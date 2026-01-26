@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.send-budget-email]
 verify_jwt = false
+
+[functions.send-order-email]
+verify_jwt = false

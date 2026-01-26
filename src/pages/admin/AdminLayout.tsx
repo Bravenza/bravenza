@@ -8,6 +8,7 @@ import {
   LogOut,
   Menu,
   X,
+  Mail,
 } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "@/components/Logo";
@@ -18,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
   { icon: Package, label: "Pedidos", path: "/admin/pedidos" },
+  { icon: Mail, label: "Emails", path: "/admin/emails" },
   { icon: Users, label: "Usuários", path: "/admin/usuarios" },
   { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
 ];
