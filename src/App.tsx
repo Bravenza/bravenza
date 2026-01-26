@@ -7,6 +7,8 @@ import { AuthProvider } from "@/hooks/useAuth";
 
 import Index from "./pages/Index";
 import TrackingPage from "./pages/TrackingPage";
+import BudgetApprovalPage from "./pages/BudgetApprovalPage";
+import PaymentPage from "./pages/PaymentPage";
 import NotFound from "./pages/NotFound";
 
 // Admin pages
@@ -32,6 +34,8 @@ const App = () => (
             {/* Public routes */}
             <Route path="/" element={<Index />} />
             <Route path="/rastreio/:orderId" element={<TrackingPage />} />
+            <Route path="/orcamento/:token" element={<BudgetApprovalPage />} />
+            <Route path="/pagamento/:token" element={<PaymentPage />} />
 
             {/* Admin routes */}
             <Route path="/admin/login" element={<Login />} />
