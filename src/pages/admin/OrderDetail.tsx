@@ -1070,20 +1070,27 @@ const OrderDetail = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Valor Total (R$)</Label>
+                      <Label>Valor Total (R$) *</Label>
                       <Input
                         type="number"
                         step="0.01"
                         value={editData.product_price || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const price = parseFloat(e.target.value) || 0;
+                          const halfPrice = price / 2;
                           setEditData((prev) => ({
                             ...prev,
-                            product_price: parseFloat(e.target.value) || null,
-                          }))
-                        }
+                            product_price: price || null,
+                            sinal_value: halfPrice || null,
+                            balance_value: halfPrice || null,
+                          }));
+                        }}
                         placeholder="0,00"
                         className="bg-secondary/50"
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Sinal e Saldo serão calculados automaticamente (50% cada)
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1156,66 +1163,59 @@ const OrderDetail = () => {
                 </div>
               )}
               {isEditing ? (
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Valor do Sinal - 50% (R$)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={editData.sinal_value || ""}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          sinal_value: parseFloat(e.target.value) || null,
-                        }))
-                      }
-                      className="bg-secondary/50"
-                    />
+                <div className="space-y-4">
+                  <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
+                    <p className="text-sm text-primary">
+                      💡 Os valores são calculados automaticamente: Sinal = 50% | Saldo = 50%
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="sinal_paid"
-                      checked={editData.sinal_paid || false}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          sinal_paid: e.target.checked,
-                        }))
-                      }
-                      className="h-4 w-4"
-                    />
-                    <Label htmlFor="sinal_paid">Sinal pago</Label>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Valor do Saldo (R$)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={editData.balance_value || ""}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          balance_value: parseFloat(e.target.value) || null,
-                        }))
-                      }
-                      className="bg-secondary/50"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="balance_paid"
-                      checked={editData.balance_paid || false}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          balance_paid: e.target.checked,
-                        }))
-                      }
-                      className="h-4 w-4"
-                    />
-                    <Label htmlFor="balance_paid">Saldo pago</Label>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-secondary/30 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Sinal (50%)</p>
+                      <p className="font-bold text-lg text-primary">
+                        {editData.sinal_value
+                          ? formatCurrency(editData.sinal_value)
+                          : editData.product_price
+                          ? formatCurrency(editData.product_price / 2)
+                          : "-"}
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        {order.sinal_paid ? (
+                          <Badge className="bg-success/20 text-success">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            Pago
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Aguardando pagamento</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Status atualizado via confirmação de pagamento
+                      </p>
+                    </div>
+                    <div className="p-4 bg-secondary/30 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Saldo (50%)</p>
+                      <p className="font-bold text-lg text-primary">
+                        {editData.balance_value
+                          ? formatCurrency(editData.balance_value)
+                          : editData.product_price
+                          ? formatCurrency(editData.product_price / 2)
+                          : "-"}
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        {order.balance_paid ? (
+                          <Badge className="bg-success/20 text-success">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            Pago
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Aguardando pagamento</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Status atualizado via confirmação de pagamento
+                      </p>
+                    </div>
                   </div>
                 </div>
               ) : (
