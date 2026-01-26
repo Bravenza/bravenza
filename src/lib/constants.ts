@@ -85,8 +85,10 @@ export const isStatusActive = (
 
 export const formatCPF = (cpf: string): string => {
   const cleaned = cpf.replace(/\D/g, "");
-  if (cleaned.length !== 11) return cpf;
-  return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  if (cleaned.length <= 3) return cleaned;
+  if (cleaned.length <= 6) return cleaned.replace(/(\d{3})(\d+)/, "$1.$2");
+  if (cleaned.length <= 9) return cleaned.replace(/(\d{3})(\d{3})(\d+)/, "$1.$2.$3");
+  return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d+)/, "$1.$2.$3-$4");
 };
 
 export const cleanCPF = (cpf: string): string => {
@@ -115,6 +117,31 @@ export const validateCPF = (cpf: string): boolean => {
   if (parseInt(cleaned[10]) !== digit) return false;
   
   return true;
+};
+
+// Phone validation and formatting
+export const cleanPhone = (phone: string): string => {
+  return phone.replace(/\D/g, "");
+};
+
+export const formatPhone = (phone: string): string => {
+  const cleaned = cleanPhone(phone);
+  if (cleaned.length <= 2) return cleaned;
+  if (cleaned.length <= 7) return cleaned.replace(/(\d{2})(\d+)/, "($1) $2");
+  if (cleaned.length <= 10) return cleaned.replace(/(\d{2})(\d{4})(\d+)/, "($1) $2-$3");
+  return cleaned.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+};
+
+export const validatePhone = (phone: string): boolean => {
+  const cleaned = cleanPhone(phone);
+  // Brazilian phone: 10 or 11 digits (with DDD)
+  return cleaned.length >= 10 && cleaned.length <= 11;
+};
+
+// Email validation
+export const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
 };
 
 export const formatCurrency = (value: number, currency: string = "BRL"): string => {
