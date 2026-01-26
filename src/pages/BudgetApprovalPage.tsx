@@ -348,7 +348,7 @@ export default function BudgetApprovalPage() {
                 </div>
                 <div className="p-4 bg-secondary/50 rounded-lg">
                   <p className="text-sm text-muted-foreground mb-1">
-                    Saldo (50%) - Na chegada do produto
+                    Saldo (50%) - Na chegada do produto ao Brasil
                   </p>
                   <p className="text-xl font-bold">
                     {order.balance_value
