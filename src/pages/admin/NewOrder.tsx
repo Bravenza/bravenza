@@ -54,6 +54,7 @@ const NewOrder = () => {
     order_type: "VAULT" as "VAULT" | "READY",
     client_name: "",
     client_cpf: "",
+    client_cep: "",
     client_email: "",
     client_phone: "",
     client_address: "",
@@ -69,6 +70,69 @@ const NewOrder = () => {
     balance_value: "",
     internal_notes: "",
   });
+
+  const [isLoadingCep, setIsLoadingCep] = useState(false);
+
+  // Função para buscar endereço pelo CEP
+  const fetchAddressByCep = async (cep: string) => {
+    const cleanedCep = cep.replace(/\D/g, "");
+    if (cleanedCep.length !== 8) return;
+
+    setIsLoadingCep(true);
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleanedCep}/json/`);
+      const data = await response.json();
+      
+      if (!data.erro) {
+        const fullAddress = [
+          data.logradouro,
+          data.complemento,
+          data.bairro,
+          `${data.localidade} - ${data.uf}`,
+          `CEP: ${data.cep}`
+        ].filter(Boolean).join("\n");
+        
+        setFormData((prev) => ({ ...prev, client_address: fullAddress }));
+        toast({
+          title: "Endereço encontrado!",
+          description: `${data.logradouro}, ${data.bairro} - ${data.localidade}/${data.uf}`,
+        });
+      } else {
+        toast({
+          title: "CEP não encontrado",
+          description: "Verifique o CEP digitado ou preencha o endereço manualmente.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao buscar CEP:", error);
+      toast({
+        title: "Erro ao buscar CEP",
+        description: "Não foi possível buscar o endereço. Preencha manualmente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingCep(false);
+    }
+  };
+
+  // Handler para mudança de CEP
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, "");
+    if (value.length > 8) value = value.slice(0, 8);
+    
+    // Formatar CEP: 00000-000
+    if (value.length > 5) {
+      value = `${value.slice(0, 5)}-${value.slice(5)}`;
+    }
+    
+    setFormData((prev) => ({ ...prev, client_cep: value }));
+    
+    // Auto-buscar quando tiver 8 dígitos
+    if (value.replace(/\D/g, "").length === 8) {
+      fetchAddressByCep(value);
+    }
+  };
 
   // Atualiza modelos disponíveis quando a marca muda
   const availableModels = getModelsForBrand(selectedBrandKey);
@@ -305,19 +369,23 @@ const NewOrder = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="client_email">Email</Label>
-                  <Input
-                    id="client_email"
-                    type="email"
-                    value={formData.client_email}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        client_email: e.target.value,
-                      }))
-                    }
-                    className="bg-secondary/50"
-                  />
+                  <Label htmlFor="client_cep">CEP</Label>
+                  <div className="relative">
+                    <Input
+                      id="client_cep"
+                      value={formData.client_cep}
+                      onChange={handleCepChange}
+                      placeholder="00000-000"
+                      className="bg-secondary/50"
+                      maxLength={9}
+                    />
+                    {isLoadingCep && (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Digite o CEP para preencher o endereço automaticamente
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="client_phone">Telefone</Label>
@@ -334,8 +402,25 @@ const NewOrder = () => {
                   />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="client_email">Email</Label>
+                  <Input
+                    id="client_email"
+                    type="email"
+                    value={formData.client_email}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        client_email: e.target.value,
+                      }))
+                    }
+                    className="bg-secondary/50"
+                  />
+                </div>
+              </div>
               <div className="space-y-2">
-                <Label htmlFor="client_address">Endereço</Label>
+                <Label htmlFor="client_address">Endereço Completo</Label>
                 <Textarea
                   id="client_address"
                   value={formData.client_address}
@@ -345,9 +430,13 @@ const NewOrder = () => {
                       client_address: e.target.value,
                     }))
                   }
+                  placeholder="Rua, número, complemento, bairro, cidade - UF"
                   className="bg-secondary/50"
-                  rows={2}
+                  rows={3}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Preenchido automaticamente pelo CEP. Adicione número e complemento se necessário.
+                </p>
               </div>
             </CardContent>
           </Card>
