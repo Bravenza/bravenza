@@ -3,6 +3,7 @@ import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Package,
+  ClipboardList,
   Users,
   Settings,
   LogOut,
@@ -18,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
+  { icon: ClipboardList, label: "Solicitações", path: "/admin/solicitacoes" },
   { icon: Package, label: "Pedidos", path: "/admin/pedidos" },
   { icon: Mail, label: "Emails", path: "/admin/emails" },
   { icon: Users, label: "Usuários", path: "/admin/usuarios" },

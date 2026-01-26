@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import TrackingPage from "./pages/TrackingPage";
 import BudgetApprovalPage from "./pages/BudgetApprovalPage";
 import PaymentPage from "./pages/PaymentPage";
+import OrderRequestPage from "./pages/OrderRequestPage";
 import NotFound from "./pages/NotFound";
 
 // Client pages
@@ -23,6 +24,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import OrdersList from "./pages/admin/OrdersList";
 import NewOrder from "./pages/admin/NewOrder";
 import OrderDetail from "./pages/admin/OrderDetail";
+import OrderRequestsPage from "./pages/admin/OrderRequestsPage";
 import UsersPage from "./pages/admin/UsersPage";
 import SettingsPage from "./pages/admin/SettingsPage";
 import EmailFlowPage from "./pages/admin/EmailFlowPage";
@@ -40,6 +42,7 @@ const App = () => (
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
+              <Route path="/solicitar" element={<OrderRequestPage />} />
               <Route path="/rastreio/:orderId" element={<TrackingPage />} />
               <Route path="/orcamento/:token" element={<BudgetApprovalPage />} />
               <Route path="/pagamento/:token" element={<PaymentPage />} />
@@ -55,6 +58,7 @@ const App = () => (
                 <Route path="pedidos" element={<OrdersList />} />
                 <Route path="pedidos/novo" element={<NewOrder />} />
                 <Route path="pedidos/:orderId" element={<OrderDetail />} />
+                <Route path="solicitacoes" element={<OrderRequestsPage />} />
                 <Route path="emails" element={<EmailFlowPage />} />
                 <Route path="usuarios" element={<UsersPage />} />
                 <Route path="configuracoes" element={<SettingsPage />} />

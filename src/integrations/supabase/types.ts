@@ -100,6 +100,90 @@ export type Database = {
           },
         ]
       }
+      order_requests: {
+        Row: {
+          additional_notes: string | null
+          address_cep: string
+          address_city: string
+          address_complement: string | null
+          address_neighborhood: string
+          address_number: string
+          address_state: string
+          address_street: string
+          admin_notes: string | null
+          client_cpf: string
+          client_email: string
+          client_name: string
+          client_phone: string
+          converted_order_id: string | null
+          created_at: string
+          id: string
+          product_brand: string | null
+          product_color: string | null
+          product_link: string | null
+          product_model: string | null
+          reference_image_url: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shoe_size: string
+          status: string
+        }
+        Insert: {
+          additional_notes?: string | null
+          address_cep: string
+          address_city: string
+          address_complement?: string | null
+          address_neighborhood: string
+          address_number: string
+          address_state: string
+          address_street: string
+          admin_notes?: string | null
+          client_cpf: string
+          client_email: string
+          client_name: string
+          client_phone: string
+          converted_order_id?: string | null
+          created_at?: string
+          id?: string
+          product_brand?: string | null
+          product_color?: string | null
+          product_link?: string | null
+          product_model?: string | null
+          reference_image_url?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shoe_size: string
+          status?: string
+        }
+        Update: {
+          additional_notes?: string | null
+          address_cep?: string
+          address_city?: string
+          address_complement?: string | null
+          address_neighborhood?: string
+          address_number?: string
+          address_state?: string
+          address_street?: string
+          admin_notes?: string | null
+          client_cpf?: string
+          client_email?: string
+          client_name?: string
+          client_phone?: string
+          converted_order_id?: string | null
+          created_at?: string
+          id?: string
+          product_brand?: string | null
+          product_color?: string | null
+          product_link?: string | null
+          product_model?: string | null
+          reference_image_url?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shoe_size?: string
+          status?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           balance_due_date: string | null
