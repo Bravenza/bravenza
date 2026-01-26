@@ -570,6 +570,7 @@ export type Database = {
         | "BALANCE_PENDING"
         | "FULLY_PAID"
         | "SHIPPED_TO_CLIENT"
+        | "LOST"
       order_type: "READY" | "VAULT"
       payment_method: "PIX" | "CREDIT_CARD"
     }
@@ -738,6 +739,7 @@ export const Constants = {
         "BALANCE_PENDING",
         "FULLY_PAID",
         "SHIPPED_TO_CLIENT",
+        "LOST",
       ],
       order_type: ["READY", "VAULT"],
       payment_method: ["PIX", "CREDIT_CARD"],

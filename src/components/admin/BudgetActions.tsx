@@ -238,15 +238,29 @@ export function BudgetActions({
 
         {/* Actions */}
         <div className="flex flex-col gap-2">
-          {budgetStatus === "PENDING" && (
+          {(budgetStatus === "PENDING" || budgetStatus === "REJECTED" || budgetStatus === "EXPIRED") && (
             <Button
               className="btn-gold w-full"
               onClick={() => setShowSendDialog(true)}
               disabled={!productPrice}
             >
               <Send className="mr-2 h-4 w-4" />
-              Enviar Orçamento
+              {budgetStatus === "REJECTED" || budgetStatus === "EXPIRED" 
+                ? "Reenviar Orçamento" 
+                : "Enviar Orçamento"}
             </Button>
+          )}
+
+          {budgetStatus === "REJECTED" && (
+            <p className="text-xs text-muted-foreground text-center">
+              O cliente recusou. Você pode editar o valor e reenviar.
+            </p>
+          )}
+
+          {budgetStatus === "EXPIRED" && (
+            <p className="text-xs text-muted-foreground text-center">
+              O orçamento expirou. Envie um novo.
+            </p>
           )}
 
           {approvalLink && budgetStatus !== "PENDING" && (
