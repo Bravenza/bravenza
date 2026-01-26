@@ -53,9 +53,16 @@ export const Footer = () => {
                 <MessageCircle className="h-4 w-4 text-primary" />
                 <span>WhatsApp</span>
               </li>
-              <li className="flex items-center gap-2">
-                <Instagram className="h-4 w-4 text-primary" />
-                <span>@bravenza</span>
+              <li>
+                <a 
+                  href="https://instagram.com/bravenza.vault" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 hover:text-primary transition-colors"
+                >
+                  <Instagram className="h-4 w-4 text-primary" />
+                  <span>@bravenza.vault</span>
+                </a>
               </li>
             </ul>
           </div>
