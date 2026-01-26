@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CheckCircle2, XCircle, Loader2, Package, AlertCircle, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Package, AlertCircle, Clock, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Logo } from "@/components/Logo";
 import { VaultPolicyCard } from "@/components/admin/VaultPolicyCard";
 import { useToast } from "@/hooks/use-toast";
@@ -52,6 +53,8 @@ export default function BudgetApprovalPage() {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [status, setStatus] = useState<"pending" | "approved" | "rejected" | "expired" | "error">("pending");
+  const [acceptedRefundPolicy, setAcceptedRefundPolicy] = useState(false);
+  const [acceptedWarrantyPolicy, setAcceptedWarrantyPolicy] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -360,6 +363,32 @@ export default function BudgetApprovalPage() {
             </CardContent>
           </Card>
 
+          {/* Non-refundable Deposit Policy */}
+          <Card className="border-destructive/30 bg-destructive/5 mb-6">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ShieldAlert className="h-5 w-5 text-destructive" />
+                <span className="text-destructive">Política de Sinal (Depósito)</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                O valor do <strong>sinal (50%)</strong> é uma garantia de reserva do produto e{" "}
+                <strong className="text-destructive">não é reembolsável</strong> após o pagamento.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Caso o cliente desista da compra durante o processo, o valor do sinal ficará retido 
+                como <strong>multa contratual</strong> para cobrir os custos operacionais já realizados 
+                (busca, negociação, reserva do produto).
+              </p>
+              <div className="mt-4 pt-3 border-t border-border/50">
+                <p className="text-[10px] text-muted-foreground italic">
+                  Esta política se aplica a todos os tipos de pedido (VAULT e READY).
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* VAULT Policy Card */}
           {order.order_type === "VAULT" && (
             <div className="mb-6">
@@ -367,13 +396,53 @@ export default function BudgetApprovalPage() {
             </div>
           )}
 
+          {/* Terms Acceptance */}
+          <Card className="card-premium mb-8">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Termos e Condições</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="refund-policy"
+                  checked={acceptedRefundPolicy}
+                  onCheckedChange={(checked) => setAcceptedRefundPolicy(checked === true)}
+                />
+                <label
+                  htmlFor="refund-policy"
+                  className="text-sm leading-relaxed cursor-pointer"
+                >
+                  Li e concordo que o <strong>sinal (50%) não é reembolsável</strong> após o pagamento, 
+                  ficando retido como multa em caso de desistência.
+                </label>
+              </div>
+
+              {order.order_type === "VAULT" && (
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="warranty-policy"
+                    checked={acceptedWarrantyPolicy}
+                    onCheckedChange={(checked) => setAcceptedWarrantyPolicy(checked === true)}
+                  />
+                  <label
+                    htmlFor="warranty-policy"
+                    className="text-sm leading-relaxed cursor-pointer"
+                  >
+                    Li e concordo com a <strong>Política de Trocas e Garantia VAULT</strong>: 
+                    troca/reembolso somente por defeito, tamanho não é trocável, prazo de 7 dias para suporte.
+                  </label>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               size="lg"
               className="btn-gold text-lg px-8"
               onClick={handleApprove}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !acceptedRefundPolicy || (order.order_type === "VAULT" && !acceptedWarrantyPolicy)}
             >
               {isSubmitting ? (
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -393,9 +462,15 @@ export default function BudgetApprovalPage() {
             </Button>
           </div>
 
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            Ao aprovar, você será direcionado para efetuar o pagamento do sinal via Pix.
-          </p>
+          {!acceptedRefundPolicy || (order.order_type === "VAULT" && !acceptedWarrantyPolicy) ? (
+            <p className="text-center text-sm text-amber-500 mt-4">
+              Você precisa aceitar os termos acima para aprovar o orçamento.
+            </p>
+          ) : (
+            <p className="text-center text-sm text-muted-foreground mt-6">
+              Ao aprovar, você será direcionado para efetuar o pagamento do sinal via Pix.
+            </p>
+          )}
         </motion.div>
       </main>
 
