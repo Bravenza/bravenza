@@ -10,6 +10,8 @@ import {
   Clock,
   CheckCircle2,
   Shield,
+  FileText,
+  ArrowRight,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Logo } from "@/components/Logo";
@@ -17,11 +19,13 @@ import { StatusTimeline } from "@/components/tracking/StatusTimeline";
 import { ProgressStepper } from "@/components/tracking/ProgressStepper";
 import { InfoCard, InfoRow } from "@/components/tracking/InfoCard";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ORDER_STATUS_LABELS,
   formatDate,
   formatDateTime,
+  formatCurrency,
   OrderType,
 } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -39,6 +43,14 @@ interface OrderData {
   national_tracking: string | null;
   national_carrier: string | null;
   created_at: string;
+  budget_status: string | null;
+  budget_approval_token: string | null;
+  sinal_paid: boolean | null;
+  sinal_value: number | null;
+  balance_paid: boolean | null;
+  balance_value: number | null;
+  product_price: number | null;
+  product_currency: string | null;
 }
 
 interface HistoryItem {
@@ -188,6 +200,108 @@ const TrackingPage = () => {
               Acompanhe abaixo o status do seu pedido.
             </p>
           </motion.div>
+
+          {/* Budget/Payment Action Card */}
+          {order.budget_status === "SENT" && order.budget_approval_token && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="mb-6"
+            >
+              <Card className="border-primary/50 bg-primary/5">
+                <CardContent className="p-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-full bg-primary/20">
+                        <FileText className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">Orçamento Pendente</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Você tem um orçamento aguardando aprovação
+                        </p>
+                      </div>
+                    </div>
+                    <Button asChild className="btn-gold">
+                      <Link to={`/orcamento/${order.budget_approval_token}`}>
+                        Ver Orçamento
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Payment Action Card - Sinal */}
+          {order.budget_status === "APPROVED" && !order.sinal_paid && order.budget_approval_token && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="mb-6"
+            >
+              <Card className="border-amber-500/50 bg-amber-500/5">
+                <CardContent className="p-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-full bg-amber-500/20">
+                        <CreditCard className="h-5 w-5 text-amber-500" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">Pagamento do Sinal Pendente</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Efetue o pagamento do sinal de {order.sinal_value ? formatCurrency(order.sinal_value, order.product_currency || "BRL") : "50%"} para confirmar seu pedido
+                        </p>
+                      </div>
+                    </div>
+                    <Button asChild className="bg-amber-500 hover:bg-amber-600 text-black">
+                      <Link to={`/pagamento/${order.budget_approval_token}`}>
+                        Pagar Sinal
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Payment Action Card - Saldo */}
+          {order.sinal_paid && !order.balance_paid && order.budget_approval_token && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="mb-6"
+            >
+              <Card className="border-primary/50 bg-primary/5">
+                <CardContent className="p-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-full bg-primary/20">
+                        <CreditCard className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">Pagamento do Saldo</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Pague o saldo de {order.balance_value ? formatCurrency(order.balance_value, order.product_currency || "BRL") : "50%"} para liberar o envio
+                        </p>
+                      </div>
+                    </div>
+                    <Button asChild className="btn-gold">
+                      <Link to={`/pagamento/${order.budget_approval_token}`}>
+                        Pagar Saldo
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
 
           {/* Progress Stepper */}
           <motion.div
