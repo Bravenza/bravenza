@@ -81,8 +81,8 @@ export default function ClientLogin() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <div className="text-center mb-8">
-          <Logo size="lg" />
+        <div className="flex flex-col items-center text-center mb-8">
+          <Logo size="lg" className="mb-4" />
           <h1 className="text-2xl font-bold text-foreground">Área do Cliente</h1>
           <p className="text-muted-foreground mt-2">
             Acompanhe seus pedidos e documentos
