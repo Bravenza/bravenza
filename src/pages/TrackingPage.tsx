@@ -9,6 +9,7 @@ import {
   AlertCircle,
   Clock,
   CheckCircle2,
+  Shield,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Logo } from "@/components/Logo";
@@ -302,24 +303,32 @@ const TrackingPage = () => {
                 </InfoCard>
               )}
 
-              {/* VAULT Rules */}
+              {/* VAULT Policy */}
               {isVault && (
                 <InfoCard
-                  title="Regras VAULT"
-                  icon={<AlertCircle className="h-5 w-5" />}
+                  title="Política VAULT"
+                  icon={<Shield className="h-5 w-5" />}
                 >
                   <ul className="space-y-2 text-xs text-muted-foreground">
                     <li className="flex items-start gap-2">
                       <span className="text-primary">•</span>
-                      Sinal de 30% para iniciar o processo
+                      <span><strong>Sinal (50%)</strong> não é reembolsável após pagamento</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-primary">•</span>
-                      Saldo em até 24h após chegada no BR
+                      <span>Saldo em até 24h após chegada no Brasil</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-amber-500">•</span>
+                      <span>Troca/reembolso <strong>somente por defeito</strong></span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-amber-500">•</span>
+                      <span>Tamanho <strong>não é trocável</strong></span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-primary">•</span>
-                      Prazo VAULT 30: 30 dias úteis
+                      <span>Prazo de suporte: 7 dias após recebimento</span>
                     </li>
                   </ul>
                 </InfoCard>
