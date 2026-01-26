@@ -65,6 +65,51 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read: boolean
+          read_at: string | null
+          reference_id: string | null
+          reference_type: string | null
+          target: Database["public"]["Enums"]["notification_target"]
+          target_client_cpf: string | null
+          target_user_id: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean
+          read_at?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          target: Database["public"]["Enums"]["notification_target"]
+          target_client_cpf?: string | null
+          target_user_id?: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean
+          read_at?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          target?: Database["public"]["Enums"]["notification_target"]
+          target_client_cpf?: string | null
+          target_user_id?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+        }
+        Relationships: []
+      }
       order_history: {
         Row: {
           created_at: string
@@ -483,6 +528,16 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       budget_status: "PENDING" | "SENT" | "APPROVED" | "REJECTED" | "EXPIRED"
+      notification_target: "admin" | "client"
+      notification_type:
+        | "new_order_request"
+        | "order_status_update"
+        | "budget_sent"
+        | "budget_approved"
+        | "budget_rejected"
+        | "payment_received"
+        | "order_delivered"
+        | "system_alert"
       order_status:
         | "ORDER_CONFIRMED"
         | "SOURCING"
@@ -628,6 +683,17 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       budget_status: ["PENDING", "SENT", "APPROVED", "REJECTED", "EXPIRED"],
+      notification_target: ["admin", "client"],
+      notification_type: [
+        "new_order_request",
+        "order_status_update",
+        "budget_sent",
+        "budget_approved",
+        "budget_rejected",
+        "payment_received",
+        "order_delivered",
+        "system_alert",
+      ],
       order_status: [
         "ORDER_CONFIRMED",
         "SOURCING",
