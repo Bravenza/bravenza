@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
+import { VaultPolicyCard } from "@/components/admin/VaultPolicyCard";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatDate } from "@/lib/constants";
 import {
@@ -358,6 +359,13 @@ export default function BudgetApprovalPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* VAULT Policy Card */}
+          {order.order_type === "VAULT" && (
+            <div className="mb-6">
+              <VaultPolicyCard />
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
