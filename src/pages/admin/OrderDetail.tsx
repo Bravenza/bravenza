@@ -1,0 +1,985 @@
+import { useEffect, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  Package,
+  User,
+  CreditCard,
+  Truck,
+  Clock,
+  Edit,
+  ArrowRight,
+  Save,
+  Loader2,
+  Trash2,
+  CheckCircle2,
+  X,
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import {
+  ORDER_STATUS_LABELS,
+  getStatusesForType,
+  getStatusIndex,
+  formatDate,
+  formatDateTime,
+  formatCurrency,
+  formatCPF,
+  OrderType,
+} from "@/lib/constants";
+
+interface Order {
+  order_id: string;
+  order_type: OrderType;
+  current_status: string;
+  client_name: string;
+  client_cpf: string;
+  client_email: string | null;
+  client_phone: string | null;
+  client_address: string | null;
+  product_name: string;
+  product_reference: string | null;
+  product_price: number | null;
+  product_currency: string;
+  sinal_value: number | null;
+  sinal_paid: boolean;
+  balance_value: number | null;
+  balance_paid: boolean;
+  international_tracking: string | null;
+  national_tracking: string | null;
+  national_carrier: string | null;
+  sla_vault_due_date: string | null;
+  balance_due_date: string | null;
+  internal_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface HistoryItem {
+  id: string;
+  status: string;
+  notes: string | null;
+  created_at: string;
+}
+
+const OrderDetail = () => {
+  const { orderId } = useParams<{ orderId: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const [order, setOrder] = useState<Order | null>(null);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [newStatus, setNewStatus] = useState("");
+  const [statusNotes, setStatusNotes] = useState("");
+
+  const [editData, setEditData] = useState<Partial<Order>>({});
+
+  useEffect(() => {
+    if (!orderId) return;
+
+    const fetchOrder = async () => {
+      try {
+        const { data: orderData, error: orderError } = await supabase
+          .from("orders")
+          .select("*")
+          .eq("order_id", orderId)
+          .single();
+
+        if (orderError) throw orderError;
+
+        setOrder(orderData as Order);
+        setEditData(orderData as Order);
+
+        const { data: historyData, error: historyError } = await supabase
+          .from("order_history")
+          .select("*")
+          .eq("order_id", orderId)
+          .order("created_at", { ascending: true });
+
+        if (!historyError) {
+          setHistory(historyData || []);
+        }
+      } catch (error) {
+        console.error("Error fetching order:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar o pedido.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrder();
+  }, [orderId, toast]);
+
+  const handleSave = async () => {
+    if (!order) return;
+
+    setIsSaving(true);
+
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          client_name: editData.client_name,
+          client_email: editData.client_email,
+          client_phone: editData.client_phone,
+          client_address: editData.client_address,
+          product_name: editData.product_name,
+          product_reference: editData.product_reference,
+          product_price: editData.product_price,
+          sinal_value: editData.sinal_value,
+          sinal_paid: editData.sinal_paid,
+          balance_value: editData.balance_value,
+          balance_paid: editData.balance_paid,
+          international_tracking: editData.international_tracking,
+          national_tracking: editData.national_tracking,
+          national_carrier: editData.national_carrier,
+          internal_notes: editData.internal_notes,
+        })
+        .eq("order_id", order.order_id);
+
+      if (error) throw error;
+
+      setOrder({ ...order, ...editData });
+      setIsEditing(false);
+      toast({
+        title: "Salvo!",
+        description: "Pedido atualizado com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível salvar.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleStatusChange = async () => {
+    if (!order || !newStatus) return;
+
+    setIsSaving(true);
+
+    try {
+      const updates: Record<string, any> = {
+        current_status: newStatus,
+      };
+
+      // Auto-calculate balance due date when ARRIVED
+      if (newStatus === "ARRIVED") {
+        const balanceDue = new Date();
+        balanceDue.setHours(balanceDue.getHours() + 24);
+        updates.balance_due_date = balanceDue.toISOString();
+      }
+
+      const { error: updateError } = await supabase
+        .from("orders")
+        .update(updates)
+        .eq("order_id", order.order_id);
+
+      if (updateError) throw updateError;
+
+      const { error: historyError } = await supabase
+        .from("order_history")
+        .insert({
+          order_id: order.order_id,
+          status: newStatus as any,
+          notes: statusNotes || null,
+        });
+
+      if (historyError) throw historyError;
+
+      setOrder({ ...order, ...updates });
+      setHistory([
+        ...history,
+        {
+          id: Date.now().toString(),
+          status: newStatus,
+          notes: statusNotes,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      setShowStatusModal(false);
+      setNewStatus("");
+      setStatusNotes("");
+
+      toast({
+        title: "Status atualizado!",
+        description: `Pedido atualizado para ${ORDER_STATUS_LABELS[newStatus]}.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível atualizar o status.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!order) return;
+
+    setIsSaving(true);
+
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .delete()
+        .eq("order_id", order.order_id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Pedido excluído",
+        description: "O pedido foi removido do sistema.",
+      });
+
+      navigate("/admin/pedidos");
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível excluir.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid lg:grid-cols-3 gap-6">
+          <Skeleton className="h-96 lg:col-span-2" />
+          <Skeleton className="h-96" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Pedido não encontrado</p>
+        <Link to="/admin/pedidos">
+          <Button variant="outline" className="mt-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const statuses = getStatusesForType(order.order_type);
+  const currentIndex = getStatusIndex(order.current_status, order.order_type);
+  const nextStatuses = statuses.slice(currentIndex + 1);
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link to="/admin/pedidos">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold">{order.order_id}</h1>
+              <Badge
+                variant="outline"
+                className={
+                  order.order_type === "VAULT"
+                    ? "border-primary text-primary"
+                    : "border-success text-success"
+                }
+              >
+                {order.order_type}
+              </Badge>
+            </div>
+            <p className="text-muted-foreground">
+              Criado em {formatDateTime(order.created_at)}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          {isEditing ? (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditData(order);
+                }}
+              >
+                <X className="mr-2 h-4 w-4" />
+                Cancelar
+              </Button>
+              <Button
+                className="btn-gold"
+                onClick={handleSave}
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Salvar
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => setIsEditing(true)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Editar
+              </Button>
+              {nextStatuses.length > 0 && (
+                <Button
+                  className="btn-gold"
+                  onClick={() => setShowStatusModal(true)}
+                >
+                  <ArrowRight className="mr-2 h-4 w-4" />
+                  Avançar Status
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Current status */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="card-premium-gold p-6"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center pulse-gold">
+            <Package className="h-7 w-7 text-primary" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Status Atual</p>
+            <h2 className="text-xl md:text-2xl font-bold text-primary">
+              {ORDER_STATUS_LABELS[order.current_status] || order.current_status}
+            </h2>
+          </div>
+        </div>
+      </motion.div>
+
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Main info */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Client */}
+          <Card className="card-premium">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" />
+                Cliente
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isEditing ? (
+                <>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Nome</Label>
+                      <Input
+                        value={editData.client_name || ""}
+                        onChange={(e) =>
+                          setEditData((prev) => ({
+                            ...prev,
+                            client_name: e.target.value,
+                          }))
+                        }
+                        className="bg-secondary/50"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>CPF</Label>
+                      <Input
+                        value={formatCPF(order.client_cpf)}
+                        disabled
+                        className="bg-secondary/50"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Email</Label>
+                      <Input
+                        value={editData.client_email || ""}
+                        onChange={(e) =>
+                          setEditData((prev) => ({
+                            ...prev,
+                            client_email: e.target.value,
+                          }))
+                        }
+                        className="bg-secondary/50"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Telefone</Label>
+                      <Input
+                        value={editData.client_phone || ""}
+                        onChange={(e) =>
+                          setEditData((prev) => ({
+                            ...prev,
+                            client_phone: e.target.value,
+                          }))
+                        }
+                        className="bg-secondary/50"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Endereço</Label>
+                    <Textarea
+                      value={editData.client_address || ""}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          client_address: e.target.value,
+                        }))
+                      }
+                      className="bg-secondary/50"
+                      rows={2}
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Nome</p>
+                    <p className="font-medium">{order.client_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">CPF</p>
+                    <p className="font-medium">{formatCPF(order.client_cpf)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-medium">{order.client_email || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Telefone</p>
+                    <p className="font-medium">{order.client_phone || "-"}</p>
+                  </div>
+                  {order.client_address && (
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-muted-foreground">Endereço</p>
+                      <p className="font-medium">{order.client_address}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Product */}
+          <Card className="card-premium">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5 text-primary" />
+                Produto
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isEditing ? (
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Nome do produto</Label>
+                    <Input
+                      value={editData.product_name || ""}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          product_name: e.target.value,
+                        }))
+                      }
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Referência</Label>
+                    <Input
+                      value={editData.product_reference || ""}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          product_reference: e.target.value,
+                        }))
+                      }
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Valor (R$)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={editData.product_price || ""}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          product_price: parseFloat(e.target.value) || null,
+                        }))
+                      }
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Nome</p>
+                    <p className="font-medium">{order.product_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Referência</p>
+                    <p className="font-medium">
+                      {order.product_reference || "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Valor</p>
+                    <p className="font-medium text-primary">
+                      {order.product_price
+                        ? formatCurrency(order.product_price)
+                        : "-"}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Financial */}
+          <Card className="card-premium">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-primary" />
+                Financeiro
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isEditing ? (
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Valor do sinal (R$)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={editData.sinal_value || ""}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          sinal_value: parseFloat(e.target.value) || null,
+                        }))
+                      }
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="sinal_paid"
+                      checked={editData.sinal_paid || false}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          sinal_paid: e.target.checked,
+                        }))
+                      }
+                      className="h-4 w-4"
+                    />
+                    <Label htmlFor="sinal_paid">Sinal pago</Label>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Valor do saldo (R$)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={editData.balance_value || ""}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          balance_value: parseFloat(e.target.value) || null,
+                        }))
+                      }
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="balance_paid"
+                      checked={editData.balance_paid || false}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          balance_paid: e.target.checked,
+                        }))
+                      }
+                      className="h-4 w-4"
+                    />
+                    <Label htmlFor="balance_paid">Saldo pago</Label>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Sinal</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">
+                        {order.sinal_value
+                          ? formatCurrency(order.sinal_value)
+                          : "-"}
+                      </p>
+                      {order.sinal_paid && (
+                        <CheckCircle2 className="h-4 w-4 text-success" />
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Saldo</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">
+                        {order.balance_value
+                          ? formatCurrency(order.balance_value)
+                          : "-"}
+                      </p>
+                      {order.balance_paid && (
+                        <CheckCircle2 className="h-4 w-4 text-success" />
+                      )}
+                    </div>
+                  </div>
+                  {order.balance_due_date && (
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-muted-foreground">
+                        Vencimento do saldo
+                      </p>
+                      <p className="font-medium text-warning">
+                        {formatDateTime(order.balance_due_date)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Logistics */}
+          <Card className="card-premium">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Truck className="h-5 w-5 text-primary" />
+                Logística
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isEditing ? (
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Rastreio internacional</Label>
+                    <Input
+                      value={editData.international_tracking || ""}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          international_tracking: e.target.value,
+                        }))
+                      }
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Rastreio nacional</Label>
+                    <Input
+                      value={editData.national_tracking || ""}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          national_tracking: e.target.value,
+                        }))
+                      }
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Transportadora</Label>
+                    <Input
+                      value={editData.national_carrier || ""}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          national_carrier: e.target.value,
+                        }))
+                      }
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Rastreio internacional
+                    </p>
+                    <p className="font-medium">
+                      {order.international_tracking || "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Rastreio nacional
+                    </p>
+                    <p className="font-medium">
+                      {order.national_tracking || "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Transportadora
+                    </p>
+                    <p className="font-medium">
+                      {order.national_carrier || "-"}
+                    </p>
+                  </div>
+                  {order.sla_vault_due_date && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Prazo VAULT 30
+                      </p>
+                      <p className="font-medium text-primary">
+                        {formatDate(order.sla_vault_due_date)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Notes */}
+          <Card className="card-premium">
+            <CardHeader>
+              <CardTitle>Observações Internas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isEditing ? (
+                <Textarea
+                  value={editData.internal_notes || ""}
+                  onChange={(e) =>
+                    setEditData((prev) => ({
+                      ...prev,
+                      internal_notes: e.target.value,
+                    }))
+                  }
+                  placeholder="Observações internas..."
+                  className="bg-secondary/50"
+                  rows={3}
+                />
+              ) : (
+                <p className="text-muted-foreground">
+                  {order.internal_notes || "Nenhuma observação."}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar - History */}
+        <div className="space-y-6">
+          <Card className="card-premium">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-primary" />
+                Histórico
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {history.length === 0 ? (
+                <p className="text-muted-foreground text-sm">
+                  Nenhum histórico registrado.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {history.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className="relative pl-4 pb-4 border-l border-border last:pb-0"
+                    >
+                      <div className="absolute -left-1.5 top-0 w-3 h-3 rounded-full bg-primary" />
+                      <p className="font-medium text-sm">
+                        {ORDER_STATUS_LABELS[item.status] || item.status}
+                      </p>
+                      {item.notes && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {item.notes}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {formatDateTime(item.created_at)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Danger zone */}
+          <Card className="card-premium border-destructive/30">
+            <CardHeader>
+              <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Excluir Pedido
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Status change modal */}
+      <Dialog open={showStatusModal} onOpenChange={setShowStatusModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Avançar Status</DialogTitle>
+            <DialogDescription>
+              Selecione o próximo status do pedido
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Novo status</Label>
+              <Select value={newStatus} onValueChange={setNewStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {nextStatuses.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {ORDER_STATUS_LABELS[status]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Observações (opcional)</Label>
+              <Textarea
+                value={statusNotes}
+                onChange={(e) => setStatusNotes(e.target.value)}
+                placeholder="Adicione uma nota sobre esta transição..."
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowStatusModal(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="btn-gold"
+              onClick={handleStatusChange}
+              disabled={!newStatus || isSaving}
+            >
+              {isSaving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowRight className="mr-2 h-4 w-4" />
+              )}
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir pedido?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O pedido {order.order_id} será
+              permanentemente removido do sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isSaving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-2 h-4 w-4" />
+              )}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
+
+export default OrderDetail;
