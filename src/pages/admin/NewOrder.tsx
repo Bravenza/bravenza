@@ -55,9 +55,14 @@ const NewOrder = () => {
     client_name: "",
     client_cpf: "",
     client_cep: "",
+    client_street: "",
+    client_number: "",
+    client_complement: "",
+    client_neighborhood: "",
+    client_city: "",
+    client_state: "",
     client_email: "",
     client_phone: "",
-    client_address: "",
     product_brand: "",
     product_model: "",
     product_name: "",
@@ -84,15 +89,14 @@ const NewOrder = () => {
       const data = await response.json();
       
       if (!data.erro) {
-        const fullAddress = [
-          data.logradouro,
-          data.complemento,
-          data.bairro,
-          `${data.localidade} - ${data.uf}`,
-          `CEP: ${data.cep}`
-        ].filter(Boolean).join("\n");
-        
-        setFormData((prev) => ({ ...prev, client_address: fullAddress }));
+        setFormData((prev) => ({
+          ...prev,
+          client_street: data.logradouro || "",
+          client_neighborhood: data.bairro || "",
+          client_city: data.localidade || "",
+          client_state: data.uf || "",
+          client_complement: data.complemento || "",
+        }));
         toast({
           title: "Endereço encontrado!",
           description: `${data.logradouro}, ${data.bairro} - ${data.localidade}/${data.uf}`,
@@ -228,6 +232,18 @@ const NewOrder = () => {
         ? parseFloat(formData.balance_value) 
         : productPrice - sinalValue;
 
+      // Montar endereço completo a partir dos campos
+      const addressParts = [
+        formData.client_street,
+        formData.client_number ? `nº ${formData.client_number}` : "",
+        formData.client_complement,
+        formData.client_neighborhood,
+        formData.client_city && formData.client_state 
+          ? `${formData.client_city} - ${formData.client_state}` 
+          : formData.client_city || formData.client_state,
+        formData.client_cep ? `CEP: ${formData.client_cep}` : "",
+      ].filter(Boolean).join(", ");
+
       const orderData = {
         order_id: orderId,
         order_type: formData.order_type,
@@ -236,7 +252,7 @@ const NewOrder = () => {
         client_cpf: cleanedCPF,
         client_email: formData.client_email || null,
         client_phone: formData.client_phone || null,
-        client_address: formData.client_address || null,
+        client_address: addressParts || null,
         product_brand: formData.product_brand || null,
         product_model: formData.product_model || null,
         product_name: formData.product_name,
@@ -336,73 +352,40 @@ const NewOrder = () => {
           </Card>
 
           {/* Client info */}
-          <Card className="card-premium">
+          <Card className="card-premium lg:col-span-2">
             <CardHeader>
               <CardTitle>Dados do Cliente</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="client_name">Nome completo *</Label>
-                <Input
-                  id="client_name"
-                  value={formData.client_name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      client_name: e.target.value,
-                    }))
-                  }
-                  className="bg-secondary/50"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="client_cpf">CPF *</Label>
-                <Input
-                  id="client_cpf"
-                  value={formData.client_cpf}
-                  onChange={handleCPFChange}
-                  placeholder="000.000.000-00"
-                  className="bg-secondary/50"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="client_cep">CEP</Label>
-                  <div className="relative">
-                    <Input
-                      id="client_cep"
-                      value={formData.client_cep}
-                      onChange={handleCepChange}
-                      placeholder="00000-000"
-                      className="bg-secondary/50"
-                      maxLength={9}
-                    />
-                    {isLoadingCep && (
-                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Digite o CEP para preencher o endereço automaticamente
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="client_phone">Telefone</Label>
+                  <Label htmlFor="client_name">Nome completo *</Label>
                   <Input
-                    id="client_phone"
-                    value={formData.client_phone}
+                    id="client_name"
+                    value={formData.client_name}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        client_phone: e.target.value,
+                        client_name: e.target.value,
                       }))
                     }
                     className="bg-secondary/50"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="client_cpf">CPF *</Label>
+                  <Input
+                    id="client_cpf"
+                    value={formData.client_cpf}
+                    onChange={handleCPFChange}
+                    placeholder="000.000.000-00"
+                    className="bg-secondary/50"
+                    required
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="client_email">Email</Label>
                   <Input
@@ -418,25 +401,142 @@ const NewOrder = () => {
                     className="bg-secondary/50"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="client_phone">Telefone</Label>
+                  <Input
+                    id="client_phone"
+                    value={formData.client_phone}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        client_phone: e.target.value,
+                      }))
+                    }
+                    placeholder="(00) 00000-0000"
+                    className="bg-secondary/50"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="client_address">Endereço Completo</Label>
-                <Textarea
-                  id="client_address"
-                  value={formData.client_address}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      client_address: e.target.value,
-                    }))
-                  }
-                  placeholder="Rua, número, complemento, bairro, cidade - UF"
-                  className="bg-secondary/50"
-                  rows={3}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Preenchido automaticamente pelo CEP. Adicione número e complemento se necessário.
-                </p>
+
+              {/* Endereço */}
+              <div className="pt-4 border-t border-border">
+                <h4 className="text-sm font-medium mb-3 text-muted-foreground">Endereço de Entrega</h4>
+                
+                <div className="grid md:grid-cols-4 gap-4 mb-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="client_cep">CEP</Label>
+                    <div className="relative">
+                      <Input
+                        id="client_cep"
+                        value={formData.client_cep}
+                        onChange={handleCepChange}
+                        placeholder="00000-000"
+                        className="bg-secondary/50"
+                        maxLength={9}
+                      />
+                      {isLoadingCep && (
+                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-2 md:col-span-3">
+                    <Label htmlFor="client_street">Rua / Logradouro</Label>
+                    <Input
+                      id="client_street"
+                      value={formData.client_street}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          client_street: e.target.value,
+                        }))
+                      }
+                      placeholder="Rua, Avenida, etc."
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-4 gap-4 mb-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="client_number">Número</Label>
+                    <Input
+                      id="client_number"
+                      value={formData.client_number}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          client_number: e.target.value,
+                        }))
+                      }
+                      placeholder="123"
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="client_complement">Complemento</Label>
+                    <Input
+                      id="client_complement"
+                      value={formData.client_complement}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          client_complement: e.target.value,
+                        }))
+                      }
+                      placeholder="Apto, Bloco..."
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="client_neighborhood">Bairro</Label>
+                    <Input
+                      id="client_neighborhood"
+                      value={formData.client_neighborhood}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          client_neighborhood: e.target.value,
+                        }))
+                      }
+                      placeholder="Bairro"
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-4 gap-4">
+                  <div className="space-y-2 md:col-span-3">
+                    <Label htmlFor="client_city">Cidade</Label>
+                    <Input
+                      id="client_city"
+                      value={formData.client_city}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          client_city: e.target.value,
+                        }))
+                      }
+                      placeholder="Cidade"
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="client_state">Estado</Label>
+                    <Input
+                      id="client_state"
+                      value={formData.client_state}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          client_state: e.target.value.toUpperCase(),
+                        }))
+                      }
+                      placeholder="UF"
+                      maxLength={2}
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
