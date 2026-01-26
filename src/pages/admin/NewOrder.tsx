@@ -265,7 +265,7 @@ const NewOrder = () => {
       const orderData = {
         order_id: orderId,
         order_type: formData.order_type,
-        current_status: "ORDER_CONFIRMED" as const,
+        current_status: "REQUEST_RECEIVED" as const,
         client_name: formData.client_name,
         client_cpf: cleanedCPF,
         client_email: formData.client_email || null,
@@ -299,8 +299,8 @@ const NewOrder = () => {
         .from("order_history")
         .insert({
           order_id: orderId,
-          status: "ORDER_CONFIRMED" as const,
-          notes: "Pedido criado",
+          status: "REQUEST_RECEIVED" as const,
+          notes: "Solicitação recebida",
         });
 
       if (historyError) throw historyError;
