@@ -517,6 +517,10 @@ export type Database = {
         Args: { p_cpf: string; p_order_id: string }
         Returns: {
           balance_due_date: string
+          balance_paid: boolean
+          balance_value: number
+          budget_approval_token: string
+          budget_status: Database["public"]["Enums"]["budget_status"]
           client_name: string
           created_at: string
           current_status: Database["public"]["Enums"]["order_status"]
@@ -525,8 +529,12 @@ export type Database = {
           national_tracking: string
           order_id: string
           order_type: Database["public"]["Enums"]["order_type"]
+          product_currency: string
           product_name: string
+          product_price: number
           product_reference: string
+          sinal_paid: boolean
+          sinal_value: number
           sla_vault_due_date: string
         }[]
       }
