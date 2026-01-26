@@ -48,8 +48,16 @@ serve(async (req) => {
 
       if (payment.status === "approved") {
         // Parse external_reference to get order_id and payment_type
+        // Format: order_id-payment_type or order_id-payment_type-card
         const externalRef = payment.external_reference || "";
         const parts = externalRef.split("-");
+        
+        // Check if it's a card payment (ends with -card)
+        const isCardPayment = parts[parts.length - 1] === "card";
+        if (isCardPayment) {
+          parts.pop(); // Remove 'card' suffix
+        }
+        
         const paymentType = parts.pop(); // 'sinal' or 'balance'
         const orderId = parts.join("-"); // order_id might contain dashes
 
@@ -58,7 +66,15 @@ serve(async (req) => {
           return new Response("OK", { status: 200 });
         }
 
-        console.log(`Payment approved for order ${orderId}, type: ${paymentType}`);
+        // Determine payment method
+        const paymentMethodId = payment.payment_method_id || "";
+        const isPixPayment = paymentMethodId === "pix";
+        const paymentMethodLabel = isPixPayment ? "PIX" : "CREDIT_CARD";
+        const paymentMethodNote = isPixPayment 
+          ? "Pix" 
+          : `Cartão de Crédito (${payment.installments || 1}x)`;
+
+        console.log(`Payment approved for order ${orderId}, type: ${paymentType}, method: ${paymentMethodLabel}`);
 
         // Update order payment status
         const updateData: Record<string, any> = {
@@ -68,13 +84,21 @@ serve(async (req) => {
         if (paymentType === "sinal") {
           updateData.sinal_paid = true;
           updateData.sinal_paid_at = new Date().toISOString();
-          updateData.sinal_payment_method = "PIX";
-          updateData.sinal_pix_transaction_id = paymentId.toString();
+          updateData.sinal_payment_method = paymentMethodLabel;
+          if (isPixPayment) {
+            updateData.sinal_pix_transaction_id = paymentId.toString();
+          } else {
+            updateData.sinal_stripe_payment_id = paymentId.toString(); // Reusing for MP card payment ID
+          }
         } else if (paymentType === "balance") {
           updateData.balance_paid = true;
           updateData.balance_paid_at = new Date().toISOString();
-          updateData.balance_payment_method = "PIX";
-          updateData.balance_pix_transaction_id = paymentId.toString();
+          updateData.balance_payment_method = paymentMethodLabel;
+          if (isPixPayment) {
+            updateData.balance_pix_transaction_id = paymentId.toString();
+          } else {
+            updateData.balance_stripe_payment_id = paymentId.toString();
+          }
         }
 
         const { error: updateError } = await supabase
@@ -90,14 +114,28 @@ serve(async (req) => {
         // Add to order history
         const historyNote =
           paymentType === "sinal"
-            ? "Pagamento do sinal confirmado via Pix"
-            : "Pagamento do saldo confirmado via Pix";
+            ? `Pagamento do sinal confirmado via ${paymentMethodNote}`
+            : `Pagamento do saldo confirmado via ${paymentMethodNote}`;
 
         await supabase.from("order_history").insert({
           order_id: orderId,
           status: paymentType === "sinal" ? "ORDER_CONFIRMED" : "BALANCE_DUE",
           notes: historyNote,
         });
+
+        // Create admin notification
+        try {
+          await supabase.from("notifications").insert({
+            type: "payment_received",
+            target: "admin",
+            title: `Pagamento ${paymentType === "sinal" ? "do sinal" : "do saldo"} recebido`,
+            message: `Pedido ${orderId}: ${paymentMethodNote}`,
+            reference_type: "order",
+            reference_id: orderId,
+          });
+        } catch (notifError) {
+          console.error("Failed to create notification:", notifError);
+        }
 
         // Fetch order data for email notification
         const { data: orderData } = await supabase

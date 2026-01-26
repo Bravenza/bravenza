@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   CheckCircle2,
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Logo } from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/constants";
@@ -44,17 +45,45 @@ type PaymentType = "sinal" | "balance";
 
 export default function PaymentPage() {
   const { token } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const [order, setOrder] = useState<OrderData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingPix, setIsGeneratingPix] = useState(false);
+  const [isProcessingCard, setIsProcessingCard] = useState(false);
   const [pixData, setPixData] = useState<{
     qr_code: string;
     copy_paste: string;
   } | null>(null);
   const [paymentType, setPaymentType] = useState<PaymentType>("sinal");
+  const [installments, setInstallments] = useState<number>(1);
+
+  // Handle payment result from URL params
+  useEffect(() => {
+    const success = searchParams.get("success");
+    const error = searchParams.get("error");
+    const pending = searchParams.get("pending");
+
+    if (success === "true") {
+      toast({
+        title: "Pagamento realizado!",
+        description: "Seu pagamento foi processado com sucesso.",
+      });
+    } else if (error === "true") {
+      toast({
+        title: "Erro no pagamento",
+        description: "Houve um problema ao processar seu pagamento. Tente novamente.",
+        variant: "destructive",
+      });
+    } else if (pending === "true") {
+      toast({
+        title: "Pagamento pendente",
+        description: "Seu pagamento está sendo processado e será confirmado em breve.",
+      });
+    }
+  }, [searchParams, toast]);
 
   useEffect(() => {
     if (!token) return;
@@ -141,26 +170,28 @@ export default function PaymentPage() {
   const handlePayWithCard = async () => {
     if (!order || !token) return;
 
+    setIsProcessingCard(true);
+
     try {
-      const amount =
-        paymentType === "sinal" ? order.sinal_value : order.balance_value;
+      const amount = order.sinal_value; // Only sinal can be paid with card
 
       const { data, error } = await supabase.functions.invoke(
-        "create-stripe-checkout",
+        "create-mercadopago-card",
         {
           body: {
             token,
-            payment_type: paymentType,
+            payment_type: "sinal",
             amount,
             order_id: order.order_id,
             product_name: order.product_name,
+            installments,
           },
         }
       );
 
       if (error) throw error;
 
-      // Redirect to Stripe checkout
+      // Redirect to Mercado Pago checkout
       window.location.href = data.checkout_url;
     } catch (error: any) {
       console.error("Error creating checkout:", error);
@@ -170,7 +201,35 @@ export default function PaymentPage() {
           error.message || "Não foi possível iniciar o pagamento com cartão.",
         variant: "destructive",
       });
+      setIsProcessingCard(false);
     }
+  };
+
+  // Calculate installment values with interest (Mercado Pago rates approximation)
+  const calculateInstallmentValue = (total: number, numInstallments: number): number => {
+    if (numInstallments === 1) return total;
+    // Approximate 3.79% per month interest (Mercado Pago typical rate)
+    const monthlyRate = 0.0379;
+    const installmentValue = (total * monthlyRate * Math.pow(1 + monthlyRate, numInstallments)) / 
+                              (Math.pow(1 + monthlyRate, numInstallments) - 1);
+    return installmentValue;
+  };
+
+  const generateInstallmentOptions = (total: number) => {
+    const options = [];
+    for (let i = 1; i <= 12; i++) {
+      const installmentValue = calculateInstallmentValue(total, i);
+      const totalWithInterest = installmentValue * i;
+      const hasInterest = i > 1;
+      options.push({
+        value: i,
+        label: i === 1 
+          ? `1x de ${formatCurrency(total)} (sem juros)`
+          : `${i}x de ${formatCurrency(installmentValue)} (Total: ${formatCurrency(totalWithInterest)})`,
+        hasInterest,
+      });
+    }
+    return options;
   };
 
   if (isLoading) {
@@ -220,6 +279,7 @@ export default function PaymentPage() {
   const currentAmount =
     paymentType === "sinal" ? order.sinal_value : order.balance_value;
   const currentLabel = paymentType === "sinal" ? "Sinal (50%)" : "Saldo (50%)";
+  const installmentOptions = order.sinal_value ? generateInstallmentOptions(order.sinal_value) : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -265,6 +325,9 @@ export default function PaymentPage() {
                         ? formatCurrency(order.sinal_value)
                         : "-"}
                     </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Pix ou Cartão até 12x
+                    </p>
                   </div>
                   {order.sinal_paid ? (
                     <Badge className="bg-success/20 text-success">
@@ -301,6 +364,9 @@ export default function PaymentPage() {
                         ? formatCurrency(order.balance_value)
                         : "-"}
                     </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Apenas Pix
+                    </p>
                   </div>
                   {order.balance_paid ? (
                     <Badge className="bg-success/20 text-success">
@@ -329,7 +395,7 @@ export default function PaymentPage() {
             </CardHeader>
             <CardContent>
               <Tabs
-                defaultValue={paymentType === "sinal" ? "pix" : "pix"}
+                defaultValue="pix"
                 className="w-full"
               >
                 <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -340,13 +406,13 @@ export default function PaymentPage() {
                   <TabsTrigger
                     value="card"
                     className="flex items-center gap-2"
-                    disabled={paymentType === "sinal"}
+                    disabled={paymentType === "balance"}
                   >
                     <CreditCard className="h-4 w-4" />
                     Cartão
-                    {paymentType === "sinal" && (
+                    {paymentType === "balance" && (
                       <span className="text-xs text-muted-foreground ml-1">
-                        (só saldo)
+                        (só sinal)
                       </span>
                     )}
                   </TabsTrigger>
@@ -412,16 +478,61 @@ export default function PaymentPage() {
                 </TabsContent>
 
                 <TabsContent value="card" className="space-y-6">
-                  <div className="text-center py-8">
+                  <div className="text-center py-4">
                     <CreditCard className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-4">
-                      Pague com cartão de crédito de forma segura via Stripe.
+                    <p className="text-muted-foreground mb-6">
+                      Pague com cartão de crédito em até 12x via Mercado Pago.
                     </p>
-                    <Button className="btn-gold" onClick={handlePayWithCard}>
-                      <CreditCard className="mr-2 h-4 w-4" />
+
+                    {/* Installments selector */}
+                    <div className="max-w-sm mx-auto mb-6">
+                      <label className="text-sm font-medium mb-2 block text-left">
+                        Parcelamento
+                      </label>
+                      <Select 
+                        value={installments.toString()} 
+                        onValueChange={(value) => setInstallments(parseInt(value))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o parcelamento" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {installmentOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value.toString()}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {installments > 1 && (
+                        <p className="text-xs text-muted-foreground mt-2 text-left">
+                          * Juros de responsabilidade do cliente
+                        </p>
+                      )}
+                    </div>
+
+                    <Button 
+                      className="btn-gold" 
+                      onClick={handlePayWithCard}
+                      disabled={isProcessingCard}
+                    >
+                      {isProcessingCard ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <CreditCard className="mr-2 h-4 w-4" />
+                      )}
                       Pagar com Cartão
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
+
+                    <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                      <img 
+                        src="https://http2.mlstatic.com/frontend-assets/ml-web-navigation/ui-navigation/6.6.92/mercadopago/logo_large_25px.png" 
+                        alt="Mercado Pago" 
+                        className="h-5"
+                      />
+                      <span>Pagamento seguro</span>
+                    </div>
                   </div>
                 </TabsContent>
               </Tabs>
