@@ -1,15 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, CreditCard, QrCode, CheckCircle2, XCircle, ExternalLink } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Settings, CreditCard, QrCode, CheckCircle2, XCircle, ExternalLink, Mail, MessageSquare, Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
 
 interface ApiConfig {
   id: string;
   name: string;
   description: string;
   icon: React.ReactNode;
-  requiredSecrets: string[];
+  requiredSecrets: { key: string; label: string; placeholder: string }[];
   docsUrl?: string;
 }
 
@@ -19,7 +23,9 @@ const API_CONFIGS: ApiConfig[] = [
     name: "Mercado Pago",
     description: "Geração automática de QR Code Pix para pagamento do sinal e saldo.",
     icon: <QrCode className="h-6 w-6" />,
-    requiredSecrets: ["MERCADO_PAGO_ACCESS_TOKEN"],
+    requiredSecrets: [
+      { key: "MERCADO_PAGO_ACCESS_TOKEN", label: "Access Token", placeholder: "APP_USR-..." }
+    ],
     docsUrl: "https://www.mercadopago.com.br/developers/pt/docs",
   },
   {
@@ -27,10 +33,51 @@ const API_CONFIGS: ApiConfig[] = [
     name: "Stripe",
     description: "Pagamentos via cartão de crédito para o saldo restante dos pedidos.",
     icon: <CreditCard className="h-6 w-6" />,
-    requiredSecrets: ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"],
+    requiredSecrets: [
+      { key: "STRIPE_SECRET_KEY", label: "Secret Key", placeholder: "sk_live_..." },
+      { key: "STRIPE_WEBHOOK_SECRET", label: "Webhook Secret", placeholder: "whsec_..." }
+    ],
     docsUrl: "https://stripe.com/docs",
   },
 ];
+
+const NOTIFICATION_CONFIGS: ApiConfig[] = [
+  {
+    id: "email",
+    name: "Email (Resend)",
+    description: "Envio automático de emails com orçamentos e atualizações de pedidos.",
+    icon: <Mail className="h-6 w-6" />,
+    requiredSecrets: [
+      { key: "RESEND_API_KEY", label: "API Key", placeholder: "re_..." }
+    ],
+    docsUrl: "https://resend.com/docs",
+  },
+  {
+    id: "whatsapp",
+    name: "WhatsApp Business API",
+    description: "Envio de mensagens automáticas via WhatsApp (opcional).",
+    icon: <MessageSquare className="h-6 w-6" />,
+    requiredSecrets: [
+      { key: "WHATSAPP_API_TOKEN", label: "API Token", placeholder: "Token da API" },
+      { key: "WHATSAPP_PHONE_ID", label: "Phone ID", placeholder: "ID do telefone" }
+    ],
+    docsUrl: "https://developers.facebook.com/docs/whatsapp",
+  },
+];
+
+// Simple localStorage-based config storage (for demo purposes)
+// In production, this should be stored securely in backend
+const getStoredConfig = (key: string): string | null => {
+  return localStorage.getItem(`config_${key}`);
+};
+
+const setStoredConfig = (key: string, value: string): void => {
+  localStorage.setItem(`config_${key}`, value);
+};
+
+const isConfigured = (secrets: { key: string }[]): boolean => {
+  return secrets.every(s => !!getStoredConfig(s.key));
+};
 
 export default function SettingsPage() {
   return (
@@ -68,26 +115,9 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <ApiIntegrationCard
-              config={{
-                id: "email",
-                name: "Email (SMTP/Resend)",
-                description: "Envio automático de emails com orçamentos e atualizações de pedidos.",
-                icon: <Settings className="h-6 w-6" />,
-                requiredSecrets: ["RESEND_API_KEY"],
-                docsUrl: "https://resend.com/docs",
-              }}
-            />
-            <ApiIntegrationCard
-              config={{
-                id: "whatsapp",
-                name: "WhatsApp Business API",
-                description: "Envio de mensagens automáticas via WhatsApp (opcional).",
-                icon: <Settings className="h-6 w-6" />,
-                requiredSecrets: ["WHATSAPP_API_TOKEN", "WHATSAPP_PHONE_ID"],
-                docsUrl: "https://developers.facebook.com/docs/whatsapp",
-              }}
-            />
+            {NOTIFICATION_CONFIGS.map((api) => (
+              <ApiIntegrationCard key={api.id} config={api} />
+            ))}
           </CardContent>
         </Card>
       </div>
@@ -96,54 +126,169 @@ export default function SettingsPage() {
 }
 
 function ApiIntegrationCard({ config }: { config: ApiConfig }) {
-  // For now, we show as "pending configuration"
-  // In a real implementation, we'd check if secrets are configured
-  const isConfigured = false;
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [secretValues, setSecretValues] = useState<Record<string, string>>({});
+  const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
+  const [configured, setConfigured] = useState(() => isConfigured(config.requiredSecrets));
+
+  const handleOpenDialog = () => {
+    // Load existing values
+    const existing: Record<string, string> = {};
+    config.requiredSecrets.forEach(s => {
+      const stored = getStoredConfig(s.key);
+      if (stored) existing[s.key] = stored;
+    });
+    setSecretValues(existing);
+    setIsDialogOpen(true);
+  };
+
+  const handleSave = () => {
+    // Validate all fields are filled
+    const allFilled = config.requiredSecrets.every(s => secretValues[s.key]?.trim());
+    if (!allFilled) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    // Save to localStorage
+    config.requiredSecrets.forEach(s => {
+      setStoredConfig(s.key, secretValues[s.key]);
+    });
+
+    setConfigured(true);
+    setIsDialogOpen(false);
+    toast.success(`${config.name} configurado com sucesso!`);
+  };
+
+  const handleRemove = () => {
+    config.requiredSecrets.forEach(s => {
+      localStorage.removeItem(`config_${s.key}`);
+    });
+    setSecretValues({});
+    setConfigured(false);
+    setIsDialogOpen(false);
+    toast.success(`Configuração do ${config.name} removida`);
+  };
+
+  const toggleShowSecret = (key: string) => {
+    setShowSecrets(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   return (
-    <div className="flex items-center justify-between p-4 border rounded-lg bg-card">
-      <div className="flex items-center gap-4">
-        <div className="p-2 bg-muted rounded-lg">
-          {config.icon}
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold">{config.name}</h3>
-            <Badge variant={isConfigured ? "default" : "secondary"}>
-              {isConfigured ? (
-                <>
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                  Configurado
-                </>
-              ) : (
-                <>
-                  <XCircle className="h-3 w-3 mr-1" />
-                  Pendente
-                </>
-              )}
-            </Badge>
+    <>
+      <div className="flex items-center justify-between p-4 border rounded-lg bg-card">
+        <div className="flex items-center gap-4">
+          <div className="p-2 bg-muted rounded-lg">
+            {config.icon}
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            {config.description}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Secrets necessários: {config.requiredSecrets.join(", ")}
-          </p>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold">{config.name}</h3>
+              <Badge variant={configured ? "default" : "secondary"}>
+                {configured ? (
+                  <>
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    Configurado
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-3 w-3 mr-1" />
+                    Pendente
+                  </>
+                )}
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              {config.description}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {config.docsUrl && (
+            <Button variant="ghost" size="sm" asChild>
+              <a href={config.docsUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-4 w-4 mr-1" />
+                Docs
+              </a>
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={handleOpenDialog}>
+            {configured ? "Editar" : "Configurar"}
+          </Button>
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        {config.docsUrl && (
-          <Button variant="ghost" size="sm" asChild>
-            <a href={config.docsUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4 mr-1" />
-              Docs
-            </a>
-          </Button>
-        )}
-        <Button variant="outline" size="sm" disabled>
-          Configurar
-        </Button>
-      </div>
-    </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {config.icon}
+              Configurar {config.name}
+            </DialogTitle>
+            <DialogDescription>
+              Insira as credenciais da API para ativar a integração.
+              {config.docsUrl && (
+                <a 
+                  href={config.docsUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline ml-1"
+                >
+                  Ver documentação
+                </a>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {config.requiredSecrets.map((secret) => (
+              <div key={secret.key} className="space-y-2">
+                <Label htmlFor={secret.key}>{secret.label}</Label>
+                <div className="relative">
+                  <Input
+                    id={secret.key}
+                    type={showSecrets[secret.key] ? "text" : "password"}
+                    placeholder={secret.placeholder}
+                    value={secretValues[secret.key] || ""}
+                    onChange={(e) => setSecretValues(prev => ({ ...prev, [secret.key]: e.target.value }))}
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => toggleShowSecret(secret.key)}
+                  >
+                    {showSecrets[secret.key] ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Variável: <code className="bg-muted px-1 rounded">{secret.key}</code>
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {configured && (
+              <Button variant="destructive" onClick={handleRemove} className="sm:mr-auto">
+                Remover
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSave}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
