@@ -71,7 +71,7 @@ const TrackingPortalPage = () => {
         <div className="container mx-auto px-4 text-center">
           <Logo size="sm" />
           <p className="text-sm text-muted-foreground mt-4">
-            © {new Date().getFullYear()} BRAVENZA. Todos os direitos reservados.
+            © 2022-{new Date().getFullYear()} BRAVENZA. Todos os direitos reservados.
           </p>
         </div>
       </footer>

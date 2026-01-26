@@ -140,7 +140,7 @@ const TermsPage = () => {
             <h2 className="text-xl font-semibold text-foreground mb-4">10. Foro e Legislação</h2>
             <p className="text-muted-foreground leading-relaxed">
               Estes Termos são regidos pela legislação brasileira. Fica eleito o foro da comarca 
-              de São Paulo/SP para dirimir quaisquer controvérsias decorrentes deste instrumento.
+              de Porto Alegre/RS para dirimir quaisquer controvérsias decorrentes deste instrumento.
             </p>
           </section>
 
