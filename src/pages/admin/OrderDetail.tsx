@@ -125,6 +125,7 @@ interface Order {
   balance_paid: boolean;
   international_tracking: string | null;
   national_tracking: string | null;
+  international_carrier: string | null;
   national_carrier: string | null;
   sla_vault_due_date: string | null;
   balance_due_date: string | null;
@@ -429,6 +430,7 @@ const OrderDetail = () => {
           balance_value: editData.balance_value,
           balance_paid: editData.balance_paid,
           international_tracking: editData.international_tracking,
+          international_carrier: editData.international_carrier,
           national_tracking: editData.national_tracking,
           national_carrier: editData.national_carrier,
           internal_notes: editData.internal_notes,
@@ -1283,7 +1285,7 @@ const OrderDetail = () => {
               {isEditing ? (
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Rastreio internacional</Label>
+                    <Label>Rastreio Internacional</Label>
                     <Input
                       value={editData.international_tracking || ""}
                       onChange={(e) =>
@@ -1292,11 +1294,26 @@ const OrderDetail = () => {
                           international_tracking: e.target.value,
                         }))
                       }
+                      placeholder="Código de rastreio internacional"
                       className="bg-secondary/50"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Rastreio nacional</Label>
+                    <Label>Transportadora Internacional</Label>
+                    <Input
+                      value={editData.international_carrier || ""}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          international_carrier: e.target.value,
+                        }))
+                      }
+                      placeholder="Ex: DHL, FedEx, UPS..."
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Rastreio Nacional</Label>
                     <Input
                       value={editData.national_tracking || ""}
                       onChange={(e) =>
@@ -1305,11 +1322,12 @@ const OrderDetail = () => {
                           national_tracking: e.target.value,
                         }))
                       }
+                      placeholder="Código de rastreio nacional"
                       className="bg-secondary/50"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Transportadora</Label>
+                    <Label>Transportadora Nacional</Label>
                     <Input
                       value={editData.national_carrier || ""}
                       onChange={(e) =>
@@ -1318,6 +1336,7 @@ const OrderDetail = () => {
                           national_carrier: e.target.value,
                         }))
                       }
+                      placeholder="Ex: Correios, Jadlog, Loggi..."
                       className="bg-secondary/50"
                     />
                   </div>
@@ -1326,7 +1345,7 @@ const OrderDetail = () => {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      Rastreio internacional
+                      Rastreio Internacional
                     </p>
                     <p className="font-medium">
                       {order.international_tracking || "-"}
@@ -1334,7 +1353,15 @@ const OrderDetail = () => {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      Rastreio nacional
+                      Transportadora Internacional
+                    </p>
+                    <p className="font-medium">
+                      {order.international_carrier || "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Rastreio Nacional
                     </p>
                     <p className="font-medium">
                       {order.national_tracking || "-"}
@@ -1342,14 +1369,14 @@ const OrderDetail = () => {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      Transportadora
+                      Transportadora Nacional
                     </p>
                     <p className="font-medium">
                       {order.national_carrier || "-"}
                     </p>
                   </div>
                   {order.sla_vault_due_date && (
-                    <div>
+                    <div className="md:col-span-2">
                       <p className="text-sm text-muted-foreground">
                         Prazo VAULT 30
                       </p>

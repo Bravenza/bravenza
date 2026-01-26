@@ -256,6 +256,7 @@ export type Database = {
           created_at: string
           current_status: Database["public"]["Enums"]["order_status"]
           internal_notes: string | null
+          international_carrier: string | null
           international_tracking: string | null
           national_carrier: string | null
           national_tracking: string | null
@@ -310,6 +311,7 @@ export type Database = {
           created_at?: string
           current_status?: Database["public"]["Enums"]["order_status"]
           internal_notes?: string | null
+          international_carrier?: string | null
           international_tracking?: string | null
           national_carrier?: string | null
           national_tracking?: string | null
@@ -364,6 +366,7 @@ export type Database = {
           created_at?: string
           current_status?: Database["public"]["Enums"]["order_status"]
           internal_notes?: string | null
+          international_carrier?: string | null
           international_tracking?: string | null
           national_carrier?: string | null
           national_tracking?: string | null
