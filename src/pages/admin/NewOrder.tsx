@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { z } from "zod";
@@ -17,6 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { generateOrderId, cleanCPF, formatCPF, validateCPF } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SNEAKER_BRANDS, getModelsForBrand, getBrandLabel, getModelLabel } from "@/lib/sneaker-data";
 
 const orderSchema = z.object({
   order_type: z.enum(["VAULT", "READY"]),
@@ -43,6 +44,12 @@ const NewOrder = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
+  // Estados para controlar seletores
+  const [selectedBrandKey, setSelectedBrandKey] = useState("");
+  const [selectedModelKey, setSelectedModelKey] = useState("");
+  const [showCustomBrand, setShowCustomBrand] = useState(false);
+  const [showCustomModel, setShowCustomModel] = useState(false);
+
   const [formData, setFormData] = useState({
     order_type: "VAULT" as "VAULT" | "READY",
     client_name: "",
@@ -62,6 +69,48 @@ const NewOrder = () => {
     balance_value: "",
     internal_notes: "",
   });
+
+  // Atualiza modelos disponíveis quando a marca muda
+  const availableModels = getModelsForBrand(selectedBrandKey);
+
+  // Handler para mudança de marca
+  const handleBrandChange = (value: string) => {
+    setSelectedBrandKey(value);
+    setSelectedModelKey("");
+    setShowCustomModel(false);
+    
+    if (value === "other") {
+      setShowCustomBrand(true);
+      setFormData((prev) => ({ ...prev, product_brand: "", product_model: "" }));
+    } else {
+      setShowCustomBrand(false);
+      const brandLabel = getBrandLabel(value);
+      setFormData((prev) => ({ ...prev, product_brand: brandLabel, product_model: "" }));
+    }
+  };
+
+  // Handler para mudança de modelo
+  const handleModelChange = (value: string) => {
+    setSelectedModelKey(value);
+    
+    if (value === "other") {
+      setShowCustomModel(true);
+      setFormData((prev) => ({ ...prev, product_model: "" }));
+    } else {
+      setShowCustomModel(false);
+      const modelLabel = getModelLabel(selectedBrandKey, value);
+      setFormData((prev) => ({ ...prev, product_model: modelLabel }));
+    }
+  };
+
+  // Gerar nome completo automaticamente
+  useEffect(() => {
+    if (formData.product_brand && formData.product_model) {
+      const color = formData.product_color ? ` ${formData.product_color}` : "";
+      const generatedName = `${formData.product_brand} ${formData.product_model}${color}`;
+      setFormData((prev) => ({ ...prev, product_name: generatedName }));
+    }
+  }, [formData.product_brand, formData.product_model, formData.product_color]);
 
   const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -310,38 +359,71 @@ const NewOrder = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-3 gap-4">
+                {/* Marca Selector */}
                 <div className="space-y-2">
-                  <Label htmlFor="product_brand">Marca *</Label>
-                  <Input
-                    id="product_brand"
-                    value={formData.product_brand}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        product_brand: e.target.value,
-                      }))
-                    }
-                    placeholder="Nike, Adidas, Jordan..."
-                    className="bg-secondary/50"
-                    required
-                  />
+                  <Label>Marca *</Label>
+                  <Select value={selectedBrandKey} onValueChange={handleBrandChange}>
+                    <SelectTrigger className="bg-secondary/50">
+                      <SelectValue placeholder="Selecione a marca" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border border-border z-50">
+                      {SNEAKER_BRANDS.map((brand) => (
+                        <SelectItem key={brand.value} value={brand.value}>
+                          {brand.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {showCustomBrand && (
+                    <Input
+                      value={formData.product_brand}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          product_brand: e.target.value,
+                        }))
+                      }
+                      placeholder="Digite a marca..."
+                      className="bg-secondary/50 mt-2"
+                    />
+                  )}
                 </div>
+
+                {/* Modelo Selector */}
                 <div className="space-y-2">
-                  <Label htmlFor="product_model">Modelo *</Label>
-                  <Input
-                    id="product_model"
-                    value={formData.product_model}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        product_model: e.target.value,
-                      }))
-                    }
-                    placeholder="Air Force 1, Yeezy 350..."
-                    className="bg-secondary/50"
-                    required
-                  />
+                  <Label>Modelo *</Label>
+                  <Select 
+                    value={selectedModelKey} 
+                    onValueChange={handleModelChange}
+                    disabled={!selectedBrandKey}
+                  >
+                    <SelectTrigger className="bg-secondary/50">
+                      <SelectValue placeholder={selectedBrandKey ? "Selecione o modelo" : "Selecione a marca primeiro"} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border border-border z-50">
+                      {availableModels.map((model) => (
+                        <SelectItem key={model.value} value={model.value}>
+                          {model.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {showCustomModel && (
+                    <Input
+                      value={formData.product_model}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          product_model: e.target.value,
+                        }))
+                      }
+                      placeholder="Digite o modelo..."
+                      className="bg-secondary/50 mt-2"
+                    />
+                  )}
                 </div>
+
+                {/* Nome completo (auto-gerado) */}
                 <div className="space-y-2">
                   <Label htmlFor="product_name">Nome completo *</Label>
                   <Input
@@ -357,8 +439,12 @@ const NewOrder = () => {
                     className="bg-secondary/50"
                     required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Gerado automaticamente a partir da marca, modelo e cor
+                  </p>
                 </div>
               </div>
+
               <div className="grid md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="product_size">Tamanho *</Label>
