@@ -20,7 +20,7 @@ const testimonials = [
     name: "Ricardo P.",
     location: "Belo Horizonte, MG",
     rating: 5,
-    text: "A inspeção que eles fazem antes de enviar é sensacional. Recebi fotos detalhadas do meu tênis antes de sair da China. Confiança total!",
+    text: "A inspeção que eles fazem antes de enviar é sensacional. Recebi fotos detalhadas do meu tênis antes de sair da Europa. Confiança total!",
     product: "Yeezy Boost 350 V2",
   },
 ];
