@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import {
   ClipboardList, Search, Eye, CheckCircle2, XCircle, ArrowRight, 
   User, MapPin, Package, ExternalLink, Loader2, Image, Clock
 } from "lucide-react";
+import { generateOrderId, cleanCPF } from "@/lib/constants";
 
 interface OrderRequest {
   id: string;
@@ -50,6 +52,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
 };
 
 export default function OrderRequestsPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRequest, setSelectedRequest] = useState<OrderRequest | null>(null);
@@ -91,6 +94,97 @@ export default function OrderRequestsPage() {
     },
     onError: (error: any) => {
       toast.error(`Erro ao atualizar: ${error.message}`);
+    },
+  });
+
+  // Convert to order mutation
+  const convertToOrderMutation = useMutation({
+    mutationFn: async (request: OrderRequest) => {
+      const orderId = generateOrderId();
+      const now = new Date();
+      const slaDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+      // Build full address
+      const addressParts = [
+        request.address_street,
+        request.address_number ? `nº ${request.address_number}` : "",
+        request.address_complement,
+        request.address_neighborhood,
+        `${request.address_city} - ${request.address_state}`,
+        `CEP: ${request.address_cep}`,
+      ].filter(Boolean).join(", ");
+
+      // Build product name
+      const productName = [
+        request.product_brand,
+        request.product_model,
+        request.product_color,
+      ].filter(Boolean).join(" ") || "Produto a definir";
+
+      // Create order
+      const { error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          order_id: orderId,
+          order_type: "VAULT" as const,
+          current_status: "ORDER_CONFIRMED" as const,
+          client_name: request.client_name,
+          client_cpf: cleanCPF(request.client_cpf),
+          client_email: request.client_email,
+          client_phone: request.client_phone,
+          client_address: addressParts,
+          product_brand: request.product_brand || null,
+          product_model: request.product_model || null,
+          product_name: productName,
+          product_size: request.shoe_size,
+          product_color: request.product_color || null,
+          product_link: request.product_link || null,
+          product_price: 0, // Admin will set price later
+          sinal_value: 0,
+          balance_value: 0,
+          budget_status: "PENDING" as const,
+          sla_vault_due_date: slaDate.toISOString().split("T")[0],
+          internal_notes: request.additional_notes || null,
+        });
+
+      if (orderError) throw orderError;
+
+      // Add initial history entry
+      const { error: historyError } = await supabase
+        .from("order_history")
+        .insert({
+          order_id: orderId,
+          status: "ORDER_CONFIRMED" as const,
+          notes: `Pedido criado a partir da solicitação de ${request.client_name}`,
+        });
+
+      if (historyError) throw historyError;
+
+      // Update request status
+      const { error: updateError } = await supabase
+        .from("order_requests")
+        .update({
+          status: "converted",
+          converted_order_id: orderId,
+          reviewed_at: new Date().toISOString(),
+          admin_notes: adminNotes || null,
+        })
+        .eq("id", request.id);
+
+      if (updateError) throw updateError;
+
+      return orderId;
+    },
+    onSuccess: (orderId) => {
+      queryClient.invalidateQueries({ queryKey: ["order-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      toast.success("Pedido criado com sucesso!");
+      setIsDetailOpen(false);
+      // Navigate to the new order to set the price
+      navigate(`/admin/pedidos/${orderId}`);
+    },
+    onError: (error: any) => {
+      toast.error(`Erro ao criar pedido: ${error.message}`);
     },
   });
 
@@ -350,13 +444,25 @@ export default function OrderRequestsPage() {
                 )}
                 <Button 
                   onClick={() => {
-                    // TODO: Navigate to create order page with pre-filled data
-                    toast.info("Funcionalidade de conversão será implementada em breve!");
+                    if (selectedRequest) {
+                      convertToOrderMutation.mutate(selectedRequest);
+                    }
                   }}
-                  disabled={selectedRequest.status === "converted" || selectedRequest.status === "rejected"}
+                  disabled={
+                    selectedRequest.status === "converted" || 
+                    selectedRequest.status === "rejected" ||
+                    convertToOrderMutation.isPending
+                  }
                 >
-                  <ArrowRight className="h-4 w-4 mr-2" />
-                  Criar Pedido
+                  {convertToOrderMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <ArrowRight className="h-4 w-4 mr-2" />
+                  )}
+                  {selectedRequest.status === "converted" 
+                    ? `Pedido: ${selectedRequest.converted_order_id}` 
+                    : "Criar Pedido"
+                  }
                 </Button>
               </DialogFooter>
             </>
