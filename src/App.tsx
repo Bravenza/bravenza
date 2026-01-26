@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,35 +6,60 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ClientAuthProvider } from "@/hooks/useClientAuth";
+import { Skeleton } from "@/components/ui/skeleton";
 
+// Eagerly loaded pages (critical path)
 import Index from "./pages/Index";
-import TrackingPortalPage from "./pages/TrackingPortalPage";
-import TrackingPage from "./pages/TrackingPage";
-import BudgetApprovalPage from "./pages/BudgetApprovalPage";
-import PaymentPage from "./pages/PaymentPage";
-import OrderRequestPage from "./pages/OrderRequestPage";
-import TermsPage from "./pages/TermsPage";
-import PrivacyPage from "./pages/PrivacyPage";
 import NotFound from "./pages/NotFound";
 
-// Client pages
-import ClientLogin from "./pages/client/ClientLogin";
-import ClientDashboard from "./pages/client/ClientDashboard";
+// Lazy loaded pages - Public
+const TrackingPortalPage = lazy(() => import("./pages/TrackingPortalPage"));
+const TrackingPage = lazy(() => import("./pages/TrackingPage"));
+const BudgetApprovalPage = lazy(() => import("./pages/BudgetApprovalPage"));
+const PaymentPage = lazy(() => import("./pages/PaymentPage"));
+const OrderRequestPage = lazy(() => import("./pages/OrderRequestPage"));
+const TermsPage = lazy(() => import("./pages/TermsPage"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 
-// Admin pages
-import Login from "./pages/admin/Login";
-import AdminLayout from "./pages/admin/AdminLayout";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import OrdersList from "./pages/admin/OrdersList";
-import NewOrder from "./pages/admin/NewOrder";
-import OrderDetail from "./pages/admin/OrderDetail";
-import OrderRequestsPage from "./pages/admin/OrderRequestsPage";
-import UsersPage from "./pages/admin/UsersPage";
-import SettingsPage from "./pages/admin/SettingsPage";
-import EmailFlowPage from "./pages/admin/EmailFlowPage";
-import WhatsAppFlowPage from "./pages/admin/WhatsAppFlowPage";
+// Lazy loaded pages - Client portal
+const ClientLogin = lazy(() => import("./pages/client/ClientLogin"));
+const ClientDashboard = lazy(() => import("./pages/client/ClientDashboard"));
 
-const queryClient = new QueryClient();
+// Lazy loaded pages - Admin (largest bundle, load on demand)
+const Login = lazy(() => import("./pages/admin/Login"));
+const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const OrdersList = lazy(() => import("./pages/admin/OrdersList"));
+const NewOrder = lazy(() => import("./pages/admin/NewOrder"));
+const OrderDetail = lazy(() => import("./pages/admin/OrderDetail"));
+const OrderRequestsPage = lazy(() => import("./pages/admin/OrderRequestsPage"));
+const UsersPage = lazy(() => import("./pages/admin/UsersPage"));
+const SettingsPage = lazy(() => import("./pages/admin/SettingsPage"));
+const EmailFlowPage = lazy(() => import("./pages/admin/EmailFlowPage"));
+const WhatsAppFlowPage = lazy(() => import("./pages/admin/WhatsAppFlowPage"));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="space-y-4 w-full max-w-md px-4">
+      <Skeleton className="h-8 w-32 mx-auto" />
+      <Skeleton className="h-4 w-48 mx-auto" />
+      <Skeleton className="h-64 w-full rounded-xl" />
+    </div>
+  </div>
+);
+
+// Optimized QueryClient with caching
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes (formerly cacheTime)
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -43,38 +69,40 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/solicitar" element={<OrderRequestPage />} />
-              <Route path="/rastreio" element={<TrackingPortalPage />} />
-              <Route path="/rastreio/:orderId" element={<TrackingPage />} />
-              <Route path="/orcamento/:token" element={<BudgetApprovalPage />} />
-              <Route path="/pagamento/:token" element={<PaymentPage />} />
-              <Route path="/termos" element={<TermsPage />} />
-              <Route path="/politicas" element={<PrivacyPage />} />
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/solicitar" element={<OrderRequestPage />} />
+                <Route path="/rastreio" element={<TrackingPortalPage />} />
+                <Route path="/rastreio/:orderId" element={<TrackingPage />} />
+                <Route path="/orcamento/:token" element={<BudgetApprovalPage />} />
+                <Route path="/pagamento/:token" element={<PaymentPage />} />
+                <Route path="/termos" element={<TermsPage />} />
+                <Route path="/politicas" element={<PrivacyPage />} />
 
-              {/* Client portal routes */}
-              <Route path="/cliente/login" element={<ClientLogin />} />
-              <Route path="/minha-conta" element={<ClientDashboard />} />
+                {/* Client portal routes */}
+                <Route path="/cliente/login" element={<ClientLogin />} />
+                <Route path="/minha-conta" element={<ClientDashboard />} />
 
-              {/* Admin routes */}
-              <Route path="/admin/login" element={<Login />} />
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<AdminDashboard />} />
-                <Route path="pedidos" element={<OrdersList />} />
-                <Route path="pedidos/novo" element={<NewOrder />} />
-                <Route path="pedidos/:orderId" element={<OrderDetail />} />
-                <Route path="solicitacoes" element={<OrderRequestsPage />} />
-                <Route path="emails" element={<EmailFlowPage />} />
-                <Route path="whatsapp" element={<WhatsAppFlowPage />} />
-                <Route path="usuarios" element={<UsersPage />} />
-                <Route path="configuracoes" element={<SettingsPage />} />
-              </Route>
+                {/* Admin routes */}
+                <Route path="/admin/login" element={<Login />} />
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="pedidos" element={<OrdersList />} />
+                  <Route path="pedidos/novo" element={<NewOrder />} />
+                  <Route path="pedidos/:orderId" element={<OrderDetail />} />
+                  <Route path="solicitacoes" element={<OrderRequestsPage />} />
+                  <Route path="emails" element={<EmailFlowPage />} />
+                  <Route path="whatsapp" element={<WhatsAppFlowPage />} />
+                  <Route path="usuarios" element={<UsersPage />} />
+                  <Route path="configuracoes" element={<SettingsPage />} />
+                </Route>
 
-              {/* 404 */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+                {/* 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
           </BrowserRouter>
         </ClientAuthProvider>
       </AuthProvider>

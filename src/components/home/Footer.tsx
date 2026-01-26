@@ -1,12 +1,13 @@
+import { forwardRef, memo } from "react";
 import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Instagram, MessageCircle } from "lucide-react";
 
-export const Footer = () => {
+const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-border bg-card/50">
+    <footer ref={ref} className="border-t border-border bg-card/50">
       <div className="container mx-auto px-4 py-12">
         <div className="grid md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -84,4 +85,9 @@ export const Footer = () => {
       </div>
     </footer>
   );
-};
+});
+
+FooterComponent.displayName = "Footer";
+
+// Memoize to prevent unnecessary re-renders
+export const Footer = memo(FooterComponent);
