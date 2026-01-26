@@ -64,6 +64,8 @@ import {
   OrderType,
 } from "@/lib/constants";
 import { BudgetActions } from "@/components/admin/BudgetActions";
+import { VaultPolicyCard } from "@/components/admin/VaultPolicyCard";
+import { InspectionPhotosUpload } from "@/components/admin/InspectionPhotosUpload";
 import { sendStatusChangeEmail, sendPaymentConfirmationEmail } from "@/lib/email-notifications";
 import { SNEAKER_BRANDS, getModelsForBrand, getBrandLabel, getModelLabel, findBrandKey, findModelKey } from "@/lib/sneaker-data";
 
@@ -130,6 +132,7 @@ interface Order {
   sla_vault_due_date: string | null;
   balance_due_date: string | null;
   internal_notes: string | null;
+  inspection_photos: string[] | null;
   created_at: string;
   updated_at: string;
   budget_status: string | null;
@@ -434,6 +437,7 @@ const OrderDetail = () => {
           national_tracking: editData.national_tracking,
           national_carrier: editData.national_carrier,
           internal_notes: editData.internal_notes,
+          inspection_photos: editData.inspection_photos,
         })
         .eq("order_id", order.order_id);
 
@@ -1420,6 +1424,25 @@ const OrderDetail = () => {
 
         {/* Sidebar - Budget and History */}
         <div className="space-y-6">
+          {/* VAULT Policy Card */}
+          {order.order_type === "VAULT" && <VaultPolicyCard />}
+
+          {/* Inspection Photos - Show for PRODUCT_INSPECTED status or later */}
+          {(order.current_status === "PRODUCT_INSPECTED" ||
+            order.current_status === "BALANCE_PENDING" ||
+            order.current_status === "FULLY_PAID" ||
+            order.current_status === "SHIPPED_TO_CLIENT" ||
+            order.current_status === "DELIVERED") && (
+            <InspectionPhotosUpload
+              orderId={order.order_id}
+              existingPhotos={order.inspection_photos || []}
+              onPhotosChange={(photos) =>
+                setEditData((prev) => ({ ...prev, inspection_photos: photos }))
+              }
+              isEditing={isEditing}
+            />
+          )}
+
           {/* Budget Actions */}
           <BudgetActions
             orderId={order.order_id}

@@ -255,6 +255,7 @@ export type Database = {
           client_phone: string | null
           created_at: string
           current_status: Database["public"]["Enums"]["order_status"]
+          inspection_photos: string[] | null
           internal_notes: string | null
           international_carrier: string | null
           international_tracking: string | null
@@ -310,6 +311,7 @@ export type Database = {
           client_phone?: string | null
           created_at?: string
           current_status?: Database["public"]["Enums"]["order_status"]
+          inspection_photos?: string[] | null
           internal_notes?: string | null
           international_carrier?: string | null
           international_tracking?: string | null
@@ -365,6 +367,7 @@ export type Database = {
           client_phone?: string | null
           created_at?: string
           current_status?: Database["public"]["Enums"]["order_status"]
+          inspection_photos?: string[] | null
           internal_notes?: string | null
           international_carrier?: string | null
           international_tracking?: string | null
