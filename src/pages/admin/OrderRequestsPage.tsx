@@ -59,13 +59,14 @@ export default function OrderRequestsPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [adminNotes, setAdminNotes] = useState("");
 
-  // Fetch requests
+  // Fetch requests (excluding converted ones)
   const { data: requests, isLoading } = useQuery({
     queryKey: ["order-requests"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("order_requests")
         .select("*")
+        .neq("status", "converted")
         .order("created_at", { ascending: false });
       
       if (error) throw error;
