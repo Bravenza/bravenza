@@ -205,6 +205,22 @@ export default function OrderRequestPage() {
 
       if (error) throw error;
 
+      // Create notification for admins
+      try {
+        await supabase.functions.invoke("create-notification", {
+          body: {
+            target: "admin",
+            type: "new_order_request",
+            title: "Nova Solicitação de Pedido",
+            message: `${formData.client_name} solicitou um orçamento para ${formData.product_brand || "tênis"} ${formData.product_model || ""} tamanho ${formData.shoe_size}`,
+            reference_type: "order_request",
+          },
+        });
+      } catch (notifError) {
+        console.error("Error creating notification:", notifError);
+        // Don't block the success flow
+      }
+
       setIsSuccess(true);
       toast.success("Solicitação enviada com sucesso!");
 

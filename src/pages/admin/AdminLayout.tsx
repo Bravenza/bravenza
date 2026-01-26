@@ -16,6 +16,7 @@ import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
+import { NotificationBell } from "@/components/admin/NotificationBell";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
@@ -132,16 +133,20 @@ const AdminLayout = () => {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile header */}
-        <header className="lg:hidden border-b border-border bg-card p-4 flex items-center justify-between">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-          <Logo size="sm" />
-          <div className="w-6" />
+        {/* Header with notifications */}
+        <header className="border-b border-border bg-card p-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden text-muted-foreground hover:text-foreground"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+            <Logo size="sm" className="lg:hidden" />
+          </div>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+          </div>
         </header>
 
         {/* Content */}
