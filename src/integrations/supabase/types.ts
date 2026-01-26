@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_auth_tokens: {
+        Row: {
+          cpf: string
+          created_at: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          cpf: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          cpf?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
+      client_sessions: {
+        Row: {
+          cpf: string
+          created_at: string
+          expires_at: string
+          id: string
+          session_token: string
+        }
+        Insert: {
+          cpf: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          session_token: string
+        }
+        Update: {
+          cpf?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          session_token?: string
+        }
+        Relationships: []
+      }
       order_history: {
         Row: {
           created_at: string
@@ -265,6 +316,26 @@ export type Database = {
     }
     Functions: {
       approve_budget: { Args: { p_token: string }; Returns: boolean }
+      get_client_orders: {
+        Args: { p_cpf: string }
+        Returns: {
+          balance_paid: boolean
+          balance_value: number
+          budget_status: Database["public"]["Enums"]["budget_status"]
+          created_at: string
+          current_status: Database["public"]["Enums"]["order_status"]
+          order_id: string
+          order_type: Database["public"]["Enums"]["order_type"]
+          product_brand: string
+          product_model: string
+          product_name: string
+          product_price: number
+          product_size: string
+          sinal_paid: boolean
+          sinal_value: number
+          updated_at: string
+        }[]
+      }
       get_order_by_token: {
         Args: { p_token: string }
         Returns: {
