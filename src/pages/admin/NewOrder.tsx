@@ -15,17 +15,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { generateOrderId, cleanCPF, formatCPF, validateCPF } from "@/lib/constants";
+import { generateOrderId, cleanCPF, formatCPF, validateCPF, cleanPhone, formatPhone, validatePhone, validateEmail } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SNEAKER_BRANDS, getModelsForBrand, getBrandLabel, getModelLabel } from "@/lib/sneaker-data";
 
 const orderSchema = z.object({
   order_type: z.enum(["VAULT", "READY"]),
-  client_name: z.string().min(2, "Nome deve ter no mínimo 2 caracteres"),
+  client_name: z.string().min(5, "Nome completo deve ter no mínimo 5 caracteres"),
   client_cpf: z.string().refine((val) => validateCPF(val), "CPF inválido"),
-  client_email: z.string().email("Email inválido").optional().or(z.literal("")),
-  client_phone: z.string().optional(),
-  client_address: z.string().optional(),
+  client_email: z.string().min(1, "Email é obrigatório").refine((val) => validateEmail(val), "Email inválido"),
+  client_phone: z.string().refine((val) => validatePhone(val), "Telefone inválido (mínimo 10 dígitos com DDD)"),
+  client_cep: z.string().min(8, "CEP é obrigatório"),
+  client_street: z.string().min(3, "Rua é obrigatória"),
+  client_number: z.string().min(1, "Número é obrigatório"),
+  client_neighborhood: z.string().min(2, "Bairro é obrigatório"),
+  client_city: z.string().min(2, "Cidade é obrigatória"),
+  client_state: z.string().length(2, "Estado deve ter 2 caracteres (UF)"),
+  client_complement: z.string().optional(),
   product_brand: z.string().min(1, "Marca obrigatória"),
   product_model: z.string().min(1, "Modelo obrigatório"),
   product_name: z.string().min(2, "Nome do produto obrigatório"),
@@ -188,10 +194,20 @@ const NewOrder = () => {
     }
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const cleaned = cleanPhone(value);
+    if (cleaned.length <= 11) {
+      setFormData((prev) => ({ ...prev, client_phone: formatPhone(cleaned) }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const cleanedCPF = cleanCPF(formData.client_cpf);
+    const cleanedPhone = cleanPhone(formData.client_phone);
+    const cleanedCep = formData.client_cep.replace(/\D/g, "");
 
     const productPrice = formData.product_price ? parseFloat(formData.product_price) : 0;
 
@@ -199,6 +215,8 @@ const NewOrder = () => {
       orderSchema.parse({
         ...formData,
         client_cpf: cleanedCPF,
+        client_phone: cleanedPhone,
+        client_cep: cleanedCep,
         product_price: productPrice,
         sinal_value: formData.sinal_value
           ? parseFloat(formData.sinal_value)
@@ -387,7 +405,7 @@ const NewOrder = () => {
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="client_email">Email</Label>
+                  <Label htmlFor="client_email">Email *</Label>
                   <Input
                     id="client_email"
                     type="email"
@@ -398,33 +416,31 @@ const NewOrder = () => {
                         client_email: e.target.value,
                       }))
                     }
+                    placeholder="email@exemplo.com"
                     className="bg-secondary/50"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="client_phone">Telefone</Label>
+                  <Label htmlFor="client_phone">Telefone *</Label>
                   <Input
                     id="client_phone"
                     value={formData.client_phone}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        client_phone: e.target.value,
-                      }))
-                    }
+                    onChange={handlePhoneChange}
                     placeholder="(00) 00000-0000"
                     className="bg-secondary/50"
+                    required
                   />
                 </div>
               </div>
 
               {/* Endereço */}
               <div className="pt-4 border-t border-border">
-                <h4 className="text-sm font-medium mb-3 text-muted-foreground">Endereço de Entrega</h4>
+                <h4 className="text-sm font-medium mb-3 text-muted-foreground">Endereço de Entrega *</h4>
                 
                 <div className="grid md:grid-cols-4 gap-4 mb-4">
                   <div className="space-y-2">
-                    <Label htmlFor="client_cep">CEP</Label>
+                    <Label htmlFor="client_cep">CEP *</Label>
                     <div className="relative">
                       <Input
                         id="client_cep"
@@ -433,6 +449,7 @@ const NewOrder = () => {
                         placeholder="00000-000"
                         className="bg-secondary/50"
                         maxLength={9}
+                        required
                       />
                       {isLoadingCep && (
                         <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
@@ -440,7 +457,7 @@ const NewOrder = () => {
                     </div>
                   </div>
                   <div className="space-y-2 md:col-span-3">
-                    <Label htmlFor="client_street">Rua / Logradouro</Label>
+                    <Label htmlFor="client_street">Rua / Logradouro *</Label>
                     <Input
                       id="client_street"
                       value={formData.client_street}
@@ -452,13 +469,14 @@ const NewOrder = () => {
                       }
                       placeholder="Rua, Avenida, etc."
                       className="bg-secondary/50"
+                      required
                     />
                   </div>
                 </div>
 
                 <div className="grid md:grid-cols-4 gap-4 mb-4">
                   <div className="space-y-2">
-                    <Label htmlFor="client_number">Número</Label>
+                    <Label htmlFor="client_number">Número *</Label>
                     <Input
                       id="client_number"
                       value={formData.client_number}
@@ -470,6 +488,7 @@ const NewOrder = () => {
                       }
                       placeholder="123"
                       className="bg-secondary/50"
+                      required
                     />
                   </div>
                   <div className="space-y-2">
@@ -488,7 +507,7 @@ const NewOrder = () => {
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="client_neighborhood">Bairro</Label>
+                    <Label htmlFor="client_neighborhood">Bairro *</Label>
                     <Input
                       id="client_neighborhood"
                       value={formData.client_neighborhood}
@@ -500,13 +519,14 @@ const NewOrder = () => {
                       }
                       placeholder="Bairro"
                       className="bg-secondary/50"
+                      required
                     />
                   </div>
                 </div>
 
                 <div className="grid md:grid-cols-4 gap-4">
                   <div className="space-y-2 md:col-span-3">
-                    <Label htmlFor="client_city">Cidade</Label>
+                    <Label htmlFor="client_city">Cidade *</Label>
                     <Input
                       id="client_city"
                       value={formData.client_city}
@@ -518,10 +538,11 @@ const NewOrder = () => {
                       }
                       placeholder="Cidade"
                       className="bg-secondary/50"
+                      required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="client_state">Estado</Label>
+                    <Label htmlFor="client_state">Estado *</Label>
                     <Input
                       id="client_state"
                       value={formData.client_state}
@@ -534,6 +555,7 @@ const NewOrder = () => {
                       placeholder="UF"
                       maxLength={2}
                       className="bg-secondary/50"
+                      required
                     />
                   </div>
                 </div>
