@@ -1,0 +1,113 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const body = await req.json();
+    console.log("Mercado Pago webhook received:", JSON.stringify(body));
+
+    // Mercado Pago sends notification with action and data.id
+    if (body.action === "payment.updated" || body.action === "payment.created") {
+      const paymentId = body.data?.id;
+
+      if (!paymentId) {
+        console.log("No payment ID in webhook");
+        return new Response("OK", { status: 200 });
+      }
+
+      // Fetch payment details from Mercado Pago
+      const mercadoPagoToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");
+      if (!mercadoPagoToken) {
+        throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurado");
+      }
+
+      const mpResponse = await fetch(
+        `https://api.mercadopago.com/v1/payments/${paymentId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${mercadoPagoToken}`,
+          },
+        }
+      );
+
+      const payment = await mpResponse.json();
+      console.log("Payment details:", JSON.stringify(payment));
+
+      if (payment.status === "approved") {
+        // Parse external_reference to get order_id and payment_type
+        const externalRef = payment.external_reference || "";
+        const parts = externalRef.split("-");
+        const paymentType = parts.pop(); // 'sinal' or 'balance'
+        const orderId = parts.join("-"); // order_id might contain dashes
+
+        if (!orderId || !paymentType) {
+          console.error("Invalid external_reference:", externalRef);
+          return new Response("OK", { status: 200 });
+        }
+
+        console.log(`Payment approved for order ${orderId}, type: ${paymentType}`);
+
+        // Update order payment status
+        const updateData: Record<string, any> = {
+          updated_at: new Date().toISOString(),
+        };
+
+        if (paymentType === "sinal") {
+          updateData.sinal_paid = true;
+          updateData.sinal_paid_at = new Date().toISOString();
+          updateData.sinal_payment_method = "PIX";
+          updateData.sinal_pix_transaction_id = paymentId.toString();
+        } else if (paymentType === "balance") {
+          updateData.balance_paid = true;
+          updateData.balance_paid_at = new Date().toISOString();
+          updateData.balance_payment_method = "PIX";
+          updateData.balance_pix_transaction_id = paymentId.toString();
+        }
+
+        const { error: updateError } = await supabase
+          .from("orders")
+          .update(updateData)
+          .eq("order_id", orderId);
+
+        if (updateError) {
+          console.error("Error updating order:", updateError);
+          throw updateError;
+        }
+
+        // Add to order history
+        const historyNote =
+          paymentType === "sinal"
+            ? "Pagamento do sinal confirmado via Pix"
+            : "Pagamento do saldo confirmado via Pix";
+
+        await supabase.from("order_history").insert({
+          order_id: orderId,
+          status: paymentType === "sinal" ? "ORDER_CONFIRMED" : "BALANCE_DUE",
+          notes: historyNote,
+        });
+
+        console.log(`Order ${orderId} updated successfully`);
+      }
+    }
+
+    return new Response("OK", { status: 200 });
+  } catch (error: any) {
+    console.error("Webhook error:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+    });
+  }
+});

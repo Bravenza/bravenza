@@ -60,6 +60,7 @@ import {
   formatCPF,
   OrderType,
 } from "@/lib/constants";
+import { BudgetActions } from "@/components/admin/BudgetActions";
 
 interface Order {
   order_id: string;
@@ -91,6 +92,12 @@ interface Order {
   internal_notes: string | null;
   created_at: string;
   updated_at: string;
+  budget_status: string | null;
+  budget_sent_at: string | null;
+  budget_approved_at: string | null;
+  budget_rejected_at: string | null;
+  budget_expires_at: string | null;
+  budget_approval_token: string | null;
 }
 
 interface HistoryItem {
@@ -955,8 +962,29 @@ const OrderDetail = () => {
           </Card>
         </div>
 
-        {/* Sidebar - History */}
+        {/* Sidebar - Budget and History */}
         <div className="space-y-6">
+          {/* Budget Actions */}
+          <BudgetActions
+            orderId={order.order_id}
+            orderType={order.order_type}
+            budgetStatus={order.budget_status}
+            budgetSentAt={order.budget_sent_at}
+            budgetApprovedAt={order.budget_approved_at}
+            budgetRejectedAt={order.budget_rejected_at}
+            budgetExpiresAt={order.budget_expires_at}
+            budgetApprovalToken={order.budget_approval_token}
+            productPrice={order.product_price}
+            sinalValue={order.sinal_value}
+            balanceValue={order.balance_value}
+            clientEmail={order.client_email}
+            clientName={order.client_name}
+            onUpdate={() => {
+              // Refetch order data
+              window.location.reload();
+            }}
+          />
+
           <Card className="card-premium">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

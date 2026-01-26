@@ -1,1 +1,16 @@
 project_id = "snfqxejtmauyspyhqvop"
+
+[functions.generate-pix]
+verify_jwt = false
+
+[functions.mercadopago-webhook]
+verify_jwt = false
+
+[functions.create-stripe-checkout]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.send-budget-email]
+verify_jwt = false
