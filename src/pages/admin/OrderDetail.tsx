@@ -14,6 +14,7 @@ import {
   Trash2,
   CheckCircle2,
   X,
+  Mail,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,6 +62,7 @@ import {
   OrderType,
 } from "@/lib/constants";
 import { BudgetActions } from "@/components/admin/BudgetActions";
+import { sendStatusChangeEmail, sendPaymentConfirmationEmail } from "@/lib/email-notifications";
 
 interface Order {
   order_id: string;
@@ -249,6 +251,20 @@ const OrderDetail = () => {
 
       if (historyError) throw historyError;
 
+      // Send automatic email notification for status change
+      const emailResult = await sendStatusChangeEmail(newStatus, {
+        order_id: order.order_id,
+        client_name: order.client_name,
+        client_email: order.client_email,
+        product_name: order.product_name,
+        product_price: order.product_price,
+        sinal_value: order.sinal_value,
+        balance_value: order.balance_value,
+        international_tracking: order.international_tracking,
+        national_tracking: order.national_tracking,
+        national_carrier: order.national_carrier,
+      });
+
       setOrder({ ...order, ...updates });
       setHistory([
         ...history,
@@ -263,10 +279,23 @@ const OrderDetail = () => {
       setNewStatus("");
       setStatusNotes("");
 
-      toast({
-        title: "Status atualizado!",
-        description: `Pedido atualizado para ${ORDER_STATUS_LABELS[newStatus]}.`,
-      });
+      // Show toast with email status
+      if (emailResult.success && order.client_email) {
+        toast({
+          title: "Status atualizado!",
+          description: (
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              <span>Pedido atualizado e cliente notificado por email.</span>
+            </div>
+          ),
+        });
+      } else {
+        toast({
+          title: "Status atualizado!",
+          description: `Pedido atualizado para ${ORDER_STATUS_LABELS[newStatus]}.`,
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Erro",
