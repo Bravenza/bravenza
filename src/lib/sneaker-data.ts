@@ -203,3 +203,24 @@ export function getModelLabel(brandValue: string, modelValue: string): string {
   const model = models.find((m) => m.value === modelValue);
   return model?.label || modelValue;
 }
+
+// Encontrar a key da marca a partir do label
+export function findBrandKey(brandLabel: string | null | undefined): string {
+  if (!brandLabel) return "";
+  const normalizedLabel = brandLabel.toLowerCase().trim();
+  const brand = SNEAKER_BRANDS.find(
+    (b) => b.label.toLowerCase() === normalizedLabel || b.value === normalizedLabel
+  );
+  return brand?.value || "other";
+}
+
+// Encontrar a key do modelo a partir do label e marca
+export function findModelKey(brandKey: string, modelLabel: string | null | undefined): string {
+  if (!modelLabel || !brandKey) return "";
+  const models = getModelsForBrand(brandKey);
+  const normalizedLabel = modelLabel.toLowerCase().trim();
+  const model = models.find(
+    (m) => m.label.toLowerCase() === normalizedLabel || m.value === normalizedLabel
+  );
+  return model?.value || "other";
+}

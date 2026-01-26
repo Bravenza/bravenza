@@ -59,10 +59,17 @@ import {
   formatDateTime,
   formatCurrency,
   formatCPF,
+  formatPhone,
+  cleanPhone,
   OrderType,
 } from "@/lib/constants";
 import { BudgetActions } from "@/components/admin/BudgetActions";
 import { sendStatusChangeEmail, sendPaymentConfirmationEmail } from "@/lib/email-notifications";
+import { SNEAKER_BRANDS, getModelsForBrand, getBrandLabel, getModelLabel, findBrandKey, findModelKey } from "@/lib/sneaker-data";
+
+const SHOE_SIZES = [
+  "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"
+];
 
 interface Order {
   order_id: string;
@@ -125,6 +132,75 @@ const OrderDetail = () => {
   const [statusNotes, setStatusNotes] = useState("");
 
   const [editData, setEditData] = useState<Partial<Order>>({});
+  
+  // Estados para seletores de marca/modelo
+  const [selectedBrandKey, setSelectedBrandKey] = useState("");
+  const [selectedModelKey, setSelectedModelKey] = useState("");
+  const [showCustomBrand, setShowCustomBrand] = useState(false);
+  const [showCustomModel, setShowCustomModel] = useState(false);
+
+  // Modelos disponíveis baseado na marca selecionada
+  const availableModels = getModelsForBrand(selectedBrandKey);
+
+  // Inicializar seletores quando entrar em modo de edição
+  useEffect(() => {
+    if (isEditing && order) {
+      const brandKey = findBrandKey(order.product_brand);
+      const modelKey = findModelKey(brandKey, order.product_model);
+      
+      setSelectedBrandKey(brandKey);
+      setSelectedModelKey(modelKey);
+      setShowCustomBrand(brandKey === "other");
+      setShowCustomModel(modelKey === "other");
+    }
+  }, [isEditing, order]);
+
+  // Handler para mudança de marca
+  const handleBrandChange = (value: string) => {
+    setSelectedBrandKey(value);
+    setSelectedModelKey("");
+    setShowCustomModel(false);
+    
+    if (value === "other") {
+      setShowCustomBrand(true);
+      setEditData((prev) => ({ ...prev, product_brand: "", product_model: "" }));
+    } else {
+      setShowCustomBrand(false);
+      const brandLabel = getBrandLabel(value);
+      setEditData((prev) => ({ ...prev, product_brand: brandLabel, product_model: "" }));
+    }
+  };
+
+  // Handler para mudança de modelo
+  const handleModelChange = (value: string) => {
+    setSelectedModelKey(value);
+    
+    if (value === "other") {
+      setShowCustomModel(true);
+      setEditData((prev) => ({ ...prev, product_model: "" }));
+    } else {
+      setShowCustomModel(false);
+      const modelLabel = getModelLabel(selectedBrandKey, value);
+      setEditData((prev) => ({ ...prev, product_model: modelLabel }));
+    }
+  };
+
+  // Atualizar nome do produto automaticamente
+  useEffect(() => {
+    if (isEditing && editData.product_brand && editData.product_model) {
+      const color = editData.product_color ? ` ${editData.product_color}` : "";
+      const generatedName = `${editData.product_brand} ${editData.product_model}${color}`;
+      setEditData((prev) => ({ ...prev, product_name: generatedName }));
+    }
+  }, [isEditing, editData.product_brand, editData.product_model, editData.product_color]);
+
+  // Handler para telefone formatado
+  const handlePhoneChange = (value: string) => {
+    const cleaned = cleanPhone(value);
+    if (cleaned.length <= 11) {
+      setEditData((prev) => ({ ...prev, client_phone: formatPhone(cleaned) }));
+    }
+  };
 
   useEffect(() => {
     if (!orderId) return;
@@ -514,12 +590,8 @@ const OrderDetail = () => {
                       <Label>Telefone</Label>
                       <Input
                         value={editData.client_phone || ""}
-                        onChange={(e) =>
-                          setEditData((prev) => ({
-                            ...prev,
-                            client_phone: e.target.value,
-                          }))
-                        }
+                        onChange={(e) => handlePhoneChange(e.target.value)}
+                        placeholder="(00) 00000-0000"
                         className="bg-secondary/50"
                       />
                     </div>
@@ -578,113 +650,176 @@ const OrderDetail = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {isEditing ? (
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>Marca</Label>
-                    <Input
-                      value={editData.product_brand || ""}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          product_brand: e.target.value,
-                        }))
-                      }
-                      className="bg-secondary/50"
-                    />
+                <div className="space-y-4">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    {/* Marca Selector */}
+                    <div className="space-y-2">
+                      <Label>Marca *</Label>
+                      <Select value={selectedBrandKey} onValueChange={handleBrandChange}>
+                        <SelectTrigger className="bg-secondary/50">
+                          <SelectValue placeholder="Selecione a marca" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background border border-border z-50">
+                          {SNEAKER_BRANDS.map((brand) => (
+                            <SelectItem key={brand.value} value={brand.value}>
+                              {brand.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {showCustomBrand && (
+                        <Input
+                          value={editData.product_brand || ""}
+                          onChange={(e) =>
+                            setEditData((prev) => ({
+                              ...prev,
+                              product_brand: e.target.value,
+                            }))
+                          }
+                          placeholder="Digite a marca..."
+                          className="bg-secondary/50 mt-2"
+                        />
+                      )}
+                    </div>
+
+                    {/* Modelo Selector */}
+                    <div className="space-y-2">
+                      <Label>Modelo *</Label>
+                      <Select 
+                        value={selectedModelKey} 
+                        onValueChange={handleModelChange}
+                        disabled={!selectedBrandKey}
+                      >
+                        <SelectTrigger className="bg-secondary/50">
+                          <SelectValue placeholder={selectedBrandKey ? "Selecione o modelo" : "Selecione a marca primeiro"} />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background border border-border z-50">
+                          {availableModels.map((model) => (
+                            <SelectItem key={model.value} value={model.value}>
+                              {model.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {showCustomModel && (
+                        <Input
+                          value={editData.product_model || ""}
+                          onChange={(e) =>
+                            setEditData((prev) => ({
+                              ...prev,
+                              product_model: e.target.value,
+                            }))
+                          }
+                          placeholder="Digite o modelo..."
+                          className="bg-secondary/50 mt-2"
+                        />
+                      )}
+                    </div>
+
+                    {/* Nome completo (auto-gerado) */}
+                    <div className="space-y-2">
+                      <Label>Nome completo *</Label>
+                      <Input
+                        value={editData.product_name || ""}
+                        onChange={(e) =>
+                          setEditData((prev) => ({
+                            ...prev,
+                            product_name: e.target.value,
+                          }))
+                        }
+                        placeholder="Nike Air Force 1 Low White"
+                        className="bg-secondary/50"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Gerado automaticamente a partir da marca, modelo e cor
+                      </p>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Modelo</Label>
-                    <Input
-                      value={editData.product_model || ""}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          product_model: e.target.value,
-                        }))
-                      }
-                      className="bg-secondary/50"
-                    />
+
+                  <div className="grid md:grid-cols-3 gap-4">
+                    {/* Tamanho Selector */}
+                    <div className="space-y-2">
+                      <Label>Tamanho *</Label>
+                      <Select 
+                        value={editData.product_size || ""} 
+                        onValueChange={(value) => setEditData((prev) => ({ ...prev, product_size: value }))}
+                      >
+                        <SelectTrigger className="bg-secondary/50">
+                          <SelectValue placeholder="Selecione o tamanho" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background border border-border z-50">
+                          {SHOE_SIZES.map((size) => (
+                            <SelectItem key={size} value={size}>
+                              {size}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Cor/Colorway</Label>
+                      <Input
+                        value={editData.product_color || ""}
+                        onChange={(e) =>
+                          setEditData((prev) => ({
+                            ...prev,
+                            product_color: e.target.value,
+                          }))
+                        }
+                        placeholder="Branco, Preto/Vermelho..."
+                        className="bg-secondary/50"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>SKU/Referência</Label>
+                      <Input
+                        value={editData.product_reference || ""}
+                        onChange={(e) =>
+                          setEditData((prev) => ({
+                            ...prev,
+                            product_reference: e.target.value,
+                          }))
+                        }
+                        placeholder="CW2288-111"
+                        className="bg-secondary/50"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Nome completo</Label>
-                    <Input
-                      value={editData.product_name || ""}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          product_name: e.target.value,
-                        }))
-                      }
-                      className="bg-secondary/50"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Tamanho</Label>
-                    <Input
-                      value={editData.product_size || ""}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          product_size: e.target.value,
-                        }))
-                      }
-                      className="bg-secondary/50"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Cor/Colorway</Label>
-                    <Input
-                      value={editData.product_color || ""}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          product_color: e.target.value,
-                        }))
-                      }
-                      className="bg-secondary/50"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>SKU/Referência</Label>
-                    <Input
-                      value={editData.product_reference || ""}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          product_reference: e.target.value,
-                        }))
-                      }
-                      className="bg-secondary/50"
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Link de Referência</Label>
-                    <Input
-                      type="url"
-                      value={editData.product_link || ""}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          product_link: e.target.value,
-                        }))
-                      }
-                      className="bg-secondary/50"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Valor Total (R$)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={editData.product_price || ""}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          product_price: parseFloat(e.target.value) || null,
-                        }))
-                      }
-                      className="bg-secondary/50"
-                    />
+
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Link de Referência</Label>
+                      <Input
+                        type="url"
+                        value={editData.product_link || ""}
+                        onChange={(e) =>
+                          setEditData((prev) => ({
+                            ...prev,
+                            product_link: e.target.value,
+                          }))
+                        }
+                        placeholder="https://..."
+                        className="bg-secondary/50"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Valor Total (R$)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={editData.product_price || ""}
+                        onChange={(e) =>
+                          setEditData((prev) => ({
+                            ...prev,
+                            product_price: parseFloat(e.target.value) || null,
+                          }))
+                        }
+                        placeholder="0,00"
+                        className="bg-secondary/50"
+                      />
+                    </div>
                   </div>
                 </div>
               ) : (
