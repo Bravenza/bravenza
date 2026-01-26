@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ClientAuthProvider } from "@/hooks/useClientAuth";
 
 import Index from "./pages/Index";
+import TrackingPortalPage from "./pages/TrackingPortalPage";
 import TrackingPage from "./pages/TrackingPage";
 import BudgetApprovalPage from "./pages/BudgetApprovalPage";
 import PaymentPage from "./pages/PaymentPage";
@@ -44,6 +45,7 @@ const App = () => (
               {/* Public routes */}
               <Route path="/" element={<Index />} />
               <Route path="/solicitar" element={<OrderRequestPage />} />
+              <Route path="/rastreio" element={<TrackingPortalPage />} />
               <Route path="/rastreio/:orderId" element={<TrackingPage />} />
               <Route path="/orcamento/:token" element={<BudgetApprovalPage />} />
               <Route path="/pagamento/:token" element={<PaymentPage />} />
