@@ -99,6 +99,41 @@ serve(async (req) => {
           notes: historyNote,
         });
 
+        // Fetch order data for email notification
+        const { data: orderData } = await supabase
+          .from("orders")
+          .select("client_name, client_email, product_name, product_price, sinal_value, balance_value")
+          .eq("order_id", orderId)
+          .single();
+
+        // Send email notification if order has email
+        if (orderData?.client_email) {
+          const emailType = paymentType === "sinal" ? "sinal_confirmed" : "balance_confirmed";
+          
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/send-order-email`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${supabaseKey}`,
+              },
+              body: JSON.stringify({
+                type: emailType,
+                order_id: orderId,
+                client_name: orderData.client_name,
+                client_email: orderData.client_email,
+                product_name: orderData.product_name,
+                total_price: orderData.product_price,
+                sinal_value: orderData.sinal_value,
+                balance_value: orderData.balance_value,
+              }),
+            });
+            console.log(`Payment confirmation email sent for order ${orderId}`);
+          } catch (emailError) {
+            console.error("Failed to send payment email:", emailError);
+          }
+        }
+
         console.log(`Order ${orderId} updated successfully`);
       }
     }
