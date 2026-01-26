@@ -17,6 +17,7 @@ import OrdersList from "./pages/admin/OrdersList";
 import NewOrder from "./pages/admin/NewOrder";
 import OrderDetail from "./pages/admin/OrderDetail";
 import UsersPage from "./pages/admin/UsersPage";
+import SettingsPage from "./pages/admin/SettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="pedidos/novo" element={<NewOrder />} />
               <Route path="pedidos/:orderId" element={<OrderDetail />} />
               <Route path="usuarios" element={<UsersPage />} />
+              <Route path="configuracoes" element={<SettingsPage />} />
             </Route>
 
             {/* 404 */}
