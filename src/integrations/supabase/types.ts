@@ -68,10 +68,15 @@ export type Database = {
           national_tracking: string | null
           order_id: string
           order_type: Database["public"]["Enums"]["order_type"]
+          product_brand: string | null
+          product_color: string | null
           product_currency: string | null
+          product_link: string | null
+          product_model: string | null
           product_name: string
           product_price: number | null
           product_reference: string | null
+          product_size: string | null
           sinal_paid: boolean | null
           sinal_proof_url: string | null
           sinal_value: number | null
@@ -96,10 +101,15 @@ export type Database = {
           national_tracking?: string | null
           order_id: string
           order_type?: Database["public"]["Enums"]["order_type"]
+          product_brand?: string | null
+          product_color?: string | null
           product_currency?: string | null
+          product_link?: string | null
+          product_model?: string | null
           product_name: string
           product_price?: number | null
           product_reference?: string | null
+          product_size?: string | null
           sinal_paid?: boolean | null
           sinal_proof_url?: string | null
           sinal_value?: number | null
@@ -124,10 +134,15 @@ export type Database = {
           national_tracking?: string | null
           order_id?: string
           order_type?: Database["public"]["Enums"]["order_type"]
+          product_brand?: string | null
+          product_color?: string | null
           product_currency?: string | null
+          product_link?: string | null
+          product_model?: string | null
           product_name?: string
           product_price?: number | null
           product_reference?: string | null
+          product_size?: string | null
           sinal_paid?: boolean | null
           sinal_proof_url?: string | null
           sinal_value?: number | null
