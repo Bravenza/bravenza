@@ -138,6 +138,18 @@ const OrderDetail = () => {
   const [selectedModelKey, setSelectedModelKey] = useState("");
   const [showCustomBrand, setShowCustomBrand] = useState(false);
   const [showCustomModel, setShowCustomModel] = useState(false);
+  
+  // Estados para campos de endereço granulares
+  const [addressFields, setAddressFields] = useState({
+    cep: "",
+    street: "",
+    number: "",
+    complement: "",
+    neighborhood: "",
+    city: "",
+    state: "",
+  });
+  const [isFetchingCep, setIsFetchingCep] = useState(false);
 
   // Modelos disponíveis baseado na marca selecionada
   const availableModels = getModelsForBrand(selectedBrandKey);
@@ -152,8 +164,127 @@ const OrderDetail = () => {
       setSelectedModelKey(modelKey);
       setShowCustomBrand(brandKey === "other");
       setShowCustomModel(modelKey === "other");
+      
+      // Parsear o endereço existente para os campos granulares
+      parseAddressToFields(order.client_address);
     }
   }, [isEditing, order]);
+
+  // Função para parsear endereço existente
+  const parseAddressToFields = (address: string | null) => {
+    if (!address) {
+      setAddressFields({
+        cep: "",
+        street: "",
+        number: "",
+        complement: "",
+        neighborhood: "",
+        city: "",
+        state: "",
+      });
+      return;
+    }
+    
+    // Tentar extrair CEP do endereço
+    const cepMatch = address.match(/CEP:\s*(\d{5}-?\d{3})/i);
+    const cep = cepMatch ? cepMatch[1].replace("-", "") : "";
+    
+    // Tentar extrair partes do endereço
+    // Formato esperado: "Rua X, nº 123, complemento, Bairro, Cidade - UF, CEP: 00000-000"
+    const parts = address.split(",").map(p => p.trim());
+    
+    let street = "", number = "", complement = "", neighborhood = "", city = "", state = "";
+    
+    if (parts.length >= 1) {
+      street = parts[0];
+    }
+    if (parts.length >= 2) {
+      const numMatch = parts[1].match(/n[º°]?\s*(\S+)/i);
+      if (numMatch) {
+        number = numMatch[1];
+      }
+    }
+    if (parts.length >= 4) {
+      // Se tem 4+ partes, a 3ª pode ser complemento ou bairro
+      const lastPart = parts[parts.length - 1];
+      const hasCep = lastPart.toLowerCase().includes("cep");
+      
+      if (hasCep && parts.length >= 5) {
+        neighborhood = parts[2];
+        const cityStateMatch = parts[parts.length - 2].match(/(.+)\s*-\s*(\w{2})/);
+        if (cityStateMatch) {
+          city = cityStateMatch[1].trim();
+          state = cityStateMatch[2].trim();
+        }
+        if (parts.length >= 6) {
+          complement = parts[2];
+          neighborhood = parts[3];
+        }
+      } else if (parts.length >= 3) {
+        neighborhood = parts[2];
+        const cityStateMatch = parts[parts.length - 1].match(/(.+)\s*-\s*(\w{2})/);
+        if (cityStateMatch) {
+          city = cityStateMatch[1].trim();
+          state = cityStateMatch[2].trim();
+        }
+      }
+    }
+    
+    setAddressFields({
+      cep,
+      street,
+      number,
+      complement,
+      neighborhood,
+      city,
+      state,
+    });
+  };
+
+  // Buscar endereço via CEP
+  const handleCepChange = async (value: string) => {
+    const cleanedCep = value.replace(/\D/g, "");
+    setAddressFields(prev => ({ ...prev, cep: cleanedCep }));
+    
+    if (cleanedCep.length === 8) {
+      setIsFetchingCep(true);
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cleanedCep}/json/`);
+        const data = await response.json();
+        
+        if (!data.erro) {
+          setAddressFields(prev => ({
+            ...prev,
+            street: data.logradouro || "",
+            neighborhood: data.bairro || "",
+            city: data.localidade || "",
+            state: data.uf || "",
+          }));
+        }
+      } catch (error) {
+        console.error("Erro ao buscar CEP:", error);
+      } finally {
+        setIsFetchingCep(false);
+      }
+    }
+  };
+
+  // Atualizar editData.client_address quando os campos de endereço mudarem
+  useEffect(() => {
+    if (isEditing) {
+      const parts = [
+        addressFields.street,
+        addressFields.number ? `nº ${addressFields.number}` : "",
+        addressFields.complement,
+        addressFields.neighborhood,
+        addressFields.city && addressFields.state ? `${addressFields.city} - ${addressFields.state}` : "",
+        addressFields.cep ? `CEP: ${addressFields.cep.replace(/(\d{5})(\d{3})/, "$1-$2")}` : "",
+      ].filter(Boolean);
+      
+      const fullAddress = parts.join(", ");
+      setEditData(prev => ({ ...prev, client_address: fullAddress }));
+    }
+  }, [isEditing, addressFields]);
 
   // Handler para mudança de marca
   const handleBrandChange = (value: string) => {
@@ -596,19 +727,115 @@ const OrderDetail = () => {
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Endereço</Label>
-                    <Textarea
-                      value={editData.client_address || ""}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          client_address: e.target.value,
-                        }))
-                      }
-                      className="bg-secondary/50"
-                      rows={2}
-                    />
+                  {/* Endereço Granular */}
+                  <div className="space-y-4 pt-2">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-base font-semibold">Endereço de Entrega</Label>
+                      {isFetchingCep && (
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      )}
+                    </div>
+                    
+                    <div className="grid md:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label>CEP *</Label>
+                        <Input
+                          value={addressFields.cep.replace(/(\d{5})(\d{3})/, "$1-$2")}
+                          onChange={(e) => handleCepChange(e.target.value)}
+                          placeholder="00000-000"
+                          maxLength={9}
+                          className="bg-secondary/50"
+                        />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>Rua *</Label>
+                        <Input
+                          value={addressFields.street}
+                          onChange={(e) =>
+                            setAddressFields((prev) => ({
+                              ...prev,
+                              street: e.target.value,
+                            }))
+                          }
+                          placeholder="Nome da rua"
+                          className="bg-secondary/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Número *</Label>
+                        <Input
+                          value={addressFields.number}
+                          onChange={(e) =>
+                            setAddressFields((prev) => ({
+                              ...prev,
+                              number: e.target.value,
+                            }))
+                          }
+                          placeholder="123"
+                          className="bg-secondary/50"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid md:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label>Complemento</Label>
+                        <Input
+                          value={addressFields.complement}
+                          onChange={(e) =>
+                            setAddressFields((prev) => ({
+                              ...prev,
+                              complement: e.target.value,
+                            }))
+                          }
+                          placeholder="Apto, Bloco..."
+                          className="bg-secondary/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Bairro *</Label>
+                        <Input
+                          value={addressFields.neighborhood}
+                          onChange={(e) =>
+                            setAddressFields((prev) => ({
+                              ...prev,
+                              neighborhood: e.target.value,
+                            }))
+                          }
+                          placeholder="Bairro"
+                          className="bg-secondary/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Cidade *</Label>
+                        <Input
+                          value={addressFields.city}
+                          onChange={(e) =>
+                            setAddressFields((prev) => ({
+                              ...prev,
+                              city: e.target.value,
+                            }))
+                          }
+                          placeholder="Cidade"
+                          className="bg-secondary/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Estado *</Label>
+                        <Input
+                          value={addressFields.state}
+                          onChange={(e) =>
+                            setAddressFields((prev) => ({
+                              ...prev,
+                              state: e.target.value.toUpperCase(),
+                            }))
+                          }
+                          placeholder="UF"
+                          maxLength={2}
+                          className="bg-secondary/50"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </>
               ) : (
