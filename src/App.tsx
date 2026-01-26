@@ -12,6 +12,8 @@ import TrackingPage from "./pages/TrackingPage";
 import BudgetApprovalPage from "./pages/BudgetApprovalPage";
 import PaymentPage from "./pages/PaymentPage";
 import OrderRequestPage from "./pages/OrderRequestPage";
+import TermsPage from "./pages/TermsPage";
+import PrivacyPage from "./pages/PrivacyPage";
 import NotFound from "./pages/NotFound";
 
 // Client pages
@@ -49,6 +51,8 @@ const App = () => (
               <Route path="/rastreio/:orderId" element={<TrackingPage />} />
               <Route path="/orcamento/:token" element={<BudgetApprovalPage />} />
               <Route path="/pagamento/:token" element={<PaymentPage />} />
+              <Route path="/termos" element={<TermsPage />} />
+              <Route path="/politicas" element={<PrivacyPage />} />
 
               {/* Client portal routes */}
               <Route path="/cliente/login" element={<ClientLogin />} />
