@@ -20,6 +20,7 @@ import NewOrder from "./pages/admin/NewOrder";
 import OrderDetail from "./pages/admin/OrderDetail";
 import UsersPage from "./pages/admin/UsersPage";
 import SettingsPage from "./pages/admin/SettingsPage";
+import EmailFlowPage from "./pages/admin/EmailFlowPage";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="pedidos" element={<OrdersList />} />
               <Route path="pedidos/novo" element={<NewOrder />} />
               <Route path="pedidos/:orderId" element={<OrderDetail />} />
+              <Route path="emails" element={<EmailFlowPage />} />
               <Route path="usuarios" element={<UsersPage />} />
               <Route path="configuracoes" element={<SettingsPage />} />
             </Route>
