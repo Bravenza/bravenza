@@ -15,20 +15,20 @@ interface ApiConfig {
 
 const API_CONFIGS: ApiConfig[] = [
   {
+    id: "mercadopago",
+    name: "Mercado Pago",
+    description: "Geração automática de QR Code Pix para pagamento do sinal e saldo.",
+    icon: <QrCode className="h-6 w-6" />,
+    requiredSecrets: ["MERCADO_PAGO_ACCESS_TOKEN"],
+    docsUrl: "https://www.mercadopago.com.br/developers/pt/docs",
+  },
+  {
     id: "stripe",
     name: "Stripe",
     description: "Pagamentos via cartão de crédito para o saldo restante dos pedidos.",
     icon: <CreditCard className="h-6 w-6" />,
     requiredSecrets: ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"],
     docsUrl: "https://stripe.com/docs",
-  },
-  {
-    id: "pix",
-    name: "Pix (Gateway de Pagamento)",
-    description: "Geração automática de QR Code Pix para pagamento do sinal e saldo.",
-    icon: <QrCode className="h-6 w-6" />,
-    requiredSecrets: ["PIX_API_KEY", "PIX_API_SECRET"],
-    docsUrl: undefined,
   },
 ];
 
