@@ -53,8 +53,21 @@ export type Database = {
         Row: {
           balance_due_date: string | null
           balance_paid: boolean | null
+          balance_paid_at: string | null
+          balance_payment_method:
+            | Database["public"]["Enums"]["payment_method"]
+            | null
+          balance_pix_transaction_id: string | null
           balance_proof_url: string | null
+          balance_stripe_payment_id: string | null
           balance_value: number | null
+          budget_approval_token: string | null
+          budget_approved_at: string | null
+          budget_expires_at: string | null
+          budget_rejected_at: string | null
+          budget_rejection_reason: string | null
+          budget_sent_at: string | null
+          budget_status: Database["public"]["Enums"]["budget_status"] | null
           client_address: string | null
           client_cpf: string
           client_email: string | null
@@ -68,6 +81,8 @@ export type Database = {
           national_tracking: string | null
           order_id: string
           order_type: Database["public"]["Enums"]["order_type"]
+          pix_copy_paste: string | null
+          pix_qr_code: string | null
           product_brand: string | null
           product_color: string | null
           product_currency: string | null
@@ -78,7 +93,13 @@ export type Database = {
           product_reference: string | null
           product_size: string | null
           sinal_paid: boolean | null
+          sinal_paid_at: string | null
+          sinal_payment_method:
+            | Database["public"]["Enums"]["payment_method"]
+            | null
+          sinal_pix_transaction_id: string | null
           sinal_proof_url: string | null
+          sinal_stripe_payment_id: string | null
           sinal_value: number | null
           sla_vault_due_date: string | null
           updated_at: string
@@ -86,8 +107,21 @@ export type Database = {
         Insert: {
           balance_due_date?: string | null
           balance_paid?: boolean | null
+          balance_paid_at?: string | null
+          balance_payment_method?:
+            | Database["public"]["Enums"]["payment_method"]
+            | null
+          balance_pix_transaction_id?: string | null
           balance_proof_url?: string | null
+          balance_stripe_payment_id?: string | null
           balance_value?: number | null
+          budget_approval_token?: string | null
+          budget_approved_at?: string | null
+          budget_expires_at?: string | null
+          budget_rejected_at?: string | null
+          budget_rejection_reason?: string | null
+          budget_sent_at?: string | null
+          budget_status?: Database["public"]["Enums"]["budget_status"] | null
           client_address?: string | null
           client_cpf: string
           client_email?: string | null
@@ -101,6 +135,8 @@ export type Database = {
           national_tracking?: string | null
           order_id: string
           order_type?: Database["public"]["Enums"]["order_type"]
+          pix_copy_paste?: string | null
+          pix_qr_code?: string | null
           product_brand?: string | null
           product_color?: string | null
           product_currency?: string | null
@@ -111,7 +147,13 @@ export type Database = {
           product_reference?: string | null
           product_size?: string | null
           sinal_paid?: boolean | null
+          sinal_paid_at?: string | null
+          sinal_payment_method?:
+            | Database["public"]["Enums"]["payment_method"]
+            | null
+          sinal_pix_transaction_id?: string | null
           sinal_proof_url?: string | null
+          sinal_stripe_payment_id?: string | null
           sinal_value?: number | null
           sla_vault_due_date?: string | null
           updated_at?: string
@@ -119,8 +161,21 @@ export type Database = {
         Update: {
           balance_due_date?: string | null
           balance_paid?: boolean | null
+          balance_paid_at?: string | null
+          balance_payment_method?:
+            | Database["public"]["Enums"]["payment_method"]
+            | null
+          balance_pix_transaction_id?: string | null
           balance_proof_url?: string | null
+          balance_stripe_payment_id?: string | null
           balance_value?: number | null
+          budget_approval_token?: string | null
+          budget_approved_at?: string | null
+          budget_expires_at?: string | null
+          budget_rejected_at?: string | null
+          budget_rejection_reason?: string | null
+          budget_sent_at?: string | null
+          budget_status?: Database["public"]["Enums"]["budget_status"] | null
           client_address?: string | null
           client_cpf?: string
           client_email?: string | null
@@ -134,6 +189,8 @@ export type Database = {
           national_tracking?: string | null
           order_id?: string
           order_type?: Database["public"]["Enums"]["order_type"]
+          pix_copy_paste?: string | null
+          pix_qr_code?: string | null
           product_brand?: string | null
           product_color?: string | null
           product_currency?: string | null
@@ -144,7 +201,13 @@ export type Database = {
           product_reference?: string | null
           product_size?: string | null
           sinal_paid?: boolean | null
+          sinal_paid_at?: string | null
+          sinal_payment_method?:
+            | Database["public"]["Enums"]["payment_method"]
+            | null
+          sinal_pix_transaction_id?: string | null
           sinal_proof_url?: string | null
+          sinal_stripe_payment_id?: string | null
           sinal_value?: number | null
           sla_vault_due_date?: string | null
           updated_at?: string
@@ -201,6 +264,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_budget: { Args: { p_token: string }; Returns: boolean }
+      get_order_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          balance_paid: boolean
+          balance_value: number
+          budget_expires_at: string
+          budget_status: Database["public"]["Enums"]["budget_status"]
+          client_name: string
+          created_at: string
+          order_id: string
+          order_type: Database["public"]["Enums"]["order_type"]
+          product_brand: string
+          product_color: string
+          product_currency: string
+          product_model: string
+          product_name: string
+          product_price: number
+          product_size: string
+          sinal_paid: boolean
+          sinal_value: number
+        }[]
+      }
       get_order_history: {
         Args: { p_cpf: string; p_order_id: string }
         Returns: {
@@ -217,6 +303,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      reject_budget: {
+        Args: { p_reason?: string; p_token: string }
+        Returns: boolean
+      }
       track_order: {
         Args: { p_cpf: string; p_order_id: string }
         Returns: {
@@ -237,6 +327,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      budget_status: "PENDING" | "SENT" | "APPROVED" | "REJECTED" | "EXPIRED"
       order_status:
         | "ORDER_CONFIRMED"
         | "SOURCING"
@@ -252,6 +343,7 @@ export type Database = {
         | "DISPATCHED"
         | "DELIVERED"
       order_type: "READY" | "VAULT"
+      payment_method: "PIX" | "CREDIT_CARD"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -380,6 +472,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      budget_status: ["PENDING", "SENT", "APPROVED", "REJECTED", "EXPIRED"],
       order_status: [
         "ORDER_CONFIRMED",
         "SOURCING",
@@ -396,6 +489,7 @@ export const Constants = {
         "DELIVERED",
       ],
       order_type: ["READY", "VAULT"],
+      payment_method: ["PIX", "CREDIT_CARD"],
     },
   },
 } as const
