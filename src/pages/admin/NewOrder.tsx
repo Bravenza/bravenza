@@ -25,9 +25,14 @@ const orderSchema = z.object({
   client_email: z.string().email("Email inválido").optional().or(z.literal("")),
   client_phone: z.string().optional(),
   client_address: z.string().optional(),
+  product_brand: z.string().min(1, "Marca obrigatória"),
+  product_model: z.string().min(1, "Modelo obrigatório"),
   product_name: z.string().min(2, "Nome do produto obrigatório"),
+  product_size: z.string().min(1, "Tamanho obrigatório"),
+  product_color: z.string().optional(),
   product_reference: z.string().optional(),
-  product_price: z.number().positive("Valor deve ser positivo").optional(),
+  product_link: z.string().url("URL inválida").optional().or(z.literal("")),
+  product_price: z.number().positive("Valor deve ser positivo"),
   sinal_value: z.number().min(0, "Valor inválido").optional(),
   balance_value: z.number().min(0, "Valor inválido").optional(),
   internal_notes: z.string().optional(),
@@ -45,8 +50,13 @@ const NewOrder = () => {
     client_email: "",
     client_phone: "",
     client_address: "",
+    product_brand: "",
+    product_model: "",
     product_name: "",
+    product_size: "",
+    product_color: "",
     product_reference: "",
+    product_link: "",
     product_price: "",
     sinal_value: "",
     balance_value: "",
@@ -66,13 +76,13 @@ const NewOrder = () => {
 
     const cleanedCPF = cleanCPF(formData.client_cpf);
 
+    const productPrice = formData.product_price ? parseFloat(formData.product_price) : 0;
+
     try {
       orderSchema.parse({
         ...formData,
         client_cpf: cleanedCPF,
-        product_price: formData.product_price
-          ? parseFloat(formData.product_price)
-          : undefined,
+        product_price: productPrice,
         sinal_value: formData.sinal_value
           ? parseFloat(formData.sinal_value)
           : undefined,
@@ -97,6 +107,14 @@ const NewOrder = () => {
       const now = new Date();
       const slaDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
+      // Calcular sinal e saldo automaticamente se não informados
+      const sinalValue = formData.sinal_value 
+        ? parseFloat(formData.sinal_value) 
+        : productPrice * 0.5;
+      const balanceValue = formData.balance_value 
+        ? parseFloat(formData.balance_value) 
+        : productPrice - sinalValue;
+
       const orderData = {
         order_id: orderId,
         order_type: formData.order_type,
@@ -106,17 +124,16 @@ const NewOrder = () => {
         client_email: formData.client_email || null,
         client_phone: formData.client_phone || null,
         client_address: formData.client_address || null,
+        product_brand: formData.product_brand || null,
+        product_model: formData.product_model || null,
         product_name: formData.product_name,
+        product_size: formData.product_size || null,
+        product_color: formData.product_color || null,
         product_reference: formData.product_reference || null,
-        product_price: formData.product_price
-          ? parseFloat(formData.product_price)
-          : null,
-        sinal_value: formData.sinal_value
-          ? parseFloat(formData.sinal_value)
-          : null,
-        balance_value: formData.balance_value
-          ? parseFloat(formData.balance_value)
-          : null,
+        product_link: formData.product_link || null,
+        product_price: productPrice,
+        sinal_value: sinalValue,
+        balance_value: balanceValue,
         internal_notes: formData.internal_notes || null,
         sla_vault_due_date:
           formData.order_type === "VAULT"
@@ -287,96 +304,201 @@ const NewOrder = () => {
           </Card>
 
           {/* Product info */}
-          <Card className="card-premium">
+          <Card className="card-premium lg:col-span-2">
             <CardHeader>
-              <CardTitle>Dados do Produto</CardTitle>
+              <CardTitle>Dados do Tênis</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="product_name">Nome do produto *</Label>
-                <Input
-                  id="product_name"
-                  value={formData.product_name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      product_name: e.target.value,
-                    }))
-                  }
-                  className="bg-secondary/50"
-                  required
-                />
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="product_brand">Marca *</Label>
+                  <Input
+                    id="product_brand"
+                    value={formData.product_brand}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        product_brand: e.target.value,
+                      }))
+                    }
+                    placeholder="Nike, Adidas, Jordan..."
+                    className="bg-secondary/50"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="product_model">Modelo *</Label>
+                  <Input
+                    id="product_model"
+                    value={formData.product_model}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        product_model: e.target.value,
+                      }))
+                    }
+                    placeholder="Air Force 1, Yeezy 350..."
+                    className="bg-secondary/50"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="product_name">Nome completo *</Label>
+                  <Input
+                    id="product_name"
+                    value={formData.product_name}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        product_name: e.target.value,
+                      }))
+                    }
+                    placeholder="Nike Air Force 1 Low White"
+                    className="bg-secondary/50"
+                    required
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="product_reference">Referência</Label>
-                <Input
-                  id="product_reference"
-                  value={formData.product_reference}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      product_reference: e.target.value,
-                    }))
-                  }
-                  className="bg-secondary/50"
-                />
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="product_size">Tamanho *</Label>
+                  <Input
+                    id="product_size"
+                    value={formData.product_size}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        product_size: e.target.value,
+                      }))
+                    }
+                    placeholder="42, 10 US, 9 UK..."
+                    className="bg-secondary/50"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="product_color">Cor/Colorway</Label>
+                  <Input
+                    id="product_color"
+                    value={formData.product_color}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        product_color: e.target.value,
+                      }))
+                    }
+                    placeholder="Branco, Preto/Vermelho..."
+                    className="bg-secondary/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="product_reference">SKU/Referência</Label>
+                  <Input
+                    id="product_reference"
+                    value={formData.product_reference}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        product_reference: e.target.value,
+                      }))
+                    }
+                    placeholder="CW2288-111"
+                    className="bg-secondary/50"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="product_price">Valor total (R$)</Label>
-                <Input
-                  id="product_price"
-                  type="number"
-                  step="0.01"
-                  value={formData.product_price}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      product_price: e.target.value,
-                    }))
-                  }
-                  className="bg-secondary/50"
-                />
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="product_link">Link de Referência</Label>
+                  <Input
+                    id="product_link"
+                    type="url"
+                    value={formData.product_link}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        product_link: e.target.value,
+                      }))
+                    }
+                    placeholder="https://stockx.com/..."
+                    className="bg-secondary/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="product_price">Valor Total do Orçamento (R$) *</Label>
+                  <Input
+                    id="product_price"
+                    type="number"
+                    step="0.01"
+                    value={formData.product_price}
+                    onChange={(e) => {
+                      const price = e.target.value;
+                      const priceNum = parseFloat(price) || 0;
+                      setFormData((prev) => ({
+                        ...prev,
+                        product_price: price,
+                        sinal_value: (priceNum * 0.5).toFixed(2),
+                        balance_value: (priceNum * 0.5).toFixed(2),
+                      }));
+                    }}
+                    className="bg-secondary/50"
+                    required
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Financial info */}
-          <Card className="card-premium">
+          <Card className="card-premium lg:col-span-2">
             <CardHeader>
               <CardTitle>Dados Financeiros</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="sinal_value">Valor do sinal (R$)</Label>
-                <Input
-                  id="sinal_value"
-                  type="number"
-                  step="0.01"
-                  value={formData.sinal_value}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      sinal_value: e.target.value,
-                    }))
-                  }
-                  className="bg-secondary/50"
-                />
+              <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                <p className="text-sm text-primary font-medium">
+                  💡 O valor do sinal é de 50% do valor total do orçamento. O saldo restante é pago quando o produto chegar ao Brasil.
+                </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="balance_value">Valor do saldo (R$)</Label>
-                <Input
-                  id="balance_value"
-                  type="number"
-                  step="0.01"
-                  value={formData.balance_value}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      balance_value: e.target.value,
-                    }))
-                  }
-                  className="bg-secondary/50"
-                />
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="sinal_value">Valor do Sinal - 50% (R$)</Label>
+                  <Input
+                    id="sinal_value"
+                    type="number"
+                    step="0.01"
+                    value={formData.sinal_value}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        sinal_value: e.target.value,
+                      }))
+                    }
+                    className="bg-secondary/50"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Calculado automaticamente como 50% do orçamento
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="balance_value">Valor do Saldo (R$)</Label>
+                  <Input
+                    id="balance_value"
+                    type="number"
+                    step="0.01"
+                    value={formData.balance_value}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        balance_value: e.target.value,
+                      }))
+                    }
+                    className="bg-secondary/50"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Restante a ser pago na chegada do produto
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>

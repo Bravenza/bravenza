@@ -70,8 +70,13 @@ interface Order {
   client_email: string | null;
   client_phone: string | null;
   client_address: string | null;
+  product_brand: string | null;
+  product_model: string | null;
   product_name: string;
+  product_size: string | null;
+  product_color: string | null;
   product_reference: string | null;
+  product_link: string | null;
   product_price: number | null;
   product_currency: string;
   sinal_value: number | null;
@@ -165,8 +170,13 @@ const OrderDetail = () => {
           client_email: editData.client_email,
           client_phone: editData.client_phone,
           client_address: editData.client_address,
+          product_brand: editData.product_brand,
+          product_model: editData.product_model,
           product_name: editData.product_name,
+          product_size: editData.product_size,
+          product_color: editData.product_color,
           product_reference: editData.product_reference,
+          product_link: editData.product_link,
           product_price: editData.product_price,
           sinal_value: editData.sinal_value,
           sinal_paid: editData.sinal_paid,
@@ -527,14 +537,40 @@ const OrderDetail = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5 text-primary" />
-                Produto
+                Tênis
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {isEditing ? (
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label>Nome do produto</Label>
+                    <Label>Marca</Label>
+                    <Input
+                      value={editData.product_brand || ""}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          product_brand: e.target.value,
+                        }))
+                      }
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Modelo</Label>
+                    <Input
+                      value={editData.product_model || ""}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          product_model: e.target.value,
+                        }))
+                      }
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Nome completo</Label>
                     <Input
                       value={editData.product_name || ""}
                       onChange={(e) =>
@@ -547,7 +583,33 @@ const OrderDetail = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Referência</Label>
+                    <Label>Tamanho</Label>
+                    <Input
+                      value={editData.product_size || ""}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          product_size: e.target.value,
+                        }))
+                      }
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cor/Colorway</Label>
+                    <Input
+                      value={editData.product_color || ""}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          product_color: e.target.value,
+                        }))
+                      }
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>SKU/Referência</Label>
                     <Input
                       value={editData.product_reference || ""}
                       onChange={(e) =>
@@ -559,8 +621,22 @@ const OrderDetail = () => {
                       className="bg-secondary/50"
                     />
                   </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Link de Referência</Label>
+                    <Input
+                      type="url"
+                      value={editData.product_link || ""}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          product_link: e.target.value,
+                        }))
+                      }
+                      className="bg-secondary/50"
+                    />
+                  </div>
                   <div className="space-y-2">
-                    <Label>Valor (R$)</Label>
+                    <Label>Valor Total (R$)</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -576,20 +652,47 @@ const OrderDetail = () => {
                   </div>
                 </div>
               ) : (
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Marca</p>
+                    <p className="font-medium">{order.product_brand || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Modelo</p>
+                    <p className="font-medium">{order.product_model || "-"}</p>
+                  </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Nome</p>
                     <p className="font-medium">{order.product_name}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Referência</p>
-                    <p className="font-medium">
-                      {order.product_reference || "-"}
-                    </p>
+                    <p className="text-sm text-muted-foreground">Tamanho</p>
+                    <p className="font-medium">{order.product_size || "-"}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Valor</p>
-                    <p className="font-medium text-primary">
+                    <p className="text-sm text-muted-foreground">Cor</p>
+                    <p className="font-medium">{order.product_color || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">SKU/Ref</p>
+                    <p className="font-medium">{order.product_reference || "-"}</p>
+                  </div>
+                  {order.product_link && (
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-muted-foreground">Link</p>
+                      <a 
+                        href={order.product_link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="font-medium text-primary hover:underline truncate block"
+                      >
+                        {order.product_link}
+                      </a>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm text-muted-foreground">Valor Total</p>
+                    <p className="font-medium text-primary text-lg">
                       {order.product_price
                         ? formatCurrency(order.product_price)
                         : "-"}
@@ -609,10 +712,17 @@ const OrderDetail = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {!isEditing && (
+                <div className="p-3 bg-primary/10 rounded-lg border border-primary/20 mb-4">
+                  <p className="text-sm text-primary">
+                    💡 Sinal = 50% do valor total | Saldo = 50% restante (pago na chegada)
+                  </p>
+                </div>
+              )}
               {isEditing ? (
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Valor do sinal (R$)</Label>
+                    <Label>Valor do Sinal - 50% (R$)</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -642,7 +752,7 @@ const OrderDetail = () => {
                     <Label htmlFor="sinal_paid">Sinal pago</Label>
                   </div>
                   <div className="space-y-2">
-                    <Label>Valor do saldo (R$)</Label>
+                    <Label>Valor do Saldo (R$)</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -674,29 +784,39 @@ const OrderDetail = () => {
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Sinal</p>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">
+                  <div className="p-4 bg-secondary/30 rounded-lg">
+                    <p className="text-sm text-muted-foreground">Sinal (50%)</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="font-bold text-lg">
                         {order.sinal_value
                           ? formatCurrency(order.sinal_value)
                           : "-"}
                       </p>
-                      {order.sinal_paid && (
-                        <CheckCircle2 className="h-4 w-4 text-success" />
+                      {order.sinal_paid ? (
+                        <Badge className="bg-success/20 text-success">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Pago
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">Pendente</Badge>
                       )}
                     </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Saldo</p>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">
+                  <div className="p-4 bg-secondary/30 rounded-lg">
+                    <p className="text-sm text-muted-foreground">Saldo (50%)</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="font-bold text-lg">
                         {order.balance_value
                           ? formatCurrency(order.balance_value)
                           : "-"}
                       </p>
-                      {order.balance_paid && (
-                        <CheckCircle2 className="h-4 w-4 text-success" />
+                      {order.balance_paid ? (
+                        <Badge className="bg-success/20 text-success">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Pago
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">Pendente</Badge>
                       )}
                     </div>
                   </div>
