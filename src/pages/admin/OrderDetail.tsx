@@ -466,8 +466,8 @@ const OrderDetail = () => {
         current_status: newStatus,
       };
 
-      // Auto-calculate balance due date when ARRIVED
-      if (newStatus === "ARRIVED") {
+      // Auto-calculate balance due date when product arrives in Brazil
+      if (newStatus === "ARRIVED_BRAZIL") {
         const balanceDue = new Date();
         balanceDue.setHours(balanceDue.getHours() + 24);
         updates.balance_due_date = balanceDue.toISOString();

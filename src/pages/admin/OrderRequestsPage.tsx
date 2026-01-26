@@ -128,7 +128,7 @@ export default function OrderRequestsPage() {
         .insert({
           order_id: orderId,
           order_type: "VAULT" as const,
-          current_status: "ORDER_CONFIRMED" as const,
+          current_status: "REQUEST_RECEIVED" as const,
           client_name: request.client_name,
           client_cpf: cleanCPF(request.client_cpf),
           client_email: request.client_email,
@@ -155,8 +155,8 @@ export default function OrderRequestsPage() {
         .from("order_history")
         .insert({
           order_id: orderId,
-          status: "ORDER_CONFIRMED" as const,
-          notes: `Pedido criado a partir da solicitação de ${request.client_name}`,
+          status: "REQUEST_RECEIVED" as const,
+          notes: `Solicitação recebida de ${request.client_name}`,
         });
 
       if (historyError) throw historyError;

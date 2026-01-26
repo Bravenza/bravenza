@@ -555,6 +555,18 @@ export type Database = {
         | "NATIONAL_TRANSIT"
         | "DISPATCHED"
         | "DELIVERED"
+        | "REQUEST_RECEIVED"
+        | "BUDGET_SENT"
+        | "DEPOSIT_CONFIRMED"
+        | "SEARCH_SELECTION"
+        | "PRODUCT_FOUND"
+        | "PREPARING_INTERNATIONAL"
+        | "INTERNATIONAL_TRANSIT"
+        | "ARRIVED_BRAZIL"
+        | "PRODUCT_INSPECTED"
+        | "BALANCE_PENDING"
+        | "FULLY_PAID"
+        | "SHIPPED_TO_CLIENT"
       order_type: "READY" | "VAULT"
       payment_method: "PIX" | "CREDIT_CARD"
     }
@@ -711,6 +723,18 @@ export const Constants = {
         "NATIONAL_TRANSIT",
         "DISPATCHED",
         "DELIVERED",
+        "REQUEST_RECEIVED",
+        "BUDGET_SENT",
+        "DEPOSIT_CONFIRMED",
+        "SEARCH_SELECTION",
+        "PRODUCT_FOUND",
+        "PREPARING_INTERNATIONAL",
+        "INTERNATIONAL_TRANSIT",
+        "ARRIVED_BRAZIL",
+        "PRODUCT_INSPECTED",
+        "BALANCE_PENDING",
+        "FULLY_PAID",
+        "SHIPPED_TO_CLIENT",
       ],
       order_type: ["READY", "VAULT"],
       payment_method: ["PIX", "CREDIT_CARD"],

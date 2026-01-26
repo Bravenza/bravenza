@@ -2,7 +2,19 @@ import { supabase } from "@/integrations/supabase/client";
 
 // Map order status to email type
 const STATUS_EMAIL_MAP: Record<string, string> = {
-  // Payment confirmations are handled separately via webhooks
+  // New status flow
+  BUDGET_SENT: "budget_sent",
+  DEPOSIT_CONFIRMED: "sinal_confirmed",
+  PRODUCT_FOUND: "product_found",
+  PREPARING_INTERNATIONAL: "package_shipped",
+  INTERNATIONAL_TRANSIT: "package_shipped",
+  ARRIVED_BRAZIL: "arrived_brazil",
+  PRODUCT_INSPECTED: "inspection_approved",
+  BALANCE_PENDING: "balance_due",
+  FULLY_PAID: "balance_confirmed",
+  SHIPPED_TO_CLIENT: "dispatched",
+  DELIVERED: "delivered",
+  // Legacy status mappings for backward compatibility
   SOURCING: "product_found",
   PURCHASE_COMPLETED: "product_found",
   PACKAGE_EN_ROUTE: "package_shipped",
@@ -10,7 +22,6 @@ const STATUS_EMAIL_MAP: Record<string, string> = {
   BALANCE_DUE: "balance_due",
   INTERNATIONAL_DISPATCH: "international_dispatch",
   DISPATCHED: "dispatched",
-  DELIVERED: "delivered",
 };
 
 interface OrderEmailData {
