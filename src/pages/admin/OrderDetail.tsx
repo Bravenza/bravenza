@@ -580,6 +580,55 @@ const OrderDetail = () => {
     }
   };
 
+  const handleMarkAsLost = async () => {
+    if (!order) return;
+
+    setIsSaving(true);
+
+    try {
+      const { error: updateError } = await supabase
+        .from("orders")
+        .update({ current_status: "LOST" })
+        .eq("order_id", order.order_id);
+
+      if (updateError) throw updateError;
+
+      const { error: historyError } = await supabase
+        .from("order_history")
+        .insert({
+          order_id: order.order_id,
+          status: "LOST" as any,
+          notes: "Pedido marcado como perdido pelo administrador",
+        });
+
+      if (historyError) throw historyError;
+
+      setOrder({ ...order, current_status: "LOST" });
+      setHistory([
+        ...history,
+        {
+          id: Date.now().toString(),
+          status: "LOST",
+          notes: "Pedido marcado como perdido pelo administrador",
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
+      toast({
+        title: "Pedido marcado como perdido",
+        description: "O pedido foi arquivado como negociação perdida.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível atualizar o status.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -1507,10 +1556,23 @@ const OrderDetail = () => {
             <CardHeader>
               <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
+              {order.current_status !== "LOST" && order.current_status !== "DELIVERED" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-orange-500/50 text-orange-500 hover:bg-orange-500/10"
+                  onClick={() => handleMarkAsLost()}
+                  disabled={isSaving}
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Marcar como Perdido
+                </Button>
+              )}
               <Button
                 variant="destructive"
                 size="sm"
+                className="w-full"
                 onClick={() => setShowDeleteDialog(true)}
               >
                 <Trash2 className="mr-2 h-4 w-4" />

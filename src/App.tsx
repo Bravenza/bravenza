@@ -28,6 +28,7 @@ import OrderRequestsPage from "./pages/admin/OrderRequestsPage";
 import UsersPage from "./pages/admin/UsersPage";
 import SettingsPage from "./pages/admin/SettingsPage";
 import EmailFlowPage from "./pages/admin/EmailFlowPage";
+import WhatsAppFlowPage from "./pages/admin/WhatsAppFlowPage";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
                 <Route path="pedidos/:orderId" element={<OrderDetail />} />
                 <Route path="solicitacoes" element={<OrderRequestsPage />} />
                 <Route path="emails" element={<EmailFlowPage />} />
+                <Route path="whatsapp" element={<WhatsAppFlowPage />} />
                 <Route path="usuarios" element={<UsersPage />} />
                 <Route path="configuracoes" element={<SettingsPage />} />
               </Route>

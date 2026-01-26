@@ -12,6 +12,7 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   FULLY_PAID: "Produto Pago Integralmente",
   SHIPPED_TO_CLIENT: "Produto Enviado ao Cliente",
   DELIVERED: "Produto Entregue",
+  LOST: "Pedido Perdido",
   // Legacy statuses (for backward compatibility with existing orders)
   ORDER_CONFIRMED: "Pedido Confirmado",
   SOURCING: "Sourcing",
