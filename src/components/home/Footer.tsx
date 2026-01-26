@@ -70,7 +70,7 @@ export const Footer = () => {
 
         <div className="border-t border-border mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            © {currentYear} BRAVENZA. Todos os direitos reservados.
+            © 2022-{currentYear} BRAVENZA. Todos os direitos reservados.
           </p>
           <div className="flex gap-6 text-sm text-muted-foreground">
             <Link to="/politicas" className="hover:text-primary transition-colors">
