@@ -63,22 +63,57 @@ const STATUS_LABELS: Record<string, string> = {
   DELIVERED: "Entregue! 🎉",
 };
 
+// Twilio helper to send WhatsApp message
+async function sendTwilioWhatsApp(
+  accountSid: string,
+  authToken: string,
+  fromNumber: string,
+  toNumber: string,
+  message: string
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
+  
+  const formData = new URLSearchParams();
+  formData.append("From", `whatsapp:${fromNumber}`);
+  formData.append("To", `whatsapp:+${toNumber}`);
+  formData.append("Body", message);
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Authorization": `Basic ${btoa(`${accountSid}:${authToken}`)}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: formData.toString(),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Twilio API error:", errorText);
+    return { success: false, error: `Twilio error: ${response.status}` };
+  }
+
+  const data = await response.json();
+  return { success: true, messageId: data.sid };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Check if WhatsApp is configured
-    const whatsappToken = Deno.env.get("WHATSAPP_API_TOKEN");
-    const whatsappPhoneId = Deno.env.get("WHATSAPP_PHONE_ID");
+    // Check if Twilio is configured
+    const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+    const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+    const twilioWhatsAppNumber = Deno.env.get("TWILIO_WHATSAPP_NUMBER");
 
-    if (!whatsappToken || !whatsappPhoneId) {
-      console.log("WhatsApp not configured - skipping notification");
+    if (!twilioAccountSid || !twilioAuthToken || !twilioWhatsAppNumber) {
+      console.log("Twilio WhatsApp not configured - skipping notification");
       return new Response(
         JSON.stringify({ 
           success: false, 
-          message: "WhatsApp não configurado",
+          message: "Twilio WhatsApp não configurado. Configure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN e TWILIO_WHATSAPP_NUMBER.",
           skipped: true 
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -148,38 +183,25 @@ serve(async (req) => {
       message = templateFn(templateData);
     }
 
-    // Send via WhatsApp Business API
-    const whatsappResponse = await fetch(
-      `https://graph.facebook.com/v18.0/${whatsappPhoneId}/messages`,
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${whatsappToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          recipient_type: "individual",
-          to: phone,
-          type: "text",
-          text: { body: message },
-        }),
-      }
+    // Send via Twilio WhatsApp
+    const result = await sendTwilioWhatsApp(
+      twilioAccountSid,
+      twilioAuthToken,
+      twilioWhatsAppNumber,
+      phone,
+      message
     );
 
-    if (!whatsappResponse.ok) {
-      const errorData = await whatsappResponse.text();
-      console.error("WhatsApp API error:", errorData);
-      throw new Error(`Erro ao enviar WhatsApp: ${whatsappResponse.status}`);
+    if (!result.success) {
+      throw new Error(result.error || "Erro ao enviar WhatsApp via Twilio");
     }
 
-    const responseData = await whatsappResponse.json();
-    console.log(`WhatsApp sent to ${phone} for order ${order_id}:`, responseData);
+    console.log(`WhatsApp sent via Twilio to +${phone} for order ${order_id}: ${result.messageId}`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message_id: responseData.messages?.[0]?.id 
+        message_id: result.messageId 
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

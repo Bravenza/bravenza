@@ -54,14 +54,15 @@ const NOTIFICATION_CONFIGS: ApiConfig[] = [
   },
   {
     id: "whatsapp",
-    name: "WhatsApp Business API",
-    description: "Envio de mensagens automáticas via WhatsApp (opcional).",
+    name: "WhatsApp (Twilio)",
+    description: "Envio de mensagens automáticas via WhatsApp usando Twilio.",
     icon: <MessageSquare className="h-6 w-6" />,
     requiredSecrets: [
-      { key: "WHATSAPP_API_TOKEN", label: "API Token", placeholder: "Token da API" },
-      { key: "WHATSAPP_PHONE_ID", label: "Phone ID", placeholder: "ID do telefone" }
+      { key: "TWILIO_ACCOUNT_SID", label: "Account SID", placeholder: "ACxxxxxxxxxxxxxxx" },
+      { key: "TWILIO_AUTH_TOKEN", label: "Auth Token", placeholder: "Token de autenticação" },
+      { key: "TWILIO_WHATSAPP_NUMBER", label: "WhatsApp Number", placeholder: "+14155238886" }
     ],
-    docsUrl: "https://developers.facebook.com/docs/whatsapp",
+    docsUrl: "https://www.twilio.com/docs/whatsapp",
   },
 ];
 
