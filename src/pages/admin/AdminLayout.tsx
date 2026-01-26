@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Package,
   Users,
+  Settings,
   LogOut,
   Menu,
   X,
@@ -18,6 +19,7 @@ const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
   { icon: Package, label: "Pedidos", path: "/admin/pedidos" },
   { icon: Users, label: "Usuários", path: "/admin/usuarios" },
+  { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
 ];
 
 const AdminLayout = () => {
