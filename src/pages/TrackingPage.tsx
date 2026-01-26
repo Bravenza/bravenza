@@ -13,6 +13,7 @@ import {
 import { motion } from "framer-motion";
 import { Logo } from "@/components/Logo";
 import { StatusTimeline } from "@/components/tracking/StatusTimeline";
+import { ProgressStepper } from "@/components/tracking/ProgressStepper";
 import { InfoCard, InfoRow } from "@/components/tracking/InfoCard";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -187,25 +188,19 @@ const TrackingPage = () => {
             </p>
           </motion.div>
 
-          {/* Current status card */}
+          {/* Progress Stepper */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             className="card-premium-gold p-6 md:p-8 mb-8"
           >
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center pulse-gold">
-                <Package className="h-7 w-7 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Status Atual</p>
-                <h2 className="text-xl md:text-2xl font-bold text-primary">
-                  {ORDER_STATUS_LABELS[order.current_status] || order.current_status}
-                </h2>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <ProgressStepper
+              currentStatus={order.current_status}
+              orderType={order.order_type}
+              history={history}
+            />
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-4 pt-4 border-t border-border/50">
               <Clock className="h-4 w-4" />
               <span>Pedido criado em {formatDateTime(order.created_at)}</span>
             </div>
