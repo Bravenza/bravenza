@@ -66,6 +66,7 @@ import {
 import { BudgetActions } from "@/components/admin/BudgetActions";
 import { VaultPolicyCard } from "@/components/admin/VaultPolicyCard";
 import { InspectionPhotosUpload } from "@/components/admin/InspectionPhotosUpload";
+import { ShippingSection } from "@/components/admin/ShippingSection";
 import { sendAllStatusNotifications, sendPaymentConfirmationEmail } from "@/lib/email-notifications";
 import { SNEAKER_BRANDS, getModelsForBrand, getBrandLabel, getModelLabel, findBrandKey, findModelKey } from "@/lib/sneaker-data";
 
@@ -1447,6 +1448,45 @@ const OrderDetail = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* SuperFrete Integration */}
+          {!isEditing && (
+            <ShippingSection
+              orderId={order.order_id}
+              clientName={order.client_name}
+              clientPhone={order.client_phone}
+              clientEmail={order.client_email}
+              clientAddress={order.client_address}
+              productName={order.product_name}
+              productPrice={order.product_price}
+              nationalTracking={order.national_tracking}
+              nationalCarrier={order.national_carrier}
+              onTrackingUpdate={async (tracking, carrier) => {
+                try {
+                  await supabase
+                    .from("orders")
+                    .update({
+                      national_tracking: tracking,
+                      national_carrier: carrier,
+                    })
+                    .eq("order_id", order.order_id);
+                  
+                  setOrder(prev => prev ? {
+                    ...prev,
+                    national_tracking: tracking,
+                    national_carrier: carrier,
+                  } : null);
+                  
+                  toast({
+                    title: "Rastreio atualizado",
+                    description: `Código: ${tracking}`,
+                  });
+                } catch (error) {
+                  console.error("Error updating tracking:", error);
+                }
+              }}
+            />
+          )}
 
           {/* Notes */}
           <Card className="card-premium">
