@@ -160,6 +160,48 @@ export async function sendPaymentConfirmationEmail(
   }
 }
 
+// Process referral reward when a referred order is fully paid
+export async function processReferralReward(orderId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Find if this order was made via referral
+    const { data: referral, error: referralError } = await supabase
+      .from("referrals")
+      .select("*")
+      .eq("referred_order_id", orderId)
+      .eq("status", "converted")
+      .maybeSingle();
+
+    if (referralError) {
+      console.error("Error finding referral:", referralError);
+      return { success: false, error: referralError.message };
+    }
+
+    if (!referral) {
+      // No referral found for this order, that's fine
+      return { success: true };
+    }
+
+    // Mark the referral as rewarded - the referrer now has a discount available
+    const { error: updateError } = await supabase
+      .from("referrals")
+      .update({
+        status: "rewarded",
+      })
+      .eq("id", referral.id);
+
+    if (updateError) {
+      console.error("Error updating referral to rewarded:", updateError);
+      return { success: false, error: updateError.message };
+    }
+
+    console.log(`Referral reward processed for ${referral.referrer_name} (${referral.discount_percentage}% discount)`);
+    return { success: true };
+  } catch (err: any) {
+    console.error("Failed to process referral reward:", err);
+    return { success: false, error: err.message };
+  }
+}
+
 // Send all notifications for a status change (email + WhatsApp)
 export async function sendAllStatusNotifications(
   newStatus: string,
@@ -185,6 +227,11 @@ export async function sendAllStatusNotifications(
     } catch (err) {
       console.error("Failed to schedule payment reminder:", err);
     }
+  }
+
+  // Process referral reward when order is fully paid
+  if (newStatus === "FULLY_PAID") {
+    processReferralReward(orderData.order_id);
   }
 
   return {

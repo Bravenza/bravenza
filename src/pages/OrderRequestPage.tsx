@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Upload, CheckCircle2, ArrowLeft, User, MapPin, Package, Image } from "lucide-react";
+import { Loader2, Upload, CheckCircle2, ArrowLeft, User, MapPin, Package, Image, Gift } from "lucide-react";
 import { SNEAKER_BRANDS, getModelsForBrand } from "@/lib/sneaker-data";
 import { Footer } from "@/components/home/Footer";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
@@ -25,11 +25,13 @@ const BR_STATES = [
 
 export default function OrderRequestPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [referralInfo, setReferralInfo] = useState<{ code: string; referrerName: string; discount: number } | null>(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -50,9 +52,51 @@ export default function OrderRequestPage() {
     product_color: "",
     product_link: "",
     additional_notes: "",
+    referral_code: "",
   });
 
   const [selectedBrand, setSelectedBrand] = useState("");
+
+  // Check for referral code in URL
+  useEffect(() => {
+    const refCode = searchParams.get("ref");
+    if (refCode) {
+      validateReferralCode(refCode);
+    }
+  }, [searchParams]);
+
+  const validateReferralCode = async (code: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("referrals")
+        .select("referral_code, referrer_name, discount_percentage, status, expires_at")
+        .eq("referral_code", code.toUpperCase())
+        .eq("status", "pending")
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        // Check if expired
+        if (data.expires_at && new Date(data.expires_at) < new Date()) {
+          toast.error("Código de indicação expirado");
+          return;
+        }
+
+        setReferralInfo({
+          code: data.referral_code,
+          referrerName: data.referrer_name,
+          discount: data.discount_percentage || 5,
+        });
+        setFormData(prev => ({ ...prev, referral_code: data.referral_code }));
+        toast.success(`Código de indicação válido! Indicado por ${data.referrer_name}`);
+      } else {
+        toast.error("Código de indicação inválido ou já utilizado");
+      }
+    } catch (err) {
+      console.error("Error validating referral code:", err);
+    }
+  };
 
   const updateField = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -197,15 +241,31 @@ export default function OrderRequestPage() {
         imageUrl = publicUrl;
       }
 
-      // Insert request
-      const { error } = await supabase
+      // Insert request with referral_code
+      const { data: requestData, error } = await supabase
         .from("order_requests")
         .insert({
           ...formData,
+          referral_code: referralInfo?.code || formData.referral_code || null,
           reference_image_url: imageUrl,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // If referral code was used, update the referral status to converted
+      if (referralInfo?.code && requestData) {
+        await supabase
+          .from("referrals")
+          .update({
+            status: "converted",
+            referred_cpf: formData.client_cpf.replace(/\D/g, ""),
+            referred_name: formData.client_name,
+          })
+          .eq("referral_code", referralInfo.code)
+          .eq("status", "pending");
+      }
 
       // Create notification for admins
       try {
@@ -550,6 +610,47 @@ export default function OrderRequestPage() {
                   </label>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Referral Code */}
+          <Card className={referralInfo ? "border-primary/50 bg-primary/5" : ""}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Gift className="h-5 w-5 text-primary" />
+                Código de Indicação
+              </CardTitle>
+              <CardDescription>
+                {referralInfo 
+                  ? `Você foi indicado por ${referralInfo.referrerName}! O indicador receberá ${referralInfo.discount}% de desconto no próximo pedido.`
+                  : "Tem um código de indicação? Insira aqui para beneficiar quem te indicou."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                <Input
+                  value={formData.referral_code}
+                  onChange={(e) => updateField("referral_code", e.target.value.toUpperCase())}
+                  placeholder="Ex: BRVZABC123"
+                  disabled={!!referralInfo}
+                  className={referralInfo ? "border-primary/50" : ""}
+                />
+                {!referralInfo && formData.referral_code.length >= 4 && (
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => validateReferralCode(formData.referral_code)}
+                  >
+                    Validar
+                  </Button>
+                )}
+              </div>
+              {referralInfo && (
+                <div className="mt-2 flex items-center gap-2 text-sm text-primary">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Código válido! Indicado por {referralInfo.referrerName}
+                </div>
+              )}
             </CardContent>
           </Card>
 

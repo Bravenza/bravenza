@@ -15,7 +15,8 @@ import {
   FileText,
   Download,
   Receipt,
-  Star
+  Star,
+  Gift
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useClientAuth } from "@/hooks/useClientAuth";
@@ -23,6 +24,7 @@ import { Footer } from "@/components/home/Footer";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 import { Logo } from "@/components/Logo";
 import { ReviewForm } from "@/components/client/ReviewForm";
+import { ReferralCard } from "@/components/client/ReferralCard";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -171,13 +173,16 @@ export default function ClientDashboard() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
+          className="grid gap-8 lg:grid-cols-3"
         >
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold">Meus Pedidos</h1>
-            <p className="text-muted-foreground">
-              Acompanhe o status de todos os seus pedidos
-            </p>
-          </div>
+          {/* Main Content - Orders */}
+          <div className="lg:col-span-2 space-y-6">
+            <div>
+              <h1 className="text-2xl font-bold">Meus Pedidos</h1>
+              <p className="text-muted-foreground">
+                Acompanhe o status de todos os seus pedidos
+              </p>
+            </div>
 
           {isLoading ? (
             <div className="grid gap-4">
@@ -407,6 +412,17 @@ export default function ClientDashboard() {
               ))}
             </div>
           )}
+          </div>
+
+          {/* Sidebar - Referral Card */}
+          <div className="space-y-6">
+            {session && (
+              <ReferralCard 
+                clientCpf={session.cpf}
+                clientName={session.client_name}
+              />
+            )}
+          </div>
         </motion.div>
 
         {/* Review Modal */}
