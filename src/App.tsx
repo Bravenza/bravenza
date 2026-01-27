@@ -37,6 +37,11 @@ const UsersPage = lazy(() => import("./pages/admin/UsersPage"));
 const SettingsPage = lazy(() => import("./pages/admin/SettingsPage"));
 const EmailFlowPage = lazy(() => import("./pages/admin/EmailFlowPage"));
 const WhatsAppFlowPage = lazy(() => import("./pages/admin/WhatsAppFlowPage"));
+const SuppliersPage = lazy(() => import("./pages/admin/SuppliersPage"));
+const FAQManagerPage = lazy(() => import("./pages/admin/FAQManagerPage"));
+const ReviewsPage = lazy(() => import("./pages/admin/ReviewsPage"));
+const ReferralsPage = lazy(() => import("./pages/admin/ReferralsPage"));
+const ActivityLogsPage = lazy(() => import("./pages/admin/ActivityLogsPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -95,6 +100,11 @@ const App = () => (
                   <Route path="solicitacoes" element={<OrderRequestsPage />} />
                   <Route path="emails" element={<EmailFlowPage />} />
                   <Route path="whatsapp" element={<WhatsAppFlowPage />} />
+                  <Route path="fornecedores" element={<SuppliersPage />} />
+                  <Route path="faq" element={<FAQManagerPage />} />
+                  <Route path="avaliacoes" element={<ReviewsPage />} />
+                  <Route path="indicacoes" element={<ReferralsPage />} />
+                  <Route path="logs" element={<ActivityLogsPage />} />
                   <Route path="usuarios" element={<UsersPage />} />
                   <Route path="configuracoes" element={<SettingsPage />} />
                 </Route>
