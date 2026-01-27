@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, Loader2, LogIn, UserPlus } from "lucide-react";
 import { motion } from "framer-motion";
@@ -26,7 +26,7 @@ const signupSchema = z.object({
   path: ["confirmPassword"],
 });
 
-const Login = () => {
+const Login = forwardRef<HTMLDivElement>((_, ref) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, isAdmin, signIn, signUp, isLoading: authLoading } = useAuth();
@@ -325,6 +325,8 @@ const Login = () => {
       </main>
     </div>
   );
-};
+});
+
+Login.displayName = "Login";
 
 export default Login;
