@@ -20,7 +20,7 @@ const STATUS_EMAIL_MAP: Record<string, string> = {
   PACKAGE_EN_ROUTE: "package_shipped",
   INSPECTION_APPROVED: "inspection_approved",
   BALANCE_DUE: "balance_due",
-  INTERNATIONAL_DISPATCH: "international_dispatch",
+  INTERNATIONAL_DISPATCH: "dispatched",
   DISPATCHED: "dispatched",
 };
 

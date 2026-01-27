@@ -14,7 +14,8 @@ type EmailType =
   | "sinal_confirmed"
   | "product_found"
   | "package_shipped"
-  | "arrived_inspection"
+  | "arrived_brazil"
+  | "inspection_approved"
   | "balance_due"
   | "balance_confirmed"
   | "dispatched"
@@ -74,7 +75,8 @@ const getEmailSubject = (type: EmailType, orderId: string, data?: EmailRequest):
     sinal_confirmed: `Pagamento confirmado! Iniciando busca - ${orderId}`,
     product_found: `Ótima notícia! Seu produto foi encontrado - ${orderId}`,
     package_shipped: `Seu pacote está a caminho do Brasil! - ${orderId}`,
-    arrived_inspection: `Produto aprovado na inspeção! - ${orderId}`,
+    arrived_brazil: `Seu produto chegou ao Brasil! - ${orderId}`,
+    inspection_approved: `Produto aprovado na inspeção! - ${orderId}`,
     balance_due: `Pague o saldo e receba seu produto! - ${orderId}`,
     balance_confirmed: `Pagamento completo! Preparando envio - ${orderId}`,
     dispatched: `Seu pedido está a caminho! - ${orderId}`,
@@ -254,17 +256,41 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         </p>
       `,
     },
-    arrived_inspection: {
-      subtitle: "Inspeção Aprovada! ✓",
+    arrived_brazil: {
+      subtitle: "Produto Chegou ao Brasil! 📦",
       content: `
         <div style="background-color: #0a3d0a; border: 1px solid #0d6d0d; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-          <p style="color: #4ade80; font-size: 14px; margin: 0;">✓ Produto chegou e passou na inspeção de qualidade!</p>
+          <p style="color: #4ade80; font-size: 14px; margin: 0;">✓ Seu produto chegou à nossa central no Brasil!</p>
         </div>
         
         <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
-          Seu <strong style="color: #fff;">${data.product_name}</strong> está pronto para ser enviado. 
-          Efetue o pagamento do saldo para liberarmos o envio.
+          Seu <strong style="color: #fff;">${data.product_name}</strong> foi recebido e está passando por nossa rigorosa inspeção de qualidade e autenticidade.
         </p>
+        
+        <p style="color: #666; font-size: 13px; text-align: center; margin: 0; line-height: 1.5;">
+          Você será notificado assim que a inspeção for concluída.
+        </p>
+      `,
+    },
+    inspection_approved: {
+      subtitle: "Inspeção Aprovada! ✓",
+      content: `
+        <div style="background-color: #0a3d0a; border: 1px solid #0d6d0d; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+          <p style="color: #4ade80; font-size: 14px; margin: 0;">✓ Produto aprovado na inspeção de qualidade!</p>
+        </div>
+        
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          Seu <strong style="color: #fff;">${data.product_name}</strong> passou em todos os testes de autenticidade e está pronto para ser enviado. Efetue o pagamento do saldo para liberarmos o envio.
+        </p>
+        
+        <div style="text-align: center;">
+          <a href="https://bravenza.com.br/minha-conta" 
+             style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
+                    color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
+                    font-weight: bold; font-size: 16px;">
+            Pagar Saldo
+          </a>
+        </div>
       `,
     },
     balance_due: {
@@ -365,7 +391,7 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         </div>
         
         <p style="color: #666; font-size: 13px; text-align: center; margin: 0; line-height: 1.5;">
-          Alguma dúvida? Entre em contato conosco.
+          Alguma dúvida? Fale conosco pelo <a href="https://wa.me/5551999999999" style="color: #d4af37; text-decoration: none;">WhatsApp</a>.
         </p>
       `,
     },
@@ -373,7 +399,11 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
       subtitle: "Lembrete de Pagamento ⏰",
       content: `
         <p style="color: #ff9500; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
-          Notamos que o pagamento do saldo do seu pedido <strong>${data.order_id}</strong> ainda está pendente.
+          Notamos que o pagamento do saldo do seu pedido <strong style="color: #fff;">${data.order_id}</strong> ainda está pendente.
+        </p>
+        
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          Seu produto já está em nossa central, pronto para ser enviado assim que o pagamento for confirmado.
         </p>
         
         <div style="background-color: #252525; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
@@ -383,14 +413,18 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
           </p>
         </div>
         
-        <div style="text-align: center;">
-          <a href="${data.payment_link}" 
+        <div style="text-align: center; margin-bottom: 24px;">
+          <a href="https://bravenza.com.br/minha-conta" 
              style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
                     color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
                     font-weight: bold; font-size: 16px;">
             Pagar Agora
           </a>
         </div>
+        
+        <p style="color: #666; font-size: 13px; text-align: center; margin: 0; line-height: 1.5;">
+          Você pode pagar via Pix ou Cartão de Crédito.
+        </p>
       `,
     },
     review_request: {
