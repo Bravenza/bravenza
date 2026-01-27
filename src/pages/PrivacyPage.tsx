@@ -1,28 +1,10 @@
-import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
-import { Logo } from "@/components/Logo";
-import { Button } from "@/components/ui/button";
+import { PublicLayout } from "@/components/layouts/PublicLayout";
 
 const PrivacyPage = () => {
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/">
-            <Logo size="md" />
-          </Link>
-          <Link to="/">
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
-            </Button>
-          </Link>
-        </div>
-      </header>
-
+    <PublicLayout>
       {/* Content */}
-      <main className="container mx-auto px-4 py-12 max-w-4xl">
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">Política de Privacidade</h1>
         <p className="text-muted-foreground mb-8">Última atualização: Janeiro de 2026</p>
 
@@ -166,18 +148,8 @@ const PrivacyPage = () => {
             </p>
           </section>
         </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-border/50 py-8 mt-12">
-        <div className="container mx-auto px-4 text-center">
-          <Logo size="sm" />
-          <p className="text-sm text-muted-foreground mt-4">
-            © 2022-{new Date().getFullYear()} BRAVENZA. Todos os direitos reservados.
-          </p>
-        </div>
-      </footer>
-    </div>
+      </div>
+    </PublicLayout>
   );
 };
 

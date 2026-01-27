@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useClientAuth } from "@/hooks/useClientAuth";
+import { Footer } from "@/components/home/Footer";
+import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 import { Logo } from "@/components/Logo";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -141,12 +143,14 @@ export default function ClientDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Logo size="sm" />
+            <Link to="/">
+              <Logo size="sm" />
+            </Link>
             <div className="hidden sm:block">
               <p className="text-sm text-muted-foreground">Olá,</p>
               <p className="font-semibold">{session?.client_name}</p>
@@ -159,7 +163,7 @@ export default function ClientDashboard() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 flex-1">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -381,6 +385,9 @@ export default function ClientDashboard() {
           )}
         </motion.div>
       </main>
+
+      <Footer />
+      <FloatingWhatsApp />
     </div>
   );
 }
