@@ -199,10 +199,77 @@ export async function processReferralReward(orderId: string): Promise<{ success:
     }
 
     console.log(`Referral reward processed for ${referral.referrer_name} (${referral.discount_percentage}% discount)`);
+
+    // Send notification to the referrer about the confirmed referral
+    await sendReferralConfirmationNotifications(referral);
+
     return { success: true };
   } catch (err: any) {
     console.error("Failed to process referral reward:", err);
     return { success: false, error: err.message };
+  }
+}
+
+// Send referral confirmation notifications (email + WhatsApp) to the referrer
+async function sendReferralConfirmationNotifications(referral: {
+  referrer_name: string;
+  referrer_email?: string | null;
+  referrer_cpf: string;
+  referred_name?: string | null;
+  discount_percentage?: number | null;
+  referral_code: string;
+}): Promise<void> {
+  try {
+    // Get referrer's phone from their orders
+    const { data: referrerOrder } = await supabase
+      .from("orders")
+      .select("client_phone")
+      .eq("client_cpf", referral.referrer_cpf)
+      .not("client_phone", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    // Send email notification
+    if (referral.referrer_email) {
+      try {
+        await supabase.functions.invoke("send-order-email", {
+          body: {
+            type: "referral_confirmed",
+            order_id: "REFERRAL",
+            client_name: referral.referrer_name,
+            client_email: referral.referrer_email,
+            referred_name: referral.referred_name || "seu indicado",
+            discount_percentage: referral.discount_percentage || 5,
+            referral_code: referral.referral_code,
+          },
+        });
+        console.log(`Referral confirmation email sent to ${referral.referrer_email}`);
+      } catch (emailErr) {
+        console.error("Failed to send referral email:", emailErr);
+      }
+    }
+
+    // Send WhatsApp notification
+    if (referrerOrder?.client_phone) {
+      try {
+        await supabase.functions.invoke("send-whatsapp", {
+          body: {
+            message_type: "referral_confirmed",
+            referrer_phone: referrerOrder.client_phone,
+            referrer_name: referral.referrer_name,
+            referred_name: referral.referred_name || "seu indicado",
+            discount_percentage: referral.discount_percentage || 5,
+            referral_code: referral.referral_code,
+          },
+        });
+        console.log(`Referral confirmation WhatsApp sent to ${referrerOrder.client_phone}`);
+      } catch (whatsappErr) {
+        console.error("Failed to send referral WhatsApp:", whatsappErr);
+      }
+    }
+  } catch (err) {
+    console.error("Error sending referral notifications:", err);
   }
 }
 
