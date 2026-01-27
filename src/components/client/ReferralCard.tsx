@@ -43,6 +43,7 @@ export function ReferralCard({ clientCpf, clientName, clientEmail }: ReferralCar
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [cashbackPercentage, setCashbackPercentage] = useState<number>(5);
 
   const myReferralCode = referrals.find(r => r.status === "pending")?.referral_code;
   const referralLink = myReferralCode 
@@ -51,7 +52,25 @@ export function ReferralCard({ clientCpf, clientName, clientEmail }: ReferralCar
 
   useEffect(() => {
     fetchReferrals();
+    fetchCashbackPercentage();
   }, [clientCpf]);
+
+  const fetchCashbackPercentage = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("system_settings")
+        .select("value")
+        .eq("key", "referral_cashback_percentage")
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        setCashbackPercentage(parseFloat(String(data.value).replace(/"/g, "")) || 5);
+      }
+    } catch (err) {
+      console.error("Error fetching cashback percentage:", err);
+    }
+  };
 
   const fetchReferrals = async () => {
     try {
@@ -78,7 +97,7 @@ export function ReferralCard({ clientCpf, clientName, clientEmail }: ReferralCar
 
       const referralCode = codeData;
 
-      // Create the referral entry
+      // Create the referral entry with the configured cashback percentage
       const { error } = await supabase
         .from("referrals")
         .insert({
@@ -86,7 +105,7 @@ export function ReferralCard({ clientCpf, clientName, clientEmail }: ReferralCar
           referrer_name: clientName,
           referrer_email: clientEmail || null,
           referral_code: referralCode,
-          discount_percentage: 5,
+          discount_percentage: cashbackPercentage,
           status: "pending",
         });
 
@@ -218,7 +237,7 @@ export function ReferralCard({ clientCpf, clientName, clientEmail }: ReferralCar
             </div>
 
             <p className="text-xs text-muted-foreground text-center">
-              Quando alguém fizer um pedido usando seu link, você ganha 5% de desconto no próximo pedido!
+              Quando alguém fizer um pedido usando seu link, você ganha {cashbackPercentage}% de desconto no próximo pedido!
             </p>
           </div>
         ) : (
