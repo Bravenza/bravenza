@@ -3,9 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Gift, Copy, Check, Users, Percent, ExternalLink } from "lucide-react";
+import { Gift, Copy, Check, Users, Percent, ExternalLink, Clock, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { MAX_CASHBACK_PERCENTAGE } from "./CashbackBanner";
 
 interface ReferralData {
   id: string;
@@ -35,6 +36,22 @@ const STATUS_COLORS: Record<string, string> = {
   converted: "bg-blue-500/20 text-blue-400 border-blue-500/30",
   rewarded: "bg-green-500/20 text-green-400 border-green-500/30",
   expired: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+};
+
+// Helper to check if a referral is expired (90 days from created_at)
+const isReferralExpired = (createdAt: string): boolean => {
+  const created = new Date(createdAt);
+  const expiresAt = new Date(created.getTime() + 90 * 24 * 60 * 60 * 1000);
+  return expiresAt < new Date();
+};
+
+// Helper to get days until expiration
+const getDaysUntilExpiration = (createdAt: string): number => {
+  const created = new Date(createdAt);
+  const expiresAt = new Date(created.getTime() + 90 * 24 * 60 * 60 * 1000);
+  const now = new Date();
+  const diffTime = expiresAt.getTime() - now.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
 export function ReferralCard({ clientCpf, clientName, clientEmail }: ReferralCardProps) {
@@ -159,11 +176,28 @@ export function ReferralCard({ clientCpf, clientName, clientEmail }: ReferralCar
   }
 
   const pendingReferrals = referrals.filter(r => r.status === "pending");
-  const convertedReferrals = referrals.filter(r => r.status === "converted");
-  const rewardedReferrals = referrals.filter(r => r.status === "rewarded");
+  
+  // Filter converted referrals that are NOT expired and NOT used
+  const validConvertedReferrals = referrals.filter(r => 
+    r.status === "converted" && 
+    !r.discount_used && 
+    !isReferralExpired(r.created_at)
+  );
+  
+  // Expired referrals (for display)
+  const expiredReferrals = referrals.filter(r => 
+    r.status === "converted" && 
+    !r.discount_used && 
+    isReferralExpired(r.created_at)
+  );
+  
+  const rewardedReferrals = referrals.filter(r => r.status === "rewarded" || r.discount_used);
 
   const totalDiscount = rewardedReferrals.reduce((acc, r) => acc + (r.discount_percentage || 0), 0);
-  const pendingDiscount = convertedReferrals.reduce((acc, r) => acc + (r.discount_percentage || 0), 0);
+  
+  // Pending discount is capped at MAX_CASHBACK_PERCENTAGE
+  const rawPendingDiscount = validConvertedReferrals.reduce((acc, r) => acc + (r.discount_percentage || 0), 0);
+  const pendingDiscount = Math.min(rawPendingDiscount, MAX_CASHBACK_PERCENTAGE);
 
   return (
     <Card className="border-border/50 bg-card/50">
@@ -181,7 +215,7 @@ export function ReferralCard({ clientCpf, clientName, clientEmail }: ReferralCar
         <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
           <div className="p-3 rounded-lg bg-muted/50">
             <Users className="h-5 w-5 mx-auto text-primary mb-1" />
-            <p className="text-2xl font-bold">{convertedReferrals.length}</p>
+            <p className="text-2xl font-bold">{validConvertedReferrals.length + rewardedReferrals.length}</p>
             <p className="text-xs text-muted-foreground">Indicados</p>
           </div>
           <div className="p-3 rounded-lg bg-muted/50">
@@ -236,9 +270,15 @@ export function ReferralCard({ clientCpf, clientName, clientEmail }: ReferralCar
               </Button>
             </div>
 
-            <p className="text-xs text-muted-foreground text-center">
-              Quando alguém fizer um pedido usando seu link, você ganha {cashbackPercentage}% de desconto no próximo pedido!
-            </p>
+            <div className="text-xs text-muted-foreground text-center space-y-1">
+              <p>
+                Quando alguém fizer um pedido usando seu link, você ganha {cashbackPercentage}% de desconto no próximo pedido!
+              </p>
+              <p className="flex items-center justify-center gap-1 text-amber-400">
+                <AlertCircle className="h-3 w-3" />
+                Máximo de {MAX_CASHBACK_PERCENTAGE}% por pedido. Créditos expiram em 90 dias.
+              </p>
+            </div>
           </div>
         ) : (
           <div className="text-center py-4">
@@ -256,23 +296,37 @@ export function ReferralCard({ clientCpf, clientName, clientEmail }: ReferralCar
         {referrals.length > 0 && (
           <div className="space-y-2">
             <p className="text-sm font-medium">Histórico de Indicações</p>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {referrals.filter(r => r.referred_name).map((referral) => (
-                <div 
-                  key={referral.id} 
-                  className="flex items-center justify-between p-2 rounded bg-muted/30"
-                >
-                  <div>
-                    <p className="text-sm font-medium">{referral.referred_name}</p>
-                    <Badge className={STATUS_COLORS[referral.status] || ""}>
-                      {STATUS_LABELS[referral.status] || referral.status}
-                    </Badge>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {referrals.filter(r => r.referred_name).map((referral) => {
+                const isExpired = referral.status === "converted" && !referral.discount_used && isReferralExpired(referral.created_at);
+                const daysLeft = getDaysUntilExpiration(referral.created_at);
+                const showExpireWarning = referral.status === "converted" && !referral.discount_used && !isExpired && daysLeft <= 30;
+                
+                return (
+                  <div 
+                    key={referral.id} 
+                    className={`flex items-center justify-between p-2 rounded ${isExpired ? 'bg-muted/20 opacity-60' : 'bg-muted/30'}`}
+                  >
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">{referral.referred_name}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge className={isExpired ? STATUS_COLORS.expired : (STATUS_COLORS[referral.status] || "")}>
+                          {isExpired ? "Expirado" : (STATUS_LABELS[referral.status] || referral.status)}
+                        </Badge>
+                        {showExpireWarning && (
+                          <span className="text-xs text-amber-400 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {daysLeft}d restantes
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <span className={`text-sm font-medium ${isExpired ? 'text-muted-foreground line-through' : 'text-primary'}`}>
+                      +{referral.discount_percentage}%
+                    </span>
                   </div>
-                  <span className="text-sm text-primary font-medium">
-                    +{referral.discount_percentage}%
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
