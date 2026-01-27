@@ -47,6 +47,16 @@ serve(async (req) => {
 
     const order = orderData[0];
 
+    // Fetch additional order data including email
+    const { data: fullOrderData } = await supabase
+      .from("orders")
+      .select("client_email, client_name")
+      .eq("order_id", order.order_id)
+      .single();
+
+    const clientEmail = fullOrderData?.client_email || "cliente@bravenza.com";
+    const clientName = fullOrderData?.client_name || order.client_name;
+
     // Validate payment status
     if (payment_type === "sinal" && order.sinal_paid) {
       throw new Error("Sinal já foi pago");
@@ -76,9 +86,9 @@ serve(async (req) => {
         description: description,
         payment_method_id: "pix",
         payer: {
-          email: order.client_email || "cliente@example.com",
-          first_name: order.client_name?.split(" ")[0] || "Cliente",
-          last_name: order.client_name?.split(" ").slice(1).join(" ") || "",
+          email: clientEmail,
+          first_name: clientName?.split(" ")[0] || "Cliente",
+          last_name: clientName?.split(" ").slice(1).join(" ") || "",
         },
         external_reference: `${order.order_id}-${payment_type}`,
         notification_url: `${supabaseUrl}/functions/v1/mercadopago-webhook`,
