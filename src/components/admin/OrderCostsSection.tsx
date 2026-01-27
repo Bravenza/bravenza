@@ -24,12 +24,24 @@ interface OrderCost {
   created_at: string;
 }
 
+// Payment fee rates
+const PAYMENT_FEE_RATES = {
+  PIX: 0.0099, // 0.99%
+  CREDIT_CARD: 0.0499, // 4.99%
+};
+
 interface OrderCostsSectionProps {
   orderId: string;
   productCost: number | null;
   shippingCost: number | null;
   otherCosts: number | null;
   productPrice: number | null;
+  sinalValue: number | null;
+  sinalPaid: boolean;
+  sinalPaymentMethod: string | null;
+  balanceValue: number | null;
+  balancePaid: boolean;
+  balancePaymentMethod: string | null;
   isEditing: boolean;
   onUpdateField: (field: string, value: number | null) => void;
 }
@@ -48,6 +60,12 @@ export const OrderCostsSection = ({
   shippingCost,
   otherCosts,
   productPrice,
+  sinalValue,
+  sinalPaid,
+  sinalPaymentMethod,
+  balanceValue,
+  balancePaid,
+  balancePaymentMethod,
   isEditing,
   onUpdateField,
 }: OrderCostsSectionProps) => {
@@ -140,12 +158,23 @@ export const OrderCostsSection = ({
     }
   };
 
+  // Calculate payment fees
+  const calculatePaymentFee = (value: number | null, paid: boolean, method: string | null) => {
+    if (!paid || !value || !method) return 0;
+    const rate = method === "PIX" ? PAYMENT_FEE_RATES.PIX : PAYMENT_FEE_RATES.CREDIT_CARD;
+    return value * rate;
+  };
+
+  const sinalPaymentFee = calculatePaymentFee(sinalValue, sinalPaid, sinalPaymentMethod);
+  const balancePaymentFee = calculatePaymentFee(balanceValue, balancePaid, balancePaymentMethod);
+  const totalPaymentFees = sinalPaymentFee + balancePaymentFee;
+
   // Calculate totals
   const totalProductCost = productCost || 0;
   const totalShippingCost = shippingCost || 0;
   const totalOtherCosts = otherCosts || 0;
   const totalAdditionalCosts = additionalCosts.reduce((sum, c) => sum + c.amount, 0);
-  const totalCosts = totalProductCost + totalShippingCost + totalOtherCosts + totalAdditionalCosts;
+  const totalCosts = totalProductCost + totalShippingCost + totalOtherCosts + totalAdditionalCosts + totalPaymentFees;
   const revenue = productPrice || 0;
   const grossProfit = revenue - totalCosts;
   const profitMargin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
@@ -305,6 +334,45 @@ export const OrderCostsSection = ({
           </div>
         )}
 
+        {/* Payment Fees Section */}
+        {totalPaymentFees > 0 && (
+          <div className="space-y-2">
+            <Label>Taxas de Pagamento</Label>
+            <div className="space-y-2">
+              {sinalPaymentFee > 0 && (
+                <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
+                  <div>
+                    <p className="font-medium">
+                      Taxa Sinal ({sinalPaymentMethod === "PIX" ? "PIX 0,99%" : "Cartão 4,99%"})
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Sobre {formatCurrency(sinalValue || 0)}
+                    </p>
+                  </div>
+                  <span className="font-medium text-destructive">
+                    - {formatCurrency(sinalPaymentFee)}
+                  </span>
+                </div>
+              )}
+              {balancePaymentFee > 0 && (
+                <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
+                  <div>
+                    <p className="font-medium">
+                      Taxa Saldo ({balancePaymentMethod === "PIX" ? "PIX 0,99%" : "Cartão 4,99%"})
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Sobre {formatCurrency(balanceValue || 0)}
+                    </p>
+                  </div>
+                  <span className="font-medium text-destructive">
+                    - {formatCurrency(balancePaymentFee)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Summary */}
         <div className="pt-4 border-t border-border space-y-3">
           <div className="flex justify-between text-sm">
@@ -312,9 +380,19 @@ export const OrderCostsSection = ({
             <span className="font-medium">{formatCurrency(revenue)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Custo Total</span>
-            <span className="font-medium text-destructive">- {formatCurrency(totalCosts)}</span>
+            <span className="text-muted-foreground">Custo do Produto</span>
+            <span className="font-medium text-destructive">- {formatCurrency(totalProductCost)}</span>
           </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Frete + Outros</span>
+            <span className="font-medium text-destructive">- {formatCurrency(totalShippingCost + totalOtherCosts + totalAdditionalCosts)}</span>
+          </div>
+          {totalPaymentFees > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Taxas de Pagamento</span>
+              <span className="font-medium text-destructive">- {formatCurrency(totalPaymentFees)}</span>
+            </div>
+          )}
           <div className="flex justify-between text-lg font-bold pt-2 border-t border-border">
             <span>Lucro Bruto</span>
             <span className={grossProfit >= 0 ? "text-success" : "text-destructive"}>
