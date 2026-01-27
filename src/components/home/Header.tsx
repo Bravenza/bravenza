@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ClipboardList } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
 const navLinks = [
   { label: "Início", href: "/" },
@@ -14,7 +16,44 @@ const navLinks = [
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const location = useLocation();
+
+  // Fetch pending order requests count
+  useEffect(() => {
+    const fetchPendingRequests = async () => {
+      const { count, error } = await supabase
+        .from("order_requests")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+      
+      if (!error && count !== null) {
+        setPendingRequestsCount(count);
+      }
+    };
+
+    fetchPendingRequests();
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel("order-requests-count")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "order_requests",
+        },
+        () => {
+          fetchPendingRequests();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleNavClick = (href: string) => {
     setIsMenuOpen(false);
@@ -54,10 +93,19 @@ export const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-4">
-            <Link to="/admin/login">
+            <Link to="/admin/login" className="relative">
               <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                <ClipboardList className="h-4 w-4 mr-1" />
                 Admin
               </Button>
+              {pendingRequestsCount > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs"
+                >
+                  {pendingRequestsCount > 99 ? "99+" : pendingRequestsCount}
+                </Badge>
+              )}
             </Link>
             <Link to="/solicitar">
               <Button size="sm" className="btn-gold">

@@ -50,9 +50,16 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4">Contato</h4>
             <ul className="space-y-2 text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <MessageCircle className="h-4 w-4 text-primary" />
-                <span>WhatsApp</span>
+              <li>
+                <a 
+                  href="https://wa.me/5551983018897?text=Olá!%20Gostaria%20de%20saber%20mais%20sobre%20a%20BRAVENZA." 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 hover:text-primary transition-colors"
+                >
+                  <MessageCircle className="h-4 w-4 text-primary" />
+                  <span>+55 51 98301-8897</span>
+                </a>
               </li>
               <li>
                 <a 
