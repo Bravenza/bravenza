@@ -8,12 +8,12 @@ const Footer = () => {
 
   return (
     <footer className="border-t border-border bg-card/50">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-10">
         <div className="grid md:grid-cols-4 gap-6">
           {/* Brand */}
           <div className="md:col-span-2">
             <Logo size="sm" className="mb-3" />
-            <p className="text-xs text-muted-foreground max-w-xs">
+            <p className="text-sm text-muted-foreground max-w-xs">
               Especialistas em importação de sneakers exclusivos. 
               Autenticidade garantida e rastreamento em tempo real.
             </p>
@@ -21,8 +21,8 @@ const Footer = () => {
 
           {/* Links */}
           <div>
-            <h4 className="text-xs font-semibold mb-3">Links Rápidos</h4>
-            <ul className="space-y-1.5 text-xs text-muted-foreground">
+            <h4 className="text-sm font-semibold mb-3">Links Rápidos</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link to="/" className="hover:text-primary transition-colors">
                   Início
@@ -48,8 +48,8 @@ const Footer = () => {
 
           {/* Contact */}
           <div>
-            <h4 className="text-xs font-semibold mb-3">Contato</h4>
-            <ul className="space-y-2 text-xs text-muted-foreground">
+            <h4 className="text-sm font-semibold mb-3">Contato</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <a 
                   href="https://wa.me/5551983018897?text=Olá!%20Gostaria%20de%20saber%20mais%20sobre%20a%20BRAVENZA." 
@@ -59,9 +59,9 @@ const Footer = () => {
                     e.stopPropagation();
                     window.open("https://wa.me/5551983018897?text=Olá!%20Gostaria%20de%20saber%20mais%20sobre%20a%20BRAVENZA.", "_blank", "noopener,noreferrer");
                   }}
-                  className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-pointer"
+                  className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"
                 >
-                  <MessageCircle className="h-3 w-3 text-primary flex-shrink-0" />
+                  <MessageCircle className="h-3.5 w-3.5 text-primary flex-shrink-0" />
                   <span>+55 51 98301-8897</span>
                 </a>
               </li>
@@ -74,9 +74,9 @@ const Footer = () => {
                     e.stopPropagation();
                     window.open("https://www.instagram.com/bravenza.vault", "_blank", "noopener,noreferrer");
                   }}
-                  className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-pointer"
+                  className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"
                 >
-                  <Instagram className="h-3 w-3 text-primary flex-shrink-0" />
+                  <Instagram className="h-3.5 w-3.5 text-primary flex-shrink-0" />
                   <span>@bravenza.vault</span>
                 </a>
               </li>
@@ -85,10 +85,10 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-border mt-6 pt-6 flex flex-col md:flex-row justify-between items-center gap-3">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             © 2022-{currentYear} BRAVENZA. Todos os direitos reservados.
           </p>
-          <div className="flex gap-4 text-xs text-muted-foreground">
+          <div className="flex gap-5 text-sm text-muted-foreground">
             <Link to="/politicas" className="hover:text-primary transition-colors">
               Políticas
             </Link>
