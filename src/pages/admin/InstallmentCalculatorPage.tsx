@@ -77,7 +77,7 @@ const InstallmentCalculatorPage = () => {
       `📊 Total do saldo: ${formatCurrency(option.totalAmount)}`,
       `📈 Juros: ${option.rate.toFixed(2)}% (${formatCurrency(option.interestAmount)})`,
       "",
-      "_Este valor se refere ao saldo restante (50%), pago após aprovação do produto._",
+      "_Este valor se refere ao saldo restante (50%), pago após o produto chegar ao Brasil._",
       "",
       "Ficou alguma dúvida? Estou à disposição! 😊",
     ];
@@ -118,7 +118,7 @@ const InstallmentCalculatorPage = () => {
     });
 
     lines.push("");
-    lines.push("_Este valor se refere ao saldo restante (50%), pago após aprovação do produto._");
+    lines.push("_Este valor se refere ao saldo restante (50%), pago após o produto chegar ao Brasil._");
     lines.push("_Os juros são aplicados pela operadora do cartão._");
     lines.push("");
     lines.push("Ficou alguma dúvida? Estou à disposição! 😊");
