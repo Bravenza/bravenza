@@ -57,10 +57,10 @@ const FeaturedModelsSection = () => {
         >
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full mb-4">
             <Flame className="h-4 w-4" />
-            <span className="text-sm font-medium">Os Mais Procurados</span>
+            <span className="text-sm font-medium">Os mais procurados</span>
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-            Modelos que Estão <span className="text-gradient-gold">Bombando</span>
+            Modelos que estão <span className="text-gradient-gold">bombando</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Estes são os sneakers que nossos clientes mais pedem. Edições limitadas, 
@@ -112,7 +112,7 @@ const FeaturedModelsSection = () => {
           </p>
           <Link to="/solicitar">
             <Button variant="outline" size="lg" className="border-primary/30 hover:bg-primary/10">
-              Solicitar Outro Modelo
+              Solicitar outro modelo
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>

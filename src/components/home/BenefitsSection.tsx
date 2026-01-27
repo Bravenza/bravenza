@@ -4,17 +4,17 @@ import { Shield, Globe, Zap, BadgeCheck, Headphones, Lock } from "lucide-react";
 const benefits = [
   {
     icon: BadgeCheck,
-    title: "Garantia de Autenticidade",
+    title: "Garantia de autenticidade",
     description: "Se não for original, devolvemos 100% do seu dinheiro. Simples assim. Sem discussão.",
   },
   {
     icon: Globe,
-    title: "Acesso Mundial",
+    title: "Acesso mundial",
     description: "EUA, Europa, Ásia, Oriente Médio... Onde estiver, nós buscamos e trazemos para você.",
   },
   {
     icon: Shield,
-    title: "Fornecedores Verificados",
+    title: "Fornecedores verificados",
     description: "Rede exclusiva de parceiros internacionais com histórico comprovado e auditado.",
   },
   {
@@ -24,7 +24,7 @@ const benefits = [
   },
   {
     icon: Lock,
-    title: "Pagamento Parcelado",
+    title: "Pagamento parcelado",
     description: "Até 12x no cartão ou PIX à vista. Pague o saldo só quando o produto chegar.",
   },
   {

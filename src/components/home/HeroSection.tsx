@@ -23,7 +23,7 @@ export const HeroSection = () => {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8">
               <Crown className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary">
-                A Elite da Importação de Sneakers
+                A elite da importação de sneakers
               </span>
             </div>
           </motion.div>
@@ -59,7 +59,7 @@ export const HeroSection = () => {
           >
             <Link to="/solicitar">
               <Button size="lg" className="btn-gold text-lg px-8 py-6 w-full sm:w-auto">
-                Quero Meu Orçamento Grátis
+                Quero meu orçamento grátis
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
@@ -69,7 +69,7 @@ export const HeroSection = () => {
                 size="lg" 
                 className="text-lg px-8 py-6 w-full sm:w-auto border-primary/30 hover:bg-primary/10"
               >
-                Rastrear Meu Pedido
+                Rastrear meu pedido
               </Button>
             </Link>
           </motion.div>
@@ -83,15 +83,15 @@ export const HeroSection = () => {
           >
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium">100% Original ou Dinheiro de Volta</span>
+              <span className="text-sm font-medium">100% Autêntico</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium">Rastreio em Tempo Real</span>
+              <span className="text-sm font-medium">Rastreio em tempo real</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium">Pague Só Depois de Aprovar</span>
+              <span className="text-sm font-medium">Pagamento seguro</span>
             </div>
           </motion.div>
         </div>

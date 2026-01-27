@@ -39,8 +39,8 @@ export const TestimonialsSection = () => {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-5xl font-bold mb-4">
-            Quem Comprou,{" "}
-            <span className="text-gradient-gold">Aprovou</span>
+            Quem comprou,{" "}
+            <span className="text-gradient-gold">aprovou</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Histórias reais de clientes que confiaram e voltaram. Leia antes de decidir.
