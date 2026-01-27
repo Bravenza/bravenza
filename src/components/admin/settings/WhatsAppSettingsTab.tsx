@@ -113,7 +113,7 @@ _Bravenza - Sua loja de sneakers premium_`,
     trigger: "Status: DISPATCHED",
     description: "Produto enviado com código de rastreio",
     icon: <Truck className="h-5 w-5" />,
-    status: "pending",
+    status: "active",
     messageTemplate: `🚚 *Seu Pedido Saiu Para Entrega!*
 
 Olá {client_name}!
@@ -127,6 +127,69 @@ Acompanhe a entrega pelo código acima.
 
 _Bravenza - Sua loja de sneakers premium_`,
     variables: ["client_name", "order_id", "tracking_code", "carrier"],
+  },
+  {
+    id: "delivered",
+    name: "Entregue",
+    trigger: "Status: DELIVERED",
+    description: "Confirmação de entrega e agradecimento",
+    icon: <CheckCircle className="h-5 w-5" />,
+    status: "active",
+    messageTemplate: `🎉 *Pedido Entregue!*
+
+Olá {client_name}!
+
+Seu pedido *{order_id}* foi entregue com sucesso!
+
+📦 Produto: {product_name}
+
+Esperamos que você ame seu novo sneaker! 👟
+
+Em alguns dias, enviaremos um link para você avaliar sua experiência.
+
+_Bravenza - Sua loja de sneakers premium_`,
+    variables: ["client_name", "order_id", "product_name"],
+  },
+  {
+    id: "review_request",
+    name: "Avaliação Pós-Entrega",
+    trigger: "3 dias após DELIVERED",
+    description: "Solicitação de avaliação do cliente",
+    icon: <MessageSquare className="h-5 w-5" />,
+    status: "active",
+    messageTemplate: `⭐ *Avalie sua experiência!*
+
+Olá {client_name}!
+
+Já faz alguns dias que você recebeu seu pedido *{order_id}*.
+
+Gostaríamos de saber: como foi sua experiência conosco?
+
+Sua opinião é muito importante! Clique no link abaixo para avaliar:
+{review_link}
+
+_Bravenza - Sua loja de sneakers premium_`,
+    variables: ["client_name", "order_id", "review_link"],
+  },
+  {
+    id: "referral_confirmed",
+    name: "Indicação Confirmada",
+    trigger: "Quando indicação é validada",
+    description: "Notificação ao cliente que indicou sobre o desconto ganho",
+    icon: <Package className="h-5 w-5" />,
+    status: "active",
+    messageTemplate: `🎁 *Parabéns! Sua indicação foi confirmada!*
+
+Olá {client_name}!
+
+{referred_name} finalizou uma compra usando sua indicação!
+
+Você ganhou *{discount_percentage}% de desconto* no seu próximo pedido.
+
+Use seu código: *{referral_code}*
+
+_Bravenza - Sua loja de sneakers premium_`,
+    variables: ["client_name", "referred_name", "discount_percentage", "referral_code"],
   },
 ];
 
@@ -202,7 +265,11 @@ export function WhatsAppSettingsTab() {
       .replace("{notes}", "📝 Previsão de entrega: 3-5 dias úteis")
       .replace("{tracking}", "🚚 Rastreio: BR123456789BR")
       .replace("{tracking_code}", "BR123456789BR")
-      .replace("{carrier}", "Correios");
+      .replace("{carrier}", "Correios")
+      .replace("{review_link}", "https://bravenza.lovable.app/avaliar/...")
+      .replace("{referred_name}", "Maria")
+      .replace("{discount_percentage}", "5")
+      .replace("{referral_code}", "BRVZABC123");
   };
 
   return (

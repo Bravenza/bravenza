@@ -142,6 +142,26 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
     subject: "Lembrete: Pagamento pendente - {order_id}",
     variables: ["client_name", "order_id", "balance_value", "payment_link"],
   },
+  {
+    id: "review_request",
+    name: "Avaliação Pós-Entrega",
+    trigger: "3 dias após DELIVERED",
+    description: "Solicitação de avaliação do cliente após recebimento",
+    icon: <CheckCircle className="h-5 w-5" />,
+    status: "active",
+    subject: "Como foi sua experiência? - {order_id}",
+    variables: ["client_name", "order_id", "product_name", "review_link"],
+  },
+  {
+    id: "referral_confirmed",
+    name: "Indicação Confirmada",
+    trigger: "Quando indicação é validada (indicado finaliza compra)",
+    description: "Notificação ao cliente que indicou sobre o desconto ganho",
+    icon: <Package className="h-5 w-5" />,
+    status: "active",
+    subject: "Parabéns! Sua indicação foi confirmada 🎉 - {referral_code}",
+    variables: ["client_name", "referral_code", "referred_name", "discount_percentage"],
+  },
 ];
 
 export function EmailSettingsTab() {
@@ -333,6 +353,81 @@ function EmailPreview({ templateId }: { templateId: string }) {
             <p className="text-white font-mono font-bold">BR123456789BR</p>
             <p className="text-xs text-gray-400">Transportadora: Correios</p>
           </div>
+        </div>
+      </div>
+    ),
+    delivered: (
+      <div className="bg-[#0a0a0a] text-white rounded-lg overflow-hidden text-sm">
+        <div className="bg-gradient-to-r from-[#d4af37] via-[#f4e5a3] to-[#d4af37] p-6 text-center">
+          <h2 className="text-xl font-bold text-[#0a0a0a]">BRAVENZA</h2>
+          <p className="text-[#333] text-xs">Pedido Entregue! 🎉</p>
+        </div>
+        <div className="p-6 space-y-4">
+          <p>Olá, <strong>João</strong>!</p>
+          <p className="text-gray-400 text-xs">
+            Seu pedido <span className="text-[#d4af37]">BV-260126-001</span> foi entregue com sucesso!
+          </p>
+          <div className="bg-[#252525] rounded-lg p-4">
+            <p className="text-center text-white">📦 Nike Air Force 1</p>
+          </div>
+          <p className="text-gray-400 text-xs text-center">
+            Esperamos que você ame seu novo sneaker! 👟
+          </p>
+          <div className="text-center">
+            <button className="bg-gradient-to-r from-[#d4af37] via-[#f4e5a3] to-[#d4af37] text-[#0a0a0a] px-6 py-2 rounded font-bold text-xs">
+              Avaliar Minha Experiência ⭐
+            </button>
+          </div>
+        </div>
+      </div>
+    ),
+    review_request: (
+      <div className="bg-[#0a0a0a] text-white rounded-lg overflow-hidden text-sm">
+        <div className="bg-gradient-to-r from-[#d4af37] via-[#f4e5a3] to-[#d4af37] p-6 text-center">
+          <h2 className="text-xl font-bold text-[#0a0a0a]">BRAVENZA</h2>
+          <p className="text-[#333] text-xs">Como foi sua experiência? ⭐</p>
+        </div>
+        <div className="p-6 space-y-4">
+          <p>Olá, <strong>João</strong>!</p>
+          <p className="text-gray-400 text-xs">
+            Já faz alguns dias que você recebeu seu pedido <span className="text-[#d4af37]">BV-260126-001</span>.
+          </p>
+          <p className="text-gray-400 text-xs">
+            Gostaríamos de saber: como foi sua experiência conosco?
+          </p>
+          <div className="text-center">
+            <button className="bg-gradient-to-r from-[#d4af37] via-[#f4e5a3] to-[#d4af37] text-[#0a0a0a] px-6 py-2 rounded font-bold text-xs">
+              Avaliar Agora ⭐⭐⭐⭐⭐
+            </button>
+          </div>
+          <p className="text-gray-500 text-[10px] text-center">
+            Sua opinião é muito importante para nós!
+          </p>
+        </div>
+      </div>
+    ),
+    referral_confirmed: (
+      <div className="bg-[#0a0a0a] text-white rounded-lg overflow-hidden text-sm">
+        <div className="bg-gradient-to-r from-[#d4af37] via-[#f4e5a3] to-[#d4af37] p-6 text-center">
+          <h2 className="text-xl font-bold text-[#0a0a0a]">BRAVENZA</h2>
+          <p className="text-[#333] text-xs">Parabéns! Sua indicação valeu! 🎁</p>
+        </div>
+        <div className="p-6 space-y-4">
+          <p>Olá, <strong>João</strong>!</p>
+          <p className="text-gray-400 text-xs">
+            <strong>Maria</strong> finalizou uma compra usando sua indicação!
+          </p>
+          <div className="bg-[#252525] rounded-lg p-4 text-center">
+            <p className="text-[#d4af37] font-bold text-lg">5% de desconto</p>
+            <p className="text-xs text-gray-400">no seu próximo pedido</p>
+          </div>
+          <div className="bg-[#252525] rounded-lg p-3 text-center">
+            <p className="text-xs text-gray-400">Seu código:</p>
+            <p className="text-white font-mono font-bold">BRVZABC123</p>
+          </div>
+          <p className="text-gray-500 text-[10px] text-center">
+            Continue indicando e ganhe mais descontos!
+          </p>
         </div>
       </div>
     ),
