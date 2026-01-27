@@ -71,11 +71,13 @@ const InstallmentCalculatorPage = () => {
     const lines = [
       clientName ? `Olá ${clientName}!` : "Olá!",
       "",
-      productName ? `Segue a cotação para *${productName}*:` : "Segue a cotação:",
+      productName ? `Segue a cotação do *saldo* para *${productName}*:` : "Segue a cotação do *saldo restante*:",
       "",
       `💳 *${option.installments}x de ${formatCurrency(option.installmentValue)}*`,
-      `📊 Total: ${formatCurrency(option.totalAmount)}`,
+      `📊 Total do saldo: ${formatCurrency(option.totalAmount)}`,
       `📈 Juros: ${option.rate.toFixed(2)}% (${formatCurrency(option.interestAmount)})`,
+      "",
+      "_Este valor se refere ao saldo restante (50%), pago após aprovação do produto._",
       "",
       "Ficou alguma dúvida? Estou à disposição! 😊",
     ];
@@ -101,11 +103,11 @@ const InstallmentCalculatorPage = () => {
     const lines = [
       clientName ? `Olá ${clientName}!` : "Olá!",
       "",
-      productName ? `Segue as opções de parcelamento para *${productName}*:` : "Segue as opções de parcelamento:",
+      productName ? `Segue as opções de parcelamento do *saldo* para *${productName}*:` : "Segue as opções de parcelamento do *saldo restante*:",
       "",
-      `💰 Valor à vista: ${formatCurrency(numericValue)}`,
+      `💰 Valor do saldo à vista: ${formatCurrency(numericValue)}`,
       "",
-      "💳 *Opções de Parcelamento:*",
+      "💳 *Opções de Parcelamento do Saldo:*",
       "",
     ];
 
@@ -116,6 +118,7 @@ const InstallmentCalculatorPage = () => {
     });
 
     lines.push("");
+    lines.push("_Este valor se refere ao saldo restante (50%), pago após aprovação do produto._");
     lines.push("_Os juros são aplicados pela operadora do cartão._");
     lines.push("");
     lines.push("Ficou alguma dúvida? Estou à disposição! 😊");
@@ -134,10 +137,10 @@ const InstallmentCalculatorPage = () => {
       <div>
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <Calculator className="h-6 w-6" />
-          Calculadora de Parcelamento
+          Calculadora de Parcelamento do Saldo
         </h1>
         <p className="text-muted-foreground">
-          Calcule o valor das parcelas com juros do Mercado Pago e envie cotações para clientes
+          Calcule o valor das parcelas do saldo (50% restante) com juros do Mercado Pago
         </p>
       </div>
 
@@ -145,11 +148,11 @@ const InstallmentCalculatorPage = () => {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Dados da Cotação</CardTitle>
-            <CardDescription>Preencha os dados para calcular</CardDescription>
+            <CardDescription>Informe o valor do saldo (50% restante)</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="baseValue">Valor Base (R$)</Label>
+              <Label htmlFor="baseValue">Valor do Saldo (R$)</Label>
               <Input
                 id="baseValue"
                 type="text"
@@ -161,6 +164,9 @@ const InstallmentCalculatorPage = () => {
                 }}
                 className="text-lg font-semibold"
               />
+              <p className="text-xs text-muted-foreground">
+                50% restante do valor total do pedido
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -196,11 +202,11 @@ const InstallmentCalculatorPage = () => {
 
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle className="text-lg">Opções de Parcelamento</CardTitle>
+            <CardTitle className="text-lg">Opções de Parcelamento do Saldo</CardTitle>
             <CardDescription>
               {numericValue > 0
-                ? `Valor base: ${formatCurrency(numericValue)}`
-                : "Digite um valor para ver as opções"}
+                ? `Valor do saldo: ${formatCurrency(numericValue)}`
+                : "Digite o valor do saldo para ver as opções"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -210,7 +216,7 @@ const InstallmentCalculatorPage = () => {
                   <TableRow>
                     <TableHead>Parcelas</TableHead>
                     <TableHead>Valor/Parcela</TableHead>
-                    <TableHead>Total</TableHead>
+                    <TableHead>Total do Saldo</TableHead>
                     <TableHead>Juros</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -261,7 +267,7 @@ const InstallmentCalculatorPage = () => {
               </Table>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                Digite um valor para ver as opções de parcelamento
+                Digite o valor do saldo para ver as opções de parcelamento
               </div>
             )}
           </CardContent>
