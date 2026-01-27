@@ -275,6 +275,16 @@ export function ShippingSection({
           window.open(orderData.print_url, "_blank");
         }
       } else if (data?.error) {
+        // Check for specific wallet balance error
+        if (data.error.includes("saldo na carteira") || data.error.includes("Sem saldo")) {
+          toast.warning(
+            "Etiqueta criada, mas sem saldo na carteira SuperFrete. Acesse o app SuperFrete para recarregar ou pagar com cartão de crédito.",
+            { duration: 8000 }
+          );
+          setShowLabelModal(false);
+          setSelectedQuote(null);
+          return;
+        }
         throw new Error(data.error);
       } else {
         toast.success("Etiqueta processada! Verifique sua conta SuperFrete.");
@@ -284,7 +294,20 @@ export function ShippingSection({
       setSelectedQuote(null);
     } catch (error: any) {
       console.error("Error creating label:", error);
-      toast.error(error.message || "Erro ao criar etiqueta");
+      
+      // Check for wallet balance error in catch block too
+      const errorMsg = error.message || "";
+      if (errorMsg.includes("saldo na carteira") || errorMsg.includes("Sem saldo")) {
+        toast.warning(
+          "Etiqueta criada no SuperFrete, mas sem saldo na carteira. Acesse o app para pagar a etiqueta.",
+          { duration: 8000 }
+        );
+        setShowLabelModal(false);
+        setSelectedQuote(null);
+        return;
+      }
+      
+      toast.error(errorMsg || "Erro ao criar etiqueta");
     } finally {
       setIsCreatingLabel(false);
     }
