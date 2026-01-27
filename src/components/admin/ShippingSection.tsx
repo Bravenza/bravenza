@@ -79,19 +79,19 @@ const DEFAULT_PACKAGE = {
   length: 30, // cm
 };
 
-// Origin address (Bravenza warehouse) - configure in settings
+// Origin address (Bravenza warehouse)
 const ORIGIN_ADDRESS = {
-  name: "Bravenza Imports",
+  name: "BRAVENZA VAULT",
   phone: "5551983018897",
   email: "contato@bravenza.com",
   document: "00000000000", // CNPJ/CPF - to be configured
-  address: "Avenida Paulista",
-  number: "1000",
+  address: "Rua Dr. Egydio Michaelsen",
+  number: "176",
   complement: "",
-  neighborhood: "Bela Vista",
-  city: "São Paulo",
-  state: "SP",
-  postal_code: "01310100",
+  neighborhood: "Cavalhada",
+  city: "Porto Alegre",
+  state: "RS",
+  postal_code: "91751140",
 };
 
 // Token is now stored as Supabase secret - no need for localStorage
