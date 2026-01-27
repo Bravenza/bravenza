@@ -78,24 +78,23 @@ const DEFAULT_PACKAGE = {
   length: 30, // cm
 };
 
-// Origin address (Bravenza warehouse)
+// Origin address (Bravenza warehouse) - configure in settings
 const ORIGIN_ADDRESS = {
   name: "Bravenza Imports",
   phone: "5551983018897",
   email: "contato@bravenza.com",
   document: "00000000000", // CNPJ/CPF - to be configured
-  address: "Rua Exemplo",
-  number: "100",
+  address: "Avenida Paulista",
+  number: "1000",
   complement: "",
-  neighborhood: "Centro",
-  city: "Porto Alegre",
-  state: "RS",
-  postal_code: "90000000",
+  neighborhood: "Bela Vista",
+  city: "São Paulo",
+  state: "SP",
+  postal_code: "01310100",
 };
 
-const getStoredToken = (): string | null => {
-  return localStorage.getItem("config_SUPERFRETE_API_TOKEN");
-};
+// Token is now stored as Supabase secret - no need for localStorage
+const hasApiTokenConfigured = true; // Token is configured in backend secrets
 
 export function ShippingSection({
   orderId,
@@ -135,12 +134,6 @@ export function ShippingSection({
   };
 
   const handleQuoteFreight = async () => {
-    const token = getStoredToken();
-    if (!token) {
-      toast.error("Configure o token da API SuperFrete nas configurações");
-      return;
-    }
-
     const toCep = parsedClientAddress.cep;
     if (!toCep || toCep.length !== 8) {
       toast.error("CEP do cliente não encontrado ou inválido no endereço");
@@ -154,7 +147,6 @@ export function ShippingSection({
       const { data, error } = await supabase.functions.invoke("superfrete", {
         body: {
           action: "quote",
-          token,
           from_cep: ORIGIN_ADDRESS.postal_code,
           to_cep: toCep,
           weight: packageDimensions.weight,
@@ -226,8 +218,7 @@ export function ShippingSection({
   };
 
   const handleCreateLabel = async () => {
-    const token = getStoredToken();
-    if (!token || !selectedQuote) return;
+    if (!selectedQuote) return;
 
     const parsedAddress = parseAddressForLabel();
     if (!parsedAddress || !parsedAddress.postal_code) {
@@ -241,7 +232,6 @@ export function ShippingSection({
       const { data, error } = await supabase.functions.invoke("superfrete", {
         body: {
           action: "create_label",
-          token,
           service_id: selectedQuote.id,
           from: ORIGIN_ADDRESS,
           to: {
@@ -297,12 +287,6 @@ export function ShippingSection({
   };
 
   const handleTrackPackage = async () => {
-    const token = getStoredToken();
-    if (!token) {
-      toast.error("Configure o token da API SuperFrete nas configurações");
-      return;
-    }
-
     if (!nationalTracking) {
       toast.error("Nenhum código de rastreio nacional cadastrado");
       return;
@@ -314,7 +298,6 @@ export function ShippingSection({
       const { data, error } = await supabase.functions.invoke("superfrete", {
         body: {
           action: "tracking",
-          token,
           tracking_code: nationalTracking,
         },
       });
@@ -340,7 +323,7 @@ export function ShippingSection({
     toast.success("Copiado!");
   };
 
-  const hasToken = !!getStoredToken();
+  const hasToken = hasApiTokenConfigured;
 
   return (
     <>

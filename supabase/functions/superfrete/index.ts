@@ -11,12 +11,11 @@ interface FreightQuoteRequest {
   action: "quote";
   from_cep: string;
   to_cep: string;
-  weight: number; // em kg
-  height: number; // em cm
-  width: number; // em cm
-  length: number; // em cm
+  weight: number;
+  height: number;
+  width: number;
+  length: number;
   insurance_value?: number;
-  token: string;
 }
 
 interface CreateLabelRequest {
@@ -60,25 +59,21 @@ interface CreateLabelRequest {
     length: number;
   };
   insurance_value?: number;
-  token: string;
 }
 
 interface TrackingRequest {
   action: "tracking";
   tracking_code: string;
-  token: string;
 }
 
 interface GetLabelRequest {
   action: "get_label";
   label_id: string;
-  token: string;
 }
 
 interface CancelLabelRequest {
   action: "cancel_label";
   label_id: string;
-  token: string;
 }
 
 serve(async (req) => {
@@ -88,15 +83,19 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
-    const { action, token } = body;
-
+    // Get token from environment (Supabase secret)
+    const token = Deno.env.get("SUPERFRETE_API_TOKEN");
+    
     if (!token) {
+      console.error("[SuperFrete] Token not configured in environment");
       return new Response(
-        JSON.stringify({ error: "Token da API SuperFrete não configurado" }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: "Token da API SuperFrete não configurado no servidor" }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const body = await req.json();
+    const { action } = body;
 
     const headers = {
       "Authorization": `Bearer ${token}`,
