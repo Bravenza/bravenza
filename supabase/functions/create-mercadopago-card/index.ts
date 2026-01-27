@@ -79,7 +79,7 @@ serve(async (req) => {
     }
 
     // Get origin for redirect URLs
-    const origin = req.headers.get("origin") || "https://bravenza.lovable.app";
+    const origin = req.headers.get("origin") || "https://bravenza.com.br";
 
     // Create Mercado Pago Preference for Credit Card Checkout Pro
     const preferenceResponse = await fetch("https://api.mercadopago.com/checkout/preferences", {
