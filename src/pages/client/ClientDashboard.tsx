@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +25,7 @@ import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 import { Logo } from "@/components/Logo";
 import { ReviewForm } from "@/components/client/ReviewForm";
 import { ReferralCard } from "@/components/client/ReferralCard";
+import { CashbackBanner } from "@/components/client/CashbackBanner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -94,6 +95,7 @@ export default function ClientDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [reviewOrder, setReviewOrder] = useState<{ orderId: string; productName: string } | null>(null);
   const [reviewedOrders, setReviewedOrders] = useState<Set<string>>(new Set());
+  const referralSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!authLoading && !session) {
@@ -170,6 +172,20 @@ export default function ClientDashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8 flex-1">
+        {/* Cashback Banner */}
+        {session && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
+            <CashbackBanner 
+              clientCpf={session.cpf}
+              onNavigateToReferrals={() => referralSectionRef.current?.scrollIntoView({ behavior: "smooth" })}
+            />
+          </motion.div>
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -415,7 +431,7 @@ export default function ClientDashboard() {
           </div>
 
           {/* Sidebar - Referral Card */}
-          <div className="space-y-6">
+          <div className="space-y-6" ref={referralSectionRef}>
             {session && (
               <ReferralCard 
                 clientCpf={session.cpf}
