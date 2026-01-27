@@ -1,13 +1,15 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ClientAuthProvider } from "@/hooks/useClientAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { usePWAOptimizations } from "@/hooks/usePWAOptimizations";
 
 // Eagerly loaded pages (critical path)
 import Index from "./pages/Index";
@@ -67,6 +69,12 @@ const queryClient = new QueryClient({
   },
 });
 
+// PWA App Shell component
+function AppShell({ children }: { children: React.ReactNode }) {
+  usePWAOptimizations();
+  return <>{children}</>;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -74,7 +82,9 @@ const App = () => (
         <ClientAuthProvider>
           <Toaster />
           <Sonner />
+          <OfflineIndicator />
           <BrowserRouter>
+            <AppShell>
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 {/* Public routes */}
@@ -114,6 +124,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
+            </AppShell>
             <PWAInstallBanner />
           </BrowserRouter>
         </ClientAuthProvider>
