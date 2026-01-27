@@ -1,6 +1,7 @@
 import { Header } from "@/components/home/Header";
 import { HeroSection } from "@/components/home/HeroSection";
 import { BrandsCarousel } from "@/components/home/BrandsCarousel";
+import FeaturedModelsSection from "@/components/home/FeaturedModelsSection";
 import { HowItWorksSection } from "@/components/home/HowItWorksSection";
 import { BenefitsSection } from "@/components/home/BenefitsSection";
 import { ReferralSection } from "@/components/home/ReferralSection";
@@ -19,6 +20,7 @@ const Index = () => {
       <main className="pt-16">
         <HeroSection />
         <BrandsCarousel />
+        <FeaturedModelsSection />
         <div id="como-funciona">
           <HowItWorksSection />
         </div>

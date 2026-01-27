@@ -175,6 +175,39 @@ export type Database = {
         }
         Relationships: []
       }
+      featured_models: {
+        Row: {
+          brand: string
+          created_at: string
+          id: string
+          image_url: string
+          is_active: boolean | null
+          name: string
+          order_index: number | null
+          updated_at: string
+        }
+        Insert: {
+          brand: string
+          created_at?: string
+          id?: string
+          image_url: string
+          is_active?: boolean | null
+          name: string
+          order_index?: number | null
+          updated_at?: string
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          is_active?: boolean | null
+          name?: string
+          order_index?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string

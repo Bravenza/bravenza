@@ -14,6 +14,7 @@ import {
   Gift,
   DollarSign,
   Calculator,
+  Sparkles,
 } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "@/components/Logo";
@@ -29,6 +30,7 @@ const navItems = [
   { icon: DollarSign, label: "Financeiro", path: "/admin/financeiro" },
   { icon: Calculator, label: "Calculadora", path: "/admin/calculadora" },
   { icon: Building2, label: "Fornecedores", path: "/admin/fornecedores" },
+  { icon: Sparkles, label: "Modelos Destaque", path: "/admin/modelos" },
   { icon: Star, label: "Avaliações", path: "/admin/avaliacoes" },
   { icon: Gift, label: "Indicações", path: "/admin/indicacoes" },
   { icon: Users, label: "Usuários", path: "/admin/usuarios" },
