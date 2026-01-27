@@ -47,7 +47,7 @@ const BenefitsSectionComponent = () => {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-5xl font-bold mb-4">
-            Por Que a{" "}
+            Por que a{" "}
             <span className="text-gradient-gold">BRAVENZA</span>?
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
