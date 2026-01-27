@@ -56,6 +56,16 @@ serve(async (req) => {
 
     const order = orderData[0];
 
+    // Fetch additional order data including email
+    const { data: fullOrderData } = await supabase
+      .from("orders")
+      .select("client_email, client_name")
+      .eq("order_id", order.order_id)
+      .single();
+
+    const clientEmail = fullOrderData?.client_email || "cliente@bravenza.com";
+    const clientName = fullOrderData?.client_name || order.client_name;
+
     if (!order.sinal_paid) {
       throw new Error("Sinal deve ser pago primeiro");
     }
@@ -86,8 +96,8 @@ serve(async (req) => {
           },
         ],
         payer: {
-          email: order.client_email || "cliente@bravenza.com",
-          name: order.client_name,
+          email: clientEmail,
+          name: clientName,
         },
         payment_methods: {
           excluded_payment_methods: [],
