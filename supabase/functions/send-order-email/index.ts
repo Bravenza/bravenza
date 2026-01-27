@@ -326,7 +326,7 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         </div>
         
         <div style="text-align: center;">
-          <a href="https://www.linkcorreto.com.br/rastreio" 
+          <a href="https://bravenza.com.br/rastreio/${data.order_id}" 
              style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
                     color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
                     font-weight: bold; font-size: 16px;">
