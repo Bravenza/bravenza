@@ -24,10 +24,19 @@ const STATUS_EMAIL_MAP: Record<string, string> = {
   DISPATCHED: "dispatched",
 };
 
+// Map order status to WhatsApp message type
+const STATUS_WHATSAPP_MAP: Record<string, string> = {
+  DEPOSIT_CONFIRMED: "sinal_confirmed",
+  FULLY_PAID: "balance_confirmed",
+  SHIPPED_TO_CLIENT: "status_update",
+  DELIVERED: "status_update",
+};
+
 interface OrderEmailData {
   order_id: string;
   client_name: string;
   client_email: string | null;
+  client_phone?: string | null;
   product_name: string;
   product_price?: number | null;
   sinal_value?: number | null;
@@ -84,6 +93,38 @@ export async function sendStatusChangeEmail(
   }
 }
 
+export async function sendStatusChangeWhatsApp(
+  newStatus: string,
+  orderId: string
+): Promise<{ success: boolean; error?: string }> {
+  // Check if this status should trigger a WhatsApp message
+  const messageType = STATUS_WHATSAPP_MAP[newStatus];
+  
+  if (!messageType) {
+    return { success: true };
+  }
+
+  try {
+    const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+      body: {
+        order_id: orderId,
+        message_type: messageType,
+      },
+    });
+
+    if (error) {
+      console.error("Error sending WhatsApp:", error);
+      return { success: false, error: error.message };
+    }
+
+    console.log(`WhatsApp sent for ${messageType} on order ${orderId}`);
+    return { success: true };
+  } catch (err: any) {
+    console.error("Failed to send WhatsApp:", err);
+    return { success: false, error: err.message };
+  }
+}
+
 export async function sendPaymentConfirmationEmail(
   paymentType: "sinal" | "balance",
   orderData: OrderEmailData
@@ -117,4 +158,20 @@ export async function sendPaymentConfirmationEmail(
   } catch (err: any) {
     return { success: false, error: err.message };
   }
+}
+
+// Send all notifications for a status change (email + WhatsApp)
+export async function sendAllStatusNotifications(
+  newStatus: string,
+  orderData: OrderEmailData
+): Promise<{ email: boolean; whatsapp: boolean }> {
+  const [emailResult, whatsappResult] = await Promise.all([
+    sendStatusChangeEmail(newStatus, orderData),
+    sendStatusChangeWhatsApp(newStatus, orderData.order_id),
+  ]);
+
+  return {
+    email: emailResult.success,
+    whatsapp: whatsappResult.success,
+  };
 }

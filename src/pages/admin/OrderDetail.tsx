@@ -66,7 +66,7 @@ import {
 import { BudgetActions } from "@/components/admin/BudgetActions";
 import { VaultPolicyCard } from "@/components/admin/VaultPolicyCard";
 import { InspectionPhotosUpload } from "@/components/admin/InspectionPhotosUpload";
-import { sendStatusChangeEmail, sendPaymentConfirmationEmail } from "@/lib/email-notifications";
+import { sendAllStatusNotifications, sendPaymentConfirmationEmail } from "@/lib/email-notifications";
 import { SNEAKER_BRANDS, getModelsForBrand, getBrandLabel, getModelLabel, findBrandKey, findModelKey } from "@/lib/sneaker-data";
 
 const SHOE_SIZES = [
@@ -494,11 +494,12 @@ const OrderDetail = () => {
 
       if (historyError) throw historyError;
 
-      // Send automatic email notification for status change
-      const emailResult = await sendStatusChangeEmail(newStatus, {
+      // Send automatic notifications for status change (email + WhatsApp)
+      const notifResult = await sendAllStatusNotifications(newStatus, {
         order_id: order.order_id,
         client_name: order.client_name,
         client_email: order.client_email,
+        client_phone: order.client_phone,
         product_name: order.product_name,
         product_price: order.product_price,
         sinal_value: order.sinal_value,
@@ -522,14 +523,18 @@ const OrderDetail = () => {
       setNewStatus("");
       setStatusNotes("");
 
-      // Show toast with email status
-      if (emailResult.success && order.client_email) {
+      // Show toast with notification status
+      const notifications = [];
+      if (notifResult.email && order.client_email) notifications.push("email");
+      if (notifResult.whatsapp && order.client_phone) notifications.push("WhatsApp");
+      
+      if (notifications.length > 0) {
         toast({
           title: "Status atualizado!",
           description: (
             <div className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
-              <span>Pedido atualizado e cliente notificado por email.</span>
+              <span>Cliente notificado via {notifications.join(" e ")}.</span>
             </div>
           ),
         });
