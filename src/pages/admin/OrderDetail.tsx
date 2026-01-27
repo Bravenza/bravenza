@@ -139,6 +139,7 @@ interface Order {
   balance_due_date: string | null;
   internal_notes: string | null;
   inspection_photos: string[] | null;
+  reference_image_url: string | null;
   created_at: string;
   updated_at: string;
   budget_status: string | null;
@@ -1227,51 +1228,65 @@ const OrderDetail = () => {
                   </div>
                 </div>
               ) : (
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Marca</p>
-                    <p className="font-medium">{order.product_brand || "-"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Modelo</p>
-                    <p className="font-medium">{order.product_model || "-"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Nome</p>
-                    <p className="font-medium">{order.product_name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Tamanho</p>
-                    <p className="font-medium">{order.product_size || "-"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Cor</p>
-                    <p className="font-medium">{order.product_color || "-"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">SKU/Ref</p>
-                    <p className="font-medium">{order.product_reference || "-"}</p>
-                  </div>
-                  {order.product_link && (
-                    <div className="md:col-span-2">
-                      <p className="text-sm text-muted-foreground">Link</p>
-                      <a 
-                        href={order.product_link} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="font-medium text-primary hover:underline truncate block"
-                      >
-                        {order.product_link}
-                      </a>
+                <div className="space-y-4">
+                  {/* Reference Image */}
+                  {order.reference_image_url && (
+                    <div className="mb-4">
+                      <p className="text-sm text-muted-foreground mb-2">Imagem de Referência</p>
+                      <img 
+                        src={order.reference_image_url} 
+                        alt="Referência do cliente" 
+                        className="w-full max-h-48 object-contain rounded-lg border border-border bg-muted"
+                      />
                     </div>
                   )}
-                  <div>
-                    <p className="text-sm text-muted-foreground">Valor Total</p>
-                    <p className="font-medium text-primary text-lg">
-                      {order.product_price
-                        ? formatCurrency(order.product_price)
-                        : "-"}
-                    </p>
+                  
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Marca</p>
+                      <p className="font-medium">{order.product_brand || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Modelo</p>
+                      <p className="font-medium">{order.product_model || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Nome</p>
+                      <p className="font-medium">{order.product_name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Tamanho</p>
+                      <p className="font-medium">{order.product_size || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Cor</p>
+                      <p className="font-medium">{order.product_color || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">SKU/Ref</p>
+                      <p className="font-medium">{order.product_reference || "-"}</p>
+                    </div>
+                    {order.product_link && (
+                      <div className="md:col-span-2">
+                        <p className="text-sm text-muted-foreground">Link</p>
+                        <a 
+                          href={order.product_link} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="font-medium text-primary hover:underline truncate block"
+                        >
+                          {order.product_link}
+                        </a>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm text-muted-foreground">Valor Total</p>
+                      <p className="font-medium text-primary text-lg">
+                        {order.product_price
+                          ? formatCurrency(order.product_price)
+                          : "-"}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1569,6 +1584,14 @@ const OrderDetail = () => {
                 } catch (error) {
                   console.error("Error updating tracking:", error);
                 }
+              }}
+              onShippingCostAdded={(cost) => {
+                // Update local state to reflect new shipping cost
+                setOrder(prev => prev ? {
+                  ...prev,
+                  shipping_cost: cost,
+                } : null);
+                setEditData(prev => ({ ...prev, shipping_cost: cost }));
               }}
             />
           )}

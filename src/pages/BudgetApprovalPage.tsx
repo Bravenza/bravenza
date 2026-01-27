@@ -13,6 +13,7 @@ import { Logo } from "@/components/Logo";
 import { VaultPolicyCard } from "@/components/admin/VaultPolicyCard";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatDate } from "@/lib/constants";
+import { capitalizeWords } from "@/lib/text-utils";
 import {
   Dialog,
   DialogContent,
@@ -326,18 +327,22 @@ export default function BudgetApprovalPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Produto</p>
-                  <p className="font-medium">{order.product_name}</p>
+                  <p className="font-medium">
+                    {order.product_brand && order.product_model
+                      ? `${capitalizeWords(order.product_brand)} ${capitalizeWords(order.product_model)}${order.product_color ? ` ${order.product_color}` : ""}`
+                      : order.product_name}
+                  </p>
                 </div>
                 {order.product_brand && (
                   <div>
                     <p className="text-sm text-muted-foreground">Marca</p>
-                    <p className="font-medium">{order.product_brand}</p>
+                    <p className="font-medium">{capitalizeWords(order.product_brand)}</p>
                   </div>
                 )}
                 {order.product_model && (
                   <div>
                     <p className="text-sm text-muted-foreground">Modelo</p>
-                    <p className="font-medium">{order.product_model}</p>
+                    <p className="font-medium">{capitalizeWords(order.product_model)}</p>
                   </div>
                 )}
                 {order.product_size && (

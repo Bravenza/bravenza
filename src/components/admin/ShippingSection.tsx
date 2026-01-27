@@ -47,6 +47,7 @@ interface ShippingSectionProps {
   nationalTracking: string | null;
   nationalCarrier: string | null;
   onTrackingUpdate?: (tracking: string, carrier: string) => void;
+  onShippingCostAdded?: (cost: number) => void;
 }
 
 interface FreightQuote {
@@ -109,6 +110,7 @@ export function ShippingSection({
   nationalTracking,
   nationalCarrier,
   onTrackingUpdate,
+  onShippingCostAdded,
 }: ShippingSectionProps) {
   const [isQuoting, setIsQuoting] = useState(false);
   const [isCreatingLabel, setIsCreatingLabel] = useState(false);
@@ -180,10 +182,57 @@ export function ShippingSection({
     }
   };
 
-  const handleSelectQuote = (quote: FreightQuote) => {
+  const handleSelectQuote = async (quote: FreightQuote) => {
     setSelectedQuote(quote);
     setShowQuoteModal(false);
     setShowLabelModal(true);
+    
+    // Automatically add shipping cost to order_costs
+    try {
+      // First check if there's already a shipping cost entry for this order
+      const { data: existingCosts } = await supabase
+        .from("order_costs")
+        .select("id")
+        .eq("order_id", orderId)
+        .eq("cost_type", "shipping");
+      
+      if (existingCosts && existingCosts.length > 0) {
+        // Update existing shipping cost
+        await supabase
+          .from("order_costs")
+          .update({
+            amount: quote.price,
+            description: `${quote.company?.name || quote.name} - Prazo: ${quote.delivery_time} dias`,
+          })
+          .eq("id", existingCosts[0].id);
+      } else {
+        // Create new shipping cost entry
+        await supabase
+          .from("order_costs")
+          .insert({
+            order_id: orderId,
+            cost_type: "shipping",
+            amount: quote.price,
+            description: `${quote.company?.name || quote.name} - Prazo: ${quote.delivery_time} dias`,
+          });
+      }
+      
+      // Also update the shipping_cost field on the order
+      await supabase
+        .from("orders")
+        .update({ shipping_cost: quote.price })
+        .eq("order_id", orderId);
+      
+      // Notify parent component
+      if (onShippingCostAdded) {
+        onShippingCostAdded(quote.price);
+      }
+      
+      toast.success(`Frete de ${formatCurrency(quote.price)} adicionado aos custos`);
+    } catch (error) {
+      console.error("Error adding shipping cost:", error);
+      // Don't block the flow, just log the error
+    }
   };
 
   const parseAddressForLabel = () => {

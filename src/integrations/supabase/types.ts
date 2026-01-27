@@ -428,6 +428,7 @@ export type Database = {
           product_price: number | null
           product_reference: string | null
           product_size: string | null
+          reference_image_url: string | null
           shipping_cost: number | null
           sinal_paid: boolean | null
           sinal_paid_at: string | null
@@ -488,6 +489,7 @@ export type Database = {
           product_price?: number | null
           product_reference?: string | null
           product_size?: string | null
+          reference_image_url?: string | null
           shipping_cost?: number | null
           sinal_paid?: boolean | null
           sinal_paid_at?: string | null
@@ -548,6 +550,7 @@ export type Database = {
           product_price?: number | null
           product_reference?: string | null
           product_size?: string | null
+          reference_image_url?: string | null
           shipping_cost?: number | null
           sinal_paid?: boolean | null
           sinal_paid_at?: string | null
