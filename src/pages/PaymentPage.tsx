@@ -10,6 +10,8 @@ import {
   Copy,
   CreditCard,
   ArrowRight,
+  Gift,
+  Percent,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,15 +19,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/constants";
+import { MAX_CASHBACK_PERCENTAGE } from "@/components/client/CashbackBanner";
 
 interface OrderData {
   order_id: string;
   order_type: string;
   budget_status: string;
   client_name: string;
+  client_cpf: string;
   product_name: string;
   product_brand: string | null;
   product_model: string | null;
@@ -39,6 +45,12 @@ interface OrderData {
   balance_paid: boolean;
   budget_expires_at: string | null;
   created_at: string;
+}
+
+interface CashbackData {
+  availablePercentage: number;
+  maxApplicable: number; // Already capped at 25%
+  discountAmount: number;
 }
 
 type PaymentType = "sinal" | "balance";
@@ -59,6 +71,11 @@ export default function PaymentPage() {
   } | null>(null);
   const [paymentType, setPaymentType] = useState<PaymentType>("sinal");
   const [installments, setInstallments] = useState<number>(1);
+  
+  // Cashback state
+  const [cashbackData, setCashbackData] = useState<CashbackData | null>(null);
+  const [applyCashback, setApplyCashback] = useState(false);
+  const [isApplyingCashback, setIsApplyingCashback] = useState(false);
 
   // Handle payment result from URL params
   useEffect(() => {
@@ -110,6 +127,11 @@ export default function PaymentPage() {
         } else if (!orderData.sinal_paid) {
           setPaymentType("sinal");
         }
+
+        // Fetch available cashback for this client
+        if (orderData.client_cpf) {
+          fetchCashback(orderData.client_cpf, orderData.product_price);
+        }
       } catch (error) {
         console.error("Error fetching order:", error);
         navigate("/");
@@ -121,21 +143,105 @@ export default function PaymentPage() {
     fetchOrder();
   }, [token, navigate]);
 
+  // Fetch cashback data for the client
+  const fetchCashback = async (cpf: string, orderTotal: number | null) => {
+    if (!orderTotal) return;
+
+    try {
+      const { data, error } = await supabase.rpc("get_client_available_cashback", {
+        p_cpf: cpf.replace(/\D/g, ""),
+      });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const totalAvailable = Number(data[0].total_percentage) || 0;
+        // Cap at MAX_CASHBACK_PERCENTAGE (25%)
+        const maxApplicable = Math.min(totalAvailable, MAX_CASHBACK_PERCENTAGE);
+        // Calculate discount amount based on order total
+        const discountAmount = (orderTotal * maxApplicable) / 100;
+
+        if (maxApplicable > 0) {
+          setCashbackData({
+            availablePercentage: totalAvailable,
+            maxApplicable,
+            discountAmount,
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching cashback:", err);
+    }
+  };
+
+  // Calculate the actual amount to pay considering cashback
+  const getPaymentAmount = (baseAmount: number | null): number => {
+    if (!baseAmount) return 0;
+    if (applyCashback && cashbackData) {
+      return Math.max(0, baseAmount - cashbackData.discountAmount);
+    }
+    return baseAmount;
+  };
+
+  // Apply cashback to order before payment
+  const handleApplyCashbackToOrder = async (): Promise<boolean> => {
+    if (!applyCashback || !cashbackData || !order) return true;
+
+    setIsApplyingCashback(true);
+    try {
+      const { error } = await supabase.rpc("apply_cashback_to_order", {
+        p_cpf: order.client_cpf.replace(/\D/g, ""),
+        p_order_id: order.order_id,
+        p_discount_amount: cashbackData.maxApplicable,
+        p_payment_type: paymentType,
+      });
+
+      if (error) throw error;
+      
+      // Clear cashback data after successful application
+      setCashbackData(null);
+      setApplyCashback(false);
+      
+      toast({
+        title: "Cashback aplicado!",
+        description: `Desconto de ${formatCurrency(cashbackData.discountAmount)} aplicado ao pagamento.`,
+      });
+      
+      return true;
+    } catch (err: any) {
+      console.error("Error applying cashback:", err);
+      toast({
+        title: "Erro ao aplicar cashback",
+        description: err.message || "Não foi possível aplicar o desconto.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsApplyingCashback(false);
+    }
+  };
+
   const handleGeneratePix = async () => {
     if (!order || !token) return;
+
+    // Apply cashback first if enabled
+    if (applyCashback && cashbackData) {
+      const success = await handleApplyCashbackToOrder();
+      if (!success) return;
+    }
 
     setIsGeneratingPix(true);
 
     try {
-      const amount =
-        paymentType === "sinal" ? order.sinal_value : order.balance_value;
+      const baseAmount = paymentType === "sinal" ? order.sinal_value : order.balance_value;
+      const amount = getPaymentAmount(baseAmount);
 
       const { data, error } = await supabase.functions.invoke("generate-pix", {
         body: {
           token,
           payment_type: paymentType,
           amount,
-          description: `${paymentType === "sinal" ? "Sinal" : "Saldo"} - ${order.order_id}`,
+          description: `${paymentType === "sinal" ? "Sinal" : "Saldo"} - ${order.order_id}${applyCashback ? " (com cashback)" : ""}`,
         },
       });
 
@@ -170,10 +276,17 @@ export default function PaymentPage() {
   const handlePayWithCard = async () => {
     if (!order || !token) return;
 
+    // Apply cashback first if enabled
+    if (applyCashback && cashbackData) {
+      const success = await handleApplyCashbackToOrder();
+      if (!success) return;
+    }
+
     setIsProcessingCard(true);
 
     try {
-      const amount = order.balance_value; // Only balance can be paid with card
+      const baseAmount = order.balance_value;
+      const amount = getPaymentAmount(baseAmount);
 
       const { data, error } = await supabase.functions.invoke(
         "create-mercadopago-card",
@@ -274,10 +387,10 @@ export default function PaymentPage() {
     );
   }
 
-  const currentAmount =
-    paymentType === "sinal" ? order.sinal_value : order.balance_value;
+  const baseAmount = paymentType === "sinal" ? order.sinal_value : order.balance_value;
+  const finalAmount = getPaymentAmount(baseAmount);
   const currentLabel = paymentType === "sinal" ? "Sinal (50%)" : "Saldo (50%)";
-  const installmentOptions = order.balance_value ? generateInstallmentOptions(order.balance_value) : [];
+  const installmentOptions = order.balance_value ? generateInstallmentOptions(getPaymentAmount(order.balance_value)) : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -381,14 +494,79 @@ export default function PaymentPage() {
             </Card>
           </div>
 
+          {/* Cashback Section */}
+          {cashbackData && cashbackData.maxApplicable > 0 && !pixData && (
+            <Card className="mb-6 border-primary/30 bg-primary/5">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-full bg-primary/20">
+                    <Gift className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      Você tem cashback disponível!
+                      <Badge className="bg-primary/20 text-primary border-primary/30">
+                        {cashbackData.maxApplicable}%
+                      </Badge>
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {cashbackData.availablePercentage > MAX_CASHBACK_PERCENTAGE 
+                        ? `Você possui ${cashbackData.availablePercentage}% acumulados, mas o máximo aplicável por pedido é ${MAX_CASHBACK_PERCENTAGE}%.`
+                        : `Aplique seu cashback e economize ${formatCurrency(cashbackData.discountAmount)} neste pagamento.`
+                      }
+                    </p>
+                    
+                    <div className="flex items-center justify-between mt-4 p-3 bg-background/50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Switch
+                          id="apply-cashback"
+                          checked={applyCashback}
+                          onCheckedChange={setApplyCashback}
+                        />
+                        <Label htmlFor="apply-cashback" className="cursor-pointer">
+                          Aplicar cashback de {formatCurrency(cashbackData.discountAmount)}
+                        </Label>
+                      </div>
+                      {applyCashback && (
+                        <div className="text-right">
+                          <p className="text-xs text-muted-foreground">Valor com desconto:</p>
+                          <p className="font-bold text-primary">{formatCurrency(finalAmount)}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Payment methods */}
           <Card className="card-premium">
             <CardHeader>
-              <CardTitle>
-                Pagar {currentLabel}:{" "}
-                <span className="text-primary">
-                  {currentAmount ? formatCurrency(currentAmount) : "-"}
+              <CardTitle className="flex flex-col gap-1">
+                <span>
+                  Pagar {currentLabel}:{" "}
+                  {applyCashback && cashbackData ? (
+                    <>
+                      <span className="text-muted-foreground line-through mr-2">
+                        {baseAmount ? formatCurrency(baseAmount) : "-"}
+                      </span>
+                      <span className="text-primary">
+                        {formatCurrency(finalAmount)}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-primary">
+                      {baseAmount ? formatCurrency(baseAmount) : "-"}
+                    </span>
+                  )}
                 </span>
+                {applyCashback && cashbackData && (
+                  <span className="text-sm font-normal text-success flex items-center gap-1">
+                    <Percent className="h-3 w-3" />
+                    Cashback de {formatCurrency(cashbackData.discountAmount)} será aplicado
+                  </span>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
