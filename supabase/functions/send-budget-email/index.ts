@@ -144,7 +144,7 @@ serve(async (req) => {
     `;
 
     const { data, error } = await resend.emails.send({
-      from: "Braz Vault <noreply@resend.dev>",
+      from: "Bravenza Vault <noreply@resend.dev>",
       to: [client_email],
       subject: `Seu orçamento está pronto - ${order_id}`,
       html: emailHtml,
