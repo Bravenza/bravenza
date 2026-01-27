@@ -411,13 +411,18 @@ const FeaturedModelsPage = () => {
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, model)}
                   onDragEnd={handleDragEnd}
-                  className={`flex items-center gap-4 p-3 bg-secondary/30 rounded-lg border transition-all ${
+                  className={`flex items-center gap-4 p-3 bg-secondary/30 rounded-lg border transition-all select-none ${
                     draggedItem?.id === model.id 
                       ? "border-primary opacity-50" 
                       : "border-border/50 hover:border-border"
                   }`}
                 >
-                  <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab active:cursor-grabbing" />
+                  <div 
+                    className="cursor-grab active:cursor-grabbing p-1"
+                    onMouseDown={(e) => e.currentTarget.parentElement?.setAttribute('draggable', 'true')}
+                  >
+                    <GripVertical className="h-5 w-5 text-muted-foreground" />
+                  </div>
                   
                   <div className="flex flex-col gap-1">
                     <Button
@@ -440,11 +445,12 @@ const FeaturedModelsPage = () => {
                     </Button>
                   </div>
                   
-                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0 pointer-events-none">
                     <img
                       src={model.image_url}
                       alt={model.name}
                       className="w-full h-full object-cover"
+                      draggable={false}
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = "/placeholder.svg";
                       }}
