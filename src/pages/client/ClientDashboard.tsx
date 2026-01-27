@@ -14,13 +14,15 @@ import {
   CreditCard,
   FileText,
   Download,
-  Receipt
+  Receipt,
+  Star
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useClientAuth } from "@/hooks/useClientAuth";
 import { Footer } from "@/components/home/Footer";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 import { Logo } from "@/components/Logo";
+import { ReviewForm } from "@/components/client/ReviewForm";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -88,6 +90,8 @@ export default function ClientDashboard() {
   const { session, isLoading: authLoading, logout } = useClientAuth();
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [reviewOrder, setReviewOrder] = useState<{ orderId: string; productName: string } | null>(null);
+  const [reviewedOrders, setReviewedOrders] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!authLoading && !session) {
@@ -376,6 +380,26 @@ export default function ClientDashboard() {
                             Recibo Saldo
                           </Button>
                         )}
+
+                        {/* Review button for delivered orders */}
+                        {order.current_status === "DELIVERED" && !reviewedOrders.has(order.order_id) && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="border-primary/50 text-primary hover:bg-primary/10"
+                            onClick={() => setReviewOrder({ orderId: order.order_id, productName: order.product_name })}
+                          >
+                            <Star className="h-4 w-4 mr-2" />
+                            Avaliar
+                          </Button>
+                        )}
+
+                        {reviewedOrders.has(order.order_id) && (
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                            Avaliado
+                          </span>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -384,6 +408,17 @@ export default function ClientDashboard() {
             </div>
           )}
         </motion.div>
+
+        {/* Review Modal */}
+        {reviewOrder && session && (
+          <ReviewForm
+            orderId={reviewOrder.orderId}
+            productName={reviewOrder.productName}
+            sessionToken={session.session_token}
+            onClose={() => setReviewOrder(null)}
+            onSubmitted={() => setReviewedOrders(prev => new Set([...prev, reviewOrder.orderId]))}
+          />
+        )}
       </main>
 
       <Footer />

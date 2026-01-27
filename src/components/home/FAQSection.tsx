@@ -21,16 +21,20 @@ interface FAQ {
 
 const CATEGORY_ICONS: Record<string, any> = {
   importacao: Package,
-  pagamento: CreditCard,
+  pagamentos: CreditCard,
+  prazos: Truck,
   garantia: Shield,
+  pagamento: CreditCard,
   envio: Truck,
   geral: HelpCircle,
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
   importacao: "Importação",
-  pagamento: "Pagamento",
+  pagamentos: "Pagamentos",
+  prazos: "Prazos",
   garantia: "Garantia",
+  pagamento: "Pagamento",
   envio: "Envio",
   geral: "Geral",
 };
