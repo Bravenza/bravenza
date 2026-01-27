@@ -36,7 +36,137 @@ serve(async (req) => {
 
     for (const reminder of reminders || []) {
       try {
-        // Get order data
+        // Handle cashback expiring reminders (not tied to an order)
+        if (reminder.reminder_type === "cashback_expiring") {
+          // Get referral data using the order_id field (which stores referral_id for this type)
+          const { data: referral, error: referralError } = await supabase
+            .from("referrals")
+            .select("*")
+            .eq("id", reminder.order_id)
+            .single();
+
+          if (referralError || !referral) {
+            console.log(`Referral ${reminder.order_id} not found, marking reminder as failed`);
+            await supabase
+              .from("scheduled_reminders")
+              .update({ 
+                status: "failed", 
+                last_error: "Indicação não encontrada",
+                attempt_count: (reminder.attempt_count || 0) + 1
+              })
+              .eq("id", reminder.id);
+            continue;
+          }
+
+          // Check if cashback was already used (cancel reminder)
+          if (referral.discount_used) {
+            console.log(`Cashback already used for referral ${referral.id}, cancelling reminder`);
+            await supabase
+              .from("scheduled_reminders")
+              .update({ status: "cancelled" })
+              .eq("id", reminder.id);
+            continue;
+          }
+
+          // Check if cashback has already expired
+          const expiresAt = new Date(new Date(referral.created_at).getTime() + 90 * 24 * 60 * 60 * 1000);
+          if (expiresAt < new Date()) {
+            console.log(`Cashback already expired for referral ${referral.id}, cancelling reminder`);
+            await supabase
+              .from("scheduled_reminders")
+              .update({ status: "cancelled" })
+              .eq("id", reminder.id);
+            continue;
+          }
+
+          // Calculate days until expiration
+          const daysUntilExpiration = Math.ceil((expiresAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+
+          // Get referrer's phone from their orders
+          const { data: referrerOrder } = await supabase
+            .from("orders")
+            .select("client_phone")
+            .eq("client_cpf", referral.referrer_cpf)
+            .not("client_phone", "is", null)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          let emailSent = false;
+          let whatsappSent = false;
+
+          // Send email reminder
+          if ((reminder.channel === "email" || reminder.channel === "both") && referral.referrer_email) {
+            const { error: emailError } = await supabase.functions.invoke("send-order-email", {
+              body: {
+                type: "cashback_expiring",
+                order_id: "CASHBACK",
+                client_name: referral.referrer_name,
+                client_email: referral.referrer_email,
+                discount_percentage: referral.discount_percentage,
+                days_until_expiration: daysUntilExpiration,
+                cashback_amount: referral.discount_percentage,
+              },
+            });
+
+            if (!emailError) {
+              emailSent = true;
+              console.log(`Cashback expiring email sent to ${referral.referrer_email}`);
+            } else {
+              console.error(`Email error for referral ${referral.id}:`, emailError);
+            }
+          }
+
+          // Send WhatsApp reminder
+          if ((reminder.channel === "whatsapp" || reminder.channel === "both") && referrerOrder?.client_phone) {
+            const { error: whatsappError } = await supabase.functions.invoke("send-whatsapp", {
+              body: {
+                message_type: "cashback_expiring",
+                referrer_phone: referrerOrder.client_phone,
+                referrer_name: referral.referrer_name,
+                discount_percentage: referral.discount_percentage,
+                days_until_expiration: daysUntilExpiration,
+                cashback_amount: referral.discount_percentage,
+              },
+            });
+
+            if (!whatsappError) {
+              whatsappSent = true;
+              console.log(`Cashback expiring WhatsApp sent to ${referrerOrder.client_phone}`);
+            } else {
+              console.error(`WhatsApp error for referral ${referral.id}:`, whatsappError);
+            }
+          }
+
+          // Update reminder status
+          if (emailSent || whatsappSent) {
+            await supabase
+              .from("scheduled_reminders")
+              .update({ 
+                status: "sent", 
+                sent_at: new Date().toISOString(),
+                attempt_count: (reminder.attempt_count || 0) + 1
+              })
+              .eq("id", reminder.id);
+
+            results.push({ reminder_id: reminder.id, status: "sent", type: "cashback_expiring" });
+          } else {
+            await supabase
+              .from("scheduled_reminders")
+              .update({ 
+                status: "failed", 
+                last_error: "Nenhum canal de envio disponível",
+                attempt_count: (reminder.attempt_count || 0) + 1
+              })
+              .eq("id", reminder.id);
+
+            results.push({ reminder_id: reminder.id, status: "failed", type: "cashback_expiring" });
+          }
+
+          continue; // Move to next reminder
+        }
+
+        // Get order data (for order-based reminders)
         const { data: order, error: orderError } = await supabase
           .from("orders")
           .select("*")

@@ -10,7 +10,7 @@ const corsHeaders = {
 
 interface WhatsAppRequest {
   order_id?: string;
-  message_type: "budget_sent" | "sinal_confirmed" | "balance_confirmed" | "status_update" | "review_request" | "referral_confirmed" | "custom";
+  message_type: "budget_sent" | "sinal_confirmed" | "balance_confirmed" | "status_update" | "review_request" | "referral_confirmed" | "cashback_expiring" | "custom";
   custom_message?: string;
   // For referral notifications
   referrer_phone?: string;
@@ -18,6 +18,9 @@ interface WhatsAppRequest {
   referred_name?: string;
   discount_percentage?: number;
   referral_code?: string;
+  // For cashback expiration
+  days_until_expiration?: number;
+  cashback_amount?: number;
 }
 
 // Message templates
@@ -71,6 +74,15 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `📱 Seu código: *${data.referral_code}*\n` +
     `Continue indicando e acumule mais descontos!\n\n` +
     `Acesse sua conta para ver suas indicações:\nhttps://bravenza.com.br/minha-conta\n\n` +
+    `_Bravenza - Sua loja de sneakers premium_`,
+
+  cashback_expiring: (data) =>
+    `⏰ *Atenção, ${data.referrer_name}!*\n\n` +
+    `Seu cashback está prestes a expirar! ⚠️\n\n` +
+    `Você tem *${data.cashback_amount || data.discount_percentage || 5}% de desconto* acumulado que expira em *${data.days_until_expiration || 7} dias*.\n\n` +
+    `💰 Use antes que perca!\n` +
+    `O desconto pode ser aplicado no seu próximo pedido (limite de 25% do valor total).\n\n` +
+    `🛒 Faça um novo pedido: https://bravenza.com.br/solicitar\n\n` +
     `_Bravenza - Sua loja de sneakers premium_`,
 };
 
@@ -153,7 +165,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const requestData: WhatsAppRequest = await req.json();
-    const { order_id, message_type, custom_message, referrer_phone, referrer_name, referred_name, discount_percentage, referral_code } = requestData;
+    const { order_id, message_type, custom_message, referrer_phone, referrer_name, referred_name, discount_percentage, referral_code, days_until_expiration, cashback_amount } = requestData;
 
     if (!message_type) {
       throw new Error("message_type é obrigatório");
@@ -203,6 +215,59 @@ serve(async (req) => {
       }
 
       console.log(`Referral WhatsApp sent to +${phone}: ${result.messageId}`);
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message_id: result.messageId 
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Handle cashback expiring notification (doesn't need order_id)
+    if (message_type === "cashback_expiring") {
+      if (!referrer_phone) {
+        console.log("No referrer phone for cashback expiring notification");
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: "Telefone do cliente não fornecido",
+            skipped: true 
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Format phone number
+      let phone = referrer_phone.replace(/\D/g, '');
+      if (phone.startsWith('0')) {
+        phone = phone.substring(1);
+      }
+      if (!phone.startsWith('55')) {
+        phone = '55' + phone;
+      }
+
+      const templateFn = MESSAGE_TEMPLATES.cashback_expiring;
+      const message = templateFn({
+        referrer_name: referrer_name || "Cliente",
+        cashback_amount: cashback_amount || discount_percentage || 5,
+        days_until_expiration: days_until_expiration || 7,
+      });
+
+      const result = await sendTwilioWhatsApp(
+        twilioAccountSid,
+        twilioAuthToken,
+        twilioWhatsAppNumber,
+        phone,
+        message
+      );
+
+      if (!result.success) {
+        throw new Error(result.error || "Erro ao enviar WhatsApp via Twilio");
+      }
+
+      console.log(`Cashback expiring WhatsApp sent to +${phone}: ${result.messageId}`);
 
       return new Response(
         JSON.stringify({ 
