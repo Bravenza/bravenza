@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Upload, CheckCircle2, ArrowLeft, User, MapPin, Package, Image } from "lucide-react";
 import { SNEAKER_BRANDS, getModelsForBrand } from "@/lib/sneaker-data";
+import { Footer } from "@/components/home/Footer";
+import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 
 const SHOE_SIZES = [
   "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"
@@ -254,11 +256,13 @@ export default function OrderRequestPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Logo size="md" />
+          <Link to="/">
+            <Logo size="md" />
+          </Link>
           <Button variant="ghost" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
@@ -267,7 +271,7 @@ export default function OrderRequestPage() {
       </header>
 
       {/* Form */}
-      <main className="container mx-auto px-4 py-8 max-w-3xl">
+      <main className="container mx-auto px-4 py-8 max-w-3xl flex-1">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Solicitar Orçamento</h1>
           <p className="text-muted-foreground">
@@ -583,6 +587,9 @@ export default function OrderRequestPage() {
           </Button>
         </form>
       </main>
+
+      <Footer />
+      <FloatingWhatsApp />
     </div>
   );
 }
