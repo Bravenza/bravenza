@@ -73,13 +73,13 @@ serve(async (req) => {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Seu Orçamento - Braz Vault</title>
+  <title>Seu Orçamento - Bravenza Vault</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0a0a0a; margin: 0; padding: 40px 20px;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #1a1a1a; border-radius: 16px; overflow: hidden; border: 1px solid #333;">
     <!-- Header -->
     <div style="background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); padding: 32px; text-align: center;">
-      <h1 style="margin: 0; font-size: 28px; font-weight: bold; color: #0a0a0a;">BRAZ VAULT</h1>
+      <h1 style="margin: 0; font-size: 28px; font-weight: bold; color: #0a0a0a;">BRAVENZA VAULT</h1>
       <p style="margin: 8px 0 0; font-size: 14px; color: #333;">Seu orçamento está pronto!</p>
     </div>
     
@@ -135,7 +135,7 @@ serve(async (req) => {
     <!-- Footer -->
     <div style="background-color: #111; padding: 24px; text-align: center; border-top: 1px solid #333;">
       <p style="color: #666; font-size: 12px; margin: 0;">
-        © ${new Date().getFullYear()} Braz Vault. Todos os direitos reservados.
+        © ${new Date().getFullYear()} Bravenza Vault. Todos os direitos reservados.
       </p>
     </div>
   </div>
