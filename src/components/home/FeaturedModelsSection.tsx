@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Flame, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 interface FeaturedModel {
   id: string;
@@ -54,14 +56,15 @@ const FeaturedModelsSection = () => {
           className="text-center mb-10"
         >
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full mb-4">
-            <Sparkles className="h-4 w-4" />
-            <span className="text-sm font-medium">Modelos em Destaque</span>
+            <Flame className="h-4 w-4" />
+            <span className="text-sm font-medium">Os Mais Procurados</span>
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-            Tênis que Trabalhamos
+            Modelos que Estão <span className="text-gradient-gold">Bombando</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Confira alguns dos modelos mais procurados que podemos conseguir para você
+            Estes são os sneakers que nossos clientes mais pedem. Edições limitadas, 
+            collabs exclusivas e clássicos atemporais — todos ao seu alcance.
           </p>
         </motion.div>
 
@@ -96,6 +99,24 @@ const FeaturedModelsSection = () => {
             </motion.div>
           ))}
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="text-center mt-10"
+        >
+          <p className="text-muted-foreground mb-4">
+            Não encontrou o seu? Nós buscamos qualquer modelo para você.
+          </p>
+          <Link to="/solicitar">
+            <Button variant="outline" size="lg" className="border-primary/30 hover:bg-primary/10">
+              Solicitar Outro Modelo
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+        </motion.div>
       </div>
     </section>
   );

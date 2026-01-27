@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Clock, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const CTASection = () => {
@@ -21,15 +21,15 @@ export const CTASection = () => {
 
           <div className="relative z-10">
             <h2 className="text-3xl md:text-5xl font-bold mb-6">
-              Pronto para ter seu{" "}
-              <span className="text-gradient-gold">sneaker exclusivo</span>?
+              O Sneaker Perfeito Está{" "}
+              <span className="text-gradient-gold">Te Esperando</span>
             </h2>
-            <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">
-              Solicite agora seu orçamento gratuito e sem compromisso. 
-              Nossa equipe vai encontrar exatamente o que você procura.
+            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Chega de procurar e não encontrar. Chega de pagar caro e receber réplica. 
+              Sua próxima aquisição começa aqui — com segurança, transparência e garantia de originalidade.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Link to="/solicitar">
                 <Button size="lg" className="btn-gold text-lg px-10 py-6 w-full sm:w-auto">
                   Solicitar Orçamento Grátis
@@ -38,9 +38,16 @@ export const CTASection = () => {
               </Link>
             </div>
 
-            <p className="text-sm text-muted-foreground mt-6">
-              Resposta em até 24 horas úteis
-            </p>
+            <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                <span>Resposta em até 24h</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                <span>Sem compromisso</span>
+              </div>
+            </div>
           </div>
         </motion.div>
       </div>

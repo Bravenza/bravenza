@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Gift, Users, Percent, ArrowRight } from "lucide-react";
+import { Gift, Users, Wallet, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -19,15 +19,15 @@ export const ReferralSection = () => {
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary mb-6">
             <Gift className="h-4 w-4" />
-            <span className="text-sm font-medium">Programa de Indicação</span>
+            <span className="text-sm font-medium">Programa Exclusivo</span>
           </div>
           
           <h2 className="text-3xl md:text-5xl font-bold mb-4">
-            Indique amigos e{" "}
-            <span className="text-gradient-gold">ganhe cashback</span>
+            Indique e <span className="text-gradient-gold">Ganhe Dinheiro</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Compartilhe seu código exclusivo e ganhe desconto no seu próximo pedido quando seus amigos comprarem
+            Cada amigo que compra usando seu código te dá desconto real no próximo pedido. 
+            Não tem limite. Quanto mais indica, mais economiza.
           </p>
         </motion.div>
 
@@ -42,9 +42,9 @@ export const ReferralSection = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
               <Gift className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="font-semibold text-lg mb-2">1. Gere seu código</h3>
+            <h3 className="font-semibold text-lg mb-2">1. Pegue Seu Código</h3>
             <p className="text-muted-foreground text-sm">
-              Acesse sua área de cliente e crie seu código de indicação exclusivo
+              Entre na sua conta e gere seu link exclusivo em segundos
             </p>
           </motion.div>
 
@@ -58,9 +58,9 @@ export const ReferralSection = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
               <Users className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="font-semibold text-lg mb-2">2. Compartilhe</h3>
+            <h3 className="font-semibold text-lg mb-2">2. Mande Pros Amigos</h3>
             <p className="text-muted-foreground text-sm">
-              Envie o link para amigos que também querem importar com segurança
+              Compartilhe com quem também quer sneakers originais
             </p>
           </motion.div>
 
@@ -72,11 +72,11 @@ export const ReferralSection = () => {
             className="text-center p-6"
           >
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
-              <Percent className="h-8 w-8 text-primary" />
+              <Wallet className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="font-semibold text-lg mb-2">3. Ganhe cashback</h3>
+            <h3 className="font-semibold text-lg mb-2">3. Receba o Cashback</h3>
             <p className="text-muted-foreground text-sm">
-              Quando seu amigo finalizar a compra, você ganha desconto automático
+              Crédito automático assim que a compra do seu amigo for confirmada
             </p>
           </motion.div>
         </div>
@@ -90,21 +90,22 @@ export const ReferralSection = () => {
         >
           <div className="flex items-center justify-center gap-3 mb-4">
             <span className="text-5xl md:text-6xl font-bold text-gradient-gold">5%</span>
-            <span className="text-xl text-muted-foreground">de cashback<br />por indicação</span>
+            <span className="text-xl text-muted-foreground text-left">de desconto<br />por indicação</span>
           </div>
           <p className="text-muted-foreground mb-6">
-            Sem limite de indicações! Quanto mais amigos você indicar, mais desconto você acumula.
+            <strong className="text-foreground">Sem limite!</strong> Indique 10 amigos = 50% de desconto acumulado. 
+            Simples assim.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button asChild size="lg" className="gap-2">
+            <Button asChild size="lg" className="gap-2 btn-gold">
               <Link to="/cliente/login">
-                Acessar minha conta
+                Começar a Indicar
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
+            <Button asChild variant="outline" size="lg" className="border-primary/30">
               <Link to="/solicitar">
-                Fazer meu primeiro pedido
+                Fazer Meu Primeiro Pedido
               </Link>
             </Button>
           </div>

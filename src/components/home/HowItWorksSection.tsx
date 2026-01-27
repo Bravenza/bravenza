@@ -4,28 +4,28 @@ import { Search, FileCheck, CreditCard, Package, Truck } from "lucide-react";
 const steps = [
   {
     icon: Search,
-    title: "Solicite",
-    description: "Nos conte qual sneaker você procura. Envie link, foto ou apenas a descrição.",
+    title: "Você Pede",
+    description: "Envie o link, foto ou nome do sneaker. Nós fazemos o resto.",
   },
   {
     icon: FileCheck,
-    title: "Orçamento",
-    description: "Receba um orçamento detalhado com preço final e prazo estimado.",
+    title: "Orçamento Completo",
+    description: "Preço final, prazo de entrega e todas as condições. Sem letras miúdas.",
   },
   {
     icon: CreditCard,
-    title: "Pagamento",
-    description: "Aprove e pague o sinal de 50%. O saldo é pago quando o produto chegar ao Brasil.",
+    title: "Pagamento Seguro",
+    description: "Pague 50% agora. O restante só quando o produto chegar ao Brasil.",
   },
   {
     icon: Package,
-    title: "Importação",
-    description: "Fazemos a busca, compra, inspeção e envio do seu sneaker com segurança.",
+    title: "Inspeção Rigorosa",
+    description: "Fotos detalhadas e verificação de autenticidade antes do envio.",
   },
   {
     icon: Truck,
-    title: "Entrega",
-    description: "Acompanhe em tempo real até receber seu sneaker em mãos.",
+    title: "Entrega Garantida",
+    description: "Rastreio em tempo real até o sneaker chegar nas suas mãos.",
   },
 ];
 
@@ -43,10 +43,10 @@ export const HowItWorksSection = () => {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-5xl font-bold mb-4">
-            Como <span className="text-gradient-gold">Funciona</span>
+            Simples assim: <span className="text-gradient-gold">5 Passos</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Um processo simples e transparente do pedido até a entrega
+            Do pedido à entrega, você acompanha tudo. Transparência total, zero complicação.
           </p>
         </motion.div>
 
