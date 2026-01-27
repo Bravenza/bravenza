@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Gift, ArrowRight, Sparkles } from "lucide-react";
+import { Gift, ArrowRight, Sparkles, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -8,9 +8,13 @@ interface CashbackBannerProps {
   onNavigateToReferrals?: () => void;
 }
 
+// Maximum cashback usage is 25% of order value
+export const MAX_CASHBACK_PERCENTAGE = 25;
+
 export function CashbackBanner({ clientCpf, onNavigateToReferrals }: CashbackBannerProps) {
   const [pendingCashback, setPendingCashback] = useState<number>(0);
   const [totalEarned, setTotalEarned] = useState<number>(0);
+  const [nextExpiration, setNextExpiration] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -26,18 +30,37 @@ export function CashbackBanner({ clientCpf, onNavigateToReferrals }: CashbackBan
       if (error) throw error;
 
       const referrals = data || [];
+      const now = new Date();
       
-      // Pending = converted but not yet used
-      const pending = referrals
-        .filter((r: any) => r.status === "converted" && !r.discount_used)
-        .reduce((acc: number, r: any) => acc + (r.discount_percentage || 0), 0);
+      // Filter only non-expired, converted but not used cashback
+      const validPending = referrals.filter((r: any) => {
+        if (r.status !== "converted" || r.discount_used) return false;
+        // Check expiration (90 days from created_at)
+        const createdAt = new Date(r.created_at);
+        const expiresAt = new Date(createdAt.getTime() + 90 * 24 * 60 * 60 * 1000);
+        return expiresAt > now;
+      });
+
+      // Calculate pending cashback (capped at MAX_CASHBACK_PERCENTAGE)
+      const rawPending = validPending.reduce((acc: number, r: any) => acc + (r.discount_percentage || 0), 0);
+      const cappedPending = Math.min(rawPending, MAX_CASHBACK_PERCENTAGE);
       
-      // Total earned = all rewards (used + pending)
+      // Find next expiration date
+      if (validPending.length > 0) {
+        const expirations = validPending.map((r: any) => {
+          const createdAt = new Date(r.created_at);
+          return new Date(createdAt.getTime() + 90 * 24 * 60 * 60 * 1000);
+        });
+        expirations.sort((a: Date, b: Date) => a.getTime() - b.getTime());
+        setNextExpiration(expirations[0]);
+      }
+      
+      // Total earned = all rewards (used + pending valid)
       const total = referrals
         .filter((r: any) => r.status === "converted" || r.status === "rewarded")
         .reduce((acc: number, r: any) => acc + (r.discount_percentage || 0), 0);
 
-      setPendingCashback(pending);
+      setPendingCashback(cappedPending);
       setTotalEarned(total);
     } catch (err) {
       console.error("Error fetching cashback data:", err);
@@ -46,10 +69,19 @@ export function CashbackBanner({ clientCpf, onNavigateToReferrals }: CashbackBan
     }
   };
 
+  const getDaysUntilExpiration = () => {
+    if (!nextExpiration) return null;
+    const now = new Date();
+    const diffTime = nextExpiration.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
   if (isLoading) return null;
 
   // Show banner if there's pending cashback or to encourage referrals
   const hasPendingCashback = pendingCashback > 0;
+  const daysUntilExpiration = getDaysUntilExpiration();
 
   return (
     <div className={`relative overflow-hidden rounded-xl p-6 ${
@@ -82,8 +114,17 @@ export function CashbackBanner({ clientCpf, onNavigateToReferrals }: CashbackBan
                   <span className="text-2xl font-bold text-primary">{pendingCashback}%</span>
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Use no seu próximo pedido! Suas indicações já geraram {totalEarned}% em recompensas.
+                  Use no seu próximo pedido! (máximo {MAX_CASHBACK_PERCENTAGE}% por pedido)
                 </p>
+                {daysUntilExpiration !== null && daysUntilExpiration <= 30 && (
+                  <p className="text-xs text-amber-400 flex items-center gap-1 mt-1">
+                    <Clock className="h-3 w-3" />
+                    {daysUntilExpiration <= 7 
+                      ? `Atenção: expira em ${daysUntilExpiration} dia${daysUntilExpiration !== 1 ? 's' : ''}!`
+                      : `Válido por mais ${daysUntilExpiration} dias`
+                    }
+                  </p>
+                )}
               </>
             ) : (
               <>
@@ -91,7 +132,7 @@ export function CashbackBanner({ clientCpf, onNavigateToReferrals }: CashbackBan
                   Ganhe cashback indicando amigos
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Compartilhe seu código e ganhe 5% de desconto por cada indicação que comprar.
+                  Compartilhe seu código e ganhe até {MAX_CASHBACK_PERCENTAGE}% de desconto no próximo pedido.
                   {totalEarned > 0 && ` Você já ganhou ${totalEarned}% em recompensas!`}
                 </p>
               </>
