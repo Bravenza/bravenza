@@ -1,13 +1,13 @@
-import { memo } from "react";
+import { memo, forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Instagram, MessageCircle } from "lucide-react";
 
-const Footer = () => {
+const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-border bg-card/50">
+    <footer ref={ref} className="border-t border-border bg-card/50">
       <div className="container mx-auto px-4 py-8 md:py-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {/* Brand */}
@@ -55,10 +55,6 @@ const Footer = () => {
                   href="https://wa.me/5551983018897?text=Olá!%20Gostaria%20de%20saber%20mais%20sobre%20a%20BRAVENZA." 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    window.open("https://wa.me/5551983018897?text=Olá!%20Gostaria%20de%20saber%20mais%20sobre%20a%20BRAVENZA.", "_blank", "noopener,noreferrer");
-                  }}
                   className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"
                 >
                   <MessageCircle className="h-3.5 w-3.5 text-primary flex-shrink-0" />
@@ -70,10 +66,6 @@ const Footer = () => {
                   href="https://www.instagram.com/bravenza.vault" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    window.open("https://www.instagram.com/bravenza.vault", "_blank", "noopener,noreferrer");
-                  }}
                   className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"
                 >
                   <Instagram className="h-3.5 w-3.5 text-primary flex-shrink-0" />
@@ -100,10 +92,13 @@ const Footer = () => {
       </div>
     </footer>
   );
-};
+});
+
+FooterComponent.displayName = "Footer";
 
 // Named export for direct imports
+const Footer = memo(FooterComponent);
 export { Footer };
 
 // Default export for lazy loading compatibility
-export default memo(Footer);
+export default Footer;

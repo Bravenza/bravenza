@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, memo } from "react";
 import { Header } from "@/components/home/Header";
 import { Footer } from "@/components/home/Footer";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
@@ -9,7 +9,7 @@ interface PublicLayoutProps {
   className?: string;
 }
 
-export const PublicLayout = ({ 
+const PublicLayoutComponent = ({ 
   children, 
   showHeader = true,
   className = "" 
@@ -28,4 +28,5 @@ export const PublicLayout = ({
   );
 };
 
+export const PublicLayout = memo(PublicLayoutComponent);
 export default PublicLayout;
