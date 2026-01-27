@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Crown, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const HeroSection = () => {
@@ -21,9 +21,9 @@ export const HeroSection = () => {
             transition={{ duration: 0.6 }}
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8">
-              <Sparkles className="h-4 w-4 text-primary" />
+              <Crown className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary">
-                Importação Premium de Sneakers
+                A Elite da Importação de Sneakers
               </span>
             </div>
           </motion.div>
@@ -34,10 +34,10 @@ export const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight"
           >
-            Seu sneaker dos{" "}
-            <span className="text-gradient-gold">sonhos</span>
+            O tênis que você{" "}
+            <span className="text-gradient-gold">deseja</span>
             <br />
-            direto para você
+            <span className="text-gradient-gold">existe</span> — nós trazemos.
           </motion.h1>
 
           <motion.p
@@ -46,9 +46,9 @@ export const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
           >
-            Somos especialistas em importação de sneakers exclusivos. 
-            Encontramos, negociamos e entregamos o tênis que você procura 
-            com total segurança e autenticidade garantida.
+            Acesso exclusivo aos sneakers mais raros do mundo. Localizamos, 
+            inspecionamos e entregamos em suas mãos com <strong className="text-foreground">garantia de autenticidade</strong> e 
+            rastreamento completo. Sem surpresas. Sem riscos.
           </motion.p>
 
           <motion.div
@@ -59,7 +59,7 @@ export const HeroSection = () => {
           >
             <Link to="/solicitar">
               <Button size="lg" className="btn-gold text-lg px-8 py-6 w-full sm:w-auto">
-                Solicitar Orçamento
+                Quero Meu Orçamento Grátis
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
@@ -69,7 +69,7 @@ export const HeroSection = () => {
                 size="lg" 
                 className="text-lg px-8 py-6 w-full sm:w-auto border-primary/30 hover:bg-primary/10"
               >
-                Rastrear Pedido
+                Rastrear Meu Pedido
               </Button>
             </Link>
           </motion.div>
@@ -79,19 +79,19 @@ export const HeroSection = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="mt-16 flex flex-wrap justify-center gap-8 text-muted-foreground"
+            className="mt-16 flex flex-wrap justify-center gap-6 md:gap-10"
           >
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-success" />
-              <span className="text-sm">100% Autêntico</span>
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium">100% Original ou Dinheiro de Volta</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-success" />
-              <span className="text-sm">Rastreamento em Tempo Real</span>
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium">Rastreio em Tempo Real</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-success" />
-              <span className="text-sm">Pagamento Seguro</span>
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium">Pague Só Depois de Aprovar</span>
             </div>
           </motion.div>
         </div>

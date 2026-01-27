@@ -28,10 +28,10 @@ export const BrandsCarousel = () => {
           className="text-center"
         >
           <h2 className="text-2xl md:text-3xl font-bold mb-4">
-            Marcas que <span className="text-gradient-gold">Importamos</span>
+            As Marcas Mais <span className="text-gradient-gold">Desejadas do Mundo</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Trabalhamos com as principais marcas mundiais de sneakers para trazer até você os modelos mais exclusivos.
+            Acesso direto às coleções internacionais. Se existe, nós conseguimos trazer para você.
           </p>
         </motion.div>
       </div>

@@ -1,36 +1,36 @@
 import { motion } from "framer-motion";
-import { Shield, Globe, Clock, BadgeCheck, Headphones, Lock } from "lucide-react";
+import { Shield, Globe, Zap, BadgeCheck, Headphones, Lock } from "lucide-react";
 
 const benefits = [
   {
     icon: BadgeCheck,
-    title: "100% Autêntico",
-    description: "Todos os produtos passam por rigorosa inspeção de autenticidade antes do envio.",
+    title: "Garantia de Autenticidade",
+    description: "Se não for original, devolvemos 100% do seu dinheiro. Simples assim. Sem discussão.",
   },
   {
     icon: Globe,
-    title: "Acesso Global",
-    description: "Importamos de qualquer lugar do mundo: EUA, Europa, Ásia e mais.",
+    title: "Acesso Mundial",
+    description: "EUA, Europa, Ásia, Oriente Médio... Onde estiver, nós buscamos e trazemos para você.",
   },
   {
     icon: Shield,
-    title: "Compra Segura",
-    description: "Negociamos apenas com fornecedores verificados e confiáveis.",
+    title: "Fornecedores Verificados",
+    description: "Rede exclusiva de parceiros internacionais com histórico comprovado e auditado.",
   },
   {
-    icon: Clock,
-    title: "Rastreamento Total",
-    description: "Acompanhe cada etapa do seu pedido em tempo real pelo nosso sistema.",
+    icon: Zap,
+    title: "Rastreamento 24/7",
+    description: "Cada movimento do seu pedido, em tempo real. Do fornecedor até sua porta.",
   },
   {
     icon: Lock,
-    title: "Pagamento Protegido",
-    description: "Parcele em até 12x no cartão ou pague via PIX com total segurança.",
+    title: "Pagamento Parcelado",
+    description: "Até 12x no cartão ou PIX à vista. Pague o saldo só quando o produto chegar.",
   },
   {
     icon: Headphones,
-    title: "Suporte Dedicado",
-    description: "Atendimento personalizado do início ao fim do seu pedido.",
+    title: "Suporte VIP",
+    description: "Atendimento direto no WhatsApp. Dúvidas? Resposta em minutos, não em dias.",
   },
 ];
 
@@ -46,11 +46,11 @@ export const BenefitsSection = () => {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-5xl font-bold mb-4">
-            Por que escolher a{" "}
+            Por Que a{" "}
             <span className="text-gradient-gold">BRAVENZA</span>?
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Experiência premium em cada detalhe da sua importação
+            Não somos apenas mais uma importadora. Somos a sua conexão direta com os sneakers mais exclusivos do planeta.
           </p>
         </motion.div>
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Star, Quote } from "lucide-react";
+import { Star, Quote, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Review {
@@ -66,11 +66,10 @@ export function FeaturedReviews() {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-5xl font-bold mb-4">
-            O que nossos clientes{" "}
-            <span className="text-gradient-gold">dizem</span>
+            Avaliações <span className="text-gradient-gold">Reais</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Avaliações reais de clientes satisfeitos
+            O que nossos clientes escreveram depois de receber seus sneakers
           </p>
         </motion.div>
 
@@ -118,10 +117,16 @@ export function FeaturedReviews() {
               )}
 
               {/* Author */}
-              <div className="border-t border-border pt-4">
-                <div className="font-semibold">{formatName(review.client_name)}</div>
-                <div className="text-sm text-muted-foreground">
-                  Cliente verificado
+              <div className="border-t border-border pt-4 flex items-center justify-between">
+                <div>
+                  <div className="font-semibold">{formatName(review.client_name)}</div>
+                  <div className="text-sm text-muted-foreground">
+                    Compra verificada
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-primary">
+                  <BadgeCheck className="h-3.5 w-3.5" />
+                  <span>Autêntico</span>
                 </div>
               </div>
             </motion.div>

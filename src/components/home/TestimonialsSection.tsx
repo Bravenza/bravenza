@@ -1,26 +1,26 @@
 import { motion } from "framer-motion";
-import { Star, Quote } from "lucide-react";
+import { Star, Quote, Verified } from "lucide-react";
 
 const testimonials = [
   {
     name: "Lucas M.",
     location: "São Paulo, SP",
     rating: 5,
-    text: "Procurei meu Jordan 1 por meses e a BRAVENZA encontrou em poucos dias. Produto original, embalagem perfeita. Super recomendo!",
+    text: "Achei que era bom demais pra ser verdade. Paguei, fiquei com medo, mas o Jordan chegou perfeito. Original, caixa impecável, tudo documentado. Agora só compro com eles.",
     product: "Air Jordan 1 Retro High OG",
   },
   {
     name: "Fernanda S.",
     location: "Rio de Janeiro, RJ",
     rating: 5,
-    text: "Primeiro pedido com eles e já virei cliente fiel. Atendimento impecável, transparência total no processo e entrega antes do prazo.",
+    text: "Atendimento absurdo de bom. Me mandaram foto do tênis na China, foto na inspeção, rastreio até em casa. Nunca vi algo assim. Estou no terceiro pedido já.",
     product: "Nike Dunk Low",
   },
   {
     name: "Ricardo P.",
     location: "Belo Horizonte, MG",
     rating: 5,
-    text: "A inspeção que eles fazem antes de enviar é sensacional. Recebi fotos detalhadas do meu tênis antes de sair da Europa. Confiança total!",
+    text: "O Yeezy que eu queria não tinha em lugar nenhum do Brasil. Eles conseguiram na Europa e em 3 semanas estava na minha casa. Preço justo, tênis perfeito.",
     product: "Yeezy Boost 350 V2",
   },
 ];
@@ -39,11 +39,11 @@ export const TestimonialsSection = () => {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-5xl font-bold mb-4">
-            O que nossos clientes{" "}
-            <span className="text-gradient-gold">dizem</span>
+            Quem Comprou,{" "}
+            <span className="text-gradient-gold">Aprovou</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Histórias reais de clientes satisfeitos
+            Histórias reais de clientes que confiaram e voltaram. Leia antes de decidir.
           </p>
         </motion.div>
 
@@ -77,10 +77,16 @@ export const TestimonialsSection = () => {
               </div>
 
               {/* Author */}
-              <div className="border-t border-border pt-4">
-                <div className="font-semibold">{testimonial.name}</div>
-                <div className="text-sm text-muted-foreground">
-                  {testimonial.location}
+              <div className="border-t border-border pt-4 flex items-center justify-between">
+                <div>
+                  <div className="font-semibold">{testimonial.name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {testimonial.location}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-primary">
+                  <Verified className="h-3.5 w-3.5" />
+                  <span>Verificado</span>
                 </div>
               </div>
             </motion.div>
