@@ -96,9 +96,11 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
 
 FooterComponent.displayName = "Footer";
 
+// Memoized component
+const MemoizedFooter = memo(FooterComponent);
+
 // Named export for direct imports
-const Footer = memo(FooterComponent);
-export { Footer };
+export { MemoizedFooter as Footer };
 
 // Default export for lazy loading compatibility
-export default Footer;
+export default MemoizedFooter;
