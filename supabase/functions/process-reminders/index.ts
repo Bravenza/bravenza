@@ -75,29 +75,52 @@ serve(async (req) => {
           continue;
         }
 
+        // Check if review was already submitted (for review reminders)
+        if (reminder.reminder_type === "review_request") {
+          const { data: existingReview } = await supabase
+            .from("reviews")
+            .select("id")
+            .eq("order_id", order.order_id)
+            .maybeSingle();
+
+          if (existingReview) {
+            console.log(`Review already submitted for ${reminder.order_id}, cancelling reminder`);
+            await supabase
+              .from("scheduled_reminders")
+              .update({ status: "cancelled" })
+              .eq("id", reminder.id);
+            continue;
+          }
+        }
+
         let emailSent = false;
         let whatsappSent = false;
 
         // Send email reminder
         if (reminder.channel === "email" || reminder.channel === "both") {
           if (order.client_email) {
-            const paymentLink = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/pagamento/${order.budget_approval_token}`;
+            const reviewLink = `https://bravenza.lovable.app/minha-conta`;
+            const paymentLink = `https://bravenza.lovable.app/pagamento/${order.budget_approval_token}`;
+            
+            // Determine email type based on reminder type
+            const emailType = reminder.reminder_type === "review_request" ? "review_request" : "balance_reminder";
             
             const { error: emailError } = await supabase.functions.invoke("send-order-email", {
               body: {
-                type: "balance_reminder",
+                type: emailType,
                 order_id: order.order_id,
                 client_name: order.client_name,
                 client_email: order.client_email,
                 product_name: order.product_name,
                 balance_value: order.balance_value,
                 payment_link: paymentLink,
+                review_link: reviewLink,
               },
             });
 
             if (!emailError) {
               emailSent = true;
-              console.log(`Email reminder sent for ${reminder.order_id}`);
+              console.log(`Email ${emailType} sent for ${reminder.order_id}`);
             } else {
               console.error(`Email error for ${reminder.order_id}:`, emailError);
             }
@@ -107,25 +130,42 @@ serve(async (req) => {
         // Send WhatsApp reminder
         if (reminder.channel === "whatsapp" || reminder.channel === "both") {
           if (order.client_phone) {
-            const { error: whatsappError } = await supabase.functions.invoke("send-whatsapp", {
-              body: {
-                order_id: order.order_id,
-                message_type: "custom",
-                custom_message: 
-                  `⏰ *Lembrete de Pagamento*\n\n` +
-                  `Olá ${order.client_name.split(" ")[0]}!\n\n` +
-                  `Seu produto *${order.product_name}* está aguardando o pagamento do saldo para ser enviado.\n\n` +
-                  `💰 Valor: R$ ${order.balance_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
-                  `Acesse sua conta para pagar: ${supabaseUrl.replace('.supabase.co', '.lovable.app')}/minha-conta\n\n` +
-                  `_Bravenza - Sua loja de sneakers premium_`,
-              },
-            });
+            // Determine message type based on reminder type
+            if (reminder.reminder_type === "review_request") {
+              const { error: whatsappError } = await supabase.functions.invoke("send-whatsapp", {
+                body: {
+                  order_id: order.order_id,
+                  message_type: "review_request",
+                },
+              });
 
-            if (!whatsappError) {
-              whatsappSent = true;
-              console.log(`WhatsApp reminder sent for ${reminder.order_id}`);
+              if (!whatsappError) {
+                whatsappSent = true;
+                console.log(`WhatsApp review request sent for ${reminder.order_id}`);
+              } else {
+                console.error(`WhatsApp error for ${reminder.order_id}:`, whatsappError);
+              }
             } else {
-              console.error(`WhatsApp error for ${reminder.order_id}:`, whatsappError);
+              const { error: whatsappError } = await supabase.functions.invoke("send-whatsapp", {
+                body: {
+                  order_id: order.order_id,
+                  message_type: "custom",
+                  custom_message: 
+                    `⏰ *Lembrete de Pagamento*\n\n` +
+                    `Olá ${order.client_name.split(" ")[0]}!\n\n` +
+                    `Seu produto *${order.product_name}* está aguardando o pagamento do saldo para ser enviado.\n\n` +
+                    `💰 Valor: R$ ${order.balance_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
+                    `Acesse sua conta para pagar: https://bravenza.lovable.app/minha-conta\n\n` +
+                    `_Bravenza - Sua loja de sneakers premium_`,
+                },
+              });
+
+              if (!whatsappError) {
+                whatsappSent = true;
+                console.log(`WhatsApp reminder sent for ${reminder.order_id}`);
+              } else {
+                console.error(`WhatsApp error for ${reminder.order_id}:`, whatsappError);
+              }
             }
           }
         }

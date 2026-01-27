@@ -64,6 +64,9 @@ export async function sendStatusChangeEmail(
     return { success: true };
   }
 
+  // Generate review link for delivered orders
+  const reviewLink = `https://bravenza.lovable.app/minha-conta`;
+
   try {
     const { data, error } = await supabase.functions.invoke("send-order-email", {
       body: {
@@ -77,6 +80,7 @@ export async function sendStatusChangeEmail(
         balance_value: orderData.balance_value,
         tracking_code: orderData.international_tracking || orderData.national_tracking,
         carrier: orderData.national_carrier,
+        review_link: reviewLink,
       },
     });
 
@@ -226,6 +230,23 @@ export async function sendAllStatusNotifications(
       console.log(`Payment reminder scheduled for order ${orderData.order_id}`);
     } catch (err) {
       console.error("Failed to schedule payment reminder:", err);
+    }
+  }
+
+  // Schedule review request reminder when order is delivered
+  if (newStatus === "DELIVERED") {
+    try {
+      await supabase.functions.invoke("schedule-reminder", {
+        body: {
+          order_id: orderData.order_id,
+          reminder_type: "review_request",
+          channel: "both",
+          delay_days: 3, // Send review request 3 days after delivery
+        },
+      });
+      console.log(`Review request scheduled for order ${orderData.order_id}`);
+    } catch (err) {
+      console.error("Failed to schedule review request:", err);
     }
   }
 
