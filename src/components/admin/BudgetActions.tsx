@@ -29,6 +29,7 @@ interface BudgetActionsProps {
   budgetRejectedAt: string | null;
   budgetExpiresAt: string | null;
   budgetApprovalToken: string | null;
+  productCost: number | null;
   productPrice: number | null;
   sinalValue: number | null;
   balanceValue: number | null;
@@ -46,6 +47,7 @@ export function BudgetActions({
   budgetRejectedAt,
   budgetExpiresAt,
   budgetApprovalToken,
+  productCost,
   productPrice,
   sinalValue,
   balanceValue,
@@ -217,6 +219,33 @@ export function BudgetActions({
             </p>
           </div>
         </div>
+
+        {/* Internal margin info (Admin only) */}
+        {productCost && productPrice && (
+          <div className="p-4 bg-secondary/50 rounded-lg border border-border">
+            <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+              🔒 Informações internas
+            </p>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <p className="text-xs text-muted-foreground">Custo</p>
+                <p className="font-medium">{formatCurrency(productCost)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Lucro Bruto</p>
+                <p className="font-bold text-success">
+                  {formatCurrency(productPrice - productCost)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Margem</p>
+                <p className="font-bold text-success">
+                  {((productPrice - productCost) / productPrice * 100).toFixed(1)}%
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Timeline */}
         {budgetSentAt && (

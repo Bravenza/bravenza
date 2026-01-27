@@ -380,6 +380,7 @@ export type Database = {
           pix_qr_code: string | null
           product_brand: string | null
           product_color: string | null
+          product_cost: number | null
           product_currency: string | null
           product_link: string | null
           product_model: string | null
@@ -436,6 +437,7 @@ export type Database = {
           pix_qr_code?: string | null
           product_brand?: string | null
           product_color?: string | null
+          product_cost?: number | null
           product_currency?: string | null
           product_link?: string | null
           product_model?: string | null
@@ -492,6 +494,7 @@ export type Database = {
           pix_qr_code?: string | null
           product_brand?: string | null
           product_color?: string | null
+          product_cost?: number | null
           product_currency?: string | null
           product_link?: string | null
           product_model?: string | null
