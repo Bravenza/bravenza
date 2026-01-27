@@ -3,7 +3,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, x-supabase-client-platform, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 serve(async (req) => {
@@ -76,31 +78,66 @@ serve(async (req) => {
 
         console.log(`Payment approved for order ${orderId}, type: ${paymentType}, method: ${paymentMethodLabel}`);
 
-        // Update order payment status
+        // Get current order data before update
+        const { data: currentOrder } = await supabase
+          .from("orders")
+          .select("*")
+          .eq("order_id", orderId)
+          .single();
+
+        if (!currentOrder) {
+          console.error("Order not found:", orderId);
+          return new Response("OK", { status: 200 });
+        }
+
+        // Build update data with automatic status advancement
         const updateData: Record<string, any> = {
           updated_at: new Date().toISOString(),
         };
+
+        let newStatus: string | null = null;
+        let historyStatus: string;
+        let historyNote: string;
 
         if (paymentType === "sinal") {
           updateData.sinal_paid = true;
           updateData.sinal_paid_at = new Date().toISOString();
           updateData.sinal_payment_method = paymentMethodLabel;
+          
           if (isPixPayment) {
             updateData.sinal_pix_transaction_id = paymentId.toString();
           } else {
-            updateData.sinal_stripe_payment_id = paymentId.toString(); // Reusing for MP card payment ID
+            updateData.sinal_stripe_payment_id = paymentId.toString();
           }
+
+          // AUTOMATIC STATUS ADVANCEMENT: Sinal paid → DEPOSIT_CONFIRMED
+          newStatus = "DEPOSIT_CONFIRMED";
+          updateData.current_status = newStatus;
+          historyStatus = "DEPOSIT_CONFIRMED";
+          historyNote = `Sinal de ${paymentMethodNote} confirmado. Iniciando busca do produto.`;
+
         } else if (paymentType === "balance") {
           updateData.balance_paid = true;
           updateData.balance_paid_at = new Date().toISOString();
           updateData.balance_payment_method = paymentMethodLabel;
+          
           if (isPixPayment) {
             updateData.balance_pix_transaction_id = paymentId.toString();
           } else {
             updateData.balance_stripe_payment_id = paymentId.toString();
           }
+
+          // AUTOMATIC STATUS ADVANCEMENT: Balance paid → FULLY_PAID
+          newStatus = "FULLY_PAID";
+          updateData.current_status = newStatus;
+          historyStatus = "FULLY_PAID";
+          historyNote = `Pagamento completo via ${paymentMethodNote}. Preparando envio.`;
+        } else {
+          historyStatus = "ORDER_CONFIRMED";
+          historyNote = `Pagamento via ${paymentMethodNote} confirmado.`;
         }
 
+        // Update order
         const { error: updateError } = await supabase
           .from("orders")
           .update(updateData)
@@ -112,40 +149,51 @@ serve(async (req) => {
         }
 
         // Add to order history
-        const historyNote =
-          paymentType === "sinal"
-            ? `Pagamento do sinal confirmado via ${paymentMethodNote}`
-            : `Pagamento do saldo confirmado via ${paymentMethodNote}`;
-
         await supabase.from("order_history").insert({
           order_id: orderId,
-          status: paymentType === "sinal" ? "ORDER_CONFIRMED" : "BALANCE_DUE",
+          status: historyStatus,
           notes: historyNote,
         });
 
-        // Create admin notification
+        console.log(`Order ${orderId} status updated to: ${newStatus || 'unchanged'}`);
+
+        // ============ NOTIFICATIONS ============
+
+        // 1. Create ADMIN notification
         try {
           await supabase.from("notifications").insert({
             type: "payment_received",
             target: "admin",
             title: `Pagamento ${paymentType === "sinal" ? "do sinal" : "do saldo"} recebido`,
-            message: `Pedido ${orderId}: ${paymentMethodNote}`,
+            message: `Pedido ${orderId}: ${paymentMethodNote} - R$ ${(payment.transaction_amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
             reference_type: "order",
             reference_id: orderId,
           });
+          console.log("Admin notification created");
         } catch (notifError) {
-          console.error("Failed to create notification:", notifError);
+          console.error("Failed to create admin notification:", notifError);
         }
 
-        // Fetch order data for email notification
-        const { data: orderData } = await supabase
-          .from("orders")
-          .select("client_name, client_email, product_name, product_price, sinal_value, balance_value")
-          .eq("order_id", orderId)
-          .single();
+        // 2. Create CLIENT notification
+        try {
+          await supabase.from("notifications").insert({
+            type: "payment_received",
+            target: "client",
+            target_client_cpf: currentOrder.client_cpf,
+            title: paymentType === "sinal" 
+              ? "Sinal confirmado! Iniciando busca"
+              : "Pagamento completo! Preparando envio",
+            message: `Seu pagamento de R$ ${(payment.transaction_amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} foi confirmado.`,
+            reference_type: "order",
+            reference_id: orderId,
+          });
+          console.log("Client notification created");
+        } catch (notifError) {
+          console.error("Failed to create client notification:", notifError);
+        }
 
-        // Send email notification if order has email
-        if (orderData?.client_email) {
+        // ============ EMAIL NOTIFICATION ============
+        if (currentOrder.client_email) {
           const emailType = paymentType === "sinal" ? "sinal_confirmed" : "balance_confirmed";
           
           try {
@@ -158,29 +206,53 @@ serve(async (req) => {
               body: JSON.stringify({
                 type: emailType,
                 order_id: orderId,
-                client_name: orderData.client_name,
-                client_email: orderData.client_email,
-                product_name: orderData.product_name,
-                total_price: orderData.product_price,
-                sinal_value: orderData.sinal_value,
-                balance_value: orderData.balance_value,
+                client_name: currentOrder.client_name,
+                client_email: currentOrder.client_email,
+                product_name: currentOrder.product_name,
+                total_price: currentOrder.product_price,
+                sinal_value: currentOrder.sinal_value,
+                balance_value: currentOrder.balance_value,
+                sla_vault_due_date: currentOrder.sla_vault_due_date,
               }),
             });
-            console.log(`Payment confirmation email sent for order ${orderId}`);
+            console.log(`Email ${emailType} sent to ${currentOrder.client_email}`);
           } catch (emailError) {
-            console.error("Failed to send payment email:", emailError);
+            console.error("Failed to send email:", emailError);
           }
         }
 
-        console.log(`Order ${orderId} updated successfully`);
+        // ============ WHATSAPP NOTIFICATION ============
+        if (currentOrder.client_phone) {
+          const whatsappType = paymentType === "sinal" ? "sinal_confirmed" : "balance_confirmed";
+          
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${supabaseKey}`,
+              },
+              body: JSON.stringify({
+                order_id: orderId,
+                message_type: whatsappType,
+              }),
+            });
+            console.log(`WhatsApp ${whatsappType} sent for order ${orderId}`);
+          } catch (whatsappError) {
+            console.error("Failed to send WhatsApp:", whatsappError);
+          }
+        }
+
+        console.log(`Order ${orderId} fully processed - payment: ${paymentType}, status: ${newStatus}`);
       }
     }
 
-    return new Response("OK", { status: 200 });
+    return new Response("OK", { status: 200, headers: corsHeaders });
   } catch (error: any) {
     console.error("Webhook error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
