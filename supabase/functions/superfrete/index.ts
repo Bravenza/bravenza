@@ -213,6 +213,8 @@ serve(async (req) => {
 
         console.log(`[SuperFrete] Creating label for service ${service_id}`);
 
+        // A API SuperFrete requer "volumes" (não "package") conforme documentação:
+        // https://superfrete.readme.io/reference/adicionar-frete-carrinho
         const payload = {
           service: service_id,
           from: {
@@ -225,7 +227,7 @@ serve(async (req) => {
             complement: from.complement || "",
             district: from.neighborhood,
             city: from.city,
-            state_abbr: from.state,
+            state_abbr: from.state.toUpperCase(),
             postal_code: from.postal_code.replace(/\D/g, ""),
             country_id: "BR",
           },
@@ -239,16 +241,17 @@ serve(async (req) => {
             complement: to.complement || "",
             district: to.neighborhood,
             city: to.city,
-            state_abbr: to.state,
+            state_abbr: to.state.toUpperCase(),
             postal_code: to.postal_code.replace(/\D/g, ""),
             country_id: "BR",
           },
           products: products,
-          package: {
-            weight: pkg.weight,
-            height: pkg.height,
-            width: pkg.width,
-            length: pkg.length,
+          // Campo obrigatório: "volumes" (objeto com dimensões do pacote)
+          volumes: {
+            weight: Number(pkg.weight),
+            height: Number(pkg.height),
+            width: Number(pkg.width),
+            length: Number(pkg.length),
           },
           options: {
             insurance_value: insurance_value || 0,
@@ -257,6 +260,8 @@ serve(async (req) => {
             non_commercial: true,
           },
         };
+
+        console.log(`[SuperFrete] Create label payload:`, JSON.stringify(payload));
 
         const response = await fetch(`${SUPERFRETE_API_URL}/api/v0/cart`, {
           method: "POST",
