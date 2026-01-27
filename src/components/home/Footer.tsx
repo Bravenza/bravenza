@@ -49,15 +49,19 @@ const Footer = () => {
           {/* Contact */}
           <div>
             <h4 className="font-semibold mb-4">Contato</h4>
-            <ul className="space-y-2 text-muted-foreground">
+            <ul className="space-y-3 text-muted-foreground">
               <li>
                 <a 
                   href="https://wa.me/5551983018897?text=Olá!%20Gostaria%20de%20saber%20mais%20sobre%20a%20BRAVENZA." 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 hover:text-primary transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open("https://wa.me/5551983018897?text=Olá!%20Gostaria%20de%20saber%20mais%20sobre%20a%20BRAVENZA.", "_blank", "noopener,noreferrer");
+                  }}
+                  className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"
                 >
-                  <MessageCircle className="h-4 w-4 text-primary" />
+                  <MessageCircle className="h-4 w-4 text-primary flex-shrink-0" />
                   <span>+55 51 98301-8897</span>
                 </a>
               </li>
@@ -66,9 +70,13 @@ const Footer = () => {
                   href="https://www.instagram.com/bravenza.vault" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 hover:text-primary transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open("https://www.instagram.com/bravenza.vault", "_blank", "noopener,noreferrer");
+                  }}
+                  className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"
                 >
-                  <Instagram className="h-4 w-4 text-primary" />
+                  <Instagram className="h-4 w-4 text-primary flex-shrink-0" />
                   <span>@bravenza.vault</span>
                 </a>
               </li>
