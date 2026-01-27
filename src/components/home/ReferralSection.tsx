@@ -6,11 +6,11 @@ import { Link } from "react-router-dom";
 
 const ReferralSectionComponent = () => {
   return (
-    <section className="py-20 md:py-32 relative overflow-hidden">
+    <section className="py-16 md:py-24 relative overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5" />
       
-      <div className="container mx-auto px-4 relative">
+      <div className="container mx-auto px-4 sm:px-6 relative">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -31,14 +31,14 @@ const ReferralSectionComponent = () => {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-12">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-4xl mx-auto mb-10 md:mb-12">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-center p-6"
-          >
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: Math.min(0.1 * 1, 0.3) }}
+              className="text-center p-4 md:p-6"
+            >
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
               <Gift className="h-8 w-8 text-primary" />
             </div>
@@ -51,10 +51,10 @@ const ReferralSectionComponent = () => {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-center p-6"
-          >
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: Math.min(0.2, 0.3) }}
+              className="text-center p-4 md:p-6"
+            >
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
               <Users className="h-8 w-8 text-primary" />
             </div>
@@ -67,10 +67,10 @@ const ReferralSectionComponent = () => {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="text-center p-6"
-          >
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: Math.min(0.3, 0.3) }}
+              className="text-center p-4 md:p-6"
+            >
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
               <Wallet className="h-8 w-8 text-primary" />
             </div>
@@ -86,7 +86,7 @@ const ReferralSectionComponent = () => {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="card-premium p-8 max-w-2xl mx-auto text-center"
+          className="card-premium p-6 md:p-8 max-w-2xl mx-auto text-center"
         >
           <div className="flex items-center justify-center gap-3 mb-4">
             <span className="text-5xl md:text-6xl font-bold text-gradient-gold">5%</span>

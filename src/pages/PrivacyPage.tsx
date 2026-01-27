@@ -4,8 +4,8 @@ const PrivacyPage = () => {
   return (
     <PublicLayout>
       {/* Content */}
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2">Política de Privacidade</h1>
+      <div className="container mx-auto px-4 sm:px-6 py-10 md:py-16 max-w-4xl">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Política de Privacidade</h1>
         <p className="text-muted-foreground mb-8">Última atualização: Janeiro de 2026</p>
 
         <div className="prose prose-invert max-w-none space-y-8">

@@ -37,8 +37,8 @@ const benefits = [
 
 const BenefitsSectionComponent = () => {
   return (
-    <section className="py-20 md:py-32">
-      <div className="container mx-auto px-4">
+    <section className="py-16 md:py-24">
+      <div className="container mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -55,15 +55,15 @@ const BenefitsSectionComponent = () => {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto">
           {benefits.map((benefit, index) => (
             <motion.div
               key={benefit.title}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="card-premium p-8 group hover:border-primary/30 transition-all duration-300"
+              transition={{ duration: 0.5, delay: Math.min(index * 0.1, 0.5) }}
+              className="card-premium p-6 md:p-8 group hover:border-primary/30 transition-all duration-300"
             >
               <div className="w-12 h-12 mb-5 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                 <benefit.icon className="h-6 w-6 text-primary" />

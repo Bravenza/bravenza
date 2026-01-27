@@ -58,10 +58,10 @@ function FeaturedReviewsComponent() {
   }
 
   return (
-    <section className="py-20 md:py-32 relative">
+    <section className="py-16 md:py-24 relative">
       <div className="absolute inset-0 bg-gradient-gold-subtle opacity-20" />
       
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -77,15 +77,15 @@ function FeaturedReviewsComponent() {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
           {reviews.map((review, index) => (
             <motion.div
               key={review.id}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="card-premium-gold p-8 relative"
+              transition={{ duration: 0.5, delay: Math.min(index * 0.1, 0.3) }}
+              className="card-premium-gold p-6 md:p-8 relative"
             >
               <Quote className="absolute top-6 right-6 h-8 w-8 text-primary/20" />
               
