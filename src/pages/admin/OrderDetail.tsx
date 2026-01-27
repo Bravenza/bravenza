@@ -120,6 +120,7 @@ interface Order {
   product_color: string | null;
   product_reference: string | null;
   product_link: string | null;
+  product_cost: number | null;
   product_price: number | null;
   product_currency: string;
   sinal_value: number | null;
@@ -428,6 +429,7 @@ const OrderDetail = () => {
           product_color: editData.product_color,
           product_reference: editData.product_reference,
           product_link: editData.product_link,
+          product_cost: editData.product_cost,
           product_price: editData.product_price,
           sinal_value: editData.sinal_value,
           sinal_paid: editData.sinal_paid,
@@ -1169,6 +1171,54 @@ const OrderDetail = () => {
                       </p>
                     </div>
                   </div>
+
+                  {/* Custo interno (Admin only) */}
+                  <div className="p-4 bg-secondary/50 rounded-lg border border-border mt-4">
+                    <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                      🔒 Dados Internos (não visíveis para o cliente)
+                    </h4>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Custo do Produto (R$)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={editData.product_cost || ""}
+                          onChange={(e) =>
+                            setEditData((prev) => ({
+                              ...prev,
+                              product_cost: parseFloat(e.target.value) || null,
+                            }))
+                          }
+                          placeholder="0,00"
+                          className="bg-background"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Valor de custo para cálculo de margem
+                        </p>
+                      </div>
+                      {editData.product_cost && editData.product_price && (
+                        <>
+                          <div className="space-y-2">
+                            <Label>Lucro Bruto (R$)</Label>
+                            <div className="p-2 bg-success/10 rounded border border-success/20">
+                              <p className="font-bold text-success">
+                                R$ {(editData.product_price - editData.product_cost).toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Margem de Lucro (%)</Label>
+                            <div className="p-2 bg-success/10 rounded border border-success/20">
+                              <p className="font-bold text-success">
+                                {((editData.product_price - editData.product_cost) / editData.product_price * 100).toFixed(1)}%
+                              </p>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="grid md:grid-cols-3 gap-4">
@@ -1562,6 +1612,7 @@ const OrderDetail = () => {
             budgetRejectedAt={order.budget_rejected_at}
             budgetExpiresAt={order.budget_expires_at}
             budgetApprovalToken={order.budget_approval_token}
+            productCost={order.product_cost}
             productPrice={order.product_price}
             sinalValue={order.sinal_value}
             balanceValue={order.balance_value}

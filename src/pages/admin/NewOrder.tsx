@@ -76,6 +76,7 @@ const NewOrder = () => {
     product_color: "",
     product_reference: "",
     product_link: "",
+    product_cost: "",
     product_price: "",
     sinal_value: "",
     balance_value: "",
@@ -262,6 +263,8 @@ const NewOrder = () => {
         formData.client_cep ? `CEP: ${formData.client_cep}` : "",
       ].filter(Boolean).join(", ");
 
+      const productCost = formData.product_cost ? parseFloat(formData.product_cost) : null;
+
       const orderData = {
         order_id: orderId,
         order_type: formData.order_type,
@@ -278,6 +281,7 @@ const NewOrder = () => {
         product_color: formData.product_color || null,
         product_reference: formData.product_reference || null,
         product_link: formData.product_link || null,
+        product_cost: productCost,
         product_price: productPrice,
         sinal_value: sinalValue,
         balance_value: balanceValue,
@@ -757,6 +761,56 @@ const NewOrder = () => {
                   💡 O valor do sinal é de 50% do valor total do orçamento. O saldo restante é pago quando o produto chegar ao Brasil.
                 </p>
               </div>
+              
+              {/* Custo interno (Admin only) */}
+              <div className="p-4 bg-secondary/50 rounded-lg border border-border">
+                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  🔒 Dados Internos (não visíveis para o cliente)
+                </h4>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="product_cost">Custo do Produto (R$)</Label>
+                    <Input
+                      id="product_cost"
+                      type="number"
+                      step="0.01"
+                      value={formData.product_cost}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          product_cost: e.target.value,
+                        }))
+                      }
+                      placeholder="0,00"
+                      className="bg-background"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Valor de custo para cálculo de margem
+                    </p>
+                  </div>
+                  {formData.product_cost && formData.product_price && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>Lucro Bruto (R$)</Label>
+                        <div className="p-2 bg-success/10 rounded border border-success/20">
+                          <p className="font-bold text-success">
+                            R$ {(parseFloat(formData.product_price) - parseFloat(formData.product_cost)).toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Margem de Lucro (%)</Label>
+                        <div className="p-2 bg-success/10 rounded border border-success/20">
+                          <p className="font-bold text-success">
+                            {((parseFloat(formData.product_price) - parseFloat(formData.product_cost)) / parseFloat(formData.product_price) * 100).toFixed(1)}%
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="sinal_value">Valor do Sinal - 50% (R$)</Label>
