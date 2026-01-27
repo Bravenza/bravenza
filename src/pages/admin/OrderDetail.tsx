@@ -129,8 +129,10 @@ interface Order {
   other_costs_description: string | null;
   sinal_value: number | null;
   sinal_paid: boolean;
+  sinal_payment_method: string | null;
   balance_value: number | null;
   balance_paid: boolean;
+  balance_payment_method: string | null;
   international_tracking: string | null;
   national_tracking: string | null;
   international_carrier: string | null;
@@ -1425,6 +1427,12 @@ const OrderDetail = () => {
             shippingCost={isEditing ? editData.shipping_cost ?? null : order.shipping_cost}
             otherCosts={isEditing ? editData.other_costs ?? null : order.other_costs}
             productPrice={order.product_price}
+            sinalValue={order.sinal_value}
+            sinalPaid={order.sinal_paid ?? false}
+            sinalPaymentMethod={order.sinal_payment_method}
+            balanceValue={order.balance_value}
+            balancePaid={order.balance_paid ?? false}
+            balancePaymentMethod={order.balance_payment_method}
             isEditing={isEditing}
             onUpdateField={(field, value) => {
               setEditData(prev => ({ ...prev, [field]: value }));

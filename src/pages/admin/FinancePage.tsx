@@ -49,6 +49,12 @@ import {
   Cell,
 } from "recharts";
 
+// Payment fee rates
+const PAYMENT_FEE_RATES = {
+  PIX: 0.0099, // 0.99%
+  CREDIT_CARD: 0.0499, // 4.99%
+};
+
 interface OrderFinancial {
   order_id: string;
   client_name: string;
@@ -59,7 +65,11 @@ interface OrderFinancial {
   shipping_cost: number | null;
   other_costs: number | null;
   sinal_paid: boolean;
+  sinal_value: number | null;
+  sinal_payment_method: string | null;
   balance_paid: boolean;
+  balance_value: number | null;
+  balance_payment_method: string | null;
   created_at: string;
 }
 
@@ -109,7 +119,7 @@ const FinancePage = () => {
         // Fetch orders with financial data
         const { data: ordersData, error: ordersError } = await supabase
           .from("orders")
-          .select("order_id, client_name, product_name, current_status, product_price, product_cost, shipping_cost, other_costs, sinal_paid, balance_paid, created_at")
+          .select("order_id, client_name, product_name, current_status, product_price, product_cost, shipping_cost, other_costs, sinal_paid, sinal_value, sinal_payment_method, balance_paid, balance_value, balance_payment_method, created_at")
           .gte("created_at", dateRange.start.toISOString())
           .lte("created_at", dateRange.end.toISOString())
           .order("created_at", { ascending: false });
@@ -153,10 +163,18 @@ const FinancePage = () => {
     return orders;
   }, [orders, statusFilter]);
 
+  // Calculate payment fee for an order
+  const calculatePaymentFee = (value: number | null, paid: boolean, method: string | null) => {
+    if (!paid || !value || !method) return 0;
+    const rate = method === "PIX" ? PAYMENT_FEE_RATES.PIX : PAYMENT_FEE_RATES.CREDIT_CARD;
+    return value * rate;
+  };
+
   // Calculate financial metrics
   const metrics = useMemo(() => {
     let totalRevenue = 0;
     let totalCosts = 0;
+    let totalPaymentFees = 0;
     let totalOrders = filteredOrders.length;
     let paidOrders = 0;
 
@@ -165,6 +183,11 @@ const FinancePage = () => {
       const productCost = order.product_cost || 0;
       const shippingCost = order.shipping_cost || 0;
       const otherCosts = order.other_costs || 0;
+
+      // Calculate payment fees
+      const sinalFee = calculatePaymentFee(order.sinal_value, order.sinal_paid, order.sinal_payment_method);
+      const balanceFee = calculatePaymentFee(order.balance_value, order.balance_paid, order.balance_payment_method);
+      const paymentFees = sinalFee + balanceFee;
 
       // Get additional costs from order_costs table
       const additionalCosts = orderCosts
@@ -177,15 +200,17 @@ const FinancePage = () => {
       }
 
       totalCosts += productCost + shippingCost + otherCosts + additionalCosts;
+      totalPaymentFees += paymentFees;
     });
 
-    const grossProfit = totalRevenue - totalCosts;
+    const grossProfit = totalRevenue - totalCosts - totalPaymentFees;
     const profitMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
     const averageTicket = paidOrders > 0 ? totalRevenue / paidOrders : 0;
 
     return {
       totalRevenue,
       totalCosts,
+      totalPaymentFees,
       grossProfit,
       profitMargin,
       averageTicket,
@@ -213,9 +238,14 @@ const FinancePage = () => {
       const additionalCosts = orderCosts
         .filter(c => c.order_id === order.order_id)
         .reduce((sum, c) => sum + c.amount, 0);
+      
+      // Calculate payment fees
+      const sinalFee = calculatePaymentFee(order.sinal_value, order.sinal_paid, order.sinal_payment_method);
+      const balanceFee = calculatePaymentFee(order.balance_value, order.balance_paid, order.balance_payment_method);
+      const paymentFees = sinalFee + balanceFee;
 
       monthlyData[monthKey].revenue += revenue;
-      monthlyData[monthKey].costs += productCost + shippingCost + otherCosts + additionalCosts;
+      monthlyData[monthKey].costs += productCost + shippingCost + otherCosts + additionalCosts + paymentFees;
       monthlyData[monthKey].profit = monthlyData[monthKey].revenue - monthlyData[monthKey].costs;
     });
 
@@ -228,11 +258,17 @@ const FinancePage = () => {
     let shippingCosts = 0;
     let otherCosts = 0;
     let additionalCosts = 0;
+    let paymentFees = 0;
 
     filteredOrders.forEach(order => {
       productCosts += order.product_cost || 0;
       shippingCosts += order.shipping_cost || 0;
       otherCosts += order.other_costs || 0;
+      
+      // Calculate payment fees
+      const sinalFee = calculatePaymentFee(order.sinal_value, order.sinal_paid, order.sinal_payment_method);
+      const balanceFee = calculatePaymentFee(order.balance_value, order.balance_paid, order.balance_payment_method);
+      paymentFees += sinalFee + balanceFee;
     });
 
     additionalCosts = orderCosts.reduce((sum, c) => sum + c.amount, 0);
@@ -240,6 +276,7 @@ const FinancePage = () => {
     return [
       { name: "Custo do Produto", value: productCosts },
       { name: "Frete Nacional", value: shippingCosts },
+      { name: "Taxas de Pagamento", value: paymentFees },
       { name: "Outros Custos", value: otherCosts + additionalCosts },
     ].filter(item => item.value > 0);
   }, [filteredOrders, orderCosts]);
@@ -254,6 +291,7 @@ const FinancePage = () => {
       "Receita",
       "Custo Produto",
       "Frete",
+      "Taxas Pgto",
       "Outros Custos",
       "Lucro Bruto",
       "Margem %",
@@ -268,7 +306,13 @@ const FinancePage = () => {
       const additionalCosts = orderCosts
         .filter(c => c.order_id === order.order_id)
         .reduce((sum, c) => sum + c.amount, 0);
-      const totalCosts = productCost + shippingCost + otherCosts + additionalCosts;
+      
+      // Calculate payment fees
+      const sinalFee = calculatePaymentFee(order.sinal_value, order.sinal_paid, order.sinal_payment_method);
+      const balanceFee = calculatePaymentFee(order.balance_value, order.balance_paid, order.balance_payment_method);
+      const paymentFees = sinalFee + balanceFee;
+      
+      const totalCosts = productCost + shippingCost + otherCosts + additionalCosts + paymentFees;
       const profit = revenue - totalCosts;
       const margin = revenue > 0 ? ((profit / revenue) * 100).toFixed(1) : "0";
 
@@ -280,6 +324,7 @@ const FinancePage = () => {
         revenue.toFixed(2),
         productCost.toFixed(2),
         shippingCost.toFixed(2),
+        paymentFees.toFixed(2),
         (otherCosts + additionalCosts).toFixed(2),
         profit.toFixed(2),
         margin,
@@ -376,7 +421,7 @@ const FinancePage = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Custos Totais</p>
                 <p className="text-2xl font-bold text-destructive">
-                  {formatCurrency(metrics.totalCosts)}
+                  {formatCurrency(metrics.totalCosts + metrics.totalPaymentFees)}
                 </p>
               </div>
               <div className="w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center">
@@ -384,7 +429,7 @@ const FinancePage = () => {
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Produto + frete + extras
+              Produto + frete + taxas pgto ({formatCurrency(metrics.totalPaymentFees)})
             </p>
           </CardContent>
         </Card>
@@ -538,6 +583,7 @@ const FinancePage = () => {
                   <TableHead className="text-right">Receita</TableHead>
                   <TableHead className="text-right">Custo</TableHead>
                   <TableHead className="text-right">Frete</TableHead>
+                  <TableHead className="text-right">Taxas</TableHead>
                   <TableHead className="text-right">Outros</TableHead>
                   <TableHead className="text-right">Lucro</TableHead>
                   <TableHead className="text-right">Margem</TableHead>
@@ -547,7 +593,7 @@ const FinancePage = () => {
               <TableBody>
                 {filteredOrders.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
                       Nenhum pedido encontrado no período
                     </TableCell>
                   </TableRow>
@@ -560,7 +606,13 @@ const FinancePage = () => {
                     const additionalCosts = orderCosts
                       .filter(c => c.order_id === order.order_id)
                       .reduce((sum, c) => sum + c.amount, 0);
-                    const totalCosts = productCost + shippingCost + otherCosts + additionalCosts;
+                    
+                    // Calculate payment fees
+                    const sinalFee = calculatePaymentFee(order.sinal_value, order.sinal_paid, order.sinal_payment_method);
+                    const balanceFee = calculatePaymentFee(order.balance_value, order.balance_paid, order.balance_payment_method);
+                    const paymentFees = sinalFee + balanceFee;
+                    
+                    const totalCosts = productCost + shippingCost + otherCosts + additionalCosts + paymentFees;
                     const profit = revenue - totalCosts;
                     const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
 
@@ -583,6 +635,9 @@ const FinancePage = () => {
                         </TableCell>
                         <TableCell className="text-right text-muted-foreground">
                           {shippingCost > 0 ? formatCurrency(shippingCost) : "-"}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {paymentFees > 0 ? formatCurrency(paymentFees) : "-"}
                         </TableCell>
                         <TableCell className="text-right text-muted-foreground">
                           {(otherCosts + additionalCosts) > 0 ? formatCurrency(otherCosts + additionalCosts) : "-"}
