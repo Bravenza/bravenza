@@ -5,9 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Settings, QrCode, CheckCircle2, XCircle, ExternalLink, Mail, MessageSquare, Eye, EyeOff, Percent, Users, Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Settings, QrCode, CheckCircle2, XCircle, ExternalLink, Mail, MessageSquare, Eye, EyeOff, Percent, Users, Loader2, HelpCircle, Activity } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { EmailSettingsTab } from "@/components/admin/settings/EmailSettingsTab";
+import { WhatsAppSettingsTab } from "@/components/admin/settings/WhatsAppSettingsTab";
+import { FAQSettingsTab } from "@/components/admin/settings/FAQSettingsTab";
+import { LogsSettingsTab } from "@/components/admin/settings/LogsSettingsTab";
 
 interface ApiConfig {
   id: string;
@@ -56,8 +61,6 @@ const NOTIFICATION_CONFIGS: ApiConfig[] = [
   },
 ];
 
-// Simple localStorage-based config storage (for demo purposes)
-// In production, this should be stored securely in backend
 const getStoredConfig = (key: string): string | null => {
   return localStorage.getItem(`config_${key}`);
 };
@@ -70,7 +73,6 @@ const isConfigured = (secrets: { key: string }[]): boolean => {
   return secrets.every(s => !!getStoredConfig(s.key));
 };
 
-// Hook for fetching and updating system settings
 function useSystemSetting(key: string, defaultValue: string = "") {
   const [value, setValue] = useState<string>(defaultValue);
   const [isLoading, setIsLoading] = useState(true);
@@ -131,53 +133,91 @@ export default function SettingsPage() {
           Configurações
         </h1>
         <p className="text-muted-foreground mt-2">
-          Gerencie as integrações, APIs e configurações do sistema.
+          Gerencie as integrações, APIs, templates e configurações do sistema.
         </p>
       </div>
 
-      <div className="grid gap-6">
-        {/* Referral Settings */}
-        <ReferralSettingsCard />
+      <Tabs defaultValue="geral" className="space-y-6">
+        <TabsList className="bg-muted/50 p-1 h-auto flex-wrap">
+          <TabsTrigger value="geral" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Geral
+          </TabsTrigger>
+          <TabsTrigger value="emails" className="flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Emails
+          </TabsTrigger>
+          <TabsTrigger value="whatsapp" className="flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" />
+            WhatsApp
+          </TabsTrigger>
+          <TabsTrigger value="faq" className="flex items-center gap-2">
+            <HelpCircle className="h-4 w-4" />
+            FAQ
+          </TabsTrigger>
+          <TabsTrigger value="logs" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            Logs
+          </TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Integrações de Pagamento</CardTitle>
-            <CardDescription>
-              Configure as APIs necessárias para processar pagamentos na plataforma.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {API_CONFIGS.map((api) => (
-              <ApiIntegrationCard key={api.id} config={api} />
-            ))}
-          </CardContent>
-        </Card>
+        <TabsContent value="geral" className="space-y-6">
+          <ReferralSettingsCard />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Notificações</CardTitle>
-            <CardDescription>
-              Configure as APIs para envio de notificações aos clientes.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {NOTIFICATION_CONFIGS.map((api) => (
-              <ApiIntegrationCard key={api.id} config={api} />
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Integrações de Pagamento</CardTitle>
+              <CardDescription>
+                Configure as APIs necessárias para processar pagamentos na plataforma.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {API_CONFIGS.map((api) => (
+                <ApiIntegrationCard key={api.id} config={api} />
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Notificações</CardTitle>
+              <CardDescription>
+                Configure as APIs para envio de notificações aos clientes.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {NOTIFICATION_CONFIGS.map((api) => (
+                <ApiIntegrationCard key={api.id} config={api} />
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="emails">
+          <EmailSettingsTab />
+        </TabsContent>
+
+        <TabsContent value="whatsapp">
+          <WhatsAppSettingsTab />
+        </TabsContent>
+
+        <TabsContent value="faq">
+          <FAQSettingsTab />
+        </TabsContent>
+
+        <TabsContent value="logs">
+          <LogsSettingsTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
 
-// Referral Settings Card Component
 function ReferralSettingsCard() {
   const { value, isLoading, isSaving, saveSetting } = useSystemSetting("referral_cashback_percentage", "5");
   const [editValue, setEditValue] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
 
-  // Sync editValue with value from database
   useEffect(() => {
     setEditValue(value);
   }, [value]);
@@ -277,7 +317,6 @@ function ApiIntegrationCard({ config }: { config: ApiConfig }) {
   const [configured, setConfigured] = useState(() => isConfigured(config.requiredSecrets));
 
   const handleOpenDialog = () => {
-    // Load existing values
     const existing: Record<string, string> = {};
     config.requiredSecrets.forEach(s => {
       const stored = getStoredConfig(s.key);
@@ -288,14 +327,12 @@ function ApiIntegrationCard({ config }: { config: ApiConfig }) {
   };
 
   const handleSave = () => {
-    // Validate all fields are filled
     const allFilled = config.requiredSecrets.every(s => secretValues[s.key]?.trim());
     if (!allFilled) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
 
-    // Save to localStorage
     config.requiredSecrets.forEach(s => {
       setStoredConfig(s.key, secretValues[s.key]);
     });
