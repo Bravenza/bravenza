@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Settings, CreditCard, QrCode, CheckCircle2, XCircle, ExternalLink, Mail, MessageSquare, Eye, EyeOff } from "lucide-react";
+import { Settings, QrCode, CheckCircle2, XCircle, ExternalLink, Mail, MessageSquare, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 interface ApiConfig {
@@ -21,23 +21,12 @@ const API_CONFIGS: ApiConfig[] = [
   {
     id: "mercadopago",
     name: "Mercado Pago",
-    description: "Geração automática de QR Code Pix para pagamento do sinal e saldo.",
+    description: "Pagamentos via Pix (sinal) e Cartão de Crédito até 12x (saldo).",
     icon: <QrCode className="h-6 w-6" />,
     requiredSecrets: [
       { key: "MERCADO_PAGO_ACCESS_TOKEN", label: "Access Token", placeholder: "APP_USR-..." }
     ],
     docsUrl: "https://www.mercadopago.com.br/developers/pt/docs",
-  },
-  {
-    id: "stripe",
-    name: "Stripe",
-    description: "Pagamentos via cartão de crédito para o saldo restante dos pedidos.",
-    icon: <CreditCard className="h-6 w-6" />,
-    requiredSecrets: [
-      { key: "STRIPE_SECRET_KEY", label: "Secret Key", placeholder: "sk_live_..." },
-      { key: "STRIPE_WEBHOOK_SECRET", label: "Webhook Secret", placeholder: "whsec_..." }
-    ],
-    docsUrl: "https://stripe.com/docs",
   },
 ];
 
