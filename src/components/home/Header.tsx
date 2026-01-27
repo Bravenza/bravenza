@@ -1,11 +1,9 @@
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useCallback, memo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ClipboardList } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 
 const navLinks = [
   { label: "Início", href: "/" },
@@ -16,45 +14,7 @@ const navLinks = [
 
 const HeaderComponent = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const location = useLocation();
-
-  // Memoized fetch function
-  const fetchPendingRequests = useCallback(async () => {
-    const { count, error } = await supabase
-      .from("order_requests")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "pending");
-    
-    if (!error && count !== null) {
-      setPendingRequestsCount(count);
-    }
-  }, []);
-
-  // Fetch pending order requests count
-  useEffect(() => {
-    fetchPendingRequests();
-
-    // Subscribe to realtime changes
-    const channel = supabase
-      .channel("order-requests-count")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "order_requests",
-        },
-        () => {
-          fetchPendingRequests();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchPendingRequests]);
 
   const handleNavClick = useCallback((href: string) => {
     setIsMenuOpen(false);
@@ -94,20 +54,6 @@ const HeaderComponent = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-4">
-            <Link to="/admin/login" className="relative">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                <ClipboardList className="h-4 w-4 mr-1" />
-                Admin
-              </Button>
-              {pendingRequestsCount > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs"
-                >
-                  {pendingRequestsCount > 99 ? "99+" : pendingRequestsCount}
-                </Badge>
-              )}
-            </Link>
             <Link to="/solicitar">
               <Button size="sm" className="btn-gold">
                 Solicitar Orçamento
@@ -166,11 +112,6 @@ const HeaderComponent = () => {
                 <Link to="/solicitar" onClick={() => setIsMenuOpen(false)}>
                   <Button className="btn-gold w-full h-12 text-base">
                     Solicitar Orçamento
-                  </Button>
-                </Link>
-                <Link to="/admin/login" onClick={() => setIsMenuOpen(false)}>
-                  <Button variant="outline" className="w-full h-12 text-base">
-                    Área Administrativa
                   </Button>
                 </Link>
               </div>
