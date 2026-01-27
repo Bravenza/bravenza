@@ -118,6 +118,45 @@ export type Database = {
           },
         ]
       }
+      client_preferences: {
+        Row: {
+          client_cpf: string
+          created_at: string
+          favorite_brands: string[] | null
+          id: string
+          notification_email: boolean | null
+          notification_push: boolean | null
+          notification_whatsapp: boolean | null
+          preferred_colors: string[] | null
+          preferred_sizes: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          client_cpf: string
+          created_at?: string
+          favorite_brands?: string[] | null
+          id?: string
+          notification_email?: boolean | null
+          notification_push?: boolean | null
+          notification_whatsapp?: boolean | null
+          preferred_colors?: string[] | null
+          preferred_sizes?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          client_cpf?: string
+          created_at?: string
+          favorite_brands?: string[] | null
+          id?: string
+          notification_email?: boolean | null
+          notification_push?: boolean | null
+          notification_whatsapp?: boolean | null
+          preferred_colors?: string[] | null
+          preferred_sizes?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_sessions: {
         Row: {
           cpf: string
@@ -960,6 +999,17 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_client_preferences: {
+        Args: { p_cpf: string }
+        Returns: {
+          favorite_brands: string[]
+          notification_email: boolean
+          notification_push: boolean
+          notification_whatsapp: boolean
+          preferred_colors: string[]
+          preferred_sizes: string[]
+        }[]
+      }
       get_client_referrals: {
         Args: { p_cpf: string }
         Returns: {
@@ -1039,6 +1089,18 @@ export type Database = {
           sinal_value: number
           sla_vault_due_date: string
         }[]
+      }
+      upsert_client_preferences: {
+        Args: {
+          p_cpf: string
+          p_favorite_brands?: string[]
+          p_notification_email?: boolean
+          p_notification_push?: boolean
+          p_notification_whatsapp?: boolean
+          p_preferred_colors?: string[]
+          p_preferred_sizes?: string[]
+        }
+        Returns: boolean
       }
     }
     Enums: {

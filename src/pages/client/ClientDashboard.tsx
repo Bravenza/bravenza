@@ -16,7 +16,9 @@ import {
   Download,
   Receipt,
   Star,
-  Gift
+  Gift,
+  Camera,
+  Settings
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useClientAuth } from "@/hooks/useClientAuth";
@@ -26,6 +28,9 @@ import { Logo } from "@/components/Logo";
 import { ReviewForm } from "@/components/client/ReviewForm";
 import { ReferralCard } from "@/components/client/ReferralCard";
 import { CashbackBanner } from "@/components/client/CashbackBanner";
+import { ClientNotificationBell } from "@/components/client/ClientNotificationBell";
+import { ClientPreferences } from "@/components/client/ClientPreferences";
+import { InspectionPhotosGallery } from "@/components/client/InspectionPhotosGallery";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -54,6 +59,7 @@ interface OrderData {
   created_at: string;
   updated_at: string;
   history: { status: string; notes: string | null; created_at: string }[];
+  inspection_photos: string[] | null;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -95,6 +101,8 @@ export default function ClientDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [reviewOrder, setReviewOrder] = useState<{ orderId: string; productName: string } | null>(null);
   const [reviewedOrders, setReviewedOrders] = useState<Set<string>>(new Set());
+  const [showPreferences, setShowPreferences] = useState(false);
+  const [selectedOrderPhotos, setSelectedOrderPhotos] = useState<{ photos: string[]; productName: string } | null>(null);
   const referralSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -164,10 +172,21 @@ export default function ClientDashboard() {
               <p className="font-semibold">{session?.client_name}</p>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sair
-          </Button>
+          <div className="flex items-center gap-2">
+            {session && <ClientNotificationBell clientCpf={session.cpf} />}
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setShowPreferences(!showPreferences)}
+              title="Configurações"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -402,6 +421,22 @@ export default function ClientDashboard() {
                           </Button>
                         )}
 
+                        {/* Inspection photos button */}
+                        {order.inspection_photos && order.inspection_photos.length > 0 && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="border-cyan-500/50 text-cyan-500 hover:bg-cyan-500/10"
+                            onClick={() => setSelectedOrderPhotos({ 
+                              photos: order.inspection_photos!, 
+                              productName: order.product_name 
+                            })}
+                          >
+                            <Camera className="h-4 w-4 mr-2" />
+                            Fotos ({order.inspection_photos.length})
+                          </Button>
+                        )}
+
                         {/* Review button for delivered orders */}
                         {order.current_status === "DELIVERED" && !reviewedOrders.has(order.order_id) && (
                           <Button 
@@ -430,13 +465,27 @@ export default function ClientDashboard() {
           )}
           </div>
 
-          {/* Sidebar - Referral Card */}
-          <div className="space-y-6" ref={referralSectionRef}>
+          {/* Sidebar - Referral Card & Preferences */}
+          <div className="space-y-6" ref={referralSectionRef} id="referral-section">
             {session && (
               <ReferralCard 
                 clientCpf={session.cpf}
                 clientName={session.client_name}
               />
+            )}
+            
+            {/* Preferences Section */}
+            {showPreferences && session && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                <ClientPreferences 
+                  clientCpf={session.cpf}
+                  clientName={session.client_name}
+                />
+              </motion.div>
             )}
           </div>
         </motion.div>
@@ -450,6 +499,26 @@ export default function ClientDashboard() {
             onClose={() => setReviewOrder(null)}
             onSubmitted={() => setReviewedOrders(prev => new Set([...prev, reviewOrder.orderId]))}
           />
+        )}
+
+        {/* Inspection Photos Gallery */}
+        {selectedOrderPhotos && (
+          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+            <div className="bg-card rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <h3 className="font-semibold">Fotos de Inspeção - {selectedOrderPhotos.productName}</h3>
+                <Button variant="ghost" size="sm" onClick={() => setSelectedOrderPhotos(null)}>
+                  ✕
+                </Button>
+              </div>
+              <div className="p-4">
+                <InspectionPhotosGallery 
+                  photos={selectedOrderPhotos.photos} 
+                  productName={selectedOrderPhotos.productName}
+                />
+              </div>
+            </div>
+          </div>
         )}
       </main>
 

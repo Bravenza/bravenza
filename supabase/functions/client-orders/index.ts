@@ -18,8 +18,56 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { session_token } = await req.json();
+    const body = await req.json();
+    const { session_token, action, cpf, notification_id, notification_ids } = body;
 
+    // Handle notification actions that use CPF directly
+    if (action === "get_notifications" && cpf) {
+      const { data: notifications, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("target", "client")
+        .eq("target_client_cpf", cpf)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true, notifications: notifications || [] }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (action === "mark_notification_read" && notification_id) {
+      const { error } = await supabase
+        .from("notifications")
+        .update({ read: true, read_at: new Date().toISOString() })
+        .eq("id", notification_id);
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (action === "mark_all_notifications_read" && notification_ids) {
+      const { error } = await supabase
+        .from("notifications")
+        .update({ read: true, read_at: new Date().toISOString() })
+        .in("id", notification_ids);
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Default action: get orders (requires session_token)
     if (!session_token) {
       throw new Error("Token de sessão é obrigatório");
     }
@@ -38,9 +86,9 @@ serve(async (req) => {
       throw new Error("Sessão inválida ou expirada");
     }
 
-    const cpf = sessions[0].cpf;
+    const clientCpf = sessions[0].cpf;
 
-    // Get all orders for this CPF
+    // Get all orders for this CPF with inspection photos
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
       .select(`
@@ -65,10 +113,11 @@ serve(async (req) => {
         international_tracking,
         national_tracking,
         national_carrier,
+        inspection_photos,
         created_at,
         updated_at
       `)
-      .eq("client_cpf", cpf)
+      .eq("client_cpf", clientCpf)
       .order("created_at", { ascending: false });
 
     if (ordersError) throw ordersError;
@@ -92,7 +141,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        orders: ordersWithHistory 
+        orders: ordersWithHistory,
+        cpf: clientCpf 
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
