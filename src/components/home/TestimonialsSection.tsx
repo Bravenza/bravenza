@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { Star, Quote, Verified } from "lucide-react";
 
@@ -25,7 +26,7 @@ const testimonials = [
   },
 ];
 
-export const TestimonialsSection = () => {
+const TestimonialsSectionComponent = () => {
   return (
     <section className="py-20 md:py-32 relative">
       <div className="absolute inset-0 bg-gradient-gold-subtle opacity-20" />
@@ -96,3 +97,5 @@ export const TestimonialsSection = () => {
     </section>
   );
 };
+
+export const TestimonialsSection = memo(TestimonialsSectionComponent);

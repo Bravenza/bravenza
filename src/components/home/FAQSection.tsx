@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, memo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -39,16 +39,12 @@ const CATEGORY_LABELS: Record<string, string> = {
   geral: "Geral",
 };
 
-export function FAQSection() {
+function FAQSectionComponent() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("importacao");
 
-  useEffect(() => {
-    fetchFAQs();
-  }, []);
-
-  const fetchFAQs = async () => {
+  const fetchFAQs = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("faqs")
@@ -63,14 +59,19 @@ export function FAQSection() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const categories = [...new Set(faqs.map((faq) => faq.category))];
-  const faqsByCategory = faqs.reduce((acc, faq) => {
+  useEffect(() => {
+    fetchFAQs();
+  }, [fetchFAQs]);
+
+  // Memoize categories and faqsByCategory to prevent recalculation
+  const categories = useMemo(() => [...new Set(faqs.map((faq) => faq.category))], [faqs]);
+  const faqsByCategory = useMemo(() => faqs.reduce((acc, faq) => {
     if (!acc[faq.category]) acc[faq.category] = [];
     acc[faq.category].push(faq);
     return acc;
-  }, {} as Record<string, FAQ[]>);
+  }, {} as Record<string, FAQ[]>), [faqs]);
 
   if (isLoading) {
     return (
@@ -185,3 +186,5 @@ export function FAQSection() {
     </section>
   );
 }
+
+export const FAQSection = memo(FAQSectionComponent);

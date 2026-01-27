@@ -1,9 +1,10 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Crown, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export const HeroSection = () => {
+const HeroSectionComponent = () => {
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
       {/* Background effects */}
@@ -99,3 +100,5 @@ export const HeroSection = () => {
     </section>
   );
 };
+
+export const HeroSection = memo(HeroSectionComponent);

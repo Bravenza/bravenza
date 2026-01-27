@@ -110,13 +110,16 @@ const FeaturedModelsPage = () => {
 
   const reorderMutation = useMutation({
     mutationFn: async (updates: { id: string; order_index: number }[]) => {
-      for (const update of updates) {
-        const { error } = await supabase
+      // Execute all updates in parallel for better performance
+      const promises = updates.map((update) =>
+        supabase
           .from("featured_models")
           .update({ order_index: update.order_index })
-          .eq("id", update.id);
-        if (error) throw error;
-      }
+          .eq("id", update.id)
+      );
+      const results = await Promise.all(promises);
+      const error = results.find((r) => r.error)?.error;
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-featured-models"] });

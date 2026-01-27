@@ -1,9 +1,10 @@
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { Gift, Users, Wallet, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
-export const ReferralSection = () => {
+const ReferralSectionComponent = () => {
   return (
     <section className="py-20 md:py-32 relative overflow-hidden">
       {/* Background gradient */}
@@ -112,3 +113,5 @@ export const ReferralSection = () => {
     </section>
   );
 };
+
+export const ReferralSection = memo(ReferralSectionComponent);

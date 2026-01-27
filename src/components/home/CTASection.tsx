@@ -1,9 +1,10 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Clock, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export const CTASection = () => {
+const CTASectionComponent = () => {
   return (
     <section className="py-20 md:py-32">
       <div className="container mx-auto px-4">
@@ -54,3 +55,5 @@ export const CTASection = () => {
     </section>
   );
 };
+
+export const CTASection = memo(CTASectionComponent);

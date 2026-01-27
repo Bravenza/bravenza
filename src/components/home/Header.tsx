@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ClipboardList } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,26 +12,27 @@ const navLinks = [
   { label: "Como Funciona", href: "/#como-funciona" },
   { label: "Rastrear Pedido", href: "/rastreio" },
   { label: "Minha Conta", href: "/cliente/login" },
-];
+] as const;
 
-export const Header = () => {
+const HeaderComponent = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const location = useLocation();
 
+  // Memoized fetch function
+  const fetchPendingRequests = useCallback(async () => {
+    const { count, error } = await supabase
+      .from("order_requests")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending");
+    
+    if (!error && count !== null) {
+      setPendingRequestsCount(count);
+    }
+  }, []);
+
   // Fetch pending order requests count
   useEffect(() => {
-    const fetchPendingRequests = async () => {
-      const { count, error } = await supabase
-        .from("order_requests")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "pending");
-      
-      if (!error && count !== null) {
-        setPendingRequestsCount(count);
-      }
-    };
-
     fetchPendingRequests();
 
     // Subscribe to realtime changes
@@ -53,9 +54,9 @@ export const Header = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchPendingRequests]);
 
-  const handleNavClick = (href: string) => {
+  const handleNavClick = useCallback((href: string) => {
     setIsMenuOpen(false);
     
     if (href.includes("#")) {
@@ -65,7 +66,7 @@ export const Header = () => {
         element.scrollIntoView({ behavior: "smooth" });
       }
     }
-  };
+  }, []);
 
   return (
     <>
@@ -180,3 +181,5 @@ export const Header = () => {
     </>
   );
 };
+
+export const Header = memo(HeaderComponent);

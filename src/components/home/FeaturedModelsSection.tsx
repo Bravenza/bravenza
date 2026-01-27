@@ -74,8 +74,8 @@ const FeaturedModelsSection = () => {
               key={model.id}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.05 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.3) }}
               className="group"
             >
               <div className="bg-card rounded-xl overflow-hidden border border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10">
@@ -85,6 +85,8 @@ const FeaturedModelsSection = () => {
                     alt={model.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
+                    decoding="async"
+                    fetchPriority={index < 6 ? "high" : "low"}
                   />
                 </div>
                 <div className="p-3 text-center">
