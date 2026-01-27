@@ -64,7 +64,7 @@ const FeaturedModelsSection = () => {
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Estes são os sneakers que nossos clientes mais pedem. Edições limitadas, 
-            collabs exclusivas e clássicos atemporais — todos ao seu alcance.
+            collabs exclusivas e clássicos atemporais, todos ao seu alcance.
           </p>
         </motion.div>
 

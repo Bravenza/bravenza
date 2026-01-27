@@ -26,7 +26,7 @@ export const CTASection = () => {
             </h2>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
               Chega de procurar e não encontrar. Chega de pagar caro e receber réplica. 
-              Sua próxima aquisição começa aqui — com segurança, transparência e garantia de originalidade.
+              Sua próxima aquisição começa aqui, com segurança, transparência e garantia de originalidade.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
