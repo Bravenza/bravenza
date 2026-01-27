@@ -828,8 +828,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_cashback_to_order: {
+        Args: {
+          p_cpf: string
+          p_discount_amount: number
+          p_order_id: string
+          p_payment_type: string
+        }
+        Returns: boolean
+      }
       approve_budget: { Args: { p_token: string }; Returns: boolean }
       generate_referral_code: { Args: never; Returns: string }
+      get_client_available_cashback: {
+        Args: { p_cpf: string }
+        Returns: {
+          referral_ids: string[]
+          total_percentage: number
+        }[]
+      }
       get_client_documents: {
         Args: { p_cpf: string }
         Returns: {
@@ -880,6 +896,7 @@ export type Database = {
           balance_value: number
           budget_expires_at: string
           budget_status: Database["public"]["Enums"]["budget_status"]
+          client_cpf: string
           client_name: string
           created_at: string
           order_id: string
