@@ -36,9 +36,9 @@ serve(async (req) => {
       throw new Error("Parâmetros inválidos");
     }
 
-    // Only allow card payment for sinal
-    if (payment_type === "balance") {
-      throw new Error("Saldo deve ser pago via Pix");
+    // Only allow card payment for balance
+    if (payment_type === "sinal") {
+      throw new Error("Sinal deve ser pago via Pix");
     }
 
     // Validate installments (1-12)
@@ -56,8 +56,12 @@ serve(async (req) => {
 
     const order = orderData[0];
 
-    if (order.sinal_paid) {
-      throw new Error("Sinal já foi pago");
+    if (!order.sinal_paid) {
+      throw new Error("Sinal deve ser pago primeiro");
+    }
+
+    if (order.balance_paid) {
+      throw new Error("Saldo já foi pago");
     }
 
     // Get origin for redirect URLs
@@ -74,8 +78,8 @@ serve(async (req) => {
         items: [
           {
             id: order_id,
-            title: `Sinal - ${product_name}`,
-            description: `Pagamento do sinal do pedido ${order_id}`,
+            title: `Saldo - ${product_name}`,
+            description: `Pagamento do saldo do pedido ${order_id}`,
             quantity: 1,
             currency_id: "BRL",
             unit_price: amount,
@@ -119,7 +123,7 @@ serve(async (req) => {
     await supabase
       .from("orders")
       .update({ 
-        sinal_stripe_payment_id: preferenceData.id, // Reusing this field for MP preference ID
+        balance_stripe_payment_id: preferenceData.id, // Reusing this field for MP preference ID
         updated_at: new Date().toISOString(),
       })
       .eq("order_id", order_id);
