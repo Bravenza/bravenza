@@ -2,10 +2,14 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 const SUPERFRETE_API_URL = "https://api.superfrete.com";
+
+// Default services for quoting (common BR services). SuperFrete may require a non-empty list.
+const DEFAULT_QUOTE_SERVICES = [1, 2, 3];
 
 interface FreightQuoteRequest {
   action: "quote";
@@ -16,6 +20,11 @@ interface FreightQuoteRequest {
   width: number;
   length: number;
   insurance_value?: number;
+  services?: number[] | string;
+}
+
+interface ListServicesRequest {
+  action: "list_services";
 }
 
 interface CreateLabelRequest {
@@ -107,14 +116,62 @@ serve(async (req) => {
     console.log(`[SuperFrete] Action: ${action}`);
 
     switch (action) {
+      case "list_services": {
+        console.log("[SuperFrete] Listing services");
+
+        const response = await fetch(`${SUPERFRETE_API_URL}/api/v0/services`, {
+          method: "GET",
+          headers,
+        });
+
+        const raw = await response.text();
+        let data: unknown = raw;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          // keep raw text (likely HTML error page)
+        }
+        console.log(`[SuperFrete] List services response status: ${response.status}`);
+
+        if (!response.ok) {
+          console.error("[SuperFrete] List services error:", data);
+          const message =
+            typeof data === "object" &&
+            data !== null &&
+            "message" in data &&
+            typeof (data as Record<string, unknown>).message === "string"
+              ? String((data as Record<string, unknown>).message)
+              : "Erro ao listar serviços";
+          return new Response(
+            JSON.stringify({ error: message, details: data }),
+            { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify(data),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       case "quote": {
-        const { from_cep, to_cep, weight, height, width, length, insurance_value } = body as FreightQuoteRequest;
+        const { from_cep, to_cep, weight, height, width, length, insurance_value, services } = body as FreightQuoteRequest;
 
         console.log(`[SuperFrete] Quote request: ${from_cep} -> ${to_cep}, ${weight}kg`);
+
+        const serviceIds = (() => {
+          if (typeof services === "string" && services.trim().length > 0) return services;
+          const list = Array.isArray(services) && services.length > 0 ? services : DEFAULT_QUOTE_SERVICES;
+          // SuperFrete backend expects a CSV string and internally does `split(',')`.
+          return list.join(",");
+        })();
 
         const payload = {
           from: { postal_code: from_cep.replace(/\D/g, "") },
           to: { postal_code: to_cep.replace(/\D/g, "") },
+          // Some SuperFrete accounts require explicitly sending `services` and it must be non-empty.
+          // Their API expects a CSV string (it calls `.split(',')` internally).
+          services: serviceIds,
           package: {
             weight: weight,
             height: height,
