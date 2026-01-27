@@ -99,8 +99,8 @@ serve(async (req) => {
         // Send email reminder
         if (reminder.channel === "email" || reminder.channel === "both") {
           if (order.client_email) {
-            const reviewLink = `https://bravenza.lovable.app/minha-conta`;
-            const paymentLink = `https://bravenza.lovable.app/pagamento/${order.budget_approval_token}`;
+            const reviewLink = `https://bravenza.com.br/minha-conta`;
+            const paymentLink = `https://bravenza.com.br/pagamento/${order.budget_approval_token}`;
             
             // Determine email type based on reminder type
             const emailType = reminder.reminder_type === "review_request" ? "review_request" : "balance_reminder";
@@ -155,7 +155,7 @@ serve(async (req) => {
                     `Olá ${order.client_name.split(" ")[0]}!\n\n` +
                     `Seu produto *${order.product_name}* está aguardando o pagamento do saldo para ser enviado.\n\n` +
                     `💰 Valor: R$ ${order.balance_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
-                    `Acesse sua conta para pagar: https://bravenza.lovable.app/minha-conta\n\n` +
+                    `Acesse sua conta para pagar: https://bravenza.com.br/minha-conta\n\n` +
                     `_Bravenza - Sua loja de sneakers premium_`,
                 },
               });

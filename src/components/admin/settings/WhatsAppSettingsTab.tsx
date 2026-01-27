@@ -257,7 +257,7 @@ export function WhatsAppSettingsTab() {
       .replace("{client_name}", "João Silva")
       .replace("{product_name}", "Nike Air Force 1")
       .replace("{product_price}", "1.500,00")
-      .replace("{budget_url}", "https://bravenza.lovable.app/orcamento/...")
+      .replace("{budget_url}", "https://bravenza.com.br/orcamento/...")
       .replace("{order_id}", "BV-260126-001")
       .replace("{sinal_value}", "750,00")
       .replace("{balance_value}", "750,00")
@@ -266,7 +266,7 @@ export function WhatsAppSettingsTab() {
       .replace("{tracking}", "🚚 Rastreio: BR123456789BR")
       .replace("{tracking_code}", "BR123456789BR")
       .replace("{carrier}", "Correios")
-      .replace("{review_link}", "https://bravenza.lovable.app/avaliar/...")
+      .replace("{review_link}", "https://bravenza.com.br/avaliar/...")
       .replace("{referred_name}", "Maria")
       .replace("{discount_percentage}", "5")
       .replace("{referral_code}", "BRVZABC123");

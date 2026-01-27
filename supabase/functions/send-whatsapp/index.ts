@@ -70,7 +70,7 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `💰 Você ganhou *${data.discount_percentage || 5}% de desconto* no seu próximo pedido!\n\n` +
     `📱 Seu código: *${data.referral_code}*\n` +
     `Continue indicando e acumule mais descontos!\n\n` +
-    `Acesse sua conta para ver suas indicações:\nhttps://bravenza.lovable.app/minha-conta\n\n` +
+    `Acesse sua conta para ver suas indicações:\nhttps://bravenza.com.br/minha-conta\n\n` +
     `_Bravenza - Sua loja de sneakers premium_`,
 };
 
@@ -263,8 +263,8 @@ serve(async (req) => {
 
       const templateData = {
         ...order,
-        budget_url: `https://bravenza.lovable.app/orcamento/${order.budget_approval_token}`,
-        review_url: `https://bravenza.lovable.app/minha-conta`,
+        budget_url: `https://bravenza.com.br/orcamento/${order.budget_approval_token}`,
+        review_url: `https://bravenza.com.br/minha-conta`,
         status_label: STATUS_LABELS[order.current_status] || order.current_status,
         tracking: order.national_tracking || order.international_tracking,
       };

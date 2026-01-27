@@ -198,7 +198,7 @@ export default function WhatsAppFlowPage() {
       .replace("{client_name}", "João Silva")
       .replace("{product_name}", "Nike Air Force 1")
       .replace("{product_price}", "1.500,00")
-      .replace("{budget_url}", "https://bravenza.lovable.app/orcamento/...")
+      .replace("{budget_url}", "https://bravenza.com.br/orcamento/...")
       .replace("{order_id}", "BV-260126-001")
       .replace("{sinal_value}", "750,00")
       .replace("{balance_value}", "750,00")

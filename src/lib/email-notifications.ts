@@ -65,7 +65,7 @@ export async function sendStatusChangeEmail(
   }
 
   // Generate review link for delivered orders
-  const reviewLink = `https://bravenza.lovable.app/minha-conta`;
+  const reviewLink = `https://bravenza.com.br/minha-conta`;
 
   try {
     const { data, error } = await supabase.functions.invoke("send-order-email", {

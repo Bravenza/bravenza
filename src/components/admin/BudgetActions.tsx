@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 // Use the published URL for client-facing links (not preview URL)
-const PUBLIC_URL = "https://bravenza.lovable.app";
+const PUBLIC_URL = "https://bravenza.com.br";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
