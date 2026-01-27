@@ -173,14 +173,14 @@ export default function PaymentPage() {
     setIsProcessingCard(true);
 
     try {
-      const amount = order.sinal_value; // Only sinal can be paid with card
+      const amount = order.balance_value; // Only balance can be paid with card
 
       const { data, error } = await supabase.functions.invoke(
         "create-mercadopago-card",
         {
           body: {
             token,
-            payment_type: "sinal",
+            payment_type: "balance",
             amount,
             order_id: order.order_id,
             product_name: order.product_name,
@@ -220,13 +220,11 @@ export default function PaymentPage() {
     for (let i = 1; i <= 12; i++) {
       const installmentValue = calculateInstallmentValue(total, i);
       const totalWithInterest = installmentValue * i;
-      const hasInterest = i > 1;
       options.push({
         value: i,
         label: i === 1 
           ? `1x de ${formatCurrency(total)} (sem juros)`
           : `${i}x de ${formatCurrency(installmentValue)} (Total: ${formatCurrency(totalWithInterest)})`,
-        hasInterest,
       });
     }
     return options;
@@ -279,7 +277,7 @@ export default function PaymentPage() {
   const currentAmount =
     paymentType === "sinal" ? order.sinal_value : order.balance_value;
   const currentLabel = paymentType === "sinal" ? "Sinal (50%)" : "Saldo (50%)";
-  const installmentOptions = order.sinal_value ? generateInstallmentOptions(order.sinal_value) : [];
+  const installmentOptions = order.balance_value ? generateInstallmentOptions(order.balance_value) : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -326,7 +324,7 @@ export default function PaymentPage() {
                         : "-"}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Pix ou Cartão até 12x
+                      Apenas Pix
                     </p>
                   </div>
                   {order.sinal_paid ? (
@@ -365,7 +363,7 @@ export default function PaymentPage() {
                         : "-"}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Apenas Pix
+                      Pix ou Cartão até 12x
                     </p>
                   </div>
                   {order.balance_paid ? (
@@ -406,13 +404,13 @@ export default function PaymentPage() {
                   <TabsTrigger
                     value="card"
                     className="flex items-center gap-2"
-                    disabled={paymentType === "balance"}
+                    disabled={paymentType === "sinal"}
                   >
                     <CreditCard className="h-4 w-4" />
                     Cartão
-                    {paymentType === "balance" && (
+                    {paymentType === "sinal" && (
                       <span className="text-xs text-muted-foreground ml-1">
-                        (só sinal)
+                        (só saldo)
                       </span>
                     )}
                   </TabsTrigger>
