@@ -81,10 +81,10 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
             <p className="text-sm text-muted-foreground">
               © 2022-{currentYear} BRAVENZA. Todos os direitos reservados.
             </p>
-            <span className="text-border hidden sm:inline">·</span>
+            <span className="text-border">·</span>
             <Link 
               to="/admin/login" 
-              className="hidden sm:inline text-muted-foreground/30 hover:text-muted-foreground/50 transition-colors text-xs"
+              className="text-muted-foreground/30 hover:text-muted-foreground/50 transition-colors text-xs"
             >
               Admin
             </Link>
