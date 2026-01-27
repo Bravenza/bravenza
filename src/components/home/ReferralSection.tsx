@@ -23,11 +23,10 @@ export const ReferralSection = () => {
           </div>
           
           <h2 className="text-3xl md:text-5xl font-bold mb-4">
-            Indique e <span className="text-gradient-gold">ganhe dinheiro</span>
+            Indique amigos e <span className="text-gradient-gold">ganhe cashback</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Cada amigo que compra usando seu código te dá desconto real no próximo pedido. 
-            Não tem limite. Quanto mais indica, mais economiza.
+            Compartilhe seu código exclusivo e ganhe desconto no seu próximo pedido quando seus amigos comprarem
           </p>
         </motion.div>
 
@@ -74,9 +73,9 @@ export const ReferralSection = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
               <Wallet className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="font-semibold text-lg mb-2">3. Receba o cashback</h3>
+            <h3 className="font-semibold text-lg mb-2">3. Ganhe cashback</h3>
             <p className="text-muted-foreground text-sm">
-              Crédito automático assim que a compra do seu amigo for confirmada
+              Quando seu amigo finalizar a compra, você ganha desconto automático
             </p>
           </motion.div>
         </div>
@@ -93,8 +92,7 @@ export const ReferralSection = () => {
             <span className="text-xl text-muted-foreground text-left">de desconto<br />por indicação</span>
           </div>
           <p className="text-muted-foreground mb-6">
-            <strong className="text-foreground">Sem limite!</strong> Indique 10 amigos = 50% de desconto acumulado. 
-            Simples assim.
+            <strong className="text-foreground">Sem limite de indicações!</strong> Quanto mais amigos você indicar, mais desconto você acumula.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild size="lg" className="gap-2 btn-gold">
