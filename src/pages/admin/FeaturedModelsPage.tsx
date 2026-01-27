@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, GripVertical, Image, Pencil, Upload, Loader2, Link } from "lucide-react";
+import { Plus, Trash2, GripVertical, Image, Pencil, Upload, Loader2, Link, ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ const FeaturedModelsPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [imageInputMode, setImageInputMode] = useState<"upload" | "url">("upload");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [draggedItem, setDraggedItem] = useState<FeaturedModel | null>(null);
 
   const { data: models, isLoading } = useQuery({
     queryKey: ["admin-featured-models"],
@@ -106,6 +107,67 @@ const FeaturedModelsPage = () => {
       toast.error("Erro ao remover modelo");
     },
   });
+
+  const reorderMutation = useMutation({
+    mutationFn: async (updates: { id: string; order_index: number }[]) => {
+      for (const update of updates) {
+        const { error } = await supabase
+          .from("featured_models")
+          .update({ order_index: update.order_index })
+          .eq("id", update.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-featured-models"] });
+    },
+    onError: () => {
+      toast.error("Erro ao reordenar modelos");
+    },
+  });
+
+  const moveItem = useCallback((fromIndex: number, toIndex: number) => {
+    if (!models || fromIndex === toIndex) return;
+    
+    const newModels = [...models];
+    const [movedItem] = newModels.splice(fromIndex, 1);
+    newModels.splice(toIndex, 0, movedItem);
+    
+    const updates = newModels.map((model, index) => ({
+      id: model.id,
+      order_index: index + 1,
+    }));
+    
+    reorderMutation.mutate(updates);
+    toast.success("Ordem atualizada!");
+  }, [models, reorderMutation]);
+
+  const handleDragStart = (e: React.DragEvent, model: FeaturedModel) => {
+    setDraggedItem(model);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = (e: React.DragEvent, targetModel: FeaturedModel) => {
+    e.preventDefault();
+    if (!draggedItem || !models) return;
+    
+    const fromIndex = models.findIndex(m => m.id === draggedItem.id);
+    const toIndex = models.findIndex(m => m.id === targetModel.id);
+    
+    if (fromIndex !== toIndex) {
+      moveItem(fromIndex, toIndex);
+    }
+    setDraggedItem(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+  };
 
   const resetForm = () => {
     setFormData({ name: "", brand: "", image_url: "" });
@@ -341,12 +403,42 @@ const FeaturedModelsPage = () => {
             </div>
           ) : models && models.length > 0 ? (
             <div className="space-y-3">
-              {models.map((model) => (
+              {models.map((model, index) => (
                 <div
                   key={model.id}
-                  className="flex items-center gap-4 p-3 bg-secondary/30 rounded-lg border border-border/50"
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, model)}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, model)}
+                  onDragEnd={handleDragEnd}
+                  className={`flex items-center gap-4 p-3 bg-secondary/30 rounded-lg border transition-all ${
+                    draggedItem?.id === model.id 
+                      ? "border-primary opacity-50" 
+                      : "border-border/50 hover:border-border"
+                  }`}
                 >
-                  <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
+                  <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab active:cursor-grabbing" />
+                  
+                  <div className="flex flex-col gap-1">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                      disabled={index === 0 || reorderMutation.isPending}
+                      onClick={() => moveItem(index, index - 1)}
+                    >
+                      <ArrowUp className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                      disabled={index === models.length - 1 || reorderMutation.isPending}
+                      onClick={() => moveItem(index, index + 1)}
+                    >
+                      <ArrowDown className="h-3 w-3" />
+                    </Button>
+                  </div>
                   
                   <div className="w-16 h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
                     <img
@@ -362,6 +454,7 @@ const FeaturedModelsPage = () => {
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-primary font-medium uppercase">{model.brand}</p>
                     <h4 className="font-semibold text-foreground truncate">{model.name}</h4>
+                    <p className="text-xs text-muted-foreground">Posição: {index + 1}</p>
                   </div>
 
                   <div className="flex items-center gap-2">
