@@ -203,6 +203,13 @@ export async function processReferralReward(orderId: string): Promise<{ success:
     // Send notification to the referrer about the confirmed referral
     await sendReferralConfirmationNotifications(referral);
 
+    // Schedule cashback expiration reminder for 7 days before expiration (83 days from now)
+    try {
+      await scheduleCashbackExpirationReminder(referral.id);
+    } catch (err) {
+      console.error("Failed to schedule cashback expiration reminder:", err);
+    }
+
     return { success: true };
   } catch (err: any) {
     console.error("Failed to process referral reward:", err);
@@ -270,6 +277,48 @@ async function sendReferralConfirmationNotifications(referral: {
     }
   } catch (err) {
     console.error("Error sending referral notifications:", err);
+  }
+}
+
+// Schedule cashback expiration reminder (7 days before expiration = 83 days after creation)
+async function scheduleCashbackExpirationReminder(referralId: string): Promise<void> {
+  try {
+    // Calculate the date 83 days from now (7 days before the 90-day expiration)
+    const reminderDate = new Date();
+    reminderDate.setDate(reminderDate.getDate() + 83);
+
+    // Check if a reminder already exists for this referral
+    const { data: existingReminder } = await supabase
+      .from("scheduled_reminders")
+      .select("id")
+      .eq("order_id", referralId) // Using order_id field to store referral_id
+      .eq("reminder_type", "cashback_expiring")
+      .maybeSingle();
+
+    if (existingReminder) {
+      console.log(`Cashback expiration reminder already scheduled for referral ${referralId}`);
+      return;
+    }
+
+    // Create the scheduled reminder
+    const { error } = await supabase
+      .from("scheduled_reminders")
+      .insert({
+        order_id: referralId, // Storing referral_id in order_id field
+        reminder_type: "cashback_expiring",
+        channel: "both",
+        scheduled_for: reminderDate.toISOString(),
+        status: "pending",
+      });
+
+    if (error) {
+      console.error("Error scheduling cashback expiration reminder:", error);
+      return;
+    }
+
+    console.log(`Cashback expiration reminder scheduled for referral ${referralId} on ${reminderDate.toISOString()}`);
+  } catch (err) {
+    console.error("Failed to schedule cashback expiration reminder:", err);
   }
 }
 

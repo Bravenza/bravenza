@@ -21,7 +21,8 @@ type EmailType =
   | "delivered"
   | "balance_reminder"
   | "review_request"
-  | "referral_confirmed";
+  | "referral_confirmed"
+  | "cashback_expiring";
 
 interface EmailRequest {
   type: EmailType;
@@ -46,6 +47,9 @@ interface EmailRequest {
   referred_name?: string;
   discount_percentage?: number;
   referral_code?: string;
+  // Cashback expiration fields
+  days_until_expiration?: number;
+  cashback_amount?: number;
 }
 
 const formatCurrency = (value: number) => {
@@ -78,6 +82,7 @@ const getEmailSubject = (type: EmailType, orderId: string, data?: EmailRequest):
     balance_reminder: `Lembrete: Pagamento pendente - ${orderId}`,
     review_request: `Como foi sua experiência? Avalie seu pedido! - ${orderId}`,
     referral_confirmed: `🎉 Parabéns! Sua indicação foi confirmada!`,
+    cashback_expiring: `⏰ Seu cashback está prestes a expirar!`,
   };
   return subjects[type];
 };
@@ -460,6 +465,48 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         
         <p style="color: #666; font-size: 13px; text-align: center; margin: 24px 0 0; line-height: 1.5;">
           Obrigado por recomendar a Braz Vault! ❤️
+        </p>
+      `,
+    },
+    cashback_expiring: {
+      subtitle: "Seu Cashback Está Expirando! ⏰",
+      content: `
+        <div style="background-color: #3d2a0a; border: 1px solid #d4af37; border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: center;">
+          <p style="color: #ff9500; font-size: 16px; margin: 0;">⚠️ Atenção: seu cashback expira em ${data.days_until_expiration || 7} dias!</p>
+        </div>
+        
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6; text-align: center;">
+          Você tem <strong style="color: #d4af37;">${data.cashback_amount || data.discount_percentage || 5}% de desconto</strong> 
+          acumulado das suas indicações que está prestes a expirar.
+        </p>
+        
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px; text-align: center;">
+          <p style="color: #ff9500; font-size: 48px; margin: 0 0 16px;">⏰</p>
+          <p style="color: #fff; font-size: 18px; margin: 0 0 8px;">Use antes que expire!</p>
+          <p style="color: #d4af37; font-size: 32px; font-weight: bold; margin: 0 0 8px;">
+            ${data.cashback_amount || data.discount_percentage || 5}% OFF
+          </p>
+          <p style="color: #ff9500; font-size: 14px; margin: 0;">
+            Expira em ${data.days_until_expiration || 7} dias
+          </p>
+        </div>
+        
+        <p style="color: #a0a0a0; font-size: 14px; text-align: center; margin: 0 0 24px; line-height: 1.6;">
+          Não perca esse desconto! Faça um novo pedido e aproveite<br />
+          até 25% de desconto no valor total.
+        </p>
+        
+        <div style="text-align: center;">
+          <a href="https://bravenza.com.br/solicitar" 
+             style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
+                    color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
+                    font-weight: bold; font-size: 16px;">
+            Fazer Novo Pedido
+          </a>
+        </div>
+        
+        <p style="color: #666; font-size: 13px; text-align: center; margin: 24px 0 0; line-height: 1.5;">
+          O desconto será aplicado automaticamente na página de pagamento.
         </p>
       `,
     },
