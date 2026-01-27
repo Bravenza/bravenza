@@ -209,6 +209,7 @@ const UsersPage = () => {
             <TableRow className="border-border hover:bg-transparent">
               <TableHead>Usuário</TableHead>
               <TableHead>Email</TableHead>
+              <TableHead>ID (UUID)</TableHead>
               <TableHead>Função</TableHead>
               <TableHead>Cadastrado em</TableHead>
               <TableHead className="w-12"></TableHead>
@@ -218,7 +219,7 @@ const UsersPage = () => {
             {users.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={6}
                   className="text-center py-12 text-muted-foreground"
                 >
                   Nenhum usuário encontrado
@@ -239,6 +240,11 @@ const UsersPage = () => {
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {user.email}
+                  </TableCell>
+                  <TableCell>
+                    <code className="text-xs bg-secondary px-2 py-1 rounded font-mono">
+                      {user.id}
+                    </code>
                   </TableCell>
                   <TableCell>
                     {user.role === "admin" ? (
@@ -278,21 +284,31 @@ const UsersPage = () => {
           <DialogHeader>
             <DialogTitle>Adicionar Administrador</DialogTitle>
             <DialogDescription>
-              Informe o ID do usuário para torná-lo administrador
+              Selecione um usuário para torná-lo administrador
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>ID do Usuário (UUID)</Label>
-              <Input
+              <Label>Selecionar Usuário</Label>
+              <select
                 value={newUserId}
                 onChange={(e) => setNewUserId(e.target.value)}
-                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-              />
-              <p className="text-xs text-muted-foreground">
-                O ID pode ser encontrado na lista de usuários ou no sistema de
-                autenticação.
-              </p>
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">Escolha um usuário...</option>
+                {users
+                  .filter((u) => u.role !== "admin")
+                  .map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.full_name || user.email} ({user.email})
+                    </option>
+                  ))}
+              </select>
+              {users.filter((u) => u.role !== "admin").length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Todos os usuários já são administradores.
+                </p>
+              )}
             </div>
           </div>
           <DialogFooter>
@@ -302,7 +318,7 @@ const UsersPage = () => {
             <Button
               className="btn-gold"
               onClick={handleAddAdmin}
-              disabled={isSaving}
+              disabled={isSaving || !newUserId}
             >
               {isSaving ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
