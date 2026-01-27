@@ -141,6 +141,7 @@ export default function OrderRequestsPage() {
           product_size: request.shoe_size,
           product_color: request.product_color || null,
           product_link: request.product_link || null,
+          reference_image_url: request.reference_image_url || null,
           product_price: 0, // Admin will set price later
           sinal_value: 0,
           balance_value: 0,
