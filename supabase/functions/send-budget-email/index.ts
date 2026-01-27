@@ -126,10 +126,14 @@ serve(async (req) => {
       </p>
       
       <!-- Footer note -->
-      <p style="color: #666; font-size: 13px; text-align: center; margin: 0; line-height: 1.5;">
-        Ao aprovar o orçamento, você será direcionado para efetuar o pagamento do sinal via Pix.
-        O saldo poderá ser pago via Pix ou Cartão de Crédito quando o produto chegar.
-      </p>
+        <p style="color: #666; font-size: 13px; text-align: center; margin: 0; line-height: 1.5;">
+          Ao aprovar o orçamento, você será direcionado para efetuar o pagamento do sinal via Pix.
+          O saldo poderá ser pago via Pix ou Cartão de Crédito quando o produto chegar.
+        </p>
+        
+        <p style="color: #666; font-size: 12px; text-align: center; margin: 24px 0 0; line-height: 1.5;">
+          Dúvidas? Fale conosco pelo <a href="https://wa.me/5551999999999" style="color: #d4af37; text-decoration: none;">WhatsApp</a>.
+        </p>
     </div>
     
     <!-- Footer -->
