@@ -5,7 +5,7 @@ const benefits = [
   {
     icon: BadgeCheck,
     title: "Garantia de autenticidade",
-    description: "Se não for original, devolvemos 100% do seu dinheiro. Simples assim. Sem discussão.",
+    description: "Todos os produtos passam por rigorosa inspeção de autenticidade antes do envio.",
   },
   {
     icon: Globe,
@@ -24,8 +24,8 @@ const benefits = [
   },
   {
     icon: Lock,
-    title: "Pagamento parcelado",
-    description: "Até 12x no cartão ou PIX à vista. Pague o saldo só quando o produto chegar.",
+    title: "Pagamento protegido",
+    description: "Parcele em até 12x no cartão ou pague via PIX com total segurança.",
   },
   {
     icon: Headphones,
