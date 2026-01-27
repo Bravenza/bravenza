@@ -251,7 +251,9 @@ export function ShippingSection({
             },
           ],
           package: packageDimensions,
-          insurance_value: productPrice || 0,
+          // insurance_value deve ser o mesmo valor declarado do produto para o seguro
+          // Se não quiser seguro adicional, envie 0
+          insurance_value: 0,
         },
       });
 
