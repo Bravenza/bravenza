@@ -37,7 +37,7 @@ export const HeroSection = () => {
             O tênis que você{" "}
             <span className="text-gradient-gold">deseja</span>
             <br />
-            <span className="text-gradient-gold">existe</span> — nós trazemos.
+            <span className="text-gradient-gold">existe.</span> Nós trazemos.
           </motion.h1>
 
           <motion.p
