@@ -10,7 +10,7 @@ const corsHeaders = {
 
 interface WhatsAppRequest {
   order_id: string;
-  message_type: "budget_sent" | "sinal_confirmed" | "balance_confirmed" | "status_update" | "custom";
+  message_type: "budget_sent" | "sinal_confirmed" | "balance_confirmed" | "status_update" | "review_request" | "custom";
   custom_message?: string;
 }
 
@@ -45,6 +45,16 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `Novo status: *${data.status_label}*\n` +
     `${data.notes ? `📝 ${data.notes}\n` : ''}` +
     `${data.tracking ? `🚚 Rastreio: ${data.tracking}\n` : ''}\n` +
+    `_Bravenza - Sua loja de sneakers premium_`,
+
+  review_request: (data) =>
+    `⭐ *Avalie sua Experiência!*\n\n` +
+    `Olá ${data.client_name}!\n\n` +
+    `Seu pedido *${data.order_id}* foi entregue! 🎉\n\n` +
+    `Como foi sua experiência com o *${data.product_name}*?\n\n` +
+    `Sua opinião é muito importante para nós! Avalie em apenas 1 minuto:\n` +
+    `${data.review_url}\n\n` +
+    `Obrigado por escolher a Bravenza! ❤️\n\n` +
     `_Bravenza - Sua loja de sneakers premium_`,
 };
 
@@ -175,9 +185,11 @@ serve(async (req) => {
         throw new Error("Tipo de mensagem inválido");
       }
 
+      const baseUrl = Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '');
       const templateData = {
         ...order,
-        budget_url: `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/orcamento/${order.budget_approval_token}`,
+        budget_url: `https://bravenza.lovable.app/orcamento/${order.budget_approval_token}`,
+        review_url: `https://bravenza.lovable.app/minha-conta`,
         status_label: STATUS_LABELS[order.current_status] || order.current_status,
         tracking: order.national_tracking || order.international_tracking,
       };

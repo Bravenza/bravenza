@@ -19,7 +19,8 @@ type EmailType =
   | "balance_confirmed"
   | "dispatched"
   | "delivered"
-  | "balance_reminder";
+  | "balance_reminder"
+  | "review_request";
 
 interface EmailRequest {
   type: EmailType;
@@ -39,6 +40,7 @@ interface EmailRequest {
   national_carrier?: string;
   sla_vault_due_date?: string;
   expires_at?: string;
+  review_link?: string;
 }
 
 const formatCurrency = (value: number) => {
@@ -69,6 +71,7 @@ const getEmailSubject = (type: EmailType, orderId: string): string => {
     dispatched: `Seu pedido está a caminho! - ${orderId}`,
     delivered: `Pedido entregue! Obrigado pela confiança - ${orderId}`,
     balance_reminder: `Lembrete: Pagamento pendente - ${orderId}`,
+    review_request: `Como foi sua experiência? Avalie seu pedido! - ${orderId}`,
   };
   return subjects[type];
 };
@@ -333,6 +336,19 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
           Esperamos que você aproveite seu <strong style="color: #fff;">${data.product_name}</strong>.
         </p>
         
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px; text-align: center;">
+          <p style="color: #fff; font-size: 16px; margin: 0 0 16px;">⭐ Sua opinião é muito importante!</p>
+          <p style="color: #a0a0a0; font-size: 14px; margin: 0 0 16px;">
+            Avalie sua experiência e ajude outros clientes a conhecer nosso trabalho.
+          </p>
+          <a href="${data.review_link || '#'}" 
+             style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
+                    color: #0a0a0a; text-decoration: none; padding: 14px 32px; border-radius: 8px; 
+                    font-weight: bold; font-size: 14px;">
+            Avaliar Minha Experiência
+          </a>
+        </div>
+        
         <p style="color: #666; font-size: 13px; text-align: center; margin: 0; line-height: 1.5;">
           Alguma dúvida? Entre em contato conosco.
         </p>
@@ -360,6 +376,36 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
             Pagar Agora
           </a>
         </div>
+      `,
+    },
+    review_request: {
+      subtitle: "Como foi sua experiência? ⭐",
+      content: `
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6; text-align: center;">
+          Seu <strong style="color: #fff;">${data.product_name}</strong> foi entregue há alguns dias.<br />
+          Gostaríamos muito de saber como foi sua experiência!
+        </p>
+        
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px; text-align: center;">
+          <p style="color: #d4af37; font-size: 40px; margin: 0 0 16px;">⭐⭐⭐⭐⭐</p>
+          <p style="color: #fff; font-size: 16px; margin: 0 0 8px;">Sua avaliação nos ajuda a melhorar!</p>
+          <p style="color: #a0a0a0; font-size: 14px; margin: 0;">
+            Leva apenas 1 minuto para avaliar.
+          </p>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 24px;">
+          <a href="${data.review_link}" 
+             style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
+                    color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
+                    font-weight: bold; font-size: 16px;">
+            Avaliar Agora
+          </a>
+        </div>
+        
+        <p style="color: #666; font-size: 13px; text-align: center; margin: 0; line-height: 1.5;">
+          Obrigado por escolher a Braz Vault! ❤️
+        </p>
       `,
     },
   };
