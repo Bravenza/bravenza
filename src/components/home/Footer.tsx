@@ -87,6 +87,13 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
             <Link to="/termos" className="hover:text-primary transition-colors">
               Termos de Uso
             </Link>
+            <span className="text-border">·</span>
+            <Link 
+              to="/admin/login" 
+              className="text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors text-xs"
+            >
+              Área Restrita
+            </Link>
           </div>
         </div>
       </div>
