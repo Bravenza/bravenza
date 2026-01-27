@@ -89,7 +89,7 @@ export const ReferralSection = () => {
         >
           <div className="flex items-center justify-center gap-3 mb-4">
             <span className="text-5xl md:text-6xl font-bold text-gradient-gold">5%</span>
-            <span className="text-xl text-muted-foreground text-left">de desconto<br />por indicação</span>
+            <span className="text-xl text-muted-foreground text-left">de cashback<br />por indicação</span>
           </div>
           <p className="text-muted-foreground mb-6">
             <strong className="text-foreground">Sem limite de indicações!</strong> Quanto mais amigos você indicar, mais desconto você acumula.
