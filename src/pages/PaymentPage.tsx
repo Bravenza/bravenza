@@ -478,9 +478,16 @@ export default function PaymentPage() {
                 <TabsContent value="card" className="space-y-6">
                   <div className="text-center py-4">
                     <CreditCard className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-6">
+                    <p className="text-muted-foreground mb-4">
                       Pague com cartão de crédito em até 12x via Mercado Pago.
                     </p>
+                    
+                    {/* Interest warning */}
+                    <div className="max-w-sm mx-auto mb-6 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                      <p className="text-sm text-amber-400">
+                        ⚠️ <strong>Atenção:</strong> O parcelamento no cartão de crédito possui juros da operadora de pagamento.
+                      </p>
+                    </div>
 
                     {/* Installments selector */}
                     <div className="max-w-sm mx-auto mb-6">
