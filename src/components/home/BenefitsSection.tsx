@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { Shield, Globe, Zap, BadgeCheck, Headphones, Lock } from "lucide-react";
 
@@ -34,7 +35,7 @@ const benefits = [
   },
 ];
 
-export const BenefitsSection = () => {
+const BenefitsSectionComponent = () => {
   return (
     <section className="py-20 md:py-32">
       <div className="container mx-auto px-4">
@@ -76,3 +77,5 @@ export const BenefitsSection = () => {
     </section>
   );
 };
+
+export const BenefitsSection = memo(BenefitsSectionComponent);

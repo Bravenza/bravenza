@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Search, FileCheck, CreditCard, Package, Truck } from "lucide-react";
 
@@ -29,7 +30,7 @@ const steps = [
   },
 ];
 
-export const HowItWorksSection = () => {
+const HowItWorksSectionComponent = () => {
   return (
     <section className="py-20 md:py-32 relative">
       <div className="absolute inset-0 bg-gradient-gold-subtle opacity-30" />
@@ -82,3 +83,5 @@ export const HowItWorksSection = () => {
     </section>
   );
 };
+
+export const HowItWorksSection = memo(HowItWorksSectionComponent);

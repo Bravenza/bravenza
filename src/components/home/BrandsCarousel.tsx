@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import { motion } from "framer-motion";
 
 const brands = [
@@ -13,9 +14,9 @@ const brands = [
   { name: "Reebok" },
 ];
 
-export const BrandsCarousel = () => {
-  // Duplicate brands for seamless infinite scroll
-  const duplicatedBrands = [...brands, ...brands, ...brands];
+const BrandsCarouselComponent = () => {
+  // Memoize duplicated brands to prevent recalculation on re-renders
+  const duplicatedBrands = useMemo(() => [...brands, ...brands, ...brands], []);
 
   return (
     <section className="py-16 overflow-hidden bg-card/30">
@@ -72,3 +73,5 @@ export const BrandsCarousel = () => {
     </section>
   );
 };
+
+export const BrandsCarousel = memo(BrandsCarouselComponent);

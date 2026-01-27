@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Star, Quote, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,44 +14,48 @@ interface Review {
   created_at: string;
 }
 
-export function FeaturedReviews() {
+const formatName = (name: string) => {
+  const parts = name.split(" ");
+  if (parts.length > 1) {
+    return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`;
+  }
+  return name;
+};
+
+function FeaturedReviewsComponent() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("reviews")
-          .select("id, client_name, rating, comment, product_quality, delivery_speed, customer_service, created_at")
-          .eq("is_approved", true)
-          .eq("is_featured", true)
-          .order("created_at", { ascending: false })
-          .limit(6);
+  const fetchReviews = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("id, client_name, rating, comment, product_quality, delivery_speed, customer_service, created_at")
+        .eq("is_approved", true)
+        .eq("is_featured", true)
+        .order("created_at", { ascending: false })
+        .limit(6);
 
-        if (error) throw error;
-        setReviews(data || []);
-      } catch (err) {
-        console.error("Error fetching reviews:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchReviews();
+      if (error) throw error;
+      setReviews(data || []);
+    } catch (err) {
+      console.error("Error fetching reviews:", err);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
 
   if (isLoading || reviews.length === 0) {
     return null;
   }
 
-  const formatName = (name: string) => {
-    const parts = name.split(" ");
-    if (parts.length > 1) {
-      return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`;
-    }
-    return name;
-  };
+  if (isLoading || reviews.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-20 md:py-32 relative">
@@ -136,3 +140,5 @@ export function FeaturedReviews() {
     </section>
   );
 }
+
+export const FeaturedReviews = memo(FeaturedReviewsComponent);
