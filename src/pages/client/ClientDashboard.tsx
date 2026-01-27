@@ -171,7 +171,7 @@ export default function ClientDashboard() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 flex-1">
+      <main className="container mx-auto px-4 sm:px-6 py-8 md:py-12 flex-1">
         {/* Cashback Banner */}
         {session && (
           <motion.div

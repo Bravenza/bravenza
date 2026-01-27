@@ -19,8 +19,8 @@ const BrandsCarouselComponent = () => {
   const duplicatedBrands = useMemo(() => [...brands, ...brands, ...brands], []);
 
   return (
-    <section className="py-16 overflow-hidden bg-card/30">
-      <div className="container mx-auto px-4 mb-10">
+    <section className="py-12 md:py-16 overflow-hidden bg-card/30">
+      <div className="container mx-auto px-4 sm:px-6 mb-8 md:mb-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

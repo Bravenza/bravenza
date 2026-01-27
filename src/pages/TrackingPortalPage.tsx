@@ -13,7 +13,7 @@ const TrackingPortalPage = () => {
       </div>
 
       {/* Main content */}
-      <div className="relative z-10 container mx-auto px-4 py-12 md:py-20">
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 py-12 md:py-20 min-h-[calc(100vh-200px)] flex items-center justify-center">
         <div className="max-w-xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

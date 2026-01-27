@@ -331,7 +331,7 @@ export default function OrderRequestPage() {
       </header>
 
       {/* Form */}
-      <main className="container mx-auto px-4 py-8 max-w-3xl flex-1">
+      <main className="container mx-auto px-4 sm:px-6 py-8 md:py-12 max-w-3xl flex-1">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Solicitar Orçamento</h1>
           <p className="text-muted-foreground">

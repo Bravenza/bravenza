@@ -18,19 +18,38 @@ const Index = () => {
       <Header />
       
       <main className="pt-16">
+        {/* Hero Section - Full viewport height */}
         <HeroSection />
+        
+        {/* Brands Carousel */}
         <BrandsCarousel />
+        
+        {/* Featured Models */}
         <FeaturedModelsSection />
+        
+        {/* How It Works */}
         <div id="como-funciona">
           <HowItWorksSection />
         </div>
+        
+        {/* Benefits Section */}
         <BenefitsSection />
+        
+        {/* Referral Section */}
         <div id="indicacao">
           <ReferralSection />
         </div>
+        
+        {/* Featured Reviews */}
         <FeaturedReviews />
+        
+        {/* Testimonials */}
         <TestimonialsSection />
+        
+        {/* FAQ Section */}
         <FAQSection />
+        
+        {/* Final CTA */}
         <CTASection />
       </main>
 

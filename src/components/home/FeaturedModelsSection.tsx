@@ -29,8 +29,8 @@ const FeaturedModelsSection = () => {
 
   if (isLoading) {
     return (
-      <section className="py-16 bg-secondary/30">
-        <div className="container mx-auto px-4">
+      <section className="py-12 md:py-16 bg-secondary/30">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="aspect-square bg-secondary animate-pulse rounded-xl" />
@@ -46,8 +46,8 @@ const FeaturedModelsSection = () => {
   }
 
   return (
-    <section className="py-16 bg-secondary/30">
-      <div className="container mx-auto px-4">
+    <section className="py-12 md:py-16 bg-secondary/30">
+      <div className="container mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

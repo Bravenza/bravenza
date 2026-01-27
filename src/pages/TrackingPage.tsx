@@ -175,7 +175,7 @@ const TrackingPage = () => {
       </header>
 
       {/* Main content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 sm:px-6 py-8 md:py-12">
         <div className="max-w-5xl mx-auto">
           {/* Order header */}
           <motion.div

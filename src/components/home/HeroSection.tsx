@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 
 const HeroSectionComponent = () => {
   return (
+    // Reduced height for better section flow
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
