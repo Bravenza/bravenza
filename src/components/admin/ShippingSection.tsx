@@ -38,6 +38,7 @@ import { formatCurrency } from "@/lib/constants";
 interface ShippingSectionProps {
   orderId: string;
   clientName: string;
+  clientCpf: string;
   clientPhone: string | null;
   clientEmail: string | null;
   clientAddress: string | null;
@@ -99,6 +100,7 @@ const hasApiTokenConfigured = true; // Token is configured in backend secrets
 export function ShippingSection({
   orderId,
   clientName,
+  clientCpf,
   clientPhone,
   clientEmail,
   clientAddress,
@@ -238,7 +240,7 @@ export function ShippingSection({
             name: clientName,
             phone: clientPhone?.replace(/\D/g, "") || "",
             email: clientEmail || "",
-            document: "",
+            document: clientCpf.replace(/\D/g, ""),
             ...parsedAddress,
           },
           products: [
