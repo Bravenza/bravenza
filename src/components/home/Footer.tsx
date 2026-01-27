@@ -8,10 +8,10 @@ const Footer = () => {
 
   return (
     <footer className="border-t border-border bg-card/50">
-      <div className="container mx-auto px-4 py-10">
-        <div className="grid md:grid-cols-4 gap-6">
+      <div className="container mx-auto px-4 py-8 md:py-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {/* Brand */}
-          <div className="md:col-span-2">
+          <div className="col-span-2 md:col-span-2">
             <Logo size="sm" className="mb-3" />
             <p className="text-sm text-muted-foreground max-w-xs">
               Especialistas em importação de sneakers exclusivos. 

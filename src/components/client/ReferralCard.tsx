@@ -178,7 +178,7 @@ export function ReferralCard({ clientCpf, clientName, clientEmail }: ReferralCar
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 text-center">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
           <div className="p-3 rounded-lg bg-muted/50">
             <Users className="h-5 w-5 mx-auto text-primary mb-1" />
             <p className="text-2xl font-bold">{convertedReferrals.length}</p>
