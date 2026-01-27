@@ -220,6 +220,44 @@ export type Database = {
         }
         Relationships: []
       }
+      order_costs: {
+        Row: {
+          amount: number
+          cost_type: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          order_id: string
+        }
+        Insert: {
+          amount?: number
+          cost_type: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          order_id: string
+        }
+        Update: {
+          amount?: number
+          cost_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_costs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["order_id"]
+          },
+        ]
+      }
       order_history: {
         Row: {
           created_at: string
@@ -376,6 +414,8 @@ export type Database = {
           national_tracking: string | null
           order_id: string
           order_type: Database["public"]["Enums"]["order_type"]
+          other_costs: number | null
+          other_costs_description: string | null
           pix_copy_paste: string | null
           pix_qr_code: string | null
           product_brand: string | null
@@ -388,6 +428,7 @@ export type Database = {
           product_price: number | null
           product_reference: string | null
           product_size: string | null
+          shipping_cost: number | null
           sinal_paid: boolean | null
           sinal_paid_at: string | null
           sinal_payment_method:
@@ -433,6 +474,8 @@ export type Database = {
           national_tracking?: string | null
           order_id: string
           order_type?: Database["public"]["Enums"]["order_type"]
+          other_costs?: number | null
+          other_costs_description?: string | null
           pix_copy_paste?: string | null
           pix_qr_code?: string | null
           product_brand?: string | null
@@ -445,6 +488,7 @@ export type Database = {
           product_price?: number | null
           product_reference?: string | null
           product_size?: string | null
+          shipping_cost?: number | null
           sinal_paid?: boolean | null
           sinal_paid_at?: string | null
           sinal_payment_method?:
@@ -490,6 +534,8 @@ export type Database = {
           national_tracking?: string | null
           order_id?: string
           order_type?: Database["public"]["Enums"]["order_type"]
+          other_costs?: number | null
+          other_costs_description?: string | null
           pix_copy_paste?: string | null
           pix_qr_code?: string | null
           product_brand?: string | null
@@ -502,6 +548,7 @@ export type Database = {
           product_price?: number | null
           product_reference?: string | null
           product_size?: string | null
+          shipping_cost?: number | null
           sinal_paid?: boolean | null
           sinal_paid_at?: string | null
           sinal_payment_method?:

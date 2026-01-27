@@ -67,6 +67,7 @@ import { BudgetActions } from "@/components/admin/BudgetActions";
 import { VaultPolicyCard } from "@/components/admin/VaultPolicyCard";
 import { InspectionPhotosUpload } from "@/components/admin/InspectionPhotosUpload";
 import { ShippingSection } from "@/components/admin/ShippingSection";
+import { OrderCostsSection } from "@/components/admin/OrderCostsSection";
 import { sendAllStatusNotifications, sendPaymentConfirmationEmail } from "@/lib/email-notifications";
 import { SNEAKER_BRANDS, getModelsForBrand, getBrandLabel, getModelLabel, findBrandKey, findModelKey } from "@/lib/sneaker-data";
 
@@ -123,6 +124,9 @@ interface Order {
   product_cost: number | null;
   product_price: number | null;
   product_currency: string;
+  shipping_cost: number | null;
+  other_costs: number | null;
+  other_costs_description: string | null;
   sinal_value: number | null;
   sinal_paid: boolean;
   balance_value: number | null;
@@ -431,6 +435,8 @@ const OrderDetail = () => {
           product_link: editData.product_link,
           product_cost: editData.product_cost,
           product_price: editData.product_price,
+          shipping_cost: editData.shipping_cost,
+          other_costs: editData.other_costs,
           sinal_value: editData.sinal_value,
           sinal_paid: editData.sinal_paid,
           balance_value: editData.balance_value,
@@ -1396,6 +1402,19 @@ const OrderDetail = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Order Costs Section */}
+          <OrderCostsSection
+            orderId={order.order_id}
+            productCost={isEditing ? editData.product_cost ?? null : order.product_cost}
+            shippingCost={isEditing ? editData.shipping_cost ?? null : order.shipping_cost}
+            otherCosts={isEditing ? editData.other_costs ?? null : order.other_costs}
+            productPrice={order.product_price}
+            isEditing={isEditing}
+            onUpdateField={(field, value) => {
+              setEditData(prev => ({ ...prev, [field]: value }));
+            }}
+          />
 
           {/* Logistics */}
           <Card className="card-premium">
