@@ -11,6 +11,11 @@ import {
   X,
   Mail,
   MessageSquare,
+  Building2,
+  Activity,
+  HelpCircle,
+  Star,
+  Gift,
 } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "@/components/Logo";
@@ -25,6 +30,11 @@ const navItems = [
   { icon: Package, label: "Pedidos", path: "/admin/pedidos" },
   { icon: Mail, label: "Emails", path: "/admin/emails" },
   { icon: MessageSquare, label: "WhatsApp", path: "/admin/whatsapp" },
+  { icon: Building2, label: "Fornecedores", path: "/admin/fornecedores" },
+  { icon: HelpCircle, label: "FAQ", path: "/admin/faq" },
+  { icon: Star, label: "Avaliações", path: "/admin/avaliacoes" },
+  { icon: Gift, label: "Indicações", path: "/admin/indicacoes" },
+  { icon: Activity, label: "Logs", path: "/admin/logs" },
   { icon: Users, label: "Usuários", path: "/admin/usuarios" },
   { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
 ];

@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          created_at: string
+          description: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          description: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          description?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       client_auth_tokens: {
         Row: {
           cpf: string
@@ -41,6 +77,47 @@ export type Database = {
         }
         Relationships: []
       }
+      client_documents: {
+        Row: {
+          client_cpf: string
+          document_name: string
+          document_type: string
+          file_size: number | null
+          file_url: string
+          generated_at: string
+          id: string
+          order_id: string | null
+        }
+        Insert: {
+          client_cpf: string
+          document_name: string
+          document_type: string
+          file_size?: number | null
+          file_url: string
+          generated_at?: string
+          id?: string
+          order_id?: string | null
+        }
+        Update: {
+          client_cpf?: string
+          document_name?: string
+          document_type?: string
+          file_size?: number | null
+          file_url?: string
+          generated_at?: string
+          id?: string
+          order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_documents_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["order_id"]
+          },
+        ]
+      }
       client_sessions: {
         Row: {
           cpf: string
@@ -62,6 +139,39 @@ export type Database = {
           expires_at?: string
           id?: string
           session_token?: string
+        }
+        Relationships: []
+      }
+      faqs: {
+        Row: {
+          answer: string
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          order_index: number | null
+          question: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          category: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          order_index?: number | null
+          question: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          order_index?: number | null
+          question?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -427,6 +537,241 @@ export type Database = {
         }
         Relationships: []
       }
+      referrals: {
+        Row: {
+          created_at: string
+          discount_order_id: string | null
+          discount_percentage: number | null
+          discount_used: boolean | null
+          discount_used_at: string | null
+          expires_at: string | null
+          id: string
+          referral_code: string
+          referred_cpf: string | null
+          referred_name: string | null
+          referred_order_id: string | null
+          referrer_cpf: string
+          referrer_email: string | null
+          referrer_name: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          discount_order_id?: string | null
+          discount_percentage?: number | null
+          discount_used?: boolean | null
+          discount_used_at?: string | null
+          expires_at?: string | null
+          id?: string
+          referral_code: string
+          referred_cpf?: string | null
+          referred_name?: string | null
+          referred_order_id?: string | null
+          referrer_cpf: string
+          referrer_email?: string | null
+          referrer_name: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          discount_order_id?: string | null
+          discount_percentage?: number | null
+          discount_used?: boolean | null
+          discount_used_at?: string | null
+          expires_at?: string | null
+          id?: string
+          referral_code?: string
+          referred_cpf?: string | null
+          referred_name?: string | null
+          referred_order_id?: string | null
+          referrer_cpf?: string
+          referrer_email?: string | null
+          referrer_name?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_discount_order_id_fkey"
+            columns: ["discount_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["order_id"]
+          },
+          {
+            foreignKeyName: "referrals_referred_order_id_fkey"
+            columns: ["referred_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["order_id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          admin_response: string | null
+          admin_response_at: string | null
+          client_cpf: string
+          client_name: string
+          comment: string | null
+          created_at: string
+          customer_service: number | null
+          delivery_speed: number | null
+          id: string
+          is_approved: boolean | null
+          is_featured: boolean | null
+          order_id: string | null
+          product_quality: number | null
+          rating: number
+          would_recommend: boolean | null
+        }
+        Insert: {
+          admin_response?: string | null
+          admin_response_at?: string | null
+          client_cpf: string
+          client_name: string
+          comment?: string | null
+          created_at?: string
+          customer_service?: number | null
+          delivery_speed?: number | null
+          id?: string
+          is_approved?: boolean | null
+          is_featured?: boolean | null
+          order_id?: string | null
+          product_quality?: number | null
+          rating: number
+          would_recommend?: boolean | null
+        }
+        Update: {
+          admin_response?: string | null
+          admin_response_at?: string | null
+          client_cpf?: string
+          client_name?: string
+          comment?: string | null
+          created_at?: string
+          customer_service?: number | null
+          delivery_speed?: number | null
+          id?: string
+          is_approved?: boolean | null
+          is_featured?: boolean | null
+          order_id?: string | null
+          product_quality?: number | null
+          rating?: number
+          would_recommend?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["order_id"]
+          },
+        ]
+      }
+      scheduled_reminders: {
+        Row: {
+          attempt_count: number | null
+          channel: string
+          created_at: string
+          id: string
+          last_error: string | null
+          order_id: string | null
+          reminder_type: string
+          scheduled_for: string
+          sent_at: string | null
+          status: string | null
+        }
+        Insert: {
+          attempt_count?: number | null
+          channel: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          order_id?: string | null
+          reminder_type: string
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          attempt_count?: number | null
+          channel?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          order_id?: string | null
+          reminder_type?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_reminders_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["order_id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          average_shipping_days: number | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          contact_whatsapp: string | null
+          country: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          notes: string | null
+          payment_methods: string[] | null
+          rating: number | null
+          specialties: string[] | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          average_shipping_days?: number | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
+          country: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notes?: string | null
+          payment_methods?: string[] | null
+          rating?: number | null
+          specialties?: string[] | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          average_shipping_days?: number | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
+          country?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notes?: string | null
+          payment_methods?: string[] | null
+          rating?: number | null
+          specialties?: string[] | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -451,6 +796,18 @@ export type Database = {
     }
     Functions: {
       approve_budget: { Args: { p_token: string }; Returns: boolean }
+      generate_referral_code: { Args: never; Returns: string }
+      get_client_documents: {
+        Args: { p_cpf: string }
+        Returns: {
+          document_name: string
+          document_type: string
+          file_url: string
+          generated_at: string
+          id: string
+          order_id: string
+        }[]
+      }
       get_client_orders: {
         Args: { p_cpf: string }
         Returns: {
@@ -469,6 +826,18 @@ export type Database = {
           sinal_paid: boolean
           sinal_value: number
           updated_at: string
+        }[]
+      }
+      get_client_referrals: {
+        Args: { p_cpf: string }
+        Returns: {
+          created_at: string
+          discount_percentage: number
+          discount_used: boolean
+          id: string
+          referral_code: string
+          referred_name: string
+          status: string
         }[]
       }
       get_order_by_token: {

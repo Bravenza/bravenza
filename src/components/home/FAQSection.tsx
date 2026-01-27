@@ -1,0 +1,183 @@
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { HelpCircle, Package, CreditCard, Shield, Truck, MessageCircle } from "lucide-react";
+
+interface FAQ {
+  id: string;
+  category: string;
+  question: string;
+  answer: string;
+  order_index: number;
+}
+
+const CATEGORY_ICONS: Record<string, any> = {
+  importacao: Package,
+  pagamento: CreditCard,
+  garantia: Shield,
+  envio: Truck,
+  geral: HelpCircle,
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  importacao: "Importação",
+  pagamento: "Pagamento",
+  garantia: "Garantia",
+  envio: "Envio",
+  geral: "Geral",
+};
+
+export function FAQSection() {
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState("importacao");
+
+  useEffect(() => {
+    fetchFAQs();
+  }, []);
+
+  const fetchFAQs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("faqs")
+        .select("*")
+        .eq("is_active", true)
+        .order("order_index");
+
+      if (error) throw error;
+      setFaqs(data || []);
+    } catch (error) {
+      console.error("Error fetching FAQs:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const categories = [...new Set(faqs.map((faq) => faq.category))];
+  const faqsByCategory = faqs.reduce((acc, faq) => {
+    if (!acc[faq.category]) acc[faq.category] = [];
+    acc[faq.category].push(faq);
+    return acc;
+  }, {} as Record<string, FAQ[]>);
+
+  if (isLoading) {
+    return (
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4">
+          <Skeleton className="h-10 w-64 mx-auto mb-8" />
+          <div className="max-w-3xl mx-auto space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (faqs.length === 0) {
+    return null;
+  }
+
+  return (
+    <section id="faq" className="py-16 bg-card/30">
+      <div className="container mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-3xl font-bold mb-4">
+            Perguntas <span className="text-primary">Frequentes</span>
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Encontre respostas para as dúvidas mais comuns sobre nossos serviços
+          </p>
+        </motion.div>
+
+        <div className="max-w-3xl mx-auto">
+          <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+            <TabsList className="w-full flex flex-wrap justify-center gap-2 bg-transparent mb-8">
+              {categories.map((category) => {
+                const Icon = CATEGORY_ICONS[category] || HelpCircle;
+                return (
+                  <TabsTrigger
+                    key={category}
+                    value={category}
+                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  >
+                    <Icon className="h-4 w-4 mr-2" />
+                    {CATEGORY_LABELS[category] || category}
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+
+            {categories.map((category) => (
+              <TabsContent key={category} value={category}>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Accordion type="single" collapsible className="space-y-3">
+                    {faqsByCategory[category]?.map((faq, index) => (
+                      <motion.div
+                        key={faq.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <AccordionItem
+                          value={faq.id}
+                          className="border border-border/50 rounded-lg px-4 bg-card/50 hover:bg-card transition-colors"
+                        >
+                          <AccordionTrigger className="text-left hover:no-underline py-4">
+                            <span className="font-medium">{faq.question}</span>
+                          </AccordionTrigger>
+                          <AccordionContent className="text-muted-foreground pb-4">
+                            {faq.answer}
+                          </AccordionContent>
+                        </AccordionItem>
+                      </motion.div>
+                    ))}
+                  </Accordion>
+                </motion.div>
+              </TabsContent>
+            ))}
+          </Tabs>
+
+          {/* CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-12 text-center"
+          >
+            <p className="text-muted-foreground mb-4">
+              Não encontrou o que procurava?
+            </p>
+            <a
+              href="https://wa.me/5551983018897?text=Olá!%20Tenho%20uma%20dúvida%20sobre%20a%20BRAVENZA."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+            >
+              <MessageCircle className="h-5 w-5" />
+              Fale Conosco no WhatsApp
+            </a>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}

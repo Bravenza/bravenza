@@ -4,6 +4,7 @@ import { BrandsCarousel } from "@/components/home/BrandsCarousel";
 import { HowItWorksSection } from "@/components/home/HowItWorksSection";
 import { BenefitsSection } from "@/components/home/BenefitsSection";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
+import { FAQSection } from "@/components/home/FAQSection";
 import { CTASection } from "@/components/home/CTASection";
 import { Footer } from "@/components/home/Footer";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
@@ -21,6 +22,7 @@ const Index = () => {
         </div>
         <BenefitsSection />
         <TestimonialsSection />
+        <FAQSection />
         <CTASection />
       </main>
 
