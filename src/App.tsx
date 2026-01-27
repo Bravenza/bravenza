@@ -39,6 +39,7 @@ const SuppliersPage = lazy(() => import("./pages/admin/SuppliersPage"));
 const ReviewsPage = lazy(() => import("./pages/admin/ReviewsPage"));
 const ReferralsPage = lazy(() => import("./pages/admin/ReferralsPage"));
 const FinancePage = lazy(() => import("./pages/admin/FinancePage"));
+const InstallmentCalculatorPage = lazy(() => import("./pages/admin/InstallmentCalculatorPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -96,6 +97,7 @@ const App = () => (
                   <Route path="pedidos/:orderId" element={<OrderDetail />} />
                   <Route path="solicitacoes" element={<OrderRequestsPage />} />
                   <Route path="financeiro" element={<FinancePage />} />
+                  <Route path="calculadora" element={<InstallmentCalculatorPage />} />
                   <Route path="fornecedores" element={<SuppliersPage />} />
                   <Route path="avaliacoes" element={<ReviewsPage />} />
                   <Route path="indicacoes" element={<ReferralsPage />} />
