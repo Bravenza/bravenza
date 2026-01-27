@@ -1519,6 +1519,7 @@ const OrderDetail = () => {
             <ShippingSection
               orderId={order.order_id}
               clientName={order.client_name}
+              clientCpf={order.client_cpf}
               clientPhone={order.client_phone}
               clientEmail={order.client_email}
               clientAddress={order.client_address}
