@@ -77,22 +77,24 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
         </div>
 
         <div className="border-t border-border mt-6 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-muted-foreground">
-            © 2022-{currentYear} BRAVENZA. Todos os direitos reservados.
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-muted-foreground">
+              © 2022-{currentYear} BRAVENZA. Todos os direitos reservados.
+            </p>
+            <span className="text-border hidden sm:inline">·</span>
+            <Link 
+              to="/admin/login" 
+              className="hidden sm:inline text-muted-foreground/30 hover:text-muted-foreground/50 transition-colors text-xs"
+            >
+              Admin
+            </Link>
+          </div>
           <div className="flex gap-5 text-sm text-muted-foreground">
             <Link to="/politicas" className="hover:text-primary transition-colors">
               Políticas
             </Link>
             <Link to="/termos" className="hover:text-primary transition-colors">
               Termos de Uso
-            </Link>
-            <span className="text-border">·</span>
-            <Link 
-              to="/admin/login" 
-              className="text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors text-xs"
-            >
-              Área Restrita
             </Link>
           </div>
         </div>
