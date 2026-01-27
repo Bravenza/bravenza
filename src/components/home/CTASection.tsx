@@ -21,8 +21,8 @@ export const CTASection = () => {
 
           <div className="relative z-10">
             <h2 className="text-3xl md:text-5xl font-bold mb-6">
-              O Sneaker Perfeito Está{" "}
-              <span className="text-gradient-gold">Te Esperando</span>
+              O sneaker perfeito está{" "}
+              <span className="text-gradient-gold">te esperando</span>
             </h2>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
               Chega de procurar e não encontrar. Chega de pagar caro e receber réplica. 
@@ -32,7 +32,7 @@ export const CTASection = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Link to="/solicitar">
                 <Button size="lg" className="btn-gold text-lg px-10 py-6 w-full sm:w-auto">
-                  Solicitar Orçamento Grátis
+                  Solicitar orçamento grátis
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>

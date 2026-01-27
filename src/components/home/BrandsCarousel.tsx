@@ -28,7 +28,7 @@ export const BrandsCarousel = () => {
           className="text-center"
         >
           <h2 className="text-2xl md:text-3xl font-bold mb-4">
-            As Marcas Mais <span className="text-gradient-gold">Desejadas do Mundo</span>
+            As marcas mais <span className="text-gradient-gold">desejadas do mundo</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Acesso direto às coleções internacionais. Se existe, nós conseguimos trazer para você.

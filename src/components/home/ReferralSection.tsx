@@ -19,11 +19,11 @@ export const ReferralSection = () => {
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary mb-6">
             <Gift className="h-4 w-4" />
-            <span className="text-sm font-medium">Programa Exclusivo</span>
+            <span className="text-sm font-medium">Programa exclusivo</span>
           </div>
           
           <h2 className="text-3xl md:text-5xl font-bold mb-4">
-            Indique e <span className="text-gradient-gold">Ganhe Dinheiro</span>
+            Indique e <span className="text-gradient-gold">ganhe dinheiro</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Cada amigo que compra usando seu código te dá desconto real no próximo pedido. 
@@ -42,7 +42,7 @@ export const ReferralSection = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
               <Gift className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="font-semibold text-lg mb-2">1. Pegue Seu Código</h3>
+            <h3 className="font-semibold text-lg mb-2">1. Pegue seu código</h3>
             <p className="text-muted-foreground text-sm">
               Entre na sua conta e gere seu link exclusivo em segundos
             </p>
@@ -58,7 +58,7 @@ export const ReferralSection = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
               <Users className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="font-semibold text-lg mb-2">2. Mande Pros Amigos</h3>
+            <h3 className="font-semibold text-lg mb-2">2. Mande pros amigos</h3>
             <p className="text-muted-foreground text-sm">
               Compartilhe com quem também quer sneakers originais
             </p>
@@ -74,7 +74,7 @@ export const ReferralSection = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
               <Wallet className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="font-semibold text-lg mb-2">3. Receba o Cashback</h3>
+            <h3 className="font-semibold text-lg mb-2">3. Receba o cashback</h3>
             <p className="text-muted-foreground text-sm">
               Crédito automático assim que a compra do seu amigo for confirmada
             </p>
@@ -99,13 +99,13 @@ export const ReferralSection = () => {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild size="lg" className="gap-2 btn-gold">
               <Link to="/cliente/login">
-                Começar a Indicar
+                Começar a indicar
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="border-primary/30">
               <Link to="/solicitar">
-                Fazer Meu Primeiro Pedido
+                Fazer meu primeiro pedido
               </Link>
             </Button>
           </div>

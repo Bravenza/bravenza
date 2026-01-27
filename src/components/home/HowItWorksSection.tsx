@@ -4,27 +4,27 @@ import { Search, FileCheck, CreditCard, Package, Truck } from "lucide-react";
 const steps = [
   {
     icon: Search,
-    title: "Você Pede",
+    title: "Você pede",
     description: "Envie o link, foto ou nome do sneaker. Nós fazemos o resto.",
   },
   {
     icon: FileCheck,
-    title: "Orçamento Completo",
+    title: "Orçamento completo",
     description: "Preço final, prazo de entrega e todas as condições. Sem letras miúdas.",
   },
   {
     icon: CreditCard,
-    title: "Pagamento Seguro",
+    title: "Pagamento seguro",
     description: "Pague 50% agora. O restante só quando o produto chegar ao Brasil.",
   },
   {
     icon: Package,
-    title: "Inspeção Rigorosa",
+    title: "Inspeção rigorosa",
     description: "Fotos detalhadas e verificação de autenticidade antes do envio.",
   },
   {
     icon: Truck,
-    title: "Entrega Garantida",
+    title: "Entrega garantida",
     description: "Rastreio em tempo real até o sneaker chegar nas suas mãos.",
   },
 ];
