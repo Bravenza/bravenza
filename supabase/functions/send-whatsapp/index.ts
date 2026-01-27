@@ -9,9 +9,15 @@ const corsHeaders = {
 };
 
 interface WhatsAppRequest {
-  order_id: string;
-  message_type: "budget_sent" | "sinal_confirmed" | "balance_confirmed" | "status_update" | "review_request" | "custom";
+  order_id?: string;
+  message_type: "budget_sent" | "sinal_confirmed" | "balance_confirmed" | "status_update" | "review_request" | "referral_confirmed" | "custom";
   custom_message?: string;
+  // For referral notifications
+  referrer_phone?: string;
+  referrer_name?: string;
+  referred_name?: string;
+  discount_percentage?: number;
+  referral_code?: string;
 }
 
 // Message templates
@@ -55,6 +61,16 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `Sua opinião é muito importante para nós! Avalie em apenas 1 minuto:\n` +
     `${data.review_url}\n\n` +
     `Obrigado por escolher a Bravenza! ❤️\n\n` +
+    `_Bravenza - Sua loja de sneakers premium_`,
+
+  referral_confirmed: (data) =>
+    `🎉 *Parabéns, ${data.referrer_name}!*\n\n` +
+    `Sua indicação foi confirmada! 🎁\n\n` +
+    `Seu amigo(a) *${data.referred_name}* acabou de fazer uma compra usando seu código de indicação.\n\n` +
+    `💰 Você ganhou *${data.discount_percentage || 5}% de desconto* no seu próximo pedido!\n\n` +
+    `📱 Seu código: *${data.referral_code}*\n` +
+    `Continue indicando e acumule mais descontos!\n\n` +
+    `Acesse sua conta para ver suas indicações:\nhttps://bravenza.lovable.app/minha-conta\n\n` +
     `_Bravenza - Sua loja de sneakers premium_`,
 };
 
@@ -136,10 +152,70 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { order_id, message_type, custom_message }: WhatsAppRequest = await req.json();
+    const requestData: WhatsAppRequest = await req.json();
+    const { order_id, message_type, custom_message, referrer_phone, referrer_name, referred_name, discount_percentage, referral_code } = requestData;
 
-    if (!order_id || !message_type) {
-      throw new Error("order_id e message_type são obrigatórios");
+    if (!message_type) {
+      throw new Error("message_type é obrigatório");
+    }
+
+    // Handle referral confirmation (doesn't need order_id)
+    if (message_type === "referral_confirmed") {
+      if (!referrer_phone) {
+        console.log("No referrer phone for referral notification");
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: "Telefone do indicador não fornecido",
+            skipped: true 
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Format phone number
+      let phone = referrer_phone.replace(/\D/g, '');
+      if (phone.startsWith('0')) {
+        phone = phone.substring(1);
+      }
+      if (!phone.startsWith('55')) {
+        phone = '55' + phone;
+      }
+
+      const templateFn = MESSAGE_TEMPLATES.referral_confirmed;
+      const message = templateFn({
+        referrer_name: referrer_name || "Cliente",
+        referred_name: referred_name || "seu indicado",
+        discount_percentage: discount_percentage || 5,
+        referral_code: referral_code || "---",
+      });
+
+      const result = await sendTwilioWhatsApp(
+        twilioAccountSid,
+        twilioAuthToken,
+        twilioWhatsAppNumber,
+        phone,
+        message
+      );
+
+      if (!result.success) {
+        throw new Error(result.error || "Erro ao enviar WhatsApp via Twilio");
+      }
+
+      console.log(`Referral WhatsApp sent to +${phone}: ${result.messageId}`);
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message_id: result.messageId 
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // For order-based messages, order_id is required
+    if (!order_id) {
+      throw new Error("order_id é obrigatório para este tipo de mensagem");
     }
 
     // Get order data
@@ -185,7 +261,6 @@ serve(async (req) => {
         throw new Error("Tipo de mensagem inválido");
       }
 
-      const baseUrl = Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '');
       const templateData = {
         ...order,
         budget_url: `https://bravenza.lovable.app/orcamento/${order.budget_approval_token}`,

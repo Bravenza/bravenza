@@ -20,7 +20,8 @@ type EmailType =
   | "dispatched"
   | "delivered"
   | "balance_reminder"
-  | "review_request";
+  | "review_request"
+  | "referral_confirmed";
 
 interface EmailRequest {
   type: EmailType;
@@ -41,6 +42,10 @@ interface EmailRequest {
   sla_vault_due_date?: string;
   expires_at?: string;
   review_link?: string;
+  // Referral fields
+  referred_name?: string;
+  discount_percentage?: number;
+  referral_code?: string;
 }
 
 const formatCurrency = (value: number) => {
@@ -58,7 +63,7 @@ const formatDate = (date: string) => {
   }).format(new Date(date));
 };
 
-const getEmailSubject = (type: EmailType, orderId: string): string => {
+const getEmailSubject = (type: EmailType, orderId: string, data?: EmailRequest): string => {
   const subjects: Record<EmailType, string> = {
     budget_sent: `Seu orçamento está pronto - ${orderId}`,
     budget_approved: `Orçamento aprovado! Próximo passo: Pagamento do sinal - ${orderId}`,
@@ -72,6 +77,7 @@ const getEmailSubject = (type: EmailType, orderId: string): string => {
     delivered: `Pedido entregue! Obrigado pela confiança - ${orderId}`,
     balance_reminder: `Lembrete: Pagamento pendente - ${orderId}`,
     review_request: `Como foi sua experiência? Avalie seu pedido! - ${orderId}`,
+    referral_confirmed: `🎉 Parabéns! Sua indicação foi confirmada!`,
   };
   return subjects[type];
 };
@@ -405,6 +411,55 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         
         <p style="color: #666; font-size: 13px; text-align: center; margin: 0; line-height: 1.5;">
           Obrigado por escolher a Braz Vault! ❤️
+        </p>
+      `,
+    },
+    referral_confirmed: {
+      subtitle: "Sua Indicação foi Confirmada! 🎉",
+      content: `
+        <div style="background-color: #0a3d0a; border: 1px solid #0d6d0d; border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: center;">
+          <p style="color: #4ade80; font-size: 16px; margin: 0;">✓ Indicação confirmada com sucesso!</p>
+        </div>
+        
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6; text-align: center;">
+          Parabéns! Seu amigo(a) <strong style="color: #fff;">${data.referred_name || "indicado"}</strong> 
+          concluiu uma compra usando seu código de indicação.
+        </p>
+        
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px; text-align: center;">
+          <p style="color: #d4af37; font-size: 48px; margin: 0 0 16px;">🎁</p>
+          <p style="color: #fff; font-size: 18px; margin: 0 0 8px;">Você ganhou um desconto!</p>
+          <p style="color: #d4af37; font-size: 32px; font-weight: bold; margin: 0 0 8px;">
+            ${data.discount_percentage || 5}% OFF
+          </p>
+          <p style="color: #a0a0a0; font-size: 14px; margin: 0;">
+            no seu próximo pedido
+          </p>
+        </div>
+        
+        <div style="background-color: #1a1a2e; border: 1px dashed #d4af37; border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: center;">
+          <p style="color: #a0a0a0; font-size: 12px; margin: 0 0 8px;">Seu código de indicação:</p>
+          <p style="color: #d4af37; font-size: 24px; font-weight: bold; font-family: monospace; margin: 0;">
+            ${data.referral_code || "---"}
+          </p>
+        </div>
+        
+        <p style="color: #a0a0a0; font-size: 14px; text-align: center; margin: 0 0 24px; line-height: 1.6;">
+          Continue indicando amigos e acumule mais descontos!<br />
+          Cada indicação confirmada = mais economia pra você.
+        </p>
+        
+        <div style="text-align: center;">
+          <a href="https://bravenza.lovable.app/minha-conta" 
+             style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
+                    color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
+                    font-weight: bold; font-size: 16px;">
+            Ver Minhas Indicações
+          </a>
+        </div>
+        
+        <p style="color: #666; font-size: 13px; text-align: center; margin: 24px 0 0; line-height: 1.5;">
+          Obrigado por recomendar a Braz Vault! ❤️
         </p>
       `,
     },
