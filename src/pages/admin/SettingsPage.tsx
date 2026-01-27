@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, QrCode, CheckCircle2, XCircle, ExternalLink, Mail, MessageSquare, Eye, EyeOff, Percent, Users, Loader2, HelpCircle, Activity } from "lucide-react";
+import { Settings, QrCode, CheckCircle2, XCircle, ExternalLink, Mail, MessageSquare, Eye, EyeOff, Percent, Users, Loader2, HelpCircle, Activity, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { EmailSettingsTab } from "@/components/admin/settings/EmailSettingsTab";
@@ -58,6 +58,19 @@ const NOTIFICATION_CONFIGS: ApiConfig[] = [
       { key: "TWILIO_WHATSAPP_NUMBER", label: "WhatsApp Number", placeholder: "+14155238886" }
     ],
     docsUrl: "https://www.twilio.com/docs/whatsapp",
+  },
+];
+
+const LOGISTICS_CONFIGS: ApiConfig[] = [
+  {
+    id: "superfrete",
+    name: "SuperFrete",
+    description: "Cotação de frete, geração de etiquetas e rastreamento para entregas nacionais (PAC, SEDEX, Jadlog, etc).",
+    icon: <Truck className="h-6 w-6" />,
+    requiredSecrets: [
+      { key: "SUPERFRETE_API_TOKEN", label: "API Token", placeholder: "Token da API SuperFrete" }
+    ],
+    docsUrl: "https://docs.superfrete.com",
   },
 ];
 
@@ -187,6 +200,20 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {NOTIFICATION_CONFIGS.map((api) => (
+                <ApiIntegrationCard key={api.id} config={api} />
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Logística</CardTitle>
+              <CardDescription>
+                Configure as APIs para cotação de frete, geração de etiquetas e rastreamento de entregas.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {LOGISTICS_CONFIGS.map((api) => (
                 <ApiIntegrationCard key={api.id} config={api} />
               ))}
             </CardContent>
