@@ -77,14 +77,14 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
         </div>
 
         <div className="border-t border-border mt-6 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-center text-center gap-1 sm:flex-row sm:items-center sm:text-left sm:gap-3">
             <p className="text-sm text-muted-foreground">
               © 2022-{currentYear} BRAVENZA. Todos os direitos reservados.
             </p>
-            <span className="text-border">·</span>
-            <Link 
-              to="/admin/login" 
-              className="text-muted-foreground/30 hover:text-muted-foreground/50 transition-colors text-xs"
+            <span className="text-border hidden sm:inline">·</span>
+            <Link
+              to="/admin/login"
+              className="text-muted-foreground/60 hover:text-muted-foreground/80 transition-colors text-xs"
             >
               Admin
             </Link>
