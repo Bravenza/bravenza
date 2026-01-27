@@ -495,6 +495,21 @@ const OrderDetail = () => {
 
       if (historyError) throw historyError;
 
+      // Create client notification in database
+      try {
+        await supabase.from("notifications").insert({
+          type: "order_status_update",
+          target: "client",
+          target_client_cpf: order.client_cpf,
+          title: `Atualização do pedido ${order.order_id}`,
+          message: `Seu pedido foi atualizado para: ${ORDER_STATUS_LABELS[newStatus]}`,
+          reference_type: "order",
+          reference_id: order.order_id,
+        });
+      } catch (notifError) {
+        console.error("Error creating notification:", notifError);
+      }
+
       // Send automatic notifications for status change (email + WhatsApp)
       const notifResult = await sendAllStatusNotifications(newStatus, {
         order_id: order.order_id,

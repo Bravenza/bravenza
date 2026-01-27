@@ -128,6 +128,21 @@ export function BudgetActions({
         }
       }
 
+      // Create client notification
+      try {
+        await supabase.from("notifications").insert({
+          type: "budget_sent",
+          target: "client",
+          target_client_cpf: null, // Will need to be set if we have CPF
+          title: "Orçamento disponível!",
+          message: `Seu orçamento para o pedido ${orderId} está pronto. Confira os valores e aprove para prosseguir.`,
+          reference_type: "order",
+          reference_id: orderId,
+        });
+      } catch (notifError) {
+        console.error("Error creating notification:", notifError);
+      }
+
       toast({
         title: "Orçamento enviado!",
         description: clientEmail

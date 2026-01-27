@@ -110,6 +110,22 @@ export default function BudgetApprovalPage() {
 
       if (error) throw error;
 
+      // Create admin notification for approved budget
+      try {
+        await supabase.functions.invoke("create-notification", {
+          body: {
+            target: "admin",
+            type: "budget_approved",
+            title: "Orçamento Aprovado!",
+            message: `${order?.client_name} aprovou o orçamento do pedido ${order?.order_id}. Aguardando pagamento do sinal.`,
+            reference_type: "order",
+            reference_id: order?.order_id,
+          },
+        });
+      } catch (notifError) {
+        console.error("Error creating notification:", notifError);
+      }
+
       setStatus("approved");
       toast({
         title: "Orçamento aprovado!",
@@ -143,6 +159,22 @@ export default function BudgetApprovalPage() {
       });
 
       if (error) throw error;
+
+      // Create admin notification for rejected budget
+      try {
+        await supabase.functions.invoke("create-notification", {
+          body: {
+            target: "admin",
+            type: "budget_rejected",
+            title: "Orçamento Recusado",
+            message: `${order?.client_name} recusou o orçamento do pedido ${order?.order_id}.${rejectReason ? ` Motivo: ${rejectReason}` : ""}`,
+            reference_type: "order",
+            reference_id: order?.order_id,
+          },
+        });
+      } catch (notifError) {
+        console.error("Error creating notification:", notifError);
+      }
 
       setStatus("rejected");
       setShowRejectDialog(false);
