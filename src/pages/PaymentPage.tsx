@@ -318,25 +318,38 @@ export default function PaymentPage() {
     }
   };
 
-  // Calculate installment values with interest (Mercado Pago rates approximation)
-  const calculateInstallmentValue = (total: number, numInstallments: number): number => {
-    if (numInstallments === 1) return total;
-    // Approximate 3.79% per month interest (Mercado Pago typical rate)
-    const monthlyRate = 0.0379;
-    const installmentValue = (total * monthlyRate * Math.pow(1 + monthlyRate, numInstallments)) / 
-                              (Math.pow(1 + monthlyRate, numInstallments) - 1);
-    return installmentValue;
+  // Mercado Pago installment rates (official rates)
+  const MERCADO_PAGO_RATES: Record<number, number> = {
+    1: 0.0498,   // 4.98%
+    2: 0.0964,   // 9.64%
+    3: 0.1123,   // 11.23%
+    4: 0.1136,   // 11.36%
+    5: 0.1431,   // 14.31%
+    6: 0.1432,   // 14.32%
+    7: 0.1672,   // 16.72%
+    8: 0.1673,   // 16.73%
+    9: 0.1969,   // 19.69%
+    10: 0.2065,  // 20.65%
+    11: 0.2066,  // 20.66%
+    12: 0.2211,  // 22.11%
+  };
+
+  // Calculate installment values with Mercado Pago official rates
+  const calculateInstallmentValue = (total: number, numInstallments: number): { installmentValue: number; totalWithInterest: number } => {
+    const rate = MERCADO_PAGO_RATES[numInstallments] || 0;
+    const totalWithInterest = total * (1 + rate);
+    const installmentValue = totalWithInterest / numInstallments;
+    return { installmentValue, totalWithInterest };
   };
 
   const generateInstallmentOptions = (total: number) => {
     const options = [];
     for (let i = 1; i <= 12; i++) {
-      const installmentValue = calculateInstallmentValue(total, i);
-      const totalWithInterest = installmentValue * i;
+      const { installmentValue, totalWithInterest } = calculateInstallmentValue(total, i);
       options.push({
         value: i,
         label: i === 1 
-          ? `1x de ${formatCurrency(total)} (sem juros)`
+          ? `1x de ${formatCurrency(totalWithInterest)} (com taxa)`
           : `${i}x de ${formatCurrency(installmentValue)} (Total: ${formatCurrency(totalWithInterest)})`,
       });
     }
