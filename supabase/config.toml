@@ -29,3 +29,12 @@ verify_jwt = false
 
 [functions.create-notification]
 verify_jwt = false
+
+[functions.process-reminders]
+verify_jwt = false
+
+[functions.schedule-reminder]
+verify_jwt = false
+
+[functions.submit-review]
+verify_jwt = false

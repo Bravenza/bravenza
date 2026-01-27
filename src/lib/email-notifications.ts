@@ -170,6 +170,23 @@ export async function sendAllStatusNotifications(
     sendStatusChangeWhatsApp(newStatus, orderData.order_id),
   ]);
 
+  // Schedule payment reminders for balance pending status
+  if (newStatus === "BALANCE_PENDING" || newStatus === "BALANCE_DUE") {
+    try {
+      await supabase.functions.invoke("schedule-reminder", {
+        body: {
+          order_id: orderData.order_id,
+          reminder_type: "balance_reminder",
+          channel: "both",
+          delay_days: 3,
+        },
+      });
+      console.log(`Payment reminder scheduled for order ${orderData.order_id}`);
+    } catch (err) {
+      console.error("Failed to schedule payment reminder:", err);
+    }
+  }
+
   return {
     email: emailResult.success,
     whatsapp: whatsappResult.success,
