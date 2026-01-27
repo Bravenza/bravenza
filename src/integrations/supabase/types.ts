@@ -1116,6 +1116,8 @@ export type Database = {
         | "payment_received"
         | "order_delivered"
         | "system_alert"
+        | "cashback_available"
+        | "cashback_expiring"
       order_status:
         | "ORDER_CONFIRMED"
         | "SOURCING"
@@ -1284,6 +1286,8 @@ export const Constants = {
         "payment_received",
         "order_delivered",
         "system_alert",
+        "cashback_available",
+        "cashback_expiring",
       ],
       order_status: [
         "ORDER_CONFIRMED",
