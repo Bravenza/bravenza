@@ -543,7 +543,7 @@ serve(async (req) => {
     console.log(`Sending ${data.type} email to ${data.client_email}`);
 
     const { data: emailData, error } = await resend.emails.send({
-      from: "Bravenza Vault <noreply@resend.dev>",
+      from: "Bravenza Vault <noreply@bravenza.com.br>",
       to: [data.client_email],
       subject: subject,
       html: html,
