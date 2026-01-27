@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.submit-review]
 verify_jwt = false
+
+[functions.superfrete]
+verify_jwt = false
