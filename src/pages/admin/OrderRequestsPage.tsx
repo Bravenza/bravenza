@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   ClipboardList, Search, Eye, CheckCircle2, XCircle, ArrowRight, 
-  User, MapPin, Package, ExternalLink, Loader2, Image, Clock
+  User, MapPin, Package, ExternalLink, Loader2, Image, Clock, Gift
 } from "lucide-react";
 import { generateOrderId, cleanCPF } from "@/lib/constants";
 
@@ -37,6 +37,7 @@ interface OrderRequest {
   product_link: string | null;
   reference_image_url: string | null;
   additional_notes: string | null;
+  referral_code: string | null;
   status: string;
   admin_notes: string | null;
   converted_order_id: string | null;
@@ -160,6 +161,25 @@ export default function OrderRequestsPage() {
         });
 
       if (historyError) throw historyError;
+
+      // Process referral code if present - update referral with the referred_order_id
+      if (request.referral_code) {
+        const { error: referralError } = await supabase
+          .from("referrals")
+          .update({
+            status: "converted",
+            referred_cpf: cleanCPF(request.client_cpf),
+            referred_name: request.client_name,
+            referred_order_id: orderId,
+          })
+          .eq("referral_code", request.referral_code)
+          .in("status", ["pending", "converted"]);
+
+        if (referralError) {
+          console.error("Error updating referral:", referralError);
+          // Don't throw - order was created successfully
+        }
+      }
 
       // Update request status
       const { error: updateError } = await supabase
@@ -401,6 +421,20 @@ export default function OrderRequestsPage() {
                     </a>
                   )}
                 </div>
+
+                {/* Referral Code */}
+                {selectedRequest.referral_code && (
+                  <div className="p-3 rounded-lg bg-primary/10 border border-primary/30">
+                    <h4 className="font-medium mb-1 flex items-center gap-2 text-primary">
+                      <Gift className="h-4 w-4" />
+                      Código de Indicação Utilizado
+                    </h4>
+                    <p className="text-sm font-mono font-semibold">{selectedRequest.referral_code}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Ao criar o pedido, o indicador receberá o desconto automaticamente.
+                    </p>
+                  </div>
+                )}
 
                 {/* Notes */}
                 {selectedRequest.additional_notes && (

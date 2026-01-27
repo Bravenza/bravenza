@@ -278,6 +278,7 @@ export type Database = {
           product_link: string | null
           product_model: string | null
           reference_image_url: string | null
+          referral_code: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           shoe_size: string
@@ -305,6 +306,7 @@ export type Database = {
           product_link?: string | null
           product_model?: string | null
           reference_image_url?: string | null
+          referral_code?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           shoe_size: string
@@ -332,6 +334,7 @@ export type Database = {
           product_link?: string | null
           product_model?: string | null
           reference_image_url?: string | null
+          referral_code?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           shoe_size?: string
