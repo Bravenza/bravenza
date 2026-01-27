@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ClientAuthProvider } from "@/hooks/useClientAuth";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 
 // Eagerly loaded pages (critical path)
 import Index from "./pages/Index";
@@ -20,6 +21,7 @@ const PaymentPage = lazy(() => import("./pages/PaymentPage"));
 const OrderRequestPage = lazy(() => import("./pages/OrderRequestPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
+const InstallPage = lazy(() => import("./pages/InstallPage"));
 
 // Lazy loaded pages - Client portal
 const ClientLogin = lazy(() => import("./pages/client/ClientLogin"));
@@ -84,6 +86,7 @@ const App = () => (
                 <Route path="/pagamento/:token" element={<PaymentPage />} />
                 <Route path="/termos" element={<TermsPage />} />
                 <Route path="/politicas" element={<PrivacyPage />} />
+                <Route path="/instalar" element={<InstallPage />} />
 
                 {/* Client portal routes */}
                 <Route path="/cliente/login" element={<ClientLogin />} />
@@ -111,6 +114,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
+            <PWAInstallBanner />
           </BrowserRouter>
         </ClientAuthProvider>
       </AuthProvider>
