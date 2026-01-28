@@ -29,34 +29,37 @@ export const RequestStepper = ({
           const isFuture = step.id > currentStep;
 
           return (
-            <div key={step.id} className="flex-1 flex items-center">
-              <button
-                onClick={() => isCompleted && onStepClick?.(step.id)}
-                disabled={!isCompleted}
-                className={cn(
-                  "flex flex-col items-center gap-2 transition-all w-full",
-                  isCompleted && "cursor-pointer hover:opacity-80",
-                  !isCompleted && "cursor-default"
+            <div key={step.id} className="flex-1 flex flex-col items-center">
+              {/* Row with lines and circle */}
+              <div className="flex items-center w-full">
+                {/* Line before */}
+                {index > 0 ? (
+                  <div
+                    className={cn(
+                      "flex-1 h-0.5 transition-colors duration-300",
+                      isCompleted || isActive ? "bg-primary" : "bg-border"
+                    )}
+                  />
+                ) : (
+                  <div className="flex-1" />
                 )}
-              >
-                <div className="flex items-center w-full">
-                  {/* Line before */}
-                  {index > 0 && (
-                    <div
-                      className={cn(
-                        "flex-1 h-0.5 transition-colors duration-300",
-                        isCompleted || isActive ? "bg-primary" : "bg-border"
-                      )}
-                    />
-                  )}
 
-                  {/* Circle */}
+                {/* Circle */}
+                <button
+                  onClick={() => isCompleted && onStepClick?.(step.id)}
+                  disabled={!isCompleted}
+                  className={cn(
+                    "shrink-0",
+                    isCompleted && "cursor-pointer hover:opacity-80",
+                    !isCompleted && "cursor-default"
+                  )}
+                >
                   <motion.div
                     initial={{ scale: 0.8 }}
                     animate={{ scale: isActive ? 1.1 : 1 }}
                     transition={{ type: "spring", stiffness: 300 }}
                     className={cn(
-                      "relative w-12 h-12 rounded-full flex items-center justify-center font-semibold text-sm transition-all shrink-0",
+                      "w-12 h-12 rounded-full flex items-center justify-center font-semibold text-sm transition-all",
                       isCompleted && "bg-primary text-primary-foreground",
                       isActive && "bg-primary text-primary-foreground ring-4 ring-primary/30",
                       isFuture && "bg-muted text-muted-foreground border-2 border-border"
@@ -70,30 +73,32 @@ export const RequestStepper = ({
                       </span>
                     )}
                   </motion.div>
+                </button>
 
-                  {/* Line after */}
-                  {index < steps.length - 1 && (
-                    <div
-                      className={cn(
-                        "flex-1 h-0.5 transition-colors duration-300",
-                        isCompleted ? "bg-primary" : "bg-border"
-                      )}
-                    />
-                  )}
-                </div>
+                {/* Line after */}
+                {index < steps.length - 1 ? (
+                  <div
+                    className={cn(
+                      "flex-1 h-0.5 transition-colors duration-300",
+                      isCompleted ? "bg-primary" : "bg-border"
+                    )}
+                  />
+                ) : (
+                  <div className="flex-1" />
+                )}
+              </div>
 
-                {/* Label */}
-                <span
-                  className={cn(
-                    "text-xs font-medium text-center leading-tight",
-                    isActive && "text-primary",
-                    isCompleted && "text-foreground",
-                    isFuture && "text-muted-foreground"
-                  )}
-                >
-                  {step.label}
-                </span>
-              </button>
+              {/* Label - always centered below circle */}
+              <span
+                className={cn(
+                  "mt-2 text-xs font-medium text-center leading-tight",
+                  isActive && "text-primary",
+                  isCompleted && "text-foreground",
+                  isFuture && "text-muted-foreground"
+                )}
+              >
+                {step.label}
+              </span>
             </div>
           );
         })}
