@@ -25,6 +25,12 @@ import { Logo } from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/constants";
 import { MAX_CASHBACK_PERCENTAGE } from "@/components/client/CashbackBanner";
+import { 
+  calculateCardTotal, 
+  calculateInstallmentValue as calcInstallment,
+  MERCADO_PAGO_RATES,
+  roundUpTo90
+} from "@/lib/budget-calculator";
 
 interface OrderData {
   order_id: string;
@@ -361,38 +367,18 @@ export default function PaymentPage() {
     }
   };
 
-  // Mercado Pago installment rates (official rates)
-  const MERCADO_PAGO_RATES: Record<number, number> = {
-    1: 0.0498,   // 4.98%
-    2: 0.0964,   // 9.64%
-    3: 0.1123,   // 11.23%
-    4: 0.1136,   // 11.36%
-    5: 0.1431,   // 14.31%
-    6: 0.1432,   // 14.32%
-    7: 0.1672,   // 16.72%
-    8: 0.1673,   // 16.73%
-    9: 0.1969,   // 19.69%
-    10: 0.2065,  // 20.65%
-    11: 0.2066,  // 20.66%
-    12: 0.2211,  // 22.11%
-  };
-
-  // Calculate installment values with Mercado Pago official rates
-  const calculateInstallmentValue = (total: number, numInstallments: number): { installmentValue: number; totalWithInterest: number } => {
-    const rate = MERCADO_PAGO_RATES[numInstallments] || 0;
-    const totalWithInterest = total * (1 + rate);
-    const installmentValue = totalWithInterest / numInstallments;
-    return { installmentValue, totalWithInterest };
-  };
-
-  const generateInstallmentOptions = (total: number) => {
+  // Generate installment options using the correct formula
+  const generateInstallmentOptions = (basePrice: number) => {
     const options = [];
     for (let i = 1; i <= 12; i++) {
-      const { installmentValue, totalWithInterest } = calculateInstallmentValue(total, i);
+      const totalWithInterest = calculateCardTotal(basePrice, i);
+      const installmentValue = calcInstallment(totalWithInterest, i);
+      const rate = MERCADO_PAGO_RATES[i] || 0;
+      
       options.push({
         value: i,
         label: i === 1 
-          ? `1x de ${formatCurrency(totalWithInterest)} (com taxa)`
+          ? `1x de ${formatCurrency(totalWithInterest)} (taxa ${(rate * 100).toFixed(2)}%)`
           : `${i}x de ${formatCurrency(installmentValue)} (Total: ${formatCurrency(totalWithInterest)})`,
       });
     }
