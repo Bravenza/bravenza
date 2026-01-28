@@ -45,6 +45,7 @@ interface OrderData {
   balance_paid: boolean;
   budget_expires_at: string | null;
   created_at: string;
+  payment_mode: 'full' | 'split' | null;
 }
 
 interface CashbackData {
@@ -53,7 +54,7 @@ interface CashbackData {
   discountAmount: number;
 }
 
-type PaymentType = "sinal" | "balance";
+type PaymentType = "full" | "sinal" | "balance";
 
 export default function PaymentPage() {
   const { token } = useParams<{ token: string }>();
@@ -69,7 +70,7 @@ export default function PaymentPage() {
     qr_code: string;
     copy_paste: string;
   } | null>(null);
-  const [paymentType, setPaymentType] = useState<PaymentType>("sinal");
+  const [paymentType, setPaymentType] = useState<PaymentType>("full");
   const [installments, setInstallments] = useState<number>(1);
   
   // Cashback state
@@ -121,11 +122,21 @@ export default function PaymentPage() {
         const orderData = data[0] as OrderData;
         setOrder(orderData);
 
-        // Determine which payment to show
-        if (orderData.sinal_paid && !orderData.balance_paid) {
-          setPaymentType("balance");
-        } else if (!orderData.sinal_paid) {
-          setPaymentType("sinal");
+        // Determine which payment to show based on payment_mode
+        const isFullPayment = orderData.payment_mode !== 'split';
+        
+        if (isFullPayment) {
+          // Full payment mode: single 100% payment
+          if (!orderData.sinal_paid) {
+            setPaymentType("full");
+          }
+        } else {
+          // Split payment mode: 50/50
+          if (orderData.sinal_paid && !orderData.balance_paid) {
+            setPaymentType("balance");
+          } else if (!orderData.sinal_paid) {
+            setPaymentType("sinal");
+          }
         }
 
         // Fetch available cashback for this client
@@ -233,15 +244,33 @@ export default function PaymentPage() {
     setIsGeneratingPix(true);
 
     try {
-      const baseAmount = paymentType === "sinal" ? order.sinal_value : order.balance_value;
+      // Determine the base amount based on payment type
+      let baseAmount: number | null;
+      let paymentDescription: string;
+      let actualPaymentType: "sinal" | "balance" | "full";
+
+      if (paymentType === "full") {
+        baseAmount = order.product_price;
+        paymentDescription = "Pagamento Total";
+        actualPaymentType = "full";
+      } else if (paymentType === "sinal") {
+        baseAmount = order.sinal_value;
+        paymentDescription = "Sinal (50%)";
+        actualPaymentType = "sinal";
+      } else {
+        baseAmount = order.balance_value;
+        paymentDescription = "Saldo (50%)";
+        actualPaymentType = "balance";
+      }
+
       const amount = getPaymentAmount(baseAmount);
 
       const { data, error } = await supabase.functions.invoke("generate-pix", {
         body: {
           token,
-          payment_type: paymentType,
+          payment_type: actualPaymentType,
           amount,
-          description: `${paymentType === "sinal" ? "Sinal" : "Saldo"} - ${order.order_id}${applyCashback ? " (com cashback)" : ""}`,
+          description: `${paymentDescription} - ${order.order_id}${applyCashback ? " (com cashback)" : ""}`,
         },
       });
 
@@ -285,7 +314,21 @@ export default function PaymentPage() {
     setIsProcessingCard(true);
 
     try {
-      const baseAmount = order.balance_value;
+      // Determine the base amount based on payment type
+      let baseAmount: number | null;
+      let actualPaymentType: "sinal" | "balance" | "full";
+
+      if (paymentType === "full") {
+        baseAmount = order.product_price;
+        actualPaymentType = "full";
+      } else if (paymentType === "sinal") {
+        baseAmount = order.sinal_value;
+        actualPaymentType = "sinal";
+      } else {
+        baseAmount = order.balance_value;
+        actualPaymentType = "balance";
+      }
+
       const amount = getPaymentAmount(baseAmount);
 
       const { data, error } = await supabase.functions.invoke(
@@ -293,7 +336,7 @@ export default function PaymentPage() {
         {
           body: {
             token,
-            payment_type: "balance",
+            payment_type: actualPaymentType,
             amount,
             order_id: order.order_id,
             product_name: order.product_name,
@@ -380,8 +423,13 @@ export default function PaymentPage() {
     );
   }
 
-  // All payments complete
-  if (order.sinal_paid && order.balance_paid) {
+  // All payments complete - check based on payment mode
+  const isFullPayment = order.payment_mode !== 'split';
+  const isPaymentComplete = isFullPayment 
+    ? order.sinal_paid // In full mode, sinal_paid means everything is paid
+    : (order.sinal_paid && order.balance_paid); // In split mode, both must be paid
+
+  if (isPaymentComplete) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full text-center">
@@ -389,7 +437,10 @@ export default function PaymentPage() {
             <CheckCircle2 className="h-16 w-16 text-success mx-auto mb-4" />
             <h1 className="text-2xl font-bold mb-2">Pagamento Completo!</h1>
             <p className="text-muted-foreground mb-4">
-              Todos os pagamentos do seu pedido foram confirmados. Obrigado!
+              {isFullPayment 
+                ? "O pagamento do seu pedido foi confirmado. Obrigado!"
+                : "Todos os pagamentos do seu pedido foram confirmados. Obrigado!"
+              }
             </p>
             <Button onClick={() => navigate(`/rastreio/${order.order_id}`)}>
               Acompanhar Pedido
@@ -400,10 +451,30 @@ export default function PaymentPage() {
     );
   }
 
-  const baseAmount = paymentType === "sinal" ? order.sinal_value : order.balance_value;
+  // Calculate amounts based on payment type
+  let baseAmount: number | null;
+  let currentLabel: string;
+
+  if (paymentType === "full") {
+    baseAmount = order.product_price;
+    currentLabel = "Valor Total";
+  } else if (paymentType === "sinal") {
+    baseAmount = order.sinal_value;
+    currentLabel = "Sinal (50%)";
+  } else {
+    baseAmount = order.balance_value;
+    currentLabel = "Saldo (50%)";
+  }
+
   const finalAmount = getPaymentAmount(baseAmount);
-  const currentLabel = paymentType === "sinal" ? "Sinal (50%)" : "Saldo (50%)";
-  const installmentOptions = order.balance_value ? generateInstallmentOptions(getPaymentAmount(order.balance_value)) : [];
+  
+  // Generate installment options based on the amount being paid
+  const installmentBaseAmount = paymentType === "full" 
+    ? getPaymentAmount(order.product_price)
+    : getPaymentAmount(order.balance_value);
+  const installmentOptions = installmentBaseAmount > 0 
+    ? generateInstallmentOptions(installmentBaseAmount) 
+    : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -428,29 +499,21 @@ export default function PaymentPage() {
             </p>
           </div>
 
-          {/* Payment status */}
-          <div className="grid md:grid-cols-2 gap-4 mb-8">
-            <Card
-              className={`cursor-pointer transition-all ${
-                paymentType === "sinal"
-                  ? "ring-2 ring-primary"
-                  : order.sinal_paid
-                    ? "opacity-60"
-                    : ""
-              }`}
-              onClick={() => !order.sinal_paid && setPaymentType("sinal")}
-            >
+          {/* Payment status - Different UI based on payment mode */}
+          {isFullPayment ? (
+            // Full payment mode: single card showing total
+            <Card className="mb-8 ring-2 ring-primary">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Sinal (50%)</p>
-                    <p className="text-xl font-bold">
-                      {order.sinal_value
-                        ? formatCurrency(order.sinal_value)
+                    <p className="text-sm text-muted-foreground">Valor Total</p>
+                    <p className="text-2xl font-bold text-primary">
+                      {order.product_price
+                        ? formatCurrency(order.product_price)
                         : "-"}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Apenas Pix
+                      Pix ou Cartão de Crédito até 12x
                     </p>
                   </div>
                   {order.sinal_paid ? (
@@ -459,53 +522,91 @@ export default function PaymentPage() {
                       Pago
                     </Badge>
                   ) : (
-                    <Badge variant="outline">Pendente</Badge>
+                    <Badge variant="outline">A pagar</Badge>
                   )}
                 </div>
               </CardContent>
             </Card>
-
-            <Card
-              className={`cursor-pointer transition-all ${
-                paymentType === "balance"
-                  ? "ring-2 ring-primary"
-                  : order.balance_paid || !order.sinal_paid
-                    ? "opacity-60"
-                    : ""
-              }`}
-              onClick={() =>
-                order.sinal_paid &&
-                !order.balance_paid &&
-                setPaymentType("balance")
-              }
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Saldo (50%)</p>
-                    <p className="text-xl font-bold">
-                      {order.balance_value
-                        ? formatCurrency(order.balance_value)
-                        : "-"}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Pix ou Cartão até 12x
-                    </p>
+          ) : (
+            // Split payment mode: two cards for sinal and balance
+            <div className="grid md:grid-cols-2 gap-4 mb-8">
+              <Card
+                className={`cursor-pointer transition-all ${
+                  paymentType === "sinal"
+                    ? "ring-2 ring-primary"
+                    : order.sinal_paid
+                      ? "opacity-60"
+                      : ""
+                }`}
+                onClick={() => !order.sinal_paid && setPaymentType("sinal")}
+              >
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Sinal (50%)</p>
+                      <p className="text-xl font-bold">
+                        {order.sinal_value
+                          ? formatCurrency(order.sinal_value)
+                          : "-"}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Pix ou Cartão até 12x
+                      </p>
+                    </div>
+                    {order.sinal_paid ? (
+                      <Badge className="bg-success/20 text-success">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Pago
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">Pendente</Badge>
+                    )}
                   </div>
-                  {order.balance_paid ? (
-                    <Badge className="bg-success/20 text-success">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                      Pago
-                    </Badge>
-                  ) : !order.sinal_paid ? (
-                    <Badge variant="secondary">Aguardando sinal</Badge>
-                  ) : (
-                    <Badge variant="outline">Pendente</Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
+
+              <Card
+                className={`cursor-pointer transition-all ${
+                  paymentType === "balance"
+                    ? "ring-2 ring-primary"
+                    : order.balance_paid || !order.sinal_paid
+                      ? "opacity-60"
+                      : ""
+                }`}
+                onClick={() =>
+                  order.sinal_paid &&
+                  !order.balance_paid &&
+                  setPaymentType("balance")
+                }
+              >
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Saldo (50%)</p>
+                      <p className="text-xl font-bold">
+                        {order.balance_value
+                          ? formatCurrency(order.balance_value)
+                          : "-"}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Pix ou Cartão até 12x
+                      </p>
+                    </div>
+                    {order.balance_paid ? (
+                      <Badge className="bg-success/20 text-success">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Pago
+                      </Badge>
+                    ) : !order.sinal_paid ? (
+                      <Badge variant="secondary">Aguardando sinal</Badge>
+                    ) : (
+                      <Badge variant="outline">Pendente</Badge>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Cashback Section */}
           {cashbackData && cashbackData.maxApplicable > 0 && !pixData && (
@@ -595,15 +696,9 @@ export default function PaymentPage() {
                   <TabsTrigger
                     value="card"
                     className="flex items-center gap-2"
-                    disabled={paymentType === "sinal"}
                   >
                     <CreditCard className="h-4 w-4" />
-                    Cartão
-                    {paymentType === "sinal" && (
-                      <span className="text-xs text-muted-foreground ml-1">
-                        (só saldo)
-                      </span>
-                    )}
+                    Cartão 12x
                   </TabsTrigger>
                 </TabsList>
 

@@ -60,13 +60,18 @@ serve(async (req) => {
           parts.pop(); // Remove 'card' suffix
         }
         
-        const paymentType = parts.pop(); // 'sinal' or 'balance'
+        const paymentType = parts.pop(); // 'sinal', 'balance', or 'full'
         const orderId = parts.join("-"); // order_id might contain dashes
 
         if (!orderId || !paymentType) {
           console.error("Invalid external_reference:", externalRef);
           return new Response("OK", { status: 200 });
         }
+
+        // Normalize payment type: 'full' is treated as 'sinal' for database updates
+        // since in full payment mode, we use sinal_paid to mark the order as paid
+        const normalizedPaymentType = paymentType === "full" ? "sinal" : paymentType;
+        const isFullPayment = paymentType === "full";
 
         // Determine payment method
         const paymentMethodId = payment.payment_method_id || "";
@@ -99,7 +104,7 @@ serve(async (req) => {
         let historyStatus: string;
         let historyNote: string;
 
-        if (paymentType === "sinal") {
+        if (normalizedPaymentType === "sinal") {
           updateData.sinal_paid = true;
           updateData.sinal_paid_at = new Date().toISOString();
           updateData.sinal_payment_method = paymentMethodLabel;
@@ -110,13 +115,24 @@ serve(async (req) => {
             updateData.sinal_stripe_payment_id = paymentId.toString();
           }
 
-          // AUTOMATIC STATUS ADVANCEMENT: Sinal paid → DEPOSIT_CONFIRMED
-          newStatus = "DEPOSIT_CONFIRMED";
-          updateData.current_status = newStatus;
-          historyStatus = "DEPOSIT_CONFIRMED";
-          historyNote = `Sinal de ${paymentMethodNote} confirmado. Iniciando busca do produto.`;
+          if (isFullPayment) {
+            // Full payment mode: mark as fully paid and also set balance as paid
+            updateData.balance_paid = true;
+            updateData.balance_paid_at = new Date().toISOString();
+            updateData.balance_payment_method = paymentMethodLabel;
+            newStatus = "DEPOSIT_CONFIRMED";
+            updateData.current_status = newStatus;
+            historyStatus = "DEPOSIT_CONFIRMED";
+            historyNote = `Pagamento integral via ${paymentMethodNote} confirmado. Iniciando busca do produto.`;
+          } else {
+            // Split payment mode: just sinal
+            newStatus = "DEPOSIT_CONFIRMED";
+            updateData.current_status = newStatus;
+            historyStatus = "DEPOSIT_CONFIRMED";
+            historyNote = `Sinal de ${paymentMethodNote} confirmado. Iniciando busca do produto.`;
+          }
 
-        } else if (paymentType === "balance") {
+        } else if (normalizedPaymentType === "balance") {
           updateData.balance_paid = true;
           updateData.balance_paid_at = new Date().toISOString();
           updateData.balance_payment_method = paymentMethodLabel;

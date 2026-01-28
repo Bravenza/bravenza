@@ -12,7 +12,7 @@ const corsHeaders = {
 
 interface CardCheckoutRequest {
   token: string;
-  payment_type: "sinal" | "balance";
+  payment_type: "sinal" | "balance" | "full";
   amount: number;
   order_id: string;
   product_name: string;
@@ -40,10 +40,7 @@ serve(async (req) => {
       throw new Error("Parâmetros inválidos");
     }
 
-    // Only allow card payment for balance
-    if (payment_type === "sinal") {
-      throw new Error("Sinal deve ser pago via Pix");
-    }
+    // Card is allowed for all payment types now
 
     // Validate installments (1-12)
     const validInstallments = Math.min(Math.max(1, installments), 12);
@@ -70,16 +67,41 @@ serve(async (req) => {
     const clientEmail = fullOrderData?.client_email || "cliente@bravenza.com";
     const clientName = fullOrderData?.client_name || order.client_name;
 
-    if (!order.sinal_paid) {
-      throw new Error("Sinal deve ser pago primeiro");
-    }
-
-    if (order.balance_paid) {
-      throw new Error("Saldo já foi pago");
+    // Validate payment status based on payment type
+    if (payment_type === "full") {
+      // Full payment: check if already paid
+      if (order.sinal_paid) {
+        throw new Error("Pagamento já foi realizado");
+      }
+    } else if (payment_type === "sinal") {
+      if (order.sinal_paid) {
+        throw new Error("Sinal já foi pago");
+      }
+    } else if (payment_type === "balance") {
+      if (!order.sinal_paid) {
+        throw new Error("Sinal deve ser pago primeiro");
+      }
+      if (order.balance_paid) {
+        throw new Error("Saldo já foi pago");
+      }
     }
 
     // Get origin for redirect URLs
     const origin = req.headers.get("origin") || "https://bravenza.com.br";
+
+    // Determine payment description based on type
+    let paymentTitle: string;
+    let paymentDescription: string;
+    if (payment_type === "full") {
+      paymentTitle = `Pagamento Total - ${product_name}`;
+      paymentDescription = `Pagamento integral do pedido ${order_id}`;
+    } else if (payment_type === "sinal") {
+      paymentTitle = `Sinal - ${product_name}`;
+      paymentDescription = `Pagamento do sinal do pedido ${order_id}`;
+    } else {
+      paymentTitle = `Saldo - ${product_name}`;
+      paymentDescription = `Pagamento do saldo do pedido ${order_id}`;
+    }
 
     // Create Mercado Pago Preference for Credit Card Checkout Pro
     const preferenceResponse = await fetch("https://api.mercadopago.com/checkout/preferences", {
@@ -92,8 +114,8 @@ serve(async (req) => {
         items: [
           {
             id: order_id,
-            title: `Saldo - ${product_name}`,
-            description: `Pagamento do saldo do pedido ${order_id}`,
+            title: paymentTitle,
+            description: paymentDescription,
             quantity: 1,
             currency_id: "BRL",
             unit_price: amount,

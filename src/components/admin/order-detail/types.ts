@@ -45,7 +45,10 @@ export interface Order {
   budget_rejected_at: string | null;
   budget_expires_at: string | null;
   budget_approval_token: string | null;
+  payment_mode: 'full' | 'split' | null;
 }
+
+export type PaymentMode = 'full' | 'split';
 
 export interface HistoryItem {
   id: string;

@@ -12,7 +12,7 @@ const corsHeaders = {
 
 interface PixRequest {
   token: string;
-  payment_type: "sinal" | "balance";
+  payment_type: "sinal" | "balance" | "full";
   amount: number;
   description: string;
 }
@@ -61,17 +61,23 @@ serve(async (req) => {
     const clientEmail = fullOrderData?.client_email || "cliente@bravenza.com";
     const clientName = fullOrderData?.client_name || order.client_name;
 
-    // Validate payment status
-    if (payment_type === "sinal" && order.sinal_paid) {
-      throw new Error("Sinal já foi pago");
-    }
-
-    if (payment_type === "balance" && order.balance_paid) {
-      throw new Error("Saldo já foi pago");
-    }
-
-    if (payment_type === "balance" && !order.sinal_paid) {
-      throw new Error("Sinal deve ser pago primeiro");
+    // Validate payment status based on payment type
+    if (payment_type === "full") {
+      // Full payment: check if already paid (using sinal_paid as the marker)
+      if (order.sinal_paid) {
+        throw new Error("Pagamento já foi realizado");
+      }
+    } else if (payment_type === "sinal") {
+      if (order.sinal_paid) {
+        throw new Error("Sinal já foi pago");
+      }
+    } else if (payment_type === "balance") {
+      if (order.balance_paid) {
+        throw new Error("Saldo já foi pago");
+      }
+      if (!order.sinal_paid) {
+        throw new Error("Sinal deve ser pago primeiro");
+      }
     }
 
     // Generate unique idempotency key
@@ -114,10 +120,21 @@ serve(async (req) => {
       throw new Error("Erro ao obter dados do Pix");
     }
 
-    // Store Pix transaction ID
-    const updateField = payment_type === "sinal" 
-      ? { sinal_pix_transaction_id: mpData.id.toString(), pix_qr_code: `data:image/png;base64,${qrCode}`, pix_copy_paste: copyPaste }
-      : { balance_pix_transaction_id: mpData.id.toString(), pix_qr_code: `data:image/png;base64,${qrCode}`, pix_copy_paste: copyPaste };
+    // Store Pix transaction ID - for "full" payment, use sinal fields
+    let updateField: Record<string, string>;
+    if (payment_type === "full" || payment_type === "sinal") {
+      updateField = { 
+        sinal_pix_transaction_id: mpData.id.toString(), 
+        pix_qr_code: `data:image/png;base64,${qrCode}`, 
+        pix_copy_paste: copyPaste 
+      };
+    } else {
+      updateField = { 
+        balance_pix_transaction_id: mpData.id.toString(), 
+        pix_qr_code: `data:image/png;base64,${qrCode}`, 
+        pix_copy_paste: copyPaste 
+      };
+    }
 
     // Get order_id from token
     const { data: fullOrder } = await supabase
