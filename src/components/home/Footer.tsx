@@ -43,6 +43,14 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
                   Minha Conta
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/admin/login"
+                  className="text-muted-foreground/70 hover:text-muted-foreground transition-colors text-xs"
+                >
+                  Admin
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -82,12 +90,6 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
               © 2022-{currentYear} BRAVENZA. Todos os direitos reservados.
             </p>
             <span className="text-border hidden sm:inline">·</span>
-            <Link
-              to="/admin/login"
-              className="text-muted-foreground/60 hover:text-muted-foreground/80 transition-colors text-xs"
-            >
-              Admin
-            </Link>
           </div>
           <div className="flex gap-5 text-sm text-muted-foreground">
             <Link to="/politicas" className="hover:text-primary transition-colors">
