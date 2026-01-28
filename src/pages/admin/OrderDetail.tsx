@@ -3,27 +3,25 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Package,
-  User,
-  CreditCard,
-  Truck,
-  Clock,
   Edit,
   ArrowRight,
   Save,
   Loader2,
   Trash2,
-  CheckCircle2,
   X,
   Mail,
+  User,
+  DollarSign,
+  FileText,
+  Truck,
+  CreditCard,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -50,114 +48,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import {
   ORDER_STATUS_LABELS,
   getStatusesForType,
   getStatusIndex,
-  formatDate,
   formatDateTime,
-  formatCurrency,
-  formatCPF,
-  formatPhone,
-  cleanPhone,
-  OrderType,
 } from "@/lib/constants";
-import { BudgetActions } from "@/components/admin/BudgetActions";
-import { VaultPolicyCard } from "@/components/admin/VaultPolicyCard";
-import { InspectionPhotosUpload } from "@/components/admin/InspectionPhotosUpload";
-import { ShippingSection } from "@/components/admin/ShippingSection";
-import { OrderCostsSection } from "@/components/admin/OrderCostsSection";
-import { sendAllStatusNotifications, sendPaymentConfirmationEmail } from "@/lib/email-notifications";
-import { SNEAKER_BRANDS, getModelsForBrand, getBrandLabel, getModelLabel, findBrandKey, findModelKey } from "@/lib/sneaker-data";
-
-const SHOE_SIZES = [
-  "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"
-];
-
-const BRAZILIAN_STATES = [
-  { value: "AC", label: "Acre" },
-  { value: "AL", label: "Alagoas" },
-  { value: "AP", label: "Amapá" },
-  { value: "AM", label: "Amazonas" },
-  { value: "BA", label: "Bahia" },
-  { value: "CE", label: "Ceará" },
-  { value: "DF", label: "Distrito Federal" },
-  { value: "ES", label: "Espírito Santo" },
-  { value: "GO", label: "Goiás" },
-  { value: "MA", label: "Maranhão" },
-  { value: "MT", label: "Mato Grosso" },
-  { value: "MS", label: "Mato Grosso do Sul" },
-  { value: "MG", label: "Minas Gerais" },
-  { value: "PA", label: "Pará" },
-  { value: "PB", label: "Paraíba" },
-  { value: "PR", label: "Paraná" },
-  { value: "PE", label: "Pernambuco" },
-  { value: "PI", label: "Piauí" },
-  { value: "RJ", label: "Rio de Janeiro" },
-  { value: "RN", label: "Rio Grande do Norte" },
-  { value: "RS", label: "Rio Grande do Sul" },
-  { value: "RO", label: "Rondônia" },
-  { value: "RR", label: "Roraima" },
-  { value: "SC", label: "Santa Catarina" },
-  { value: "SP", label: "São Paulo" },
-  { value: "SE", label: "Sergipe" },
-  { value: "TO", label: "Tocantins" },
-];
-
-interface Order {
-  order_id: string;
-  order_type: OrderType;
-  current_status: string;
-  client_name: string;
-  client_cpf: string;
-  client_email: string | null;
-  client_phone: string | null;
-  client_address: string | null;
-  product_brand: string | null;
-  product_model: string | null;
-  product_name: string;
-  product_size: string | null;
-  product_color: string | null;
-  product_reference: string | null;
-  product_link: string | null;
-  product_cost: number | null;
-  product_price: number | null;
-  product_currency: string;
-  shipping_cost: number | null;
-  other_costs: number | null;
-  other_costs_description: string | null;
-  sinal_value: number | null;
-  sinal_paid: boolean;
-  sinal_payment_method: string | null;
-  balance_value: number | null;
-  balance_paid: boolean;
-  balance_payment_method: string | null;
-  international_tracking: string | null;
-  national_tracking: string | null;
-  international_carrier: string | null;
-  national_carrier: string | null;
-  sla_vault_due_date: string | null;
-  balance_due_date: string | null;
-  internal_notes: string | null;
-  inspection_photos: string[] | null;
-  reference_image_url: string | null;
-  created_at: string;
-  updated_at: string;
-  budget_status: string | null;
-  budget_sent_at: string | null;
-  budget_approved_at: string | null;
-  budget_rejected_at: string | null;
-  budget_expires_at: string | null;
-  budget_approval_token: string | null;
-}
-
-interface HistoryItem {
-  id: string;
-  status: string;
-  notes: string | null;
-  created_at: string;
-}
+import { sendAllStatusNotifications } from "@/lib/email-notifications";
+import {
+  OrderProgressStepper,
+  ClientProductTab,
+  CostsTab,
+  BudgetTab,
+  LogisticsTab,
+  PaymentsTab,
+  Order,
+  HistoryItem,
+} from "@/components/admin/order-detail";
 
 const OrderDetail = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -173,208 +83,9 @@ const OrderDetail = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [newStatus, setNewStatus] = useState("");
   const [statusNotes, setStatusNotes] = useState("");
+  const [activeTab, setActiveTab] = useState("cliente");
 
   const [editData, setEditData] = useState<Partial<Order>>({});
-  
-  // Estados para seletores de marca/modelo
-  const [selectedBrandKey, setSelectedBrandKey] = useState("");
-  const [selectedModelKey, setSelectedModelKey] = useState("");
-  const [showCustomBrand, setShowCustomBrand] = useState(false);
-  const [showCustomModel, setShowCustomModel] = useState(false);
-  
-  // Estados para campos de endereço granulares
-  const [addressFields, setAddressFields] = useState({
-    cep: "",
-    street: "",
-    number: "",
-    complement: "",
-    neighborhood: "",
-    city: "",
-    state: "",
-  });
-  const [isFetchingCep, setIsFetchingCep] = useState(false);
-
-  // Modelos disponíveis baseado na marca selecionada
-  const availableModels = getModelsForBrand(selectedBrandKey);
-
-  // Inicializar seletores quando entrar em modo de edição
-  useEffect(() => {
-    if (isEditing && order) {
-      const brandKey = findBrandKey(order.product_brand);
-      const modelKey = findModelKey(brandKey, order.product_model);
-      
-      setSelectedBrandKey(brandKey);
-      setSelectedModelKey(modelKey);
-      setShowCustomBrand(brandKey === "other");
-      setShowCustomModel(modelKey === "other");
-      
-      // Parsear o endereço existente para os campos granulares
-      parseAddressToFields(order.client_address);
-    }
-  }, [isEditing, order]);
-
-  // Função para parsear endereço existente
-  const parseAddressToFields = (address: string | null) => {
-    if (!address) {
-      setAddressFields({
-        cep: "",
-        street: "",
-        number: "",
-        complement: "",
-        neighborhood: "",
-        city: "",
-        state: "",
-      });
-      return;
-    }
-    
-    // Tentar extrair CEP do endereço
-    const cepMatch = address.match(/CEP:\s*(\d{5}-?\d{3})/i);
-    const cep = cepMatch ? cepMatch[1].replace("-", "") : "";
-    
-    // Tentar extrair partes do endereço
-    // Formato esperado: "Rua X, nº 123, complemento, Bairro, Cidade - UF, CEP: 00000-000"
-    const parts = address.split(",").map(p => p.trim());
-    
-    let street = "", number = "", complement = "", neighborhood = "", city = "", state = "";
-    
-    if (parts.length >= 1) {
-      street = parts[0];
-    }
-    if (parts.length >= 2) {
-      const numMatch = parts[1].match(/n[º°]?\s*(\S+)/i);
-      if (numMatch) {
-        number = numMatch[1];
-      }
-    }
-    if (parts.length >= 4) {
-      // Se tem 4+ partes, a 3ª pode ser complemento ou bairro
-      const lastPart = parts[parts.length - 1];
-      const hasCep = lastPart.toLowerCase().includes("cep");
-      
-      if (hasCep && parts.length >= 5) {
-        neighborhood = parts[2];
-        const cityStateMatch = parts[parts.length - 2].match(/(.+)\s*-\s*(\w{2})/);
-        if (cityStateMatch) {
-          city = cityStateMatch[1].trim();
-          state = cityStateMatch[2].trim();
-        }
-        if (parts.length >= 6) {
-          complement = parts[2];
-          neighborhood = parts[3];
-        }
-      } else if (parts.length >= 3) {
-        neighborhood = parts[2];
-        const cityStateMatch = parts[parts.length - 1].match(/(.+)\s*-\s*(\w{2})/);
-        if (cityStateMatch) {
-          city = cityStateMatch[1].trim();
-          state = cityStateMatch[2].trim();
-        }
-      }
-    }
-    
-    setAddressFields({
-      cep,
-      street,
-      number,
-      complement,
-      neighborhood,
-      city,
-      state,
-    });
-  };
-
-  // Buscar endereço via CEP
-  const handleCepChange = async (value: string) => {
-    const cleanedCep = value.replace(/\D/g, "");
-    setAddressFields(prev => ({ ...prev, cep: cleanedCep }));
-    
-    if (cleanedCep.length === 8) {
-      setIsFetchingCep(true);
-      try {
-        const response = await fetch(`https://viacep.com.br/ws/${cleanedCep}/json/`);
-        const data = await response.json();
-        
-        if (!data.erro) {
-          setAddressFields(prev => ({
-            ...prev,
-            street: data.logradouro || "",
-            neighborhood: data.bairro || "",
-            city: data.localidade || "",
-            state: data.uf || "",
-          }));
-        }
-      } catch (error) {
-        console.error("Erro ao buscar CEP:", error);
-      } finally {
-        setIsFetchingCep(false);
-      }
-    }
-  };
-
-  // Atualizar editData.client_address quando os campos de endereço mudarem
-  useEffect(() => {
-    if (isEditing) {
-      const parts = [
-        addressFields.street,
-        addressFields.number ? `nº ${addressFields.number}` : "",
-        addressFields.complement,
-        addressFields.neighborhood,
-        addressFields.city && addressFields.state ? `${addressFields.city} - ${addressFields.state}` : "",
-        addressFields.cep ? `CEP: ${addressFields.cep.replace(/(\d{5})(\d{3})/, "$1-$2")}` : "",
-      ].filter(Boolean);
-      
-      const fullAddress = parts.join(", ");
-      setEditData(prev => ({ ...prev, client_address: fullAddress }));
-    }
-  }, [isEditing, addressFields]);
-
-  // Handler para mudança de marca
-  const handleBrandChange = (value: string) => {
-    setSelectedBrandKey(value);
-    setSelectedModelKey("");
-    setShowCustomModel(false);
-    
-    if (value === "other") {
-      setShowCustomBrand(true);
-      setEditData((prev) => ({ ...prev, product_brand: "", product_model: "" }));
-    } else {
-      setShowCustomBrand(false);
-      const brandLabel = getBrandLabel(value);
-      setEditData((prev) => ({ ...prev, product_brand: brandLabel, product_model: "" }));
-    }
-  };
-
-  // Handler para mudança de modelo
-  const handleModelChange = (value: string) => {
-    setSelectedModelKey(value);
-    
-    if (value === "other") {
-      setShowCustomModel(true);
-      setEditData((prev) => ({ ...prev, product_model: "" }));
-    } else {
-      setShowCustomModel(false);
-      const modelLabel = getModelLabel(selectedBrandKey, value);
-      setEditData((prev) => ({ ...prev, product_model: modelLabel }));
-    }
-  };
-
-  // Atualizar nome do produto automaticamente
-  useEffect(() => {
-    if (isEditing && editData.product_brand && editData.product_model) {
-      const color = editData.product_color ? ` ${editData.product_color}` : "";
-      const generatedName = `${editData.product_brand} ${editData.product_model}${color}`;
-      setEditData((prev) => ({ ...prev, product_name: generatedName }));
-    }
-  }, [isEditing, editData.product_brand, editData.product_model, editData.product_color]);
-
-  // Handler para telefone formatado
-  const handlePhoneChange = (value: string) => {
-    const cleaned = cleanPhone(value);
-    if (cleaned.length <= 11) {
-      setEditData((prev) => ({ ...prev, client_phone: formatPhone(cleaned) }));
-    }
-  };
 
   useEffect(() => {
     if (!orderId) return;
@@ -482,7 +193,6 @@ const OrderDetail = () => {
         current_status: newStatus,
       };
 
-      // Auto-calculate balance due date when product arrives in Brazil
       if (newStatus === "ARRIVED_BRAZIL") {
         const balanceDue = new Date();
         balanceDue.setHours(balanceDue.getHours() + 24);
@@ -506,7 +216,6 @@ const OrderDetail = () => {
 
       if (historyError) throw historyError;
 
-      // Create client notification in database
       try {
         await supabase.from("notifications").insert({
           type: "order_status_update",
@@ -521,7 +230,6 @@ const OrderDetail = () => {
         console.error("Error creating notification:", notifError);
       }
 
-      // Send automatic notifications for status change (email + WhatsApp)
       const notifResult = await sendAllStatusNotifications(newStatus, {
         order_id: order.order_id,
         client_name: order.client_name,
@@ -550,7 +258,6 @@ const OrderDetail = () => {
       setNewStatus("");
       setStatusNotes("");
 
-      // Show toast with notification status
       const notifications = [];
       if (notifResult.email && order.client_email) notifications.push("email");
       if (notifResult.whatsapp && order.client_phone) notifications.push("WhatsApp");
@@ -661,14 +368,60 @@ const OrderDetail = () => {
     }
   };
 
+  // Calcular progresso das etapas para o stepper
+  const getStepperSteps = () => {
+    if (!order) return [];
+
+    const hasCost = order.product_cost != null && order.product_cost > 0;
+    const hasPrice = order.product_price != null && order.product_price > 0;
+    const hasBudgetSent = order.budget_status === "SENT" || order.budget_status === "APPROVED";
+    const hasBudgetApproved = order.budget_status === "APPROVED";
+    const hasTracking = order.national_tracking || order.international_tracking;
+
+    return [
+      {
+        id: "cliente",
+        label: "Cliente",
+        description: "Dados do cliente e produto",
+        isComplete: !!order.client_name && !!order.product_name,
+      },
+      {
+        id: "custos",
+        label: "Custos",
+        description: "Defina custos e preço de venda",
+        isComplete: hasCost && hasPrice,
+        hasWarning: !hasCost,
+        warningMessage: "Defina o custo do produto",
+      },
+      {
+        id: "orcamento",
+        label: "Orçamento",
+        description: "Envie e acompanhe o orçamento",
+        isComplete: hasBudgetApproved,
+        hasWarning: !hasBudgetSent && hasPrice,
+        warningMessage: "Orçamento pronto para enviar",
+      },
+      {
+        id: "logistica",
+        label: "Logística",
+        description: "Rastreamento e envio",
+        isComplete: hasTracking && order.current_status === "DELIVERED",
+      },
+      {
+        id: "pagamentos",
+        label: "Pagamentos",
+        description: "Status financeiro do pedido",
+        isComplete: order.sinal_paid && order.balance_paid,
+      },
+    ];
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
-        <div className="grid lg:grid-cols-3 gap-6">
-          <Skeleton className="h-96 lg:col-span-2" />
-          <Skeleton className="h-96" />
-        </div>
+        <Skeleton className="h-24" />
+        <Skeleton className="h-96" />
       </div>
     );
   }
@@ -690,6 +443,7 @@ const OrderDetail = () => {
   const statuses = getStatusesForType(order.order_type);
   const currentIndex = getStatusIndex(order.current_status, order.order_type);
   const nextStatuses = statuses.slice(currentIndex + 1);
+  const stepperSteps = getStepperSteps();
 
   return (
     <div className="space-y-6">
@@ -785,965 +539,113 @@ const OrderDetail = () => {
         </div>
       </motion.div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Main info */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Client */}
-          <Card className="card-premium">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5 text-primary" />
-                Cliente
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {isEditing ? (
-                <>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Nome</Label>
-                      <Input
-                        value={editData.client_name || ""}
-                        onChange={(e) =>
-                          setEditData((prev) => ({
-                            ...prev,
-                            client_name: e.target.value,
-                          }))
-                        }
-                        className="bg-secondary/50"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>CPF</Label>
-                      <Input
-                        value={formatCPF(order.client_cpf)}
-                        disabled
-                        className="bg-secondary/50"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Email</Label>
-                      <Input
-                        value={editData.client_email || ""}
-                        onChange={(e) =>
-                          setEditData((prev) => ({
-                            ...prev,
-                            client_email: e.target.value,
-                          }))
-                        }
-                        className="bg-secondary/50"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Telefone</Label>
-                      <Input
-                        value={editData.client_phone || ""}
-                        onChange={(e) => handlePhoneChange(e.target.value)}
-                        placeholder="(00) 00000-0000"
-                        className="bg-secondary/50"
-                      />
-                    </div>
-                  </div>
-                  {/* Endereço Granular */}
-                  <div className="space-y-4 pt-2">
-                    <div className="flex items-center gap-2">
-                      <Label className="text-base font-semibold">Endereço de Entrega</Label>
-                      {isFetchingCep && (
-                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                      )}
-                    </div>
-                    
-                    <div className="grid md:grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <Label>CEP *</Label>
-                        <Input
-                          value={addressFields.cep.replace(/(\d{5})(\d{3})/, "$1-$2")}
-                          onChange={(e) => handleCepChange(e.target.value)}
-                          placeholder="00000-000"
-                          maxLength={9}
-                          className="bg-secondary/50"
-                        />
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
-                        <Label>Rua *</Label>
-                        <Input
-                          value={addressFields.street}
-                          onChange={(e) =>
-                            setAddressFields((prev) => ({
-                              ...prev,
-                              street: e.target.value,
-                            }))
-                          }
-                          placeholder="Nome da rua"
-                          className="bg-secondary/50"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Número *</Label>
-                        <Input
-                          value={addressFields.number}
-                          onChange={(e) =>
-                            setAddressFields((prev) => ({
-                              ...prev,
-                              number: e.target.value,
-                            }))
-                          }
-                          placeholder="123"
-                          className="bg-secondary/50"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="grid md:grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <Label>Complemento</Label>
-                        <Input
-                          value={addressFields.complement}
-                          onChange={(e) =>
-                            setAddressFields((prev) => ({
-                              ...prev,
-                              complement: e.target.value,
-                            }))
-                          }
-                          placeholder="Apto, Bloco..."
-                          className="bg-secondary/50"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Bairro *</Label>
-                        <Input
-                          value={addressFields.neighborhood}
-                          onChange={(e) =>
-                            setAddressFields((prev) => ({
-                              ...prev,
-                              neighborhood: e.target.value,
-                            }))
-                          }
-                          placeholder="Bairro"
-                          className="bg-secondary/50"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Cidade *</Label>
-                        <Input
-                          value={addressFields.city}
-                          onChange={(e) =>
-                            setAddressFields((prev) => ({
-                              ...prev,
-                              city: e.target.value,
-                            }))
-                          }
-                          placeholder="Cidade"
-                          className="bg-secondary/50"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Estado *</Label>
-                        <Select
-                          value={addressFields.state}
-                          onValueChange={(value) =>
-                            setAddressFields((prev) => ({
-                              ...prev,
-                              state: value,
-                            }))
-                          }
-                        >
-                          <SelectTrigger className="bg-secondary/50">
-                            <SelectValue placeholder="Selecione o estado" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-background border border-border z-50">
-                            {BRAZILIAN_STATES.map((state) => (
-                              <SelectItem key={state.value} value={state.value}>
-                                {state.value} - {state.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Nome</p>
-                    <p className="font-medium">{order.client_name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">CPF</p>
-                    <p className="font-medium">{formatCPF(order.client_cpf)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium">{order.client_email || "-"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Telefone</p>
-                    <p className="font-medium">{order.client_phone || "-"}</p>
-                  </div>
-                  {order.client_address && (
-                    <div className="md:col-span-2">
-                      <p className="text-sm text-muted-foreground">Endereço</p>
-                      <p className="font-medium">{order.client_address}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+      {/* Progress Stepper */}
+      <Card className="card-premium">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base">Progresso do Pedido</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <OrderProgressStepper
+            steps={stepperSteps}
+            currentStep={activeTab}
+            onStepClick={(stepId) => setActiveTab(stepId)}
+          />
+        </CardContent>
+      </Card>
 
-          {/* Product */}
-          <Card className="card-premium">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-primary" />
-                Tênis
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {isEditing ? (
-                <div className="space-y-4">
-                  <div className="grid md:grid-cols-3 gap-4">
-                    {/* Marca Selector */}
-                    <div className="space-y-2">
-                      <Label>Marca *</Label>
-                      <Select value={selectedBrandKey} onValueChange={handleBrandChange}>
-                        <SelectTrigger className="bg-secondary/50">
-                          <SelectValue placeholder="Selecione a marca" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background border border-border z-50">
-                          {SNEAKER_BRANDS.map((brand) => (
-                            <SelectItem key={brand.value} value={brand.value}>
-                              {brand.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {showCustomBrand && (
-                        <Input
-                          value={editData.product_brand || ""}
-                          onChange={(e) =>
-                            setEditData((prev) => ({
-                              ...prev,
-                              product_brand: e.target.value,
-                            }))
-                          }
-                          placeholder="Digite a marca..."
-                          className="bg-secondary/50 mt-2"
-                        />
-                      )}
-                    </div>
+      {/* Tabs Content */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5 h-auto">
+          <TabsTrigger value="cliente" className="flex flex-col gap-1 py-3">
+            <User className="h-4 w-4" />
+            <span className="text-xs">Cliente</span>
+          </TabsTrigger>
+          <TabsTrigger value="custos" className="flex flex-col gap-1 py-3">
+            <DollarSign className="h-4 w-4" />
+            <span className="text-xs">Custos</span>
+          </TabsTrigger>
+          <TabsTrigger value="orcamento" className="flex flex-col gap-1 py-3">
+            <FileText className="h-4 w-4" />
+            <span className="text-xs">Orçamento</span>
+          </TabsTrigger>
+          <TabsTrigger value="logistica" className="flex flex-col gap-1 py-3">
+            <Truck className="h-4 w-4" />
+            <span className="text-xs">Logística</span>
+          </TabsTrigger>
+          <TabsTrigger value="pagamentos" className="flex flex-col gap-1 py-3">
+            <CreditCard className="h-4 w-4" />
+            <span className="text-xs">Pagamentos</span>
+          </TabsTrigger>
+        </TabsList>
 
-                    {/* Modelo Selector */}
-                    <div className="space-y-2">
-                      <Label>Modelo *</Label>
-                      <Select 
-                        value={selectedModelKey} 
-                        onValueChange={handleModelChange}
-                        disabled={!selectedBrandKey}
-                      >
-                        <SelectTrigger className="bg-secondary/50">
-                          <SelectValue placeholder={selectedBrandKey ? "Selecione o modelo" : "Selecione a marca primeiro"} />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background border border-border z-50">
-                          {availableModels.map((model) => (
-                            <SelectItem key={model.value} value={model.value}>
-                              {model.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {showCustomModel && (
-                        <Input
-                          value={editData.product_model || ""}
-                          onChange={(e) =>
-                            setEditData((prev) => ({
-                              ...prev,
-                              product_model: e.target.value,
-                            }))
-                          }
-                          placeholder="Digite o modelo..."
-                          className="bg-secondary/50 mt-2"
-                        />
-                      )}
-                    </div>
-
-                    {/* Nome completo (auto-gerado) */}
-                    <div className="space-y-2">
-                      <Label>Nome completo *</Label>
-                      <Input
-                        value={editData.product_name || ""}
-                        onChange={(e) =>
-                          setEditData((prev) => ({
-                            ...prev,
-                            product_name: e.target.value,
-                          }))
-                        }
-                        placeholder="Nike Air Force 1 Low White"
-                        className="bg-secondary/50"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Gerado automaticamente a partir da marca, modelo e cor
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-3 gap-4">
-                    {/* Tamanho Selector */}
-                    <div className="space-y-2">
-                      <Label>Tamanho *</Label>
-                      <Select 
-                        value={editData.product_size || ""} 
-                        onValueChange={(value) => setEditData((prev) => ({ ...prev, product_size: value }))}
-                      >
-                        <SelectTrigger className="bg-secondary/50">
-                          <SelectValue placeholder="Selecione o tamanho" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background border border-border z-50">
-                          {SHOE_SIZES.map((size) => (
-                            <SelectItem key={size} value={size}>
-                              {size}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Cor/Colorway</Label>
-                      <Input
-                        value={editData.product_color || ""}
-                        onChange={(e) =>
-                          setEditData((prev) => ({
-                            ...prev,
-                            product_color: e.target.value,
-                          }))
-                        }
-                        placeholder="Branco, Preto/Vermelho..."
-                        className="bg-secondary/50"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>SKU/Referência</Label>
-                      <Input
-                        value={editData.product_reference || ""}
-                        onChange={(e) =>
-                          setEditData((prev) => ({
-                            ...prev,
-                            product_reference: e.target.value,
-                          }))
-                        }
-                        placeholder="CW2288-111"
-                        className="bg-secondary/50"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="space-y-2 md:col-span-2">
-                      <Label>Link de Referência</Label>
-                      <Input
-                        type="url"
-                        value={editData.product_link || ""}
-                        onChange={(e) =>
-                          setEditData((prev) => ({
-                            ...prev,
-                            product_link: e.target.value,
-                          }))
-                        }
-                        placeholder="https://..."
-                        className="bg-secondary/50"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Valor Total (R$) *</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={editData.product_price || ""}
-                        onChange={(e) => {
-                          const price = parseFloat(e.target.value) || 0;
-                          const halfPrice = price / 2;
-                          setEditData((prev) => ({
-                            ...prev,
-                            product_price: price || null,
-                            sinal_value: halfPrice || null,
-                            balance_value: halfPrice || null,
-                          }));
-                        }}
-                        placeholder="0,00"
-                        className="bg-secondary/50"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Sinal e Saldo serão calculados automaticamente (50% cada)
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Custo interno (Admin only) */}
-                  <div className="p-4 bg-secondary/50 rounded-lg border border-border mt-4">
-                    <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                      🔒 Dados Internos (não visíveis para o cliente)
-                    </h4>
-                    <div className="grid md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label>Custo do Produto (R$)</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={editData.product_cost || ""}
-                          onChange={(e) =>
-                            setEditData((prev) => ({
-                              ...prev,
-                              product_cost: parseFloat(e.target.value) || null,
-                            }))
-                          }
-                          placeholder="0,00"
-                          className="bg-background"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Valor de custo para cálculo de margem
-                        </p>
-                      </div>
-                      {editData.product_cost && editData.product_price && (
-                        <>
-                          <div className="space-y-2">
-                            <Label>Lucro Bruto (R$)</Label>
-                            <div className="p-2 bg-success/10 rounded border border-success/20">
-                              <p className="font-bold text-success">
-                                R$ {(editData.product_price - editData.product_cost).toFixed(2)}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Margem de Lucro (%)</Label>
-                            <div className="p-2 bg-success/10 rounded border border-success/20">
-                              <p className="font-bold text-success">
-                                {((editData.product_price - editData.product_cost) / editData.product_price * 100).toFixed(1)}%
-                              </p>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Reference Image */}
-                  {order.reference_image_url && (
-                    <div className="mb-4">
-                      <p className="text-sm text-muted-foreground mb-2">Imagem de Referência</p>
-                      <img 
-                        src={order.reference_image_url} 
-                        alt="Referência do cliente" 
-                        className="w-full max-h-48 object-contain rounded-lg border border-border bg-muted"
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Marca</p>
-                      <p className="font-medium">{order.product_brand || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Modelo</p>
-                      <p className="font-medium">{order.product_model || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Nome</p>
-                      <p className="font-medium">{order.product_name}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Tamanho</p>
-                      <p className="font-medium">{order.product_size || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Cor</p>
-                      <p className="font-medium">{order.product_color || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">SKU/Ref</p>
-                      <p className="font-medium">{order.product_reference || "-"}</p>
-                    </div>
-                    {order.product_link && (
-                      <div className="md:col-span-2">
-                        <p className="text-sm text-muted-foreground">Link</p>
-                        <a 
-                          href={order.product_link} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="font-medium text-primary hover:underline truncate block"
-                        >
-                          {order.product_link}
-                        </a>
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-sm text-muted-foreground">Valor Total</p>
-                      <p className="font-medium text-primary text-lg">
-                        {order.product_price
-                          ? formatCurrency(order.product_price)
-                          : "-"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Financial */}
-          <Card className="card-premium">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-primary" />
-                Financeiro
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {!isEditing && (
-                <div className="p-3 bg-primary/10 rounded-lg border border-primary/20 mb-4">
-                  <p className="text-sm text-primary">
-                    💡 Sinal = 50% do valor total | Saldo = 50% restante (pago na chegada)
-                  </p>
-                </div>
-              )}
-              {isEditing ? (
-                <div className="space-y-4">
-                  <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
-                    <p className="text-sm text-primary">
-                      💡 Os valores são calculados automaticamente: Sinal = 50% | Saldo = 50%
-                    </p>
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-secondary/30 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Sinal (50%)</p>
-                      <p className="font-bold text-lg text-primary">
-                        {editData.sinal_value
-                          ? formatCurrency(editData.sinal_value)
-                          : editData.product_price
-                          ? formatCurrency(editData.product_price / 2)
-                          : "-"}
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        {order.sinal_paid ? (
-                          <Badge className="bg-success/20 text-success">
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Pago
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">Aguardando pagamento</Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Status atualizado via confirmação de pagamento
-                      </p>
-                    </div>
-                    <div className="p-4 bg-secondary/30 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Saldo (50%)</p>
-                      <p className="font-bold text-lg text-primary">
-                        {editData.balance_value
-                          ? formatCurrency(editData.balance_value)
-                          : editData.product_price
-                          ? formatCurrency(editData.product_price / 2)
-                          : "-"}
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        {order.balance_paid ? (
-                          <Badge className="bg-success/20 text-success">
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Pago
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">Aguardando pagamento</Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Status atualizado via confirmação de pagamento
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-secondary/30 rounded-lg">
-                    <p className="text-sm text-muted-foreground">Sinal (50%)</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <p className="font-bold text-lg">
-                        {order.sinal_value
-                          ? formatCurrency(order.sinal_value)
-                          : "-"}
-                      </p>
-                      {order.sinal_paid ? (
-                        <Badge className="bg-success/20 text-success">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Pago
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">Pendente</Badge>
-                      )}
-                    </div>
-                  </div>
-                  <div className="p-4 bg-secondary/30 rounded-lg">
-                    <p className="text-sm text-muted-foreground">Saldo (50%)</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <p className="font-bold text-lg">
-                        {order.balance_value
-                          ? formatCurrency(order.balance_value)
-                          : "-"}
-                      </p>
-                      {order.balance_paid ? (
-                        <Badge className="bg-success/20 text-success">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Pago
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">Pendente</Badge>
-                      )}
-                    </div>
-                  </div>
-                  {order.balance_due_date && (
-                    <div className="md:col-span-2">
-                      <p className="text-sm text-muted-foreground">
-                        Vencimento do saldo
-                      </p>
-                      <p className="font-medium text-warning">
-                        {formatDateTime(order.balance_due_date)}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Order Costs Section */}
-          <OrderCostsSection
-            orderId={order.order_id}
-            productCost={isEditing ? editData.product_cost ?? null : order.product_cost}
-            shippingCost={isEditing ? editData.shipping_cost ?? null : order.shipping_cost}
-            otherCosts={isEditing ? editData.other_costs ?? null : order.other_costs}
-            productPrice={order.product_price}
-            sinalValue={order.sinal_value}
-            sinalPaid={order.sinal_paid ?? false}
-            sinalPaymentMethod={order.sinal_payment_method}
-            balanceValue={order.balance_value}
-            balancePaid={order.balance_paid ?? false}
-            balancePaymentMethod={order.balance_payment_method}
+        <TabsContent value="cliente">
+          <ClientProductTab
+            order={order}
+            editData={editData}
+            setEditData={setEditData}
             isEditing={isEditing}
-            onUpdateField={(field, value) => {
-              setEditData(prev => ({ ...prev, [field]: value }));
-            }}
           />
+        </TabsContent>
 
-          {/* Logistics */}
-          <Card className="card-premium">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Truck className="h-5 w-5 text-primary" />
-                Logística
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {isEditing ? (
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Rastreio Internacional</Label>
-                    <Input
-                      value={editData.international_tracking || ""}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          international_tracking: e.target.value,
-                        }))
-                      }
-                      placeholder="Código de rastreio internacional"
-                      className="bg-secondary/50"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Transportadora Internacional</Label>
-                    <Input
-                      value={editData.international_carrier || ""}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          international_carrier: e.target.value,
-                        }))
-                      }
-                      placeholder="Ex: DHL, FedEx, UPS..."
-                      className="bg-secondary/50"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Rastreio Nacional</Label>
-                    <Input
-                      value={editData.national_tracking || ""}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          national_tracking: e.target.value,
-                        }))
-                      }
-                      placeholder="Código de rastreio nacional"
-                      className="bg-secondary/50"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Transportadora Nacional</Label>
-                    <Input
-                      value={editData.national_carrier || ""}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          national_carrier: e.target.value,
-                        }))
-                      }
-                      placeholder="Ex: Correios, Jadlog, Loggi..."
-                      className="bg-secondary/50"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Rastreio Internacional
-                    </p>
-                    <p className="font-medium">
-                      {order.international_tracking || "-"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Transportadora Internacional
-                    </p>
-                    <p className="font-medium">
-                      {order.international_carrier || "-"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Rastreio Nacional
-                    </p>
-                    <p className="font-medium">
-                      {order.national_tracking || "-"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Transportadora Nacional
-                    </p>
-                    <p className="font-medium">
-                      {order.national_carrier || "-"}
-                    </p>
-                  </div>
-                  {order.sla_vault_due_date && (
-                    <div className="md:col-span-2">
-                      <p className="text-sm text-muted-foreground">
-                        Prazo VAULT 30
-                      </p>
-                      <p className="font-medium text-primary">
-                        {formatDate(order.sla_vault_due_date)}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* SuperFrete Integration */}
-          {!isEditing && (
-            <ShippingSection
-              orderId={order.order_id}
-              clientName={order.client_name}
-              clientCpf={order.client_cpf}
-              clientPhone={order.client_phone}
-              clientEmail={order.client_email}
-              clientAddress={order.client_address}
-              productName={order.product_name}
-              productPrice={order.product_price}
-              nationalTracking={order.national_tracking}
-              nationalCarrier={order.national_carrier}
-              onTrackingUpdate={async (tracking, carrier) => {
-                try {
-                  await supabase
-                    .from("orders")
-                    .update({
-                      national_tracking: tracking,
-                      national_carrier: carrier,
-                    })
-                    .eq("order_id", order.order_id);
-                  
-                  setOrder(prev => prev ? {
-                    ...prev,
-                    national_tracking: tracking,
-                    national_carrier: carrier,
-                  } : null);
-                  
-                  toast({
-                    title: "Rastreio atualizado",
-                    description: `Código: ${tracking}`,
-                  });
-                } catch (error) {
-                  console.error("Error updating tracking:", error);
-                }
-              }}
-              onShippingCostAdded={(cost) => {
-                // Update local state to reflect new shipping cost
-                setOrder(prev => prev ? {
-                  ...prev,
-                  shipping_cost: cost,
-                } : null);
-                setEditData(prev => ({ ...prev, shipping_cost: cost }));
-              }}
-            />
-          )}
-
-          {/* Notes */}
-          <Card className="card-premium">
-            <CardHeader>
-              <CardTitle>Observações Internas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isEditing ? (
-                <Textarea
-                  value={editData.internal_notes || ""}
-                  onChange={(e) =>
-                    setEditData((prev) => ({
-                      ...prev,
-                      internal_notes: e.target.value,
-                    }))
-                  }
-                  placeholder="Observações internas..."
-                  className="bg-secondary/50"
-                  rows={3}
-                />
-              ) : (
-                <p className="text-muted-foreground">
-                  {order.internal_notes || "Nenhuma observação."}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Sidebar - Budget and History */}
-        <div className="space-y-6">
-          {/* VAULT Policy Card */}
-          {order.order_type === "VAULT" && <VaultPolicyCard />}
-
-          {/* Inspection Photos - Show for PRODUCT_INSPECTED status or later */}
-          {(order.current_status === "PRODUCT_INSPECTED" ||
-            order.current_status === "BALANCE_PENDING" ||
-            order.current_status === "FULLY_PAID" ||
-            order.current_status === "SHIPPED_TO_CLIENT" ||
-            order.current_status === "DELIVERED") && (
-            <InspectionPhotosUpload
-              orderId={order.order_id}
-              existingPhotos={order.inspection_photos || []}
-              onPhotosChange={(photos) =>
-                setEditData((prev) => ({ ...prev, inspection_photos: photos }))
-              }
-              isEditing={isEditing}
-            />
-          )}
-
-          {/* Budget Actions */}
-          <BudgetActions
-            orderId={order.order_id}
-            orderType={order.order_type}
-            budgetStatus={order.budget_status}
-            budgetSentAt={order.budget_sent_at}
-            budgetApprovedAt={order.budget_approved_at}
-            budgetRejectedAt={order.budget_rejected_at}
-            budgetExpiresAt={order.budget_expires_at}
-            budgetApprovalToken={order.budget_approval_token}
-            productCost={order.product_cost}
-            productPrice={order.product_price}
-            sinalValue={order.sinal_value}
-            balanceValue={order.balance_value}
-            clientEmail={order.client_email}
-            clientName={order.client_name}
-            onUpdate={() => {
-              // Refetch order data
-              window.location.reload();
-            }}
+        <TabsContent value="custos">
+          <CostsTab
+            order={order}
+            editData={editData}
+            setEditData={setEditData}
+            isEditing={isEditing}
           />
+        </TabsContent>
 
-          <Card className="card-premium">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-primary" />
-                Histórico
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {history.length === 0 ? (
-                <p className="text-muted-foreground text-sm">
-                  Nenhum histórico registrado.
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {history.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className="relative pl-4 pb-4 border-l border-border last:pb-0"
-                    >
-                      <div className="absolute -left-1.5 top-0 w-3 h-3 rounded-full bg-primary" />
-                      <p className="font-medium text-sm">
-                        {ORDER_STATUS_LABELS[item.status] || item.status}
-                      </p>
-                      {item.notes && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {item.notes}
-                        </p>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {formatDateTime(item.created_at)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        <TabsContent value="orcamento">
+          <BudgetTab
+            order={order}
+            onUpdate={() => window.location.reload()}
+          />
+        </TabsContent>
 
-          {/* Danger zone */}
-          <Card className="card-premium border-destructive/30">
-            <CardHeader>
-              <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {order.current_status !== "LOST" && order.current_status !== "DELIVERED" && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full border-orange-500/50 text-orange-500 hover:bg-orange-500/10"
-                  onClick={() => handleMarkAsLost()}
-                  disabled={isSaving}
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Marcar como Perdido
-                </Button>
-              )}
-              <Button
-                variant="destructive"
-                size="sm"
-                className="w-full"
-                onClick={() => setShowDeleteDialog(true)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Excluir Pedido
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+        <TabsContent value="logistica">
+          <LogisticsTab
+            order={order}
+            editData={editData}
+            setEditData={setEditData}
+            setOrder={setOrder}
+            isEditing={isEditing}
+          />
+        </TabsContent>
+
+        <TabsContent value="pagamentos">
+          <PaymentsTab order={order} history={history} />
+        </TabsContent>
+      </Tabs>
+
+      {/* Danger zone */}
+      <Card className="card-premium border-destructive/30">
+        <CardHeader>
+          <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-3">
+          {order.current_status !== "LOST" && order.current_status !== "DELIVERED" && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-orange-500/50 text-orange-500 hover:bg-orange-500/10"
+              onClick={() => handleMarkAsLost()}
+              disabled={isSaving}
+            >
+              <X className="mr-2 h-4 w-4" />
+              Marcar como Perdido
+            </Button>
+          )}
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setShowDeleteDialog(true)}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Excluir Pedido
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Status change modal */}
       <Dialog open={showStatusModal} onOpenChange={setShowStatusModal}>
