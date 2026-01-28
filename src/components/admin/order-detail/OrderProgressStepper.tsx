@@ -100,7 +100,7 @@ export const OrderProgressStepper = ({
                     {/* Label */}
                     <span
                       className={cn(
-                        "text-xs font-medium text-center max-w-[80px] leading-tight",
+                        "text-xs font-medium text-center max-w-[100px] leading-tight",
                         isActive && "text-primary",
                         step.isComplete && "text-foreground",
                         isFuture && !step.isComplete && "text-muted-foreground"

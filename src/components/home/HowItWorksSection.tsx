@@ -16,7 +16,7 @@ const steps = [
   {
     icon: CreditCard,
     title: "Pagamento seguro",
-    description: "Pague 50% agora. O restante só quando o produto chegar ao Brasil.",
+    description: "PIX à vista ou cartão em até 12x. Escolha a melhor opção para você.",
   },
   {
     icon: Package,
