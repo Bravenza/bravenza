@@ -488,6 +488,7 @@ export type Database = {
           order_type: Database["public"]["Enums"]["order_type"]
           other_costs: number | null
           other_costs_description: string | null
+          payment_mode: string | null
           pix_copy_paste: string | null
           pix_qr_code: string | null
           product_brand: string | null
@@ -549,6 +550,7 @@ export type Database = {
           order_type?: Database["public"]["Enums"]["order_type"]
           other_costs?: number | null
           other_costs_description?: string | null
+          payment_mode?: string | null
           pix_copy_paste?: string | null
           pix_qr_code?: string | null
           product_brand?: string | null
@@ -610,6 +612,7 @@ export type Database = {
           order_type?: Database["public"]["Enums"]["order_type"]
           other_costs?: number | null
           other_costs_description?: string | null
+          payment_mode?: string | null
           pix_copy_paste?: string | null
           pix_qr_code?: string | null
           product_brand?: string | null
@@ -1034,6 +1037,7 @@ export type Database = {
           created_at: string
           order_id: string
           order_type: Database["public"]["Enums"]["order_type"]
+          payment_mode: string
           product_brand: string
           product_color: string
           product_currency: string

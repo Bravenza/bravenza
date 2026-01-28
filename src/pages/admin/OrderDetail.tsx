@@ -87,43 +87,42 @@ const OrderDetail = () => {
 
   const [editData, setEditData] = useState<Partial<Order>>({});
 
+  const fetchOrder = async () => {
+    try {
+      const { data: orderData, error: orderError } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("order_id", orderId)
+        .single();
+
+      if (orderError) throw orderError;
+
+      setOrder(orderData as Order);
+      setEditData(orderData as Order);
+
+      const { data: historyData, error: historyError } = await supabase
+        .from("order_history")
+        .select("*")
+        .eq("order_id", orderId)
+        .order("created_at", { ascending: true });
+
+      if (!historyError) {
+        setHistory(historyData || []);
+      }
+    } catch (error) {
+      console.error("Error fetching order:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar o pedido.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!orderId) return;
-
-    const fetchOrder = async () => {
-      try {
-        const { data: orderData, error: orderError } = await supabase
-          .from("orders")
-          .select("*")
-          .eq("order_id", orderId)
-          .single();
-
-        if (orderError) throw orderError;
-
-        setOrder(orderData as Order);
-        setEditData(orderData as Order);
-
-        const { data: historyData, error: historyError } = await supabase
-          .from("order_history")
-          .select("*")
-          .eq("order_id", orderId)
-          .order("created_at", { ascending: true });
-
-        if (!historyError) {
-          setHistory(historyData || []);
-        }
-      } catch (error) {
-        console.error("Error fetching order:", error);
-        toast({
-          title: "Erro",
-          description: "Não foi possível carregar o pedido.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchOrder();
   }, [orderId, toast]);
 
@@ -614,7 +613,7 @@ const OrderDetail = () => {
         </TabsContent>
 
         <TabsContent value="pagamentos">
-          <PaymentsTab order={order} history={history} />
+          <PaymentsTab order={order} history={history} onOrderUpdate={fetchOrder} />
         </TabsContent>
       </Tabs>
 
