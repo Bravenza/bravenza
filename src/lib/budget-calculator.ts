@@ -9,8 +9,9 @@
  */
 
 // Taxas de juros do Mercado Pago por número de parcelas
+// NOTA: 1x não tem juros para o cliente (empresa absorve)
 export const MERCADO_PAGO_RATES: Record<number, number> = {
-  1: 0.0498,   // 4.98%
+  1: 0,        // À vista - sem juros para o cliente
   2: 0.0964,   // 9.64%
   3: 0.1123,   // 11.23%
   4: 0.1136,   // 11.36%
