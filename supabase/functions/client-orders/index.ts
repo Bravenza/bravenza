@@ -102,6 +102,7 @@ serve(async (req) => {
         product_color,
         product_price,
         product_currency,
+        payment_mode,
         sinal_value,
         sinal_paid,
         sinal_paid_at,

@@ -554,7 +554,34 @@ const OrderDetail = () => {
 
       {/* Tabs Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 h-auto">
+        {/* Mobile: Scrollable tabs */}
+        <div className="md:hidden overflow-x-auto pb-2 -mx-4 px-4">
+          <TabsList className="inline-flex w-max gap-1 h-auto bg-muted/50 p-1">
+            <TabsTrigger value="cliente" className="flex items-center gap-2 px-4 py-2.5 whitespace-nowrap">
+              <User className="h-4 w-4" />
+              <span className="text-sm">Cliente</span>
+            </TabsTrigger>
+            <TabsTrigger value="custos" className="flex items-center gap-2 px-4 py-2.5 whitespace-nowrap">
+              <DollarSign className="h-4 w-4" />
+              <span className="text-sm">Custos</span>
+            </TabsTrigger>
+            <TabsTrigger value="orcamento" className="flex items-center gap-2 px-4 py-2.5 whitespace-nowrap">
+              <FileText className="h-4 w-4" />
+              <span className="text-sm">Orçamento</span>
+            </TabsTrigger>
+            <TabsTrigger value="logistica" className="flex items-center gap-2 px-4 py-2.5 whitespace-nowrap">
+              <Truck className="h-4 w-4" />
+              <span className="text-sm">Logística</span>
+            </TabsTrigger>
+            <TabsTrigger value="pagamentos" className="flex items-center gap-2 px-4 py-2.5 whitespace-nowrap">
+              <CreditCard className="h-4 w-4" />
+              <span className="text-sm">Pagamentos</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
+        
+        {/* Desktop: Grid tabs */}
+        <TabsList className="hidden md:grid w-full grid-cols-5 h-auto">
           <TabsTrigger value="cliente" className="flex flex-col gap-1 py-3">
             <User className="h-4 w-4" />
             <span className="text-xs">Cliente</span>

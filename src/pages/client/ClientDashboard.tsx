@@ -45,6 +45,7 @@ interface OrderData {
   product_color: string | null;
   product_price: number | null;
   product_currency: string | null;
+  payment_mode: string | null;
   sinal_value: number | null;
   sinal_paid: boolean | null;
   sinal_paid_at: string | null;
@@ -303,42 +304,68 @@ export default function ClientDashboard() {
                       {/* Payment Status */}
                       {order.product_price && (
                         <div className="border-t border-border/50 pt-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                            <div className="flex items-center justify-between sm:block">
-                              <p className="text-muted-foreground">Valor Total</p>
-                              <p className="font-semibold text-lg text-primary">
-                                {formatCurrency(order.product_price, order.product_currency)}
-                              </p>
+                          {order.payment_mode === 'split' ? (
+                            // Split payment mode (50/50)
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                              <div className="flex items-center justify-between sm:block">
+                                <p className="text-muted-foreground">Valor Total</p>
+                                <p className="font-semibold text-lg text-primary">
+                                  {formatCurrency(order.product_price, order.product_currency)}
+                                </p>
+                              </div>
+                              <div className="flex items-center justify-between sm:block">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-muted-foreground">Sinal (50%)</p>
+                                  {order.sinal_paid ? (
+                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                  ) : (
+                                    <Clock className="h-4 w-4 text-yellow-500" />
+                                  )}
+                                </div>
+                                <p className="font-medium">
+                                  {formatCurrency(order.sinal_value, order.product_currency)}
+                                </p>
+                              </div>
+                              <div className="flex items-center justify-between sm:block">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-muted-foreground">Saldo</p>
+                                  {order.balance_paid ? (
+                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                  ) : order.sinal_paid ? (
+                                    <Clock className="h-4 w-4 text-yellow-500" />
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground">-</span>
+                                  )}
+                                </div>
+                                <p className="font-medium">
+                                  {formatCurrency(order.balance_value, order.product_currency)}
+                                </p>
+                              </div>
                             </div>
-                            <div className="flex items-center justify-between sm:block">
+                          ) : (
+                            // Full payment mode (100% upfront)
+                            <div className="flex items-center justify-between text-sm">
+                              <div>
+                                <p className="text-muted-foreground">Valor Total (100% à vista)</p>
+                                <p className="font-semibold text-lg text-primary">
+                                  {formatCurrency(order.product_price, order.product_currency)}
+                                </p>
+                              </div>
                               <div className="flex items-center gap-2">
-                                <p className="text-muted-foreground">Sinal (50%)</p>
-                                {order.sinal_paid ? (
-                                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                {order.sinal_paid || order.balance_paid ? (
+                                  <>
+                                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                    <span className="text-sm font-medium text-green-500">Pago</span>
+                                  </>
                                 ) : (
-                                  <Clock className="h-4 w-4 text-yellow-500" />
+                                  <>
+                                    <Clock className="h-5 w-5 text-yellow-500" />
+                                    <span className="text-sm font-medium text-yellow-500">Pendente</span>
+                                  </>
                                 )}
                               </div>
-                              <p className="font-medium">
-                                {formatCurrency(order.sinal_value, order.product_currency)}
-                              </p>
                             </div>
-                            <div className="flex items-center justify-between sm:block">
-                              <div className="flex items-center gap-2">
-                                <p className="text-muted-foreground">Saldo</p>
-                                {order.balance_paid ? (
-                                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                ) : order.sinal_paid ? (
-                                  <Clock className="h-4 w-4 text-yellow-500" />
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">-</span>
-                                )}
-                              </div>
-                              <p className="font-medium">
-                                {formatCurrency(order.balance_value, order.product_currency)}
-                              </p>
-                            </div>
-                          </div>
+                          )}
                         </div>
                       )}
 
