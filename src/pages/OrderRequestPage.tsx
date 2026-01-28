@@ -2,25 +2,26 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Upload, CheckCircle2, ArrowLeft, User, MapPin, Package, Image, Gift } from "lucide-react";
-import { SNEAKER_BRANDS, getModelsForBrand } from "@/lib/sneaker-data";
+import { Loader2, CheckCircle2, ArrowLeft, ArrowRight, User, MapPin, Package, ClipboardCheck } from "lucide-react";
 import { Footer } from "@/components/home/Footer";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
+import { RequestStepper } from "@/components/order-request/RequestStepper";
+import { 
+  PersonalDataStep, 
+  AddressStep, 
+  ProductStep, 
+  ReviewStep 
+} from "@/components/order-request/steps";
+import { motion, AnimatePresence } from "framer-motion";
 
-const SHOE_SIZES = [
-  "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"
-];
-
-const BR_STATES = [
-  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
-  "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"
+const WIZARD_STEPS = [
+  { id: 1, label: "Dados Pessoais", icon: <User className="h-5 w-5" /> },
+  { id: 2, label: "Endereço", icon: <MapPin className="h-5 w-5" /> },
+  { id: 3, label: "Produto", icon: <Package className="h-5 w-5" /> },
+  { id: 4, label: "Revisão", icon: <ClipboardCheck className="h-5 w-5" /> },
 ];
 
 export default function OrderRequestPage() {
@@ -32,6 +33,7 @@ export default function OrderRequestPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [referralInfo, setReferralInfo] = useState<{ code: string; referrerName: string; discount: number } | null>(null);
+  const [currentStep, setCurrentStep] = useState(1);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -77,7 +79,6 @@ export default function OrderRequestPage() {
       if (error) throw error;
 
       if (data) {
-        // Check if expired
         if (data.expires_at && new Date(data.expires_at) < new Date()) {
           toast.error("Código de indicação expirado");
           return;
@@ -182,41 +183,67 @@ export default function OrderRequestPage() {
     updateField("product_model", "");
   };
 
-  // Validate form
-  const validateForm = () => {
-    const required = [
-      "client_name", "client_cpf", "client_email", "client_phone",
-      "address_cep", "address_street", "address_number", 
-      "address_neighborhood", "address_city", "address_state",
-      "shoe_size"
-    ];
-
-    for (const field of required) {
-      if (!formData[field as keyof typeof formData]) {
-        toast.error(`Preencha todos os campos obrigatórios`);
-        return false;
+  // Validate step
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 1: {
+        if (!formData.client_name || !formData.client_cpf || !formData.client_email || !formData.client_phone) {
+          toast.error("Preencha todos os campos obrigatórios");
+          return false;
+        }
+        const cpfClean = formData.client_cpf.replace(/\D/g, "");
+        if (cpfClean.length !== 11) {
+          toast.error("CPF inválido");
+          return false;
+        }
+        if (!formData.client_email.includes("@")) {
+          toast.error("E-mail inválido");
+          return false;
+        }
+        return true;
       }
+      case 2: {
+        if (!formData.address_cep || !formData.address_street || !formData.address_number || 
+            !formData.address_neighborhood || !formData.address_city || !formData.address_state) {
+          toast.error("Preencha todos os campos obrigatórios do endereço");
+          return false;
+        }
+        return true;
+      }
+      case 3: {
+        if (!formData.shoe_size) {
+          toast.error("Selecione o tamanho do tênis");
+          return false;
+        }
+        return true;
+      }
+      default:
+        return true;
     }
+  };
 
-    const cpfClean = formData.client_cpf.replace(/\D/g, "");
-    if (cpfClean.length !== 11) {
-      toast.error("CPF inválido");
-      return false;
+  // Navigate between steps
+  const goToNextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => Math.min(prev + 1, WIZARD_STEPS.length));
     }
+  };
 
-    if (!formData.client_email.includes("@")) {
-      toast.error("E-mail inválido");
-      return false;
+  const goToPreviousStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
+  const goToStep = (step: number) => {
+    if (step < currentStep) {
+      setCurrentStep(step);
     }
-
-    return true;
   };
 
   // Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    if (!validateStep(currentStep)) return;
 
     setIsSubmitting(true);
 
@@ -280,7 +307,6 @@ export default function OrderRequestPage() {
         });
       } catch (notifError) {
         console.error("Error creating notification:", notifError);
-        // Don't block the success flow
       }
 
       setIsSuccess(true);
@@ -297,20 +323,31 @@ export default function OrderRequestPage() {
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="max-w-md w-full text-center">
-          <CardContent className="pt-8 pb-6">
-            <div className="w-16 h-16 bg-success/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle2 className="h-8 w-8 text-success" />
-            </div>
-            <h2 className="text-2xl font-bold mb-2">Solicitação Enviada!</h2>
-            <p className="text-muted-foreground mb-6">
-              Recebemos sua solicitação e entraremos em contato em breve com o orçamento.
-            </p>
-            <Button onClick={() => navigate("/")} className="w-full">
-              Voltar ao Início
-            </Button>
-          </CardContent>
-        </Card>
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 200 }}
+        >
+          <Card className="max-w-md w-full text-center">
+            <CardContent className="pt-8 pb-6">
+              <motion.div 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring" }}
+                className="w-20 h-20 bg-success/20 rounded-full flex items-center justify-center mx-auto mb-4"
+              >
+                <CheckCircle2 className="h-10 w-10 text-success" />
+              </motion.div>
+              <h2 className="text-2xl font-bold mb-2">Solicitação Enviada!</h2>
+              <p className="text-muted-foreground mb-6">
+                Recebemos sua solicitação e entraremos em contato em breve com o orçamento.
+              </p>
+              <Button onClick={() => navigate("/")} className="w-full btn-gold">
+                Voltar ao Início
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     );
   }
@@ -331,362 +368,128 @@ export default function OrderRequestPage() {
       </header>
 
       {/* Form */}
-      <main className="container mx-auto px-4 sm:px-6 py-8 md:py-12 max-w-3xl flex-1">
+      <main className="container mx-auto px-4 sm:px-6 py-8 md:py-12 max-w-2xl flex-1">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Solicitar Orçamento</h1>
           <p className="text-muted-foreground">
-            Preencha o formulário abaixo e receba seu orçamento personalizado
+            Preencha o formulário em 4 etapas simples
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Personal Data */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5 text-primary" />
-                Dados Pessoais
-              </CardTitle>
-              <CardDescription>Suas informações de contato</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="client_name">Nome Completo *</Label>
-                <Input
-                  id="client_name"
-                  value={formData.client_name}
-                  onChange={(e) => updateField("client_name", e.target.value)}
-                  placeholder="Seu nome completo"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="client_cpf">CPF *</Label>
-                <Input
-                  id="client_cpf"
-                  value={formData.client_cpf}
-                  onChange={(e) => updateField("client_cpf", formatCpf(e.target.value))}
-                  placeholder="000.000.000-00"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="client_email">E-mail *</Label>
-                <Input
-                  id="client_email"
-                  type="email"
-                  value={formData.client_email}
-                  onChange={(e) => updateField("client_email", e.target.value)}
-                  placeholder="seu@email.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="client_phone">Telefone *</Label>
-                <Input
-                  id="client_phone"
-                  value={formData.client_phone}
-                  onChange={(e) => updateField("client_phone", formatPhone(e.target.value))}
-                  placeholder="(00) 00000-0000"
-                />
-              </div>
-            </CardContent>
-          </Card>
+        {/* Stepper */}
+        <div className="mb-8">
+          <RequestStepper 
+            steps={WIZARD_STEPS} 
+            currentStep={currentStep} 
+            onStepClick={goToStep}
+          />
+        </div>
 
-          {/* Address */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" />
-                Endereço de Entrega
-              </CardTitle>
-              <CardDescription>Onde você deseja receber o produto</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="address_cep">CEP *</Label>
-                <div className="relative">
-                  <Input
-                    id="address_cep"
-                    value={formData.address_cep}
-                    onChange={(e) => {
-                      const formatted = formatCep(e.target.value);
-                      updateField("address_cep", formatted);
-                      if (formatted.replace(/\D/g, "").length === 8) {
-                        fetchAddressFromCep(formatted);
-                      }
-                    }}
-                    placeholder="00000-000"
-                  />
-                  {isLoadingCep && (
-                    <Loader2 className="h-4 w-4 animate-spin absolute right-3 top-3 text-muted-foreground" />
-                  )}
-                </div>
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="address_street">Rua *</Label>
-                <Input
-                  id="address_street"
-                  value={formData.address_street}
-                  onChange={(e) => updateField("address_street", e.target.value)}
-                  placeholder="Nome da rua"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address_number">Número *</Label>
-                <Input
-                  id="address_number"
-                  value={formData.address_number}
-                  onChange={(e) => updateField("address_number", e.target.value)}
-                  placeholder="123"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address_complement">Complemento</Label>
-                <Input
-                  id="address_complement"
-                  value={formData.address_complement}
-                  onChange={(e) => updateField("address_complement", e.target.value)}
-                  placeholder="Apto, bloco..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address_neighborhood">Bairro *</Label>
-                <Input
-                  id="address_neighborhood"
-                  value={formData.address_neighborhood}
-                  onChange={(e) => updateField("address_neighborhood", e.target.value)}
-                  placeholder="Bairro"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address_city">Cidade *</Label>
-                <Input
-                  id="address_city"
-                  value={formData.address_city}
-                  onChange={(e) => updateField("address_city", e.target.value)}
-                  placeholder="Cidade"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address_state">Estado *</Label>
-                <Select
-                  value={formData.address_state}
-                  onValueChange={(value) => updateField("address_state", value)}
+        {/* Form Card */}
+        <Card className="overflow-hidden">
+          <CardContent className="p-6 sm:p-8">
+            <form onSubmit={handleSubmit}>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentStep}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BR_STATES.map((state) => (
-                      <SelectItem key={state} value={state}>{state}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Product Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-primary" />
-                Informações do Tênis
-              </CardTitle>
-              <CardDescription>Detalhes do produto que você deseja</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="shoe_size">Tamanho (BR) *</Label>
-                <Select
-                  value={formData.shoe_size}
-                  onValueChange={(value) => updateField("shoe_size", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SHOE_SIZES.map((size) => (
-                      <SelectItem key={size} value={size}>{size}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="product_brand">Marca</Label>
-                <Select
-                  value={selectedBrand}
-                  onValueChange={handleBrandChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione (opcional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SNEAKER_BRANDS.map((brand) => (
-                      <SelectItem key={brand.value} value={brand.value}>{brand.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="product_model">Modelo</Label>
-                <Select
-                  value={formData.product_model}
-                  onValueChange={(value) => updateField("product_model", value)}
-                  disabled={!selectedBrand}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a marca primeiro" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectedBrand && getModelsForBrand(selectedBrand).map((model) => (
-                      <SelectItem key={model.value} value={model.value}>{model.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="product_color">Cor / Colorway</Label>
-                <Input
-                  id="product_color"
-                  value={formData.product_color}
-                  onChange={(e) => updateField("product_color", e.target.value)}
-                  placeholder="Ex: Triple Black, University Blue"
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="product_link">Link de Referência</Label>
-                <Input
-                  id="product_link"
-                  type="url"
-                  value={formData.product_link}
-                  onChange={(e) => updateField("product_link", e.target.value)}
-                  placeholder="https://..."
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Reference Image */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Image className="h-5 w-5 text-primary" />
-                Imagem de Referência
-              </CardTitle>
-              <CardDescription>Envie uma foto do tênis que você deseja (opcional)</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {imagePreview ? (
-                  <div className="relative">
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
-                      className="w-full max-h-64 object-contain rounded-lg border border-border"
+                  {currentStep === 1 && (
+                    <PersonalDataStep
+                      formData={formData}
+                      updateField={updateField}
+                      formatCpf={formatCpf}
+                      formatPhone={formatPhone}
                     />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={() => {
+                  )}
+                  
+                  {currentStep === 2 && (
+                    <AddressStep
+                      formData={formData}
+                      updateField={updateField}
+                      formatCep={formatCep}
+                      onCepChange={fetchAddressFromCep}
+                      isLoadingCep={isLoadingCep}
+                    />
+                  )}
+                  
+                  {currentStep === 3 && (
+                    <ProductStep
+                      formData={formData}
+                      selectedBrand={selectedBrand}
+                      updateField={updateField}
+                      onBrandChange={handleBrandChange}
+                      imagePreview={imagePreview}
+                      onImageChange={handleImageChange}
+                      onRemoveImage={() => {
                         setImageFile(null);
                         setImagePreview(null);
                       }}
-                    >
-                      Remover
-                    </Button>
-                  </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
-                    <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                    <span className="text-sm text-muted-foreground">Clique para enviar uma imagem</span>
-                    <span className="text-xs text-muted-foreground mt-1">PNG, JPG até 5MB</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageChange}
                     />
-                  </label>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  )}
+                  
+                  {currentStep === 4 && (
+                    <ReviewStep
+                      formData={formData}
+                      updateField={updateField}
+                      referralInfo={referralInfo}
+                      validateReferralCode={validateReferralCode}
+                      imagePreview={imagePreview}
+                      onStepClick={goToStep}
+                    />
+                  )}
+                </motion.div>
+              </AnimatePresence>
 
-          {/* Referral Code */}
-          <Card className={referralInfo ? "border-primary/50 bg-primary/5" : ""}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Gift className="h-5 w-5 text-primary" />
-                Código de Indicação
-              </CardTitle>
-              <CardDescription>
-                {referralInfo 
-                  ? `Você foi indicado por ${referralInfo.referrerName}! O indicador receberá ${referralInfo.discount}% de desconto no próximo pedido.`
-                  : "Tem um código de indicação? Insira aqui para beneficiar quem te indicou."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-2">
-                <Input
-                  value={formData.referral_code}
-                  onChange={(e) => updateField("referral_code", e.target.value.toUpperCase())}
-                  placeholder="Ex: BRVZABC123"
-                  disabled={!!referralInfo}
-                  className={referralInfo ? "border-primary/50" : ""}
-                />
-                {!referralInfo && formData.referral_code.length >= 4 && (
-                  <Button 
-                    type="button" 
+              {/* Navigation buttons */}
+              <div className="flex gap-3 mt-8 pt-6 border-t border-border">
+                {currentStep > 1 && (
+                  <Button
+                    type="button"
                     variant="outline"
-                    onClick={() => validateReferralCode(formData.referral_code)}
+                    onClick={goToPreviousStep}
+                    className="flex-1"
                   >
-                    Validar
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Voltar
+                  </Button>
+                )}
+                
+                {currentStep < WIZARD_STEPS.length ? (
+                  <Button
+                    type="button"
+                    onClick={goToNextStep}
+                    className="flex-1 btn-gold"
+                  >
+                    Continuar
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 btn-gold"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Enviar Solicitação
+                      </>
+                    )}
                   </Button>
                 )}
               </div>
-              {referralInfo && (
-                <div className="mt-2 flex items-center gap-2 text-sm text-primary">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Código válido! Indicado por {referralInfo.referrerName}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Additional Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Observações Adicionais</CardTitle>
-              <CardDescription>Algo mais que devemos saber?</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                value={formData.additional_notes}
-                onChange={(e) => updateField("additional_notes", e.target.value)}
-                placeholder="Informações adicionais sobre o pedido..."
-                rows={4}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Submit */}
-          <Button 
-            type="submit" 
-            size="lg" 
-            className="w-full btn-gold"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Enviando...
-              </>
-            ) : (
-              "Enviar Solicitação"
-            )}
-          </Button>
-        </form>
+            </form>
+          </CardContent>
+        </Card>
       </main>
 
       <Footer />
