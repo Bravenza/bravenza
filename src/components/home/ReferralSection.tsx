@@ -3,21 +3,23 @@ import { motion } from "framer-motion";
 import { Gift, Users, Wallet, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-
 const ReferralSectionComponent = () => {
-  return (
-    <section className="py-14 md:py-20 relative overflow-hidden">
+  return <section className="py-14 md:py-20 relative overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5" />
       
       <div className="container mx-auto px-4 sm:px-6 relative">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
-        >
+        <motion.div initial={{
+        opacity: 0,
+        y: 20
+      }} whileInView={{
+        opacity: 1,
+        y: 0
+      }} viewport={{
+        once: true
+      }} transition={{
+        duration: 0.6
+      }} className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary mb-6">
             <Gift className="h-4 w-4" />
             <span className="text-sm font-medium">Programa exclusivo</span>
@@ -26,19 +28,24 @@ const ReferralSectionComponent = () => {
           <h2 className="text-3xl md:text-5xl font-bold mb-4">
             Indique amigos e <span className="text-gradient-gold">ganhe cashback</span>
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto text-base">
             Compartilhe seu código exclusivo e ganhe desconto no seu próximo pedido quando seus amigos comprarem
           </p>
         </motion.div>
 
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-4xl mx-auto mb-10 md:mb-12">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: Math.min(0.1 * 1, 0.3) }}
-              className="text-center p-4 md:p-6"
-            >
+          <motion.div initial={{
+          opacity: 0,
+          y: 30
+        }} whileInView={{
+          opacity: 1,
+          y: 0
+        }} viewport={{
+          once: true
+        }} transition={{
+          duration: 0.5,
+          delay: Math.min(0.1 * 1, 0.3)
+        }} className="text-center p-4 md:p-6">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
               <Gift className="h-8 w-8 text-primary" />
             </div>
@@ -48,13 +55,18 @@ const ReferralSectionComponent = () => {
             </p>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: Math.min(0.2, 0.3) }}
-              className="text-center p-4 md:p-6"
-            >
+          <motion.div initial={{
+          opacity: 0,
+          y: 30
+        }} whileInView={{
+          opacity: 1,
+          y: 0
+        }} viewport={{
+          once: true
+        }} transition={{
+          duration: 0.5,
+          delay: Math.min(0.2, 0.3)
+        }} className="text-center p-4 md:p-6">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
               <Users className="h-8 w-8 text-primary" />
             </div>
@@ -64,13 +76,18 @@ const ReferralSectionComponent = () => {
             </p>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: Math.min(0.3, 0.3) }}
-              className="text-center p-4 md:p-6"
-            >
+          <motion.div initial={{
+          opacity: 0,
+          y: 30
+        }} whileInView={{
+          opacity: 1,
+          y: 0
+        }} viewport={{
+          once: true
+        }} transition={{
+          duration: 0.5,
+          delay: Math.min(0.3, 0.3)
+        }} className="text-center p-4 md:p-6">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
               <Wallet className="h-8 w-8 text-primary" />
             </div>
@@ -81,18 +98,23 @@ const ReferralSectionComponent = () => {
           </motion.div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="card-premium p-6 md:p-8 max-w-2xl mx-auto text-center"
-        >
+        <motion.div initial={{
+        opacity: 0,
+        scale: 0.95
+      }} whileInView={{
+        opacity: 1,
+        scale: 1
+      }} viewport={{
+        once: true
+      }} transition={{
+        duration: 0.5,
+        delay: 0.4
+      }} className="card-premium p-6 md:p-8 max-w-2xl mx-auto text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
             <span className="text-5xl md:text-6xl font-bold text-gradient-gold">5%</span>
             <span className="text-xl text-muted-foreground text-left">de cashback<br />por indicação</span>
           </div>
-          <p className="text-muted-foreground mb-6">
+          <p className="text-muted-foreground mb-6 text-base">
             <strong className="text-foreground">Sem limite de indicações!</strong> Quanto mais amigos você indicar, mais desconto você acumula.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -110,8 +132,6 @@ const ReferralSectionComponent = () => {
           </div>
         </motion.div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export const ReferralSection = memo(ReferralSectionComponent);

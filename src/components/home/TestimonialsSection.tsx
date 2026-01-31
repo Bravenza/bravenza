@@ -40,7 +40,7 @@ const TestimonialsSectionComponent = () => {
             Quem comprou,{" "}
             <span className="text-gradient-gold">aprovou</span>
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto text-base">
             Histórias reais de clientes que confiaram e voltaram. Leia antes de decidir.
           </p>
         </motion.div>
