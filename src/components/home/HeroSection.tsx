@@ -47,7 +47,7 @@ const HeroSectionComponent = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
           >
-            Acesso exclusivo aos sneakers mais raros do mundo. Localizamos, 
+            Acesso exclusivo aos tênis mais raros do mundo. Localizamos, 
             inspecionamos e entregamos em suas mãos com <strong className="text-foreground">garantia de autenticidade</strong> e 
             rastreamento completo. Sem surpresas. Sem riscos.
           </motion.p>
