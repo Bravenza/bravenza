@@ -40,7 +40,7 @@ const BenefitsSectionComponent = () => {
       }} transition={{
         duration: 0.6
       }} className="text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-bold mb-4">
+          <h2 className="text-3xl font-bold mb-4 md:text-3xl">
             Por que a{" "}
             <span className="text-gradient-gold text-3xl">BRAVENZA</span>?
           </h2>

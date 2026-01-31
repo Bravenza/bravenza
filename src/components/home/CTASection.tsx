@@ -23,7 +23,7 @@ const CTASectionComponent = () => {
           </div>
 
           <div className="relative z-10">
-            <h2 className="md:text-4xl lg:text-5xl font-bold mb-6 text-3xl">
+            <h2 className="lg:text-5xl font-bold mb-6 text-3xl md:text-3xl">
               O tênis perfeito está{" "}
               <span className="text-gradient-gold text-3xl">te esperando</span>
             </h2>

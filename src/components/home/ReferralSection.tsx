@@ -25,7 +25,7 @@ const ReferralSectionComponent = () => {
             <span className="text-sm font-medium">Programa exclusivo</span>
           </div>
           
-          <h2 className="text-3xl md:text-5xl font-bold mb-4">
+          <h2 className="text-3xl font-bold mb-4 md:text-3xl">
             Indique amigos e <span className="text-gradient-gold text-3xl">ganhe cashback</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto text-base">
