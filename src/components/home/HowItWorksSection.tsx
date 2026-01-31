@@ -39,7 +39,7 @@ const HowItWorksSectionComponent = () => {
         duration: 0.6
       }} className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-bold mb-4">
-            Simples assim: <span className="text-gradient-gold">5 Passos</span>
+            Simples assim: <span className="text-gradient-gold text-3xl">5 Passos</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto text-base">
             Do pedido à entrega, você acompanha tudo. Transparência total, zero complicação.

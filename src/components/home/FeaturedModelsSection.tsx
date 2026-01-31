@@ -56,8 +56,8 @@ const FeaturedModelsSection = () => {
             <Flame className="h-4 w-4" />
             <span className="text-sm font-medium">Os mais procurados</span>
           </div>
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-3">
-            Modelos que estão <span className="text-gradient-gold">bombando</span>
+          <h2 className="md:text-3xl lg:text-4xl font-bold text-foreground mb-3 text-3xl">
+            Modelos que estão <span className="text-gradient-gold text-3xl">bombando</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto md:text-base text-base">
             Estes são os tênis que nossos clientes mais pedem. Edições limitadas, 

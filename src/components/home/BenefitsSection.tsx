@@ -42,7 +42,7 @@ const BenefitsSectionComponent = () => {
       }} className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-bold mb-4">
             Por que a{" "}
-            <span className="text-gradient-gold">BRAVENZA</span>?
+            <span className="text-gradient-gold text-3xl">BRAVENZA</span>?
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto text-base">
             Não somos apenas mais uma importadora. Somos a sua conexão direta com os tênis mais exclusivos do planeta.

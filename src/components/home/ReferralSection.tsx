@@ -26,7 +26,7 @@ const ReferralSectionComponent = () => {
           </div>
           
           <h2 className="text-3xl md:text-5xl font-bold mb-4">
-            Indique amigos e <span className="text-gradient-gold">ganhe cashback</span>
+            Indique amigos e <span className="text-gradient-gold text-3xl">ganhe cashback</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto text-base">
             Compartilhe seu código exclusivo e ganhe desconto no seu próximo pedido quando seus amigos comprarem
@@ -115,7 +115,7 @@ const ReferralSectionComponent = () => {
             <span className="text-xl text-muted-foreground text-left">de cashback<br />por indicação</span>
           </div>
           <p className="text-muted-foreground mb-6 text-base">
-            <strong className="text-foreground">Sem limite de indicações!</strong> Quanto mais amigos você indicar, mais desconto você acumula.
+            <strong className="text-foreground text-base">Sem limite de indicações!</strong> Quanto mais amigos você indicar, mais desconto você acumula.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild size="lg" className="gap-2 btn-gold">

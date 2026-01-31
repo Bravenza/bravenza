@@ -23,9 +23,9 @@ const CTASectionComponent = () => {
           </div>
 
           <div className="relative z-10">
-            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-6">
+            <h2 className="md:text-4xl lg:text-5xl font-bold mb-6 text-3xl">
               O tênis perfeito está{" "}
-              <span className="text-gradient-gold">te esperando</span>
+              <span className="text-gradient-gold text-3xl">te esperando</span>
             </h2>
             <p className="text-muted-foreground mb-8 max-w-2xl mx-auto text-base">
               Chega de procurar e não encontrar. Chega de pagar caro e receber réplica. 

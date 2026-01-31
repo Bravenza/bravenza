@@ -38,7 +38,7 @@ const TestimonialsSectionComponent = () => {
       }} className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-bold mb-4">
             Quem comprou,{" "}
-            <span className="text-gradient-gold">aprovou</span>
+            <span className="text-gradient-gold text-3xl">aprovou</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto text-base">
             Histórias reais de clientes que confiaram e voltaram. Leia antes de decidir.
