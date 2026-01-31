@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ShippingSection } from "@/components/admin/ShippingSection";
 import { InspectionPhotosUpload } from "@/components/admin/InspectionPhotosUpload";
+import { AuthenticityCodeSection } from "@/components/admin/AuthenticityCodeSection";
 import { formatDate } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -192,6 +193,18 @@ export const LogisticsTab = ({
             setEditData((prev) => ({ ...prev, inspection_photos: photos }))
           }
           isEditing={isEditing}
+        />
+      )}
+
+      {/* Certificado de Autenticidade */}
+      {showInspectionPhotos && !isEditing && (
+        <AuthenticityCodeSection
+          orderId={order.order_id}
+          authenticityCode={order.authenticity_code}
+          verificationCount={order.authenticity_verification_count || 0}
+          onCodeGenerated={(code) => {
+            setOrder(prev => prev ? { ...prev, authenticity_code: code } : null);
+          }}
         />
       )}
 

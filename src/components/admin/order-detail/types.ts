@@ -46,6 +46,9 @@ export interface Order {
   budget_expires_at: string | null;
   budget_approval_token: string | null;
   payment_mode: 'full' | 'split' | null;
+  authenticity_code: string | null;
+  authenticity_verified_at: string | null;
+  authenticity_verification_count: number | null;
 }
 
 export type PaymentMode = 'full' | 'split';

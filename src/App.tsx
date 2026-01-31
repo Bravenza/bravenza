@@ -24,6 +24,7 @@ const OrderRequestPage = lazy(() => import("./pages/OrderRequestPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const InstallPage = lazy(() => import("./pages/InstallPage"));
+const AuthenticityPage = lazy(() => import("./pages/AuthenticityPage"));
 
 // Lazy loaded pages - Client portal
 const ClientLogin = lazy(() => import("./pages/client/ClientLogin"));
@@ -97,6 +98,8 @@ const App = () => (
                 <Route path="/termos" element={<TermsPage />} />
                 <Route path="/politicas" element={<PrivacyPage />} />
                 <Route path="/instalar" element={<InstallPage />} />
+                <Route path="/autenticidade" element={<AuthenticityPage />} />
+                <Route path="/autenticidade/:code" element={<AuthenticityPage />} />
 
                 {/* Client portal routes */}
                 <Route path="/cliente/login" element={<ClientLogin />} />
