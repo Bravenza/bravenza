@@ -51,7 +51,7 @@ const BenefitsSectionComponent = () => {
             <span className="text-gradient-gold">BRAVENZA</span>?
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Não somos apenas mais uma importadora. Somos a sua conexão direta com os sneakers mais exclusivos do planeta.
+            Não somos apenas mais uma importadora. Somos a sua conexão direta com os tênis mais exclusivos do planeta.
           </p>
         </motion.div>
 

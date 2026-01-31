@@ -371,7 +371,7 @@ function EmailPreview({ templateId }: { templateId: string }) {
             <p className="text-center text-white">📦 Nike Air Force 1</p>
           </div>
           <p className="text-gray-400 text-xs text-center">
-            Esperamos que você ame seu novo sneaker! 👟
+            Esperamos que você ame seu novo tênis! 👟
           </p>
           <div className="text-center">
             <button className="bg-gradient-to-r from-[#d4af37] via-[#f4e5a3] to-[#d4af37] text-[#0a0a0a] px-6 py-2 rounded font-bold text-xs">

@@ -14,7 +14,7 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
           <div className="sm:col-span-2">
             <Logo size="sm" className="mb-3" />
             <p className="text-sm text-muted-foreground max-w-xs">
-              Especialistas em importação de sneakers exclusivos. 
+              Especialistas em importação de tênis exclusivos. 
               Autenticidade garantida e rastreamento em tempo real.
             </p>
           </div>

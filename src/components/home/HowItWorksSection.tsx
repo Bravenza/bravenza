@@ -6,7 +6,7 @@ const steps = [
   {
     icon: Search,
     title: "Você pede",
-    description: "Envie o link, foto ou nome do sneaker. Nós fazemos o resto.",
+    description: "Envie o link, foto ou nome do tênis. Nós fazemos o resto.",
   },
   {
     icon: FileCheck,
@@ -26,7 +26,7 @@ const steps = [
   {
     icon: Truck,
     title: "Entrega garantida",
-    description: "Rastreio em tempo real até o sneaker chegar nas suas mãos.",
+    description: "Rastreio em tempo real até o tênis chegar nas suas mãos.",
   },
 ];
 
