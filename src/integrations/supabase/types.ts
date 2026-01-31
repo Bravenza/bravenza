@@ -454,6 +454,9 @@ export type Database = {
       }
       orders: {
         Row: {
+          authenticity_code: string | null
+          authenticity_verification_count: number | null
+          authenticity_verified_at: string | null
           balance_due_date: string | null
           balance_paid: boolean | null
           balance_paid_at: string | null
@@ -516,6 +519,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          authenticity_code?: string | null
+          authenticity_verification_count?: number | null
+          authenticity_verified_at?: string | null
           balance_due_date?: string | null
           balance_paid?: boolean | null
           balance_paid_at?: string | null
@@ -578,6 +584,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          authenticity_code?: string | null
+          authenticity_verification_count?: number | null
+          authenticity_verified_at?: string | null
           balance_due_date?: string | null
           balance_paid?: boolean | null
           balance_paid_at?: string | null
@@ -963,6 +972,7 @@ export type Database = {
         Returns: boolean
       }
       approve_budget: { Args: { p_token: string }; Returns: boolean }
+      generate_authenticity_code: { Args: never; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
       get_client_available_cashback: {
         Args: { p_cpf: string }
@@ -1105,6 +1115,22 @@ export type Database = {
           p_preferred_sizes?: string[]
         }
         Returns: boolean
+      }
+      verify_authenticity: {
+        Args: { p_code: string }
+        Returns: {
+          client_name: string
+          created_at: string
+          inspection_photos: string[]
+          is_valid: boolean
+          order_id: string
+          product_brand: string
+          product_color: string
+          product_model: string
+          product_name: string
+          product_size: string
+          verification_count: number
+        }[]
       }
     }
     Enums: {
