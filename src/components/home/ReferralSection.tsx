@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 
 const ReferralSectionComponent = () => {
   return (
-    <section className="py-16 md:py-24 relative overflow-hidden">
+    <section className="py-14 md:py-20 relative overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5" />
       
@@ -60,7 +60,7 @@ const ReferralSectionComponent = () => {
             </div>
             <h3 className="font-semibold text-lg mb-2">2. Mande pros amigos</h3>
             <p className="text-muted-foreground text-sm">
-              Compartilhe com quem também quer sneakers originais
+              Compartilhe com quem também quer tênis originais
             </p>
           </motion.div>
 

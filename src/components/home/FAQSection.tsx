@@ -93,39 +93,41 @@ function FAQSectionComponent() {
   }
 
   return (
-    <section id="faq" className="py-12 md:py-16 bg-card/30">
+    <section id="faq" className="py-16 md:py-20 bg-card/30">
       <div className="container mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center mb-10 md:mb-12"
         >
-          <h2 className="text-3xl font-bold mb-4">
-            Perguntas <span className="text-primary">Frequentes</span>
+          <h2 className="text-2xl md:text-3xl font-bold mb-3">
+            Perguntas <span className="text-primary">frequentes</span>
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base">
             Encontre respostas para as dúvidas mais comuns sobre nossos serviços
           </p>
         </motion.div>
 
         <div className="max-w-3xl mx-auto">
           <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-            <TabsList className="w-full flex flex-wrap justify-center gap-2 bg-transparent mb-8">
-              {categories.map((category) => {
-                const Icon = CATEGORY_ICONS[category] || HelpCircle;
-                return (
-                  <TabsTrigger
-                    key={category}
-                    value={category}
-                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                  >
-                    <Icon className="h-4 w-4 mr-2" />
-                    {CATEGORY_LABELS[category] || category}
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
+            <div className="overflow-x-auto -mx-4 px-4 mb-6 md:mb-8">
+              <TabsList className="inline-flex w-max md:w-full md:flex md:flex-wrap md:justify-center gap-2 bg-transparent h-auto p-1">
+                {categories.map((category) => {
+                  const Icon = CATEGORY_ICONS[category] || HelpCircle;
+                  return (
+                    <TabsTrigger
+                      key={category}
+                      value={category}
+                      className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap px-3 py-2 text-sm"
+                    >
+                      <Icon className="h-4 w-4 mr-1.5" />
+                      {CATEGORY_LABELS[category] || category}
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+            </div>
 
             {categories.map((category) => (
               <TabsContent key={category} value={category}>
@@ -144,12 +146,12 @@ function FAQSectionComponent() {
                       >
                         <AccordionItem
                           value={faq.id}
-                          className="border border-border/50 rounded-lg px-4 bg-card/50 hover:bg-card transition-colors"
+                          className="border border-border/50 rounded-lg px-3 md:px-4 bg-card/50 hover:bg-card transition-colors"
                         >
-                          <AccordionTrigger className="text-left hover:no-underline py-4">
-                            <span className="font-medium">{faq.question}</span>
+                          <AccordionTrigger className="text-left hover:no-underline py-3 md:py-4">
+                            <span className="font-medium text-sm md:text-base pr-2">{faq.question}</span>
                           </AccordionTrigger>
-                          <AccordionContent className="text-muted-foreground pb-4">
+                          <AccordionContent className="text-muted-foreground pb-3 md:pb-4 text-sm md:text-base">
                             {faq.answer}
                           </AccordionContent>
                         </AccordionItem>
@@ -166,19 +168,19 @@ function FAQSectionComponent() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mt-12 text-center"
+            className="mt-8 md:mt-12 text-center"
           >
-            <p className="text-muted-foreground mb-4">
+            <p className="text-muted-foreground mb-4 text-sm md:text-base">
               Não encontrou o que procurava?
             </p>
             <a
               href="https://wa.me/5551983018897?text=Olá!%20Tenho%20uma%20dúvida%20sobre%20a%20BRAVENZA."
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 md:px-6 md:py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm md:text-base"
             >
-              <MessageCircle className="h-5 w-5" />
-              Fale Conosco no WhatsApp
+              <MessageCircle className="h-4 w-4 md:h-5 md:w-5" />
+              Fale conosco no WhatsApp
             </a>
           </motion.div>
         </div>

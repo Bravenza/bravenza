@@ -14,7 +14,7 @@ import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background space-y-0">
       <Header />
       
       <main className="pt-16">

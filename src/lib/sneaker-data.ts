@@ -10,7 +10,7 @@ export interface ModelOption {
   label: string;
 }
 
-export const SNEAKER_BRANDS: BrandOption[] = [
+export const TENIS_BRANDS: BrandOption[] = [
   { value: "nike", label: "Nike" },
   { value: "jordan", label: "Jordan" },
   { value: "adidas", label: "Adidas" },
@@ -30,6 +30,9 @@ export const SNEAKER_BRANDS: BrandOption[] = [
   { value: "fear-of-god", label: "Fear of God" },
   { value: "other", label: "Outro" },
 ];
+
+// Alias for backward compatibility
+export const SNEAKER_BRANDS = TENIS_BRANDS;
 
 export const MODELS_BY_BRAND: Record<string, ModelOption[]> = {
   nike: [
@@ -194,7 +197,7 @@ export function getModelsForBrand(brandValue: string): ModelOption[] {
 }
 
 export function getBrandLabel(value: string): string {
-  const brand = SNEAKER_BRANDS.find((b) => b.value === value);
+  const brand = TENIS_BRANDS.find((b) => b.value === value);
   return brand?.label || value;
 }
 
@@ -208,7 +211,7 @@ export function getModelLabel(brandValue: string, modelValue: string): string {
 export function findBrandKey(brandLabel: string | null | undefined): string {
   if (!brandLabel) return "";
   const normalizedLabel = brandLabel.toLowerCase().trim();
-  const brand = SNEAKER_BRANDS.find(
+  const brand = TENIS_BRANDS.find(
     (b) => b.label.toLowerCase() === normalizedLabel || b.value === normalizedLabel
   );
   return brand?.value || "other";

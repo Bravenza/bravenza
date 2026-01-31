@@ -28,7 +28,7 @@ const testimonials = [
 
 const TestimonialsSectionComponent = () => {
   return (
-    <section className="py-16 md:py-24 relative">
+    <section className="py-14 md:py-20 relative">
       <div className="absolute inset-0 bg-gradient-gold-subtle opacity-20" />
       
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
