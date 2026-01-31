@@ -286,7 +286,7 @@ serve(async (req) => {
                     `Seu produto *${order.product_name}* está aguardando o pagamento do saldo para ser enviado.\n\n` +
                     `💰 Valor: R$ ${order.balance_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
                     `Acesse sua conta para pagar: https://bravenza.com.br/minha-conta\n\n` +
-                    `_Bravenza - Sua loja de sneakers premium_`,
+                    `_Bravenza - Sua loja de tênis premium_`,
                 },
               });
 

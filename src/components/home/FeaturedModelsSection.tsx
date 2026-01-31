@@ -46,24 +46,24 @@ const FeaturedModelsSection = () => {
   }
 
   return (
-    <section className="py-12 md:py-16 bg-secondary/30">
+    <section className="py-10 md:py-14 bg-secondary/30">
       <div className="container mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-10"
+          className="text-center mb-8 md:mb-10"
         >
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full mb-4">
             <Flame className="h-4 w-4" />
             <span className="text-sm font-medium">Os mais procurados</span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-3">
             Modelos que estão <span className="text-gradient-gold">bombando</span>
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Estes são os sneakers que nossos clientes mais pedem. Edições limitadas, 
+          <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base">
+            Estes são os tênis que nossos clientes mais pedem. Edições limitadas, 
             collabs exclusivas e clássicos atemporais, todos ao seu alcance.
           </p>
         </motion.div>

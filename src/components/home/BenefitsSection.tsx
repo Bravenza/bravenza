@@ -37,7 +37,7 @@ const benefits = [
 
 const BenefitsSectionComponent = () => {
   return (
-    <section className="py-16 md:py-24">
+    <section className="py-14 md:py-20">
       <div className="container mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

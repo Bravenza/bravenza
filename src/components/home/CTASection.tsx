@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 const CTASectionComponent = () => {
   return (
-    <section className="py-16 md:py-24">
+    <section className="py-14 md:py-20">
       <div className="container mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -21,8 +21,8 @@ const CTASectionComponent = () => {
           </div>
 
           <div className="relative z-10">
-            <h2 className="text-3xl md:text-5xl font-bold mb-6">
-              O sneaker perfeito está{" "}
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-6">
+              O tênis perfeito está{" "}
               <span className="text-gradient-gold">te esperando</span>
             </h2>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
