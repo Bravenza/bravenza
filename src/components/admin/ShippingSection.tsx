@@ -72,7 +72,7 @@ interface ShippingLabel {
   print_url?: string;
 }
 
-// Default package dimensions for sneakers (in cm and kg)
+// Default package dimensions for tênis (in cm and kg)
 const DEFAULT_PACKAGE = {
   weight: 1.2, // kg
   height: 15, // cm

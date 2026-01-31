@@ -25,7 +25,7 @@ const HeroSectionComponent = () => {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8">
               <Crown className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary">
-                A elite da importação de sneakers
+                A elite da importação de tênis
               </span>
             </div>
           </motion.div>
@@ -36,10 +36,9 @@ const HeroSectionComponent = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight"
           >
-            O tênis que você{" "}
-            <span className="text-gradient-gold">deseja</span>
+            O tênis que você deseja
             <br />
-            <span className="text-gradient-gold">existe.</span> Nós trazemos.
+            <span className="text-gradient-gold">existe.</span> E nós trazemos.
           </motion.h1>
 
           <motion.p

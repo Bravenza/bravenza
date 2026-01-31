@@ -22,7 +22,7 @@ const TermsPage = () => {
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-4">2. Descrição dos Serviços</h2>
             <p className="text-muted-foreground leading-relaxed">
-              A BRAVENZA atua como intermediária na importação de sneakers e calçados exclusivos. 
+              A BRAVENZA atua como intermediária na importação de tênis e calçados exclusivos. 
               Nossos serviços incluem:
             </p>
             <ul className="list-disc list-inside text-muted-foreground mt-3 space-y-2">
