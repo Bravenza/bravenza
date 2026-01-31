@@ -83,7 +83,7 @@ const DEFAULT_PACKAGE = {
 // Origin address (Bravenza warehouse)
 const ORIGIN_ADDRESS = {
   name: "BRAVENZA VAULT",
-  phone: "5551983018897",
+  phone: "5551981055425",
   email: "contato@bravenza.com",
   document: "00000000000", // CNPJ/CPF - to be configured
   address: "Rua Dr. Egydio Michaelsen",

@@ -2,7 +2,7 @@ import { forwardRef, memo } from "react";
 import { MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
-const WHATSAPP_NUMBER = "5551983018897";
+const WHATSAPP_NUMBER = "5551981055425";
 const WHATSAPP_MESSAGE = "Olá! Gostaria de saber mais sobre a BRAVENZA.";
 
 const FloatingWhatsAppComponent = forwardRef<HTMLButtonElement>((_, ref) => {

@@ -152,7 +152,7 @@ function FAQSectionComponent() {
             <p className="text-muted-foreground mb-4 text-sm md:text-base">
               Não encontrou o que procurava?
             </p>
-            <a href="https://wa.me/5551983018897?text=Olá!%20Tenho%20uma%20dúvida%20sobre%20a%20BRAVENZA." target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 md:px-6 md:py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm md:text-base">
+            <a href="https://wa.me/5551981055425?text=Olá!%20Tenho%20uma%20dúvida%20sobre%20a%20BRAVENZA." target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 md:px-6 md:py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm md:text-base">
               <MessageCircle className="h-4 w-4 md:h-5 md:w-5" />
               Fale conosco no WhatsApp
             </a>
