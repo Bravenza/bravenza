@@ -9,13 +9,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
 import { HolographicSeal } from "@/components/authenticity/HolographicSeal";
 import { CertificateQRCode } from "@/components/authenticity/CertificateQRCode";
+import { GoldenConfetti } from "@/components/authenticity/GoldenConfetti";
+import { PremiumGallery } from "@/components/authenticity/PremiumGallery";
+import { CertificateDownload } from "@/components/authenticity/CertificateDownload";
+import { useSuccessSound } from "@/hooks/useSuccessSound";
 
 interface CertificateData {
   order_id: string;
@@ -75,6 +77,8 @@ export default function AuthenticityPage() {
   const [error, setError] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const { playSuccessSound } = useSuccessSound();
 
   useEffect(() => {
     if (code) {
@@ -86,6 +90,7 @@ export default function AuthenticityPage() {
     setIsLoading(true);
     setError(null);
     setCertificate(null);
+    setShowConfetti(false);
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke("verify-authenticity", {
@@ -100,6 +105,9 @@ export default function AuthenticityPage() {
       }
 
       setCertificate(data.certificate);
+      // Trigger confetti and sound on successful verification
+      setShowConfetti(true);
+      playSuccessSound();
     } catch (err: any) {
       console.error("Verification error:", err);
       setError("Erro ao verificar. Tente novamente.");
@@ -136,6 +144,9 @@ export default function AuthenticityPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#111111] to-[#0a0a0a]">
+      {/* Golden Confetti Effect */}
+      <GoldenConfetti isActive={showConfetti} />
+
       {/* Premium Header */}
       <header className="border-b border-primary/20 bg-black/40 backdrop-blur-xl">
         <div className="container mx-auto px-4 py-5">
@@ -504,6 +515,14 @@ export default function AuthenticityPage() {
                       code={code || ""} 
                       verificationUrl={getVerificationUrl()} 
                     />
+
+                    <Separator className="bg-border/30" />
+
+                    {/* Certificate Download Section */}
+                    <CertificateDownload 
+                      certificate={certificate}
+                      code={code || ""}
+                    />
                   </CardContent>
 
                   {/* Premium Footer */}
@@ -565,47 +584,14 @@ export default function AuthenticityPage() {
         </div>
       </footer>
 
-      {/* Lightbox for Photos */}
-      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-        <DialogContent className="max-w-5xl p-0 bg-black/98 border-primary/20">
-          <VisuallyHidden>
-            <DialogTitle>Foto de inspeção</DialogTitle>
-          </VisuallyHidden>
-          {certificate?.inspection_photos && (
-            <div className="relative">
-              <div className="flex items-center justify-center min-h-[70vh] p-6">
-                <img
-                  src={certificate.inspection_photos[currentPhotoIndex]}
-                  alt={`Inspeção ${currentPhotoIndex + 1}`}
-                  className="max-w-full max-h-[80vh] object-contain rounded-lg"
-                />
-              </div>
-              
-              {/* Navigation */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/80 border border-primary/30">
-                  {certificate.inspection_photos.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setCurrentPhotoIndex(idx)}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        idx === currentPhotoIndex 
-                          ? "bg-primary w-6" 
-                          : "bg-white/30 hover:bg-white/50"
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-              
-              {/* Counter */}
-              <div className="absolute top-6 right-6 px-4 py-2 rounded-full bg-black/80 border border-primary/30 text-sm font-medium">
-                {currentPhotoIndex + 1} / {certificate.inspection_photos.length}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Premium Gallery for Photos */}
+      <PremiumGallery
+        photos={certificate?.inspection_photos || []}
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        initialIndex={currentPhotoIndex}
+        productName={certificate?.product.name}
+      />
     </div>
   );
 }
