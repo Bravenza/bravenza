@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
         wishlist:wishlist_item_id(product_name, product_brand)
       `)
       .eq('is_active', true)
-      .in('status', ['RECEIVED', 'IN_CURATION', 'OPTIONS_SENT']);
+      .in('status', ['RECEIVED', 'IN_CURATION', 'MATCH_SENT']);
 
     if (searchError) {
       console.error('Error fetching searches:', searchError);
@@ -176,6 +176,26 @@ Deno.serve(async (req) => {
           deadline: deadline.toISOString(),
         });
       } else if (hoursOverdue > -2) {
+        // Warning: notify client that deadline is approaching
+        const { data: member } = await supabase
+          .from('vault_members')
+          .select('client_cpf')
+          .eq('id', room.user_id)
+          .single();
+
+        if (member?.client_cpf) {
+          const hoursRemaining = Math.abs(Math.round(hoursOverdue));
+          await supabase.from('notifications').insert({
+            target: 'client',
+            target_client_cpf: member.client_cpf,
+            type: 'match_room',
+            title: 'Decisão pendente!',
+            message: `Você tem ${hoursRemaining}h para decidir sobre as opções encontradas.`,
+            reference_type: 'vault_match_room',
+            reference_id: room.id,
+          });
+        }
+
         warnings.push({
           search_id: room.search_id,
           member_name: memberName,

@@ -125,6 +125,17 @@ Deno.serve(async (req) => {
             });
         }
 
+        // Create notification for tier upgrade
+        await supabase.from('notifications').insert({
+          target: 'client',
+          target_client_cpf: member.client_cpf,
+          type: 'tier_change',
+          title: `Parabéns! Você agora é ${tierNames[newTier] || newTier}!`,
+          message: `Você foi promovido para ${tierNames[newTier] || newTier}. Aproveite seus novos benefícios exclusivos.`,
+          reference_type: 'vault_member',
+          reference_id: member.id,
+        });
+
         results.upgraded++;
         console.log(`Member ${member.client_name} upgraded from ${member.tier} to ${newTier}`);
       } else {
