@@ -102,37 +102,26 @@ export default function VaultWishlist() {
     
     setIsLoading(true);
     try {
-      // Fetch wishlist items
-      const { data: member } = await supabase
-        .rpc("get_vault_member", { p_cpf: session.cpf });
+      // Fetch wishlist items using RPC
+      const { data: wishlists, error: wishlistError } = await supabase
+        .rpc("get_vault_member_wishlists", { p_cpf: session.cpf });
       
-      if (member && member.length > 0) {
-        const memberId = member[0].id;
-        
-        // Get wishlists
-        const { data: wishlists } = await supabase
-          .from("vault_wishlists")
-          .select("*")
-          .eq("member_id", memberId)
-          .order("priority", { ascending: false });
-        
-        if (wishlists) {
-          setWishlistItems(wishlists.map(w => ({
-            id: w.id,
-            title: w.title || w.product_name,
-            product_brand: w.product_brand,
-            product_model: w.product_model,
-            product_size: w.product_size,
-            product_color: w.product_color || w.colorway,
-            condition_pref: w.condition_pref || w.condition_preference || "DS",
-            urgency_level: w.urgency_level || w.urgency || "FLEXIBLE",
-            priority: w.priority || 3,
-            min_price: w.min_price,
-            max_price: w.max_price,
-            notes: w.notes,
-            created_at: w.created_at,
-          })));
-        }
+      if (!wishlistError && wishlists) {
+        setWishlistItems(wishlists.map((w: any) => ({
+          id: w.id,
+          title: w.title,
+          product_brand: w.product_brand,
+          product_model: w.product_model,
+          product_size: w.product_size,
+          product_color: w.product_color,
+          condition_pref: w.condition_pref || "DS",
+          urgency_level: w.urgency_level || "FLEXIBLE",
+          priority: w.priority || 3,
+          min_price: w.min_price,
+          max_price: w.max_price,
+          notes: w.notes,
+          created_at: w.created_at,
+        })));
       }
 
       // Fetch searches
@@ -159,44 +148,23 @@ export default function VaultWishlist() {
       return;
     }
 
-    // Check limits
-    const member = context?.member;
-    if (member && wishlistItems.length >= member.max_wishlist_items) {
-      toast({
-        title: "Limite atingido",
-        description: `Seu tier permite até ${member.max_wishlist_items} itens na wishlist`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsAddingItem(true);
     
     try {
-      const { data: memberData } = await supabase
-        .rpc("get_vault_member", { p_cpf: session?.cpf });
-      
-      if (!memberData || memberData.length === 0) {
-        throw new Error("Membro não encontrado");
-      }
-
-      const { error } = await supabase
-        .from("vault_wishlists")
-        .insert({
-          member_id: memberData[0].id,
-          product_name: newItem.title,
-          title: newItem.title,
-          product_brand: newItem.brand || null,
-          product_model: newItem.model || null,
-          product_size: newItem.size,
-          product_color: newItem.color || null,
-          condition_pref: newItem.condition as any,
-          urgency_level: newItem.urgency as any,
-          priority: newItem.priority,
-          min_price: newItem.min_price ? parseFloat(newItem.min_price) : null,
-          max_price: newItem.max_price ? parseFloat(newItem.max_price) : null,
-          notes: newItem.notes || null,
-        });
+      const { error } = await supabase.rpc("create_vault_wishlist_item", {
+        p_cpf: session?.cpf,
+        p_title: newItem.title,
+        p_brand: newItem.brand || null,
+        p_model: newItem.model || null,
+        p_size: newItem.size,
+        p_color: newItem.color || null,
+        p_condition: newItem.condition,
+        p_urgency: newItem.urgency,
+        p_priority: newItem.priority,
+        p_min_price: newItem.min_price ? parseFloat(newItem.min_price) : null,
+        p_max_price: newItem.max_price ? parseFloat(newItem.max_price) : null,
+        p_notes: newItem.notes || null,
+      });
 
       if (error) throw error;
 
@@ -207,24 +175,16 @@ export default function VaultWishlist() {
 
       setShowAddDialog(false);
       setNewItem({
-        title: "",
-        brand: "",
-        model: "",
-        size: "",
-        color: "",
-        condition: "DS",
-        urgency: "FLEXIBLE",
-        priority: 3,
-        min_price: "",
-        max_price: "",
-        notes: "",
+        title: "", brand: "", model: "", size: "", color: "",
+        condition: "DS", urgency: "FLEXIBLE", priority: 3,
+        min_price: "", max_price: "", notes: "",
       });
       fetchData();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding item:", error);
       toast({
         title: "Erro ao adicionar",
-        description: "Tente novamente",
+        description: error.message || "Tente novamente",
         variant: "destructive",
       });
     } finally {
@@ -233,47 +193,13 @@ export default function VaultWishlist() {
   };
 
   const startSearch = async (wishlistId: string) => {
-    const member = context?.member;
-    
-    // Check active searches limit
-    if (member && member.active_hunts >= member.max_active_hunts) {
-      toast({
-        title: "Limite de buscas ativas",
-        description: `Seu tier permite até ${member.max_active_hunts} ${member.max_active_hunts === 1 ? 'busca ativa' : 'buscas ativas'}`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Check review mode
-    if (member?.flags_review_mode_until) {
-      const reviewUntil = new Date(member.flags_review_mode_until);
-      if (reviewUntil > new Date()) {
-        toast({
-          title: "Modo revisão ativo",
-          description: "Você precisa preencher a faixa de preço (Open Bid) para iniciar novas buscas",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
+    if (!session?.cpf) return;
 
     try {
-      const { data: memberData } = await supabase
-        .rpc("get_vault_member", { p_cpf: session?.cpf });
-      
-      if (!memberData || memberData.length === 0) {
-        throw new Error("Membro não encontrado");
-      }
-
-      const { error } = await supabase
-        .from("vault_searches")
-        .insert({
-          user_id: memberData[0].id,
-          wishlist_item_id: wishlistId,
-          status: "RECEIVED",
-          is_active: true,
-        });
+      const { error } = await supabase.rpc("start_vault_search", {
+        p_cpf: session.cpf,
+        p_wishlist_id: wishlistId,
+      });
 
       if (error) throw error;
 
@@ -283,11 +209,11 @@ export default function VaultWishlist() {
       });
 
       fetchData();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error starting search:", error);
       toast({
         title: "Erro ao iniciar busca",
-        description: "Tente novamente",
+        description: error.message || "Tente novamente",
         variant: "destructive",
       });
     }

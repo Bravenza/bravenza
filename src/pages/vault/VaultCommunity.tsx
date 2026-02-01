@@ -75,13 +75,10 @@ export default function VaultCommunity() {
     if (!session?.cpf) return;
     
     const { data } = await supabase
-      .from("vault_members")
-      .select("community_opt_in")
-      .eq("client_cpf", session.cpf)
-      .maybeSingle();
+      .rpc("get_vault_member", { p_cpf: session.cpf });
     
-    if (data) {
-      setIsOptedIn(data.community_opt_in || false);
+    if (data && data.length > 0) {
+      setIsOptedIn(data[0].community_opt_in || false);
     }
   };
 
@@ -110,9 +107,7 @@ export default function VaultCommunity() {
     
     try {
       const { error } = await supabase
-        .from("vault_members")
-        .update({ community_opt_in: !isOptedIn })
-        .eq("client_cpf", session.cpf);
+        .rpc("update_vault_community_opt_in", { p_cpf: session.cpf, p_opt_in: !isOptedIn });
       
       if (error) throw error;
       

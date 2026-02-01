@@ -104,34 +104,20 @@ export default function VaultClub() {
       return;
     }
 
+    if (!session?.cpf) return;
+
     setIsGenerating(true);
     
     try {
-      // Generate invite code
-      const { data: code, error: codeError } = await supabase
-        .rpc("generate_vault_invite_code");
+      // Use RPC function to create invite
+      const { data, error } = await supabase
+        .rpc("create_vault_invite", { p_cpf: session.cpf });
       
-      if (codeError) throw codeError;
-
-      // Create invite
-      const { error: insertError } = await supabase
-        .from("vault_invites")
-        .insert({
-          inviter_id: member.id,
-          invite_code: code,
-          token: code,
-          created_by_tier_at_time: member.tier,
-          status: "pending",
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        });
-
-      if (insertError) throw insertError;
-
-      // Update invites remaining
-      await supabase
-        .from("vault_members")
-        .update({ invites_remaining: member.invites_remaining - 1 })
-        .eq("id", member.id);
+      if (error) throw error;
+      
+      if (!data || data.length === 0 || !data[0].success) {
+        throw new Error("Falha ao criar convite");
+      }
 
       toast({
         title: "Convite gerado!",
