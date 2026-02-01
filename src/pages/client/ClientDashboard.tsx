@@ -59,6 +59,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
+// Super admin email - full Vault Club access
+const SUPER_ADMIN_EMAIL = "jefferson@mindsc.com.br";
+
 interface OrderData {
   order_id: string;
   order_type: string;
@@ -86,6 +89,7 @@ interface OrderData {
   updated_at: string;
   history: { status: string; notes: string | null; created_at: string }[];
   inspection_photos: string[] | null;
+  client_email?: string;
 }
 
 interface VaultMemberData {
@@ -156,7 +160,14 @@ export default function ClientDashboard() {
   const [vaultMember, setVaultMember] = useState<VaultMemberData | null>(null);
   const [activeSection, setActiveSection] = useState("pedidos");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [clientEmail, setClientEmail] = useState<string | null>(null);
   const isMobile = useIsMobile();
+
+  // Check if current user is super admin
+  const isSuperAdmin = clientEmail?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+  
+  // Vault Club access: super admin, vault member, or has purchases
+  const hasVaultAccess = isSuperAdmin || !!vaultMember || orders.length > 0;
 
   useEffect(() => {
     if (!authLoading && !session) {
@@ -178,10 +189,19 @@ export default function ClientDashboard() {
 
         if (!ordersRes.error && ordersRes.data?.orders) {
           setOrders(ordersRes.data.orders);
+          // Get client email from response or first order
+          if (ordersRes.data.client_email) {
+            setClientEmail(ordersRes.data.client_email);
+          }
         }
 
         if (memberRes.data && memberRes.data.length > 0) {
-          setVaultMember(memberRes.data[0] as unknown as VaultMemberData);
+          const member = memberRes.data[0] as unknown as VaultMemberData & { client_email?: string };
+          setVaultMember(member);
+          // Get email from vault member if available
+          if ((memberRes.data[0] as any).client_email) {
+            setClientEmail((memberRes.data[0] as any).client_email);
+          }
         }
       } catch (err) {
         console.error("Error fetching data:", err);
@@ -223,6 +243,16 @@ export default function ClientDashboard() {
   const tierInfo = vaultMember ? tierConfig[vaultMember.tier] : null;
   const currentSection = sectionTitles[activeSection];
   const isVaultSection = activeSection !== "pedidos";
+  
+  // For super admin without vault member record, create virtual tier info
+  const effectiveTierInfo = tierInfo || (isSuperAdmin ? {
+    name: "Super Admin",
+    icon: Sparkles,
+    color: "text-primary",
+    bgColor: "bg-primary/10",
+    borderColor: "border-primary/30",
+    gradient: "from-primary/10 to-transparent",
+  } : null);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -260,8 +290,8 @@ export default function ClientDashboard() {
                 )}
               </button>
 
-              {/* Vault Club Dropdown - show if vault member OR has purchases */}
-              {(vaultMember || orders.length > 0) && (
+              {/* Vault Club Dropdown - show if has vault access */}
+              {hasVaultAccess && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
@@ -274,6 +304,7 @@ export default function ClientDashboard() {
                     >
                       <Crown className="h-4 w-4" />
                       Vault Club
+                      {isSuperAdmin && <Sparkles className="h-3 w-3 ml-1 text-primary" />}
                       <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-70" />
                     </button>
                   </DropdownMenuTrigger>
@@ -303,8 +334,8 @@ export default function ClientDashboard() {
                 </DropdownMenu>
               )}
 
-              {/* Non-member Vault CTA - only show if no purchases AND not a vault member */}
-              {!vaultMember && orders.length === 0 && (
+              {/* Non-member Vault CTA - only show if no vault access */}
+              {!hasVaultAccess && (
                 <Link
                   to="/vault"
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 transition-colors"
@@ -384,13 +415,14 @@ export default function ClientDashboard() {
                 </div>
               </button>
 
-              {/* Vault Club Items - show if vault member OR has purchases */}
-              {(vaultMember || orders.length > 0) && (
+              {/* Vault Club Items - show if has vault access */}
+              {hasVaultAccess && (
                 <>
-                  <div className="pt-3 pb-2 px-4">
+                  <div className="pt-3 pb-2 px-4 flex items-center gap-2">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Vault Club
                     </p>
+                    {isSuperAdmin && <Sparkles className="h-3 w-3 text-primary" />}
                   </div>
                   {vaultMenuItems.map((item) => {
                     const isActive = activeSection === item.id;
@@ -443,22 +475,22 @@ export default function ClientDashboard() {
             <div className="flex items-start gap-4">
               <div className={cn(
                 "p-3 rounded-2xl",
-                isVaultSection && tierInfo ? tierInfo.bgColor : "bg-muted/50"
+                isVaultSection && effectiveTierInfo ? effectiveTierInfo.bgColor : "bg-muted/50"
               )}>
                 <currentSection.icon className={cn(
                   "h-6 w-6",
-                  isVaultSection && tierInfo ? tierInfo.color : "text-foreground"
+                  isVaultSection && effectiveTierInfo ? effectiveTierInfo.color : "text-foreground"
                 )} />
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-3">
                   <h1 className="text-2xl font-bold tracking-tight">{currentSection.title}</h1>
-                  {isVaultSection && tierInfo && (
+                  {isVaultSection && effectiveTierInfo && (
                     <span className={cn(
                       "px-2.5 py-1 rounded-full text-xs font-semibold",
-                      tierInfo.bgColor, tierInfo.color
+                      effectiveTierInfo.bgColor, effectiveTierInfo.color
                     )}>
-                      {tierInfo.name}
+                      {effectiveTierInfo.name}
                     </span>
                   )}
                 </div>
@@ -466,22 +498,22 @@ export default function ClientDashboard() {
               </div>
 
               {/* Quick Stats for Vault sections */}
-              {isVaultSection && vaultMember && (
+              {isVaultSection && (vaultMember || isSuperAdmin) && (
                 <div className="hidden lg:flex items-center gap-6 pr-2">
                   <div className="text-right">
-                    <p className="text-2xl font-bold tabular-nums">{vaultMember.total_purchases}</p>
+                    <p className="text-2xl font-bold tabular-nums">{vaultMember?.total_purchases ?? "∞"}</p>
                     <p className="text-xs text-muted-foreground">Itens</p>
                   </div>
                   <div className="h-8 w-px bg-border/50" />
                   <div className="text-right">
                     <p className="text-2xl font-bold tabular-nums">
-                      {vaultMember.active_hunts}/{vaultMember.max_active_hunts}
+                      {vaultMember ? `${vaultMember.active_hunts}/${vaultMember.max_active_hunts}` : "∞"}
                     </p>
                     <p className="text-xs text-muted-foreground">Buscas</p>
                   </div>
                   <div className="h-8 w-px bg-border/50" />
                   <div className="text-right">
-                    <p className="text-2xl font-bold tabular-nums">{vaultMember.invites_remaining}</p>
+                    <p className="text-2xl font-bold tabular-nums">{vaultMember?.invites_remaining ?? "∞"}</p>
                     <p className="text-xs text-muted-foreground">Convites</p>
                   </div>
                 </div>
@@ -516,8 +548,8 @@ export default function ClientDashboard() {
                 />
               )}
 
-              {/* Vault sections - show if vault member OR has purchases */}
-              {(vaultMember || orders.length > 0) && session && (
+              {/* Vault sections - show if has vault access */}
+              {hasVaultAccess && session && (
                 <>
                   {activeSection === "vault" && (
                     <VaultMyItemsTab clientCpf={session.cpf} />
@@ -531,15 +563,28 @@ export default function ClientDashboard() {
                     <VaultIntelTab clientCpf={session.cpf} />
                   )}
 
-                  {activeSection === "clube" && vaultMember && (
+                  {activeSection === "clube" && (vaultMember || isSuperAdmin) && (
                     <VaultClubTab
                       clientCpf={session.cpf}
-                      member={vaultMember}
+                      member={vaultMember || {
+                        id: "super-admin",
+                        tier: "elite" as const,
+                        total_purchases: 0,
+                        active_hunts: 0,
+                        max_active_hunts: 999,
+                        max_wishlist_items: 999,
+                        invites_remaining: 999,
+                        community_opt_in: true,
+                        stats_purchases_count_12m: 0,
+                        stats_spend_total_12m: 0,
+                        stats_decision_rate: 100,
+                        stats_converted_invites: 0,
+                      }}
                       onMemberUpdate={refreshVaultMember}
                     />
                   )}
 
-                  {activeSection === "clube" && !vaultMember && (
+                  {activeSection === "clube" && !vaultMember && !isSuperAdmin && (
                     <div className="text-center py-12">
                       <Crown className="h-12 w-12 mx-auto text-primary/50 mb-4" />
                       <h3 className="text-lg font-semibold mb-2">Bem-vindo ao Vault Club!</h3>
@@ -549,14 +594,27 @@ export default function ClientDashboard() {
                     </div>
                   )}
 
-                  {activeSection === "comunidade" && vaultMember && (
+                  {activeSection === "comunidade" && (vaultMember || isSuperAdmin) && (
                     <VaultCommunityTab
                       clientCpf={session.cpf}
-                      member={vaultMember}
+                      member={vaultMember || {
+                        id: "super-admin",
+                        tier: "elite" as const,
+                        total_purchases: 0,
+                        active_hunts: 0,
+                        max_active_hunts: 999,
+                        max_wishlist_items: 999,
+                        invites_remaining: 999,
+                        community_opt_in: true,
+                        stats_purchases_count_12m: 0,
+                        stats_spend_total_12m: 0,
+                        stats_decision_rate: 100,
+                        stats_converted_invites: 0,
+                      }}
                     />
                   )}
 
-                  {activeSection === "comunidade" && !vaultMember && (
+                  {activeSection === "comunidade" && !vaultMember && !isSuperAdmin && (
                     <div className="text-center py-12">
                       <Users className="h-12 w-12 mx-auto text-primary/50 mb-4" />
                       <h3 className="text-lg font-semibold mb-2">Comunidade Vault</h3>
