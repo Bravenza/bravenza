@@ -115,6 +115,7 @@ serve(async (req) => {
         national_tracking,
         national_carrier,
         inspection_photos,
+        client_email,
         created_at,
         updated_at
       `)
@@ -122,6 +123,23 @@ serve(async (req) => {
       .order("created_at", { ascending: false });
 
     if (ordersError) throw ordersError;
+
+    // Get client email from first order or vault member
+    let clientEmail: string | null = null;
+    if (orders && orders.length > 0 && orders[0].client_email) {
+      clientEmail = orders[0].client_email;
+    } else {
+      // Try to get email from vault_members
+      const { data: vaultMember } = await supabase
+        .from("vault_members")
+        .select("client_email")
+        .eq("client_cpf", clientCpf)
+        .limit(1);
+      
+      if (vaultMember && vaultMember.length > 0) {
+        clientEmail = vaultMember[0].client_email;
+      }
+    }
 
     // Get order history for each order
     const ordersWithHistory = await Promise.all(
@@ -143,7 +161,8 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         orders: ordersWithHistory,
-        cpf: clientCpf 
+        cpf: clientCpf,
+        client_email: clientEmail
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
