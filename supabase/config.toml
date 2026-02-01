@@ -41,3 +41,15 @@ verify_jwt = false
 
 [functions.superfrete]
 verify_jwt = false
+
+[functions.vault-redeem-invite]
+verify_jwt = false
+
+[functions.vault-tier-check]
+verify_jwt = false
+
+[functions.vault-semester-reset]
+verify_jwt = false
+
+[functions.vault-sla-monitor]
+verify_jwt = false
