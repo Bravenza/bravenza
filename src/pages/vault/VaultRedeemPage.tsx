@@ -138,48 +138,26 @@ export default function VaultRedeemPage() {
     setIsRegistering(true);
     
     try {
-      // Check if member already exists
-      const { data: existingMember } = await supabase
-        .from("vault_members")
-        .select("id")
-        .eq("client_cpf", cleanCpf)
-        .maybeSingle();
+      // Use edge function for redemption
+      const { data, error } = await supabase.functions.invoke("vault-redeem-invite", {
+        body: {
+          invite_code: token,
+          cpf: cleanCpf,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || undefined,
+        },
+      });
       
-      if (existingMember) {
+      if (error) throw error;
+      
+      if (data?.error) {
         toast({
-          title: "Você já é membro!",
-          description: "Faça login na sua conta",
+          title: "Erro no cadastro",
+          description: data.error,
           variant: "destructive",
         });
-        navigate("/cliente/login");
         return;
-      }
-      
-      // Create new member
-      const { data: newMember, error: memberError } = await supabase
-        .from("vault_members")
-        .insert({
-          client_name: formData.name,
-          client_email: formData.email,
-          client_cpf: cleanCpf,
-          tier: "member", // Vault Access
-          joined_via: "invite",
-        })
-        .select("id")
-        .single();
-      
-      if (memberError) throw memberError;
-      
-      // Update invite as used
-      if (inviteData) {
-        await supabase
-          .from("vault_invites")
-          .update({
-            status: "used",
-            used_by_member_id: newMember.id,
-            used_at: new Date().toISOString(),
-          })
-          .eq("id", inviteData.id);
       }
       
       setStep("success");
