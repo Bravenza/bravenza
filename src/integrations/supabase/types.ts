@@ -2109,6 +2109,10 @@ export type Database = {
           max_wishlist_items: number
           preferred_brands: string[]
           preferred_sizes: string[]
+          stats_converted_invites: number
+          stats_decision_rate: number
+          stats_purchases_count_12m: number
+          stats_spend_total_12m: number
           tier: Database["public"]["Enums"]["vault_tier"]
           total_purchases: number
         }[]
