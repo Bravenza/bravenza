@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ClientAuthProvider } from "@/hooks/useClientAuth";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,12 +30,6 @@ const AuthenticityPage = lazy(() => import("./pages/AuthenticityPage"));
 const VaultLandingPage = lazy(() => import("./pages/vault/VaultLandingPage"));
 const VaultWaitlistPage = lazy(() => import("./pages/vault/VaultWaitlistPage"));
 const VaultRedeemPage = lazy(() => import("./pages/vault/VaultRedeemPage"));
-const VaultAppLayout = lazy(() => import("./pages/vault/VaultAppLayout"));
-const VaultMyItems = lazy(() => import("./pages/vault/VaultMyItems"));
-const VaultWishlist = lazy(() => import("./pages/vault/VaultWishlist"));
-const VaultIntel = lazy(() => import("./pages/vault/VaultIntel"));
-const VaultClub = lazy(() => import("./pages/vault/VaultClub"));
-const VaultCommunity = lazy(() => import("./pages/vault/VaultCommunity"));
 const VaultMatchRoom = lazy(() => import("./pages/vault/VaultMatchRoom"));
 
 // Lazy loaded pages - Client portal
@@ -124,14 +118,10 @@ const App = () => (
                 <Route path="/vault" element={<VaultLandingPage />} />
                 <Route path="/vault/waitlist" element={<VaultWaitlistPage />} />
                 <Route path="/vault/redeem" element={<VaultRedeemPage />} />
-                <Route path="/vault/app" element={<VaultAppLayout />}>
-                  <Route index element={<VaultMyItems />} />
-                  <Route path="wishlist" element={<VaultWishlist />} />
-                  <Route path="intel" element={<VaultIntel />} />
-                  <Route path="club" element={<VaultClub />} />
-                  <Route path="community" element={<VaultCommunity />} />
-                  <Route path="match/:matchRoomId" element={<VaultMatchRoom />} />
-                </Route>
+                {/* Redirect old vault/app routes to client dashboard */}
+                <Route path="/vault/app" element={<Navigate to="/minha-conta" replace />} />
+                <Route path="/vault/app/*" element={<Navigate to="/minha-conta" replace />} />
+                <Route path="/vault/app/match/:matchRoomId" element={<VaultMatchRoom />} />
 
                 {/* Client portal routes */}
                 <Route path="/cliente/login" element={<ClientLogin />} />
