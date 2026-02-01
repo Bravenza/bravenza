@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   Search, Plus, Play, Clock, CheckCircle2, 
-  AlertCircle, ChevronRight, MessageSquare
+  AlertCircle, ChevronRight, MessageSquare, ArrowLeft
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { MatchRoomView } from "./MatchRoomView";
 
 interface WishlistItem {
   id: string;
@@ -68,6 +69,7 @@ export function VaultWishlistTab({ clientCpf }: VaultWishlistTabProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [selectedMatchRoom, setSelectedMatchRoom] = useState<{ id: string; title: string } | null>(null);
   
   const [newItem, setNewItem] = useState({
     title: "",
@@ -410,47 +412,92 @@ export function VaultWishlistTab({ clientCpf }: VaultWishlistTabProps) {
 
         {/* Active Searches Tab */}
         <TabsContent value="active" className="space-y-3">
-          {activeSearches.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="py-8 text-center">
-                <Search className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground text-sm">Nenhuma busca ativa</p>
-                <p className="text-xs text-muted-foreground mt-1">Inicie uma busca a partir da sua wishlist</p>
-              </CardContent>
-            </Card>
-          ) : (
-            activeSearches.map((search, index) => {
-              const statusInfo = searchStatusConfig[search.status] || searchStatusConfig.RECEIVED;
-              
-              return (
-                <motion.div
-                  key={search.search_id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium truncate">{search.wishlist_title}</h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
-                            {search.has_match_room && (
-                              <Badge variant="outline" className="border-primary text-primary">
-                                <MessageSquare className="h-3 w-3 mr-1" />
-                                Match Room
-                              </Badge>
+          {/* Match Room View */}
+          {selectedMatchRoom && (
+            <div className="space-y-3">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setSelectedMatchRoom(null)}
+                className="gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Voltar às buscas
+              </Button>
+              <MatchRoomView
+                clientCpf={clientCpf}
+                matchRoomId={selectedMatchRoom.id}
+                onDecisionMade={() => {
+                  setSelectedMatchRoom(null);
+                  fetchData();
+                }}
+              />
+            </div>
+          )}
+
+          {/* Searches List */}
+          {!selectedMatchRoom && (
+            <>
+              {activeSearches.length === 0 ? (
+                <Card className="border-dashed">
+                  <CardContent className="py-8 text-center">
+                    <Search className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground text-sm">Nenhuma busca ativa</p>
+                    <p className="text-xs text-muted-foreground mt-1">Inicie uma busca a partir da sua wishlist</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                activeSearches.map((search, index) => {
+                  const statusInfo = searchStatusConfig[search.status] || searchStatusConfig.RECEIVED;
+                  const hasMatchRoom = search.has_match_room && search.match_room_id;
+                  
+                  return (
+                    <motion.div
+                      key={search.search_id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      <Card 
+                        className={hasMatchRoom ? "cursor-pointer hover:border-primary/50 transition" : ""}
+                        onClick={() => {
+                          if (hasMatchRoom) {
+                            setSelectedMatchRoom({ 
+                              id: search.match_room_id!, 
+                              title: search.wishlist_title 
+                            });
+                          }
+                        }}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium truncate">{search.wishlist_title}</h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
+                                {hasMatchRoom && (
+                                  <Badge variant="outline" className="border-primary text-primary animate-pulse">
+                                    <MessageSquare className="h-3 w-3 mr-1" />
+                                    Ver opções
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            {hasMatchRoom ? (
+                              <Button size="sm" variant="ghost">
+                                <ChevronRight className="h-5 w-5" />
+                              </Button>
+                            ) : (
+                              <ChevronRight className="h-5 w-5 text-muted-foreground" />
                             )}
                           </div>
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                })
+              )}
+            </>
           )}
         </TabsContent>
 
