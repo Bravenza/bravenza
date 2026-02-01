@@ -11,22 +11,20 @@ import {
   Newspaper,
   Crown,
   Users,
+  Shield,
+  Sparkles,
+  ChevronRight,
+  Menu,
+  X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useClientAuth } from "@/hooks/useClientAuth";
 import { Footer } from "@/components/home/Footer";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 import { Logo } from "@/components/Logo";
-import { ReferralCard } from "@/components/client/ReferralCard";
-import { CashbackBanner } from "@/components/client/CashbackBanner";
 import { ClientNotificationBell } from "@/components/client/ClientNotificationBell";
 import { ClientPreferences } from "@/components/client/ClientPreferences";
-import {
-  OrdersTab,
-  DashboardSidebar,
-  MobileNav,
-  SectionHeader,
-} from "@/components/client/dashboard";
+import { OrdersTab } from "@/components/client/dashboard";
 import {
   VaultMyItemsTab,
   VaultWishlistTab,
@@ -40,6 +38,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 interface OrderData {
   order_id: string;
@@ -85,38 +84,41 @@ interface VaultMemberData {
   stats_converted_invites: number;
 }
 
-const sectionConfig = {
-  pedidos: {
-    icon: Package,
-    title: "Meus Pedidos",
-    description: "Acompanhe o status de todos os seus pedidos",
+const tierConfig = {
+  member: {
+    name: "Vault Access",
+    icon: Shield,
+    color: "text-muted-foreground",
+    bgColor: "bg-muted/30",
+    borderColor: "border-muted-foreground/20",
+    gradient: "from-muted/20 to-transparent",
   },
-  vault: {
-    icon: Box,
-    title: "Meu Vault",
-    description: "Sua coleção certificada pelo Vault Club",
-  },
-  wishlist: {
-    icon: Search,
-    title: "Wishlist & Buscas",
-    description: "Gerencie seus itens desejados e acompanhe buscas ativas",
-  },
-  intel: {
-    icon: Newspaper,
-    title: "Intel",
-    description: "Conteúdo exclusivo, alertas de mercado e guias",
-  },
-  clube: {
+  collector: {
+    name: "Vault Privilege",
     icon: Crown,
-    title: "Meu Clube",
-    description: "Seu status, benefícios, convites e progresso",
+    color: "text-amber-500",
+    bgColor: "bg-amber-500/10",
+    borderColor: "border-amber-500/30",
+    gradient: "from-amber-500/10 to-transparent",
   },
-  comunidade: {
-    icon: Users,
-    title: "Comunidade",
-    description: "Conecte-se com outros membros do Vault",
+  elite: {
+    name: "Vault Black",
+    icon: Sparkles,
+    color: "text-primary",
+    bgColor: "bg-primary/10",
+    borderColor: "border-primary/30",
+    gradient: "from-primary/10 to-transparent",
   },
 };
+
+const navItems = [
+  { id: "pedidos", label: "Pedidos", icon: Package },
+  { id: "vault", label: "Vault", icon: Box, vaultOnly: true },
+  { id: "wishlist", label: "Wishlist", icon: Search, vaultOnly: true },
+  { id: "intel", label: "Intel", icon: Newspaper, vaultOnly: true },
+  { id: "clube", label: "Clube", icon: Crown, vaultOnly: true },
+  { id: "comunidade", label: "Social", icon: Users, vaultOnly: true },
+];
 
 export default function ClientDashboard() {
   const navigate = useNavigate();
@@ -126,6 +128,7 @@ export default function ClientDashboard() {
   const [showPreferences, setShowPreferences] = useState(false);
   const [vaultMember, setVaultMember] = useState<VaultMemberData | null>(null);
   const [activeSection, setActiveSection] = useState("pedidos");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !session) {
@@ -189,23 +192,49 @@ export default function ClientDashboard() {
     );
   }
 
-  const currentSection =
-    sectionConfig[activeSection as keyof typeof sectionConfig];
+  const tierInfo = vaultMember ? tierConfig[vaultMember.tier] : null;
+  const visibleNavItems = navItems.filter(
+    (item) => !item.vaultOnly || vaultMember
+  );
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="border-b border-border/50 bg-card/80 backdrop-blur-sm sticky top-0 z-30">
-        <div className="px-4 lg:px-6 py-3">
-          <div className="flex items-center justify-between">
+      <header className="border-b border-border/50 bg-background/95 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6">
+          <div className="flex items-center justify-between h-14">
             <Link to="/" className="flex items-center gap-2">
               <Logo size="sm" />
             </Link>
-            <div className="flex items-center gap-1">
+
+            {/* Desktop Nav */}
+            <nav className="hidden md:flex items-center gap-1">
+              {visibleNavItems.map((item) => {
+                const isActive = activeSection === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveSection(item.id)}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </nav>
+
+            <div className="flex items-center gap-2">
               {session && <ClientNotificationBell clientCpf={session.cpf} />}
               <Button
                 variant="ghost"
                 size="icon"
+                className="h-9 w-9"
                 onClick={() => setShowPreferences(true)}
               >
                 <Settings className="h-4 w-4" />
@@ -213,130 +242,204 @@ export default function ClientDashboard() {
               <Button
                 variant="ghost"
                 size="icon"
+                className="h-9 w-9 hidden sm:flex"
                 onClick={handleLogout}
                 title="Sair"
               >
                 <LogOut className="h-4 w-4" />
+              </Button>
+              {/* Mobile menu toggle */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 md:hidden"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                {mobileMenuOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="flex-1 flex">
-        {/* Desktop Sidebar */}
-        <DashboardSidebar
-          activeSection={activeSection}
-          onSectionChange={setActiveSection}
-          isVaultMember={!!vaultMember}
-          tier={vaultMember?.tier}
-          userName={session?.client_name || ""}
-          className="hidden lg:block"
-        />
-
-        {/* Main Content */}
-        <main className="flex-1 min-w-0">
-          <div className="p-4 lg:p-8 max-w-5xl mx-auto">
-            {/* Mobile Navigation */}
-            <div className="lg:hidden mb-6">
-              <MobileNav
-                activeSection={activeSection}
-                onSectionChange={setActiveSection}
-                isVaultMember={!!vaultMember}
-                tier={vaultMember?.tier}
-                userName={session?.client_name || ""}
-              />
+      {/* Mobile Menu Dropdown */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden border-b border-border/50 bg-card/95 backdrop-blur-md overflow-hidden"
+          >
+            <div className="p-4 space-y-2">
+              {visibleNavItems.map((item) => {
+                const isActive = activeSection === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setActiveSection(item.id);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200",
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    <span className="font-medium">{item.label}</span>
+                  </button>
+                );
+              })}
+              <div className="pt-2 border-t border-border/50">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="font-medium">Sair</span>
+                </button>
+              </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            {/* Cashback Banner */}
-            {session && activeSection === "pedidos" && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-6"
-              >
-                <CashbackBanner
-                  clientCpf={session.cpf}
-                  onNavigateToReferrals={() => {}}
-                />
-              </motion.div>
-            )}
-
-            {/* Section Header */}
-            {currentSection && (
-              <SectionHeader
-                icon={currentSection.icon}
-                title={currentSection.title}
-                description={currentSection.description}
-              />
-            )}
-
-            {/* Content */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeSection}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.15 }}
-              >
-                {/* Pedidos */}
-                {activeSection === "pedidos" && (
-                  <div className="grid gap-6 lg:grid-cols-3">
-                    <div className="lg:col-span-2">
-                      <OrdersTab
-                        orders={orders}
-                        isLoading={isLoading}
-                        sessionToken={session?.session_token || ""}
-                      />
+      {/* Main Content */}
+      <main className="flex-1">
+        <div className="max-w-5xl mx-auto px-4 lg:px-6 py-6 lg:py-8">
+          {/* User Hero Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
+            <div
+              className={cn(
+                "relative overflow-hidden rounded-2xl border p-6",
+                tierInfo
+                  ? `${tierInfo.borderColor} bg-gradient-to-br ${tierInfo.gradient}`
+                  : "border-border/50 bg-card/50"
+              )}
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  {tierInfo && (
+                    <div className={cn("p-3 rounded-xl", tierInfo.bgColor)}>
+                      <tierInfo.icon className={cn("h-6 w-6", tierInfo.color)} />
                     </div>
-                    <div className="space-y-4">
-                      {session && (
-                        <ReferralCard
-                          clientCpf={session.cpf}
-                          clientName={session.client_name}
-                        />
-                      )}
+                  )}
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {tierInfo ? "Bem-vindo ao Vault Club" : "Olá"}
+                    </p>
+                    <h1 className="text-xl font-semibold">
+                      {session?.client_name}
+                    </h1>
+                    {tierInfo && (
+                      <p className={cn("text-sm font-medium mt-1", tierInfo.color)}>
+                        {tierInfo.name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Quick Stats */}
+                {vaultMember && (
+                  <div className="flex items-center gap-6">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold">
+                        {vaultMember.total_purchases}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Itens</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold">
+                        {vaultMember.active_hunts}/{vaultMember.max_active_hunts}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Buscas</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold">
+                        {vaultMember.invites_remaining}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Convites</p>
                     </div>
                   </div>
                 )}
 
-                {/* Vault Tabs */}
-                {vaultMember && session && (
-                  <>
-                    {activeSection === "vault" && (
-                      <VaultMyItemsTab clientCpf={session.cpf} />
-                    )}
-
-                    {activeSection === "wishlist" && (
-                      <VaultWishlistTab clientCpf={session.cpf} />
-                    )}
-
-                    {activeSection === "intel" && (
-                      <VaultIntelTab clientCpf={session.cpf} />
-                    )}
-
-                    {activeSection === "clube" && (
-                      <VaultClubTab
-                        clientCpf={session.cpf}
-                        member={vaultMember}
-                        onMemberUpdate={refreshVaultMember}
-                      />
-                    )}
-
-                    {activeSection === "comunidade" && (
-                      <VaultCommunityTab
-                        clientCpf={session.cpf}
-                        member={vaultMember}
-                      />
-                    )}
-                  </>
+                {/* Non-member CTA */}
+                {!vaultMember && (
+                  <Link
+                    to="/vault"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  >
+                    <Crown className="h-4 w-4" />
+                    <span className="text-sm font-medium">Conhecer Vault Club</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
                 )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </main>
-      </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Content */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSection}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.15 }}
+            >
+              {activeSection === "pedidos" && (
+                <OrdersTab
+                  orders={orders}
+                  isLoading={isLoading}
+                  sessionToken={session?.session_token || ""}
+                />
+              )}
+
+              {vaultMember && session && (
+                <>
+                  {activeSection === "vault" && (
+                    <VaultMyItemsTab clientCpf={session.cpf} />
+                  )}
+
+                  {activeSection === "wishlist" && (
+                    <VaultWishlistTab clientCpf={session.cpf} />
+                  )}
+
+                  {activeSection === "intel" && (
+                    <VaultIntelTab clientCpf={session.cpf} />
+                  )}
+
+                  {activeSection === "clube" && (
+                    <VaultClubTab
+                      clientCpf={session.cpf}
+                      member={vaultMember}
+                      onMemberUpdate={refreshVaultMember}
+                    />
+                  )}
+
+                  {activeSection === "comunidade" && (
+                    <VaultCommunityTab
+                      clientCpf={session.cpf}
+                      member={vaultMember}
+                    />
+                  )}
+                </>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </main>
 
       {/* Preferences Dialog */}
       <Dialog open={showPreferences} onOpenChange={setShowPreferences}>

@@ -1,25 +1,31 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  Package, 
-  Clock, 
-  CheckCircle2, 
-  Truck, 
+import {
+  Package,
+  Clock,
+  CheckCircle2,
+  Truck,
   CreditCard,
   FileText,
   Download,
   Star,
-  Camera
+  Camera,
+  ChevronRight,
+  ExternalLink,
 } from "lucide-react";
 import { ReviewForm } from "@/components/client/ReviewForm";
 import { InspectionPhotosGallery } from "@/components/client/InspectionPhotosGallery";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 interface OrderData {
   order_id: string;
@@ -56,42 +62,147 @@ interface OrdersTabProps {
   sessionToken: string;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  ORDER_CONFIRMED: "Pedido Confirmado",
-  SOURCING: "Buscando Produto",
-  NEGOTIATING: "Negociando",
-  PURCHASE_COMPLETED: "Compra Realizada",
-  PACKAGE_EN_ROUTE: "Em Trânsito Internacional",
-  ARRIVED: "Chegou no Brasil",
-  INSPECTION_APPROVED: "Inspeção Aprovada",
-  BALANCE_DUE: "Aguardando Saldo",
-  INTERNATIONAL_DISPATCH: "Enviado",
-  CUSTOMS: "Na Alfândega",
-  NATIONAL_TRANSIT: "Em Trânsito Nacional",
-  DISPATCHED: "Saiu para Entrega",
-  DELIVERED: "Entregue",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  ORDER_CONFIRMED: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  SOURCING: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-  NEGOTIATING: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-  PURCHASE_COMPLETED: "bg-green-500/20 text-green-400 border-green-500/30",
-  PACKAGE_EN_ROUTE: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-  ARRIVED: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
-  INSPECTION_APPROVED: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  BALANCE_DUE: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-  INTERNATIONAL_DISPATCH: "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
-  CUSTOMS: "bg-rose-500/20 text-rose-400 border-rose-500/30",
-  NATIONAL_TRANSIT: "bg-teal-500/20 text-teal-400 border-teal-500/30",
-  DISPATCHED: "bg-lime-500/20 text-lime-400 border-lime-500/30",
-  DELIVERED: "bg-green-500/20 text-green-400 border-green-500/30",
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; color: string; icon: React.ElementType }
+> = {
+  novo: { label: "Novo", color: "bg-muted text-muted-foreground", icon: Clock },
+  orcamento_enviado: {
+    label: "Orçamento enviado",
+    color: "bg-amber-500/20 text-amber-500",
+    icon: Clock,
+  },
+  orcamento_aprovado: {
+    label: "Aprovado",
+    color: "bg-success/20 text-success",
+    icon: CheckCircle2,
+  },
+  aguardando_sinal: {
+    label: "Aguardando sinal",
+    color: "bg-amber-500/20 text-amber-500",
+    icon: Clock,
+  },
+  sinal_confirmado: {
+    label: "Sinal confirmado",
+    color: "bg-success/20 text-success",
+    icon: CheckCircle2,
+  },
+  em_separacao: {
+    label: "Em separação",
+    color: "bg-primary/20 text-primary",
+    icon: Package,
+  },
+  enviado_internacional: {
+    label: "Em trânsito internacional",
+    color: "bg-primary/20 text-primary",
+    icon: Truck,
+  },
+  em_fiscalizacao: {
+    label: "Fiscalização",
+    color: "bg-amber-500/20 text-amber-500",
+    icon: Clock,
+  },
+  aguardando_saldo: {
+    label: "Aguardando saldo",
+    color: "bg-amber-500/20 text-amber-500",
+    icon: Clock,
+  },
+  saldo_confirmado: {
+    label: "Saldo confirmado",
+    color: "bg-success/20 text-success",
+    icon: CheckCircle2,
+  },
+  enviado_cliente: {
+    label: "Enviado para você",
+    color: "bg-primary/20 text-primary",
+    icon: Truck,
+  },
+  entregue: {
+    label: "Entregue",
+    color: "bg-success/20 text-success",
+    icon: CheckCircle2,
+  },
+  cancelado: {
+    label: "Cancelado",
+    color: "bg-destructive/20 text-destructive",
+    icon: Clock,
+  },
+  // Legacy status mappings
+  ORDER_CONFIRMED: {
+    label: "Pedido confirmado",
+    color: "bg-primary/20 text-primary",
+    icon: CheckCircle2,
+  },
+  SOURCING: {
+    label: "Buscando produto",
+    color: "bg-amber-500/20 text-amber-500",
+    icon: Clock,
+  },
+  NEGOTIATING: {
+    label: "Negociando",
+    color: "bg-amber-500/20 text-amber-500",
+    icon: Clock,
+  },
+  PURCHASE_COMPLETED: {
+    label: "Compra realizada",
+    color: "bg-success/20 text-success",
+    icon: CheckCircle2,
+  },
+  PACKAGE_EN_ROUTE: {
+    label: "Em trânsito internacional",
+    color: "bg-primary/20 text-primary",
+    icon: Truck,
+  },
+  ARRIVED: {
+    label: "Chegou no Brasil",
+    color: "bg-success/20 text-success",
+    icon: CheckCircle2,
+  },
+  INSPECTION_APPROVED: {
+    label: "Inspeção aprovada",
+    color: "bg-success/20 text-success",
+    icon: CheckCircle2,
+  },
+  BALANCE_DUE: {
+    label: "Aguardando saldo",
+    color: "bg-amber-500/20 text-amber-500",
+    icon: Clock,
+  },
+  INTERNATIONAL_DISPATCH: {
+    label: "Enviado",
+    color: "bg-primary/20 text-primary",
+    icon: Truck,
+  },
+  CUSTOMS: {
+    label: "Na alfândega",
+    color: "bg-amber-500/20 text-amber-500",
+    icon: Clock,
+  },
+  NATIONAL_TRANSIT: {
+    label: "Em trânsito nacional",
+    color: "bg-primary/20 text-primary",
+    icon: Truck,
+  },
+  DISPATCHED: {
+    label: "Saiu para entrega",
+    color: "bg-primary/20 text-primary",
+    icon: Truck,
+  },
+  DELIVERED: {
+    label: "Entregue",
+    color: "bg-success/20 text-success",
+    icon: CheckCircle2,
+  },
 };
 
 export function OrdersTab({ orders, isLoading, sessionToken }: OrdersTabProps) {
-  const [reviewOrder, setReviewOrder] = useState<{ orderId: string; productName: string } | null>(null);
+  const [reviewOrder, setReviewOrder] = useState<{
+    orderId: string;
+    productName: string;
+  } | null>(null);
   const [reviewedOrders, setReviewedOrders] = useState<Set<string>>(new Set());
-  const [selectedOrderPhotos, setSelectedOrderPhotos] = useState<{ photos: string[]; productName: string } | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null);
+  const [showPhotos, setShowPhotos] = useState(false);
 
   const formatCurrency = (value: number | null, currency: string | null) => {
     if (!value) return "-";
@@ -103,233 +214,398 @@ export function OrdersTab({ orders, isLoading, sessionToken }: OrdersTabProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {[1, 2].map((i) => (
-          <Card key={i}>
-            <CardHeader className="pb-3">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-4 w-48" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-16 w-full" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
 
   if (orders.length === 0) {
     return (
-      <Card className="border-dashed">
-        <CardContent className="py-12 text-center">
-          <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Nenhum pedido encontrado</h3>
-          <p className="text-sm text-muted-foreground">
-            Você ainda não tem pedidos registrados.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="text-center py-12">
+        <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
+        <h3 className="text-lg font-medium mb-2">Nenhum pedido ainda</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Quando você fizer seu primeiro pedido, ele aparecerá aqui.
+        </p>
+        <Button asChild>
+          <a href="/solicitar">Fazer primeiro pedido</a>
+        </Button>
+      </div>
     );
   }
 
   return (
     <>
       <div className="space-y-3">
-        {orders.map((order, index) => (
-          <motion.div
-            key={order.order_id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-          >
-            <Card className="overflow-hidden hover:border-primary/30 transition-colors">
-              <CardHeader className="pb-2 bg-gradient-to-r from-card to-card/50">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div className="min-w-0">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Package className="h-4 w-4 text-primary shrink-0" />
-                      <span className="truncate">{order.order_id}</span>
-                    </CardTitle>
-                    <CardDescription className="truncate">
-                      {order.product_name}
-                      {order.product_brand && ` • ${order.product_brand}`}
-                      {order.product_model && ` ${order.product_model}`}
-                    </CardDescription>
+        {orders.map((order, index) => {
+          const statusConfig =
+            STATUS_CONFIG[order.current_status] || {
+              label: order.current_status,
+              color: "bg-muted text-muted-foreground",
+              icon: Clock,
+            };
+          const StatusIcon = statusConfig.icon;
+
+          return (
+            <motion.div
+              key={order.order_id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+            >
+              <Card
+                className="cursor-pointer hover:bg-card/80 transition-colors"
+                onClick={() => setSelectedOrder(order)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 min-w-0 flex-1">
+                      <div className="p-2.5 rounded-xl bg-muted/50">
+                        <StatusIcon className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">
+                          {order.product_name}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-muted-foreground">
+                            #{order.order_id}
+                          </span>
+                          {order.product_size && (
+                            <Badge variant="outline" className="text-xs">
+                              {order.product_size}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge className={cn("text-xs", statusConfig.color)}>
+                        {statusConfig.label}
+                      </Badge>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
                   </div>
-                  <Badge className={`shrink-0 ${STATUS_COLORS[order.current_status] || "bg-muted"}`}>
-                    {STATUS_LABELS[order.current_status] || order.current_status}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-3 space-y-3">
-                {/* Product Details */}
-                <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
-                  {order.product_size && (
-                    <div>
-                      <span className="text-muted-foreground">Tam:</span>{" "}
-                      <span className="font-medium">{order.product_size}</span>
-                    </div>
-                  )}
-                  {order.product_color && (
-                    <div>
-                      <span className="text-muted-foreground">Cor:</span>{" "}
-                      <span className="font-medium">{order.product_color}</span>
-                    </div>
-                  )}
-                  <div>
-                    <span className="text-muted-foreground">Data:</span>{" "}
-                    <span className="font-medium">
-                      {format(new Date(order.created_at), "dd/MM/yy", { locale: ptBR })}
-                    </span>
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Order Detail Dialog */}
+      <Dialog
+        open={!!selectedOrder}
+        onOpenChange={() => setSelectedOrder(null)}
+      >
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          {selectedOrder && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Pedido #{selectedOrder.order_id}
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-6">
+                {/* Product Info */}
+                <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                  <h4 className="font-medium mb-3">
+                    {selectedOrder.product_name}
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    {selectedOrder.product_brand && (
+                      <div>
+                        <p className="text-muted-foreground">Marca</p>
+                        <p className="font-medium">
+                          {selectedOrder.product_brand}
+                        </p>
+                      </div>
+                    )}
+                    {selectedOrder.product_size && (
+                      <div>
+                        <p className="text-muted-foreground">Tamanho</p>
+                        <p className="font-medium">
+                          {selectedOrder.product_size}
+                        </p>
+                      </div>
+                    )}
+                    {selectedOrder.product_color && (
+                      <div>
+                        <p className="text-muted-foreground">Cor</p>
+                        <p className="font-medium">
+                          {selectedOrder.product_color}
+                        </p>
+                      </div>
+                    )}
+                    {selectedOrder.product_price && (
+                      <div>
+                        <p className="text-muted-foreground">Preço</p>
+                        <p className="font-medium">
+                          {formatCurrency(
+                            selectedOrder.product_price,
+                            selectedOrder.product_currency
+                          )}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Payment Status */}
-                {order.product_price && (
-                  <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Valor Total</p>
-                      <p className="font-semibold text-primary">
-                        {formatCurrency(order.product_price, order.product_currency)}
-                      </p>
-                    </div>
-                    {order.payment_mode === 'split' ? (
-                      <div className="flex items-center gap-4 text-sm">
-                        <div className="text-center">
-                          <p className="text-xs text-muted-foreground">Sinal</p>
-                          <div className="flex items-center gap-1">
-                            {order.sinal_paid ? (
-                              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                            ) : (
-                              <Clock className="h-3.5 w-3.5 text-yellow-500" />
-                            )}
-                            <span className="text-xs">{order.sinal_paid ? "Pago" : "Pendente"}</span>
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs text-muted-foreground">Saldo</p>
-                          <div className="flex items-center gap-1">
-                            {order.balance_paid ? (
-                              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                            ) : order.sinal_paid ? (
-                              <Clock className="h-3.5 w-3.5 text-yellow-500" />
-                            ) : (
-                              <span className="text-xs text-muted-foreground">-</span>
-                            )}
-                            <span className="text-xs">
-                              {order.balance_paid ? "Pago" : order.sinal_paid ? "Pendente" : ""}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1">
-                        {order.sinal_paid || order.balance_paid ? (
-                          <>
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            <span className="text-sm text-green-500">Pago</span>
-                          </>
-                        ) : (
-                          <>
-                            <Clock className="h-4 w-4 text-yellow-500" />
-                            <span className="text-sm text-yellow-500">Pendente</span>
-                          </>
-                        )}
-                      </div>
+                {/* Status */}
+                <div>
+                  <h4 className="text-sm font-medium mb-3">Status atual</h4>
+                  <Badge
+                    className={cn(
+                      "text-sm px-3 py-1",
+                      STATUS_CONFIG[selectedOrder.current_status]?.color ||
+                        "bg-muted text-muted-foreground"
                     )}
+                  >
+                    {STATUS_CONFIG[selectedOrder.current_status]?.label ||
+                      selectedOrder.current_status}
+                  </Badge>
+                </div>
+
+                {/* Payment Status */}
+                {selectedOrder.payment_mode === "split" && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-3">Pagamento</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 rounded-lg bg-muted/30">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            Sinal
+                          </span>
+                          {selectedOrder.sinal_paid ? (
+                            <CheckCircle2 className="h-4 w-4 text-success" />
+                          ) : (
+                            <Clock className="h-4 w-4 text-amber-500" />
+                          )}
+                        </div>
+                        <p className="font-medium mt-1">
+                          {formatCurrency(
+                            selectedOrder.sinal_value,
+                            selectedOrder.product_currency
+                          )}
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-muted/30">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            Saldo
+                          </span>
+                          {selectedOrder.balance_paid ? (
+                            <CheckCircle2 className="h-4 w-4 text-success" />
+                          ) : (
+                            <Clock className="h-4 w-4 text-amber-500" />
+                          )}
+                        </div>
+                        <p className="font-medium mt-1">
+                          {formatCurrency(
+                            selectedOrder.balance_value,
+                            selectedOrder.product_currency
+                          )}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
                 {/* Tracking */}
-                {(order.national_tracking || order.international_tracking) && (
-                  <div className="flex items-center gap-2 text-sm py-1">
-                    <Truck className="h-4 w-4 text-primary shrink-0" />
-                    <span className="text-muted-foreground">Rastreio:</span>
-                    <span className="font-mono text-xs truncate">
-                      {order.national_tracking || order.international_tracking}
-                    </span>
+                {(selectedOrder.international_tracking ||
+                  selectedOrder.national_tracking) && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-3">Rastreamento</h4>
+                    <div className="space-y-2">
+                      {selectedOrder.international_tracking && (
+                        <a
+                          href={`https://www.17track.net/pt/track?nums=${selectedOrder.international_tracking}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <div>
+                            <p className="text-xs text-muted-foreground">
+                              Internacional
+                            </p>
+                            <p className="font-mono text-sm">
+                              {selectedOrder.international_tracking}
+                            </p>
+                          </div>
+                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                        </a>
+                      )}
+                      {selectedOrder.national_tracking && (
+                        <a
+                          href={`https://www.linkcorreios.com.br/?id=${selectedOrder.national_tracking}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <div>
+                            <p className="text-xs text-muted-foreground">
+                              Nacional
+                              {selectedOrder.national_carrier &&
+                                ` (${selectedOrder.national_carrier})`}
+                            </p>
+                            <p className="font-mono text-sm">
+                              {selectedOrder.national_tracking}
+                            </p>
+                          </div>
+                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Inspection Photos */}
+                {selectedOrder.inspection_photos &&
+                  selectedOrder.inspection_photos.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-3">
+                        Fotos de inspeção
+                      </h4>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start gap-2"
+                        onClick={() => setShowPhotos(true)}
+                      >
+                        <Camera className="h-4 w-4" />
+                        Ver {selectedOrder.inspection_photos.length} fotos
+                      </Button>
+                    </div>
+                  )}
+
+                {/* Timeline */}
+                {selectedOrder.history && selectedOrder.history.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-3">Histórico</h4>
+                    <div className="space-y-3">
+                      {selectedOrder.history.slice(0, 5).map((event, idx) => (
+                        <div key={idx} className="flex gap-3 text-sm">
+                          <div className="flex flex-col items-center">
+                            <div className="h-2 w-2 rounded-full bg-primary" />
+                            {idx < selectedOrder.history.length - 1 && (
+                              <div className="w-px h-full bg-border/50 my-1" />
+                            )}
+                          </div>
+                          <div className="flex-1 pb-3">
+                            <p className="font-medium">
+                              {STATUS_CONFIG[event.status]?.label ||
+                                event.status}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(event.created_at).toLocaleDateString(
+                                "pt-BR",
+                                {
+                                  day: "2-digit",
+                                  month: "short",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )}
+                            </p>
+                            {event.notes && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {event.notes}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
                 {/* Actions */}
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <Button variant="outline" size="sm" className="h-8 text-xs" asChild>
-                    <Link to={`/rastreio/${order.order_id}`}>
-                      <Truck className="h-3.5 w-3.5 mr-1.5" />
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" className="flex-1" asChild>
+                    <Link to={`/rastreio/${selectedOrder.order_id}`}>
+                      <Truck className="h-4 w-4 mr-2" />
                       Rastrear
                     </Link>
                   </Button>
 
-                  {order.budget_status === "APPROVED" && !order.balance_paid && order.sinal_paid && (
-                    <Button size="sm" className="h-8 text-xs" asChild>
-                      <Link to={`/pagamento/${order.budget_approval_token}`}>
-                        <CreditCard className="h-3.5 w-3.5 mr-1.5" />
-                        Pagar Saldo
+                  {selectedOrder.budget_status === "SENT" && (
+                    <Button className="flex-1" asChild>
+                      <Link
+                        to={`/orcamento/${selectedOrder.budget_approval_token}`}
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Ver orçamento
                       </Link>
                     </Button>
                   )}
 
-                  {order.budget_status === "SENT" && (
-                    <Button size="sm" className="h-8 text-xs" asChild>
-                      <Link to={`/orcamento/${order.budget_approval_token}`}>
-                        <FileText className="h-3.5 w-3.5 mr-1.5" />
-                        Ver Orçamento
-                      </Link>
-                    </Button>
-                  )}
+                  {selectedOrder.budget_status === "APPROVED" &&
+                    !selectedOrder.balance_paid &&
+                    selectedOrder.sinal_paid && (
+                      <Button className="flex-1" asChild>
+                        <Link
+                          to={`/pagamento/${selectedOrder.budget_approval_token}`}
+                        >
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          Pagar saldo
+                        </Link>
+                      </Button>
+                    )}
 
-                  {order.budget_status === "APPROVED" && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="h-8 text-xs"
-                      onClick={() => window.open(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-pdf?order_id=${order.order_id}&type=budget`, '_blank')}
+                  {selectedOrder.budget_status === "APPROVED" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        window.open(
+                          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-pdf?order_id=${selectedOrder.order_id}&type=budget`,
+                          "_blank"
+                        )
+                      }
                     >
-                      <Download className="h-3.5 w-3.5 mr-1.5" />
-                      PDF
+                      <Download className="h-4 w-4" />
                     </Button>
                   )}
 
-                  {order.inspection_photos && order.inspection_photos.length > 0 && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="h-8 text-xs border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10"
-                      onClick={() => setSelectedOrderPhotos({ 
-                        photos: order.inspection_photos!, 
-                        productName: order.product_name 
-                      })}
-                    >
-                      <Camera className="h-3.5 w-3.5 mr-1.5" />
-                      Fotos ({order.inspection_photos.length})
-                    </Button>
-                  )}
-
-                  {order.current_status === "DELIVERED" && !reviewedOrders.has(order.order_id) && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="h-8 text-xs border-primary/50 text-primary hover:bg-primary/10"
-                      onClick={() => setReviewOrder({ orderId: order.order_id, productName: order.product_name })}
-                    >
-                      <Star className="h-3.5 w-3.5 mr-1.5" />
-                      Avaliar
-                    </Button>
-                  )}
-
-                  {reviewedOrders.has(order.order_id) && (
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <CheckCircle2 className="h-3 w-3 text-green-500" />
-                      Avaliado
-                    </span>
-                  )}
+                  {selectedOrder.current_status === "DELIVERED" &&
+                    !reviewedOrders.has(selectedOrder.order_id) && (
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setReviewOrder({
+                            orderId: selectedOrder.order_id,
+                            productName: selectedOrder.product_name,
+                          });
+                          setSelectedOrder(null);
+                        }}
+                      >
+                        <Star className="h-4 w-4 mr-2" />
+                        Avaliar
+                      </Button>
+                    )}
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Photos Gallery */}
+      {selectedOrder?.inspection_photos && (
+        <Dialog open={showPhotos} onOpenChange={setShowPhotos}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Fotos de inspeção</DialogTitle>
+            </DialogHeader>
+            <InspectionPhotosGallery
+              photos={selectedOrder.inspection_photos}
+              productName={selectedOrder.product_name}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Review Modal */}
       {reviewOrder && (
@@ -338,28 +614,10 @@ export function OrdersTab({ orders, isLoading, sessionToken }: OrdersTabProps) {
           productName={reviewOrder.productName}
           sessionToken={sessionToken}
           onClose={() => setReviewOrder(null)}
-          onSubmitted={() => setReviewedOrders(prev => new Set([...prev, reviewOrder.orderId]))}
+          onSubmitted={() =>
+            setReviewedOrders((prev) => new Set([...prev, reviewOrder.orderId]))
+          }
         />
-      )}
-
-      {/* Inspection Photos Gallery */}
-      {selectedOrderPhotos && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-card rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
-            <div className="p-4 border-b border-border flex items-center justify-between">
-              <h3 className="font-semibold">Fotos de Inspeção - {selectedOrderPhotos.productName}</h3>
-              <Button variant="ghost" size="sm" onClick={() => setSelectedOrderPhotos(null)}>
-                ✕
-              </Button>
-            </div>
-            <div className="p-4">
-              <InspectionPhotosGallery 
-                photos={selectedOrderPhotos.photos} 
-                productName={selectedOrderPhotos.productName}
-              />
-            </div>
-          </div>
-        </div>
       )}
     </>
   );

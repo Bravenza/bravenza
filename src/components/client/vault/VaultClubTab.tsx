@@ -12,6 +12,8 @@ import {
   Clock,
   Search,
   Zap,
+  FileText,
+  ChevronRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -66,8 +68,6 @@ const tierConfig = {
     color: "text-muted-foreground",
     borderColor: "border-muted-foreground/30",
     bgColor: "bg-muted/20",
-    gradient: "from-muted/20 to-transparent",
-    nextTier: "Vault Privilege",
     slaFirstResponse: "24h úteis",
     slaUpdate: "72h úteis",
     slaMatchRoom: "48h úteis",
@@ -78,8 +78,6 @@ const tierConfig = {
     color: "text-amber-500",
     borderColor: "border-amber-500/30",
     bgColor: "bg-amber-500/10",
-    gradient: "from-amber-500/10 to-transparent",
-    nextTier: "Vault Black",
     slaFirstResponse: "12h úteis",
     slaUpdate: "48h úteis",
     slaMatchRoom: "24h úteis",
@@ -90,8 +88,6 @@ const tierConfig = {
     color: "text-primary",
     borderColor: "border-primary/30",
     bgColor: "bg-primary/10",
-    gradient: "from-primary/10 to-transparent",
-    nextTier: null,
     slaFirstResponse: "6h úteis",
     slaUpdate: "24h úteis",
     slaMatchRoom: "12h úteis",
@@ -112,7 +108,6 @@ export function VaultClubTab({
   onMemberUpdate,
 }: VaultClubTabProps) {
   const { toast } = useToast();
-
   const [invites, setInvites] = useState<Invite[]>([]);
   const [badges, setBadges] = useState<VaultBadge[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -218,115 +213,76 @@ export function VaultClubTab({
 
   return (
     <div className="space-y-6">
-      {/* Tier Status Hero Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={cn(
-          "p-6 rounded-2xl border-2 bg-gradient-to-br",
-          tierInfo.borderColor,
-          tierInfo.gradient
-        )}
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div
-              className={cn(
-                "p-4 rounded-xl",
-                tierInfo.bgColor
-              )}
-            >
-              <tierInfo.icon className={cn("h-8 w-8", tierInfo.color)} />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Seu nível</p>
-              <h2 className={cn("text-2xl font-bold", tierInfo.color)}>
-                {tierInfo.name}
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                {member?.total_purchases || 0} compras no Vault
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-6 sm:gap-8">
-            <div className="text-center">
-              <p className="text-3xl font-bold">{member?.max_active_hunts || 1}</p>
-              <p className="text-xs text-muted-foreground">Buscas</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold">{member?.invites_remaining || 0}</p>
-              <p className="text-xs text-muted-foreground">Convites</p>
-            </div>
-          </div>
-        </div>
-        {tierInfo.nextTier && (
-          <div className="mt-4 pt-4 border-t border-border/30">
-            <Badge variant="outline" className="text-xs gap-1">
-              <TrendingUp className="h-3 w-3" />
-              Próximo: {tierInfo.nextTier}
-            </Badge>
-          </div>
-        )}
-      </motion.div>
-
       {/* Main Grid */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Evolution Progress */}
         {member?.tier !== "elite" && (
-          <Card>
+          <Card className="md:col-span-2">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-primary" />
                 Progresso para evolução
               </CardTitle>
               <p className="text-xs text-muted-foreground">
-                Cumpra 2 de 3 critérios
+                Cumpra 2 de 3 critérios para subir de tier
               </p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">Compras (12 meses)</span>
-                  <span
-                    className={cn(
-                      "font-medium",
-                      purchasesProgress >= 100 && "text-green-500"
-                    )}
-                  >
-                    {member?.stats_purchases_count_12m || 0}/3
-                  </span>
+            <CardContent>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm text-muted-foreground">Compras</span>
+                    <Badge
+                      variant={purchasesProgress >= 100 ? "default" : "outline"}
+                      className={cn(
+                        "text-xs",
+                        purchasesProgress >= 100 && "bg-success"
+                      )}
+                    >
+                      {member?.stats_purchases_count_12m || 0}/3
+                    </Badge>
+                  </div>
+                  <Progress value={purchasesProgress} className="h-2" />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Últimos 12 meses
+                  </p>
                 </div>
-                <Progress value={purchasesProgress} className="h-2" />
-              </div>
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">Taxa de decisão</span>
-                  <span
-                    className={cn(
-                      "font-medium",
-                      decisionProgress >= 100 && "text-green-500"
-                    )}
-                  >
-                    {Math.round((member?.stats_decision_rate || 0) * 100)}%/50%
-                  </span>
+
+                <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm text-muted-foreground">Decisão</span>
+                    <Badge
+                      variant={decisionProgress >= 100 ? "default" : "outline"}
+                      className={cn(
+                        "text-xs",
+                        decisionProgress >= 100 && "bg-success"
+                      )}
+                    >
+                      {Math.round((member?.stats_decision_rate || 0) * 100)}%
+                    </Badge>
+                  </div>
+                  <Progress value={decisionProgress} className="h-2" />
+                  <p className="text-xs text-muted-foreground mt-2">Meta: 50%</p>
                 </div>
-                <Progress value={decisionProgress} className="h-2" />
-              </div>
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">
-                    Indicações convertidas
-                  </span>
-                  <span
-                    className={cn(
-                      "font-medium",
-                      invitesProgress >= 100 && "text-green-500"
-                    )}
-                  >
-                    {member?.stats_converted_invites || 0}/1
-                  </span>
+
+                <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm text-muted-foreground">Indicações</span>
+                    <Badge
+                      variant={invitesProgress >= 100 ? "default" : "outline"}
+                      className={cn(
+                        "text-xs",
+                        invitesProgress >= 100 && "bg-success"
+                      )}
+                    >
+                      {member?.stats_converted_invites || 0}/1
+                    </Badge>
+                  </div>
+                  <Progress value={invitesProgress} className="h-2" />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Convertidas
+                  </p>
                 </div>
-                <Progress value={invitesProgress} className="h-2" />
               </div>
             </CardContent>
           </Card>
@@ -337,12 +293,12 @@ export function VaultClubTab({
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" />
-              SLA de Atendimento
+              SLA de atendimento
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex justify-between py-2 border-b border-border/30">
+              <div className="flex justify-between items-center py-2 border-b border-border/30">
                 <span className="text-sm text-muted-foreground">
                   Primeiro retorno
                 </span>
@@ -350,13 +306,13 @@ export function VaultClubTab({
                   {tierInfo.slaFirstResponse}
                 </span>
               </div>
-              <div className="flex justify-between py-2 border-b border-border/30">
+              <div className="flex justify-between items-center py-2 border-b border-border/30">
                 <span className="text-sm text-muted-foreground">
                   Updates de curadoria
                 </span>
                 <span className="text-sm font-medium">{tierInfo.slaUpdate}</span>
               </div>
-              <div className="flex justify-between py-2">
+              <div className="flex justify-between items-center py-2">
                 <span className="text-sm text-muted-foreground">Match Room</span>
                 <span className="text-sm font-medium">
                   {tierInfo.slaMatchRoom}
@@ -371,27 +327,27 @@ export function VaultClubTab({
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Search className="h-4 w-4 text-primary" />
-              Benefícios do Tier
+              Benefícios do tier
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-lg bg-muted/30 border border-border/30">
-                <p className="text-2xl font-bold">{member?.max_active_hunts || 1}</p>
-                <p className="text-xs text-muted-foreground">
-                  Buscas simultâneas
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="p-3 rounded-lg bg-muted/30 border border-border/30 text-center">
+                <p className="text-2xl font-bold">
+                  {member?.max_active_hunts || 1}
                 </p>
+                <p className="text-xs text-muted-foreground">Buscas ativas</p>
               </div>
-              <div className="p-3 rounded-lg bg-muted/30 border border-border/30">
+              <div className="p-3 rounded-lg bg-muted/30 border border-border/30 text-center">
                 <p className="text-2xl font-bold">
                   {member?.max_wishlist_items || 3}
                 </p>
-                <p className="text-xs text-muted-foreground">Itens na wishlist</p>
+                <p className="text-xs text-muted-foreground">Wishlist</p>
               </div>
             </div>
 
             {member?.tier === "elite" && (
-              <div className="mt-4 space-y-2">
+              <div className="space-y-2">
                 <p className="text-xs font-medium text-primary flex items-center gap-1">
                   <Sparkles className="h-3 w-3" />
                   Exclusivo Black
@@ -403,7 +359,7 @@ export function VaultClubTab({
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-3 w-3 text-primary" />
-                    Curadoria personalizada
+                    Curadoria por perfil
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-3 w-3 text-primary" />
@@ -414,7 +370,7 @@ export function VaultClubTab({
             )}
 
             {member?.tier === "collector" && (
-              <div className="mt-4 space-y-2">
+              <div className="space-y-2">
                 <p className="text-xs font-medium text-amber-500 flex items-center gap-1">
                   <Crown className="h-3 w-3" />
                   Exclusivo Privilege
@@ -439,47 +395,53 @@ export function VaultClubTab({
         </Card>
 
         {/* Invites */}
-        <Card>
+        <Card className="md:col-span-2">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Gift className="h-4 w-4 text-primary" />
-                Vault Pass
-              </CardTitle>
+              <div>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Gift className="h-4 w-4 text-primary" />
+                  Vault Pass
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Convide amigos e ganhe buscas extras
+                </p>
+              </div>
               <Button
                 onClick={generateInvite}
                 disabled={
                   isGenerating || !member || member.invites_remaining <= 0
                 }
                 size="sm"
+                className="btn-gold"
               >
                 {isGenerating ? "Gerando..." : "Gerar convite"}
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Convide amigos para o Vault Club
-            </p>
           </CardHeader>
           <CardContent>
             {invites.length === 0 ? (
-              <div className="py-6 text-center text-muted-foreground">
-                <Gift className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                <p className="text-sm">Nenhum convite gerado</p>
+              <div className="py-8 text-center text-muted-foreground">
+                <Gift className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">Nenhum convite gerado ainda</p>
+                <p className="text-xs mt-1">
+                  Gere um convite e compartilhe com amigos
+                </p>
               </div>
             ) : (
-              <div className="space-y-2 max-h-48 overflow-y-auto">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {invites.map((invite) => (
                   <div
                     key={invite.id}
-                    className="flex items-center justify-between p-3 bg-muted/30 border border-border/30 rounded-lg"
+                    className="flex items-center justify-between p-4 bg-muted/30 border border-border/30 rounded-xl"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="font-mono text-sm truncate">
                         {invite.invite_code}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {invite.status === "used" ? (
-                          <span className="flex items-center gap-1 text-green-500">
+                          <span className="flex items-center gap-1 text-success">
                             <CheckCircle2 className="h-3 w-3" />
                             Usado
                           </span>
@@ -530,8 +492,7 @@ export function VaultClubTab({
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {badges.map((badge, index) => {
-                const BadgeIcon =
-                  badgeIcons[badge.badge_icon] || Award;
+                const BadgeIcon = badgeIcons[badge.badge_icon] || Award;
                 return (
                   <motion.div
                     key={badge.badge_type}
@@ -552,6 +513,27 @@ export function VaultClubTab({
           </CardContent>
         </Card>
       )}
+
+      {/* Rules Link */}
+      <Card>
+        <CardContent className="py-4">
+          <a
+            href="/vault/rules"
+            className="flex items-center justify-between p-3 bg-muted/30 border border-border/30 rounded-xl hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="font-medium text-sm">Código do Vault</p>
+                <p className="text-xs text-muted-foreground">
+                  Regras e políticas do clube
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </a>
+        </CardContent>
+      </Card>
     </div>
   );
 }
