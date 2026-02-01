@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SNEAKER_BRANDS } from "@/lib/sneaker-data";
+import { cn } from "@/lib/utils";
 
 const SHOE_SIZES = [
   "35", "35.5", "36", "36.5", "37", "37.5", "38", "38.5", "39", "39.5",
@@ -28,9 +29,10 @@ interface PreferencesData {
 interface ClientPreferencesProps {
   clientCpf: string;
   clientName: string;
+  embedded?: boolean;
 }
 
-export function ClientPreferences({ clientCpf, clientName }: ClientPreferencesProps) {
+export function ClientPreferences({ clientCpf, clientName, embedded = false }: ClientPreferencesProps) {
   const [preferences, setPreferences] = useState<PreferencesData>({
     preferred_sizes: [],
     favorite_brands: [],
@@ -133,12 +135,164 @@ export function ClientPreferences({ clientCpf, clientName }: ClientPreferencesPr
 
   if (isLoading) {
     return (
-      <Card className="border-border/50">
-        <CardContent className="py-8 text-center">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto" />
-        </CardContent>
-      </Card>
+      <div className={cn(
+        "py-8 text-center",
+        !embedded && "border border-border/50 rounded-lg bg-card/50"
+      )}>
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto" />
+      </div>
     );
+  }
+
+  const content = (
+    <div className="space-y-6">
+      {/* Preferred Sizes */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">Tamanhos preferidos</Label>
+        <div className="flex flex-wrap gap-2">
+          {SHOE_SIZES.map((size) => (
+            <Badge
+              key={size}
+              variant={preferences.preferred_sizes.includes(size) ? "default" : "outline"}
+              className="cursor-pointer transition-all hover:scale-105"
+              onClick={() => toggleSize(size)}
+            >
+              {preferences.preferred_sizes.includes(size) && (
+                <Check className="h-3 w-3 mr-1" />
+              )}
+              {size}
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      {/* Favorite Brands */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">Marcas favoritas</Label>
+        <div className="flex flex-wrap gap-2">
+          {SNEAKER_BRANDS.slice(0, 12).map((brand) => (
+            <Badge
+              key={brand.value}
+              variant={preferences.favorite_brands.includes(brand.label) ? "default" : "outline"}
+              className="cursor-pointer transition-all hover:scale-105"
+              onClick={() => toggleBrand(brand.label)}
+            >
+              {preferences.favorite_brands.includes(brand.label) && (
+                <Check className="h-3 w-3 mr-1" />
+              )}
+              {brand.label}
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      {/* Preferred Colors */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">Cores preferidas</Label>
+        <div className="flex flex-wrap gap-2 mb-2">
+          {preferences.preferred_colors.map((color) => (
+            <Badge
+              key={color}
+              variant="secondary"
+              className="cursor-pointer"
+            >
+              {color}
+              <X 
+                className="h-3 w-3 ml-1 hover:text-destructive" 
+                onClick={() => removeColor(color)}
+              />
+            </Badge>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Adicionar cor..."
+            value={newColor}
+            onChange={(e) => setNewColor(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && addColor()}
+            className="max-w-[200px]"
+          />
+          <Button variant="outline" size="icon" onClick={addColor}>
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Notification Preferences */}
+      <div className="space-y-4 pt-4 border-t border-border/50">
+        <Label className="text-sm font-medium">Notificações</Label>
+        
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label htmlFor="email-notif" className="text-sm">E-mail</Label>
+            <p className="text-xs text-muted-foreground">
+              Receber atualizações por e-mail
+            </p>
+          </div>
+          <Switch
+            id="email-notif"
+            checked={preferences.notification_email}
+            onCheckedChange={(checked) =>
+              setPreferences((prev) => ({ ...prev, notification_email: checked }))
+            }
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label htmlFor="whatsapp-notif" className="text-sm">WhatsApp</Label>
+            <p className="text-xs text-muted-foreground">
+              Receber atualizações por WhatsApp
+            </p>
+          </div>
+          <Switch
+            id="whatsapp-notif"
+            checked={preferences.notification_whatsapp}
+            onCheckedChange={(checked) =>
+              setPreferences((prev) => ({ ...prev, notification_whatsapp: checked }))
+            }
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label htmlFor="push-notif" className="text-sm">Push (App)</Label>
+            <p className="text-xs text-muted-foreground">
+              Receber notificações no celular
+            </p>
+          </div>
+          <Switch
+            id="push-notif"
+            checked={preferences.notification_push}
+            onCheckedChange={(checked) =>
+              setPreferences((prev) => ({ ...prev, notification_push: checked }))
+            }
+          />
+        </div>
+      </div>
+
+      <Button 
+        className="w-full btn-gold" 
+        onClick={savePreferences}
+        disabled={isSaving}
+      >
+        {isSaving ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+            Salvando...
+          </>
+        ) : (
+          <>
+            <Save className="h-4 w-4 mr-2" />
+            Salvar Preferências
+          </>
+        )}
+      </Button>
+    </div>
+  );
+
+  if (embedded) {
+    return content;
   }
 
   return (
@@ -152,149 +306,8 @@ export function ClientPreferences({ clientCpf, clientName }: ClientPreferencesPr
           Personalize sua experiência e receba recomendações melhores
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Preferred Sizes */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">Tamanhos preferidos</Label>
-          <div className="flex flex-wrap gap-2">
-            {SHOE_SIZES.map((size) => (
-              <Badge
-                key={size}
-                variant={preferences.preferred_sizes.includes(size) ? "default" : "outline"}
-                className="cursor-pointer transition-all hover:scale-105"
-                onClick={() => toggleSize(size)}
-              >
-                {preferences.preferred_sizes.includes(size) && (
-                  <Check className="h-3 w-3 mr-1" />
-                )}
-                {size}
-              </Badge>
-            ))}
-          </div>
-        </div>
-
-        {/* Favorite Brands */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">Marcas favoritas</Label>
-          <div className="flex flex-wrap gap-2">
-            {SNEAKER_BRANDS.slice(0, 12).map((brand) => (
-              <Badge
-                key={brand.value}
-                variant={preferences.favorite_brands.includes(brand.label) ? "default" : "outline"}
-                className="cursor-pointer transition-all hover:scale-105"
-                onClick={() => toggleBrand(brand.label)}
-              >
-                {preferences.favorite_brands.includes(brand.label) && (
-                  <Check className="h-3 w-3 mr-1" />
-                )}
-                {brand.label}
-              </Badge>
-            ))}
-          </div>
-        </div>
-
-        {/* Preferred Colors */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">Cores preferidas</Label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {preferences.preferred_colors.map((color) => (
-              <Badge
-                key={color}
-                variant="secondary"
-                className="cursor-pointer"
-              >
-                {color}
-                <X 
-                  className="h-3 w-3 ml-1 hover:text-destructive" 
-                  onClick={() => removeColor(color)}
-                />
-              </Badge>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Adicionar cor..."
-              value={newColor}
-              onChange={(e) => setNewColor(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && addColor()}
-              className="max-w-[200px]"
-            />
-            <Button variant="outline" size="icon" onClick={addColor}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Notification Preferences */}
-        <div className="space-y-4 pt-4 border-t border-border/50">
-          <Label className="text-sm font-medium">Notificações</Label>
-          
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="email-notif" className="text-sm">E-mail</Label>
-              <p className="text-xs text-muted-foreground">
-                Receber atualizações por e-mail
-              </p>
-            </div>
-            <Switch
-              id="email-notif"
-              checked={preferences.notification_email}
-              onCheckedChange={(checked) =>
-                setPreferences((prev) => ({ ...prev, notification_email: checked }))
-              }
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="whatsapp-notif" className="text-sm">WhatsApp</Label>
-              <p className="text-xs text-muted-foreground">
-                Receber atualizações por WhatsApp
-              </p>
-            </div>
-            <Switch
-              id="whatsapp-notif"
-              checked={preferences.notification_whatsapp}
-              onCheckedChange={(checked) =>
-                setPreferences((prev) => ({ ...prev, notification_whatsapp: checked }))
-              }
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="push-notif" className="text-sm">Push (App)</Label>
-              <p className="text-xs text-muted-foreground">
-                Receber notificações no celular
-              </p>
-            </div>
-            <Switch
-              id="push-notif"
-              checked={preferences.notification_push}
-              onCheckedChange={(checked) =>
-                setPreferences((prev) => ({ ...prev, notification_push: checked }))
-              }
-            />
-          </div>
-        </div>
-
-        <Button 
-          className="w-full btn-gold" 
-          onClick={savePreferences}
-          disabled={isSaving}
-        >
-          {isSaving ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
-              Salvando...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4 mr-2" />
-              Salvar Preferências
-            </>
-          )}
-        </Button>
+      <CardContent>
+        {content}
       </CardContent>
     </Card>
   );
