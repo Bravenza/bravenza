@@ -957,6 +957,398 @@ export type Database = {
         }
         Relationships: []
       }
+      vault_badges: {
+        Row: {
+          badge_description: string | null
+          badge_icon: string | null
+          badge_name: string
+          badge_type: string
+          earned_at: string | null
+          id: string
+          member_id: string
+        }
+        Insert: {
+          badge_description?: string | null
+          badge_icon?: string | null
+          badge_name: string
+          badge_type: string
+          earned_at?: string | null
+          id?: string
+          member_id: string
+        }
+        Update: {
+          badge_description?: string | null
+          badge_icon?: string | null
+          badge_name?: string
+          badge_type?: string
+          earned_at?: string | null
+          id?: string
+          member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_badges_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_hunt_options: {
+        Row: {
+          admin_recommendation: boolean | null
+          authenticity_notes: string | null
+          client_feedback: string | null
+          condition: string | null
+          created_at: string | null
+          currency: string | null
+          estimated_total_brl: number | null
+          hunt_id: string
+          id: string
+          images: string[] | null
+          is_selected: boolean | null
+          price: number
+          risk_level: string | null
+          shipping_estimate: string | null
+          supplier_country: string | null
+          supplier_name: string | null
+        }
+        Insert: {
+          admin_recommendation?: boolean | null
+          authenticity_notes?: string | null
+          client_feedback?: string | null
+          condition?: string | null
+          created_at?: string | null
+          currency?: string | null
+          estimated_total_brl?: number | null
+          hunt_id: string
+          id?: string
+          images?: string[] | null
+          is_selected?: boolean | null
+          price: number
+          risk_level?: string | null
+          shipping_estimate?: string | null
+          supplier_country?: string | null
+          supplier_name?: string | null
+        }
+        Update: {
+          admin_recommendation?: boolean | null
+          authenticity_notes?: string | null
+          client_feedback?: string | null
+          condition?: string | null
+          created_at?: string | null
+          currency?: string | null
+          estimated_total_brl?: number | null
+          hunt_id?: string
+          id?: string
+          images?: string[] | null
+          is_selected?: boolean | null
+          price?: number
+          risk_level?: string | null
+          shipping_estimate?: string | null
+          supplier_country?: string | null
+          supplier_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_hunt_options_hunt_id_fkey"
+            columns: ["hunt_id"]
+            isOneToOne: false
+            referencedRelation: "vault_wishlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_invites: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          invite_code: string
+          inviter_id: string
+          recipient_email: string | null
+          recipient_name: string | null
+          reward_expires_at: string | null
+          reward_granted: boolean | null
+          reward_type: string | null
+          status: string | null
+          used_at: string | null
+          used_by_member_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          invite_code: string
+          inviter_id: string
+          recipient_email?: string | null
+          recipient_name?: string | null
+          reward_expires_at?: string | null
+          reward_granted?: boolean | null
+          reward_type?: string | null
+          status?: string | null
+          used_at?: string | null
+          used_by_member_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          invite_code?: string
+          inviter_id?: string
+          recipient_email?: string | null
+          recipient_name?: string | null
+          reward_expires_at?: string | null
+          reward_granted?: boolean | null
+          reward_type?: string | null
+          status?: string | null
+          used_at?: string | null
+          used_by_member_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_invites_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_invites_used_by_member_id_fkey"
+            columns: ["used_by_member_id"]
+            isOneToOne: false
+            referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_members: {
+        Row: {
+          active_hunts: number | null
+          client_cpf: string
+          client_email: string | null
+          client_name: string
+          created_at: string | null
+          id: string
+          invited_by: string | null
+          invites_remaining: number | null
+          invites_semester_reset: string | null
+          is_active: boolean | null
+          joined_via: string | null
+          max_active_hunts: number | null
+          max_wishlist_items: number | null
+          preferred_brands: string[] | null
+          preferred_sizes: string[] | null
+          preferred_styles: string[] | null
+          tier: Database["public"]["Enums"]["vault_tier"]
+          tier_upgraded_at: string | null
+          total_purchases: number | null
+          total_spent: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          active_hunts?: number | null
+          client_cpf: string
+          client_email?: string | null
+          client_name: string
+          created_at?: string | null
+          id?: string
+          invited_by?: string | null
+          invites_remaining?: number | null
+          invites_semester_reset?: string | null
+          is_active?: boolean | null
+          joined_via?: string | null
+          max_active_hunts?: number | null
+          max_wishlist_items?: number | null
+          preferred_brands?: string[] | null
+          preferred_sizes?: string[] | null
+          preferred_styles?: string[] | null
+          tier?: Database["public"]["Enums"]["vault_tier"]
+          tier_upgraded_at?: string | null
+          total_purchases?: number | null
+          total_spent?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          active_hunts?: number | null
+          client_cpf?: string
+          client_email?: string | null
+          client_name?: string
+          created_at?: string | null
+          id?: string
+          invited_by?: string | null
+          invites_remaining?: number | null
+          invites_semester_reset?: string | null
+          is_active?: boolean | null
+          joined_via?: string | null
+          max_active_hunts?: number | null
+          max_wishlist_items?: number | null
+          preferred_brands?: string[] | null
+          preferred_sizes?: string[] | null
+          preferred_styles?: string[] | null
+          tier?: Database["public"]["Enums"]["vault_tier"]
+          tier_upgraded_at?: string | null
+          total_purchases?: number | null
+          total_spent?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_members_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_waitlist: {
+        Row: {
+          admin_notes: string | null
+          cpf: string | null
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          reason: string | null
+          referral_source: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+          reason?: string | null
+          referral_source?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          reason?: string | null
+          referral_source?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      vault_wishlists: {
+        Row: {
+          assigned_to: string | null
+          bid_amount: number | null
+          bid_deadline: string | null
+          completed_at: string | null
+          condition_preference: string | null
+          converted_order_id: string | null
+          created_at: string | null
+          decision_deadline: string | null
+          id: string
+          is_active: boolean | null
+          max_price: number | null
+          member_id: string
+          min_price: number | null
+          notes: string | null
+          open_bid_enabled: boolean | null
+          options_sent_at: string | null
+          priority: number | null
+          product_brand: string | null
+          product_color: string | null
+          product_link: string | null
+          product_model: string | null
+          product_name: string
+          product_size: string | null
+          reference_image_url: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["hunt_status"] | null
+          updated_at: string | null
+          urgency: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          bid_amount?: number | null
+          bid_deadline?: string | null
+          completed_at?: string | null
+          condition_preference?: string | null
+          converted_order_id?: string | null
+          created_at?: string | null
+          decision_deadline?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_price?: number | null
+          member_id: string
+          min_price?: number | null
+          notes?: string | null
+          open_bid_enabled?: boolean | null
+          options_sent_at?: string | null
+          priority?: number | null
+          product_brand?: string | null
+          product_color?: string | null
+          product_link?: string | null
+          product_model?: string | null
+          product_name: string
+          product_size?: string | null
+          reference_image_url?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["hunt_status"] | null
+          updated_at?: string | null
+          urgency?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          bid_amount?: number | null
+          bid_deadline?: string | null
+          completed_at?: string | null
+          condition_preference?: string | null
+          converted_order_id?: string | null
+          created_at?: string | null
+          decision_deadline?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_price?: number | null
+          member_id?: string
+          min_price?: number | null
+          notes?: string | null
+          open_bid_enabled?: boolean | null
+          options_sent_at?: string | null
+          priority?: number | null
+          product_brand?: string | null
+          product_color?: string | null
+          product_link?: string | null
+          product_model?: string | null
+          product_name?: string
+          product_size?: string | null
+          reference_image_url?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["hunt_status"] | null
+          updated_at?: string | null
+          urgency?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_wishlists_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -972,8 +1364,13 @@ export type Database = {
         Returns: boolean
       }
       approve_budget: { Args: { p_token: string }; Returns: boolean }
+      calculate_vault_tier: {
+        Args: { p_total_purchases: number; p_total_spent: number }
+        Returns: Database["public"]["Enums"]["vault_tier"]
+      }
       generate_authenticity_code: { Args: never; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
+      generate_vault_invite_code: { Args: never; Returns: string }
       get_client_available_cashback: {
         Args: { p_cpf: string }
         Returns: {
@@ -1067,6 +1464,101 @@ export type Database = {
           status: Database["public"]["Enums"]["order_status"]
         }[]
       }
+      get_vault_badges: {
+        Args: { p_cpf: string }
+        Returns: {
+          badge_description: string
+          badge_icon: string
+          badge_name: string
+          badge_type: string
+          earned_at: string
+        }[]
+      }
+      get_vault_collection: {
+        Args: { p_cpf: string }
+        Returns: {
+          authenticity_code: string
+          inspection_photos: string[]
+          order_id: string
+          product_brand: string
+          product_color: string
+          product_model: string
+          product_name: string
+          product_size: string
+          purchase_date: string
+          vault_id: string
+        }[]
+      }
+      get_vault_hunt_options: {
+        Args: { p_cpf: string; p_hunt_id: string }
+        Returns: {
+          admin_recommendation: boolean
+          condition: string
+          currency: string
+          estimated_total_brl: number
+          id: string
+          images: string[]
+          is_selected: boolean
+          price: number
+          risk_level: string
+          shipping_estimate: string
+          supplier_country: string
+          supplier_name: string
+        }[]
+      }
+      get_vault_invites: {
+        Args: { p_cpf: string }
+        Returns: {
+          created_at: string
+          expires_at: string
+          id: string
+          invite_code: string
+          recipient_name: string
+          reward_granted: boolean
+          status: string
+          used_at: string
+        }[]
+      }
+      get_vault_member: {
+        Args: { p_cpf: string }
+        Returns: {
+          active_hunts: number
+          created_at: string
+          id: string
+          invites_remaining: number
+          joined_via: string
+          max_active_hunts: number
+          max_wishlist_items: number
+          preferred_brands: string[]
+          preferred_sizes: string[]
+          tier: Database["public"]["Enums"]["vault_tier"]
+          total_purchases: number
+        }[]
+      }
+      get_vault_tier_limits: {
+        Args: { p_tier: Database["public"]["Enums"]["vault_tier"] }
+        Returns: {
+          invites_per_semester: number
+          max_hunts: number
+          max_wishlist: number
+        }[]
+      }
+      get_vault_wishlists: {
+        Args: { p_cpf: string }
+        Returns: {
+          created_at: string
+          decision_deadline: string
+          id: string
+          max_price: number
+          options_count: number
+          product_brand: string
+          product_model: string
+          product_name: string
+          product_size: string
+          status: Database["public"]["Enums"]["hunt_status"]
+          urgency: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1136,6 +1628,15 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       budget_status: "PENDING" | "SENT" | "APPROVED" | "REJECTED" | "EXPIRED"
+      hunt_status:
+        | "queued"
+        | "curating"
+        | "options_found"
+        | "validating"
+        | "pending_decision"
+        | "confirmed"
+        | "converted"
+        | "cancelled"
       notification_target: "admin" | "client"
       notification_type:
         | "new_order_request"
@@ -1177,6 +1678,7 @@ export type Database = {
         | "LOST"
       order_type: "READY" | "VAULT"
       payment_method: "PIX" | "CREDIT_CARD"
+      vault_tier: "member" | "collector" | "elite"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1306,6 +1808,16 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       budget_status: ["PENDING", "SENT", "APPROVED", "REJECTED", "EXPIRED"],
+      hunt_status: [
+        "queued",
+        "curating",
+        "options_found",
+        "validating",
+        "pending_decision",
+        "confirmed",
+        "converted",
+        "cancelled",
+      ],
       notification_target: ["admin", "client"],
       notification_type: [
         "new_order_request",
@@ -1349,6 +1861,7 @@ export const Constants = {
       ],
       order_type: ["READY", "VAULT"],
       payment_method: ["PIX", "CREDIT_CARD"],
+      vault_tier: ["member", "collector", "elite"],
     },
   },
 } as const
