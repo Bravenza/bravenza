@@ -575,14 +575,28 @@ export default function ClientDashboard() {
       {/* Preferences - Sheet on mobile, Dialog on desktop */}
       {isMobile ? (
         <Sheet open={showPreferences} onOpenChange={setShowPreferences}>
-          <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl px-0 pb-0">
-            <SheetHeader className="px-6 pb-4 border-b border-border/30">
-              <SheetTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5 text-primary" />
+          <SheetContent 
+            side="bottom" 
+            className="h-[90vh] rounded-t-[20px] border-t border-border/50 p-0 flex flex-col"
+          >
+            {/* Drag indicator */}
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+            </div>
+            
+            <SheetHeader className="px-5 pb-4 border-b border-border/30 shrink-0">
+              <SheetTitle className="flex items-center gap-2.5 text-lg">
+                <div className="p-2 rounded-xl bg-primary/10">
+                  <Settings className="h-5 w-5 text-primary" />
+                </div>
                 Configurações
               </SheetTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Personalize sua experiência
+              </p>
             </SheetHeader>
-            <div className="overflow-y-auto h-[calc(100%-4rem)] px-4 py-4">
+            
+            <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5">
               {session && (
                 <ClientPreferences
                   clientCpf={session.cpf}
@@ -591,24 +605,34 @@ export default function ClientDashboard() {
                 />
               )}
             </div>
+            
+            {/* Safe area padding for iOS */}
+            <div className="h-[env(safe-area-inset-bottom,0px)]" />
           </SheetContent>
         </Sheet>
       ) : (
         <Dialog open={showPreferences} onOpenChange={setShowPreferences}>
-          <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5 text-primary" />
+          <DialogContent className="max-w-md max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
+            <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/30 shrink-0">
+              <DialogTitle className="flex items-center gap-2.5 text-lg">
+                <div className="p-2 rounded-xl bg-primary/10">
+                  <Settings className="h-5 w-5 text-primary" />
+                </div>
                 Configurações
               </DialogTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Personalize sua experiência
+              </p>
             </DialogHeader>
-            {session && (
-              <ClientPreferences
-                clientCpf={session.cpf}
-                clientName={session.client_name}
-                embedded
-              />
-            )}
+            <div className="flex-1 overflow-y-auto px-6 py-5">
+              {session && (
+                <ClientPreferences
+                  clientCpf={session.cpf}
+                  clientName={session.client_name}
+                  embedded
+                />
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       )}
