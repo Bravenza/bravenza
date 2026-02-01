@@ -53,3 +53,9 @@ verify_jwt = false
 
 [functions.vault-sla-monitor]
 verify_jwt = false
+
+[functions.vault-certificate]
+verify_jwt = false
+
+[functions.verify-authenticity]
+verify_jwt = false
