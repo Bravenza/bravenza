@@ -229,12 +229,14 @@ export function CertificateDownload({ certificate, code }: CertificateDownloadPr
             
             @media print {
               body {
-                padding: 0;
-                background: #fff;
+                padding: 20px;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
               }
               .certificate {
-                border: none;
-                box-shadow: none;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
               }
             }
           </style>
@@ -284,7 +286,7 @@ export function CertificateDownload({ certificate, code }: CertificateDownloadPr
                 </div>
                 <div class="info-block">
                   <div class="info-label">Verificações</div>
-                  <div class="info-value">${certificate.verification_count} verificação(ões)</div>
+                  <div class="info-value">${certificate.verification_count} ${certificate.verification_count === 1 ? 'verificação' : 'verificações'}</div>
                 </div>
               </div>
               
