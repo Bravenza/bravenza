@@ -26,6 +26,18 @@ const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const InstallPage = lazy(() => import("./pages/InstallPage"));
 const AuthenticityPage = lazy(() => import("./pages/AuthenticityPage"));
 
+// Lazy loaded pages - Vault Club
+const VaultLandingPage = lazy(() => import("./pages/vault/VaultLandingPage"));
+const VaultWaitlistPage = lazy(() => import("./pages/vault/VaultWaitlistPage"));
+const VaultRedeemPage = lazy(() => import("./pages/vault/VaultRedeemPage"));
+const VaultAppLayout = lazy(() => import("./pages/vault/VaultAppLayout"));
+const VaultMyItems = lazy(() => import("./pages/vault/VaultMyItems"));
+const VaultWishlist = lazy(() => import("./pages/vault/VaultWishlist"));
+const VaultIntel = lazy(() => import("./pages/vault/VaultIntel"));
+const VaultClub = lazy(() => import("./pages/vault/VaultClub"));
+const VaultCommunity = lazy(() => import("./pages/vault/VaultCommunity"));
+const VaultMatchRoom = lazy(() => import("./pages/vault/VaultMatchRoom"));
+
 // Lazy loaded pages - Client portal
 const ClientLogin = lazy(() => import("./pages/client/ClientLogin"));
 const ClientDashboard = lazy(() => import("./pages/client/ClientDashboard"));
@@ -100,6 +112,19 @@ const App = () => (
                 <Route path="/instalar" element={<InstallPage />} />
                 <Route path="/autenticidade" element={<AuthenticityPage />} />
                 <Route path="/autenticidade/:code" element={<AuthenticityPage />} />
+
+                {/* Vault Club routes */}
+                <Route path="/vault" element={<VaultLandingPage />} />
+                <Route path="/vault/waitlist" element={<VaultWaitlistPage />} />
+                <Route path="/vault/redeem" element={<VaultRedeemPage />} />
+                <Route path="/vault/app" element={<VaultAppLayout />}>
+                  <Route index element={<VaultMyItems />} />
+                  <Route path="wishlist" element={<VaultWishlist />} />
+                  <Route path="intel" element={<VaultIntel />} />
+                  <Route path="club" element={<VaultClub />} />
+                  <Route path="community" element={<VaultCommunity />} />
+                  <Route path="match/:matchRoomId" element={<VaultMatchRoom />} />
+                </Route>
 
                 {/* Client portal routes */}
                 <Route path="/cliente/login" element={<ClientLogin />} />
