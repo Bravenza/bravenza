@@ -123,6 +123,11 @@ export default function VaultLandingPage() {
                 Entrar na lista de espera
               </Link>
             </Button>
+            <Button asChild variant="ghost" size="lg" className="text-zinc-400 hover:text-white hover:bg-zinc-900">
+              <Link to="/cliente/login?redirect=/vault/app">
+                Já sou membro
+              </Link>
+            </Button>
           </div>
         </motion.div>
       </section>

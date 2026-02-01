@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Shield, Box, Search, Newspaper, Users, Crown, LogOut, Menu, X, Bell } from "lucide-react";
+import { Shield, Box, Search, Newspaper, Users, Crown, LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useClientAuth } from "@/hooks/useClientAuth";
+import { useVaultNotifications } from "@/hooks/useVaultNotifications";
+import { VaultNotificationBell } from "@/components/vault/VaultNotificationBell";
 import { supabase } from "@/integrations/supabase/client";
 
 interface VaultMember {
@@ -37,6 +38,14 @@ export default function VaultAppLayout() {
   const location = useLocation();
   const [member, setMember] = useState<VaultMember | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Vault notifications
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+  } = useVaultNotifications({ cpf: session?.cpf || null, enabled: !!session });
 
   useEffect(() => {
     if (!isLoading && !session) {
@@ -130,9 +139,12 @@ export default function VaultAppLayout() {
               )}
 
               {/* Notifications */}
-              <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
-                <Bell className="h-5 w-5" />
-              </Button>
+              <VaultNotificationBell
+                notifications={notifications}
+                unreadCount={unreadCount}
+                onMarkAsRead={markAsRead}
+                onMarkAllAsRead={markAllAsRead}
+              />
 
               {/* Logout */}
               <Button 
