@@ -136,6 +136,38 @@ Deno.serve(async (req) => {
         badge_icon: 'key',
       });
 
+    // Create notification for new member
+    await supabase.from('notifications').insert({
+      target: 'client',
+      target_client_cpf: cleanCpf,
+      type: 'tier_change',
+      title: 'Bem-vindo ao Vault Club!',
+      message: `Você agora é membro Vault Access. Explore sua área exclusiva de curadoria.`,
+      reference_type: 'vault_member',
+      reference_id: newMember.id,
+    });
+
+    // Create notification for inviter
+    if (invite.inviter?.client_cpf) {
+      const { data: inviterMember } = await supabase
+        .from('vault_members')
+        .select('client_cpf')
+        .eq('id', invite.inviter_id)
+        .single();
+
+      if (inviterMember?.client_cpf) {
+        await supabase.from('notifications').insert({
+          target: 'client',
+          target_client_cpf: inviterMember.client_cpf,
+          type: 'invite_used',
+          title: 'Seu convite foi utilizado!',
+          message: `${name} entrou no Vault Club usando seu convite.`,
+          reference_type: 'vault_invite',
+          reference_id: invite.id,
+        });
+      }
+    }
+
     console.log(`New member created: ${newMember.id} via invite ${invite_code}`);
 
     return new Response(
