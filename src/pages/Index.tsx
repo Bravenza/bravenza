@@ -4,6 +4,7 @@ import { BrandsCarousel } from "@/components/home/BrandsCarousel";
 import FeaturedModelsSection from "@/components/home/FeaturedModelsSection";
 import { HowItWorksSection } from "@/components/home/HowItWorksSection";
 import { BenefitsSection } from "@/components/home/BenefitsSection";
+import { VaultClubSection } from "@/components/home/VaultClubSection";
 import { ReferralSection } from "@/components/home/ReferralSection";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { FeaturedReviews } from "@/components/home/FeaturedReviews";
@@ -34,6 +35,11 @@ const Index = () => {
         
         {/* Benefits Section */}
         <BenefitsSection />
+
+        {/* Vault Club Section */}
+        <div id="vault-club">
+          <VaultClubSection />
+        </div>
         
         {/* Referral Section */}
         <div id="indicacao">
