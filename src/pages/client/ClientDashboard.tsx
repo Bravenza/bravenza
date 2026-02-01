@@ -2,20 +2,15 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Package, 
-  LogOut, 
+import {
+  LogOut,
   Settings,
+  Package,
   Box,
   Search,
   Newspaper,
   Crown,
   Users,
-  Shield,
-  Sparkles,
-  ChevronRight
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useClientAuth } from "@/hooks/useClientAuth";
@@ -26,14 +21,25 @@ import { ReferralCard } from "@/components/client/ReferralCard";
 import { CashbackBanner } from "@/components/client/CashbackBanner";
 import { ClientNotificationBell } from "@/components/client/ClientNotificationBell";
 import { ClientPreferences } from "@/components/client/ClientPreferences";
-import { OrdersTab } from "@/components/client/dashboard";
-import { 
-  VaultMyItemsTab, 
-  VaultWishlistTab, 
-  VaultIntelTab, 
-  VaultClubTab, 
-  VaultCommunityTab 
+import {
+  OrdersTab,
+  DashboardSidebar,
+  MobileNav,
+  SectionHeader,
+} from "@/components/client/dashboard";
+import {
+  VaultMyItemsTab,
+  VaultWishlistTab,
+  VaultIntelTab,
+  VaultClubTab,
+  VaultCommunityTab,
 } from "@/components/client/vault";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface OrderData {
   order_id: string;
@@ -79,35 +85,38 @@ interface VaultMemberData {
   stats_converted_invites: number;
 }
 
-const tierConfig = {
-  member: { 
-    label: "Vault Access", 
-    icon: Shield, 
-    color: "text-muted-foreground",
-    bgColor: "bg-muted/50"
+const sectionConfig = {
+  pedidos: {
+    icon: Package,
+    title: "Meus Pedidos",
+    description: "Acompanhe o status de todos os seus pedidos",
   },
-  collector: { 
-    label: "Vault Privilege", 
-    icon: Crown, 
-    color: "text-amber-500",
-    bgColor: "bg-amber-500/10"
+  vault: {
+    icon: Box,
+    title: "Meu Vault",
+    description: "Sua coleção certificada pelo Vault Club",
   },
-  elite: { 
-    label: "Vault Black", 
-    icon: Sparkles, 
-    color: "text-primary",
-    bgColor: "bg-primary/10"
+  wishlist: {
+    icon: Search,
+    title: "Wishlist & Buscas",
+    description: "Gerencie seus itens desejados e acompanhe buscas ativas",
+  },
+  intel: {
+    icon: Newspaper,
+    title: "Intel",
+    description: "Conteúdo exclusivo, alertas de mercado e guias",
+  },
+  clube: {
+    icon: Crown,
+    title: "Meu Clube",
+    description: "Seu status, benefícios, convites e progresso",
+  },
+  comunidade: {
+    icon: Users,
+    title: "Comunidade",
+    description: "Conecte-se com outros membros do Vault",
   },
 };
-
-const tabItems = [
-  { value: "pedidos", label: "Pedidos", icon: Package, vaultOnly: false },
-  { value: "vault", label: "Meu Vault", icon: Box, vaultOnly: true },
-  { value: "wishlist", label: "Wishlist", icon: Search, vaultOnly: true },
-  { value: "intel", label: "Intel", icon: Newspaper, vaultOnly: true },
-  { value: "clube", label: "Clube", icon: Crown, vaultOnly: true },
-  { value: "comunidade", label: "Comunidade", icon: Users, vaultOnly: true },
-];
 
 export default function ClientDashboard() {
   const navigate = useNavigate();
@@ -116,7 +125,7 @@ export default function ClientDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [showPreferences, setShowPreferences] = useState(false);
   const [vaultMember, setVaultMember] = useState<VaultMemberData | null>(null);
-  const [activeTab, setActiveTab] = useState("pedidos");
+  const [activeSection, setActiveSection] = useState("pedidos");
 
   useEffect(() => {
     if (!authLoading && !session) {
@@ -133,7 +142,7 @@ export default function ClientDashboard() {
           supabase.functions.invoke("client-orders", {
             body: { session_token: session.session_token },
           }),
-          supabase.rpc("get_vault_member", { p_cpf: session.cpf })
+          supabase.rpc("get_vault_member", { p_cpf: session.cpf }),
         ]);
 
         if (!ordersRes.error && ordersRes.data?.orders) {
@@ -157,9 +166,11 @@ export default function ClientDashboard() {
 
   const refreshVaultMember = async () => {
     if (!session?.cpf) return;
-    
-    const { data } = await supabase.rpc("get_vault_member", { p_cpf: session.cpf });
-    
+
+    const { data } = await supabase.rpc("get_vault_member", {
+      p_cpf: session.cpf,
+    });
+
     if (data && data.length > 0) {
       setVaultMember(data[0] as unknown as VaultMemberData);
     }
@@ -178,41 +189,33 @@ export default function ClientDashboard() {
     );
   }
 
-  const tierInfo = vaultMember ? tierConfig[vaultMember.tier] : null;
-  const visibleTabs = tabItems.filter(tab => !tab.vaultOnly || vaultMember);
+  const currentSection =
+    sectionConfig[activeSection as keyof typeof sectionConfig];
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="border-b border-border/50 bg-card/80 backdrop-blur-sm sticky top-0 z-20">
-        <div className="container mx-auto px-4 py-3">
+      <header className="border-b border-border/50 bg-card/80 backdrop-blur-sm sticky top-0 z-30">
+        <div className="px-4 lg:px-6 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Link to="/">
-                <Logo size="sm" />
-              </Link>
-              <div className="hidden sm:flex items-center gap-2">
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">{session?.client_name}</span>
-                {tierInfo && (
-                  <Badge variant="outline" className={`${tierInfo.color} ${tierInfo.bgColor} border-0`}>
-                    <tierInfo.icon className="h-3 w-3 mr-1" />
-                    {tierInfo.label}
-                  </Badge>
-                )}
-              </div>
-            </div>
+            <Link to="/" className="flex items-center gap-2">
+              <Logo size="sm" />
+            </Link>
             <div className="flex items-center gap-1">
               {session && <ClientNotificationBell clientCpf={session.cpf} />}
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="icon"
-                onClick={() => setShowPreferences(!showPreferences)}
-                className="relative"
+                onClick={() => setShowPreferences(true)}
               >
                 <Settings className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={handleLogout} title="Sair">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                title="Sair"
+              >
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
@@ -220,215 +223,135 @@ export default function ClientDashboard() {
         </div>
       </header>
 
-      <main className="flex-1">
-        <div className="container mx-auto px-4 py-4 md:py-6">
-          {/* Mobile User Info */}
-          <div className="sm:hidden mb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Olá,</p>
-                <p className="font-semibold">{session?.client_name}</p>
-              </div>
-              {tierInfo && (
-                <Badge variant="outline" className={`${tierInfo.color} ${tierInfo.bgColor} border-0`}>
-                  <tierInfo.icon className="h-3 w-3 mr-1" />
-                  {tierInfo.label}
-                </Badge>
-              )}
-            </div>
-          </div>
+      <div className="flex-1 flex">
+        {/* Desktop Sidebar */}
+        <DashboardSidebar
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          isVaultMember={!!vaultMember}
+          tier={vaultMember?.tier}
+          userName={session?.client_name || ""}
+          className="hidden lg:block"
+        />
 
-          {/* Cashback Banner */}
-          {session && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-4"
-            >
-              <CashbackBanner 
-                clientCpf={session.cpf}
-                onNavigateToReferrals={() => setActiveTab("pedidos")}
+        {/* Main Content */}
+        <main className="flex-1 min-w-0">
+          <div className="p-4 lg:p-8 max-w-5xl mx-auto">
+            {/* Mobile Navigation */}
+            <div className="lg:hidden mb-6">
+              <MobileNav
+                activeSection={activeSection}
+                onSectionChange={setActiveSection}
+                isVaultMember={!!vaultMember}
+                tier={vaultMember?.tier}
+                userName={session?.client_name || ""}
               />
-            </motion.div>
-          )}
-
-          {/* Main Navigation Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <div className="sticky top-[57px] z-10 -mx-4 px-4 py-2 bg-background/95 backdrop-blur-sm border-b border-border/30">
-              <TabsList className="w-full h-auto p-1 bg-card/50 border border-border/50 rounded-xl flex gap-1 overflow-x-auto">
-                {visibleTabs.map((tab) => (
-                  <TabsTrigger
-                    key={tab.value}
-                    value={tab.value}
-                    className="flex-1 min-w-[70px] gap-1.5 py-2.5 px-3 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all"
-                  >
-                    <tab.icon className="h-4 w-4" />
-                    <span className="hidden sm:inline text-sm">{tab.label}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
             </div>
 
-            {/* Tab Contents */}
+            {/* Cashback Banner */}
+            {session && activeSection === "pedidos" && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6"
+              >
+                <CashbackBanner
+                  clientCpf={session.cpf}
+                  onNavigateToReferrals={() => {}}
+                />
+              </motion.div>
+            )}
+
+            {/* Section Header */}
+            {currentSection && (
+              <SectionHeader
+                icon={currentSection.icon}
+                title={currentSection.title}
+                description={currentSection.description}
+              />
+            )}
+
+            {/* Content */}
             <AnimatePresence mode="wait">
               <motion.div
-                key={activeTab}
+                key={activeSection}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.15 }}
               >
-                {/* Pedidos Tab */}
-                <TabsContent value="pedidos" className="mt-0">
-                  <div className="grid gap-4 lg:grid-cols-3">
+                {/* Pedidos */}
+                {activeSection === "pedidos" && (
+                  <div className="grid gap-6 lg:grid-cols-3">
                     <div className="lg:col-span-2">
-                      <div className="mb-4">
-                        <h2 className="text-lg font-semibold">Meus Pedidos</h2>
-                        <p className="text-sm text-muted-foreground">
-                          Acompanhe o status de todos os seus pedidos
-                        </p>
-                      </div>
-                      <OrdersTab 
-                        orders={orders} 
-                        isLoading={isLoading} 
-                        sessionToken={session?.session_token || ""} 
+                      <OrdersTab
+                        orders={orders}
+                        isLoading={isLoading}
+                        sessionToken={session?.session_token || ""}
                       />
                     </div>
                     <div className="space-y-4">
-                      {!vaultMember && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className="p-4 rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20"
-                        >
-                          <div className="flex items-center gap-2 mb-2">
-                            <Shield className="h-5 w-5 text-primary" />
-                            <h3 className="font-semibold">Bravenza Vault Club</h3>
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-3">
-                            Acesso exclusivo a curadoria global de tênis raros.
-                          </p>
-                          <Button asChild size="sm" variant="outline" className="w-full border-primary/50 hover:bg-primary/10">
-                            <Link to="/vault">Saiba mais</Link>
-                          </Button>
-                        </motion.div>
-                      )}
                       {session && (
-                        <ReferralCard 
+                        <ReferralCard
                           clientCpf={session.cpf}
                           clientName={session.client_name}
                         />
                       )}
                     </div>
                   </div>
-                </TabsContent>
+                )}
 
                 {/* Vault Tabs */}
                 {vaultMember && session && (
                   <>
-                    <TabsContent value="vault" className="mt-0">
-                      <div className="mb-4">
-                        <h2 className="text-lg font-semibold flex items-center gap-2">
-                          <Box className="h-5 w-5 text-primary" />
-                          Meu Vault
-                        </h2>
-                        <p className="text-sm text-muted-foreground">
-                          Sua coleção certificada pelo Vault Club
-                        </p>
-                      </div>
+                    {activeSection === "vault" && (
                       <VaultMyItemsTab clientCpf={session.cpf} />
-                    </TabsContent>
+                    )}
 
-                    <TabsContent value="wishlist" className="mt-0">
-                      <div className="mb-4">
-                        <h2 className="text-lg font-semibold flex items-center gap-2">
-                          <Search className="h-5 w-5 text-primary" />
-                          Wishlist & Buscas
-                        </h2>
-                        <p className="text-sm text-muted-foreground">
-                          Gerencie seus itens desejados e acompanhe buscas ativas
-                        </p>
-                      </div>
+                    {activeSection === "wishlist" && (
                       <VaultWishlistTab clientCpf={session.cpf} />
-                    </TabsContent>
+                    )}
 
-                    <TabsContent value="intel" className="mt-0">
-                      <div className="mb-4">
-                        <h2 className="text-lg font-semibold flex items-center gap-2">
-                          <Newspaper className="h-5 w-5 text-primary" />
-                          Intel
-                        </h2>
-                        <p className="text-sm text-muted-foreground">
-                          Conteúdo exclusivo, alertas de mercado e guias
-                        </p>
-                      </div>
+                    {activeSection === "intel" && (
                       <VaultIntelTab clientCpf={session.cpf} />
-                    </TabsContent>
+                    )}
 
-                    <TabsContent value="clube" className="mt-0">
-                      <div className="mb-4">
-                        <h2 className="text-lg font-semibold flex items-center gap-2">
-                          <Crown className="h-5 w-5 text-primary" />
-                          Vault Club
-                        </h2>
-                        <p className="text-sm text-muted-foreground">
-                          Seu status, benefícios, convites e progresso
-                        </p>
-                      </div>
-                      <VaultClubTab 
-                        clientCpf={session.cpf} 
+                    {activeSection === "clube" && (
+                      <VaultClubTab
+                        clientCpf={session.cpf}
                         member={vaultMember}
                         onMemberUpdate={refreshVaultMember}
                       />
-                    </TabsContent>
+                    )}
 
-                    <TabsContent value="comunidade" className="mt-0">
-                      <div className="mb-4">
-                        <h2 className="text-lg font-semibold flex items-center gap-2">
-                          <Users className="h-5 w-5 text-primary" />
-                          Comunidade
-                        </h2>
-                        <p className="text-sm text-muted-foreground">
-                          Conecte-se com outros membros do Vault
-                        </p>
-                      </div>
-                      <VaultCommunityTab 
+                    {activeSection === "comunidade" && (
+                      <VaultCommunityTab
                         clientCpf={session.cpf}
                         member={vaultMember}
                       />
-                    </TabsContent>
+                    )}
                   </>
                 )}
               </motion.div>
             </AnimatePresence>
-          </Tabs>
+          </div>
+        </main>
+      </div>
 
-          {/* Preferences Panel */}
-          <AnimatePresence>
-            {showPreferences && session && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="fixed inset-x-0 bottom-0 z-30 bg-card border-t border-border shadow-lg"
-              >
-                <div className="container mx-auto px-4 py-4 max-h-[50vh] overflow-auto">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold">Configurações</h3>
-                    <Button variant="ghost" size="sm" onClick={() => setShowPreferences(false)}>
-                      ✕
-                    </Button>
-                  </div>
-                  <ClientPreferences 
-                    clientCpf={session.cpf}
-                    clientName={session.client_name}
-                  />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </main>
+      {/* Preferences Dialog */}
+      <Dialog open={showPreferences} onOpenChange={setShowPreferences}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Configurações</DialogTitle>
+          </DialogHeader>
+          {session && (
+            <ClientPreferences
+              clientCpf={session.cpf}
+              clientName={session.client_name}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Footer />
       <FloatingWhatsApp />
