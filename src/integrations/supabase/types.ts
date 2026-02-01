@@ -995,6 +995,53 @@ export type Database = {
           },
         ]
       }
+      vault_community_posts: {
+        Row: {
+          attachments: string[] | null
+          content: string | null
+          created_at: string | null
+          id: string
+          moderated_by_admin_id: string | null
+          moderation_notes: string | null
+          status: Database["public"]["Enums"]["community_post_status"] | null
+          title: string
+          type: Database["public"]["Enums"]["community_post_type"]
+          user_id: string
+        }
+        Insert: {
+          attachments?: string[] | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          moderated_by_admin_id?: string | null
+          moderation_notes?: string | null
+          status?: Database["public"]["Enums"]["community_post_status"] | null
+          title: string
+          type?: Database["public"]["Enums"]["community_post_type"]
+          user_id: string
+        }
+        Update: {
+          attachments?: string[] | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          moderated_by_admin_id?: string | null
+          moderation_notes?: string | null
+          status?: Database["public"]["Enums"]["community_post_status"] | null
+          title?: string
+          type?: Database["public"]["Enums"]["community_post_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_community_posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vault_hunt_options: {
         Row: {
           admin_recommendation: boolean | null
@@ -1060,9 +1107,52 @@ export type Database = {
           },
         ]
       }
+      vault_intel_posts: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by_admin_id: string | null
+          id: string
+          published_at: string | null
+          status: string | null
+          title: string
+          type: Database["public"]["Enums"]["intel_post_type"]
+          updated_at: string | null
+          visibility: Database["public"]["Enums"]["intel_visibility"] | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by_admin_id?: string | null
+          id?: string
+          published_at?: string | null
+          status?: string | null
+          title: string
+          type?: Database["public"]["Enums"]["intel_post_type"]
+          updated_at?: string | null
+          visibility?: Database["public"]["Enums"]["intel_visibility"] | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by_admin_id?: string | null
+          id?: string
+          published_at?: string | null
+          status?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["intel_post_type"]
+          updated_at?: string | null
+          visibility?: Database["public"]["Enums"]["intel_visibility"] | null
+        }
+        Relationships: []
+      }
       vault_invites: {
         Row: {
+          converted_purchase_vault_item_id: string | null
           created_at: string | null
+          created_by_tier_at_time:
+            | Database["public"]["Enums"]["vault_tier"]
+            | null
           expires_at: string | null
           id: string
           invite_code: string
@@ -1073,11 +1163,16 @@ export type Database = {
           reward_granted: boolean | null
           reward_type: string | null
           status: string | null
+          token: string | null
           used_at: string | null
           used_by_member_id: string | null
         }
         Insert: {
+          converted_purchase_vault_item_id?: string | null
           created_at?: string | null
+          created_by_tier_at_time?:
+            | Database["public"]["Enums"]["vault_tier"]
+            | null
           expires_at?: string | null
           id?: string
           invite_code: string
@@ -1088,11 +1183,16 @@ export type Database = {
           reward_granted?: boolean | null
           reward_type?: string | null
           status?: string | null
+          token?: string | null
           used_at?: string | null
           used_by_member_id?: string | null
         }
         Update: {
+          converted_purchase_vault_item_id?: string | null
           created_at?: string | null
+          created_by_tier_at_time?:
+            | Database["public"]["Enums"]["vault_tier"]
+            | null
           expires_at?: string | null
           id?: string
           invite_code?: string
@@ -1103,10 +1203,18 @@ export type Database = {
           reward_granted?: boolean | null
           reward_type?: string | null
           status?: string | null
+          token?: string | null
           used_at?: string | null
           used_by_member_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "vault_invites_converted_purchase_vault_item_id_fkey"
+            columns: ["converted_purchase_vault_item_id"]
+            isOneToOne: false
+            referencedRelation: "vault_items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vault_invites_inviter_id_fkey"
             columns: ["inviter_id"]
@@ -1123,13 +1231,214 @@ export type Database = {
           },
         ]
       }
+      vault_items: {
+        Row: {
+          brand: string | null
+          certificate_pdf_url: string | null
+          colorway: string | null
+          created_at: string | null
+          id: string
+          inspection_photos: string[] | null
+          model: string | null
+          origin_city: string | null
+          origin_country: string | null
+          purchase_date: string | null
+          purchase_value: number | null
+          qr_private_url: string | null
+          search_id: string | null
+          size: string | null
+          timeline_events: Json | null
+          title: string
+          user_id: string
+          vault_id: string
+          verified_at: string | null
+          verified_status:
+            | Database["public"]["Enums"]["vault_verified_status"]
+            | null
+        }
+        Insert: {
+          brand?: string | null
+          certificate_pdf_url?: string | null
+          colorway?: string | null
+          created_at?: string | null
+          id?: string
+          inspection_photos?: string[] | null
+          model?: string | null
+          origin_city?: string | null
+          origin_country?: string | null
+          purchase_date?: string | null
+          purchase_value?: number | null
+          qr_private_url?: string | null
+          search_id?: string | null
+          size?: string | null
+          timeline_events?: Json | null
+          title: string
+          user_id: string
+          vault_id: string
+          verified_at?: string | null
+          verified_status?:
+            | Database["public"]["Enums"]["vault_verified_status"]
+            | null
+        }
+        Update: {
+          brand?: string | null
+          certificate_pdf_url?: string | null
+          colorway?: string | null
+          created_at?: string | null
+          id?: string
+          inspection_photos?: string[] | null
+          model?: string | null
+          origin_city?: string | null
+          origin_country?: string | null
+          purchase_date?: string | null
+          purchase_value?: number | null
+          qr_private_url?: string | null
+          search_id?: string | null
+          size?: string | null
+          timeline_events?: Json | null
+          title?: string
+          user_id?: string
+          vault_id?: string
+          verified_at?: string | null
+          verified_status?:
+            | Database["public"]["Enums"]["vault_verified_status"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_items_search_id_fkey"
+            columns: ["search_id"]
+            isOneToOne: false
+            referencedRelation: "vault_searches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_match_options: {
+        Row: {
+          condition: string | null
+          created_at: string | null
+          currency: string | null
+          evidence_urls: string[] | null
+          id: string
+          match_room_id: string
+          option_title: string
+          price_estimate: number | null
+          pros: string | null
+          region: string | null
+          risks: string | null
+        }
+        Insert: {
+          condition?: string | null
+          created_at?: string | null
+          currency?: string | null
+          evidence_urls?: string[] | null
+          id?: string
+          match_room_id: string
+          option_title: string
+          price_estimate?: number | null
+          pros?: string | null
+          region?: string | null
+          risks?: string | null
+        }
+        Update: {
+          condition?: string | null
+          created_at?: string | null
+          currency?: string | null
+          evidence_urls?: string[] | null
+          id?: string
+          match_room_id?: string
+          option_title?: string
+          price_estimate?: number | null
+          pros?: string | null
+          region?: string | null
+          risks?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_match_options_match_room_id_fkey"
+            columns: ["match_room_id"]
+            isOneToOne: false
+            referencedRelation: "vault_match_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_match_rooms: {
+        Row: {
+          created_at: string | null
+          created_by_admin_id: string | null
+          decision_at: string | null
+          decision_deadline_at: string | null
+          decision_notes_from_customer: string | null
+          decision_status:
+            | Database["public"]["Enums"]["match_decision_status"]
+            | null
+          id: string
+          search_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by_admin_id?: string | null
+          decision_at?: string | null
+          decision_deadline_at?: string | null
+          decision_notes_from_customer?: string | null
+          decision_status?:
+            | Database["public"]["Enums"]["match_decision_status"]
+            | null
+          id?: string
+          search_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by_admin_id?: string | null
+          decision_at?: string | null
+          decision_deadline_at?: string | null
+          decision_notes_from_customer?: string | null
+          decision_status?:
+            | Database["public"]["Enums"]["match_decision_status"]
+            | null
+          id?: string
+          search_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_match_rooms_search_id_fkey"
+            columns: ["search_id"]
+            isOneToOne: false
+            referencedRelation: "vault_searches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_match_rooms_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vault_members: {
         Row: {
           active_hunts: number | null
           client_cpf: string
           client_email: string | null
           client_name: string
+          community_opt_in: boolean | null
           created_at: string | null
+          flags_consecutive_declines: number | null
+          flags_eligible_for_black: boolean | null
+          flags_review_mode_until: string | null
           id: string
           invited_by: string | null
           invites_remaining: number | null
@@ -1138,11 +1447,23 @@ export type Database = {
           joined_via: string | null
           max_active_hunts: number | null
           max_wishlist_items: number | null
+          notes_internal: string | null
           preferred_brands: string[] | null
           preferred_sizes: string[] | null
           preferred_styles: string[] | null
+          stats_converted_invites: number | null
+          stats_decision_rate: number | null
+          stats_matches_approved: number | null
+          stats_matches_declined: number | null
+          stats_matches_total: number | null
+          stats_purchases_count_12m: number | null
+          stats_purchases_count_18m: number | null
+          stats_spend_total_12m: number | null
+          stats_spend_total_18m: number | null
+          status: Database["public"]["Enums"]["vault_member_status"] | null
           tier: Database["public"]["Enums"]["vault_tier"]
           tier_upgraded_at: string | null
+          timezone: string | null
           total_purchases: number | null
           total_spent: number | null
           updated_at: string | null
@@ -1152,7 +1473,11 @@ export type Database = {
           client_cpf: string
           client_email?: string | null
           client_name: string
+          community_opt_in?: boolean | null
           created_at?: string | null
+          flags_consecutive_declines?: number | null
+          flags_eligible_for_black?: boolean | null
+          flags_review_mode_until?: string | null
           id?: string
           invited_by?: string | null
           invites_remaining?: number | null
@@ -1161,11 +1486,23 @@ export type Database = {
           joined_via?: string | null
           max_active_hunts?: number | null
           max_wishlist_items?: number | null
+          notes_internal?: string | null
           preferred_brands?: string[] | null
           preferred_sizes?: string[] | null
           preferred_styles?: string[] | null
+          stats_converted_invites?: number | null
+          stats_decision_rate?: number | null
+          stats_matches_approved?: number | null
+          stats_matches_declined?: number | null
+          stats_matches_total?: number | null
+          stats_purchases_count_12m?: number | null
+          stats_purchases_count_18m?: number | null
+          stats_spend_total_12m?: number | null
+          stats_spend_total_18m?: number | null
+          status?: Database["public"]["Enums"]["vault_member_status"] | null
           tier?: Database["public"]["Enums"]["vault_tier"]
           tier_upgraded_at?: string | null
+          timezone?: string | null
           total_purchases?: number | null
           total_spent?: number | null
           updated_at?: string | null
@@ -1175,7 +1512,11 @@ export type Database = {
           client_cpf?: string
           client_email?: string | null
           client_name?: string
+          community_opt_in?: boolean | null
           created_at?: string | null
+          flags_consecutive_declines?: number | null
+          flags_eligible_for_black?: boolean | null
+          flags_review_mode_until?: string | null
           id?: string
           invited_by?: string | null
           invites_remaining?: number | null
@@ -1184,11 +1525,23 @@ export type Database = {
           joined_via?: string | null
           max_active_hunts?: number | null
           max_wishlist_items?: number | null
+          notes_internal?: string | null
           preferred_brands?: string[] | null
           preferred_sizes?: string[] | null
           preferred_styles?: string[] | null
+          stats_converted_invites?: number | null
+          stats_decision_rate?: number | null
+          stats_matches_approved?: number | null
+          stats_matches_declined?: number | null
+          stats_matches_total?: number | null
+          stats_purchases_count_12m?: number | null
+          stats_purchases_count_18m?: number | null
+          stats_spend_total_12m?: number | null
+          stats_spend_total_18m?: number | null
+          status?: Database["public"]["Enums"]["vault_member_status"] | null
           tier?: Database["public"]["Enums"]["vault_tier"]
           tier_upgraded_at?: string | null
+          timezone?: string | null
           total_purchases?: number | null
           total_spent?: number | null
           updated_at?: string | null
@@ -1203,13 +1556,123 @@ export type Database = {
           },
         ]
       }
+      vault_search_updates: {
+        Row: {
+          created_at: string | null
+          created_by_admin_id: string | null
+          id: string
+          message: string
+          search_id: string
+          update_type: Database["public"]["Enums"]["search_update_type"]
+          visible_to_customer: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by_admin_id?: string | null
+          id?: string
+          message: string
+          search_id: string
+          update_type?: Database["public"]["Enums"]["search_update_type"]
+          visible_to_customer?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by_admin_id?: string | null
+          id?: string
+          message?: string
+          search_id?: string
+          update_type?: Database["public"]["Enums"]["search_update_type"]
+          visible_to_customer?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_search_updates_search_id_fkey"
+            columns: ["search_id"]
+            isOneToOne: false
+            referencedRelation: "vault_searches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_searches: {
+        Row: {
+          created_at: string | null
+          created_by_admin_id: string | null
+          id: string
+          internal_notes: string | null
+          is_active: boolean | null
+          last_update_at: string | null
+          match_room_id: string | null
+          sla_next_update_due_at: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["search_status"]
+          updated_at: string | null
+          user_id: string
+          wishlist_item_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by_admin_id?: string | null
+          id?: string
+          internal_notes?: string | null
+          is_active?: boolean | null
+          last_update_at?: string | null
+          match_room_id?: string | null
+          sla_next_update_due_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["search_status"]
+          updated_at?: string | null
+          user_id: string
+          wishlist_item_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by_admin_id?: string | null
+          id?: string
+          internal_notes?: string | null
+          is_active?: boolean | null
+          last_update_at?: string | null
+          match_room_id?: string | null
+          sla_next_update_due_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["search_status"]
+          updated_at?: string | null
+          user_id?: string
+          wishlist_item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_match_room"
+            columns: ["match_room_id"]
+            isOneToOne: false
+            referencedRelation: "vault_match_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_searches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_searches_wishlist_item_id_fkey"
+            columns: ["wishlist_item_id"]
+            isOneToOne: false
+            referencedRelation: "vault_wishlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vault_waitlist: {
         Row: {
           admin_notes: string | null
+          city: string | null
           cpf: string | null
           created_at: string | null
           email: string
           id: string
+          interests: string | null
           name: string
           phone: string | null
           reason: string | null
@@ -1220,10 +1683,12 @@ export type Database = {
         }
         Insert: {
           admin_notes?: string | null
+          city?: string | null
           cpf?: string | null
           created_at?: string | null
           email: string
           id?: string
+          interests?: string | null
           name: string
           phone?: string | null
           reason?: string | null
@@ -1234,10 +1699,12 @@ export type Database = {
         }
         Update: {
           admin_notes?: string | null
+          city?: string | null
           cpf?: string | null
           created_at?: string | null
           email?: string
           id?: string
+          interests?: string | null
           name?: string
           phone?: string | null
           reason?: string | null
@@ -1253,7 +1720,11 @@ export type Database = {
           assigned_to: string | null
           bid_amount: number | null
           bid_deadline: string | null
+          colorway: string | null
           completed_at: string | null
+          condition_pref:
+            | Database["public"]["Enums"]["condition_preference"]
+            | null
           condition_preference: string | null
           converted_order_id: string | null
           created_at: string | null
@@ -1276,14 +1747,20 @@ export type Database = {
           reference_image_url: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["hunt_status"] | null
+          title: string | null
           updated_at: string | null
           urgency: string | null
+          urgency_level: Database["public"]["Enums"]["urgency_level"] | null
         }
         Insert: {
           assigned_to?: string | null
           bid_amount?: number | null
           bid_deadline?: string | null
+          colorway?: string | null
           completed_at?: string | null
+          condition_pref?:
+            | Database["public"]["Enums"]["condition_preference"]
+            | null
           condition_preference?: string | null
           converted_order_id?: string | null
           created_at?: string | null
@@ -1306,14 +1783,20 @@ export type Database = {
           reference_image_url?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["hunt_status"] | null
+          title?: string | null
           updated_at?: string | null
           urgency?: string | null
+          urgency_level?: Database["public"]["Enums"]["urgency_level"] | null
         }
         Update: {
           assigned_to?: string | null
           bid_amount?: number | null
           bid_deadline?: string | null
+          colorway?: string | null
           completed_at?: string | null
+          condition_pref?:
+            | Database["public"]["Enums"]["condition_preference"]
+            | null
           condition_preference?: string | null
           converted_order_id?: string | null
           created_at?: string | null
@@ -1336,8 +1819,10 @@ export type Database = {
           reference_image_url?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["hunt_status"] | null
+          title?: string | null
           updated_at?: string | null
           urgency?: string | null
+          urgency_level?: Database["public"]["Enums"]["urgency_level"] | null
         }
         Relationships: [
           {
@@ -1364,13 +1849,32 @@ export type Database = {
         Returns: boolean
       }
       approve_budget: { Args: { p_token: string }; Returns: boolean }
+      approve_vault_match: {
+        Args: { p_cpf: string; p_match_room_id: string }
+        Returns: boolean
+      }
       calculate_vault_tier: {
         Args: { p_total_purchases: number; p_total_spent: number }
         Returns: Database["public"]["Enums"]["vault_tier"]
       }
+      check_vault_tier_eligibility: {
+        Args: { p_member_id: string }
+        Returns: {
+          black_criteria_met: number
+          current_tier: Database["public"]["Enums"]["vault_tier"]
+          eligible_for_black: boolean
+          eligible_for_privilege: boolean
+          privilege_criteria_met: number
+        }[]
+      }
+      decline_vault_match: {
+        Args: { p_cpf: string; p_match_room_id: string; p_reason?: string }
+        Returns: boolean
+      }
       generate_authenticity_code: { Args: never; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
       generate_vault_invite_code: { Args: never; Returns: string }
+      generate_vault_item_id: { Args: never; Returns: string }
       get_client_available_cashback: {
         Args: { p_cpf: string }
         Returns: {
@@ -1474,6 +1978,18 @@ export type Database = {
           earned_at: string
         }[]
       }
+      get_vault_club_tier_limits: {
+        Args: { p_tier: Database["public"]["Enums"]["vault_tier"] }
+        Returns: {
+          decision_window_hours: number
+          invites_per_semester: number
+          max_active_searches: number
+          max_wishlist_items: number
+          sla_first_response_hours: number
+          sla_match_room_hours: number
+          sla_update_frequency_hours: number
+        }[]
+      }
       get_vault_collection: {
         Args: { p_cpf: string }
         Returns: {
@@ -1487,6 +2003,19 @@ export type Database = {
           product_size: string
           purchase_date: string
           vault_id: string
+        }[]
+      }
+      get_vault_community_posts: {
+        Args: { p_cpf: string }
+        Returns: {
+          attachments: string[]
+          author_name: string
+          author_tier: Database["public"]["Enums"]["vault_tier"]
+          content: string
+          created_at: string
+          id: string
+          title: string
+          type: Database["public"]["Enums"]["community_post_type"]
         }[]
       }
       get_vault_hunt_options: {
@@ -1506,6 +2035,17 @@ export type Database = {
           supplier_name: string
         }[]
       }
+      get_vault_intel_posts: {
+        Args: { p_cpf: string }
+        Returns: {
+          content: string
+          id: string
+          published_at: string
+          title: string
+          type: Database["public"]["Enums"]["intel_post_type"]
+          visibility: Database["public"]["Enums"]["intel_visibility"]
+        }[]
+      }
       get_vault_invites: {
         Args: { p_cpf: string }
         Returns: {
@@ -1517,6 +2057,18 @@ export type Database = {
           reward_granted: boolean
           status: string
           used_at: string
+        }[]
+      }
+      get_vault_match_room: {
+        Args: { p_cpf: string; p_match_room_id: string }
+        Returns: {
+          created_at: string
+          decision_deadline_at: string
+          decision_status: Database["public"]["Enums"]["match_decision_status"]
+          id: string
+          options: Json
+          search_id: string
+          wishlist_title: string
         }[]
       }
       get_vault_member: {
@@ -1533,6 +2085,38 @@ export type Database = {
           preferred_sizes: string[]
           tier: Database["public"]["Enums"]["vault_tier"]
           total_purchases: number
+        }[]
+      }
+      get_vault_member_items: {
+        Args: { p_cpf: string }
+        Returns: {
+          brand: string
+          certificate_pdf_url: string
+          colorway: string
+          id: string
+          inspection_photos: string[]
+          model: string
+          purchase_date: string
+          purchase_value: number
+          qr_private_url: string
+          size: string
+          title: string
+          vault_id: string
+          verified_status: Database["public"]["Enums"]["vault_verified_status"]
+        }[]
+      }
+      get_vault_member_searches: {
+        Args: { p_cpf: string }
+        Returns: {
+          decision_status: Database["public"]["Enums"]["match_decision_status"]
+          has_match_room: boolean
+          is_active: boolean
+          last_update_at: string
+          match_room_id: string
+          search_id: string
+          started_at: string
+          status: Database["public"]["Enums"]["search_status"]
+          wishlist_title: string
         }[]
       }
       get_vault_tier_limits: {
@@ -1628,6 +2212,9 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       budget_status: "PENDING" | "SENT" | "APPROVED" | "REJECTED" | "EXPIRED"
+      community_post_status: "PUBLISHED" | "PENDING_REVIEW" | "REMOVED"
+      community_post_type: "SHOWCASE" | "DISCUSSION" | "POLL" | "ISO_WTB"
+      condition_preference: "DS" | "VNDS" | "USED_OK"
       hunt_status:
         | "queued"
         | "curating"
@@ -1637,6 +2224,9 @@ export type Database = {
         | "confirmed"
         | "converted"
         | "cancelled"
+      intel_post_type: "RADAR" | "GUIDE" | "ALERT" | "EVENT"
+      intel_visibility: "ALL" | "PRIVILEGE_PLUS" | "BLACK_ONLY"
+      match_decision_status: "PENDING" | "APPROVED" | "DECLINED" | "EXPIRED"
       notification_target: "admin" | "client"
       notification_type:
         | "new_order_request"
@@ -1678,7 +2268,21 @@ export type Database = {
         | "LOST"
       order_type: "READY" | "VAULT"
       payment_method: "PIX" | "CREDIT_CARD"
+      search_status:
+        | "RECEIVED"
+        | "IN_CURATION"
+        | "OPTIONS_IDENTIFIED"
+        | "VALIDATING"
+        | "MATCH_SENT"
+        | "AWAITING_DECISION"
+        | "CLOSED_APPROVED"
+        | "CLOSED_NOT_FOUND"
+        | "CLOSED_CANCELLED"
+      search_update_type: "UPDATE" | "ALERT" | "REQUEST_INFO"
+      urgency_level: "NOW" | "FLEXIBLE"
+      vault_member_status: "ACTIVE" | "SUSPENDED" | "BANNED"
       vault_tier: "member" | "collector" | "elite"
+      vault_verified_status: "VERIFIED" | "PENDING" | "REVOKED"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1808,6 +2412,9 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       budget_status: ["PENDING", "SENT", "APPROVED", "REJECTED", "EXPIRED"],
+      community_post_status: ["PUBLISHED", "PENDING_REVIEW", "REMOVED"],
+      community_post_type: ["SHOWCASE", "DISCUSSION", "POLL", "ISO_WTB"],
+      condition_preference: ["DS", "VNDS", "USED_OK"],
       hunt_status: [
         "queued",
         "curating",
@@ -1818,6 +2425,9 @@ export const Constants = {
         "converted",
         "cancelled",
       ],
+      intel_post_type: ["RADAR", "GUIDE", "ALERT", "EVENT"],
+      intel_visibility: ["ALL", "PRIVILEGE_PLUS", "BLACK_ONLY"],
+      match_decision_status: ["PENDING", "APPROVED", "DECLINED", "EXPIRED"],
       notification_target: ["admin", "client"],
       notification_type: [
         "new_order_request",
@@ -1861,7 +2471,22 @@ export const Constants = {
       ],
       order_type: ["READY", "VAULT"],
       payment_method: ["PIX", "CREDIT_CARD"],
+      search_status: [
+        "RECEIVED",
+        "IN_CURATION",
+        "OPTIONS_IDENTIFIED",
+        "VALIDATING",
+        "MATCH_SENT",
+        "AWAITING_DECISION",
+        "CLOSED_APPROVED",
+        "CLOSED_NOT_FOUND",
+        "CLOSED_CANCELLED",
+      ],
+      search_update_type: ["UPDATE", "ALERT", "REQUEST_INFO"],
+      urgency_level: ["NOW", "FLEXIBLE"],
+      vault_member_status: ["ACTIVE", "SUSPENDED", "BANNED"],
       vault_tier: ["member", "collector", "elite"],
+      vault_verified_status: ["VERIFIED", "PENDING", "REVOKED"],
     },
   },
 } as const
