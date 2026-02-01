@@ -16,6 +16,11 @@ import {
   ChevronRight,
   Menu,
   X,
+  ChevronDown,
+  ShoppingBag,
+  Gift,
+  Award,
+  Clock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useClientAuth } from "@/hooks/useClientAuth";
@@ -38,6 +43,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 interface OrderData {
@@ -111,14 +123,22 @@ const tierConfig = {
   },
 };
 
-const navItems = [
-  { id: "pedidos", label: "Pedidos", icon: Package },
-  { id: "vault", label: "Vault", icon: Box, vaultOnly: true },
-  { id: "wishlist", label: "Wishlist", icon: Search, vaultOnly: true },
-  { id: "intel", label: "Intel", icon: Newspaper, vaultOnly: true },
-  { id: "clube", label: "Clube", icon: Crown, vaultOnly: true },
-  { id: "comunidade", label: "Social", icon: Users, vaultOnly: true },
+const vaultMenuItems = [
+  { id: "vault", label: "Minha Coleção", icon: Box, description: "Itens verificados" },
+  { id: "wishlist", label: "Wishlist", icon: Search, description: "Buscas ativas" },
+  { id: "intel", label: "Intel", icon: Newspaper, description: "Novidades exclusivas" },
+  { id: "clube", label: "Meu Status", icon: Award, description: "Tier e benefícios" },
+  { id: "comunidade", label: "Comunidade", icon: Users, description: "Social" },
 ];
+
+const sectionTitles: Record<string, { title: string; subtitle: string; icon: any }> = {
+  pedidos: { title: "Meus Pedidos", subtitle: "Acompanhe suas importações em tempo real", icon: Package },
+  vault: { title: "Minha Coleção", subtitle: "Seus itens verificados com certificado de autenticidade", icon: Box },
+  wishlist: { title: "Wishlist", subtitle: "Itens que estamos buscando para você", icon: Search },
+  intel: { title: "Vault Intel", subtitle: "Novidades e conteúdos exclusivos para membros", icon: Newspaper },
+  clube: { title: "Meu Status", subtitle: "Seu tier, benefícios e evolução no Vault Club", icon: Award },
+  comunidade: { title: "Comunidade", subtitle: "Conecte-se com outros membros", icon: Users },
+};
 
 export default function ClientDashboard() {
   const navigate = useNavigate();
@@ -193,48 +213,106 @@ export default function ClientDashboard() {
   }
 
   const tierInfo = vaultMember ? tierConfig[vaultMember.tier] : null;
-  const visibleNavItems = navItems.filter(
-    (item) => !item.vaultOnly || vaultMember
-  );
+  const currentSection = sectionTitles[activeSection];
+  const isVaultSection = activeSection !== "pedidos";
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border/50 bg-background/95 backdrop-blur-md sticky top-0 z-50">
+      {/* Premium Header */}
+      <header className="border-b border-border/30 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 lg:px-6">
-          <div className="flex items-center justify-between h-14">
+          <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2">
               <Logo size="sm" />
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center gap-1">
-              {visibleNavItems.map((item) => {
-                const isActive = activeSection === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveSection(item.id)}
-                    className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    )}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </button>
-                );
-              })}
+            <nav className="hidden md:flex items-center gap-2">
+              {/* Orders Button */}
+              <button
+                onClick={() => setActiveSection("pedidos")}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300",
+                  activeSection === "pedidos"
+                    ? "bg-foreground text-background shadow-lg"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+              >
+                <ShoppingBag className="h-4 w-4" />
+                Meus Pedidos
+                {orders.length > 0 && (
+                  <span className={cn(
+                    "ml-1 px-2 py-0.5 rounded-full text-xs font-bold",
+                    activeSection === "pedidos" 
+                      ? "bg-background/20 text-background"
+                      : "bg-primary/10 text-primary"
+                  )}>
+                    {orders.length}
+                  </span>
+                )}
+              </button>
+
+              {/* Vault Club Dropdown */}
+              {vaultMember && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className={cn(
+                        "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300",
+                        isVaultSection
+                          ? "bg-foreground text-background shadow-lg"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      )}
+                    >
+                      <Crown className="h-4 w-4" />
+                      Vault Club
+                      <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-70" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center" className="w-64 p-2 bg-card border-border/50">
+                    {vaultMenuItems.map((item) => (
+                      <DropdownMenuItem
+                        key={item.id}
+                        onClick={() => setActiveSection(item.id)}
+                        className={cn(
+                          "flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors",
+                          activeSection === item.id && "bg-primary/10"
+                        )}
+                      >
+                        <div className={cn(
+                          "p-2 rounded-lg",
+                          activeSection === item.id ? "bg-primary/20 text-primary" : "bg-muted/50"
+                        )}>
+                          <item.icon className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{item.label}</p>
+                          <p className="text-xs text-muted-foreground">{item.description}</p>
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+              {/* Non-member Vault CTA */}
+              {!vaultMember && (
+                <Link
+                  to="/vault"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 transition-colors"
+                >
+                  <Gift className="h-4 w-4" />
+                  Conhecer Vault Club
+                </Link>
+              )}
             </nav>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               {session && <ClientNotificationBell clientCpf={session.cpf} />}
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9"
+                className="h-9 w-9 rounded-xl"
                 onClick={() => setShowPreferences(true)}
               >
                 <Settings className="h-4 w-4" />
@@ -242,7 +320,7 @@ export default function ClientDashboard() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 hidden sm:flex"
+                className="h-9 w-9 rounded-xl hidden sm:flex"
                 onClick={handleLogout}
                 title="Sair"
               >
@@ -252,7 +330,7 @@ export default function ClientDashboard() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 md:hidden"
+                className="h-9 w-9 rounded-xl md:hidden"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
                 {mobileMenuOpen ? (
@@ -273,34 +351,67 @@ export default function ClientDashboard() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-b border-border/50 bg-card/95 backdrop-blur-md overflow-hidden"
+            className="md:hidden border-b border-border/30 bg-card/95 backdrop-blur-xl overflow-hidden"
           >
-            <div className="p-4 space-y-2">
-              {visibleNavItems.map((item) => {
-                const isActive = activeSection === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveSection(item.id);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200",
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    )}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    <span className="font-medium">{item.label}</span>
-                  </button>
-                );
-              })}
-              <div className="pt-2 border-t border-border/50">
+            <div className="p-4 space-y-1">
+              {/* Orders */}
+              <button
+                onClick={() => {
+                  setActiveSection("pedidos");
+                  setMobileMenuOpen(false);
+                }}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200",
+                  activeSection === "pedidos"
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                )}
+              >
+                <ShoppingBag className="h-5 w-5" />
+                <div className="flex-1">
+                  <span className="font-medium">Meus Pedidos</span>
+                  {orders.length > 0 && (
+                    <span className="ml-2 text-xs opacity-70">({orders.length})</span>
+                  )}
+                </div>
+              </button>
+
+              {/* Vault Club Items */}
+              {vaultMember && (
+                <>
+                  <div className="pt-3 pb-2 px-4">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Vault Club
+                    </p>
+                  </div>
+                  {vaultMenuItems.map((item) => {
+                    const isActive = activeSection === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveSection(item.id);
+                          setMobileMenuOpen(false);
+                        }}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200",
+                          isActive
+                            ? "bg-foreground text-background"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                        )}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        <span className="font-medium">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </>
+              )}
+
+              <div className="pt-3 border-t border-border/30 mt-2">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left text-muted-foreground hover:text-foreground hover:bg-muted/30"
                 >
                   <LogOut className="h-5 w-5" />
                   <span className="font-medium">Sair</span>
@@ -314,78 +425,69 @@ export default function ClientDashboard() {
       {/* Main Content */}
       <main className="flex-1">
         <div className="max-w-5xl mx-auto px-4 lg:px-6 py-6 lg:py-8">
-          {/* User Hero Card */}
+          {/* Section Header */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            key={`header-${activeSection}`}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
+            className="mb-6"
           >
-            <div
-              className={cn(
-                "relative overflow-hidden rounded-2xl border p-6",
-                tierInfo
-                  ? `${tierInfo.borderColor} bg-gradient-to-br ${tierInfo.gradient}`
-                  : "border-border/50 bg-card/50"
-              )}
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  {tierInfo && (
-                    <div className={cn("p-3 rounded-xl", tierInfo.bgColor)}>
-                      <tierInfo.icon className={cn("h-6 w-6", tierInfo.color)} />
-                    </div>
+            <div className="flex items-start gap-4">
+              <div className={cn(
+                "p-3 rounded-2xl",
+                isVaultSection && tierInfo ? tierInfo.bgColor : "bg-muted/50"
+              )}>
+                <currentSection.icon className={cn(
+                  "h-6 w-6",
+                  isVaultSection && tierInfo ? tierInfo.color : "text-foreground"
+                )} />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl font-bold tracking-tight">{currentSection.title}</h1>
+                  {isVaultSection && tierInfo && (
+                    <span className={cn(
+                      "px-2.5 py-1 rounded-full text-xs font-semibold",
+                      tierInfo.bgColor, tierInfo.color
+                    )}>
+                      {tierInfo.name}
+                    </span>
                   )}
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      {tierInfo ? "Bem-vindo ao Vault Club" : "Olá"}
+                </div>
+                <p className="text-muted-foreground mt-1">{currentSection.subtitle}</p>
+              </div>
+
+              {/* Quick Stats for Vault sections */}
+              {isVaultSection && vaultMember && (
+                <div className="hidden lg:flex items-center gap-6 pr-2">
+                  <div className="text-right">
+                    <p className="text-2xl font-bold tabular-nums">{vaultMember.total_purchases}</p>
+                    <p className="text-xs text-muted-foreground">Itens</p>
+                  </div>
+                  <div className="h-8 w-px bg-border/50" />
+                  <div className="text-right">
+                    <p className="text-2xl font-bold tabular-nums">
+                      {vaultMember.active_hunts}/{vaultMember.max_active_hunts}
                     </p>
-                    <h1 className="text-xl font-semibold">
-                      {session?.client_name}
-                    </h1>
-                    {tierInfo && (
-                      <p className={cn("text-sm font-medium mt-1", tierInfo.color)}>
-                        {tierInfo.name}
-                      </p>
-                    )}
+                    <p className="text-xs text-muted-foreground">Buscas</p>
+                  </div>
+                  <div className="h-8 w-px bg-border/50" />
+                  <div className="text-right">
+                    <p className="text-2xl font-bold tabular-nums">{vaultMember.invites_remaining}</p>
+                    <p className="text-xs text-muted-foreground">Convites</p>
                   </div>
                 </div>
+              )}
 
-                {/* Quick Stats */}
-                {vaultMember && (
-                  <div className="flex items-center gap-6">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold">
-                        {vaultMember.total_purchases}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Itens</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold">
-                        {vaultMember.active_hunts}/{vaultMember.max_active_hunts}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Buscas</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold">
-                        {vaultMember.invites_remaining}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Convites</p>
-                    </div>
+              {/* Orders count for orders section */}
+              {activeSection === "pedidos" && orders.length > 0 && (
+                <div className="hidden lg:flex items-center gap-4 pr-2">
+                  <div className="text-right">
+                    <p className="text-2xl font-bold tabular-nums">{orders.length}</p>
+                    <p className="text-xs text-muted-foreground">Total de pedidos</p>
                   </div>
-                )}
-
-                {/* Non-member CTA */}
-                {!vaultMember && (
-                  <Link
-                    to="/vault"
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                  >
-                    <Crown className="h-4 w-4" />
-                    <span className="text-sm font-medium">Conhecer Vault Club</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </motion.div>
 
