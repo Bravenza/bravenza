@@ -15,6 +15,13 @@ import {
   DollarSign,
   Calculator,
   Sparkles,
+  Crown,
+  Search,
+  Layers,
+  Shield,
+  Ticket,
+  FileText,
+  MessageSquare,
 } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "@/components/Logo";
@@ -22,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NotificationBell } from "@/components/admin/NotificationBell";
+import { Separator } from "@/components/ui/separator";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
@@ -35,6 +43,16 @@ const navItems = [
   { icon: Gift, label: "Indicações", path: "/admin/indicacoes" },
   { icon: Users, label: "Usuários", path: "/admin/usuarios" },
   { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
+];
+
+const vaultNavItems = [
+  { icon: Crown, label: "Membros Vault", path: "/admin/vault/membros" },
+  { icon: Search, label: "Buscas", path: "/admin/vault/buscas" },
+  { icon: Layers, label: "Match Rooms", path: "/admin/vault/match-rooms" },
+  { icon: Shield, label: "Vault Items", path: "/admin/vault/items" },
+  { icon: Ticket, label: "Convites", path: "/admin/vault/convites" },
+  { icon: FileText, label: "Intel", path: "/admin/vault/intel" },
+  { icon: MessageSquare, label: "Comunidade", path: "/admin/vault/comunidade" },
 ];
 
 const AdminLayout = () => {
@@ -106,8 +124,32 @@ const AdminLayout = () => {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1">
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  }`}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span className="font-medium">{item.label}</span>
+                </Link>
+              );
+            })}
+
+            <Separator className="my-3" />
+            <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              Vault Club
+            </p>
+
+            {vaultNavItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <Link
