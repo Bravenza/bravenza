@@ -44,6 +44,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -149,6 +156,7 @@ export default function ClientDashboard() {
   const [vaultMember, setVaultMember] = useState<VaultMemberData | null>(null);
   const [activeSection, setActiveSection] = useState("pedidos");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!authLoading && !session) {
@@ -564,20 +572,46 @@ export default function ClientDashboard() {
         </div>
       </main>
 
-      {/* Preferences Dialog */}
-      <Dialog open={showPreferences} onOpenChange={setShowPreferences}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Configurações</DialogTitle>
-          </DialogHeader>
-          {session && (
-            <ClientPreferences
-              clientCpf={session.cpf}
-              clientName={session.client_name}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Preferences - Sheet on mobile, Dialog on desktop */}
+      {isMobile ? (
+        <Sheet open={showPreferences} onOpenChange={setShowPreferences}>
+          <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl px-0 pb-0">
+            <SheetHeader className="px-6 pb-4 border-b border-border/30">
+              <SheetTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5 text-primary" />
+                Configurações
+              </SheetTitle>
+            </SheetHeader>
+            <div className="overflow-y-auto h-[calc(100%-4rem)] px-4 py-4">
+              {session && (
+                <ClientPreferences
+                  clientCpf={session.cpf}
+                  clientName={session.client_name}
+                  embedded
+                />
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog open={showPreferences} onOpenChange={setShowPreferences}>
+          <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5 text-primary" />
+                Configurações
+              </DialogTitle>
+            </DialogHeader>
+            {session && (
+              <ClientPreferences
+                clientCpf={session.cpf}
+                clientName={session.client_name}
+                embedded
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
 
       <Footer />
       <FloatingWhatsApp />
