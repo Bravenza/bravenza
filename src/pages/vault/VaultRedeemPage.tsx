@@ -49,57 +49,40 @@ export default function VaultRedeemPage() {
     setIsValidating(true);
     
     try {
-      // Check if invite exists and is valid
-      const { data: invite, error } = await supabase
-        .from("vault_invites")
-        .select("id, status, expires_at, inviter_id")
-        .or(`token.eq.${token.toUpperCase()},invite_code.eq.${token.toUpperCase()}`)
-        .maybeSingle();
+      // Use RPC function to validate invite
+      const { data, error } = await supabase
+        .rpc("validate_vault_invite", { p_code: token.toUpperCase() });
       
       if (error) throw error;
       
-      if (!invite) {
-        toast({
-          title: "Convite não encontrado",
-          description: "Verifique o código e tente novamente",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (invite.status === "USED") {
-        toast({
-          title: "Convite já utilizado",
-          description: "Este convite já foi resgatado",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (invite.status === "EXPIRED" || (invite.expires_at && new Date(invite.expires_at) < new Date())) {
-        toast({
-          title: "Convite expirado",
-          description: "Este convite não é mais válido",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Get inviter name
-      let inviterName = "Membro do Vault";
-      if (invite.inviter_id) {
-        const { data: inviter } = await supabase
-          .from("vault_members")
-          .select("client_name")
-          .eq("id", invite.inviter_id)
-          .maybeSingle();
-        
-        if (inviter) {
-          inviterName = inviter.client_name.split(" ")[0];
+      if (!data || data.length === 0 || !data[0].is_valid) {
+        const result = data?.[0];
+        if (result?.status === "used") {
+          toast({
+            title: "Convite já utilizado",
+            description: "Este convite já foi resgatado",
+            variant: "destructive",
+          });
+        } else if (result?.status === "expired") {
+          toast({
+            title: "Convite expirado",
+            description: "Este convite não é mais válido",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Convite não encontrado",
+            description: "Verifique o código e tente novamente",
+            variant: "destructive",
+          });
         }
+        return;
       }
       
-      setInviteData({ id: invite.id, inviter_name: inviterName });
+      const result = data[0];
+      const inviterName = result.inviter_name ? result.inviter_name.split(" ")[0] : "Membro do Vault";
+      
+      setInviteData({ id: result.invite_id, inviter_name: inviterName });
       setStep("register");
     } catch (error) {
       console.error("Validate token error:", error);

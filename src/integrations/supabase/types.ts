@@ -1867,6 +1867,30 @@ export type Database = {
           privilege_criteria_met: number
         }[]
       }
+      create_vault_invite: {
+        Args: { p_cpf: string }
+        Returns: {
+          invite_code: string
+          success: boolean
+        }[]
+      }
+      create_vault_wishlist_item: {
+        Args: {
+          p_brand?: string
+          p_color?: string
+          p_condition?: string
+          p_cpf: string
+          p_max_price?: number
+          p_min_price?: number
+          p_model?: string
+          p_notes?: string
+          p_priority?: number
+          p_size?: string
+          p_title: string
+          p_urgency?: string
+        }
+        Returns: string
+      }
       decline_vault_match: {
         Args: { p_cpf: string; p_match_room_id: string; p_reason?: string }
         Returns: boolean
@@ -2075,6 +2099,8 @@ export type Database = {
         Args: { p_cpf: string }
         Returns: {
           active_hunts: number
+          client_name: string
+          community_opt_in: boolean
           created_at: string
           id: string
           invites_remaining: number
@@ -2119,6 +2145,24 @@ export type Database = {
           wishlist_title: string
         }[]
       }
+      get_vault_member_wishlists: {
+        Args: { p_cpf: string }
+        Returns: {
+          condition_pref: string
+          created_at: string
+          id: string
+          max_price: number
+          min_price: number
+          notes: string
+          priority: number
+          product_brand: string
+          product_color: string
+          product_model: string
+          product_size: string
+          title: string
+          urgency_level: string
+        }[]
+      }
       get_vault_tier_limits: {
         Args: { p_tier: Database["public"]["Enums"]["vault_tier"] }
         Returns: {
@@ -2155,6 +2199,10 @@ export type Database = {
         Args: { p_reason?: string; p_token: string }
         Returns: boolean
       }
+      start_vault_search: {
+        Args: { p_cpf: string; p_wishlist_id: string }
+        Returns: string
+      }
       track_order: {
         Args: { p_cpf: string; p_order_id: string }
         Returns: {
@@ -2180,6 +2228,10 @@ export type Database = {
           sla_vault_due_date: string
         }[]
       }
+      update_vault_community_opt_in: {
+        Args: { p_cpf: string; p_opt_in: boolean }
+        Returns: boolean
+      }
       upsert_client_preferences: {
         Args: {
           p_cpf: string
@@ -2191,6 +2243,16 @@ export type Database = {
           p_preferred_sizes?: string[]
         }
         Returns: boolean
+      }
+      validate_vault_invite: {
+        Args: { p_code: string }
+        Returns: {
+          expires_at: string
+          invite_id: string
+          inviter_name: string
+          is_valid: boolean
+          status: string
+        }[]
       }
       verify_authenticity: {
         Args: { p_code: string }

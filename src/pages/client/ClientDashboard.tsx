@@ -31,6 +31,7 @@ import { CashbackBanner } from "@/components/client/CashbackBanner";
 import { ClientNotificationBell } from "@/components/client/ClientNotificationBell";
 import { ClientPreferences } from "@/components/client/ClientPreferences";
 import { InspectionPhotosGallery } from "@/components/client/InspectionPhotosGallery";
+import { VaultMemberCard } from "@/components/client/VaultMemberCard";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -492,8 +493,13 @@ export default function ClientDashboard() {
           )}
           </div>
 
-          {/* Sidebar - Referral Card & Preferences */}
+          {/* Sidebar - Vault Club, Referral Card & Preferences */}
           <div className="space-y-6" ref={referralSectionRef} id="referral-section">
+            {/* Vault Club Card - Most prominent */}
+            {session && (
+              <VaultMemberCard clientCpf={session.cpf} />
+            )}
+
             {session && (
               <ReferralCard 
                 clientCpf={session.cpf}

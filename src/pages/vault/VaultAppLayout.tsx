@@ -16,6 +16,7 @@ interface VaultMember {
   active_hunts: number;
   max_active_hunts: number;
   invites_remaining: number;
+  community_opt_in: boolean;
 }
 
 const tierLabels: Record<string, { label: string; color: string }> = {
