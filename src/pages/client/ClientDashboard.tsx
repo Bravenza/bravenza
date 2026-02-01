@@ -252,8 +252,8 @@ export default function ClientDashboard() {
                 )}
               </button>
 
-              {/* Vault Club Dropdown */}
-              {vaultMember && (
+              {/* Vault Club Dropdown - show if vault member OR has purchases */}
+              {(vaultMember || orders.length > 0) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
@@ -295,8 +295,8 @@ export default function ClientDashboard() {
                 </DropdownMenu>
               )}
 
-              {/* Non-member Vault CTA */}
-              {!vaultMember && (
+              {/* Non-member Vault CTA - only show if no purchases AND not a vault member */}
+              {!vaultMember && orders.length === 0 && (
                 <Link
                   to="/vault"
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 transition-colors"
@@ -376,8 +376,8 @@ export default function ClientDashboard() {
                 </div>
               </button>
 
-              {/* Vault Club Items */}
-              {vaultMember && (
+              {/* Vault Club Items - show if vault member OR has purchases */}
+              {(vaultMember || orders.length > 0) && (
                 <>
                   <div className="pt-3 pb-2 px-4">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -508,7 +508,8 @@ export default function ClientDashboard() {
                 />
               )}
 
-              {vaultMember && session && (
+              {/* Vault sections - show if vault member OR has purchases */}
+              {(vaultMember || orders.length > 0) && session && (
                 <>
                   {activeSection === "vault" && (
                     <VaultMyItemsTab clientCpf={session.cpf} />
@@ -522,7 +523,7 @@ export default function ClientDashboard() {
                     <VaultIntelTab clientCpf={session.cpf} />
                   )}
 
-                  {activeSection === "clube" && (
+                  {activeSection === "clube" && vaultMember && (
                     <VaultClubTab
                       clientCpf={session.cpf}
                       member={vaultMember}
@@ -530,11 +531,31 @@ export default function ClientDashboard() {
                     />
                   )}
 
-                  {activeSection === "comunidade" && (
+                  {activeSection === "clube" && !vaultMember && (
+                    <div className="text-center py-12">
+                      <Crown className="h-12 w-12 mx-auto text-primary/50 mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">Bem-vindo ao Vault Club!</h3>
+                      <p className="text-muted-foreground max-w-md mx-auto">
+                        Seu acesso está sendo processado. Em breve você terá acesso a todos os benefícios exclusivos do clube.
+                      </p>
+                    </div>
+                  )}
+
+                  {activeSection === "comunidade" && vaultMember && (
                     <VaultCommunityTab
                       clientCpf={session.cpf}
                       member={vaultMember}
                     />
+                  )}
+
+                  {activeSection === "comunidade" && !vaultMember && (
+                    <div className="text-center py-12">
+                      <Users className="h-12 w-12 mx-auto text-primary/50 mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">Comunidade Vault</h3>
+                      <p className="text-muted-foreground max-w-md mx-auto">
+                        Seu acesso à comunidade está sendo ativado. Em breve você poderá interagir com outros membros.
+                      </p>
+                    </div>
                   )}
                 </>
               )}
