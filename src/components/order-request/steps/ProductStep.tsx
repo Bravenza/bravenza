@@ -16,6 +16,7 @@ interface ProductStepProps {
     product_model: string;
     product_color: string;
     product_link: string;
+    custom_model?: string;
   };
   selectedBrand: string;
   updateField: (field: string, value: string) => void;
@@ -34,6 +35,10 @@ export const ProductStep = ({
   onImageChange,
   onRemoveImage,
 }: ProductStepProps) => {
+  const models = selectedBrand ? getModelsForBrand(selectedBrand) : [];
+  const isOtherModel = formData.product_model === "other";
+  const isOtherBrand = selectedBrand === "other";
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-6">
@@ -79,23 +84,61 @@ export const ProductStep = ({
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="product_model">Modelo</Label>
-          <Select
-            value={formData.product_model}
-            onValueChange={(value) => updateField("product_model", value)}
-            disabled={!selectedBrand}
-          >
-            <SelectTrigger className="h-12">
-              <SelectValue placeholder={selectedBrand ? "Selecione o modelo" : "Selecione a marca primeiro"} />
-            </SelectTrigger>
-            <SelectContent>
-              {selectedBrand && getModelsForBrand(selectedBrand).map((model) => (
-                <SelectItem key={model.value} value={model.value}>{model.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+
+        {/* Campo de marca customizada quando "Outro" é selecionado */}
+        {isOtherBrand && (
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="custom_brand">Nome da Marca *</Label>
+            <Input
+              id="custom_brand"
+              value={formData.product_brand !== "other" ? formData.product_brand : ""}
+              onChange={(e) => updateField("product_brand", e.target.value)}
+              placeholder="Digite o nome da marca"
+              className="h-12"
+            />
+          </div>
+        )}
+
+        {/* Seletor de modelo - só aparece se não for "Outro" na marca */}
+        {!isOtherBrand && (
+          <div className="space-y-2">
+            <Label htmlFor="product_model">Modelo</Label>
+            <Select
+              value={formData.product_model}
+              onValueChange={(value) => {
+                updateField("product_model", value);
+                if (value !== "other") {
+                  updateField("custom_model", "");
+                }
+              }}
+              disabled={!selectedBrand}
+            >
+              <SelectTrigger className="h-12">
+                <SelectValue placeholder={selectedBrand ? "Selecione o modelo" : "Selecione a marca primeiro"} />
+              </SelectTrigger>
+              <SelectContent>
+                {models.map((model) => (
+                  <SelectItem key={model.value} value={model.value}>{model.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Campo de modelo customizado quando "Outro" é selecionado no modelo OU na marca */}
+        {(isOtherModel || isOtherBrand) && (
+          <div className="space-y-2">
+            <Label htmlFor="custom_model">Nome do Modelo *</Label>
+            <Input
+              id="custom_model"
+              value={formData.custom_model || ""}
+              onChange={(e) => updateField("custom_model", e.target.value)}
+              placeholder="Digite o nome do modelo"
+              className="h-12"
+            />
+          </div>
+        )}
+
         <div className="space-y-2">
           <Label htmlFor="product_color">Cor / Colorway</Label>
           <Input

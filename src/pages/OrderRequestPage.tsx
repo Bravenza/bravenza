@@ -55,6 +55,7 @@ export default function OrderRequestPage() {
     product_link: "",
     additional_notes: "",
     referral_code: "",
+    custom_model: "",
   });
 
   const [selectedBrand, setSelectedBrand] = useState("");
@@ -268,11 +269,33 @@ export default function OrderRequestPage() {
         imageUrl = publicUrl;
       }
 
+      // Prepare form data - use custom_model if "other" was selected
+      const finalBrand = selectedBrand === "other" ? formData.product_brand : selectedBrand;
+      const finalModel = formData.product_model === "other" || selectedBrand === "other" 
+        ? formData.custom_model 
+        : formData.product_model;
+
       // Insert request with referral_code
       const { data: requestData, error } = await supabase
         .from("order_requests")
         .insert({
-          ...formData,
+          client_name: formData.client_name,
+          client_cpf: formData.client_cpf,
+          client_email: formData.client_email,
+          client_phone: formData.client_phone,
+          address_cep: formData.address_cep,
+          address_street: formData.address_street,
+          address_number: formData.address_number,
+          address_complement: formData.address_complement,
+          address_neighborhood: formData.address_neighborhood,
+          address_city: formData.address_city,
+          address_state: formData.address_state,
+          shoe_size: formData.shoe_size,
+          product_brand: finalBrand,
+          product_model: finalModel,
+          product_color: formData.product_color,
+          product_link: formData.product_link,
+          additional_notes: formData.additional_notes,
           referral_code: referralInfo?.code || formData.referral_code || null,
           reference_image_url: imageUrl,
         })
@@ -301,7 +324,7 @@ export default function OrderRequestPage() {
             target: "admin",
             type: "new_order_request",
             title: "Nova Solicitação de Pedido",
-            message: `${formData.client_name} solicitou um orçamento para ${formData.product_brand || "tênis"} ${formData.product_model || ""} tamanho ${formData.shoe_size}`,
+            message: `${formData.client_name} solicitou um orçamento para ${finalBrand || "tênis"} ${finalModel || ""} tamanho ${formData.shoe_size}`,
             reference_type: "order_request",
           },
         });
