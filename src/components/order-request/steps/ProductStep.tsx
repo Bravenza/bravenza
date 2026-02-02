@@ -153,7 +153,8 @@ export const ProductStep = ({
           <Label htmlFor="product_link">Link de Referência</Label>
           <Input
             id="product_link"
-            type="url"
+            type="text"
+            inputMode="url"
             value={formData.product_link}
             onChange={(e) => updateField("product_link", e.target.value)}
             placeholder="https://..."
