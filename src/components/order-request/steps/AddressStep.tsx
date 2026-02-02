@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MobileSelect } from "@/components/ui/mobile-select";
 import { MapPin, Loader2 } from "lucide-react";
 
 const BR_STATES = [
@@ -31,6 +31,8 @@ export const AddressStep = ({
   onCepChange,
   isLoadingCep,
 }: AddressStepProps) => {
+  const stateOptions = BR_STATES.map(state => ({ value: state, label: state }));
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-6">
@@ -117,19 +119,13 @@ export const AddressStep = ({
         </div>
         <div className="space-y-2">
           <Label htmlFor="address_state">Estado *</Label>
-          <Select
+          <MobileSelect
             value={formData.address_state}
             onValueChange={(value) => updateField("address_state", value)}
-          >
-            <SelectTrigger className="h-12">
-              <SelectValue placeholder="Selecione o estado" />
-            </SelectTrigger>
-            <SelectContent>
-              {BR_STATES.map((state) => (
-                <SelectItem key={state} value={state}>{state}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={stateOptions}
+            placeholder="Selecione o estado"
+            className="h-12"
+          />
         </div>
       </div>
     </div>

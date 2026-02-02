@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MobileSelect } from "@/components/ui/mobile-select";
 import { Button } from "@/components/ui/button";
 import { Package, Upload } from "lucide-react";
 import { SNEAKER_BRANDS, getModelsForBrand } from "@/lib/sneaker-data";
@@ -39,6 +39,10 @@ export const ProductStep = ({
   const isOtherModel = formData.product_model === "other";
   const isOtherBrand = selectedBrand === "other";
 
+  const sizeOptions = SHOE_SIZES.map(size => ({ value: size, label: size }));
+  const brandOptions = SNEAKER_BRANDS.map(brand => ({ value: brand.value, label: brand.label }));
+  const modelOptions = models.map(model => ({ value: model.value, label: model.label }));
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-6">
@@ -54,35 +58,23 @@ export const ProductStep = ({
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="shoe_size">Tamanho (BR) *</Label>
-          <Select
+          <MobileSelect
             value={formData.shoe_size}
             onValueChange={(value) => updateField("shoe_size", value)}
-          >
-            <SelectTrigger className="h-12">
-              <SelectValue placeholder="Selecione o tamanho" />
-            </SelectTrigger>
-            <SelectContent>
-              {SHOE_SIZES.map((size) => (
-                <SelectItem key={size} value={size}>{size}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={sizeOptions}
+            placeholder="Selecione o tamanho"
+            className="h-12"
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="product_brand">Marca *</Label>
-          <Select
+          <MobileSelect
             value={selectedBrand}
             onValueChange={onBrandChange}
-          >
-            <SelectTrigger className="h-12">
-              <SelectValue placeholder="Selecione a marca" />
-            </SelectTrigger>
-            <SelectContent>
-              {SNEAKER_BRANDS.map((brand) => (
-                <SelectItem key={brand.value} value={brand.value}>{brand.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={brandOptions}
+            placeholder="Selecione a marca"
+            className="h-12"
+          />
         </div>
 
         {/* Campo de marca customizada quando "Outro" é selecionado */}
@@ -103,7 +95,7 @@ export const ProductStep = ({
         {!isOtherBrand && (
           <div className="space-y-2">
             <Label htmlFor="product_model">Modelo *</Label>
-            <Select
+            <MobileSelect
               value={formData.product_model}
               onValueChange={(value) => {
                 updateField("product_model", value);
@@ -112,16 +104,10 @@ export const ProductStep = ({
                 }
               }}
               disabled={!selectedBrand}
-            >
-              <SelectTrigger className="h-12">
-                <SelectValue placeholder={selectedBrand ? "Selecione o modelo" : "Selecione a marca primeiro"} />
-              </SelectTrigger>
-              <SelectContent>
-                {models.map((model) => (
-                  <SelectItem key={model.value} value={model.value}>{model.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={modelOptions}
+              placeholder={selectedBrand ? "Selecione o modelo" : "Selecione a marca primeiro"}
+              className="h-12"
+            />
           </div>
         )}
 
