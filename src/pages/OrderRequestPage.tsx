@@ -216,6 +216,26 @@ export default function OrderRequestPage() {
           toast.error("Selecione o tamanho do tênis");
           return false;
         }
+        // Validate brand - either selected brand or custom brand when "other"
+        const hasBrand = selectedBrand === "other" 
+          ? formData.product_brand && formData.product_brand !== "other"
+          : selectedBrand;
+        if (!hasBrand) {
+          toast.error("Selecione a marca do tênis");
+          return false;
+        }
+        // Validate model - either selected model or custom model when "other"
+        const hasModel = formData.product_model === "other" || selectedBrand === "other"
+          ? formData.custom_model
+          : formData.product_model;
+        if (!hasModel) {
+          toast.error("Selecione ou informe o modelo do tênis");
+          return false;
+        }
+        if (!formData.product_color) {
+          toast.error("Informe a cor do tênis");
+          return false;
+        }
         return true;
       }
       default:
