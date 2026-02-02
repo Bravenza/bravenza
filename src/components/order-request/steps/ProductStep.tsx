@@ -69,13 +69,13 @@ export const ProductStep = ({
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="product_brand">Marca</Label>
+          <Label htmlFor="product_brand">Marca *</Label>
           <Select
             value={selectedBrand}
             onValueChange={onBrandChange}
           >
             <SelectTrigger className="h-12">
-              <SelectValue placeholder="Selecione (opcional)" />
+              <SelectValue placeholder="Selecione a marca" />
             </SelectTrigger>
             <SelectContent>
               {SNEAKER_BRANDS.map((brand) => (
@@ -102,7 +102,7 @@ export const ProductStep = ({
         {/* Seletor de modelo - só aparece se não for "Outro" na marca */}
         {!isOtherBrand && (
           <div className="space-y-2">
-            <Label htmlFor="product_model">Modelo</Label>
+            <Label htmlFor="product_model">Modelo *</Label>
             <Select
               value={formData.product_model}
               onValueChange={(value) => {
@@ -140,7 +140,7 @@ export const ProductStep = ({
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="product_color">Cor / Colorway</Label>
+          <Label htmlFor="product_color">Cor / Colorway *</Label>
           <Input
             id="product_color"
             value={formData.product_color}
@@ -150,7 +150,7 @@ export const ProductStep = ({
           />
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="product_link">Link de Referência</Label>
+          <Label htmlFor="product_link">Link de Referência (opcional)</Label>
           <Input
             id="product_link"
             type="text"
