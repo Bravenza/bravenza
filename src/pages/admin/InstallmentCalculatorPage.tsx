@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { Calculator, Copy, Send, Check } from "lucide-react";
+import { Calculator, Copy, Send, Check, CreditCard, Banknote } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 // Mercado Pago interest rates by installment count
+// NOTA: 1x tem juros zero para o cliente (absorvido pela empresa)
 const INSTALLMENT_RATES: Record<number, number> = {
-  1: 0.0498,   // 4.98%
+  1: 0,        // 0% - juros absorvido pela empresa
   2: 0.0964,   // 9.64%
   3: 0.1123,   // 11.23%
   4: 0.1136,   // 11.36%
@@ -23,18 +26,22 @@ const INSTALLMENT_RATES: Record<number, number> = {
   12: 0.2211,  // 22.11%
 };
 
+type PaymentMode = "full" | "split";
+
 interface InstallmentOption {
   installments: number;
   rate: number;
   totalAmount: number;
   installmentValue: number;
   interestAmount: number;
+  isInterestFree: boolean;
 }
 
 const InstallmentCalculatorPage = () => {
   const [baseValue, setBaseValue] = useState<string>("");
   const [clientName, setClientName] = useState<string>("");
   const [productName, setProductName] = useState<string>("");
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>("full");
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const numericValue = parseFloat(baseValue.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
@@ -44,7 +51,8 @@ const InstallmentCalculatorPage = () => {
 
     return Object.entries(INSTALLMENT_RATES).map(([installments, rate]) => {
       const numInstallments = parseInt(installments);
-      const totalAmount = numericValue * (1 + rate);
+      const isInterestFree = numInstallments === 1;
+      const totalAmount = isInterestFree ? numericValue : numericValue * (1 + rate);
       const installmentValue = totalAmount / numInstallments;
       const interestAmount = totalAmount - numericValue;
 
@@ -54,6 +62,7 @@ const InstallmentCalculatorPage = () => {
         totalAmount,
         installmentValue,
         interestAmount,
+        isInterestFree,
       };
     });
   };
@@ -67,20 +76,45 @@ const InstallmentCalculatorPage = () => {
     }).format(value);
   };
 
+  const getPaymentModeLabel = () => {
+    return paymentMode === "full" ? "valor total" : "saldo restante (50%)";
+  };
+
+  const getPaymentModeDescription = () => {
+    return paymentMode === "full" 
+      ? "Pagamento único de 100% do valor"
+      : "50% restante, pago após o produto chegar ao Brasil";
+  };
+
   const generateQuoteText = (option: InstallmentOption) => {
+    const valueLabel = paymentMode === "full" ? "valor total" : "saldo";
+    const valueDescription = paymentMode === "full" 
+      ? "_Pagamento único de 100% do valor do pedido._"
+      : "_Este valor se refere ao saldo restante (50%), pago após o produto chegar ao Brasil._";
+
     const lines = [
       clientName ? `Olá ${clientName}!` : "Olá!",
       "",
-      productName ? `Segue a cotação do *saldo* para *${productName}*:` : "Segue a cotação do *saldo restante*:",
+      productName 
+        ? `Segue a cotação do *${valueLabel}* para *${productName}*:` 
+        : `Segue a cotação do *${valueLabel}*:`,
       "",
-      `💳 *${option.installments}x de ${formatCurrency(option.installmentValue)}*`,
-      `📊 Total do saldo: ${formatCurrency(option.totalAmount)}`,
-      `📈 Juros: ${option.rate.toFixed(2)}% (${formatCurrency(option.interestAmount)})`,
-      "",
-      "_Este valor se refere ao saldo restante (50%), pago após o produto chegar ao Brasil._",
-      "",
-      "Ficou alguma dúvida? Estou à disposição! 😊",
     ];
+
+    if (option.isInterestFree) {
+      lines.push(`💳 *1x de ${formatCurrency(option.totalAmount)}* (sem juros)`);
+      lines.push(`✅ Mesmo valor do PIX!`);
+    } else {
+      lines.push(`💳 *${option.installments}x de ${formatCurrency(option.installmentValue)}*`);
+      lines.push(`📊 Total: ${formatCurrency(option.totalAmount)}`);
+      lines.push(`📈 Juros: ${option.rate.toFixed(2)}% (+${formatCurrency(option.interestAmount)})`);
+    }
+
+    lines.push("");
+    lines.push(valueDescription);
+    lines.push("");
+    lines.push("Ficou alguma dúvida? Estou à disposição! 😊");
+
     return lines.join("\n");
   };
 
@@ -100,26 +134,37 @@ const InstallmentCalculatorPage = () => {
   const generateFullQuoteText = () => {
     if (installmentOptions.length === 0) return "";
 
+    const valueLabel = paymentMode === "full" ? "valor total" : "saldo";
+    const valueDescription = paymentMode === "full" 
+      ? "_Pagamento único de 100% do valor do pedido._"
+      : "_Este valor se refere ao saldo restante (50%), pago após o produto chegar ao Brasil._";
+
     const lines = [
       clientName ? `Olá ${clientName}!` : "Olá!",
       "",
-      productName ? `Segue as opções de parcelamento do *saldo* para *${productName}*:` : "Segue as opções de parcelamento do *saldo restante*:",
+      productName 
+        ? `Segue as opções de pagamento do *${valueLabel}* para *${productName}*:` 
+        : `Segue as opções de pagamento do *${valueLabel}*:`,
       "",
-      `💰 Valor do saldo à vista: ${formatCurrency(numericValue)}`,
+      `💰 *Valor à vista (PIX ou 1x cartão):* ${formatCurrency(numericValue)}`,
       "",
-      "💳 *Opções de Parcelamento do Saldo:*",
+      "💳 *Opções de Parcelamento:*",
       "",
     ];
 
     installmentOptions.forEach((option) => {
-      lines.push(
-        `• *${option.installments}x* de ${formatCurrency(option.installmentValue)} = ${formatCurrency(option.totalAmount)}`
-      );
+      if (option.isInterestFree) {
+        lines.push(`• *1x* de ${formatCurrency(option.totalAmount)} _(sem juros, igual ao PIX)_`);
+      } else {
+        lines.push(
+          `• *${option.installments}x* de ${formatCurrency(option.installmentValue)} = ${formatCurrency(option.totalAmount)}`
+        );
+      }
     });
 
     lines.push("");
-    lines.push("_Este valor se refere ao saldo restante (50%), pago após o produto chegar ao Brasil._");
-    lines.push("_Os juros são aplicados pela operadora do cartão._");
+    lines.push(valueDescription);
+    lines.push("_Juros aplicados a partir de 2x são da operadora do cartão._");
     lines.push("");
     lines.push("Ficou alguma dúvida? Estou à disposição! 😊");
 
@@ -137,10 +182,10 @@ const InstallmentCalculatorPage = () => {
       <div>
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <Calculator className="h-6 w-6" />
-          Calculadora de Parcelamento do Saldo
+          Calculadora de Parcelamento
         </h1>
         <p className="text-muted-foreground">
-          Calcule o valor das parcelas do saldo (50% restante) com juros do Mercado Pago
+          Calcule o valor das parcelas com juros do Mercado Pago (1x sem juros para o cliente)
         </p>
       </div>
 
@@ -148,11 +193,51 @@ const InstallmentCalculatorPage = () => {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Dados da Cotação</CardTitle>
-            <CardDescription>Informe o valor do saldo (50% restante)</CardDescription>
+            <CardDescription>Configure o modo de pagamento e valor</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Payment Mode Selection */}
+            <div className="space-y-3">
+              <Label>Modo de Pagamento</Label>
+              <RadioGroup 
+                value={paymentMode} 
+                onValueChange={(v) => setPaymentMode(v as PaymentMode)}
+                className="grid grid-cols-2 gap-2"
+              >
+                <Label
+                  htmlFor="mode-full"
+                  className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                    paymentMode === 'full' 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <RadioGroupItem value="full" id="mode-full" className="sr-only" />
+                  <Banknote className="h-5 w-5 text-primary" />
+                  <span className="font-medium text-sm">100%</span>
+                  <span className="text-xs text-muted-foreground text-center">Valor Total</span>
+                </Label>
+
+                <Label
+                  htmlFor="mode-split"
+                  className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                    paymentMode === 'split' 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <RadioGroupItem value="split" id="mode-split" className="sr-only" />
+                  <CreditCard className="h-5 w-5 text-primary" />
+                  <span className="font-medium text-sm">50/50</span>
+                  <span className="text-xs text-muted-foreground text-center">Saldo (50%)</span>
+                </Label>
+              </RadioGroup>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="baseValue">Valor do Saldo (R$)</Label>
+              <Label htmlFor="baseValue">
+                {paymentMode === "full" ? "Valor Total (R$)" : "Valor do Saldo (R$)"}
+              </Label>
               <Input
                 id="baseValue"
                 type="text"
@@ -165,7 +250,7 @@ const InstallmentCalculatorPage = () => {
                 className="text-lg font-semibold"
               />
               <p className="text-xs text-muted-foreground">
-                50% restante do valor total do pedido
+                {getPaymentModeDescription()}
               </p>
             </div>
 
@@ -202,11 +287,16 @@ const InstallmentCalculatorPage = () => {
 
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle className="text-lg">Opções de Parcelamento do Saldo</CardTitle>
+            <CardTitle className="text-lg">
+              Opções de Parcelamento
+              {paymentMode === "split" && (
+                <Badge variant="secondary" className="ml-2">Saldo 50%</Badge>
+              )}
+            </CardTitle>
             <CardDescription>
               {numericValue > 0
-                ? `Valor do saldo: ${formatCurrency(numericValue)}`
-                : "Digite o valor do saldo para ver as opções"}
+                ? `${paymentMode === "full" ? "Valor total" : "Valor do saldo"}: ${formatCurrency(numericValue)}`
+                : "Digite o valor para ver as opções"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -216,28 +306,42 @@ const InstallmentCalculatorPage = () => {
                   <TableRow>
                     <TableHead>Parcelas</TableHead>
                     <TableHead>Valor/Parcela</TableHead>
-                    <TableHead>Total do Saldo</TableHead>
+                    <TableHead>Total</TableHead>
                     <TableHead>Juros</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {installmentOptions.map((option, index) => (
-                    <TableRow key={option.installments}>
+                    <TableRow 
+                      key={option.installments}
+                      className={option.isInterestFree ? "bg-success/5" : ""}
+                    >
                       <TableCell className="font-medium">
                         {option.installments}x
+                        {option.isInterestFree && (
+                          <Badge variant="outline" className="ml-2 text-success border-success">
+                            Sem juros
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="font-semibold text-primary">
                         {formatCurrency(option.installmentValue)}
                       </TableCell>
                       <TableCell>{formatCurrency(option.totalAmount)}</TableCell>
                       <TableCell>
-                        <span className="text-muted-foreground">
-                          {option.rate.toFixed(2)}%
-                        </span>
-                        <span className="text-xs text-muted-foreground ml-1">
-                          (+{formatCurrency(option.interestAmount)})
-                        </span>
+                        {option.isInterestFree ? (
+                          <span className="text-success font-medium">0%</span>
+                        ) : (
+                          <>
+                            <span className="text-muted-foreground">
+                              {option.rate.toFixed(2)}%
+                            </span>
+                            <span className="text-xs text-muted-foreground ml-1">
+                              (+{formatCurrency(option.interestAmount)})
+                            </span>
+                          </>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
@@ -267,33 +371,70 @@ const InstallmentCalculatorPage = () => {
               </Table>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                Digite o valor do saldo para ver as opções de parcelamento
+                Digite o valor para ver as opções de parcelamento
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
+      {/* Info Cards */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="border-success/30 bg-success/5">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-full bg-success/20">
+                <Check className="h-5 w-5 text-success" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-success">1x sem juros para o cliente</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Pagamentos em 1x no cartão têm o mesmo valor do PIX. A taxa de 4,98% é absorvida pela empresa.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-full bg-amber-500/20">
+                <CreditCard className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-amber-600">Juros a partir de 2x</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Para parcelamentos de 2x a 12x, os juros do Mercado Pago são repassados ao cliente.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Tabela de Taxas</CardTitle>
+          <CardTitle className="text-lg">Tabela de Taxas (2x a 12x)</CardTitle>
           <CardDescription>
-            Taxas de juros do Mercado Pago por número de parcelas
+            Taxas de juros do Mercado Pago repassadas ao cliente (1x é absorvido)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
-            {Object.entries(INSTALLMENT_RATES).map(([installments, rate]) => (
-              <div
-                key={installments}
-                className="bg-secondary/50 rounded-lg p-3 text-center"
-              >
-                <div className="text-lg font-bold text-primary">{installments}x</div>
-                <div className="text-xs text-muted-foreground">
-                  {(rate * 100).toFixed(2)}%
+          <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-11 gap-2">
+            {Object.entries(INSTALLMENT_RATES)
+              .filter(([installments]) => parseInt(installments) > 1)
+              .map(([installments, rate]) => (
+                <div
+                  key={installments}
+                  className="bg-secondary/50 rounded-lg p-3 text-center"
+                >
+                  <div className="text-lg font-bold text-primary">{installments}x</div>
+                  <div className="text-xs text-muted-foreground">
+                    {(rate * 100).toFixed(2)}%
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         </CardContent>
       </Card>
