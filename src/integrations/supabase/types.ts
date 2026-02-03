@@ -1853,6 +1853,10 @@ export type Database = {
         Args: { p_cpf: string; p_match_room_id: string }
         Returns: boolean
       }
+      auto_enroll_vault_member: {
+        Args: { p_cpf: string; p_email?: string; p_name: string }
+        Returns: string
+      }
       calculate_vault_tier: {
         Args: { p_total_purchases: number; p_total_spent: number }
         Returns: Database["public"]["Enums"]["vault_tier"]
@@ -1874,6 +1878,10 @@ export type Database = {
           success: boolean
         }[]
       }
+      create_vault_item_from_order: {
+        Args: { p_member_id: string; p_order_id: string }
+        Returns: string
+      }
       create_vault_wishlist_item: {
         Args: {
           p_brand?: string
@@ -1894,6 +1902,22 @@ export type Database = {
       decline_vault_match: {
         Args: { p_cpf: string; p_match_room_id: string; p_reason?: string }
         Returns: boolean
+      }
+      ensure_vault_membership: {
+        Args: { p_cpf: string }
+        Returns: {
+          active_hunts: number
+          client_name: string
+          community_opt_in: boolean
+          id: string
+          invites_remaining: number
+          is_new_member: boolean
+          joined_via: string
+          max_active_hunts: number
+          max_wishlist_items: number
+          tier: Database["public"]["Enums"]["vault_tier"]
+          total_purchases: number
+        }[]
       }
       generate_authenticity_code: { Args: never; Returns: string }
       generate_referral_code: { Args: never; Returns: string }

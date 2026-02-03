@@ -180,27 +180,29 @@ export default function ClientDashboard() {
       if (!session?.session_token) return;
 
       try {
-        const [ordersRes, memberRes] = await Promise.all([
-          supabase.functions.invoke("client-orders", {
-            body: { session_token: session.session_token },
-          }),
-          supabase.rpc("get_vault_member", { p_cpf: session.cpf }),
-        ]);
+        // Fetch orders first
+        const ordersRes = await supabase.functions.invoke("client-orders", {
+          body: { session_token: session.session_token },
+        });
 
         if (!ordersRes.error && ordersRes.data?.orders) {
           setOrders(ordersRes.data.orders);
-          // Get client email from response or first order
           if (ordersRes.data.client_email) {
             setClientEmail(ordersRes.data.client_email);
           }
         }
 
+        // Use ensure_vault_membership to auto-enroll if user has orders
+        // This creates a vault member automatically if they have purchase history
+        const memberRes = await supabase.rpc("ensure_vault_membership", { p_cpf: session.cpf });
+
         if (memberRes.data && memberRes.data.length > 0) {
-          const member = memberRes.data[0] as unknown as VaultMemberData & { client_email?: string };
+          const member = memberRes.data[0] as unknown as VaultMemberData & { is_new_member?: boolean };
           setVaultMember(member);
-          // Get email from vault member if available
-          if ((memberRes.data[0] as any).client_email) {
-            setClientEmail((memberRes.data[0] as any).client_email);
+          
+          // Log if this was a new auto-enrollment
+          if ((memberRes.data[0] as any).is_new_member) {
+            console.log("Auto-enrolled as Vault Club member via purchase history");
           }
         }
       } catch (err) {
@@ -218,7 +220,7 @@ export default function ClientDashboard() {
   const refreshVaultMember = async () => {
     if (!session?.cpf) return;
 
-    const { data } = await supabase.rpc("get_vault_member", {
+    const { data } = await supabase.rpc("ensure_vault_membership", {
       p_cpf: session.cpf,
     });
 
