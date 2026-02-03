@@ -213,8 +213,9 @@ export function CardPaymentForm({
     return {
       value: n,
       label: n === 1
-        ? `1x de ${formatCurrency(total)} (taxa ${(rate * 100).toFixed(2)}%)`
+        ? `1x de ${formatCurrency(total)} (sem juros)`
         : `${n}x de ${formatCurrency(value)} (Total: ${formatCurrency(total)})`,
+      isInterestFree: n === 1,
     };
   });
 
@@ -495,15 +496,22 @@ export function CardPaymentForm({
         )}
       </div>
 
-      {/* Interest warning */}
-      {interestRate > 0 && (
+      {/* Interest warning or interest-free info */}
+      {interestRate > 0 ? (
         <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-start gap-2">
           <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
           <p className="text-sm text-amber-500">
             O parcelamento possui juros da operadora de pagamento.
           </p>
         </div>
-      )}
+      ) : installments === 1 ? (
+        <div className="p-3 bg-success/10 border border-success/30 rounded-lg flex items-start gap-2">
+          <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-success">
+            1x sem juros! Mesmo valor do pagamento via PIX.
+          </p>
+        </div>
+      ) : null}
 
       {/* Submit button */}
       <Button
