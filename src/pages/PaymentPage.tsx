@@ -9,7 +9,6 @@ import {
   QrCode,
   Copy,
   CreditCard,
-  ArrowRight,
   Gift,
   Percent,
 } from "lucide-react";
@@ -18,19 +17,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/constants";
 import { MAX_CASHBACK_PERCENTAGE } from "@/components/client/CashbackBanner";
-import { 
-  calculateCardTotal, 
-  calculateInstallmentValue as calcInstallment,
-  MERCADO_PAGO_RATES,
-  roundUpTo90
-} from "@/lib/budget-calculator";
+import { CardPaymentForm } from "@/components/payment/CardPaymentForm";
 
 interface OrderData {
   order_id: string;
@@ -71,13 +64,11 @@ export default function PaymentPage() {
   const [order, setOrder] = useState<OrderData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingPix, setIsGeneratingPix] = useState(false);
-  const [isProcessingCard, setIsProcessingCard] = useState(false);
   const [pixData, setPixData] = useState<{
     qr_code: string;
     copy_paste: string;
   } | null>(null);
   const [paymentType, setPaymentType] = useState<PaymentType>("full");
-  const [installments, setInstallments] = useState<number>(1);
   
   // Cashback state
   const [cashbackData, setCashbackData] = useState<CashbackData | null>(null);
@@ -308,81 +299,15 @@ export default function PaymentPage() {
     });
   };
 
-  const handlePayWithCard = async () => {
-    if (!order || !token) return;
-
-    // Apply cashback first if enabled
-    if (applyCashback && cashbackData) {
-      const success = await handleApplyCashbackToOrder();
-      if (!success) return;
-    }
-
-    setIsProcessingCard(true);
-
-    try {
-      // Determine the base amount based on payment type
-      let baseAmount: number | null;
-      let actualPaymentType: "sinal" | "balance" | "full";
-
-      if (paymentType === "full") {
-        baseAmount = order.product_price;
-        actualPaymentType = "full";
-      } else if (paymentType === "sinal") {
-        baseAmount = order.sinal_value;
-        actualPaymentType = "sinal";
-      } else {
-        baseAmount = order.balance_value;
-        actualPaymentType = "balance";
-      }
-
-      const amount = getPaymentAmount(baseAmount);
-
-      const { data, error } = await supabase.functions.invoke(
-        "create-mercadopago-card",
-        {
-          body: {
-            token,
-            payment_type: actualPaymentType,
-            amount,
-            order_id: order.order_id,
-            product_name: order.product_name,
-            installments,
-          },
-        }
-      );
-
-      if (error) throw error;
-
-      // Redirect to Mercado Pago checkout
-      window.location.href = data.checkout_url;
-    } catch (error: any) {
-      console.error("Error creating checkout:", error);
-      toast({
-        title: "Erro",
-        description:
-          error.message || "Não foi possível iniciar o pagamento com cartão.",
-        variant: "destructive",
-      });
-      setIsProcessingCard(false);
-    }
+  // Handle successful card payment
+  const handleCardPaymentSuccess = () => {
+    // Reload order data to reflect payment
+    window.location.reload();
   };
 
-  // Generate installment options using the correct formula
-  const generateInstallmentOptions = (basePrice: number) => {
-    const options = [];
-    for (let i = 1; i <= 12; i++) {
-      const totalWithInterest = calculateCardTotal(basePrice, i);
-      const installmentValue = calcInstallment(totalWithInterest, i);
-      const rate = MERCADO_PAGO_RATES[i] || 0;
-      
-      options.push({
-        value: i,
-        label: i === 1 
-          ? `1x de ${formatCurrency(totalWithInterest)} (taxa ${(rate * 100).toFixed(2)}%)`
-          : `${i}x de ${formatCurrency(installmentValue)} (Total: ${formatCurrency(totalWithInterest)})`,
-      });
-    }
-    return options;
+  // Handle card payment error
+  const handleCardPaymentError = (error: string) => {
+    console.error("Card payment error:", error);
   };
 
   if (isLoading) {
@@ -453,14 +378,6 @@ export default function PaymentPage() {
   }
 
   const finalAmount = getPaymentAmount(baseAmount);
-  
-  // Generate installment options based on the amount being paid
-  const installmentBaseAmount = paymentType === "full" 
-    ? getPaymentAmount(order.product_price)
-    : getPaymentAmount(order.balance_value);
-  const installmentOptions = installmentBaseAmount > 0 
-    ? generateInstallmentOptions(installmentBaseAmount) 
-    : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -748,69 +665,17 @@ export default function PaymentPage() {
                 </TabsContent>
 
                 <TabsContent value="card" className="space-y-6">
-                  <div className="text-center py-4">
-                    <CreditCard className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-4">
-                      Pague com cartão de crédito em até 12x via Mercado Pago.
-                    </p>
-                    
-                    {/* Interest warning */}
-                    <div className="max-w-sm mx-auto mb-6 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                      <p className="text-sm text-amber-400">
-                        ⚠️ <strong>Atenção:</strong> O parcelamento no cartão de crédito possui juros da operadora de pagamento.
-                      </p>
-                    </div>
-
-                    {/* Installments selector */}
-                    <div className="max-w-sm mx-auto mb-6">
-                      <label className="text-sm font-medium mb-2 block text-left">
-                        Parcelamento
-                      </label>
-                      <Select 
-                        value={installments.toString()} 
-                        onValueChange={(value) => setInstallments(parseInt(value))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o parcelamento" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {installmentOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value.toString()}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {installments > 1 && (
-                        <p className="text-xs text-muted-foreground mt-2 text-left">
-                          * Juros de responsabilidade do cliente
-                        </p>
-                      )}
-                    </div>
-
-                    <Button 
-                      className="btn-gold" 
-                      onClick={handlePayWithCard}
-                      disabled={isProcessingCard}
-                    >
-                      {isProcessingCard ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <CreditCard className="mr-2 h-4 w-4" />
-                      )}
-                      Pagar com Cartão
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-
-                    <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                      <img 
-                        src="https://http2.mlstatic.com/frontend-assets/ml-web-navigation/ui-navigation/6.6.92/mercadopago/logo_large_25px.png" 
-                        alt="Mercado Pago" 
-                        className="h-5"
-                      />
-                      <span>Pagamento seguro</span>
-                    </div>
-                  </div>
+                  {token && order && (
+                    <CardPaymentForm
+                      token={token}
+                      orderId={order.order_id}
+                      productName={order.product_name}
+                      amount={finalAmount}
+                      paymentType={paymentType === "full" ? "full" : paymentType === "sinal" ? "sinal" : "balance"}
+                      onSuccess={handleCardPaymentSuccess}
+                      onError={handleCardPaymentError}
+                    />
+                  )}
                 </TabsContent>
               </Tabs>
             </CardContent>

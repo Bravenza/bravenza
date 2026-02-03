@@ -9,6 +9,9 @@ verify_jwt = false
 [functions.create-mercadopago-card]
 verify_jwt = false
 
+[functions.process-card-payment]
+verify_jwt = false
+
 [functions.send-budget-email]
 verify_jwt = false
 
