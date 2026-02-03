@@ -40,6 +40,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 
 interface Supplier {
   id: string;
@@ -82,6 +83,8 @@ export default function SuppliersPage() {
   const [editingSupplier, setEditingSupplier] = useState<Partial<Supplier> | null>(null);
   const [specialtiesInput, setSpecialtiesInput] = useState("");
   const [paymentMethodsInput, setPaymentMethodsInput] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -193,14 +196,15 @@ export default function SuppliersPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este fornecedor?")) return;
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setIsDeleting(true);
 
     try {
       const { error } = await supabase
         .from("suppliers")
         .delete()
-        .eq("id", id);
+        .eq("id", deleteId);
 
       if (error) throw error;
       toast({ title: "Fornecedor excluído com sucesso!" });
@@ -212,6 +216,9 @@ export default function SuppliersPage() {
         description: "Não foi possível excluir o fornecedor.",
         variant: "destructive",
       });
+    } finally {
+      setIsDeleting(false);
+      setDeleteId(null);
     }
   };
 
@@ -361,7 +368,7 @@ export default function SuppliersPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDelete(supplier.id)}
+                          onClick={() => setDeleteId(supplier.id)}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -545,6 +552,18 @@ export default function SuppliersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={handleDelete}
+        title="Excluir fornecedor?"
+        description="Esta ação não pode ser desfeita. O fornecedor será removido permanentemente do sistema."
+        confirmText="Excluir"
+        isLoading={isDeleting}
+        variant="destructive"
+      />
     </div>
   );
 }
