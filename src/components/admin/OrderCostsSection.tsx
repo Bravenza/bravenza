@@ -14,6 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/constants";
+import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 
 interface OrderCost {
   id: string;
@@ -75,6 +76,8 @@ export const OrderCostsSection = ({
   const [isSaving, setIsSaving] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newCost, setNewCost] = useState({ type: "", description: "", amount: "" });
+  const [deleteCostId, setDeleteCostId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchCosts = async () => {
@@ -134,16 +137,19 @@ export const OrderCostsSection = ({
     }
   };
 
-  const handleDeleteCost = async (costId: string) => {
+  const handleDeleteCost = async () => {
+    if (!deleteCostId) return;
+    setIsDeleting(true);
+
     try {
       const { error } = await supabase
         .from("order_costs")
         .delete()
-        .eq("id", costId);
+        .eq("id", deleteCostId);
 
       if (error) throw error;
 
-      setAdditionalCosts(additionalCosts.filter(c => c.id !== costId));
+      setAdditionalCosts(additionalCosts.filter(c => c.id !== deleteCostId));
 
       toast({
         title: "Custo removido",
@@ -155,6 +161,9 @@ export const OrderCostsSection = ({
         description: error.message || "Não foi possível remover o custo.",
         variant: "destructive",
       });
+    } finally {
+      setIsDeleting(false);
+      setDeleteCostId(null);
     }
   };
 
@@ -256,7 +265,7 @@ export const OrderCostsSection = ({
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteCost(cost.id)}
+                        onClick={() => setDeleteCostId(cost.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -401,6 +410,18 @@ export const OrderCostsSection = ({
           </div>
         </div>
       </CardContent>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!deleteCostId}
+        onOpenChange={(open) => !open && setDeleteCostId(null)}
+        onConfirm={handleDeleteCost}
+        title="Excluir custo?"
+        description="Esta ação não pode ser desfeita. O custo será removido do pedido."
+        confirmText="Excluir"
+        isLoading={isDeleting}
+        variant="destructive"
+      />
     </Card>
   );
 };

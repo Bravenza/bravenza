@@ -45,6 +45,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 
 interface Review {
   id: string;
@@ -72,6 +73,8 @@ export default function ReviewsPage() {
   const [replyDialogOpen, setReplyDialogOpen] = useState(false);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -143,14 +146,15 @@ export default function ReviewsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir esta avaliação?")) return;
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setIsDeleting(true);
 
     try {
       const { error } = await supabase
         .from("reviews")
         .delete()
-        .eq("id", id);
+        .eq("id", deleteId);
 
       if (error) throw error;
       toast({ title: "Avaliação excluída com sucesso!" });
@@ -162,6 +166,9 @@ export default function ReviewsPage() {
         description: "Não foi possível excluir a avaliação.",
         variant: "destructive",
       });
+    } finally {
+      setIsDeleting(false);
+      setDeleteId(null);
     }
   };
 
@@ -454,7 +461,7 @@ export default function ReviewsPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDelete(review.id)}
+                          onClick={() => setDeleteId(review.id)}
                           title="Excluir"
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
@@ -514,6 +521,18 @@ export default function ReviewsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={handleDelete}
+        title="Excluir avaliação?"
+        description="Esta ação não pode ser desfeita. A avaliação será removida permanentemente."
+        confirmText="Excluir"
+        isLoading={isDeleting}
+        variant="destructive"
+      />
     </div>
   );
 }
