@@ -15,9 +15,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { generateOrderId, cleanCPF, formatCPF, validateCPF, cleanPhone, formatPhone, validatePhone, validateEmail } from "@/lib/constants";
+import { generateOrderId, cleanCPF, formatCPF, validateCPF, cleanPhone, formatPhone, validatePhone, validateEmail, formatCurrency } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { SNEAKER_BRANDS, getModelsForBrand, getBrandLabel, getModelLabel } from "@/lib/sneaker-data";
+import { calculateProductPrice, DEFAULT_MULTIPLIER, roundUpTo90 } from "@/lib/budget-calculator";
 
 const orderSchema = z.object({
   order_type: z.enum(["VAULT", "READY"]),
@@ -39,7 +41,8 @@ const orderSchema = z.object({
   product_color: z.string().optional(),
   product_reference: z.string().optional(),
   product_link: z.string().url("URL inválida").optional().or(z.literal("")),
-  product_price: z.number().positive("Valor deve ser positivo"),
+  product_cost: z.number().positive("Custo total é obrigatório"),
+  product_price: z.number().positive("Preço será calculado automaticamente").optional(),
   sinal_value: z.number().min(0, "Valor inválido").optional(),
   balance_value: z.number().min(0, "Valor inválido").optional(),
   internal_notes: z.string().optional(),
@@ -203,6 +206,52 @@ const NewOrder = () => {
     }
   };
 
+  // Handler para mudança de custo - calcula preço automaticamente
+  const handleCostChange = (value: string) => {
+    const cost = parseFloat(value) || 0;
+    if (cost > 0) {
+      const calculatedPrice = calculateProductPrice(cost, DEFAULT_MULTIPLIER);
+      const halfPrice = calculatedPrice / 2;
+      setFormData((prev) => ({
+        ...prev,
+        product_cost: value,
+        product_price: calculatedPrice.toFixed(2),
+        sinal_value: halfPrice.toFixed(2),
+        balance_value: halfPrice.toFixed(2),
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        product_cost: value,
+        product_price: "",
+        sinal_value: "",
+        balance_value: "",
+      }));
+    }
+  };
+
+  // Handler para ajuste manual do preço (mantendo regra do ,90)
+  const handlePriceOverride = (value: string) => {
+    const price = parseFloat(value) || 0;
+    if (price > 0) {
+      const roundedPrice = roundUpTo90(price);
+      const halfPrice = roundedPrice / 2;
+      setFormData((prev) => ({
+        ...prev,
+        product_price: roundedPrice.toFixed(2),
+        sinal_value: halfPrice.toFixed(2),
+        balance_value: halfPrice.toFixed(2),
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        product_price: value,
+        sinal_value: "",
+        balance_value: "",
+      }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -210,7 +259,8 @@ const NewOrder = () => {
     const cleanedPhone = cleanPhone(formData.client_phone);
     const cleanedCep = formData.client_cep.replace(/\D/g, "");
 
-    const productPrice = formData.product_price ? parseFloat(formData.product_price) : 0;
+    const productCost = formData.product_cost ? parseFloat(formData.product_cost) : 0;
+    const productPrice = formData.product_price ? parseFloat(formData.product_price) : calculateProductPrice(productCost, DEFAULT_MULTIPLIER);
 
     try {
       orderSchema.parse({
@@ -218,6 +268,7 @@ const NewOrder = () => {
         client_cpf: cleanedCPF,
         client_phone: cleanedPhone,
         client_cep: cleanedCep,
+        product_cost: productCost,
         product_price: productPrice,
         sinal_value: formData.sinal_value
           ? parseFloat(formData.sinal_value)
@@ -708,147 +759,124 @@ const NewOrder = () => {
                   />
                 </div>
               </div>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="product_link">Link de Referência</Label>
-                  <Input
-                    id="product_link"
-                    type="url"
-                    value={formData.product_link}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        product_link: e.target.value,
-                      }))
-                    }
-                    placeholder="https://stockx.com/..."
-                    className="bg-secondary/50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="product_price">Valor Total do Orçamento (R$) *</Label>
-                  <Input
-                    id="product_price"
-                    type="number"
-                    step="0.01"
-                    value={formData.product_price}
-                    onChange={(e) => {
-                      const price = e.target.value;
-                      const priceNum = parseFloat(price) || 0;
-                      setFormData((prev) => ({
-                        ...prev,
-                        product_price: price,
-                        sinal_value: (priceNum * 0.5).toFixed(2),
-                        balance_value: (priceNum * 0.5).toFixed(2),
-                      }));
-                    }}
-                    className="bg-secondary/50"
-                    required
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="product_link">Link de Referência</Label>
+                <Input
+                  id="product_link"
+                  type="url"
+                  value={formData.product_link}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      product_link: e.target.value,
+                    }))
+                  }
+                  placeholder="https://stockx.com/..."
+                  className="bg-secondary/50"
+                />
               </div>
             </CardContent>
           </Card>
 
-          {/* Financial info */}
-          <Card className="card-premium lg:col-span-2">
+          {/* Calculadora de Preço Automático */}
+          <Card className="card-premium lg:col-span-2 border-primary/30">
             <CardHeader>
-              <CardTitle>Dados Financeiros</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                💰 Calculadora de Orçamento
+                <Badge variant="secondary" className="ml-2">Multiplicador: {DEFAULT_MULTIPLIER}x</Badge>
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
                 <p className="text-sm text-primary font-medium">
-                  💡 O valor do sinal é de 50% do valor total do orçamento. O saldo restante é pago quando o produto chegar ao Brasil.
+                  💡 Informe o custo total (produto + frete + impostos) e o preço de venda será calculado automaticamente com margem de {((DEFAULT_MULTIPLIER - 1) * 100).toFixed(0)}%.
                 </p>
               </div>
-              
-              {/* Custo interno (Admin only) */}
-              <div className="p-4 bg-secondary/50 rounded-lg border border-border">
-                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  🔒 Dados Internos (não visíveis para o cliente)
-                </h4>
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="product_cost">Custo do Produto (R$)</Label>
-                    <Input
-                      id="product_cost"
-                      type="number"
-                      step="0.01"
-                      value={formData.product_cost}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          product_cost: e.target.value,
-                        }))
-                      }
-                      placeholder="0,00"
-                      className="bg-background"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Valor de custo para cálculo de margem
-                    </p>
-                  </div>
-                  {formData.product_cost && formData.product_price && (
-                    <>
-                      <div className="space-y-2">
-                        <Label>Lucro Bruto (R$)</Label>
-                        <div className="p-2 bg-success/10 rounded border border-success/20">
-                          <p className="font-bold text-success">
-                            R$ {(parseFloat(formData.product_price) - parseFloat(formData.product_cost)).toFixed(2)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Margem de Lucro (%)</Label>
-                        <div className="p-2 bg-success/10 rounded border border-success/20">
-                          <p className="font-bold text-success">
-                            {((parseFloat(formData.product_price) - parseFloat(formData.product_cost)) / parseFloat(formData.product_price) * 100).toFixed(1)}%
-                          </p>
-                        </div>
-                      </div>
-                    </>
-                  )}
+
+              {/* Custo Total - Campo Principal */}
+              <div className="p-4 bg-secondary/30 rounded-lg border-2 border-dashed border-primary/30">
+                <div className="space-y-2">
+                  <Label htmlFor="product_cost" className="text-base font-semibold">
+                    Custo Total (Produto + Frete + Impostos) *
+                  </Label>
+                  <Input
+                    id="product_cost"
+                    type="number"
+                    step="0.01"
+                    value={formData.product_cost}
+                    onChange={(e) => handleCostChange(e.target.value)}
+                    placeholder="0,00"
+                    className="bg-background text-lg font-medium"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    O preço de venda será calculado automaticamente
+                  </p>
                 </div>
               </div>
 
+              {/* Cálculo em tempo real */}
+              {parseFloat(formData.product_cost) > 0 && (
+                <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                  <div className="grid md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Custo × {DEFAULT_MULTIPLIER}</p>
+                      <p className="font-medium">
+                        {formatCurrency(parseFloat(formData.product_cost) * DEFAULT_MULTIPLIER)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Arredondado (↑,90)</p>
+                      <p className="font-bold text-primary text-lg">
+                        {formData.product_price ? formatCurrency(parseFloat(formData.product_price)) : "-"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Margem de Lucro</p>
+                      <p className="font-bold text-success">
+                        {formData.product_price && formData.product_cost 
+                          ? `${((parseFloat(formData.product_price) - parseFloat(formData.product_cost)) / parseFloat(formData.product_price) * 100).toFixed(1)}%`
+                          : "-"
+                        }
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-primary/20">
+                    <Label className="text-sm text-muted-foreground">
+                      Preço Final (Ajustável - arredonda para ,90)
+                    </Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.product_price}
+                      onChange={(e) => handlePriceOverride(e.target.value)}
+                      placeholder="0,00"
+                      className="bg-background mt-1"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Sinal e Saldo - Calculados automaticamente */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="sinal_value">Valor do Sinal - 50% (R$)</Label>
-                  <Input
-                    id="sinal_value"
-                    type="number"
-                    step="0.01"
-                    value={formData.sinal_value}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        sinal_value: e.target.value,
-                      }))
-                    }
-                    className="bg-secondary/50"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Calculado automaticamente como 50% do orçamento
-                  </p>
+                  <Label>Sinal (50%)</Label>
+                  <div className="p-2.5 bg-muted rounded-md border">
+                    <p className="font-medium">
+                      {formData.sinal_value ? formatCurrency(parseFloat(formData.sinal_value)) : "-"}
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Calculado automaticamente</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="balance_value">Valor do Saldo (R$)</Label>
-                  <Input
-                    id="balance_value"
-                    type="number"
-                    step="0.01"
-                    value={formData.balance_value}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        balance_value: e.target.value,
-                      }))
-                    }
-                    className="bg-secondary/50"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Restante a ser pago na chegada do produto
-                  </p>
+                  <Label>Saldo (50%)</Label>
+                  <div className="p-2.5 bg-muted rounded-md border">
+                    <p className="font-medium">
+                      {formData.balance_value ? formatCurrency(parseFloat(formData.balance_value)) : "-"}
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Calculado automaticamente</p>
                 </div>
               </div>
             </CardContent>
