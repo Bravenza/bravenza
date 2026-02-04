@@ -1,29 +1,30 @@
 import { forwardRef } from "react";
-import bravenzaLogo from "@/assets/bravenza-logo.png";
 import { cn } from "@/lib/utils";
 
-interface LogoProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface LogoProps extends React.HTMLAttributes<HTMLSpanElement> {
   size?: "sm" | "md" | "lg";
 }
 
-export const Logo = forwardRef<HTMLImageElement, LogoProps>(
+export const Logo = forwardRef<HTMLSpanElement, LogoProps>(
   ({ size = "md", className, ...props }, ref) => {
     const sizeClasses = {
-      sm: "h-3",
-      md: "h-5",
-      lg: "h-6",
+      sm: "text-base",
+      md: "text-lg",
+      lg: "text-xl",
     };
 
     return (
-      <img
+      <span
         ref={ref}
-        src={bravenzaLogo}
-        alt="BRAVENZA"
-        className={cn(sizeClasses[size], "w-auto object-contain", className)}
-        loading="lazy"
-        decoding="async"
+        className={cn(
+          "font-display font-bold tracking-tight text-gradient-gold",
+          sizeClasses[size],
+          className
+        )}
         {...props}
-      />
+      >
+        BRAVENZA
+      </span>
     );
   }
 );
