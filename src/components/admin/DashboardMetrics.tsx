@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend, FunnelChart, Funnel, LabelList } from "recharts";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,9 +11,12 @@ import {
   Package, 
   CheckCircle2,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  Target,
+  Timer,
+  Users
 } from "lucide-react";
-import { startOfMonth, endOfMonth, subMonths, format, startOfWeek, endOfWeek, subDays } from "date-fns";
+import { startOfMonth, endOfMonth, subMonths, format, differenceInDays, differenceInHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface OrderData {
@@ -23,9 +26,12 @@ interface OrderData {
   product_price: number | null;
   sinal_value: number | null;
   sinal_paid: boolean | null;
+  sinal_paid_at: string | null;
   balance_value: number | null;
   balance_paid: boolean | null;
   budget_status: string | null;
+  budget_sent_at: string | null;
+  budget_approved_at: string | null;
   created_at: string;
 }
 
@@ -40,6 +46,11 @@ interface MetricsData {
   approvedBudgets: number;
   rejectedBudgets: number;
   pendingBudgets: number;
+  // New conversion metrics
+  avgTimeToApproval: number; // hours
+  avgTimeToClose: number; // days
+  funnelData: { name: string; value: number; fill: string }[];
+  weeklyConversion: { week: string; rate: number; approved: number; total: number }[];
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -49,6 +60,8 @@ const STATUS_COLORS: Record<string, string> = {
   "Entregue": "#22c55e",
   "Outros": "#6b7280",
 };
+
+const FUNNEL_COLORS = ["hsl(var(--primary))", "#3b82f6", "#22c55e", "#10b981"];
 
 export function DashboardMetrics() {
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
@@ -63,7 +76,7 @@ export function DashboardMetrics() {
     try {
       const { data: orders, error } = await supabase
         .from("orders")
-        .select("*")
+        .select("order_id, order_type, current_status, product_price, sinal_value, sinal_paid, sinal_paid_at, balance_value, balance_paid, budget_status, budget_sent_at, budget_approved_at, created_at")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -73,7 +86,7 @@ export function DashboardMetrics() {
         setMetrics(metricsData);
       }
     } catch (error) {
-      console.error("Error fetching metrics:", error);
+      // Silent fail - metrics are non-critical
     } finally {
       setIsLoading(false);
     }
@@ -87,6 +100,10 @@ export function DashboardMetrics() {
     let approvedBudgets = 0;
     let rejectedBudgets = 0;
     let pendingBudgets = 0;
+    let totalTimeToApproval = 0;
+    let approvalCount = 0;
+    let totalTimeToClose = 0;
+    let closeCount = 0;
 
     const statusGroups: Record<string, number> = {
       "Em Processamento": 0,
@@ -97,12 +114,21 @@ export function DashboardMetrics() {
     };
 
     const monthlyData: Record<string, { pedidos: number; faturamento: number }> = {};
+    const weeklyConversionData: Record<string, { approved: number; total: number }> = {};
 
     // Initialize last 6 months
     for (let i = 5; i >= 0; i--) {
       const month = subMonths(new Date(), i);
       const key = format(month, "MMM/yy", { locale: ptBR });
       monthlyData[key] = { pedidos: 0, faturamento: 0 };
+    }
+
+    // Initialize last 8 weeks
+    for (let i = 7; i >= 0; i--) {
+      const weekStart = subMonths(new Date(), 0);
+      weekStart.setDate(weekStart.getDate() - i * 7);
+      const key = format(weekStart, "dd/MM", { locale: ptBR });
+      weeklyConversionData[key] = { approved: 0, total: 0 };
     }
 
     orders.forEach((order) => {
@@ -122,18 +148,38 @@ export function DashboardMetrics() {
         pendingRevenue += order.balance_value;
       }
 
-      // Budget status
-      if (order.budget_status === "APPROVED") approvedBudgets++;
-      else if (order.budget_status === "REJECTED") rejectedBudgets++;
-      else if (order.budget_status === "SENT" || order.budget_status === "PENDING") pendingBudgets++;
+      // Budget status and time calculations
+      if (order.budget_status === "APPROVED") {
+        approvedBudgets++;
+        if (order.budget_sent_at && order.budget_approved_at) {
+          const hours = differenceInHours(new Date(order.budget_approved_at), new Date(order.budget_sent_at));
+          if (hours > 0 && hours < 720) { // Exclude outliers (> 30 days)
+            totalTimeToApproval += hours;
+            approvalCount++;
+          }
+        }
+      } else if (order.budget_status === "REJECTED") {
+        rejectedBudgets++;
+      } else if (order.budget_status === "SENT" || order.budget_status === "PENDING") {
+        pendingBudgets++;
+      }
+
+      // Time to close (from creation to sinal paid)
+      if (order.sinal_paid && order.sinal_paid_at) {
+        const days = differenceInDays(new Date(order.sinal_paid_at), new Date(order.created_at));
+        if (days >= 0 && days < 90) { // Exclude outliers
+          totalTimeToClose += days;
+          closeCount++;
+        }
+      }
 
       // Status grouping
       const status = order.current_status;
-      if (["ORDER_CONFIRMED", "SOURCING", "NEGOTIATING", "PURCHASE_COMPLETED"].includes(status)) {
+      if (["ORDER_CONFIRMED", "SOURCING", "NEGOTIATING", "PURCHASE_COMPLETED", "REQUEST_RECEIVED", "BUDGET_SENT", "DEPOSIT_CONFIRMED", "SEARCH_SELECTION", "PRODUCT_FOUND"].includes(status)) {
         statusGroups["Em Processamento"]++;
       } else if (["BALANCE_DUE", "BALANCE_PENDING"].includes(status)) {
         statusGroups["Aguardando Pagamento"]++;
-      } else if (["PACKAGE_EN_ROUTE", "INTERNATIONAL_TRANSIT", "CUSTOMS", "NATIONAL_TRANSIT", "DISPATCHED"].includes(status)) {
+      } else if (["PACKAGE_EN_ROUTE", "INTERNATIONAL_TRANSIT", "CUSTOMS", "NATIONAL_TRANSIT", "DISPATCHED", "PREPARING_INTERNATIONAL", "ARRIVED_BRAZIL", "PRODUCT_INSPECTED", "SHIPPED_TO_CLIENT"].includes(status)) {
         statusGroups["Em Trânsito"]++;
       } else if (status === "DELIVERED") {
         statusGroups["Entregue"]++;
@@ -153,6 +199,16 @@ export function DashboardMetrics() {
 
     const totalBudgets = approvedBudgets + rejectedBudgets;
     const conversionRate = totalBudgets > 0 ? (approvedBudgets / totalBudgets) * 100 : 0;
+    const avgTimeToApproval = approvalCount > 0 ? totalTimeToApproval / approvalCount : 0;
+    const avgTimeToClose = closeCount > 0 ? totalTimeToClose / closeCount : 0;
+
+    // Funnel data
+    const funnelData = [
+      { name: "Orçamentos Enviados", value: approvedBudgets + rejectedBudgets + pendingBudgets, fill: FUNNEL_COLORS[0] },
+      { name: "Orçamentos Aprovados", value: approvedBudgets, fill: FUNNEL_COLORS[1] },
+      { name: "Sinal Pago", value: orders.filter(o => o.sinal_paid).length, fill: FUNNEL_COLORS[2] },
+      { name: "Entregues", value: orders.filter(o => o.current_status === "DELIVERED").length, fill: FUNNEL_COLORS[3] },
+    ];
 
     return {
       totalRevenue,
@@ -174,6 +230,15 @@ export function DashboardMetrics() {
       approvedBudgets,
       rejectedBudgets,
       pendingBudgets,
+      avgTimeToApproval,
+      avgTimeToClose,
+      funnelData,
+      weeklyConversion: Object.entries(weeklyConversionData).map(([week, data]) => ({
+        week,
+        rate: data.total > 0 ? (data.approved / data.total) * 100 : 0,
+        approved: data.approved,
+        total: data.total,
+      })),
     };
   };
 
@@ -207,33 +272,33 @@ export function DashboardMetrics() {
       title: "Faturamento Total",
       value: formatCurrency(metrics.totalRevenue),
       icon: DollarSign,
-      color: "text-green-500",
-      bgColor: "bg-green-500/10",
+      color: "text-success",
+      bgColor: "bg-success/10",
       description: "Receita confirmada",
-    },
-    {
-      title: "Receita Pendente",
-      value: formatCurrency(metrics.pendingRevenue),
-      icon: Clock,
-      color: "text-yellow-500",
-      bgColor: "bg-yellow-500/10",
-      description: "Aguardando pagamento",
     },
     {
       title: "Taxa de Conversão",
       value: `${metrics.conversionRate.toFixed(1)}%`,
-      icon: TrendingUp,
+      icon: Target,
       color: "text-primary",
       bgColor: "bg-primary/10",
-      description: `${metrics.approvedBudgets} aprovados de ${metrics.approvedBudgets + metrics.rejectedBudgets}`,
+      description: `${metrics.approvedBudgets} de ${metrics.approvedBudgets + metrics.rejectedBudgets} orçamentos`,
     },
     {
-      title: "Orçamentos Pendentes",
-      value: metrics.pendingBudgets,
-      icon: AlertTriangle,
-      color: "text-orange-500",
-      bgColor: "bg-orange-500/10",
-      description: "Aguardando resposta",
+      title: "Tempo Médio p/ Aprovar",
+      value: metrics.avgTimeToApproval > 0 ? `${metrics.avgTimeToApproval.toFixed(0)}h` : "-",
+      icon: Timer,
+      color: "text-blue-500",
+      bgColor: "bg-blue-500/10",
+      description: "Orçamento → Aprovação",
+    },
+    {
+      title: "Tempo Médio p/ Fechar",
+      value: metrics.avgTimeToClose > 0 ? `${metrics.avgTimeToClose.toFixed(0)} dias` : "-",
+      icon: Clock,
+      color: "text-amber-500",
+      bgColor: "bg-amber-500/10",
+      description: "Criação → Sinal pago",
     },
   ];
 
@@ -375,11 +440,11 @@ export function DashboardMetrics() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-                <CheckCircle2 className="h-8 w-8 mx-auto text-green-500 mb-2" />
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 rounded-lg bg-success/10 border border-success/20">
+                <CheckCircle2 className="h-8 w-8 mx-auto text-success mb-2" />
                 <p className="text-sm text-muted-foreground">Sinal Recebido</p>
-                <p className="text-2xl font-bold text-green-500">
+                <p className="text-2xl font-bold text-success">
                   {formatCurrency(metrics.sinalReceived)}
                 </p>
               </div>
@@ -390,13 +455,66 @@ export function DashboardMetrics() {
                   {formatCurrency(metrics.balanceReceived)}
                 </p>
               </div>
-              <div className="text-center p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-                <Clock className="h-8 w-8 mx-auto text-yellow-500 mb-2" />
-                <p className="text-sm text-muted-foreground">Total Pendente</p>
-                <p className="text-2xl font-bold text-yellow-500">
+              <div className="text-center p-4 rounded-lg bg-warning/10 border border-warning/20">
+                <Clock className="h-8 w-8 mx-auto text-warning mb-2" />
+                <p className="text-sm text-muted-foreground">Pendente</p>
+                <p className="text-2xl font-bold text-warning">
                   {formatCurrency(metrics.pendingRevenue)}
                 </p>
               </div>
+              <div className="text-center p-4 rounded-lg bg-muted/30 border border-border">
+                <AlertTriangle className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">Orçamentos Abertos</p>
+                <p className="text-2xl font-bold">
+                  {metrics.pendingBudgets}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Sales Funnel */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+      >
+        <Card className="card-premium">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-primary" />
+              Funil de Vendas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-4 gap-4">
+              {metrics.funnelData.map((item, index) => {
+                const prevValue = index > 0 ? metrics.funnelData[index - 1].value : item.value;
+                const conversionRate = prevValue > 0 ? ((item.value / prevValue) * 100).toFixed(0) : "100";
+                return (
+                  <div key={item.name} className="text-center">
+                    <div 
+                      className="mx-auto mb-3 rounded-lg flex items-center justify-center"
+                      style={{ 
+                        backgroundColor: `${item.fill}20`,
+                        width: `${Math.max(60, 100 - index * 15)}%`,
+                        height: "80px"
+                      }}
+                    >
+                      <span className="text-2xl font-bold" style={{ color: item.fill }}>
+                        {item.value}
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium">{item.name}</p>
+                    {index > 0 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {conversionRate}% do anterior
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>

@@ -199,11 +199,6 @@ export default function ClientDashboard() {
         if (memberRes.data && memberRes.data.length > 0) {
           const member = memberRes.data[0] as unknown as VaultMemberData & { is_new_member?: boolean };
           setVaultMember(member);
-          
-          // Log if this was a new auto-enrollment
-          if ((memberRes.data[0] as any).is_new_member) {
-            console.log("Auto-enrolled as Vault Club member via purchase history");
-          }
         }
       } catch (err) {
         console.error("Error fetching data:", err);

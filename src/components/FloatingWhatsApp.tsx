@@ -1,12 +1,12 @@
 import { forwardRef, memo } from "react";
 import { MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
-
-const WHATSAPP_NUMBER = "5551981055425";
-const WHATSAPP_MESSAGE = "Olá! Gostaria de saber mais sobre a BRAVENZA.";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
 
 const FloatingWhatsAppComponent = forwardRef<HTMLButtonElement>((_, ref) => {
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
+  const { settings } = useSystemSettings();
+
+  const whatsappUrl = `https://wa.me/${settings.whatsapp_number}?text=${encodeURIComponent(settings.whatsapp_message)}`;
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
