@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Users, Image, MessageSquare, RefreshCw, Loader2, Settings, LogOut, UserCircle
+  Users, Image, MessageSquare, RefreshCw, Loader2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +19,7 @@ import {
   CommunityNewPost,
   CommunityProfile,
   CommunityFeedTabs,
+  CommunityProfileHeader,
   type CommunityPost,
 } from "./community";
 
@@ -315,9 +316,17 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
   // Main community view
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+      {/* Profile Header */}
+      {member && (
+        <CommunityProfileHeader
+          memberId={member.id}
+          onProfileClick={handleProfileClick}
+        />
+      )}
+
+      {/* Controls Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-secondary/20 border border-border/30">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Switch
               id="community-opt-in"
@@ -325,7 +334,7 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
               onCheckedChange={handleOptInToggle}
               disabled={isUpdatingOptIn}
             />
-            <Label htmlFor="community-opt-in" className="text-sm text-muted-foreground">
+            <Label htmlFor="community-opt-in" className="text-xs text-muted-foreground">
               Participando
             </Label>
           </div>
@@ -335,44 +344,19 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
             size="sm"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="gap-1.5"
+            className="gap-1.5 h-8"
           >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Atualizar</span>
+            <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline text-xs">Atualizar</span>
           </Button>
-
-          {member && (
-            <>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleProfileClick(member.id)}
-                className="gap-1.5"
-              >
-                <UserCircle className="h-4 w-4" />
-                <span className="hidden sm:inline">Meu Perfil</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/vault/perfil")}
-                className="gap-1.5"
-              >
-                <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">Editar</span>
-              </Button>
-            </>
-          )}
-
-          {member && (
-            <div className="ml-auto">
-              <CommunityNewPost 
-                memberId={member.id} 
-                onPostCreated={handlePostCreated}
-              />
-            </div>
-          )}
         </div>
+
+        {member && (
+          <CommunityNewPost 
+            memberId={member.id} 
+            onPostCreated={handlePostCreated}
+          />
+        )}
       </div>
 
       {/* Feed Tabs */}

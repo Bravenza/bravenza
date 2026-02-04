@@ -14,3 +14,5 @@ export { CommunityFeedTabs } from "./CommunityFeedTabs";
 export { ReportPostDialog } from "./ReportPostDialog";
 export { RichTextEditor } from "./RichTextEditor";
 export { FormattedText } from "./FormattedText";
+export { WysiwygEditor } from "./WysiwygEditor";
+export { CommunityProfileHeader } from "./CommunityProfileHeader";

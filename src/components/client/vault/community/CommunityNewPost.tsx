@@ -18,7 +18,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { RichTextEditor } from "./RichTextEditor";
+import { WysiwygEditor } from "./WysiwygEditor";
 
 interface CommunityNewPostProps {
   memberId: string;
@@ -270,13 +270,13 @@ export function CommunityNewPost({ memberId, onPostCreated }: CommunityNewPostPr
             <p className="text-xs text-muted-foreground text-right">{postData.title.length}/100</p>
           </div>
 
-          {/* Content with Rich Text Editor */}
+          {/* Content with WYSIWYG Editor */}
           <div className="space-y-2">
             <Label>Descrição</Label>
-            <RichTextEditor
+            <WysiwygEditor
               value={postData.content}
               onChange={(content) => setPostData(prev => ({ ...prev, content }))}
-              placeholder="Conte mais sobre sua publicação... Use **negrito**, _itálico_, emojis e mais!"
+              placeholder="Conte mais sobre sua publicação... Formate seu texto usando a barra de ferramentas!"
               maxLength={2000}
               minHeight="120px"
             />
