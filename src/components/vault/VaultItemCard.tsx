@@ -70,8 +70,8 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
       transition={{ delay: index * 0.05 }}
     >
       <Card className="card-premium overflow-hidden">
-        {/* Image */}
-        <div className="relative aspect-square bg-background">
+        {/* Image - compact size */}
+        <div className="relative aspect-[4/3] bg-background">
           {item.inspection_photos && item.inspection_photos.length > 0 ? (
             <img
               src={item.inspection_photos[0]}
@@ -80,27 +80,27 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <Image className="h-12 w-12 text-muted-foreground/30" />
+              <Image className="h-8 w-8 text-muted-foreground/30" />
             </div>
           )}
           <Badge 
-            className={`absolute top-3 right-3 ${status.bgColor} ${status.color} border-0`}
+            className={`absolute top-2 right-2 ${status.bgColor} ${status.color} border-0 text-[10px] px-1.5 py-0.5`}
           >
-            <status.icon className="h-3 w-3 mr-1" />
+            <status.icon className="h-2.5 w-2.5 mr-0.5" />
             {status.label}
           </Badge>
         </div>
 
-        <CardContent className="pt-4">
+        <CardContent className="p-3">
           {/* Vault ID */}
-          <div className="flex items-center gap-2 mb-2">
-            <Shield className="h-4 w-4 text-primary" />
-            <span className="text-xs font-mono text-primary">{item.vault_id}</span>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Shield className="h-3 w-3 text-primary" />
+            <span className="text-[10px] font-mono text-primary">{item.vault_id}</span>
           </div>
 
           {/* Title */}
-          <h3 className="font-semibold mb-1 line-clamp-1">{item.title}</h3>
-          <p className="text-sm text-muted-foreground mb-3">
+          <h3 className="font-semibold text-sm mb-0.5 line-clamp-1">{item.title}</h3>
+          <p className="text-xs text-muted-foreground mb-2">
             {item.brand} • Tam. {item.size}
           </p>
 
