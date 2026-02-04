@@ -25,6 +25,18 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://bravenza.lovable.app/sobre-autenticidade</loc>
+    <lastmod>2026-02-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://bravenza.lovable.app/autenticidade</loc>
+    <lastmod>2026-02-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://bravenza.lovable.app/termos</loc>
     <lastmod>2026-02-04</lastmod>
     <changefreq>yearly</changefreq>
