@@ -1,18 +1,18 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, Crown, Sparkles, Users, Search, CheckCircle2, Lock, ArrowRight } from "lucide-react";
+import { Shield, Crown, Sparkles, Users, Search, CheckCircle2, Lock, ArrowRight, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Logo } from "@/components/Logo";
 
 const tiers = [
   {
     name: "Vault Access",
     icon: Shield,
-    color: "text-zinc-400",
-    bgColor: "bg-zinc-900",
-    borderColor: "border-zinc-700",
+    color: "text-muted-foreground",
+    bgColor: "bg-card",
+    borderColor: "border-border",
     benefits: [
       "Até 3 itens na wishlist",
       "1 busca ativa por vez",
@@ -23,9 +23,9 @@ const tiers = [
   {
     name: "Vault Privilege",
     icon: Crown,
-    color: "text-amber-400",
-    bgColor: "bg-zinc-900",
-    borderColor: "border-amber-500/30",
+    color: "text-primary",
+    bgColor: "bg-card",
+    borderColor: "border-primary/30",
     benefits: [
       "Wishlist ilimitada",
       "3 buscas ativas simultâneas",
@@ -38,9 +38,9 @@ const tiers = [
   {
     name: "Vault Black",
     icon: Sparkles,
-    color: "text-white",
-    bgColor: "bg-gradient-to-br from-zinc-900 to-black",
-    borderColor: "border-white/20",
+    color: "text-foreground",
+    bgColor: "bg-gradient-to-br from-card to-background",
+    borderColor: "border-foreground/20",
     benefits: [
       "Acesso total ao clube",
       "5 buscas ativas simultâneas",
@@ -82,11 +82,37 @@ const howItWorks = [
 
 export default function VaultLandingPage() {
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-background text-foreground relative">
+      {/* Background Effects */}
+      <div className="fixed inset-0 bg-grid-pattern opacity-30 pointer-events-none" />
+      <div className="fixed inset-0 bg-radial-glow pointer-events-none" />
+      
+      {/* Header */}
+      <header className="relative border-b border-border/30 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+          <Link to="/" className="flex items-center gap-2">
+            <Logo size="sm" />
+          </Link>
+          <div className="flex items-center gap-3">
+            <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+              <Link to="/cliente/login?redirect=/vault/app">
+                Já sou membro
+              </Link>
+            </Button>
+            <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Link to="/vault/redeem">
+                Resgatar convite
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/50 to-black" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/10 via-transparent to-transparent" />
+      <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-card/50 to-background" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
         
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -94,38 +120,33 @@ export default function VaultLandingPage() {
           transition={{ duration: 0.8 }}
           className="relative z-10 text-center px-4 max-w-4xl mx-auto"
         >
-          <Badge variant="outline" className="mb-6 border-amber-500/30 text-amber-400">
+          <Badge variant="outline" className="mb-6 border-primary/30 text-primary bg-primary/5">
             <Lock className="w-3 h-3 mr-1" />
             Acesso por convite
           </Badge>
           
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight">
+          <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight">
             Bravenza{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">
+            <span className="text-gradient-gold">
               Vault Club
             </span>
           </h1>
           
-          <p className="text-lg md:text-xl text-zinc-400 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Curadoria global exclusiva de tênis para colecionadores. 
             Não existe catálogo. Existe a sua busca e a nossa dedicação.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="bg-amber-500 hover:bg-amber-600 text-black font-semibold">
+            <Button asChild size="lg" className="btn-gold">
               <Link to="/vault/redeem">
                 Recebi um convite
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="border-zinc-700 hover:bg-zinc-900">
+            <Button asChild variant="outline" size="lg" className="border-border hover:bg-card hover:border-border/80">
               <Link to="/vault/waitlist">
                 Entrar na lista de espera
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" size="lg" className="text-zinc-400 hover:text-white hover:bg-zinc-900">
-              <Link to="/cliente/login?redirect=/vault/app">
-                Já sou membro
               </Link>
             </Button>
           </div>
@@ -133,19 +154,20 @@ export default function VaultLandingPage() {
       </section>
 
       {/* How It Works */}
-      <section className="py-24 px-4 bg-zinc-950">
-        <div className="max-w-6xl mx-auto">
+      <section className="relative py-24 px-4">
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-card/30 to-background" />
+        <div className="max-w-6xl mx-auto relative">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Como funciona</h2>
-            <p className="text-zinc-400">Curadoria personalizada do início ao fim</p>
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Como funciona</h2>
+            <p className="text-muted-foreground">Curadoria personalizada do início ao fim</p>
           </motion.div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {howItWorks.map((item, index) => (
               <motion.div
                 key={item.step}
@@ -154,14 +176,14 @@ export default function VaultLandingPage() {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="bg-zinc-900 border-zinc-800 h-full">
+                <Card className="card-premium h-full">
                   <CardContent className="pt-6">
-                    <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
-                      <item.icon className="h-6 w-6 text-amber-500" />
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                      <item.icon className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="text-sm text-amber-500 font-medium mb-2">Passo {item.step}</div>
+                    <div className="text-sm text-primary font-medium mb-2">Passo {item.step}</div>
                     <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-                    <p className="text-sm text-zinc-400">{item.description}</p>
+                    <p className="text-sm text-muted-foreground">{item.description}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -171,16 +193,16 @@ export default function VaultLandingPage() {
       </section>
 
       {/* Tiers Section */}
-      <section className="py-24 px-4 bg-black">
-        <div className="max-w-6xl mx-auto">
+      <section className="relative py-24 px-4">
+        <div className="max-w-6xl mx-auto relative">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Níveis do clube</h2>
-            <p className="text-zinc-400">Evolua conforme sua jornada no Vault</p>
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Níveis do clube</h2>
+            <p className="text-muted-foreground">Evolua conforme sua jornada no Vault</p>
           </motion.div>
           
           <div className="grid md:grid-cols-3 gap-6">
@@ -192,20 +214,20 @@ export default function VaultLandingPage() {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className={`${tier.bgColor} border ${tier.borderColor} h-full ${tier.featured ? 'ring-2 ring-amber-500/30' : ''} ${tier.exclusive ? 'ring-2 ring-white/20' : ''}`}>
+                <Card className={`${tier.bgColor} border ${tier.borderColor} h-full ${tier.featured ? 'ring-2 ring-primary/30' : ''} ${tier.exclusive ? 'ring-2 ring-foreground/20' : ''}`}>
                   <CardContent className="pt-6">
                     <div className="flex items-center gap-3 mb-4">
                       <tier.icon className={`h-6 w-6 ${tier.color}`} />
                       <h3 className="text-xl font-bold">{tier.name}</h3>
                     </div>
                     {tier.exclusive && (
-                      <Badge className="mb-4 bg-white/10 text-white border-0">
+                      <Badge className="mb-4 bg-foreground/10 text-foreground border-0">
                         Somente por convite
                       </Badge>
                     )}
                     <ul className="space-y-3">
                       {tier.benefits.map((benefit) => (
-                        <li key={benefit} className="flex items-start gap-2 text-sm text-zinc-300">
+                        <li key={benefit} className="flex items-start gap-2 text-sm text-muted-foreground">
                           <CheckCircle2 className={`h-4 w-4 ${tier.color} flex-shrink-0 mt-0.5`} />
                           {benefit}
                         </li>
@@ -220,26 +242,29 @@ export default function VaultLandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 px-4 bg-gradient-to-t from-zinc-900 to-black">
+      <section className="relative py-24 px-4">
+        <div className="absolute inset-0 bg-gradient-to-t from-card/50 to-transparent" />
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="max-w-2xl mx-auto text-center"
+          className="max-w-2xl mx-auto text-center relative"
         >
-          <Shield className="h-16 w-16 text-amber-500 mx-auto mb-6" />
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+            <Shield className="h-10 w-10 text-primary" />
+          </div>
+          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
             Pronto para entrar no Vault?
           </h2>
-          <p className="text-zinc-400 mb-8">
+          <p className="text-muted-foreground mb-8">
             Se você tem um convite, resgate agora. Se não, entre na lista de espera 
             e aguarde sua vez de fazer parte do clube.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="bg-amber-500 hover:bg-amber-600 text-black font-semibold">
+            <Button asChild size="lg" className="btn-gold">
               <Link to="/vault/redeem">Resgatar convite</Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="border-zinc-700 hover:bg-zinc-900">
+            <Button asChild variant="outline" size="lg" className="border-border hover:bg-card">
               <Link to="/vault/waitlist">Lista de espera</Link>
             </Button>
           </div>
@@ -247,20 +272,23 @@ export default function VaultLandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-4 border-t border-zinc-800">
+      <footer className="relative py-8 px-4 border-t border-border/30">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="text-sm text-zinc-500">
+          <div className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} Bravenza Vault Club. Todos os direitos reservados.
           </div>
           <div className="flex gap-6">
-            <Link to="/termos" className="text-sm text-zinc-500 hover:text-white transition">
+            <Link to="/termos" className="text-sm text-muted-foreground hover:text-foreground transition group inline-flex items-center gap-1">
               Termos
+              <ArrowUpRight className="h-3 w-3 opacity-0 -translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all" />
             </Link>
-            <Link to="/politicas" className="text-sm text-zinc-500 hover:text-white transition">
+            <Link to="/politicas" className="text-sm text-muted-foreground hover:text-foreground transition group inline-flex items-center gap-1">
               Privacidade
+              <ArrowUpRight className="h-3 w-3 opacity-0 -translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all" />
             </Link>
-            <Link to="/" className="text-sm text-zinc-500 hover:text-white transition">
+            <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition group inline-flex items-center gap-1">
               Bravenza Store
+              <ArrowUpRight className="h-3 w-3 opacity-0 -translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all" />
             </Link>
           </div>
         </div>
