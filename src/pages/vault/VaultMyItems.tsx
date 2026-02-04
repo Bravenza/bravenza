@@ -88,8 +88,8 @@ export default function VaultMyItems() {
         </p>
       </div>
 
-      {/* Items Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Items Grid - 4 columns on desktop */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {items.map((item, index) => (
           <VaultItemCard key={item.id} item={item} index={index} />
         ))}
