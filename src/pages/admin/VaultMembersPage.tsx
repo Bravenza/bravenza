@@ -71,9 +71,9 @@ const tierLabels: Record<VaultTier, string> = {
 };
 
 const tierColors: Record<VaultTier, string> = {
-  member: "bg-zinc-500",
-  collector: "bg-amber-500",
-  elite: "bg-zinc-900 border border-amber-400",
+  member: "bg-muted-foreground",
+  collector: "bg-primary",
+  elite: "bg-foreground border border-primary",
 };
 
 const statusLabels: Record<string, string> = {
@@ -257,7 +257,7 @@ const VaultMembersPage = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-zinc-500" />
+              <Shield className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-2xl font-bold">{stats.access}</p>
                 <p className="text-xs text-muted-foreground">Access</p>
@@ -268,7 +268,7 @@ const VaultMembersPage = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Star className="h-5 w-5 text-amber-500" />
+              <Star className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-2xl font-bold">{stats.privilege}</p>
                 <p className="text-xs text-muted-foreground">Privilege</p>
@@ -279,7 +279,7 @@ const VaultMembersPage = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-amber-400" />
+              <Crown className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-2xl font-bold">{stats.black}</p>
                 <p className="text-xs text-muted-foreground">Black</p>
@@ -290,7 +290,7 @@ const VaultMembersPage = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-500" />
+              <TrendingUp className="h-5 w-5 text-success" />
               <div>
                 <p className="text-2xl font-bold">{stats.eligibleForBlack}</p>
                 <p className="text-xs text-muted-foreground">Elegíveis Black</p>
@@ -369,7 +369,7 @@ const VaultMembersPage = () => {
                         {tierLabels[member.tier]}
                       </Badge>
                       {member.flags_eligible_for_black && member.tier !== "elite" && (
-                        <Badge variant="outline" className="ml-2 text-xs border-amber-400 text-amber-400">
+                        <Badge variant="outline" className="ml-2 text-xs border-primary text-primary">
                           Elegível Black
                         </Badge>
                       )}
@@ -415,7 +415,7 @@ const VaultMembersPage = () => {
                             variant="ghost"
                             size="icon"
                             onClick={() => handleUpgradeToBlack(member)}
-                            className="text-amber-400 hover:text-amber-300"
+                            className="text-primary hover:text-primary/80"
                           >
                             <Crown className="h-4 w-4" />
                           </Button>
@@ -425,7 +425,7 @@ const VaultMembersPage = () => {
                             variant="ghost"
                             size="icon"
                             onClick={() => handleRemoveReviewMode(member)}
-                            className="text-green-500 hover:text-green-400"
+                            className="text-success hover:text-success/80"
                           >
                             <RefreshCw className="h-4 w-4" />
                           </Button>

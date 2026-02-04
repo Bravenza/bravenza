@@ -54,7 +54,7 @@ export default function VaultMyItems() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
@@ -62,14 +62,14 @@ export default function VaultMyItems() {
   if (items.length === 0) {
     return (
       <div className="text-center py-20">
-        <div className="w-20 h-20 rounded-full bg-zinc-900 flex items-center justify-center mx-auto mb-6">
-          <Box className="h-10 w-10 text-zinc-600" />
+        <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
+          <Box className="h-10 w-10 text-muted-foreground" />
         </div>
         <h2 className="text-xl font-bold mb-2">Seu vault está vazio</h2>
-        <p className="text-zinc-400 mb-6 max-w-md mx-auto">
+        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
           Quando você concluir compras pelo Vault Club, seus tênis aparecerão aqui com Vault ID e certificado.
         </p>
-        <Button asChild className="bg-amber-500 hover:bg-amber-600 text-black">
+        <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
           <Link to="/vault/app/wishlist">
             Criar wishlist
           </Link>
@@ -82,8 +82,8 @@ export default function VaultMyItems() {
     <div className="space-y-6 pb-20 md:pb-0">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold mb-2">Meu vault</h1>
-        <p className="text-zinc-400">
+        <h1 className="text-2xl font-bold mb-1">Meu vault</h1>
+        <p className="text-muted-foreground text-sm">
           {items.length} {items.length === 1 ? "item" : "itens"} na sua coleção
         </p>
       </div>

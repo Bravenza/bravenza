@@ -225,7 +225,7 @@ export default function VaultWishlist() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
@@ -236,19 +236,19 @@ export default function VaultWishlist() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold mb-1">Wishlist e buscas</h1>
-          <p className="text-zinc-400 text-sm">
+          <p className="text-muted-foreground text-sm">
             Gerencie seus itens desejados e acompanhe buscas ativas
           </p>
         </div>
         
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
           <DialogTrigger asChild>
-            <Button className="bg-amber-500 hover:bg-amber-600 text-black">
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
               <Plus className="h-4 w-4 mr-2" />
               Adicionar item
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-zinc-900 border-zinc-800 max-w-lg">
+          <DialogContent className="bg-card border-border max-w-lg">
             <DialogHeader>
               <DialogTitle>Adicionar à wishlist</DialogTitle>
             </DialogHeader>
@@ -259,7 +259,6 @@ export default function VaultWishlist() {
                 <Input
                   value={newItem.title}
                   onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
-                  className="bg-zinc-800 border-zinc-700"
                   placeholder="Ex: Air Jordan 1 High OG 'Chicago'"
                 />
               </div>
@@ -270,7 +269,6 @@ export default function VaultWishlist() {
                   <Input
                     value={newItem.brand}
                     onChange={(e) => setNewItem({ ...newItem, brand: e.target.value })}
-                    className="bg-zinc-800 border-zinc-700"
                     placeholder="Nike, adidas..."
                   />
                 </div>
@@ -279,7 +277,6 @@ export default function VaultWishlist() {
                   <Input
                     value={newItem.size}
                     onChange={(e) => setNewItem({ ...newItem, size: e.target.value })}
-                    className="bg-zinc-800 border-zinc-700"
                     placeholder="42, 10 US..."
                   />
                 </div>
@@ -292,7 +289,7 @@ export default function VaultWishlist() {
                     value={newItem.condition} 
                     onValueChange={(v) => setNewItem({ ...newItem, condition: v })}
                   >
-                    <SelectTrigger className="bg-zinc-800 border-zinc-700">
+                    <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -308,7 +305,7 @@ export default function VaultWishlist() {
                     value={newItem.urgency} 
                     onValueChange={(v) => setNewItem({ ...newItem, urgency: v })}
                   >
-                    <SelectTrigger className="bg-zinc-800 border-zinc-700">
+                    <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -326,7 +323,6 @@ export default function VaultWishlist() {
                     type="number"
                     value={newItem.min_price}
                     onChange={(e) => setNewItem({ ...newItem, min_price: e.target.value })}
-                    className="bg-zinc-800 border-zinc-700"
                     placeholder="500"
                   />
                 </div>
@@ -336,7 +332,6 @@ export default function VaultWishlist() {
                     type="number"
                     value={newItem.max_price}
                     onChange={(e) => setNewItem({ ...newItem, max_price: e.target.value })}
-                    className="bg-zinc-800 border-zinc-700"
                     placeholder="2000"
                   />
                 </div>
@@ -347,7 +342,6 @@ export default function VaultWishlist() {
                 <Textarea
                   value={newItem.notes}
                   onChange={(e) => setNewItem({ ...newItem, notes: e.target.value })}
-                  className="bg-zinc-800 border-zinc-700"
                   placeholder="Detalhes adicionais..."
                 />
               </div>
@@ -355,7 +349,7 @@ export default function VaultWishlist() {
               <Button
                 onClick={handleAddItem}
                 disabled={isAddingItem}
-                className="w-full bg-amber-500 hover:bg-amber-600 text-black"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {isAddingItem ? "Adicionando..." : "Adicionar à wishlist"}
               </Button>
@@ -366,14 +360,14 @@ export default function VaultWishlist() {
 
       {/* Tabs */}
       <Tabs defaultValue="wishlist" className="space-y-4">
-        <TabsList className="bg-zinc-900 border border-zinc-800">
-          <TabsTrigger value="wishlist" className="data-[state=active]:bg-amber-500 data-[state=active]:text-black">
+        <TabsList className="bg-card border border-border">
+          <TabsTrigger value="wishlist" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Wishlist ({wishlistItems.length})
           </TabsTrigger>
-          <TabsTrigger value="active" className="data-[state=active]:bg-amber-500 data-[state=active]:text-black">
+          <TabsTrigger value="active" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Buscas ativas ({activeSearches.length})
           </TabsTrigger>
-          <TabsTrigger value="history" className="data-[state=active]:bg-amber-500 data-[state=active]:text-black">
+          <TabsTrigger value="history" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Histórico ({closedSearches.length})
           </TabsTrigger>
         </TabsList>
@@ -381,11 +375,11 @@ export default function VaultWishlist() {
         {/* Wishlist Tab */}
         <TabsContent value="wishlist" className="space-y-4">
           {wishlistItems.length === 0 ? (
-            <Card className="bg-zinc-900 border-zinc-800">
+            <Card className="bg-card border-border">
               <CardContent className="py-12 text-center">
-                <Search className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-                <p className="text-zinc-400">Sua wishlist está vazia</p>
-                <p className="text-sm text-zinc-500 mt-1">Adicione itens para começar uma busca</p>
+                <Search className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                <p className="text-muted-foreground">Sua wishlist está vazia</p>
+                <p className="text-sm text-muted-foreground/70 mt-1">Adicione itens para começar uma busca</p>
               </CardContent>
             </Card>
           ) : (
@@ -397,23 +391,23 @@ export default function VaultWishlist() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Card className="bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition">
+                  <Card className="bg-card border-border hover:border-border/80 transition">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="font-semibold truncate">{item.title}</h3>
                             {item.urgency_level === "NOW" && (
-                              <Badge className="bg-red-500/10 text-red-400 border-0">Urgente</Badge>
+                              <Badge className="bg-destructive/10 text-destructive border-0">Urgente</Badge>
                             )}
                           </div>
-                          <p className="text-sm text-zinc-400">
+                          <p className="text-sm text-muted-foreground">
                             {[item.product_brand, `Tam. ${item.product_size}`, item.condition_pref]
                               .filter(Boolean)
                               .join(" • ")}
                           </p>
                           {(item.min_price || item.max_price) && (
-                            <p className="text-xs text-zinc-500 mt-1">
+                            <p className="text-xs text-muted-foreground/70 mt-1">
                               Faixa: {item.min_price ? `R$ ${item.min_price}` : "?"} - {item.max_price ? `R$ ${item.max_price}` : "?"}
                             </p>
                           )}
@@ -421,7 +415,7 @@ export default function VaultWishlist() {
                         <Button
                           onClick={() => startSearch(item.id)}
                           size="sm"
-                          className="bg-amber-500 hover:bg-amber-600 text-black flex-shrink-0"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground flex-shrink-0"
                         >
                           <Play className="h-4 w-4 mr-1" />
                           Iniciar busca
@@ -438,11 +432,11 @@ export default function VaultWishlist() {
         {/* Active Searches Tab */}
         <TabsContent value="active" className="space-y-4">
           {activeSearches.length === 0 ? (
-            <Card className="bg-zinc-900 border-zinc-800">
+            <Card className="bg-card border-border">
               <CardContent className="py-12 text-center">
-                <Search className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-                <p className="text-zinc-400">Nenhuma busca ativa</p>
-                <p className="text-sm text-zinc-500 mt-1">Inicie uma busca a partir da sua wishlist</p>
+                <Search className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                <p className="text-muted-foreground">Nenhuma busca ativa</p>
+                <p className="text-sm text-muted-foreground/70 mt-1">Inicie uma busca a partir da sua wishlist</p>
               </CardContent>
             </Card>
           ) : (
@@ -458,7 +452,7 @@ export default function VaultWishlist() {
                     transition={{ delay: index * 0.05 }}
                   >
                     <Link to={`/vault/app/search/${search.search_id}`}>
-                      <Card className="bg-zinc-900 border-zinc-800 hover:border-amber-500/50 transition cursor-pointer">
+                      <Card className="bg-card border-border hover:border-primary/50 transition cursor-pointer">
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between gap-4">
                             <div className="flex-1 min-w-0">
@@ -468,18 +462,18 @@ export default function VaultWishlist() {
                                   {statusInfo.label}
                                 </Badge>
                               </div>
-                              <p className="text-sm text-zinc-400">
+                              <p className="text-sm text-muted-foreground">
                                 Última atualização: {new Date(search.last_update_at).toLocaleDateString("pt-BR")}
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
                               {search.has_match_room && search.decision_status === "PENDING" && (
-                                <Badge className="bg-emerald-500/10 text-emerald-400 border-0">
+                                <Badge className="bg-success/10 text-success border-0">
                                   <Sparkles className="h-3 w-3 mr-1" />
                                   Match disponível
                                 </Badge>
                               )}
-                              <ChevronRight className="h-5 w-5 text-zinc-500" />
+                              <ChevronRight className="h-5 w-5 text-muted-foreground" />
                             </div>
                           </div>
                         </CardContent>
@@ -495,10 +489,10 @@ export default function VaultWishlist() {
         {/* History Tab */}
         <TabsContent value="history" className="space-y-4">
           {closedSearches.length === 0 ? (
-            <Card className="bg-zinc-900 border-zinc-800">
+            <Card className="bg-card border-border">
               <CardContent className="py-12 text-center">
-                <Clock className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-                <p className="text-zinc-400">Nenhuma busca finalizada</p>
+                <Clock className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                <p className="text-muted-foreground">Nenhuma busca finalizada</p>
               </CardContent>
             </Card>
           ) : (
@@ -513,17 +507,17 @@ export default function VaultWishlist() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <Card className="bg-zinc-900 border-zinc-800">
+                    <Card className="bg-card border-border">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-medium truncate text-zinc-300">{search.wishlist_title}</h3>
+                              <h3 className="font-medium truncate text-foreground/80">{search.wishlist_title}</h3>
                               <Badge className={`${statusInfo.bgColor} ${statusInfo.color} border-0`}>
                                 {statusInfo.label}
                               </Badge>
                             </div>
-                            <p className="text-sm text-zinc-500">
+                            <p className="text-sm text-muted-foreground">
                               {new Date(search.started_at).toLocaleDateString("pt-BR")}
                             </p>
                           </div>
