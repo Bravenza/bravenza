@@ -21,9 +21,9 @@ interface VaultMember {
 }
 
 const tierLabels: Record<string, { label: string; color: string }> = {
-  member: { label: "Vault Access", color: "text-zinc-400" },
-  collector: { label: "Vault Privilege", color: "text-amber-400" },
-  elite: { label: "Vault Black", color: "text-white" },
+  member: { label: "Vault Access", color: "text-muted-foreground" },
+  collector: { label: "Vault Privilege", color: "text-primary" },
+  elite: { label: "Vault Black", color: "text-foreground" },
 };
 
 const navItems = [
@@ -79,8 +79,8 @@ export default function VaultAppLayout() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
@@ -92,9 +92,13 @@ export default function VaultAppLayout() {
   const tierInfo = tierLabels[member?.tier || "member"];
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-background text-foreground relative">
+      {/* Background Effects */}
+      <div className="fixed inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
+      
       {/* Desktop Header */}
-      <header className="sticky top-0 z-50 border-b border-zinc-800 bg-black/95 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b border-border/30 bg-background/80 backdrop-blur-xl">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -116,8 +120,8 @@ export default function VaultAppLayout() {
                     to={item.path}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
                       isActive 
-                        ? "bg-amber-500/10 text-amber-500" 
-                        : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+                        ? "bg-primary/10 text-primary" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     }`}
                   >
                     <item.icon className="h-4 w-4" />
@@ -133,7 +137,7 @@ export default function VaultAppLayout() {
               {member && (
                 <Badge 
                   variant="outline" 
-                  className={`hidden sm:flex border-zinc-700 ${tierInfo.color}`}
+                  className={`hidden sm:flex border-border/50 ${tierInfo.color}`}
                 >
                   <Crown className="h-3 w-3 mr-1" />
                   {tierInfo.label}
@@ -153,7 +157,7 @@ export default function VaultAppLayout() {
                 variant="ghost" 
                 size="sm"
                 onClick={handleLogout}
-                className="hidden sm:flex text-zinc-400 hover:text-white"
+                className="hidden sm:flex text-muted-foreground hover:text-foreground"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Sair
@@ -166,12 +170,12 @@ export default function VaultAppLayout() {
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="bg-zinc-900 border-zinc-800 w-72">
+                <SheetContent side="right" className="bg-card border-border w-72">
                   <div className="flex flex-col h-full">
                     {/* User info */}
-                    <div className="pb-4 mb-4 border-b border-zinc-800">
+                    <div className="pb-4 mb-4 border-b border-border">
                       <p className="font-medium">{session.client_name}</p>
-                      <Badge variant="outline" className={`mt-2 ${tierInfo.color} border-zinc-700`}>
+                      <Badge variant="outline" className={`mt-2 ${tierInfo.color} border-border/50`}>
                         {tierInfo.label}
                       </Badge>
                     </div>
@@ -190,8 +194,8 @@ export default function VaultAppLayout() {
                             onClick={() => setMobileMenuOpen(false)}
                             className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition ${
                               isActive 
-                                ? "bg-amber-500/10 text-amber-500" 
-                                : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                                ? "bg-primary/10 text-primary" 
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                             }`}
                           >
                             <item.icon className="h-5 w-5" />
@@ -205,7 +209,7 @@ export default function VaultAppLayout() {
                     <Button 
                       variant="ghost" 
                       onClick={handleLogout}
-                      className="justify-start text-zinc-400 hover:text-white mt-4"
+                      className="justify-start text-muted-foreground hover:text-foreground mt-4"
                     >
                       <LogOut className="h-4 w-4 mr-2" />
                       Sair
@@ -219,12 +223,12 @@ export default function VaultAppLayout() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className="relative max-w-7xl mx-auto px-4 py-6 pb-24 md:pb-6">
         <Outlet context={{ member, refreshMember: fetchMember }} />
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-zinc-900/95 backdrop-blur border-t border-zinc-800">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border/30">
         <div className="flex justify-around">
           {navItems.slice(0, 5).map((item) => {
             const isActive = item.exact 
@@ -235,8 +239,8 @@ export default function VaultAppLayout() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex flex-col items-center gap-1 py-3 px-3 text-xs ${
-                  isActive ? "text-amber-500" : "text-zinc-500"
+                className={`flex flex-col items-center gap-1 py-3 px-3 text-xs transition ${
+                  isActive ? "text-primary" : "text-muted-foreground"
                 }`}
               >
                 <item.icon className="h-5 w-5" />

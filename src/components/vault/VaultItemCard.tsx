@@ -29,9 +29,9 @@ interface VaultItemCardProps {
 }
 
 const statusConfig = {
-  VERIFIED: { label: "Verificado", icon: CheckCircle2, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
-  PENDING: { label: "Pendente", icon: Clock, color: "text-amber-500", bgColor: "bg-amber-500/10" },
-  REVOKED: { label: "Revogado", icon: AlertCircle, color: "text-red-500", bgColor: "bg-red-500/10" },
+  VERIFIED: { label: "Verificado", icon: CheckCircle2, color: "text-success", bgColor: "bg-success/10" },
+  PENDING: { label: "Pendente", icon: Clock, color: "text-primary", bgColor: "bg-primary/10" },
+  REVOKED: { label: "Revogado", icon: AlertCircle, color: "text-destructive", bgColor: "bg-destructive/10" },
 };
 
 export function VaultItemCard({ item, index }: VaultItemCardProps) {
@@ -69,9 +69,9 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
     >
-      <Card className="bg-zinc-900 border-zinc-800 overflow-hidden hover:border-zinc-700 transition">
+      <Card className="card-premium overflow-hidden">
         {/* Image */}
-        <div className="relative aspect-square bg-zinc-950">
+        <div className="relative aspect-square bg-background">
           {item.inspection_photos && item.inspection_photos.length > 0 ? (
             <img
               src={item.inspection_photos[0]}
@@ -80,7 +80,7 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <Image className="h-12 w-12 text-zinc-700" />
+              <Image className="h-12 w-12 text-muted-foreground/30" />
             </div>
           )}
           <Badge 
@@ -94,13 +94,13 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
         <CardContent className="pt-4">
           {/* Vault ID */}
           <div className="flex items-center gap-2 mb-2">
-            <Shield className="h-4 w-4 text-amber-500" />
-            <span className="text-xs font-mono text-amber-500">{item.vault_id}</span>
+            <Shield className="h-4 w-4 text-primary" />
+            <span className="text-xs font-mono text-primary">{item.vault_id}</span>
           </div>
 
           {/* Title */}
           <h3 className="font-semibold mb-1 line-clamp-1">{item.title}</h3>
-          <p className="text-sm text-zinc-400 mb-3">
+          <p className="text-sm text-muted-foreground mb-3">
             {item.brand} • Tam. {item.size}
           </p>
 
@@ -109,19 +109,19 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
             {/* View Details Dialog */}
             <Dialog>
               <DialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1 border-zinc-700"
-                >
-                  <Image className="h-4 w-4 mr-1" />
-                  Ver
-                </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1 border-border/50 hover:border-border"
+              >
+                <Image className="h-4 w-4 mr-1" />
+                Ver
+              </Button>
               </DialogTrigger>
-              <DialogContent className="bg-zinc-900 border-zinc-800 max-w-2xl">
+              <DialogContent className="bg-card border-border max-w-2xl">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-amber-500" />
+                    <Shield className="h-5 w-5 text-primary" />
                     {item.vault_id}
                   </DialogTitle>
                 </DialogHeader>
@@ -129,7 +129,7 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
                 <div className="space-y-4">
                   {/* Photo carousel */}
                   {item.inspection_photos && item.inspection_photos.length > 0 && (
-                    <div className="relative aspect-square bg-zinc-950 rounded-lg overflow-hidden">
+                    <div className="relative aspect-square bg-background rounded-lg overflow-hidden">
                       <img
                         src={item.inspection_photos[photoIndex]}
                         alt={`Foto ${photoIndex + 1}`}
@@ -142,7 +142,7 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
                               key={i}
                               onClick={() => setPhotoIndex(i)}
                               className={`w-2 h-2 rounded-full transition ${
-                                i === photoIndex ? "bg-amber-500" : "bg-zinc-600"
+                                i === photoIndex ? "bg-primary" : "bg-muted"
                               }`}
                             />
                           ))}
@@ -154,19 +154,19 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
                   {/* Details */}
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-zinc-500">Produto</p>
+                      <p className="text-muted-foreground">Produto</p>
                       <p className="font-medium">{item.title}</p>
                     </div>
                     <div>
-                      <p className="text-zinc-500">Tamanho</p>
+                      <p className="text-muted-foreground">Tamanho</p>
                       <p className="font-medium">{item.size}</p>
                     </div>
                     <div>
-                      <p className="text-zinc-500">Valor</p>
+                      <p className="text-muted-foreground">Valor</p>
                       <p className="font-medium">{formatCurrency(item.purchase_value)}</p>
                     </div>
                     <div>
-                      <p className="text-zinc-500">Data</p>
+                      <p className="text-muted-foreground">Data</p>
                       <p className="font-medium">{formatDate(item.purchase_date)}</p>
                     </div>
                   </div>
@@ -183,14 +183,14 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
                   <div className="flex gap-2 pt-2">
                     <Button 
                       variant="outline" 
-                      className="flex-1 border-zinc-700"
+                      className="flex-1 border-border/50 hover:border-border"
                       onClick={handleOpenCertificate}
                     >
                       <Download className="h-4 w-4 mr-2" />
                       Certificado
                     </Button>
                     {item.qr_private_url && (
-                      <Button asChild variant="outline" className="flex-1 border-zinc-700">
+                      <Button asChild variant="outline" className="flex-1 border-border/50 hover:border-border">
                         <a href={item.qr_private_url} target="_blank" rel="noopener noreferrer">
                           <ExternalLink className="h-4 w-4 mr-2" />
                           Verificar online
@@ -208,15 +208,15 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
                 <Button 
                   variant="outline" 
                   size="icon"
-                  className="border-zinc-700"
+                  className="border-border/50 hover:border-border"
                 >
                   <QrCode className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-zinc-900 border-zinc-800 max-w-md">
+              <DialogContent className="bg-card border-border max-w-md">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-amber-500" />
+                    <Shield className="h-5 w-5 text-primary" />
                     {item.vault_id}
                   </DialogTitle>
                 </DialogHeader>
