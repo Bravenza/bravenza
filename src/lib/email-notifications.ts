@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 const STATUS_EMAIL_MAP: Record<string, string> = {
   // New status flow
   BUDGET_SENT: "budget_sent",
+  BUDGET_APPROVED: "budget_approved",
   DEPOSIT_CONFIRMED: "sinal_confirmed",
   PRODUCT_FOUND: "product_found",
   PREPARING_INTERNATIONAL: "package_shipped",
@@ -332,6 +333,40 @@ export async function sendAllStatusNotifications(
     sendStatusChangeWhatsApp(newStatus, orderData.order_id),
   ]);
 
+  // Schedule budget expiring reminder when budget is sent (2 days later = 1 day before 3-day expiration)
+  if (newStatus === "BUDGET_SENT") {
+    try {
+      await supabase.functions.invoke("schedule-reminder", {
+        body: {
+          order_id: orderData.order_id,
+          reminder_type: "budget_expiring",
+          channel: "both",
+          delay_days: 2,
+        },
+      });
+      console.log(`Budget expiring reminder scheduled for order ${orderData.order_id}`);
+    } catch (err) {
+      console.error("Failed to schedule budget expiring reminder:", err);
+    }
+  }
+
+  // Schedule sinal payment reminder when budget is approved (2 days after)
+  if (newStatus === "BUDGET_APPROVED") {
+    try {
+      await supabase.functions.invoke("schedule-reminder", {
+        body: {
+          order_id: orderData.order_id,
+          reminder_type: "sinal_reminder",
+          channel: "both",
+          delay_days: 2,
+        },
+      });
+      console.log(`Sinal reminder scheduled for order ${orderData.order_id}`);
+    } catch (err) {
+      console.error("Failed to schedule sinal reminder:", err);
+    }
+  }
+
   // Schedule payment reminders for balance pending status
   if (newStatus === "BALANCE_PENDING" || newStatus === "BALANCE_DUE") {
     try {
@@ -374,5 +409,67 @@ export async function sendAllStatusNotifications(
   return {
     email: emailResult.success,
     whatsapp: whatsappResult.success,
+  };
+}
+
+// Send Vault Club welcome notification (email + WhatsApp)
+export async function sendVaultWelcomeNotification(
+  memberName: string,
+  memberEmail: string | null,
+  memberPhone: string | null,
+  memberTier: string = "Vault Access"
+): Promise<{ email: boolean; whatsapp: boolean }> {
+  let emailSent = false;
+  let whatsappSent = false;
+
+  // Send email
+  if (memberEmail) {
+    try {
+      const { error } = await supabase.functions.invoke("send-order-email", {
+        body: {
+          type: "vault_welcome",
+          order_id: "VAULT",
+          client_name: memberName,
+          client_email: memberEmail,
+        },
+      });
+
+      if (!error) {
+        emailSent = true;
+        console.log(`Vault welcome email sent to ${memberEmail}`);
+      } else {
+        console.error("Error sending vault welcome email:", error);
+      }
+    } catch (err) {
+      console.error("Failed to send vault welcome email:", err);
+    }
+  }
+
+  // Send WhatsApp
+  if (memberPhone) {
+    try {
+      const { error } = await supabase.functions.invoke("send-whatsapp", {
+        body: {
+          message_type: "vault_welcome",
+          member_name: memberName,
+          member_phone: memberPhone,
+          member_tier: memberTier,
+        },
+      });
+
+      if (!error) {
+        whatsappSent = true;
+        console.log(`Vault welcome WhatsApp sent to ${memberPhone}`);
+      } else {
+        console.error("Error sending vault welcome WhatsApp:", error);
+      }
+    } catch (err) {
+      console.error("Failed to send vault welcome WhatsApp:", err);
+    }
+  }
+
+  return {
+    email: emailSent,
+    whatsapp: whatsappSent,
   };
 }

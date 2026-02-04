@@ -205,6 +205,27 @@ serve(async (req) => {
           continue;
         }
 
+        // Check if budget was already approved/rejected/expired (cancel budget_expiring reminder)
+        if (reminder.reminder_type === "budget_expiring") {
+          if (order.budget_status !== "pending" || order.budget_approved_at || order.budget_rejected_at) {
+            console.log(`Budget already processed for ${reminder.order_id}, cancelling reminder`);
+            await supabase
+              .from("scheduled_reminders")
+              .update({ status: "cancelled" })
+              .eq("id", reminder.id);
+            continue;
+          }
+          // Check if budget already expired
+          if (order.budget_expires_at && new Date(order.budget_expires_at) < new Date()) {
+            console.log(`Budget already expired for ${reminder.order_id}, cancelling reminder`);
+            await supabase
+              .from("scheduled_reminders")
+              .update({ status: "cancelled" })
+              .eq("id", reminder.id);
+            continue;
+          }
+        }
+
         // Check if review was already submitted (for review reminders)
         if (reminder.reminder_type === "review_request") {
           const { data: existingReview } = await supabase
@@ -231,9 +252,17 @@ serve(async (req) => {
           if (order.client_email) {
             const reviewLink = `https://bravenza.com.br/minha-conta`;
             const paymentLink = `https://bravenza.com.br/pagamento/${order.budget_approval_token}`;
+            const approvalLink = `https://bravenza.com.br/orcamento/${order.budget_approval_token}`;
             
             // Determine email type based on reminder type
-            const emailType = reminder.reminder_type === "review_request" ? "review_request" : "balance_reminder";
+            let emailType = "balance_reminder";
+            if (reminder.reminder_type === "review_request") {
+              emailType = "review_request";
+            } else if (reminder.reminder_type === "budget_expiring") {
+              emailType = "budget_expiring";
+            } else if (reminder.reminder_type === "sinal_reminder") {
+              emailType = "sinal_reminder";
+            }
             
             const { error: emailError } = await supabase.functions.invoke("send-order-email", {
               body: {
@@ -242,8 +271,12 @@ serve(async (req) => {
                 client_name: order.client_name,
                 client_email: order.client_email,
                 product_name: order.product_name,
+                product_price: order.product_price,
+                sinal_value: order.sinal_value,
                 balance_value: order.balance_value,
                 payment_link: paymentLink,
+                approval_link: approvalLink,
+                expires_at: order.budget_expires_at,
                 review_link: reviewLink,
               },
             });
@@ -272,6 +305,34 @@ serve(async (req) => {
               if (!whatsappError) {
                 whatsappSent = true;
                 console.log(`WhatsApp review request sent for ${reminder.order_id}`);
+              } else {
+                console.error(`WhatsApp error for ${reminder.order_id}:`, whatsappError);
+              }
+            } else if (reminder.reminder_type === "budget_expiring") {
+              const { error: whatsappError } = await supabase.functions.invoke("send-whatsapp", {
+                body: {
+                  order_id: order.order_id,
+                  message_type: "budget_expiring",
+                },
+              });
+
+              if (!whatsappError) {
+                whatsappSent = true;
+                console.log(`WhatsApp budget expiring sent for ${reminder.order_id}`);
+              } else {
+                console.error(`WhatsApp error for ${reminder.order_id}:`, whatsappError);
+              }
+            } else if (reminder.reminder_type === "sinal_reminder") {
+              const { error: whatsappError } = await supabase.functions.invoke("send-whatsapp", {
+                body: {
+                  order_id: order.order_id,
+                  message_type: "sinal_reminder",
+                },
+              });
+
+              if (!whatsappError) {
+                whatsappSent = true;
+                console.log(`WhatsApp sinal reminder sent for ${reminder.order_id}`);
               } else {
                 console.error(`WhatsApp error for ${reminder.order_id}:`, whatsappError);
               }

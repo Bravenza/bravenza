@@ -11,7 +11,9 @@ const corsHeaders = {
 type EmailType = 
   | "budget_sent"
   | "budget_approved"
+  | "budget_expiring"
   | "sinal_confirmed"
+  | "sinal_reminder"
   | "product_found"
   | "package_shipped"
   | "arrived_brazil"
@@ -23,7 +25,8 @@ type EmailType =
   | "balance_reminder"
   | "review_request"
   | "referral_confirmed"
-  | "cashback_expiring";
+  | "cashback_expiring"
+  | "vault_welcome";
 
 interface EmailRequest {
   type: EmailType;
@@ -72,7 +75,9 @@ const getEmailSubject = (type: EmailType, orderId: string, data?: EmailRequest):
   const subjects: Record<EmailType, string> = {
     budget_sent: `Seu orçamento está pronto - ${orderId}`,
     budget_approved: `Orçamento aprovado! Próximo passo: Pagamento do sinal - ${orderId}`,
+    budget_expiring: `⏰ Último dia! Seu orçamento expira amanhã - ${orderId}`,
     sinal_confirmed: `Pagamento confirmado! Iniciando busca - ${orderId}`,
+    sinal_reminder: `Lembrete: Pagamento do sinal pendente - ${orderId}`,
     product_found: `Ótima notícia! Seu produto foi encontrado - ${orderId}`,
     package_shipped: `Seu pacote está a caminho do Brasil! - ${orderId}`,
     arrived_brazil: `Seu produto chegou ao Brasil! - ${orderId}`,
@@ -85,6 +90,7 @@ const getEmailSubject = (type: EmailType, orderId: string, data?: EmailRequest):
     review_request: `Como foi sua experiência? Avalie seu pedido! - ${orderId}`,
     referral_confirmed: `🎉 Parabéns! Sua indicação foi confirmada!`,
     cashback_expiring: `⏰ Seu cashback está prestes a expirar!`,
+    vault_welcome: `🏆 Bem-vindo ao Bravenza Vault Club!`,
   };
   return subjects[type];
 };
@@ -198,6 +204,47 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         </div>
       `,
     },
+    budget_expiring: {
+      subtitle: "Seu Orçamento Expira Amanhã! ⏰",
+      content: `
+        <div style="background-color: #3d2a0a; border: 1px solid #d4af37; border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: center;">
+          <p style="color: #ff9500; font-size: 16px; margin: 0;">⚠️ Último dia para aprovar seu orçamento!</p>
+        </div>
+        
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          Seu orçamento do pedido <strong style="color: #d4af37;">${data.order_id}</strong> expira amanhã.
+          Não perca a oportunidade de garantir seu produto!
+        </p>
+        
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #333;">
+            <span style="color: #a0a0a0;">Valor Total</span>
+            <span style="color: #d4af37; font-size: 20px; font-weight: bold;">${formatCurrency(data.product_price || 0)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+            <span style="color: #a0a0a0;">Sinal (50%)</span>
+            <span style="color: #ffffff; font-weight: 600;">${formatCurrency(data.sinal_value || 0)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #a0a0a0;">Saldo (50%)</span>
+            <span style="color: #ffffff; font-weight: 600;">${formatCurrency(data.balance_value || 0)}</span>
+          </div>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 24px;">
+          <a href="${data.approval_link}" 
+             style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
+                    color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
+                    font-weight: bold; font-size: 16px;">
+            Aprovar Orçamento Agora
+          </a>
+        </div>
+        
+        <p style="color: #ff9500; font-size: 14px; text-align: center; margin: 0;">
+          ⏰ Expira em: <strong>${data.expires_at ? formatDate(data.expires_at) : "amanhã"}</strong>
+        </p>
+      `,
+    },
     sinal_confirmed: {
       subtitle: "Pagamento Confirmado! 💰",
       content: `
@@ -218,6 +265,38 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         
         <p style="color: #666; font-size: 13px; text-align: center; margin: 0; line-height: 1.5;">
           Você receberá atualizações por email a cada nova etapa do processo.
+        </p>
+      `,
+    },
+    sinal_reminder: {
+      subtitle: "Lembrete: Pagamento do Sinal ⏰",
+      content: `
+        <p style="color: #ff9500; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          Notamos que o pagamento do sinal do seu pedido <strong style="color: #fff;">${data.order_id}</strong> ainda está pendente.
+        </p>
+        
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          Você aprovou o orçamento, mas ainda não efetuou o pagamento do sinal para iniciarmos a busca do seu produto.
+        </p>
+        
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+          <p style="color: #a0a0a0; font-size: 14px; margin: 0 0 8px;">Valor do Sinal:</p>
+          <p style="color: #d4af37; font-size: 28px; font-weight: bold; margin: 0;">
+            ${formatCurrency(data.sinal_value || 0)}
+          </p>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 24px;">
+          <a href="${data.payment_link || 'https://bravenza.com.br/minha-conta'}" 
+             style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
+                    color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
+                    font-weight: bold; font-size: 16px;">
+            Pagar Sinal Agora
+          </a>
+        </div>
+        
+        <p style="color: #666; font-size: 13px; text-align: center; margin: 0; line-height: 1.5;">
+          Quanto antes o sinal for confirmado, mais rápido iniciaremos a busca!
         </p>
       `,
     },
@@ -545,6 +624,45 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         
         <p style="color: #666; font-size: 13px; text-align: center; margin: 24px 0 0; line-height: 1.5;">
           O desconto será aplicado automaticamente na página de pagamento.
+        </p>
+      `,
+    },
+    vault_welcome: {
+      subtitle: "Bem-vindo ao Vault Club! 🏆",
+      content: `
+        <div style="background-color: #1a1a2e; border: 2px solid #d4af37; border-radius: 12px; padding: 24px; margin-bottom: 24px; text-align: center;">
+          <p style="color: #d4af37; font-size: 48px; margin: 0 0 16px;">🏆</p>
+          <p style="color: #d4af37; font-size: 24px; font-weight: bold; margin: 0 0 8px;">Você faz parte do clube!</p>
+          <p style="color: #fff; font-size: 16px; margin: 0;">Bravenza Vault Club Member</p>
+        </div>
+        
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6; text-align: center;">
+          Parabéns por se tornar um membro do <strong style="color: #d4af37;">Bravenza Vault Club</strong>!
+          Você agora tem acesso a benefícios exclusivos.
+        </p>
+        
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+          <p style="color: #fff; font-size: 16px; margin: 0 0 16px; font-weight: bold;">✨ Seus benefícios:</p>
+          <ul style="color: #a0a0a0; font-size: 14px; margin: 0; padding-left: 20px; line-height: 2;">
+            <li><strong style="color: #d4af37;">Curadoria Premium</strong> - Encontramos peças raras para você</li>
+            <li><strong style="color: #d4af37;">SLA Garantido</strong> - Respostas rápidas e acompanhamento</li>
+            <li><strong style="color: #d4af37;">Match Room</strong> - Compare opções antes de comprar</li>
+            <li><strong style="color: #d4af37;">Certificados</strong> - Autenticidade garantida em cada item</li>
+            <li><strong style="color: #d4af37;">Vault Intel</strong> - Conteúdo exclusivo sobre sneakers</li>
+          </ul>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 24px;">
+          <a href="https://bravenza.com.br/vault" 
+             style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
+                    color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
+                    font-weight: bold; font-size: 16px;">
+            Acessar Vault Club
+          </a>
+        </div>
+        
+        <p style="color: #666; font-size: 13px; text-align: center; margin: 0; line-height: 1.5;">
+          Adicione sua primeira wishlist e deixe nossa equipe encontrar o par perfeito para você.
         </p>
       `,
     },
