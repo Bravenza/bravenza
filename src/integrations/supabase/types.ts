@@ -1208,6 +1208,7 @@ export type Database = {
           moderated_by_admin_id: string | null
           moderation_notes: string | null
           reactions_summary: Json | null
+          reports_count: number | null
           status: Database["public"]["Enums"]["community_post_status"] | null
           title: string
           type: Database["public"]["Enums"]["community_post_type"]
@@ -1226,6 +1227,7 @@ export type Database = {
           moderated_by_admin_id?: string | null
           moderation_notes?: string | null
           reactions_summary?: Json | null
+          reports_count?: number | null
           status?: Database["public"]["Enums"]["community_post_status"] | null
           title: string
           type?: Database["public"]["Enums"]["community_post_type"]
@@ -1244,6 +1246,7 @@ export type Database = {
           moderated_by_admin_id?: string | null
           moderation_notes?: string | null
           reactions_summary?: Json | null
+          reports_count?: number | null
           status?: Database["public"]["Enums"]["community_post_status"] | null
           title?: string
           type?: Database["public"]["Enums"]["community_post_type"]
@@ -1321,6 +1324,60 @@ export type Database = {
           {
             foreignKeyName: "vault_community_reactions_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_community_reports: {
+        Row: {
+          admin_notes: string | null
+          created_at: string | null
+          details: string | null
+          id: string
+          post_id: string
+          reason: string
+          reporter_id: string
+          reviewed_at: string | null
+          reviewed_by_admin_id: string | null
+          status: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string | null
+          details?: string | null
+          id?: string
+          post_id: string
+          reason: string
+          reporter_id: string
+          reviewed_at?: string | null
+          reviewed_by_admin_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string | null
+          details?: string | null
+          id?: string
+          post_id?: string
+          reason?: string
+          reporter_id?: string
+          reviewed_at?: string | null
+          reviewed_by_admin_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_community_reports_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "vault_community_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_community_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
             isOneToOne: false
             referencedRelation: "vault_members"
             referencedColumns: ["id"]
@@ -2366,6 +2423,27 @@ export type Database = {
           status: string
         }[]
       }
+      get_following_feed: {
+        Args: { p_cpf: string; p_limit?: number; p_offset?: number }
+        Returns: {
+          attachments: string[]
+          author_avatar: string
+          author_id: string
+          author_name: string
+          author_tier: string
+          comments_count: number
+          content: string
+          created_at: string
+          id: string
+          is_pinned: boolean
+          likes_count: number
+          media_types: string[]
+          reactions_summary: Json
+          title: string
+          type: string
+          user_reactions: string[]
+        }[]
+      }
       get_online_community_users: {
         Args: { p_minutes?: number }
         Returns: {
@@ -2486,48 +2564,27 @@ export type Database = {
           vault_id: string
         }[]
       }
-      get_vault_community_feed:
-        | {
-            Args: { p_cpf: string; p_limit?: number; p_offset?: number }
-            Returns: {
-              attachments: string[]
-              author_items_count: number
-              author_name: string
-              author_tier: string
-              comments_count: number
-              content: string
-              created_at: string
-              has_liked: boolean
-              id: string
-              is_pinned: boolean
-              likes_count: number
-              title: string
-              type: string
-              user_id: string
-            }[]
-          }
-        | {
-            Args: { p_cpf: string; p_limit?: number; p_offset?: number }
-            Returns: {
-              attachments: string[]
-              author_avatar: string
-              author_id: string
-              author_name: string
-              author_tier: Database["public"]["Enums"]["vault_tier"]
-              comments_count: number
-              content: string
-              created_at: string
-              id: string
-              is_liked: boolean
-              is_pinned: boolean
-              likes_count: number
-              media_types: string[]
-              reactions_summary: Json
-              title: string
-              type: Database["public"]["Enums"]["community_post_type"]
-              user_reactions: string[]
-            }[]
-          }
+      get_vault_community_feed: {
+        Args: { p_cpf: string; p_limit?: number; p_offset?: number }
+        Returns: {
+          attachments: string[]
+          author_avatar: string
+          author_id: string
+          author_name: string
+          author_tier: string
+          comments_count: number
+          content: string
+          created_at: string
+          id: string
+          is_pinned: boolean
+          likes_count: number
+          media_types: string[]
+          reactions_summary: Json
+          title: string
+          type: string
+          user_reactions: string[]
+        }[]
+      }
       get_vault_community_posts: {
         Args: { p_cpf: string }
         Returns: {
@@ -2703,6 +2760,15 @@ export type Database = {
       reject_budget: {
         Args: { p_reason?: string; p_token: string }
         Returns: boolean
+      }
+      report_community_post: {
+        Args: {
+          p_cpf: string
+          p_details?: string
+          p_post_id: string
+          p_reason: string
+        }
+        Returns: Json
       }
       start_vault_search: {
         Args: { p_cpf: string; p_wishlist_id: string }

@@ -165,7 +165,7 @@ export function CommunityNewPost({ memberId, onPostCreated }: CommunityNewPostPr
         mediaTypes = uploaded.types;
       }
 
-      // Create post
+      // Create post - now publishes immediately
       const { error } = await supabase
         .from("vault_community_posts")
         .insert({
@@ -175,14 +175,14 @@ export function CommunityNewPost({ memberId, onPostCreated }: CommunityNewPostPr
           content: postData.content.trim() || null,
           attachments,
           media_types: mediaTypes,
-          status: "PENDING_REVIEW",
+          status: "PUBLISHED",
         });
 
       if (error) throw error;
 
       toast({
-        title: "Publicação enviada! 🎉",
-        description: "Será revisada e publicada em breve",
+        title: "Publicado! 🎉",
+        description: "Sua publicação está disponível na comunidade",
       });
 
       // Cleanup
@@ -411,7 +411,7 @@ export function CommunityNewPost({ memberId, onPostCreated }: CommunityNewPostPr
           {/* Submit */}
           <div className="flex items-center justify-between pt-2 border-t border-border">
             <p className="text-xs text-muted-foreground">
-              Publicações são revisadas antes de aparecer
+              Publicações aparecem imediatamente na comunidade
             </p>
             <Button type="submit" disabled={isSubmitting} className="gap-2">
               {isSubmitting ? (
