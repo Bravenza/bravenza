@@ -12,56 +12,74 @@ import { FAQSection } from "@/components/home/FAQSection";
 import { CTASection } from "@/components/home/CTASection";
 import { Footer } from "@/components/home/Footer";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
+import { LocalBusinessSchema, ServiceSchema } from "@/components/seo/StructuredData";
+import { Helmet } from "react-helmet-async";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background space-y-0">
-      <Header />
+    <>
+      {/* SEO Meta Tags */}
+      <Helmet>
+        <title>BRAVENZA | Importação Premium de Tênis Exclusivos</title>
+        <meta name="description" content="Especialistas em importação de tênis exclusivos. Nike, Jordan, Adidas, Yeezy e mais. Autenticidade garantida, rastreamento completo e entrega segura no Brasil." />
+        <link rel="canonical" href="https://bravenza.lovable.app/" />
+      </Helmet>
       
-      <main className="pt-16">
-        {/* Hero Section - Full viewport height */}
-        <HeroSection />
-        
-        {/* Brands Carousel */}
-        <BrandsCarousel />
-        
-        {/* Featured Models */}
-        <FeaturedModelsSection />
-        
-        {/* How It Works */}
-        <div id="como-funciona">
-          <HowItWorksSection />
-        </div>
-        
-        {/* Benefits Section */}
-        <BenefitsSection />
+      {/* Structured Data */}
+      <LocalBusinessSchema />
+      <ServiceSchema 
+        name="Importação de Tênis Exclusivos"
+        description="Serviço premium de importação de tênis raros e exclusivos com garantia de autenticidade e rastreamento completo."
+      />
 
-        {/* Vault Club Section */}
-        <div id="vault-club">
-          <VaultClubSection />
-        </div>
+      <div className="min-h-screen bg-background space-y-0">
+        <Header />
         
-        {/* Referral Section */}
-        <div id="indicacao">
-          <ReferralSection />
-        </div>
-        
-        {/* Featured Reviews */}
-        <FeaturedReviews />
-        
-        {/* Testimonials */}
-        <TestimonialsSection />
-        
-        {/* FAQ Section */}
-        <FAQSection />
-        
-        {/* Final CTA */}
-        <CTASection />
-      </main>
+        <main id="main-content" className="pt-16">
+          {/* Hero Section - Full viewport height */}
+          <HeroSection />
+          
+          {/* Brands Carousel */}
+          <BrandsCarousel />
+          
+          {/* Featured Models */}
+          <FeaturedModelsSection />
+          
+          {/* How It Works */}
+          <div id="como-funciona">
+            <HowItWorksSection />
+          </div>
+          
+          {/* Benefits Section */}
+          <BenefitsSection />
 
-      <Footer />
-      <FloatingWhatsApp />
-    </div>
+          {/* Vault Club Section */}
+          <div id="vault-club">
+            <VaultClubSection />
+          </div>
+          
+          {/* Referral Section */}
+          <div id="indicacao">
+            <ReferralSection />
+          </div>
+          
+          {/* Featured Reviews */}
+          <FeaturedReviews />
+          
+          {/* Testimonials */}
+          <TestimonialsSection />
+          
+          {/* FAQ Section */}
+          <FAQSection />
+          
+          {/* Final CTA */}
+          <CTASection />
+        </main>
+
+        <Footer />
+        <FloatingWhatsApp />
+      </div>
+    </>
   );
 };
 
