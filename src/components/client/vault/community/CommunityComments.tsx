@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { ReactionPicker, ReactionType, ReactionSummary } from "./ReactionPicker";
+import { FormattedText } from "./FormattedText";
 
 interface Comment {
   id: string;
@@ -209,7 +210,7 @@ export function CommunityComments({ postId, clientCpf, onClose }: CommunityComme
                 <span className="font-medium text-sm">{comment.author_name}</span>
                 <TierIcon className={cn("h-3 w-3", tierInfo.color)} />
               </div>
-              <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
+              <FormattedText content={comment.content} className="text-sm" />
             </div>
             
             <div className="flex items-center gap-4 mt-1 px-2">

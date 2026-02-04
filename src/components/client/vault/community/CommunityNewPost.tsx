@@ -2,11 +2,10 @@ import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Plus, Image as ImageIcon, X, Send, Video, 
-  MessageSquare, Sparkles, Loader2, Camera, Smile
+  MessageSquare, Sparkles, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -19,6 +18,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { RichTextEditor } from "./RichTextEditor";
 
 interface CommunityNewPostProps {
   memberId: string;
@@ -210,7 +210,7 @@ export function CommunityNewPost({ memberId, onPostCreated }: CommunityNewPostPr
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2 btn-gold">
+        <Button className="gap-2 btn-gold relative z-10">
           <Plus className="h-4 w-4" />
           Nova publicação
         </Button>
@@ -270,18 +270,16 @@ export function CommunityNewPost({ memberId, onPostCreated }: CommunityNewPostPr
             <p className="text-xs text-muted-foreground text-right">{postData.title.length}/100</p>
           </div>
 
-          {/* Content */}
+          {/* Content with Rich Text Editor */}
           <div className="space-y-2">
-            <Label htmlFor="content">Descrição</Label>
-            <Textarea
-              id="content"
+            <Label>Descrição</Label>
+            <RichTextEditor
               value={postData.content}
-              onChange={(e) => setPostData(prev => ({ ...prev, content: e.target.value }))}
-              placeholder="Conte mais sobre sua publicação..."
-              className="min-h-[100px] resize-none text-base"
+              onChange={(content) => setPostData(prev => ({ ...prev, content }))}
+              placeholder="Conte mais sobre sua publicação... Use **negrito**, _itálico_, emojis e mais!"
               maxLength={2000}
+              minHeight="120px"
             />
-            <p className="text-xs text-muted-foreground text-right">{postData.content.length}/2000</p>
           </div>
 
           {/* Media Upload */}

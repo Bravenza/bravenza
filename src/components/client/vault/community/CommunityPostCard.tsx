@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { MediaGallery } from "./MediaGallery";
 import { ReactionPicker, ReactionType, ReactionSummary } from "./ReactionPicker";
 import { ReportPostDialog } from "./ReportPostDialog";
+import { FormattedText } from "./FormattedText";
 import { useToast } from "@/hooks/use-toast";
 
 export interface CommunityPost {
@@ -303,9 +304,10 @@ export function CommunityPostCard({
           >
             <h3 className="font-semibold text-lg mb-2">{post.title}</h3>
             {post.content && (
-              <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                {post.content}
-              </p>
+              <FormattedText 
+                content={post.content} 
+                className="text-muted-foreground leading-relaxed"
+              />
             )}
 
             {/* Heart animation on double click */}

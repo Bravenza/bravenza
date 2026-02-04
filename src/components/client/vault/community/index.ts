@@ -12,3 +12,5 @@ export { CommunityProfileEdit } from "./CommunityProfileEdit";
 export { CommunityConnectionsList } from "./CommunityConnectionsList";
 export { CommunityFeedTabs } from "./CommunityFeedTabs";
 export { ReportPostDialog } from "./ReportPostDialog";
+export { RichTextEditor } from "./RichTextEditor";
+export { FormattedText } from "./FormattedText";
