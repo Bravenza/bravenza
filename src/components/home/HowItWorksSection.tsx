@@ -1,80 +1,128 @@
-import { memo, useMemo } from "react";
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { Search, FileCheck, CreditCard, Package, Truck } from "lucide-react";
-const steps = [{
-  icon: Search,
-  title: "Você pede",
-  description: "Envie o link, foto ou nome do tênis. Nós fazemos o resto."
-}, {
-  icon: FileCheck,
-  title: "Orçamento completo",
-  description: "Preço final, prazo de entrega e todas as condições. Sem letras miúdas."
-}, {
-  icon: CreditCard,
-  title: "Pagamento seguro",
-  description: "PIX à vista ou cartão em até 12x. Escolha a melhor opção para você."
-}, {
-  icon: Package,
-  title: "Inspeção rigorosa",
-  description: "Fotos detalhadas e verificação de autenticidade antes do envio."
-}, {
-  icon: Truck,
-  title: "Entrega garantida",
-  description: "Rastreio em tempo real até o tênis chegar nas suas mãos."
-}];
+
+const steps = [
+  {
+    icon: Search,
+    title: "Você pede",
+    description: "Envie o link, foto ou nome do tênis.",
+  },
+  {
+    icon: FileCheck,
+    title: "Orçamento completo",
+    description: "Preço final, prazo e condições. Sem surpresas.",
+  },
+  {
+    icon: CreditCard,
+    title: "Pagamento seguro",
+    description: "PIX ou cartão em até 12x.",
+  },
+  {
+    icon: Package,
+    title: "Inspeção rigorosa",
+    description: "Fotos detalhadas antes do envio.",
+  },
+  {
+    icon: Truck,
+    title: "Entrega garantida",
+    description: "Rastreio até sua porta.",
+  },
+];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5 },
+  },
+};
+
 const HowItWorksSectionComponent = () => {
-  return <section className="py-16 md:py-24 relative">
-      <div className="absolute inset-0 bg-gradient-gold-subtle opacity-30" />
-      
+  return (
+    <section className="py-20 md:py-28 relative overflow-hidden">
+      {/* Subtle background elements */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-20" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
-        <motion.div initial={{
-        opacity: 0,
-        y: 20
-      }} whileInView={{
-        opacity: 1,
-        y: 0
-      }} viewport={{
-        once: true
-      }} transition={{
-        duration: 0.6
-      }} className="text-center mb-16">
-          <h2 className="text-3xl font-bold mb-4 md:text-3xl">
-            Simples assim: <span className="text-gradient-gold text-3xl">5 Passos</span>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <span className="text-primary text-sm font-medium tracking-wider uppercase mb-3 block">
+            Processo
+          </span>
+          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4 tracking-tight">
+            Simples assim: <span className="text-gradient-gold">5 Passos</span>
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-base">
-            Do pedido à entrega, você acompanha tudo. Transparência total, zero complicação.
+          <p className="text-muted-foreground max-w-xl mx-auto">
+            Do pedido à entrega, você acompanha tudo. Transparência total.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-6 max-w-6xl mx-auto">
-          {steps.map((step, index) => <motion.div key={step.title} initial={{
-          opacity: 0,
-          y: 30
-        }} whileInView={{
-          opacity: 1,
-          y: 0
-        }} viewport={{
-          once: true
-        }} transition={{
-          duration: 0.5,
-          delay: Math.min(index * 0.1, 0.4)
-        }} className="relative">
-              <div className="card-premium-gold p-4 md:p-6 h-full text-center group hover:border-primary/40 transition-all duration-300">
-                <div className="w-12 h-12 md:w-14 md:h-14 mx-auto mb-3 md:mb-4 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <step.icon className="h-6 w-6 md:h-7 md:w-7 text-primary" />
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-3 max-w-5xl mx-auto"
+        >
+          {steps.map((step, index) => (
+            <motion.div
+              key={step.title}
+              variants={itemVariants}
+              className={`relative ${index === 4 ? 'col-span-2 md:col-span-1 max-w-[200px] mx-auto md:max-w-none' : ''}`}
+            >
+              <div className="card-premium-gold p-5 md:p-6 h-full text-center group">
+                {/* Step number - top right */}
+                <div className="absolute top-3 right-3 text-[10px] font-mono text-primary/60">
+                  {String(index + 1).padStart(2, "0")}
                 </div>
-                <div className="text-primary font-bold text-xs md:text-sm mb-1 md:mb-2">
-                  {String(index + 1).padStart(2, '0')}
+
+                {/* Icon */}
+                <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/15 transition-colors duration-300">
+                  <step.icon className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="font-semibold text-base md:text-lg mb-1 md:mb-2">{step.title}</h3>
-                <p className="text-xs md:text-sm text-muted-foreground">{step.description}</p>
+
+                {/* Content */}
+                <h3 className="font-semibold text-sm md:text-base mb-2">
+                  {step.title}
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {step.description}
+                </p>
               </div>
 
-              {/* Connector line - only on larger screens */}
-              {index < steps.length - 1 && <div className="hidden lg:block absolute top-1/2 -right-3 w-6 h-0.5 bg-border" />}
-            </motion.div>)}
-        </div>
+              {/* Connector dots - desktop only */}
+              {index < steps.length - 1 && (
+                <div className="hidden md:flex absolute top-1/2 -right-2 items-center gap-0.5">
+                  <div className="w-1 h-1 rounded-full bg-primary/40" />
+                  <div className="w-1 h-1 rounded-full bg-primary/20" />
+                </div>
+              )}
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
-    </section>;
+
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+    </section>
+  );
 };
+
 export const HowItWorksSection = memo(HowItWorksSectionComponent);
