@@ -65,170 +65,141 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: index * 0.03 }}
     >
-      <Card className="card-premium overflow-hidden">
-        {/* Image - compact size */}
-        <div className="relative aspect-[4/3] bg-background">
-          {item.inspection_photos && item.inspection_photos.length > 0 ? (
-            <img
-              src={item.inspection_photos[0]}
-              alt={item.title}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Image className="h-8 w-8 text-muted-foreground/30" />
+      <Dialog>
+        <DialogTrigger asChild>
+          <Card className="card-premium overflow-hidden cursor-pointer hover:border-primary/30 transition-colors group">
+            {/* Image - compact square */}
+            <div className="relative aspect-square bg-background">
+              {item.inspection_photos && item.inspection_photos.length > 0 ? (
+                <img
+                  src={item.inspection_photos[0]}
+                  alt={item.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Image className="h-6 w-6 text-muted-foreground/30" />
+                </div>
+              )}
+              {item.verified_status === "VERIFIED" && (
+                <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-success/90 flex items-center justify-center">
+                  <CheckCircle2 className="h-3 w-3 text-white" />
+                </div>
+              )}
             </div>
-          )}
-          <Badge 
-            className={`absolute top-2 right-2 ${status.bgColor} ${status.color} border-0 text-[10px] px-1.5 py-0.5`}
-          >
-            <status.icon className="h-2.5 w-2.5 mr-0.5" />
-            {status.label}
-          </Badge>
-        </div>
 
-        <CardContent className="p-3">
-          {/* Vault ID */}
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <Shield className="h-3 w-3 text-primary" />
-            <span className="text-[10px] font-mono text-primary">{item.vault_id}</span>
-          </div>
+            <CardContent className="p-2">
+              <p className="text-[11px] font-medium line-clamp-1">{item.brand || item.title}</p>
+              <p className="text-[10px] text-muted-foreground">Tam. {item.size}</p>
+            </CardContent>
+          </Card>
+        </DialogTrigger>
+        
+        {/* Full Details Dialog */}
+        <DialogContent className="bg-card border-border max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" />
+              {item.vault_id}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Photo carousel */}
+            {item.inspection_photos && item.inspection_photos.length > 0 && (
+              <div className="relative aspect-square bg-background rounded-lg overflow-hidden">
+                <img
+                  src={item.inspection_photos[photoIndex]}
+                  alt={`Foto ${photoIndex + 1}`}
+                  className="w-full h-full object-contain"
+                />
+                {item.inspection_photos.length > 1 && (
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                    {item.inspection_photos.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setPhotoIndex(i)}
+                        className={`w-2 h-2 rounded-full transition ${
+                          i === photoIndex ? "bg-primary" : "bg-muted"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-          {/* Title */}
-          <h3 className="font-semibold text-sm mb-0.5 line-clamp-1">{item.title}</h3>
-          <p className="text-xs text-muted-foreground mb-2">
-            {item.brand} • Tam. {item.size}
-          </p>
+            {/* Details */}
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p className="text-muted-foreground text-xs">Produto</p>
+                <p className="font-medium">{item.title}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Tamanho</p>
+                <p className="font-medium">{item.size}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Valor</p>
+                <p className="font-medium">{formatCurrency(item.purchase_value)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Data</p>
+                <p className="font-medium">{formatDate(item.purchase_date)}</p>
+              </div>
+            </div>
 
-          {/* Actions */}
-          <div className="flex gap-2">
-            {/* View Details Dialog */}
-            <Dialog>
-              <DialogTrigger asChild>
+            {/* QR Code Section */}
+            {item.verified_status === "VERIFIED" && (
+              <CertificateQRCode 
+                code={item.vault_id} 
+                verificationUrl={verificationUrl}
+              />
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-2 pt-2">
               <Button 
                 variant="outline" 
-                size="sm" 
+                size="sm"
                 className="flex-1 border-border/50 hover:border-border"
+                onClick={handleOpenCertificate}
               >
-                <Image className="h-4 w-4" />
-                Ver
+                <Download className="h-4 w-4" />
+                Certificado
               </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-card border-border max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-primary" />
-                    {item.vault_id}
-                  </DialogTitle>
-                </DialogHeader>
-                
-                <div className="space-y-4">
-                  {/* Photo carousel */}
-                  {item.inspection_photos && item.inspection_photos.length > 0 && (
-                    <div className="relative aspect-square bg-background rounded-lg overflow-hidden">
-                      <img
-                        src={item.inspection_photos[photoIndex]}
-                        alt={`Foto ${photoIndex + 1}`}
-                        className="w-full h-full object-contain"
-                      />
-                      {item.inspection_photos.length > 1 && (
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                          {item.inspection_photos.map((_, i) => (
-                            <button
-                              key={i}
-                              onClick={() => setPhotoIndex(i)}
-                              className={`w-2 h-2 rounded-full transition ${
-                                i === photoIndex ? "bg-primary" : "bg-muted"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Details */}
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Produto</p>
-                      <p className="font-medium">{item.title}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Tamanho</p>
-                      <p className="font-medium">{item.size}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Valor</p>
-                      <p className="font-medium">{formatCurrency(item.purchase_value)}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Data</p>
-                      <p className="font-medium">{formatDate(item.purchase_date)}</p>
-                    </div>
-                  </div>
-
-                  {/* QR Code Section */}
-                  {item.verified_status === "VERIFIED" && (
-                    <CertificateQRCode 
-                      code={item.vault_id} 
-                      verificationUrl={verificationUrl}
-                    />
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-2">
-                    <Button 
-                      variant="outline" 
-                      className="flex-1 border-border/50 hover:border-border"
-                      onClick={handleOpenCertificate}
-                    >
-                      <Download className="h-4 w-4" />
-                      Certificado
-                    </Button>
-                    {item.qr_private_url && (
-                      <Button asChild variant="outline" className="flex-1 border-border/50 hover:border-border">
-                        <a href={item.qr_private_url} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-4 w-4" />
-                          Verificar online
-                        </a>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-
-            {/* Quick QR Access */}
-            <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
-              <DialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  className="border-border/50 hover:border-border"
-                >
-                  <QrCode className="h-4 w-4" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-card border-border max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-primary" />
-                    {item.vault_id}
-                  </DialogTitle>
-                </DialogHeader>
-                <CertificateQRCode 
-                  code={item.vault_id} 
-                  verificationUrl={verificationUrl}
-                />
-              </DialogContent>
-            </Dialog>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="border-border/50 hover:border-border"
+                onClick={() => setShowQRDialog(true)}
+              >
+                <QrCode className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
+
+      {/* QR Dialog */}
+      <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
+        <DialogContent className="bg-card border-border max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" />
+              {item.vault_id}
+            </DialogTitle>
+          </DialogHeader>
+          <CertificateQRCode 
+            code={item.vault_id} 
+            verificationUrl={verificationUrl}
+          />
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
