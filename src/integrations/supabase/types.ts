@@ -2222,7 +2222,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_admin: { Args: never; Returns: boolean }
+      is_admin:
+        | { Args: never; Returns: boolean }
+        | { Args: { _user_id: string }; Returns: boolean }
       reject_budget: {
         Args: { p_reason?: string; p_token: string }
         Returns: boolean
