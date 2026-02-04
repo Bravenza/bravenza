@@ -1770,29 +1770,78 @@ export type Database = {
           },
         ]
       }
+      vault_member_follows: {
+        Row: {
+          created_at: string | null
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_member_follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_member_follows_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vault_members: {
         Row: {
           active_hunts: number | null
+          avatar_url: string | null
+          bio: string | null
+          city: string | null
           client_cpf: string
           client_email: string | null
           client_name: string
           community_opt_in: boolean | null
           created_at: string | null
+          display_name: string | null
+          facebook_url: string | null
           flags_consecutive_declines: number | null
           flags_eligible_for_black: boolean | null
           flags_review_mode_until: string | null
+          followers_count: number | null
+          following_count: number | null
           id: string
+          instagram_url: string | null
           invited_by: string | null
           invites_remaining: number | null
           invites_semester_reset: string | null
           is_active: boolean | null
+          is_profile_public: boolean | null
+          joined_at: string | null
           joined_via: string | null
+          linkedin_url: string | null
           max_active_hunts: number | null
           max_wishlist_items: number | null
           notes_internal: string | null
+          posts_count: number | null
           preferred_brands: string[] | null
           preferred_sizes: string[] | null
           preferred_styles: string[] | null
+          state: string | null
           stats_converted_invites: number | null
           stats_decision_rate: number | null
           stats_matches_approved: number | null
@@ -1808,30 +1857,44 @@ export type Database = {
           timezone: string | null
           total_purchases: number | null
           total_spent: number | null
+          twitter_url: string | null
           updated_at: string | null
         }
         Insert: {
           active_hunts?: number | null
+          avatar_url?: string | null
+          bio?: string | null
+          city?: string | null
           client_cpf: string
           client_email?: string | null
           client_name: string
           community_opt_in?: boolean | null
           created_at?: string | null
+          display_name?: string | null
+          facebook_url?: string | null
           flags_consecutive_declines?: number | null
           flags_eligible_for_black?: boolean | null
           flags_review_mode_until?: string | null
+          followers_count?: number | null
+          following_count?: number | null
           id?: string
+          instagram_url?: string | null
           invited_by?: string | null
           invites_remaining?: number | null
           invites_semester_reset?: string | null
           is_active?: boolean | null
+          is_profile_public?: boolean | null
+          joined_at?: string | null
           joined_via?: string | null
+          linkedin_url?: string | null
           max_active_hunts?: number | null
           max_wishlist_items?: number | null
           notes_internal?: string | null
+          posts_count?: number | null
           preferred_brands?: string[] | null
           preferred_sizes?: string[] | null
           preferred_styles?: string[] | null
+          state?: string | null
           stats_converted_invites?: number | null
           stats_decision_rate?: number | null
           stats_matches_approved?: number | null
@@ -1847,30 +1910,44 @@ export type Database = {
           timezone?: string | null
           total_purchases?: number | null
           total_spent?: number | null
+          twitter_url?: string | null
           updated_at?: string | null
         }
         Update: {
           active_hunts?: number | null
+          avatar_url?: string | null
+          bio?: string | null
+          city?: string | null
           client_cpf?: string
           client_email?: string | null
           client_name?: string
           community_opt_in?: boolean | null
           created_at?: string | null
+          display_name?: string | null
+          facebook_url?: string | null
           flags_consecutive_declines?: number | null
           flags_eligible_for_black?: boolean | null
           flags_review_mode_until?: string | null
+          followers_count?: number | null
+          following_count?: number | null
           id?: string
+          instagram_url?: string | null
           invited_by?: string | null
           invites_remaining?: number | null
           invites_semester_reset?: string | null
           is_active?: boolean | null
+          is_profile_public?: boolean | null
+          joined_at?: string | null
           joined_via?: string | null
+          linkedin_url?: string | null
           max_active_hunts?: number | null
           max_wishlist_items?: number | null
           notes_internal?: string | null
+          posts_count?: number | null
           preferred_brands?: string[] | null
           preferred_sizes?: string[] | null
           preferred_styles?: string[] | null
+          state?: string | null
           stats_converted_invites?: number | null
           stats_decision_rate?: number | null
           stats_matches_approved?: number | null
@@ -1886,6 +1963,7 @@ export type Database = {
           timezone?: string | null
           total_purchases?: number | null
           total_spent?: number | null
+          twitter_url?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -2444,6 +2522,20 @@ export type Database = {
           user_reactions: string[]
         }[]
       }
+      get_member_connections: {
+        Args: {
+          p_cpf: string
+          p_limit?: number
+          p_member_id: string
+          p_offset?: number
+          p_type: string
+        }
+        Returns: Json
+      }
+      get_member_public_profile: {
+        Args: { p_cpf: string; p_member_id: string }
+        Returns: Json
+      }
       get_online_community_users: {
         Args: { p_minutes?: number }
         Returns: {
@@ -2781,6 +2873,10 @@ export type Database = {
       }
       toggle_comment_reaction: {
         Args: { p_comment_id: string; p_cpf: string; p_reaction_type: string }
+        Returns: Json
+      }
+      toggle_follow: {
+        Args: { p_cpf: string; p_target_member_id: string }
         Returns: Json
       }
       toggle_post_like: {

@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Connection {
-  member_id: string;
+  id: string;
   display_name: string;
   avatar_url: string | null;
   tier: "member" | "privilege" | "black";
@@ -60,7 +60,11 @@ export function CommunityConnectionsList({
       });
 
       if (error) throw error;
-      setConnections((data as Connection[]) || []);
+      
+      const result = data as any;
+      if (result?.success) {
+        setConnections(result.connections || []);
+      }
     } catch (error) {
       console.error("Error fetching connections:", error);
     } finally {
@@ -83,7 +87,7 @@ export function CommunityConnectionsList({
       if (result?.success) {
         setConnections(prev => 
           prev.map(c => 
-            c.member_id === targetMemberId 
+            c.id === targetMemberId 
               ? { ...c, is_following: result.is_following }
               : c
           )
@@ -144,19 +148,20 @@ export function CommunityConnectionsList({
           ) : (
             <div className="space-y-2 py-2">
               {connections.map((connection, index) => {
-                const TierIcon = tierConfig[connection.tier].icon;
-                const isToggling = togglingIds.has(connection.member_id);
+                const tier = connection.tier || "member";
+                const TierIcon = tierConfig[tier].icon;
+                const isToggling = togglingIds.has(connection.id);
                 
                 return (
                   <motion.div
-                    key={connection.member_id}
+                    key={connection.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.03 }}
                     className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary/50 transition-colors"
                   >
                     <button
-                      onClick={() => onProfileClick(connection.member_id)}
+                      onClick={() => onProfileClick(connection.id)}
                       className="flex items-center gap-3 flex-1 text-left"
                     >
                       <Avatar className="h-10 w-10">
@@ -173,7 +178,7 @@ export function CommunityConnectionsList({
                           <span className="font-medium text-sm truncate">
                             {connection.display_name}
                           </span>
-                          <TierIcon className={`h-3.5 w-3.5 flex-shrink-0 ${tierConfig[connection.tier].color}`} />
+                          <TierIcon className={`h-3.5 w-3.5 flex-shrink-0 ${tierConfig[tier].color}`} />
                         </div>
                       </div>
                     </button>
@@ -182,7 +187,7 @@ export function CommunityConnectionsList({
                       size="sm"
                       variant={connection.is_following ? "outline" : "default"}
                       className="flex-shrink-0 h-8 px-3 text-xs"
-                      onClick={() => handleToggleFollow(connection.member_id)}
+                      onClick={() => handleToggleFollow(connection.id)}
                       disabled={isToggling}
                     >
                       {connection.is_following ? (
