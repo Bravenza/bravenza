@@ -5,15 +5,14 @@ import {
   Instagram, Facebook, Linkedin, Twitter, Shield, Crown, Sparkles,
   Settings, ExternalLink, Check
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { CommunityProfileEdit } from "./CommunityProfileEdit";
 import { CommunityConnectionsList } from "./CommunityConnectionsList";
 
 interface VaultItem {
@@ -64,13 +63,13 @@ const tierConfig = {
 };
 
 export function CommunityProfile({ memberId, clientCpf, onClose, onFollowChange }: CommunityProfileProps) {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [items, setItems] = useState<VaultItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
-  const [showEditProfile, setShowEditProfile] = useState(false);
   const [showConnections, setShowConnections] = useState<"followers" | "following" | null>(null);
 
   useEffect(() => {
@@ -215,7 +214,10 @@ export function CommunityProfile({ memberId, clientCpf, onClose, onFollowChange 
                       size="sm"
                       variant="secondary"
                       className="gap-1.5"
-                      onClick={() => setShowEditProfile(true)}
+                      onClick={() => {
+                        onClose();
+                        navigate("/vault/perfil");
+                      }}
                     >
                       <Settings className="h-4 w-4" />
                       Editar
@@ -402,19 +404,6 @@ export function CommunityProfile({ memberId, clientCpf, onClose, onFollowChange 
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Edit Profile Modal */}
-      {showEditProfile && profile && (
-        <CommunityProfileEdit
-          clientCpf={clientCpf}
-          currentProfile={profile}
-          onClose={() => setShowEditProfile(false)}
-          onSave={() => {
-            setShowEditProfile(false);
-            fetchProfile();
-          }}
-        />
-      )}
 
       {/* Connections List Modal */}
       {showConnections && profile && (
