@@ -699,3 +699,13 @@ main {
 .formatted-html-content p:last-child {
   margin-bottom: 0;
 }
+
+/* Scrollbar Hide Utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
