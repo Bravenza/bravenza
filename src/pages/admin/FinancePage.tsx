@@ -36,6 +36,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatDate, ORDER_STATUS_LABELS } from "@/lib/constants";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
 import {
   BarChart,
   Bar,
@@ -48,12 +49,6 @@ import {
   Pie,
   Cell,
 } from "recharts";
-
-// Payment fee rates
-const PAYMENT_FEE_RATES = {
-  PIX: 0.0099, // 0.99%
-  CREDIT_CARD: 0.0499, // 4.99%
-};
 
 interface OrderFinancial {
   order_id: string;
@@ -86,6 +81,7 @@ const CHART_COLORS = ["hsl(var(--primary))", "hsl(var(--success))", "hsl(var(--w
 
 const FinancePage = () => {
   const { toast } = useToast();
+  const { settings } = useSystemSettings();
   const [orders, setOrders] = useState<OrderFinancial[]>([]);
   const [orderCosts, setOrderCosts] = useState<OrderCost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -163,10 +159,10 @@ const FinancePage = () => {
     return orders;
   }, [orders, statusFilter]);
 
-  // Calculate payment fee for an order
+  // Calculate payment fee for an order using configurable rates
   const calculatePaymentFee = (value: number | null, paid: boolean, method: string | null) => {
     if (!paid || !value || !method) return 0;
-    const rate = method === "PIX" ? PAYMENT_FEE_RATES.PIX : PAYMENT_FEE_RATES.CREDIT_CARD;
+    const rate = method === "PIX" ? settings.payment_fee_pix : settings.payment_fee_credit_card;
     return value * rate;
   };
 

@@ -55,21 +55,19 @@ export async function sendStatusChangeEmail(
   const emailType = STATUS_EMAIL_MAP[newStatus];
   
   if (!emailType) {
-    console.log(`No email configured for status: ${newStatus}`);
     return { success: true };
   }
 
   // Skip if no client email
   if (!orderData.client_email) {
-    console.log(`No email for order ${orderData.order_id}, skipping notification`);
     return { success: true };
   }
 
   // Generate review link for delivered orders
-  const reviewLink = `https://bravenza.com.br/minha-conta`;
+  const reviewLink = `https://bravenza.lovable.app/minha-conta`;
 
   try {
-    const { data, error } = await supabase.functions.invoke("send-order-email", {
+    const { error } = await supabase.functions.invoke("send-order-email", {
       body: {
         type: emailType,
         order_id: orderData.order_id,
@@ -86,15 +84,13 @@ export async function sendStatusChangeEmail(
     });
 
     if (error) {
-      console.error("Error sending status email:", error);
       return { success: false, error: error.message };
     }
 
-    console.log(`Email sent for ${emailType} to ${orderData.client_email}`);
     return { success: true };
-  } catch (err: any) {
-    console.error("Failed to send status email:", err);
-    return { success: false, error: err.message };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return { success: false, error: message };
   }
 }
 
@@ -110,7 +106,7 @@ export async function sendStatusChangeWhatsApp(
   }
 
   try {
-    const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+    const { error } = await supabase.functions.invoke("send-whatsapp", {
       body: {
         order_id: orderId,
         message_type: messageType,
@@ -118,15 +114,13 @@ export async function sendStatusChangeWhatsApp(
     });
 
     if (error) {
-      console.error("Error sending WhatsApp:", error);
       return { success: false, error: error.message };
     }
 
-    console.log(`WhatsApp sent for ${messageType} on order ${orderId}`);
     return { success: true };
-  } catch (err: any) {
-    console.error("Failed to send WhatsApp:", err);
-    return { success: false, error: err.message };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return { success: false, error: message };
   }
 }
 
@@ -155,13 +149,13 @@ export async function sendPaymentConfirmationEmail(
     });
 
     if (error) {
-      console.error("Error sending payment email:", error);
       return { success: false, error: error.message };
     }
 
     return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return { success: false, error: message };
   }
 }
 
@@ -177,7 +171,6 @@ export async function processReferralReward(orderId: string): Promise<{ success:
       .maybeSingle();
 
     if (referralError) {
-      console.error("Error finding referral:", referralError);
       return { success: false, error: referralError.message };
     }
 
@@ -195,11 +188,8 @@ export async function processReferralReward(orderId: string): Promise<{ success:
       .eq("id", referral.id);
 
     if (updateError) {
-      console.error("Error updating referral to rewarded:", updateError);
       return { success: false, error: updateError.message };
     }
-
-    console.log(`Referral reward processed for ${referral.referrer_name} (${referral.discount_percentage}% discount)`);
 
     // Send notification to the referrer about the confirmed referral
     await sendReferralConfirmationNotifications(referral);
@@ -207,14 +197,14 @@ export async function processReferralReward(orderId: string): Promise<{ success:
     // Schedule cashback expiration reminder for 7 days before expiration (83 days from now)
     try {
       await scheduleCashbackExpirationReminder(referral.id);
-    } catch (err) {
-      console.error("Failed to schedule cashback expiration reminder:", err);
+    } catch {
+      // Silent fail - non-critical
     }
 
     return { success: true };
-  } catch (err: any) {
-    console.error("Failed to process referral reward:", err);
-    return { success: false, error: err.message };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return { success: false, error: message };
   }
 }
 
@@ -252,9 +242,8 @@ async function sendReferralConfirmationNotifications(referral: {
             referral_code: referral.referral_code,
           },
         });
-        console.log(`Referral confirmation email sent to ${referral.referrer_email}`);
-      } catch (emailErr) {
-        console.error("Failed to send referral email:", emailErr);
+      } catch {
+        // Silent fail - non-critical
       }
     }
 
@@ -271,13 +260,12 @@ async function sendReferralConfirmationNotifications(referral: {
             referral_code: referral.referral_code,
           },
         });
-        console.log(`Referral confirmation WhatsApp sent to ${referrerOrder.client_phone}`);
-      } catch (whatsappErr) {
-        console.error("Failed to send referral WhatsApp:", whatsappErr);
+      } catch {
+        // Silent fail - non-critical
       }
     }
-  } catch (err) {
-    console.error("Error sending referral notifications:", err);
+  } catch {
+    // Silent fail - non-critical
   }
 }
 
@@ -297,12 +285,11 @@ async function scheduleCashbackExpirationReminder(referralId: string): Promise<v
       .maybeSingle();
 
     if (existingReminder) {
-      console.log(`Cashback expiration reminder already scheduled for referral ${referralId}`);
       return;
     }
 
     // Create the scheduled reminder
-    const { error } = await supabase
+    await supabase
       .from("scheduled_reminders")
       .insert({
         order_id: referralId, // Storing referral_id in order_id field
@@ -311,15 +298,8 @@ async function scheduleCashbackExpirationReminder(referralId: string): Promise<v
         scheduled_for: reminderDate.toISOString(),
         status: "pending",
       });
-
-    if (error) {
-      console.error("Error scheduling cashback expiration reminder:", error);
-      return;
-    }
-
-    console.log(`Cashback expiration reminder scheduled for referral ${referralId} on ${reminderDate.toISOString()}`);
-  } catch (err) {
-    console.error("Failed to schedule cashback expiration reminder:", err);
+  } catch {
+    // Silent fail - non-critical
   }
 }
 
@@ -344,9 +324,8 @@ export async function sendAllStatusNotifications(
           delay_days: 2,
         },
       });
-      console.log(`Budget expiring reminder scheduled for order ${orderData.order_id}`);
-    } catch (err) {
-      console.error("Failed to schedule budget expiring reminder:", err);
+    } catch {
+      // Silent fail - non-critical
     }
   }
 
@@ -361,9 +340,8 @@ export async function sendAllStatusNotifications(
           delay_days: 2,
         },
       });
-      console.log(`Sinal reminder scheduled for order ${orderData.order_id}`);
-    } catch (err) {
-      console.error("Failed to schedule sinal reminder:", err);
+    } catch {
+      // Silent fail - non-critical
     }
   }
 
@@ -378,9 +356,8 @@ export async function sendAllStatusNotifications(
           delay_days: 3,
         },
       });
-      console.log(`Payment reminder scheduled for order ${orderData.order_id}`);
-    } catch (err) {
-      console.error("Failed to schedule payment reminder:", err);
+    } catch {
+      // Silent fail - non-critical
     }
   }
 
@@ -395,9 +372,8 @@ export async function sendAllStatusNotifications(
           delay_days: 3, // Send review request 3 days after delivery
         },
       });
-      console.log(`Review request scheduled for order ${orderData.order_id}`);
-    } catch (err) {
-      console.error("Failed to schedule review request:", err);
+    } catch {
+      // Silent fail - non-critical
     }
   }
 
@@ -436,12 +412,9 @@ export async function sendVaultWelcomeNotification(
 
       if (!error) {
         emailSent = true;
-        console.log(`Vault welcome email sent to ${memberEmail}`);
-      } else {
-        console.error("Error sending vault welcome email:", error);
       }
-    } catch (err) {
-      console.error("Failed to send vault welcome email:", err);
+    } catch {
+      // Silent fail
     }
   }
 
@@ -459,12 +432,9 @@ export async function sendVaultWelcomeNotification(
 
       if (!error) {
         whatsappSent = true;
-        console.log(`Vault welcome WhatsApp sent to ${memberPhone}`);
-      } else {
-        console.error("Error sending vault welcome WhatsApp:", error);
       }
-    } catch (err) {
-      console.error("Failed to send vault welcome WhatsApp:", err);
+    } catch {
+      // Silent fail
     }
   }
 
