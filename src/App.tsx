@@ -27,6 +27,7 @@ const TermsPage = lazy(() => import("./pages/TermsPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const InstallPage = lazy(() => import("./pages/InstallPage"));
 const AuthenticityPage = lazy(() => import("./pages/AuthenticityPage"));
+const AuthenticityInfoPage = lazy(() => import("./pages/AuthenticityInfoPage"));
 
 // Lazy loaded pages - Vault Club
 const VaultLandingPage = lazy(() => import("./pages/vault/VaultLandingPage"));
@@ -117,6 +118,7 @@ const App = () => (
                   <Route path="/instalar" element={<InstallPage />} />
                   <Route path="/autenticidade" element={<AuthenticityPage />} />
                   <Route path="/autenticidade/:code" element={<AuthenticityPage />} />
+                  <Route path="/sobre-autenticidade" element={<AuthenticityInfoPage />} />
 
                   {/* Vault Club routes */}
                   <Route path="/vault" element={<VaultLandingPage />} />

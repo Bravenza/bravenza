@@ -26,13 +26,18 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
                 </Link>
               </li>
               <li>
-                <Link to="/solicitar" className="hover:text-primary transition-colors">
+              <Link to="/solicitar" className="hover:text-primary transition-colors">
                   Solicitar Orçamento
                 </Link>
               </li>
               <li>
                 <Link to="/rastreio" className="hover:text-primary transition-colors">
                   Rastrear Pedido
+                </Link>
+              </li>
+              <li>
+                <Link to="/sobre-autenticidade" className="hover:text-primary transition-colors">
+                  Autenticidade
                 </Link>
               </li>
               <li>
