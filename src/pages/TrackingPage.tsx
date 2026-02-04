@@ -120,17 +120,21 @@ const TrackingPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm">
+      <div className="min-h-screen bg-background relative">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-grid-pattern opacity-20" />
+        </div>
+        <header className="relative border-b border-border/30 bg-background/80 backdrop-blur-xl">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
           <div className="container mx-auto px-4 h-16 flex items-center">
             <Logo size="md" />
           </div>
         </header>
-        <main className="container mx-auto px-4 py-8">
+        <main className="relative z-10 container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto space-y-6">
             <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-40 w-full" />
-            <Skeleton className="h-60 w-full" />
+            <Skeleton className="h-40 w-full rounded-2xl" />
+            <Skeleton className="h-60 w-full rounded-2xl" />
           </div>
         </main>
       </div>
@@ -139,20 +143,38 @@ const TrackingPage = () => {
 
   if (error || !order) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">{error || "Erro"}</h1>
-          <p className="text-muted-foreground mb-6">
-            Não foi possível encontrar seu pedido.
-          </p>
-          <Link to="/">
-            <Button variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar ao início
-            </Button>
-          </Link>
+      <div className="min-h-screen bg-background flex flex-col relative">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-grid-pattern opacity-20" />
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-destructive/5 rounded-full blur-3xl" />
         </div>
+        <header className="relative border-b border-border/30 bg-background/80 backdrop-blur-xl">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+          <div className="container mx-auto px-4 h-16 flex items-center">
+            <Logo size="md" />
+          </div>
+        </header>
+        <main className="relative z-10 flex-1 flex items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <div className="w-20 h-20 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="h-10 w-10 text-destructive" />
+            </div>
+            <h1 className="text-2xl font-display font-bold mb-2">{error || "Erro"}</h1>
+            <p className="text-muted-foreground mb-6">
+              Não foi possível encontrar seu pedido.
+            </p>
+            <Link to="/">
+              <Button variant="outline">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Voltar ao início
+              </Button>
+            </Link>
+          </motion.div>
+        </main>
       </div>
     );
   }
@@ -160,9 +182,10 @@ const TrackingPage = () => {
   const isVault = order.order_type === "VAULT";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
       {/* Header */}
-      <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-border/30 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Logo size="md" />
           <Link to="/">
@@ -453,7 +476,8 @@ const TrackingPage = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border/50 py-8">
+      <footer className="border-t border-border/30 py-8 relative">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
         <div className="container mx-auto px-4 text-center">
           <Logo size="sm" />
           <p className="text-sm text-muted-foreground mt-4">

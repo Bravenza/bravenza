@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, CheckCircle2, ArrowLeft, ArrowRight, User, MapPin, Package, ClipboardCheck } from "lucide-react";
@@ -365,45 +364,58 @@ export default function OrderRequestPage() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
+        {/* Background decorations */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-grid-pattern opacity-20" />
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl" />
+        </div>
+        
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 200 }}
+          className="relative z-10"
         >
-          <Card className="max-w-md w-full text-center">
-            <CardContent className="pt-8 pb-6">
-              <motion.div 
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring" }}
-                className="w-20 h-20 bg-success/20 rounded-full flex items-center justify-center mx-auto mb-4"
-              >
-                <CheckCircle2 className="h-10 w-10 text-success" />
-              </motion.div>
-              <h2 className="text-2xl font-bold mb-2">Solicitação Enviada!</h2>
-              <p className="text-muted-foreground mb-6">
-                Recebemos sua solicitação e entraremos em contato em breve com o orçamento.
-              </p>
-              <Button onClick={() => navigate("/")} className="w-full btn-gold">
-                Voltar ao Início
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="card-premium-gold max-w-md w-full text-center p-8">
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring" }}
+              className="w-20 h-20 bg-success/20 rounded-full flex items-center justify-center mx-auto mb-4"
+            >
+              <CheckCircle2 className="h-10 w-10 text-success" />
+            </motion.div>
+            <h2 className="text-2xl font-display font-bold mb-2">Solicitação Enviada!</h2>
+            <p className="text-muted-foreground mb-6">
+              Recebemos sua solicitação e entraremos em contato em breve com o orçamento.
+            </p>
+            <Button onClick={() => navigate("/")} className="w-full btn-gold">
+              Voltar ao Início
+            </Button>
+          </div>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col relative">
+      {/* Background decorations */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-grid-pattern opacity-20" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 left-0 w-[400px] h-[400px] bg-primary/3 rounded-full blur-3xl" />
+      </div>
+
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="relative border-b border-border/30 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/">
             <Logo size="md" />
           </Link>
-          <Button variant="ghost" onClick={() => navigate("/")}>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
@@ -411,9 +423,9 @@ export default function OrderRequestPage() {
       </header>
 
       {/* Form */}
-      <main className="container mx-auto px-4 sm:px-6 py-8 md:py-12 max-w-2xl flex-1">
+      <main className="relative z-10 container mx-auto px-4 sm:px-6 py-8 md:py-12 max-w-2xl flex-1">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Solicitar Orçamento</h1>
+          <h1 className="text-3xl font-display font-bold mb-2">Solicitar <span className="text-gradient-gold">Orçamento</span></h1>
           <p className="text-muted-foreground">
             Preencha o formulário em 4 etapas simples
           </p>
@@ -429,8 +441,8 @@ export default function OrderRequestPage() {
         </div>
 
         {/* Form Card */}
-        <Card className="overflow-hidden">
-          <CardContent className="p-6 sm:p-8">
+        <div className="card-premium overflow-hidden">
+          <div className="p-6 sm:p-8">
             <form onSubmit={handleSubmit}>
               <AnimatePresence mode="wait">
                 <motion.div
@@ -531,8 +543,8 @@ export default function OrderRequestPage() {
                 )}
               </div>
             </form>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </main>
 
       <Footer />
