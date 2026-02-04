@@ -402,6 +402,7 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
                   <CommunityPostCard
                     key={post.id}
                     post={post}
+                    clientCpf={clientCpf}
                     onLike={handleLike}
                     onReaction={handleReaction}
                     onComment={setSelectedPostId}

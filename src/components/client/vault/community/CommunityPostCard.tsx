@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { MediaGallery } from "./MediaGallery";
 import { ReactionPicker, ReactionType, ReactionSummary } from "./ReactionPicker";
+import { ReportPostDialog } from "./ReportPostDialog";
 import { useToast } from "@/hooks/use-toast";
 
 export interface CommunityPost {
@@ -45,6 +46,7 @@ export interface CommunityPost {
 
 interface CommunityPostCardProps {
   post: CommunityPost;
+  clientCpf: string;
   onLike: (postId: string) => void;
   onReaction: (postId: string, reactionType: ReactionType) => void;
   onComment: (postId: string) => void;
@@ -69,6 +71,7 @@ const postTypeConfig = {
 
 export function CommunityPostCard({ 
   post, 
+  clientCpf,
   onLike, 
   onReaction,
   onComment,
@@ -87,6 +90,7 @@ export function CommunityPostCard({
   );
   const [showHeartAnimation, setShowHeartAnimation] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
 
   const tierInfo = tierConfig[post.author_tier];
   const TierIcon = tierInfo.icon;
@@ -280,9 +284,12 @@ export function CommunityPostCard({
                     <EyeOff className="h-4 w-4 mr-2" />
                     Não tenho interesse
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive">
+                  <DropdownMenuItem 
+                    className="text-destructive"
+                    onClick={() => setShowReportDialog(true)}
+                  >
                     <Flag className="h-4 w-4 mr-2" />
-                    Reportar
+                    Denunciar
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -412,6 +419,15 @@ export function CommunityPostCard({
           </div>
         </CardContent>
       </Card>
+
+      {/* Report Dialog */}
+      <ReportPostDialog
+        open={showReportDialog}
+        onOpenChange={setShowReportDialog}
+        postId={post.id}
+        postTitle={post.title}
+        clientCpf={clientCpf}
+      />
     </motion.div>
   );
 }
