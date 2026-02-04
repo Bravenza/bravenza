@@ -630,3 +630,72 @@ main {
     color: black !important;
   }
 }
+
+/* Formatted HTML Content (from WYSIWYG editor) */
+.formatted-html-content {
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.formatted-html-content b,
+.formatted-html-content strong {
+  font-weight: 700;
+}
+
+.formatted-html-content i,
+.formatted-html-content em {
+  font-style: italic;
+}
+
+.formatted-html-content u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.formatted-html-content s,
+.formatted-html-content strike {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.formatted-html-content ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.formatted-html-content ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.formatted-html-content li {
+  margin: 0.25rem 0;
+}
+
+.formatted-html-content blockquote {
+  border-left: 3px solid hsl(var(--primary) / 0.5);
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+}
+
+.formatted-html-content hr {
+  border: none;
+  border-top: 1px solid hsl(var(--border));
+  margin: 1rem 0;
+}
+
+.formatted-html-content p {
+  margin: 0.25rem 0;
+}
+
+.formatted-html-content p:first-child {
+  margin-top: 0;
+}
+
+.formatted-html-content p:last-child {
+  margin-bottom: 0;
+}
