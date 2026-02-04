@@ -41,9 +41,9 @@ const tierIcons = {
 };
 
 const tierColors = {
-  member: "text-zinc-400",
-  collector: "text-amber-400",
-  elite: "text-white",
+  member: "text-muted-foreground",
+  collector: "text-primary",
+  elite: "text-foreground",
 };
 
 export default function VaultCommunity() {
@@ -190,29 +190,29 @@ export default function VaultCommunity() {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-md mx-auto text-center py-12"
         >
-          <div className="w-20 h-20 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-6">
-            <Users className="h-10 w-10 text-amber-500" />
+          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+            <Users className="h-10 w-10 text-primary" />
           </div>
           <h1 className="text-2xl font-bold mb-4">Comunidade Vault</h1>
-          <p className="text-zinc-400 mb-6">
+          <p className="text-muted-foreground mb-6">
             Conecte-se com outros membros do Vault Club. Compartilhe sua coleção, 
             participe de discussões e descubra novidades.
           </p>
           
-          <Card className="bg-zinc-900 border-zinc-800 mb-6">
-            <CardContent className="pt-6">
+          <Card className="bg-card border-border mb-6">
+            <CardContent className="p-6">
               <ul className="text-sm text-left space-y-3">
                 <li className="flex items-start gap-2">
-                  <Image className="h-4 w-4 text-amber-500 mt-0.5" />
-                  <span className="text-zinc-300">Showcase: exiba seus tênis do Vault</span>
+                  <Image className="h-4 w-4 text-primary mt-0.5" />
+                  <span className="text-foreground/90">Showcase: exiba seus tênis do Vault</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <MessageSquare className="h-4 w-4 text-amber-500 mt-0.5" />
-                  <span className="text-zinc-300">Discussões sobre mercado e tendências</span>
+                  <MessageSquare className="h-4 w-4 text-primary mt-0.5" />
+                  <span className="text-foreground/90">Discussões sobre mercado e tendências</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Users className="h-4 w-4 text-amber-500 mt-0.5" />
-                  <span className="text-zinc-300">Networking com colecionadores</span>
+                  <Users className="h-4 w-4 text-primary mt-0.5" />
+                  <span className="text-foreground/90">Networking com colecionadores</span>
                 </li>
               </ul>
             </CardContent>
@@ -221,7 +221,7 @@ export default function VaultCommunity() {
           <Button
             onClick={handleOptInToggle}
             disabled={isUpdatingOptIn}
-            className="bg-amber-500 hover:bg-amber-600 text-black"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             {isUpdatingOptIn ? "Entrando..." : "Entrar na comunidade"}
           </Button>
@@ -236,7 +236,7 @@ export default function VaultCommunity() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold mb-1">Comunidade</h1>
-          <p className="text-zinc-400 text-sm">
+          <p className="text-muted-foreground text-sm">
             Conecte-se com outros membros do Vault
           </p>
         </div>
@@ -249,26 +249,26 @@ export default function VaultCommunity() {
               onCheckedChange={handleOptInToggle}
               disabled={isUpdatingOptIn}
             />
-            <Label htmlFor="opt-in" className="text-sm text-zinc-400">
+            <Label htmlFor="opt-in" className="text-sm text-muted-foreground">
               Participando
             </Label>
           </div>
           
           <Dialog open={showPostDialog} onOpenChange={setShowPostDialog}>
             <DialogTrigger asChild>
-              <Button className="bg-amber-500 hover:bg-amber-600 text-black">
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Plus className="h-4 w-4 mr-2" />
                 Publicar
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-zinc-900 border-zinc-800">
+            <DialogContent className="bg-card border-border">
               <DialogHeader>
                 <DialogTitle>Nova publicação</DialogTitle>
               </DialogHeader>
               
               <div className="space-y-4">
                 <Tabs value={newPost.type} onValueChange={(v) => setNewPost({ ...newPost, type: v })}>
-                  <TabsList className="w-full bg-zinc-800">
+                  <TabsList className="w-full bg-secondary">
                     <TabsTrigger value="DISCUSSION" className="flex-1">Discussão</TabsTrigger>
                     <TabsTrigger value="SHOWCASE" className="flex-1">Showcase</TabsTrigger>
                   </TabsList>
@@ -279,7 +279,6 @@ export default function VaultCommunity() {
                   <Input
                     value={newPost.title}
                     onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-                    className="bg-zinc-800 border-zinc-700"
                     placeholder="Título da publicação"
                   />
                 </div>
@@ -289,7 +288,7 @@ export default function VaultCommunity() {
                   <Textarea
                     value={newPost.content}
                     onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
-                    className="bg-zinc-800 border-zinc-700 min-h-[120px]"
+                    className="min-h-[120px]"
                     placeholder="Escreva sua publicação..."
                   />
                 </div>
@@ -297,12 +296,12 @@ export default function VaultCommunity() {
                 <Button
                   onClick={handleCreatePost}
                   disabled={isSubmitting}
-                  className="w-full bg-amber-500 hover:bg-amber-600 text-black"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   {isSubmitting ? "Enviando..." : "Publicar"}
                 </Button>
 
-                <p className="text-xs text-zinc-500 text-center">
+                <p className="text-xs text-muted-foreground text-center">
                   Publicações são revisadas antes de aparecer
                 </p>
               </div>
@@ -314,14 +313,14 @@ export default function VaultCommunity() {
       {/* Posts Feed */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
       ) : posts.length === 0 ? (
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardContent className="py-12 text-center">
-            <MessageSquare className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-            <p className="text-zinc-400">Nenhuma publicação ainda</p>
-            <p className="text-sm text-zinc-500 mt-1">
+            <MessageSquare className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+            <p className="text-muted-foreground">Nenhuma publicação ainda</p>
+            <p className="text-sm text-muted-foreground/70 mt-1">
               Seja o primeiro a publicar!
             </p>
           </CardContent>
@@ -339,25 +338,25 @@ export default function VaultCommunity() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Card className="bg-zinc-900 border-zinc-800">
-                  <CardContent className="pt-4">
+                <Card className="bg-card border-border">
+                  <CardContent className="p-6">
                     {/* Author */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
                         <TierIcon className={`h-5 w-5 ${tierColor}`} />
                       </div>
                       <div>
                         <p className="font-medium">{post.author_name}</p>
-                        <p className="text-xs text-zinc-500">{formatDate(post.created_at)}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(post.created_at)}</p>
                       </div>
-                      <Badge variant="outline" className="ml-auto border-zinc-700 text-zinc-400 text-xs">
+                      <Badge variant="outline" className="ml-auto border-border text-muted-foreground text-xs">
                         {post.type === "SHOWCASE" ? "Showcase" : "Discussão"}
                       </Badge>
                     </div>
 
                     {/* Content */}
                     <h3 className="font-semibold mb-2">{post.title}</h3>
-                    <p className="text-sm text-zinc-400 whitespace-pre-wrap">{post.content}</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{post.content}</p>
 
                     {/* Attachments */}
                     {post.attachments && post.attachments.length > 0 && (

@@ -68,7 +68,7 @@ export default function VaultIntel() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
@@ -78,30 +78,30 @@ export default function VaultIntel() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold mb-1">Intel</h1>
-        <p className="text-zinc-400 text-sm">
+        <p className="text-muted-foreground text-sm">
           Conteúdo exclusivo, alertas de mercado e guias de curadoria
         </p>
       </div>
 
       {/* Filter */}
       <Tabs value={filter} onValueChange={setFilter}>
-        <TabsList className="bg-zinc-900 border border-zinc-800 w-full justify-start overflow-x-auto">
-          <TabsTrigger value="all" className="data-[state=active]:bg-amber-500 data-[state=active]:text-black">
+        <TabsList className="bg-card border border-border w-full justify-start overflow-x-auto">
+          <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Todos
           </TabsTrigger>
-          <TabsTrigger value="RADAR" className="data-[state=active]:bg-amber-500 data-[state=active]:text-black">
+          <TabsTrigger value="RADAR" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Radar className="h-4 w-4 mr-1" />
             Radar
           </TabsTrigger>
-          <TabsTrigger value="GUIDE" className="data-[state=active]:bg-amber-500 data-[state=active]:text-black">
+          <TabsTrigger value="GUIDE" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <BookOpen className="h-4 w-4 mr-1" />
             Guias
           </TabsTrigger>
-          <TabsTrigger value="ALERT" className="data-[state=active]:bg-amber-500 data-[state=active]:text-black">
+          <TabsTrigger value="ALERT" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <AlertTriangle className="h-4 w-4 mr-1" />
             Alertas
           </TabsTrigger>
-          <TabsTrigger value="EVENT" className="data-[state=active]:bg-amber-500 data-[state=active]:text-black">
+          <TabsTrigger value="EVENT" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Calendar className="h-4 w-4 mr-1" />
             Eventos
           </TabsTrigger>
@@ -110,11 +110,11 @@ export default function VaultIntel() {
 
       {/* Posts */}
       {filteredPosts.length === 0 ? (
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardContent className="py-12 text-center">
-            <Newspaper className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-            <p className="text-zinc-400">Nenhum conteúdo disponível</p>
-            <p className="text-sm text-zinc-500 mt-1">
+            <Newspaper className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+            <p className="text-muted-foreground">Nenhum conteúdo disponível</p>
+            <p className="text-sm text-muted-foreground/70 mt-1">
               {filter !== "all" ? "Tente outro filtro" : "Em breve teremos novidades"}
             </p>
           </CardContent>
@@ -131,8 +131,8 @@ export default function VaultIntel() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Card className="bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition overflow-hidden">
-                  <CardHeader className="pb-3">
+                <Card className="bg-card border-border hover:border-border/80 transition overflow-hidden">
+                  <CardHeader className="pb-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-lg ${config.bgColor} flex items-center justify-center`}>
@@ -144,12 +144,12 @@ export default function VaultIntel() {
                               {config.label}
                             </Badge>
                             {post.visibility !== "ALL" && (
-                              <Badge variant="outline" className="border-amber-500/30 text-amber-400 text-xs">
+                              <Badge variant="outline" className="border-primary/30 text-primary text-xs">
                                 {post.visibility === "BLACK_ONLY" ? "Black" : "Privilege+"}
                               </Badge>
                             )}
                           </div>
-                          <p className="text-xs text-zinc-500 mt-1">
+                          <p className="text-xs text-muted-foreground mt-1">
                             {formatDate(post.published_at)}
                           </p>
                         </div>
@@ -159,7 +159,7 @@ export default function VaultIntel() {
                   <CardContent>
                     <h3 className="font-semibold text-lg mb-2">{post.title}</h3>
                     <div 
-                      className="text-sm text-zinc-400 prose prose-invert prose-sm max-w-none"
+                      className="text-sm text-muted-foreground prose prose-invert prose-sm max-w-none"
                       dangerouslySetInnerHTML={{ __html: post.content }}
                     />
                   </CardContent>

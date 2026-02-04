@@ -39,22 +39,22 @@ const tierConfig = {
   member: { 
     name: "Vault Access", 
     icon: Shield, 
-    color: "text-zinc-400",
-    bgGradient: "from-zinc-800 to-zinc-900",
+    color: "text-muted-foreground",
+    bgGradient: "from-muted/20 to-card",
     nextTier: "Vault Privilege",
   },
   collector: { 
     name: "Vault Privilege", 
     icon: Crown, 
-    color: "text-amber-400",
-    bgGradient: "from-amber-900/20 to-zinc-900",
+    color: "text-primary",
+    bgGradient: "from-primary/10 to-card",
     nextTier: "Vault Black",
   },
   elite: { 
     name: "Vault Black", 
     icon: Sparkles, 
-    color: "text-white",
-    bgGradient: "from-zinc-800 to-black",
+    color: "text-foreground",
+    bgGradient: "from-primary/5 to-background",
     nextTier: null,
   },
 };
@@ -157,7 +157,7 @@ export default function VaultClub() {
   if (isLoading && !member) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
@@ -169,19 +169,19 @@ export default function VaultClub() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <Card className={`bg-gradient-to-br ${tierInfo.bgGradient} border-zinc-800 overflow-hidden`}>
-          <CardContent className="pt-6">
+        <Card className={`bg-gradient-to-br ${tierInfo.bgGradient} border-border overflow-hidden`}>
+          <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <tierInfo.icon className={`h-6 w-6 ${tierInfo.color}`} />
                   <span className={`text-lg font-bold ${tierInfo.color}`}>{tierInfo.name}</span>
                 </div>
-                <p className="text-sm text-zinc-400 mb-4">
+                <p className="text-sm text-muted-foreground mb-4">
                   {member?.total_purchases || 0} compras no Vault
                 </p>
                 {tierInfo.nextTier && (
-                  <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+                  <Badge variant="outline" className="border-border text-muted-foreground">
                     <TrendingUp className="h-3 w-3 mr-1" />
                     Próximo: {tierInfo.nextTier}
                   </Badge>
@@ -189,7 +189,7 @@ export default function VaultClub() {
               </div>
               <div className="text-right">
                 <p className="text-4xl font-bold">{member?.invites_remaining || 0}</p>
-                <p className="text-xs text-zinc-400">convites restantes</p>
+                <p className="text-xs text-muted-foreground">convites restantes</p>
               </div>
             </div>
           </CardContent>
@@ -198,8 +198,8 @@ export default function VaultClub() {
 
       {/* Eligibility Progress (only for non-elite) */}
       {member?.tier !== "elite" && (
-        <Card className="bg-zinc-900 border-zinc-800">
-          <CardHeader>
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg">Progresso para evolução</CardTitle>
             <CardDescription>
               Cumpra 2 de 3 critérios para avançar de tier
@@ -208,8 +208,8 @@ export default function VaultClub() {
           <CardContent className="space-y-4">
             <div>
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-zinc-400">Compras (12 meses)</span>
-                <span className={purchasesProgress >= 100 ? "text-emerald-400" : ""}>
+                <span className="text-muted-foreground">Compras (12 meses)</span>
+                <span className={purchasesProgress >= 100 ? "text-success" : ""}>
                   {member?.stats_purchases_count_12m || 0}/3
                 </span>
               </div>
@@ -217,8 +217,8 @@ export default function VaultClub() {
             </div>
             <div>
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-zinc-400">Taxa de decisão</span>
-                <span className={decisionProgress >= 100 ? "text-emerald-400" : ""}>
+                <span className="text-muted-foreground">Taxa de decisão</span>
+                <span className={decisionProgress >= 100 ? "text-success" : ""}>
                   {Math.round((member?.stats_decision_rate || 0) * 100)}%/50%
                 </span>
               </div>
@@ -226,8 +226,8 @@ export default function VaultClub() {
             </div>
             <div>
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-zinc-400">Indicações convertidas</span>
-                <span className={invitesProgress >= 100 ? "text-emerald-400" : ""}>
+                <span className="text-muted-foreground">Indicações convertidas</span>
+                <span className={invitesProgress >= 100 ? "text-success" : ""}>
                   {member?.stats_converted_invites || 0}/1
                 </span>
               </div>
@@ -238,12 +238,12 @@ export default function VaultClub() {
       )}
 
       {/* Invites Section */}
-      <Card className="bg-zinc-900 border-zinc-800">
-        <CardHeader>
+      <Card className="bg-card border-border">
+        <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
-                <Gift className="h-5 w-5 text-amber-500" />
+                <Gift className="h-5 w-5 text-primary" />
                 Vault Pass
               </CardTitle>
               <CardDescription>
@@ -253,7 +253,7 @@ export default function VaultClub() {
             <Button
               onClick={generateInvite}
               disabled={isGenerating || !member || member.invites_remaining <= 0}
-              className="bg-amber-500 hover:bg-amber-600 text-black"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {isGenerating ? "Gerando..." : "Gerar convite"}
             </Button>
@@ -261,7 +261,7 @@ export default function VaultClub() {
         </CardHeader>
         <CardContent>
           {invites.length === 0 ? (
-            <p className="text-sm text-zinc-500 text-center py-4">
+            <p className="text-sm text-muted-foreground text-center py-4">
               Você ainda não gerou nenhum convite
             </p>
           ) : (
@@ -269,14 +269,14 @@ export default function VaultClub() {
               {invites.map((invite) => (
                 <div
                   key={invite.id}
-                  className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg"
+                  className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg"
                 >
                   <div>
                     <p className="font-mono text-sm">{invite.invite_code}</p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-muted-foreground">
                       {invite.status === "used" ? (
                         <>
-                          <CheckCircle2 className="h-3 w-3 inline mr-1 text-emerald-500" />
+                          <CheckCircle2 className="h-3 w-3 inline mr-1 text-success" />
                           Usado por {invite.recipient_name || "alguém"}
                         </>
                       ) : (
@@ -301,20 +301,20 @@ export default function VaultClub() {
       </Card>
 
       {/* Rules Link */}
-      <Card className="bg-zinc-900 border-zinc-800">
-        <CardContent className="pt-6">
+      <Card className="bg-card border-border">
+        <CardContent className="p-6">
           <Link
             to="/vault/rules"
-            className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition"
+            className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg hover:bg-secondary/80 transition"
           >
             <div className="flex items-center gap-3">
-              <FileText className="h-5 w-5 text-zinc-400" />
+              <FileText className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="font-medium">Código do Vault</p>
-                <p className="text-xs text-zinc-500">Regras e políticas do clube</p>
+                <p className="text-xs text-muted-foreground">Regras e políticas do clube</p>
               </div>
             </div>
-            <ArrowRight className="h-5 w-5 text-zinc-500" />
+            <ArrowRight className="h-5 w-5 text-muted-foreground" />
           </Link>
         </CardContent>
       </Card>
