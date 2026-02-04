@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { Shield, Box, Search, Newspaper, Users, Crown, LogOut, Menu } from "lucide-react";
+import { Box, Search, Newspaper, Users, Crown, LogOut, Menu } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -98,8 +99,8 @@ export default function VaultAppLayout() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/vault/app" className="flex items-center gap-2">
-              <Shield className="h-6 w-6 text-amber-500" />
-              <span className="font-bold text-lg hidden sm:inline">Vault Club</span>
+              <Logo size="md" />
+              <span className="text-muted-foreground font-medium hidden sm:inline">Vault</span>
             </Link>
 
             {/* Desktop Nav */}

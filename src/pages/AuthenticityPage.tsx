@@ -151,7 +151,7 @@ export default function AuthenticityPage() {
       <header className="border-b border-primary/20 bg-black/40 backdrop-blur-xl">
         <div className="container mx-auto px-4 py-5">
           <div className="flex items-center justify-between">
-            <Logo className="h-6" />
+            <Logo size="sm" />
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
                 <Shield className="h-4 w-4 text-primary" />
@@ -349,7 +349,7 @@ export default function AuthenticityPage() {
                             <p className="text-primary/80 text-sm font-medium">Bravenza Authentic™</p>
                           </div>
                         </div>
-                        <Logo className="h-5 opacity-70 hidden md:block" />
+                        <Logo size="sm" className="opacity-70 hidden md:block" />
                       </div>
                     </div>
                   </div>
