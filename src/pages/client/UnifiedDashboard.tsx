@@ -11,7 +11,9 @@ import {
   Star,
   Clock,
   CheckCircle2,
-  Truck
+  Truck,
+  Newspaper,
+  Users
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -224,6 +226,14 @@ export default function UnifiedDashboard() {
                     <Shield className="h-4 w-4" />
                     Minha Coleção
                   </TabsTrigger>
+                  <TabsTrigger value="intel" className="flex items-center gap-2">
+                    <Newspaper className="h-4 w-4" />
+                    Intel
+                  </TabsTrigger>
+                  <TabsTrigger value="comunidade" className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Comunidade
+                  </TabsTrigger>
                 </>
               )}
             </TabsList>
@@ -309,6 +319,14 @@ export default function UnifiedDashboard() {
 
                 <TabsContent value="colecao" className="mt-6">
                   <VaultMyItemsTab clientCpf={profile.cpf} />
+                </TabsContent>
+
+                <TabsContent value="intel" className="mt-6">
+                  <VaultIntelTab clientCpf={profile.cpf} />
+                </TabsContent>
+
+                <TabsContent value="comunidade" className="mt-6">
+                  <VaultCommunityTab clientCpf={profile.cpf} member={vaultMember} />
                 </TabsContent>
               </>
             )}
