@@ -244,7 +244,7 @@ export default function VaultWishlist() {
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
           <DialogTrigger asChild>
             <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4" />
               Adicionar item
             </Button>
           </DialogTrigger>
@@ -359,15 +359,15 @@ export default function VaultWishlist() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="wishlist" className="space-y-4">
-        <TabsList className="bg-card border border-border">
-          <TabsTrigger value="wishlist" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+      <Tabs defaultValue="wishlist" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="wishlist">
             Wishlist ({wishlistItems.length})
           </TabsTrigger>
-          <TabsTrigger value="active" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="active">
             Buscas ativas ({activeSearches.length})
           </TabsTrigger>
-          <TabsTrigger value="history" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="history">
             Histórico ({closedSearches.length})
           </TabsTrigger>
         </TabsList>
@@ -417,7 +417,7 @@ export default function VaultWishlist() {
                           size="sm"
                           className="bg-primary hover:bg-primary/90 text-primary-foreground flex-shrink-0"
                         >
-                          <Play className="h-4 w-4 mr-1" />
+                          <Play className="h-4 w-4" />
                           Iniciar busca
                         </Button>
                       </div>

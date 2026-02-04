@@ -117,14 +117,14 @@ const AdminLayout = () => {
             <Logo size="sm" />
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-muted-foreground hover:text-foreground"
+              className="lg:hidden p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
@@ -139,13 +139,13 @@ const AdminLayout = () => {
                   }`}
                 >
                   <item.icon className="h-5 w-5" />
-                  <span className="font-medium">{item.label}</span>
+                  <span className="font-medium text-sm">{item.label}</span>
                 </Link>
               );
             })}
 
-            <Separator className="my-3" />
-            <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            <Separator className="my-4" />
+            <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Vault Club
             </p>
 
@@ -163,21 +163,21 @@ const AdminLayout = () => {
                   }`}
                 >
                   <item.icon className="h-5 w-5" />
-                  <span className="font-medium">{item.label}</span>
+                  <span className="font-medium text-sm">{item.label}</span>
                 </Link>
               );
             })}
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-border">
+          <div className="p-3 border-t border-border">
             <Button
               variant="ghost"
               onClick={handleSignOut}
-              className="w-full justify-start text-muted-foreground hover:text-foreground"
+              className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
             >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sair
+              <LogOut className="h-4 w-4" />
+              <span className="text-sm">Sair</span>
             </Button>
           </div>
         </div>
@@ -187,12 +187,12 @@ const AdminLayout = () => {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header with notifications */}
         <header className="border-b border-border bg-card p-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden text-muted-foreground hover:text-foreground"
+              className="lg:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-5 w-5" />
             </button>
             <Logo size="sm" className="lg:hidden" />
           </div>
