@@ -34,7 +34,7 @@ interface ProfileData {
   city: string | null;
   state: string | null;
   bio: string | null;
-  tier: "member" | "privilege" | "black";
+  tier: string;
   instagram_url: string | null;
   facebook_url: string | null;
   linkedin_url: string | null;
@@ -56,9 +56,11 @@ interface CommunityProfileProps {
   onFollowChange?: () => void;
 }
 
-const tierConfig = {
+const tierConfig: Record<string, { icon: typeof Shield; label: string; color: string; bg: string }> = {
   member: { icon: Shield, label: "Member", color: "text-muted-foreground", bg: "bg-secondary" },
+  collector: { icon: Crown, label: "Privilege", color: "text-primary", bg: "bg-primary/10" },
   privilege: { icon: Crown, label: "Privilege", color: "text-primary", bg: "bg-primary/10" },
+  elite: { icon: Sparkles, label: "Black", color: "text-foreground", bg: "bg-foreground/10" },
   black: { icon: Sparkles, label: "Black", color: "text-foreground", bg: "bg-foreground/10" },
 };
 
@@ -165,7 +167,8 @@ export function CommunityProfile({ memberId, clientCpf, onClose, onFollowChange 
   if (!memberId) return null;
 
   const tier = profile?.tier || "member";
-  const TierIcon = tierConfig[tier].icon;
+  const tierData = tierConfig[tier] || tierConfig.member;
+  const TierIcon = tierData.icon;
 
   return (
     <>
@@ -179,9 +182,9 @@ export function CommunityProfile({ memberId, clientCpf, onClose, onFollowChange 
             <ScrollArea className="max-h-[90vh]">
               {/* Header with Cover */}
               <div className="relative">
-                <div className={`h-24 ${tierConfig[tier].bg} relative overflow-hidden`}>
+                <div className={`h-24 ${tierData.bg} relative overflow-hidden`}>
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent" />
-                  {tier === "black" && (
+                  {(tier === "black" || tier === "elite") && (
                     <motion.div
                       className="absolute inset-0"
                       animate={{
@@ -201,7 +204,7 @@ export function CommunityProfile({ memberId, clientCpf, onClose, onFollowChange 
                     {profile.avatar_url ? (
                       <AvatarImage src={profile.avatar_url} alt={profile.display_name} />
                     ) : null}
-                    <AvatarFallback className={`text-xl font-bold ${tierConfig[tier].bg} ${tierConfig[tier].color}`}>
+                    <AvatarFallback className={`text-xl font-bold ${tierData.bg} ${tierData.color}`}>
                       {getInitials(profile.display_name)}
                     </AvatarFallback>
                   </Avatar>
@@ -250,9 +253,9 @@ export function CommunityProfile({ memberId, clientCpf, onClose, onFollowChange 
               <div className="pt-14 px-6 pb-4">
                 <div className="flex items-center gap-2 mb-1">
                   <h2 className="text-xl font-bold">{profile.display_name}</h2>
-                  <Badge variant="outline" className={`${tierConfig[tier].color} border-current gap-1`}>
+                  <Badge variant="outline" className={`${tierData.color} border-current gap-1`}>
                     <TierIcon className="h-3 w-3" />
-                    {tierConfig[tier].label}
+                    {tierData.label}
                   </Badge>
                 </div>
 

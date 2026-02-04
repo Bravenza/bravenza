@@ -30,7 +30,7 @@ interface ProfileData {
   linkedin_url: string | null;
   twitter_url: string | null;
   is_profile_public: boolean;
-  tier: "member" | "privilege" | "black";
+  tier: string;
   followers_count: number;
   following_count: number;
   joined_at: string;
@@ -42,9 +42,11 @@ const BRAZILIAN_STATES = [
   "RS", "RO", "RR", "SC", "SP", "SE", "TO"
 ];
 
-const tierConfig = {
+const tierConfig: Record<string, { icon: typeof Shield; label: string; color: string; bg: string }> = {
   member: { icon: Shield, label: "Member", color: "text-muted-foreground", bg: "bg-secondary" },
+  collector: { icon: Crown, label: "Privilege", color: "text-primary", bg: "bg-primary/10" },
   privilege: { icon: Crown, label: "Privilege", color: "text-primary", bg: "bg-primary/10" },
+  elite: { icon: Sparkles, label: "Black", color: "text-foreground", bg: "bg-foreground/10" },
   black: { icon: Sparkles, label: "Black", color: "text-foreground", bg: "bg-foreground/10" },
 };
 
@@ -261,7 +263,8 @@ export default function VaultProfilePage() {
   }
 
   const tier = profile.tier || "member";
-  const TierIcon = tierConfig[tier].icon;
+  const tierData = tierConfig[tier] || tierConfig.member;
+  const TierIcon = tierData.icon;
 
   return (
     <div className="min-h-screen bg-background">
@@ -306,7 +309,7 @@ export default function VaultProfilePage() {
                   {formData.avatar_url ? (
                     <AvatarImage src={formData.avatar_url} alt="Avatar" />
                   ) : null}
-                  <AvatarFallback className={`text-2xl font-bold ${tierConfig[tier].bg}`}>
+                  <AvatarFallback className={`text-2xl font-bold ${tierData.bg}`}>
                     {getInitials(formData.display_name || "?")}
                   </AvatarFallback>
                 </Avatar>
@@ -326,9 +329,9 @@ export default function VaultProfilePage() {
                 </label>
               </div>
               
-              <Badge variant="outline" className={`${tierConfig[tier].color} border-current gap-1`}>
+              <Badge variant="outline" className={`${tierData.color} border-current gap-1`}>
                 <TierIcon className="h-3 w-3" />
-                {tierConfig[tier].label}
+                {tierData.label}
               </Badge>
               
               <div className="flex gap-4 mt-3 text-sm text-muted-foreground">
