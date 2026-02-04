@@ -7,3 +7,7 @@ export { CommunityNewPost } from "./CommunityNewPost";
 export { MediaGallery } from "./MediaGallery";
 export { ReactionPicker, ReactionSummary } from "./ReactionPicker";
 export type { ReactionType } from "./ReactionPicker";
+export { CommunityProfile } from "./CommunityProfile";
+export { CommunityProfileEdit } from "./CommunityProfileEdit";
+export { CommunityConnectionsList } from "./CommunityConnectionsList";
+export { CommunityFeedTabs } from "./CommunityFeedTabs";

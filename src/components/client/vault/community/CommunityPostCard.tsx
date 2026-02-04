@@ -7,7 +7,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,8 +23,10 @@ import { useToast } from "@/hooks/use-toast";
 export interface CommunityPost {
   id: string;
   user_id: string;
+  author_id?: string;
   author_name: string;
-  author_tier: "member" | "collector" | "elite";
+  author_tier: "member" | "collector" | "elite" | "privilege" | "black";
+  author_avatar?: string | null;
   author_items_count: number;
   type: "SHOWCASE" | "DISCUSSION" | "POLL";
   title: string;
@@ -37,6 +39,7 @@ export interface CommunityPost {
   is_pinned: boolean;
   created_at: string;
   has_liked: boolean;
+  is_liked?: boolean;
   user_reactions?: string[];
 }
 
@@ -46,13 +49,16 @@ interface CommunityPostCardProps {
   onReaction: (postId: string, reactionType: ReactionType) => void;
   onComment: (postId: string) => void;
   onShare?: (postId: string) => void;
+  onAuthorClick?: (authorId: string) => void;
   isLiking?: boolean;
 }
 
 const tierConfig = {
   member: { icon: Shield, color: "text-muted-foreground", bg: "bg-muted", label: "Member", border: "border-muted" },
   collector: { icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10", label: "Privilege", border: "border-amber-500/50" },
+  privilege: { icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10", label: "Privilege", border: "border-amber-500/50" },
   elite: { icon: Sparkles, color: "text-primary", bg: "bg-primary/10", label: "Black", border: "border-primary/50" },
+  black: { icon: Sparkles, color: "text-primary", bg: "bg-primary/10", label: "Black", border: "border-primary/50" },
 };
 
 const postTypeConfig = {
@@ -67,6 +73,7 @@ export function CommunityPostCard({
   onReaction,
   onComment,
   onShare,
+  onAuthorClick,
   isLiking 
 }: CommunityPostCardProps) {
   const { toast } = useToast();
@@ -205,8 +212,14 @@ export function CommunityPostCard({
           {/* Header */}
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="relative">
-                <Avatar className={cn("h-12 w-12 border-2", tierInfo.border)}>
+              <button 
+                className="relative"
+                onClick={() => onAuthorClick?.(post.author_id || post.user_id)}
+              >
+                <Avatar className={cn("h-12 w-12 border-2 hover:opacity-80 transition-opacity", tierInfo.border)}>
+                  {post.author_avatar && (
+                    <AvatarImage src={post.author_avatar} alt={post.author_name} />
+                  )}
                   <AvatarFallback className={cn(tierInfo.bg, tierInfo.color, "font-semibold")}>
                     {getInitials(post.author_name)}
                   </AvatarFallback>
@@ -218,12 +231,15 @@ export function CommunityPostCard({
                 )}>
                   <TierIcon className={cn("h-3 w-3", tierInfo.color)} />
                 </div>
-              </div>
+              </button>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold hover:underline cursor-pointer">
+                  <button 
+                    className="font-semibold hover:underline cursor-pointer text-left"
+                    onClick={() => onAuthorClick?.(post.author_id || post.user_id)}
+                  >
                     {post.author_name}
-                  </span>
+                  </button>
                   <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", tierInfo.color)}>
                     {tierInfo.label}
                   </Badge>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Users, Image, MessageSquare, RefreshCw, Loader2, Settings, LogOut
+  Users, Image, MessageSquare, RefreshCw, Loader2, Settings, LogOut, UserCircle
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,12 +16,15 @@ import {
   CommunityOnlineUsers,
   CommunityTrending,
   CommunityNewPost,
+  CommunityProfile,
+  CommunityFeedTabs,
   type CommunityPost,
 } from "./community";
 
 interface VaultMember {
   id: string;
   community_opt_in?: boolean;
+  following_count?: number;
 }
 
 interface VaultCommunityTabProps {
@@ -38,8 +41,11 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
   const [isOptedIn, setIsOptedIn] = useState(false);
   const [isUpdatingOptIn, setIsUpdatingOptIn] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [feedType, setFeedType] = useState<"for_you" | "following">("for_you");
+  const [followingCount, setFollowingCount] = useState(0);
 
   useEffect(() => {
     checkOptIn();
@@ -57,6 +63,7 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
     
     if (data && data.length > 0) {
       setIsOptedIn(data[0].community_opt_in || false);
+      setFollowingCount((data[0] as any).following_count || 0);
     }
     setIsLoading(false);
   };
@@ -79,15 +86,20 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
     };
   };
 
-  const fetchPosts = async (refresh = false) => {
+  const fetchPosts = async (refresh = false, type?: "for_you" | "following") => {
     if (refresh) {
       setIsRefreshing(true);
       setOffset(0);
     }
 
+    const currentFeedType = type || feedType;
+
     try {
       const currentOffset = refresh ? 0 : offset;
-      const { data, error } = await supabase.rpc("get_vault_community_feed", {
+      
+      // Use different RPC based on feed type
+      const rpcName = currentFeedType === "following" ? "get_following_feed" : "get_vault_community_feed";
+      const { data, error } = await (supabase.rpc as any)(rpcName, {
         p_cpf: clientCpf,
         p_limit: 20,
         p_offset: currentOffset,
@@ -109,6 +121,18 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
       setIsLoading(false);
       setIsRefreshing(false);
     }
+  };
+
+  const handleFeedTypeChange = (type: "for_you" | "following") => {
+    setFeedType(type);
+    setPosts([]);
+    setOffset(0);
+    setHasMore(true);
+    fetchPosts(true, type);
+  };
+
+  const handleProfileClick = (memberId: string) => {
+    setSelectedProfileId(memberId);
   };
 
   const handleOptInToggle = async () => {
@@ -314,6 +338,18 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
+
+          {member && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleProfileClick(member.id)}
+              className="gap-2"
+            >
+              <UserCircle className="h-4 w-4" />
+              Meu Perfil
+            </Button>
+          )}
         </div>
 
         {member && (
@@ -324,6 +360,13 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
         )}
       </div>
 
+      {/* Feed Tabs */}
+      <CommunityFeedTabs
+        activeTab={feedType}
+        onTabChange={handleFeedTypeChange}
+        followingCount={followingCount}
+      />
+
       {/* Main content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
         {/* Feed */}
@@ -332,11 +375,19 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
             <Card className="card-premium border-dashed">
               <CardContent className="py-12 text-center">
                 <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-medium mb-2">Nenhuma publicação ainda</h3>
+                <h3 className="font-medium mb-2">
+                  {feedType === "following" 
+                    ? "Nenhuma publicação de quem você segue" 
+                    : "Nenhuma publicação ainda"
+                  }
+                </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Seja o primeiro a publicar algo incrível!
+                  {feedType === "following"
+                    ? "Siga outros membros para ver suas publicações aqui"
+                    : "Seja o primeiro a publicar algo incrível!"
+                  }
                 </p>
-                {member && (
+                {feedType === "for_you" && member && (
                   <CommunityNewPost 
                     memberId={member.id} 
                     onPostCreated={handlePostCreated}
@@ -354,6 +405,7 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
                     onLike={handleLike}
                     onReaction={handleReaction}
                     onComment={setSelectedPostId}
+                    onAuthorClick={handleProfileClick}
                   />
                 ))}
               </AnimatePresence>
@@ -382,8 +434,8 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
 
         {/* Sidebar */}
         <div className="hidden lg:block space-y-4">
-          <CommunityOnlineUsers clientCpf={clientCpf} />
-          <CommunityTrending />
+          <CommunityOnlineUsers clientCpf={clientCpf} onProfileClick={handleProfileClick} />
+          <CommunityTrending onProfileClick={handleProfileClick} />
         </div>
       </div>
 
@@ -397,6 +449,19 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
           />
         )}
       </AnimatePresence>
+
+      {/* Profile modal */}
+      {selectedProfileId && (
+        <CommunityProfile
+          memberId={selectedProfileId}
+          clientCpf={clientCpf}
+          onClose={() => setSelectedProfileId(null)}
+          onFollowChange={() => {
+            checkOptIn();
+            fetchPosts(true);
+          }}
+        />
+      )}
     </div>
   );
 }
