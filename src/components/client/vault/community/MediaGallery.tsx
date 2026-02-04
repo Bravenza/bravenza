@@ -232,7 +232,7 @@ export function MediaGallery({ items, onDoubleClick }: MediaGalleryProps) {
 
             {/* Thumbnails */}
             {items.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 max-w-[90vw] overflow-x-auto px-2 pb-1 scrollbar-hide">
                 {items.map((item, i) => (
                   <button
                     key={i}
@@ -241,13 +241,13 @@ export function MediaGallery({ items, onDoubleClick }: MediaGalleryProps) {
                       setSelectedIndex(i);
                     }}
                     className={cn(
-                      "w-16 h-16 rounded-lg overflow-hidden border-2 transition-all",
+                      "w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0",
                       i === selectedIndex ? "border-white scale-110" : "border-transparent opacity-60 hover:opacity-100"
                     )}
                   >
                     {item.type === "video" ? (
                       <div className="w-full h-full bg-muted flex items-center justify-center">
-                        <Play className="h-4 w-4 text-white" />
+                        <Play className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                       </div>
                     ) : (
                       <img src={item.url} alt="" className="w-full h-full object-cover" />

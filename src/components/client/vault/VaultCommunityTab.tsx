@@ -316,8 +316,8 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-2">
             <Switch
               id="community-opt-in"
@@ -335,10 +335,10 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
             size="sm"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="gap-2"
+            className="gap-1.5"
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Atualizar
+            <span className="hidden sm:inline">Atualizar</span>
           </Button>
 
           {member && (
@@ -347,30 +347,32 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
                 variant="ghost"
                 size="sm"
                 onClick={() => handleProfileClick(member.id)}
-                className="gap-2"
+                className="gap-1.5"
               >
                 <UserCircle className="h-4 w-4" />
-                Meu Perfil
+                <span className="hidden sm:inline">Meu Perfil</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate("/vault/perfil")}
-                className="gap-2"
+                className="gap-1.5"
               >
                 <Settings className="h-4 w-4" />
-                Editar
+                <span className="hidden sm:inline">Editar</span>
               </Button>
             </>
           )}
-        </div>
 
-        {member && (
-          <CommunityNewPost 
-            memberId={member.id} 
-            onPostCreated={handlePostCreated}
-          />
-        )}
+          {member && (
+            <div className="ml-auto">
+              <CommunityNewPost 
+                memberId={member.id} 
+                onPostCreated={handlePostCreated}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Feed Tabs */}
