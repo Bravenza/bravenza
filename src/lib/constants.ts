@@ -74,36 +74,24 @@ export const VAULT_STATUSES = [
   "DELIVERED",
 ] as const;
 
-// Simplified READY flow (for products already in stock)
-export const READY_STATUSES = [
-  "REQUEST_RECEIVED",
-  "BUDGET_SENT",
-  "DEPOSIT_CONFIRMED",
-  "BALANCE_PENDING",
-  "FULLY_PAID",
-  "SHIPPED_TO_CLIENT",
-  "DELIVERED",
-] as const;
-
 export type OrderStatus = typeof VAULT_STATUSES[number];
-export type OrderType = "READY" | "VAULT";
+export type OrderType = "VAULT";
 
-export const getStatusesForType = (type: OrderType): readonly string[] => {
-  return type === "READY" ? READY_STATUSES : VAULT_STATUSES;
+export const getStatusesForType = (_type?: OrderType): readonly string[] => {
+  return VAULT_STATUSES;
 };
 
-export const getStatusIndex = (status: string, type: OrderType): number => {
-  const statuses = getStatusesForType(type);
-  return statuses.indexOf(status as any);
+export const getStatusIndex = (status: string, _type?: OrderType): number => {
+  return VAULT_STATUSES.indexOf(status as any);
 };
 
 export const isStatusCompleted = (
   currentStatus: string,
   checkStatus: string,
-  type: OrderType
+  _type?: OrderType
 ): boolean => {
-  const currentIndex = getStatusIndex(currentStatus, type);
-  const checkIndex = getStatusIndex(checkStatus, type);
+  const currentIndex = getStatusIndex(currentStatus);
+  const checkIndex = getStatusIndex(checkStatus);
   return checkIndex < currentIndex;
 };
 

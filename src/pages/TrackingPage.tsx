@@ -179,8 +179,6 @@ const TrackingPage = () => {
     );
   }
 
-  const isVault = order.order_type === "VAULT";
-
   return (
     <div className="min-h-screen bg-background relative">
       {/* Header */}
@@ -207,14 +205,8 @@ const TrackingPage = () => {
             className="mb-8"
           >
             <div className="flex flex-wrap items-center gap-3 mb-4">
-              <span
-                className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                  isVault
-                    ? "bg-primary/20 text-primary"
-                    : "bg-success/20 text-success"
-                }`}
-              >
-                {isVault ? "VAULT" : "READY"}
+              <span className="px-3 py-1 text-xs font-semibold rounded-full bg-primary/20 text-primary">
+                VAULT
               </span>
               <h1 className="text-2xl md:text-3xl font-bold">{order.order_id}</h1>
             </div>
@@ -375,8 +367,8 @@ const TrackingPage = () => {
                 )}
               </InfoCard>
 
-              {/* SLA info for VAULT */}
-              {isVault && order.sla_vault_due_date && (
+              {/* SLA info */}
+              {order.sla_vault_due_date && (
                 <InfoCard
                   title="Prazo VAULT 30"
                   icon={<Calendar className="h-5 w-5" />}
@@ -441,11 +433,10 @@ const TrackingPage = () => {
               )}
 
               {/* VAULT Policy */}
-              {isVault && (
-                <InfoCard
-                  title="Política VAULT"
-                  icon={<Shield className="h-5 w-5" />}
-                >
+              <InfoCard
+                title="Política VAULT"
+                icon={<Shield className="h-5 w-5" />}
+              >
                   <ul className="space-y-2 text-xs text-muted-foreground">
                     <li className="flex items-start gap-2">
                       <span className="text-primary">•</span>
@@ -469,7 +460,6 @@ const TrackingPage = () => {
                     </li>
                   </ul>
                 </InfoCard>
-              )}
             </div>
           </div>
         </div>

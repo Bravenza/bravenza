@@ -146,7 +146,7 @@ function generateBudgetHTML(order: any): string {
         </div>
         <div class="info-item">
           <div class="info-label">Tipo</div>
-          <div class="info-value">${order.order_type === 'VAULT' ? 'Encomenda' : 'Pronta Entrega'}</div>
+          <div class="info-value">Encomenda</div>
         </div>
       </div>
     </div>
