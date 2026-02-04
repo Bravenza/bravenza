@@ -9,7 +9,7 @@ const corsHeaders = {
 
 interface ScheduleReminderRequest {
   order_id: string;
-  reminder_type: "sinal_reminder" | "balance_reminder";
+  reminder_type: "sinal_reminder" | "balance_reminder" | "budget_expiring" | "review_request";
   channel?: "email" | "whatsapp" | "both";
   delay_days?: number;
 }

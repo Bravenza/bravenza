@@ -10,7 +10,7 @@ const corsHeaders = {
 
 interface WhatsAppRequest {
   order_id?: string;
-  message_type: "budget_sent" | "sinal_confirmed" | "balance_confirmed" | "status_update" | "review_request" | "referral_confirmed" | "cashback_expiring" | "custom";
+  message_type: "budget_sent" | "budget_expiring" | "sinal_confirmed" | "sinal_reminder" | "balance_confirmed" | "status_update" | "review_request" | "referral_confirmed" | "cashback_expiring" | "vault_welcome" | "custom";
   custom_message?: string;
   // For referral notifications
   referrer_phone?: string;
@@ -21,6 +21,10 @@ interface WhatsAppRequest {
   // For cashback expiration
   days_until_expiration?: number;
   cashback_amount?: number;
+  // For vault welcome
+  member_name?: string;
+  member_phone?: string;
+  member_tier?: string;
 }
 
 // Message templates
@@ -32,12 +36,30 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `Acesse o link abaixo para aprovar:\n${data.budget_url}\n\n` +
     `_Bravenza - Sua loja de tênis premium_`,
 
+  budget_expiring: (data) =>
+    `⏰ *Último Dia, ${data.client_name}!*\n\n` +
+    `Seu orçamento para *${data.product_name}* expira amanhã!\n\n` +
+    `💰 Valor: R$ ${data.product_price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
+    `Não perca essa oportunidade!\n` +
+    `Aprove agora: ${data.budget_url}\n\n` +
+    `_Bravenza - Sua loja de tênis premium_`,
+
   sinal_confirmed: (data) =>
     `✅ *Pagamento Confirmado!*\n\n` +
     `Olá ${data.client_name}, recebemos o sinal do seu pedido *${data.order_id}*.\n\n` +
     `📦 Produto: ${data.product_name}\n` +
     `💰 Sinal: R$ ${data.sinal_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
     `Já estamos trabalhando na sua encomenda!\n\n` +
+    `_Bravenza - Sua loja de tênis premium_`,
+
+  sinal_reminder: (data) =>
+    `⏰ *Lembrete: Pagamento do Sinal*\n\n` +
+    `Olá ${data.client_name}!\n\n` +
+    `Você aprovou o orçamento do pedido *${data.order_id}*, mas ainda não pagou o sinal.\n\n` +
+    `📦 Produto: ${data.product_name}\n` +
+    `💰 Sinal: R$ ${data.sinal_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
+    `Pague agora para iniciarmos a busca!\n` +
+    `Acesse: https://bravenza.com.br/minha-conta\n\n` +
     `_Bravenza - Sua loja de tênis premium_`,
 
   balance_confirmed: (data) =>
@@ -84,6 +106,19 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `O desconto pode ser aplicado no seu próximo pedido (limite de 25% do valor total).\n\n` +
     `🛒 Faça um novo pedido: https://bravenza.com.br/solicitar\n\n` +
     `_Bravenza - Sua loja de tênis premium_`,
+
+  vault_welcome: (data) =>
+    `🏆 *Bem-vindo ao Vault Club, ${data.member_name || data.referrer_name}!*\n\n` +
+    `Você agora faz parte do clube exclusivo da Bravenza! 🎉\n\n` +
+    `✨ *Seus benefícios:*\n` +
+    `• Curadoria Premium de peças raras\n` +
+    `• SLA garantido em todas as buscas\n` +
+    `• Match Room para comparar opções\n` +
+    `• Certificados de autenticidade\n` +
+    `• Conteúdo exclusivo Vault Intel\n\n` +
+    `Acesse agora e adicione sua primeira wishlist!\n` +
+    `https://bravenza.com.br/vault\n\n` +
+    `_Bravenza Vault Club - Exclusividade Premium_`,
 };
 
 // Status labels for WhatsApp messages
@@ -165,7 +200,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const requestData: WhatsAppRequest = await req.json();
-    const { order_id, message_type, custom_message, referrer_phone, referrer_name, referred_name, discount_percentage, referral_code, days_until_expiration, cashback_amount } = requestData;
+    const { order_id, message_type, custom_message, referrer_phone, referrer_name, referred_name, discount_percentage, referral_code, days_until_expiration, cashback_amount, member_name, member_phone, member_tier } = requestData;
 
     if (!message_type) {
       throw new Error("message_type é obrigatório");
@@ -268,6 +303,59 @@ serve(async (req) => {
       }
 
       console.log(`Cashback expiring WhatsApp sent to +${phone}: ${result.messageId}`);
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message_id: result.messageId 
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Handle vault welcome notification (doesn't need order_id)
+    if (message_type === "vault_welcome") {
+      const phoneToUse = member_phone || referrer_phone;
+      if (!phoneToUse) {
+        console.log("No phone for vault welcome notification");
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: "Telefone do membro não fornecido",
+            skipped: true 
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Format phone number
+      let phone = phoneToUse.replace(/\D/g, '');
+      if (phone.startsWith('0')) {
+        phone = phone.substring(1);
+      }
+      if (!phone.startsWith('55')) {
+        phone = '55' + phone;
+      }
+
+      const templateFn = MESSAGE_TEMPLATES.vault_welcome;
+      const message = templateFn({
+        member_name: member_name || referrer_name || "Membro",
+        member_tier: member_tier || "Vault Access",
+      });
+
+      const result = await sendTwilioWhatsApp(
+        twilioAccountSid,
+        twilioAuthToken,
+        twilioWhatsAppNumber,
+        phone,
+        message
+      );
+
+      if (!result.success) {
+        throw new Error(result.error || "Erro ao enviar WhatsApp via Twilio");
+      }
+
+      console.log(`Vault welcome WhatsApp sent to +${phone}: ${result.messageId}`);
 
       return new Response(
         JSON.stringify({ 
