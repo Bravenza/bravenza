@@ -2510,21 +2510,21 @@ export type Database = {
             Args: { p_cpf: string; p_limit?: number; p_offset?: number }
             Returns: {
               attachments: string[]
-              author_items_count: number
+              author_avatar: string
+              author_id: string
               author_name: string
-              author_tier: string
+              author_tier: Database["public"]["Enums"]["vault_tier"]
               comments_count: number
               content: string
               created_at: string
-              has_liked: boolean
               id: string
+              is_liked: boolean
               is_pinned: boolean
               likes_count: number
               media_types: string[]
               reactions_summary: Json
               title: string
-              type: string
-              user_id: string
+              type: Database["public"]["Enums"]["community_post_type"]
               user_reactions: string[]
             }[]
           }

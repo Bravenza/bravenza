@@ -15,9 +15,10 @@ interface TrendingPost {
 
 interface CommunityTrendingProps {
   onSelectPost?: (postId: string) => void;
+  onProfileClick?: (memberId: string) => void;
 }
 
-export function CommunityTrending({ onSelectPost }: CommunityTrendingProps) {
+export function CommunityTrending({ onSelectPost, onProfileClick }: CommunityTrendingProps) {
   const [trendingPosts, setTrendingPosts] = useState<TrendingPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

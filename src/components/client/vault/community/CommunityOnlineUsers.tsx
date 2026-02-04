@@ -17,6 +17,7 @@ interface OnlineUser {
 
 interface CommunityOnlineUsersProps {
   clientCpf: string;
+  onProfileClick?: (memberId: string) => void;
 }
 
 const tierConfig = {
@@ -25,7 +26,7 @@ const tierConfig = {
   elite: { icon: Sparkles, color: "text-primary", ring: "ring-primary" },
 };
 
-export function CommunityOnlineUsers({ clientCpf }: CommunityOnlineUsersProps) {
+export function CommunityOnlineUsers({ clientCpf, onProfileClick }: CommunityOnlineUsersProps) {
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -108,12 +109,13 @@ export function CommunityOnlineUsers({ clientCpf }: CommunityOnlineUsersProps) {
               const TierIcon = tierInfo.icon;
 
               return (
-                <motion.div
+                <motion.button
                   key={user.user_id}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                  className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer w-full text-left"
+                  onClick={() => onProfileClick?.(user.user_id)}
                 >
                   <div className="relative">
                     <Avatar className={cn("h-8 w-8 ring-2", tierInfo.ring)}>
@@ -135,7 +137,7 @@ export function CommunityOnlineUsers({ clientCpf }: CommunityOnlineUsersProps) {
                       {user.items_count} itens
                     </div>
                   </div>
-                </motion.div>
+                </motion.button>
               );
             })}
           </div>
