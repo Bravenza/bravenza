@@ -1,15 +1,17 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ClientAuthProvider } from "@/hooks/useClientAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { usePWAOptimizations } from "@/hooks/usePWAOptimizations";
+import { SkipToContent } from "@/components/a11y/SkipToContent";
 
 // Eagerly loaded pages (critical path)
 import Index from "./pages/Index";
@@ -90,80 +92,83 @@ function AppShell({ children }: { children: React.ReactNode }) {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <ClientAuthProvider>
-          <Toaster />
-          <Sonner />
-          <OfflineIndicator />
-          <BrowserRouter>
-            <AppShell>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<Index />} />
-                <Route path="/solicitar" element={<OrderRequestPage />} />
-                <Route path="/rastreio" element={<TrackingPortalPage />} />
-                <Route path="/rastreio/:orderId" element={<TrackingPage />} />
-                <Route path="/orcamento/:token" element={<BudgetApprovalPage />} />
-                <Route path="/pagamento/:token" element={<PaymentPage />} />
-                <Route path="/termos" element={<TermsPage />} />
-                <Route path="/politicas" element={<PrivacyPage />} />
-                <Route path="/instalar" element={<InstallPage />} />
-                <Route path="/autenticidade" element={<AuthenticityPage />} />
-                <Route path="/autenticidade/:code" element={<AuthenticityPage />} />
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <ClientAuthProvider>
+            <Toaster />
+            <Sonner />
+            <OfflineIndicator />
+            <BrowserRouter>
+              <SkipToContent />
+              <AppShell>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/solicitar" element={<OrderRequestPage />} />
+                  <Route path="/rastreio" element={<TrackingPortalPage />} />
+                  <Route path="/rastreio/:orderId" element={<TrackingPage />} />
+                  <Route path="/orcamento/:token" element={<BudgetApprovalPage />} />
+                  <Route path="/pagamento/:token" element={<PaymentPage />} />
+                  <Route path="/termos" element={<TermsPage />} />
+                  <Route path="/politicas" element={<PrivacyPage />} />
+                  <Route path="/instalar" element={<InstallPage />} />
+                  <Route path="/autenticidade" element={<AuthenticityPage />} />
+                  <Route path="/autenticidade/:code" element={<AuthenticityPage />} />
 
-                {/* Vault Club routes */}
-                <Route path="/vault" element={<VaultLandingPage />} />
-                <Route path="/vault/waitlist" element={<VaultWaitlistPage />} />
-                <Route path="/vault/redeem" element={<VaultRedeemPage />} />
-                {/* Redirect old vault/app routes to client dashboard */}
-                <Route path="/vault/app" element={<Navigate to="/minha-conta" replace />} />
-                <Route path="/vault/app/*" element={<Navigate to="/minha-conta" replace />} />
-                <Route path="/vault/app/match/:matchRoomId" element={<VaultMatchRoom />} />
+                  {/* Vault Club routes */}
+                  <Route path="/vault" element={<VaultLandingPage />} />
+                  <Route path="/vault/waitlist" element={<VaultWaitlistPage />} />
+                  <Route path="/vault/redeem" element={<VaultRedeemPage />} />
+                  {/* Redirect old vault/app routes to client dashboard */}
+                  <Route path="/vault/app" element={<Navigate to="/minha-conta" replace />} />
+                  <Route path="/vault/app/*" element={<Navigate to="/minha-conta" replace />} />
+                  <Route path="/vault/app/match/:matchRoomId" element={<VaultMatchRoom />} />
 
-                {/* Client portal routes */}
-                <Route path="/cliente/login" element={<ClientLogin />} />
-                <Route path="/minha-conta" element={<ClientDashboard />} />
+                  {/* Client portal routes */}
+                  <Route path="/cliente/login" element={<ClientLogin />} />
+                  <Route path="/minha-conta" element={<ClientDashboard />} />
 
-                {/* Admin routes */}
-                <Route path="/admin/login" element={<Login />} />
-                <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<AdminDashboard />} />
-                  <Route path="pedidos" element={<OrdersList />} />
-                  <Route path="pedidos/novo" element={<NewOrder />} />
-                  <Route path="pedidos/:orderId" element={<OrderDetail />} />
-                  <Route path="solicitacoes" element={<OrderRequestsPage />} />
-                  <Route path="financeiro" element={<FinancePage />} />
-                  <Route path="calculadora" element={<InstallmentCalculatorPage />} />
-                  <Route path="modelos" element={<FeaturedModelsPage />} />
-                  <Route path="fornecedores" element={<SuppliersPage />} />
-                  <Route path="avaliacoes" element={<ReviewsPage />} />
-                  <Route path="indicacoes" element={<ReferralsPage />} />
-                  <Route path="usuarios" element={<UsersPage />} />
-                  <Route path="configuracoes" element={<SettingsPage />} />
-                  {/* Vault Club Admin */}
-                  <Route path="vault/membros" element={<VaultMembersPage />} />
-                  <Route path="vault/buscas" element={<VaultSearchesPage />} />
-                  <Route path="vault/match-rooms" element={<VaultMatchRoomsPage />} />
-                  <Route path="vault/items" element={<VaultItemsPage />} />
-                  <Route path="vault/convites" element={<VaultInvitesPage />} />
-                  <Route path="vault/intel" element={<VaultIntelAdminPage />} />
-                  <Route path="vault/comunidade" element={<VaultCommunityAdminPage />} />
-                </Route>
+                  {/* Admin routes */}
+                  <Route path="/admin/login" element={<Login />} />
+                  <Route path="/admin" element={<AdminLayout />}>
+                    <Route index element={<AdminDashboard />} />
+                    <Route path="pedidos" element={<OrdersList />} />
+                    <Route path="pedidos/novo" element={<NewOrder />} />
+                    <Route path="pedidos/:orderId" element={<OrderDetail />} />
+                    <Route path="solicitacoes" element={<OrderRequestsPage />} />
+                    <Route path="financeiro" element={<FinancePage />} />
+                    <Route path="calculadora" element={<InstallmentCalculatorPage />} />
+                    <Route path="modelos" element={<FeaturedModelsPage />} />
+                    <Route path="fornecedores" element={<SuppliersPage />} />
+                    <Route path="avaliacoes" element={<ReviewsPage />} />
+                    <Route path="indicacoes" element={<ReferralsPage />} />
+                    <Route path="usuarios" element={<UsersPage />} />
+                    <Route path="configuracoes" element={<SettingsPage />} />
+                    {/* Vault Club Admin */}
+                    <Route path="vault/membros" element={<VaultMembersPage />} />
+                    <Route path="vault/buscas" element={<VaultSearchesPage />} />
+                    <Route path="vault/match-rooms" element={<VaultMatchRoomsPage />} />
+                    <Route path="vault/items" element={<VaultItemsPage />} />
+                    <Route path="vault/convites" element={<VaultInvitesPage />} />
+                    <Route path="vault/intel" element={<VaultIntelAdminPage />} />
+                    <Route path="vault/comunidade" element={<VaultCommunityAdminPage />} />
+                  </Route>
 
-                {/* 404 */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-            </AppShell>
-            <PWAInstallBanner />
-          </BrowserRouter>
-        </ClientAuthProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+                  {/* 404 */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+              </AppShell>
+              <PWAInstallBanner />
+            </BrowserRouter>
+          </ClientAuthProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;
