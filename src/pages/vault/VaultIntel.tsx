@@ -85,24 +85,24 @@ export default function VaultIntel() {
 
       {/* Filter */}
       <Tabs value={filter} onValueChange={setFilter}>
-        <TabsList className="bg-card border border-border w-full justify-start overflow-x-auto">
-          <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+        <TabsList className="w-full sm:w-auto flex-wrap">
+          <TabsTrigger value="all">
             Todos
           </TabsTrigger>
-          <TabsTrigger value="RADAR" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Radar className="h-4 w-4 mr-1" />
+          <TabsTrigger value="RADAR">
+            <Radar className="h-4 w-4" />
             Radar
           </TabsTrigger>
-          <TabsTrigger value="GUIDE" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <BookOpen className="h-4 w-4 mr-1" />
+          <TabsTrigger value="GUIDE">
+            <BookOpen className="h-4 w-4" />
             Guias
           </TabsTrigger>
-          <TabsTrigger value="ALERT" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <AlertTriangle className="h-4 w-4 mr-1" />
+          <TabsTrigger value="ALERT">
+            <AlertTriangle className="h-4 w-4" />
             Alertas
           </TabsTrigger>
-          <TabsTrigger value="EVENT" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Calendar className="h-4 w-4 mr-1" />
+          <TabsTrigger value="EVENT">
+            <Calendar className="h-4 w-4" />
             Eventos
           </TabsTrigger>
         </TabsList>

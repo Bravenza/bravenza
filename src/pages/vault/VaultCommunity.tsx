@@ -257,7 +257,7 @@ export default function VaultCommunity() {
           <Dialog open={showPostDialog} onOpenChange={setShowPostDialog}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4" />
                 Publicar
               </Button>
             </DialogTrigger>
@@ -268,7 +268,7 @@ export default function VaultCommunity() {
               
               <div className="space-y-4">
                 <Tabs value={newPost.type} onValueChange={(v) => setNewPost({ ...newPost, type: v })}>
-                  <TabsList className="w-full bg-secondary">
+                  <TabsList className="w-full">
                     <TabsTrigger value="DISCUSSION" className="flex-1">Discussão</TabsTrigger>
                     <TabsTrigger value="SHOWCASE" className="flex-1">Showcase</TabsTrigger>
                   </TabsList>

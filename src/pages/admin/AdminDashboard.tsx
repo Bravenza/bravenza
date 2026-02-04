@@ -154,7 +154,7 @@ const AdminDashboard = () => {
           <TabsTrigger value="metrics">Métricas Detalhadas</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6 mt-6">
+        <TabsContent value="overview" className="space-y-6">
           {/* Stats cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {statCards.map((stat, index) => (
@@ -308,7 +308,7 @@ const AdminDashboard = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="metrics" className="mt-6">
+        <TabsContent value="metrics">
           <DashboardMetrics />
         </TabsContent>
       </Tabs>

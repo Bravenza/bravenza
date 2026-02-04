@@ -114,7 +114,7 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
                 size="sm" 
                 className="flex-1 border-border/50 hover:border-border"
               >
-                <Image className="h-4 w-4 mr-1" />
+                <Image className="h-4 w-4" />
                 Ver
               </Button>
               </DialogTrigger>
@@ -186,13 +186,13 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
                       className="flex-1 border-border/50 hover:border-border"
                       onClick={handleOpenCertificate}
                     >
-                      <Download className="h-4 w-4 mr-2" />
+                      <Download className="h-4 w-4" />
                       Certificado
                     </Button>
                     {item.qr_private_url && (
                       <Button asChild variant="outline" className="flex-1 border-border/50 hover:border-border">
                         <a href={item.qr_private_url} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-4 w-4 mr-2" />
+                          <ExternalLink className="h-4 w-4" />
                           Verificar online
                         </a>
                       </Button>
