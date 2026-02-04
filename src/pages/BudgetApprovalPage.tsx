@@ -449,11 +449,9 @@ export default function BudgetApprovalPage() {
           )}
 
           {/* VAULT Policy Card */}
-          {order.order_type === "VAULT" && (
-            <div className="mb-6">
-              <VaultPolicyCard />
-            </div>
-          )}
+          <div className="mb-6">
+            <VaultPolicyCard />
+          </div>
 
           <Card className="card-premium mb-8">
             <CardHeader className="pb-3">
@@ -492,22 +490,20 @@ export default function BudgetApprovalPage() {
                 </div>
               )}
 
-              {order.order_type === "VAULT" && (
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    id="warranty-policy"
-                    checked={acceptedWarrantyPolicy}
-                    onCheckedChange={(checked) => setAcceptedWarrantyPolicy(checked === true)}
-                  />
-                  <label
-                    htmlFor="warranty-policy"
-                    className="text-sm leading-relaxed cursor-pointer"
-                  >
-                    Li e concordo com a <strong>Política de Trocas e Garantia VAULT</strong>: 
-                    troca/reembolso somente por defeito, tamanho não é trocável, prazo de 7 dias para suporte.
-                  </label>
-                </div>
-              )}
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="warranty-policy"
+                  checked={acceptedWarrantyPolicy}
+                  onCheckedChange={(checked) => setAcceptedWarrantyPolicy(checked === true)}
+                />
+                <label
+                  htmlFor="warranty-policy"
+                  className="text-sm leading-relaxed cursor-pointer"
+                >
+                  Li e concordo com a <strong>Política de Trocas e Garantia VAULT</strong>: 
+                  troca/reembolso somente por defeito, tamanho não é trocável, prazo de 7 dias para suporte.
+                </label>
+              </div>
             </CardContent>
           </Card>
 
@@ -517,7 +513,7 @@ export default function BudgetApprovalPage() {
               size="lg"
               className="btn-gold text-lg px-8"
               onClick={handleApprove}
-              disabled={isSubmitting || !acceptedRefundPolicy || (order.order_type === "VAULT" && !acceptedWarrantyPolicy)}
+              disabled={isSubmitting || !acceptedRefundPolicy || !acceptedWarrantyPolicy}
             >
               {isSubmitting ? (
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -537,8 +533,8 @@ export default function BudgetApprovalPage() {
             </Button>
           </div>
 
-          {!acceptedRefundPolicy || (order.order_type === "VAULT" && !acceptedWarrantyPolicy) ? (
-            <p className="text-center text-sm text-amber-500 mt-4">
+          {!acceptedRefundPolicy || !acceptedWarrantyPolicy ? (
+            <p className="text-center text-sm text-warning mt-4">
               Você precisa aceitar os termos acima para aprovar o orçamento.
             </p>
           ) : (

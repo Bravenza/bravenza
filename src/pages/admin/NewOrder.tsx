@@ -22,7 +22,6 @@ import { SNEAKER_BRANDS, getModelsForBrand, getBrandLabel, getModelLabel } from 
 import { calculateProductPrice, DEFAULT_MULTIPLIER, roundUpTo90 } from "@/lib/budget-calculator";
 
 const orderSchema = z.object({
-  order_type: z.enum(["VAULT", "READY"]),
   client_name: z.string().min(5, "Nome completo deve ter no mínimo 5 caracteres"),
   client_cpf: z.string().refine((val) => validateCPF(val), "CPF inválido"),
   client_email: z.string().min(1, "Email é obrigatório").refine((val) => validateEmail(val), "Email inválido"),
@@ -60,7 +59,6 @@ const NewOrder = () => {
   const [showCustomModel, setShowCustomModel] = useState(false);
 
   const [formData, setFormData] = useState({
-    order_type: "VAULT" as "VAULT" | "READY",
     client_name: "",
     client_cpf: "",
     client_cep: "",
@@ -318,7 +316,7 @@ const NewOrder = () => {
 
       const orderData = {
         order_id: orderId,
-        order_type: formData.order_type,
+        order_type: "VAULT" as const,
         current_status: "REQUEST_RECEIVED" as const,
         client_name: formData.client_name,
         client_cpf: cleanedCPF,
@@ -337,10 +335,7 @@ const NewOrder = () => {
         sinal_value: sinalValue,
         balance_value: balanceValue,
         internal_notes: formData.internal_notes || null,
-        sla_vault_due_date:
-          formData.order_type === "VAULT"
-            ? slaDate.toISOString().split("T")[0]
-            : null,
+        sla_vault_due_date: slaDate.toISOString().split("T")[0],
       };
 
       const { error: orderError } = await supabase
@@ -396,34 +391,6 @@ const NewOrder = () => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Order type */}
-          <Card className="card-premium">
-            <CardHeader>
-              <CardTitle>Tipo de Pedido</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select
-                value={formData.order_type}
-                onValueChange={(value: "VAULT" | "READY") =>
-                  setFormData((prev) => ({ ...prev, order_type: value }))
-                }
-              >
-                <SelectTrigger className="bg-secondary/50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="VAULT">VAULT - Sourcing internacional</SelectItem>
-                  <SelectItem value="READY">READY - Pronta entrega</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground mt-2">
-                {formData.order_type === "VAULT"
-                  ? "Produto será buscado internacionalmente. Prazo: 30 dias."
-                  : "Produto disponível para envio imediato."}
-              </p>
-            </CardContent>
-          </Card>
-
           {/* Client info */}
           <Card className="card-premium lg:col-span-2">
             <CardHeader>

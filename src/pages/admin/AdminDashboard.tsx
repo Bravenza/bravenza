@@ -19,8 +19,6 @@ import { DashboardMetrics } from "@/components/admin/DashboardMetrics";
 
 interface DashboardStats {
   total: number;
-  vault: number;
-  ready: number;
   pending: number;
   delivered: number;
   nearDeadline: number;
@@ -60,8 +58,6 @@ const AdminDashboard = () => {
 
           const statsData: DashboardStats = {
             total: orders.length,
-            vault: orders.filter((o) => o.order_type === "VAULT").length,
-            ready: orders.filter((o) => o.order_type === "READY").length,
             pending: orders.filter((o) => o.current_status !== "DELIVERED")
               .length,
             delivered: orders.filter((o) => o.current_status === "DELIVERED")
@@ -181,67 +177,8 @@ const AdminDashboard = () => {
             ))}
           </div>
 
-          {/* Type distribution */}
+          {/* Recent orders */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <Card className="card-premium">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-primary" />
-                    Distribuição por Tipo
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">VAULT</span>
-                      <div className="flex items-center gap-3">
-                        <div className="w-32 h-2 bg-secondary rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary rounded-full"
-                            style={{
-                              width: `${
-                                stats?.total
-                                  ? (stats.vault / stats.total) * 100
-                                  : 0
-                              }%`,
-                            }}
-                          />
-                        </div>
-                        <span className="font-semibold w-8 text-right">
-                          {stats?.vault || 0}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">READY</span>
-                      <div className="flex items-center gap-3">
-                        <div className="w-32 h-2 bg-secondary rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-success rounded-full"
-                            style={{
-                              width: `${
-                                stats?.total
-                                  ? (stats.ready / stats.total) * 100
-                                  : 0
-                              }%`,
-                            }}
-                          />
-                        </div>
-                        <span className="font-semibold w-8 text-right">
-                          {stats?.ready || 0}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
             {/* Recent orders */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -274,14 +211,8 @@ const AdminDashboard = () => {
                           to={`/admin/pedidos/${order.order_id}`}
                           className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 transition-colors"
                         >
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`w-2 h-2 rounded-full ${
-                                order.order_type === "VAULT"
-                                  ? "bg-primary"
-                                  : "bg-success"
-                              }`}
-                            />
+                        <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-primary" />
                             <div>
                               <p className="font-medium text-sm">{order.order_id}</p>
                               <p className="text-xs text-muted-foreground">

@@ -58,7 +58,6 @@ const OrdersList = () => {
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
@@ -98,18 +97,13 @@ const OrdersList = () => {
       );
     }
 
-    // Type filter
-    if (typeFilter !== "all") {
-      result = result.filter((order) => order.order_type === typeFilter);
-    }
-
     // Status filter
     if (statusFilter !== "all") {
       result = result.filter((order) => order.current_status === statusFilter);
     }
 
     setFilteredOrders(result);
-  }, [search, typeFilter, statusFilter, orders]);
+  }, [search, statusFilter, orders]);
 
   const getStatusColor = (status: string) => {
     if (status === "DELIVERED") return "bg-success/20 text-success";
@@ -157,16 +151,6 @@ const OrdersList = () => {
             className="pl-10 bg-secondary/50"
           />
         </div>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-full md:w-40 bg-secondary/50">
-            <SelectValue placeholder="Tipo" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os tipos</SelectItem>
-            <SelectItem value="VAULT">VAULT</SelectItem>
-            <SelectItem value="READY">READY</SelectItem>
-          </SelectContent>
-        </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full md:w-48 bg-secondary/50">
             <SelectValue placeholder="Status" />
@@ -190,7 +174,6 @@ const OrdersList = () => {
               <TableHead>Pedido</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Produto</TableHead>
-              <TableHead>Tipo</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Prazo</TableHead>
               <TableHead>Criado</TableHead>
@@ -201,7 +184,7 @@ const OrdersList = () => {
             {filteredOrders.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={8}
+                  colSpan={7}
                   className="text-center py-12 text-muted-foreground"
                 >
                   Nenhum pedido encontrado
@@ -225,18 +208,6 @@ const OrdersList = () => {
                   </TableCell>
                   <TableCell className="max-w-[200px] truncate">
                     {order.product_name}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={
-                        order.order_type === "VAULT"
-                          ? "border-primary text-primary"
-                          : "border-success text-success"
-                      }
-                    >
-                      {order.order_type}
-                    </Badge>
                   </TableCell>
                   <TableCell>
                     <span

@@ -457,16 +457,6 @@ const OrderDetail = () => {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">{order.order_id}</h1>
-              <Badge
-                variant="outline"
-                className={
-                  order.order_type === "VAULT"
-                    ? "border-primary text-primary"
-                    : "border-success text-success"
-                }
-              >
-                {order.order_type}
-              </Badge>
             </div>
             <p className="text-muted-foreground">
               Criado em {formatDateTime(order.created_at)}
