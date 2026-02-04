@@ -177,16 +177,22 @@ export default function ClientAuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col relative">
+      {/* Background Effects */}
+      <div className="fixed inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
+      <div className="fixed top-1/4 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed bottom-1/4 left-0 w-[300px] h-[300px] bg-primary/3 rounded-full blur-3xl pointer-events-none" />
+
       {/* Header */}
-      <header className="py-6 px-4 border-b border-border/50">
-        <div className="container mx-auto flex justify-center">
-          <Logo />
+      <header className="relative border-b border-border/30 bg-background/80 backdrop-blur-xl">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+        <div className="container mx-auto px-4 h-16 flex items-center justify-center">
+          <Logo size="md" />
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center p-4">
+      <main className="relative z-10 flex-1 flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

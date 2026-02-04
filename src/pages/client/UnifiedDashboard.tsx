@@ -148,18 +148,24 @@ export default function UnifiedDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col relative">
+      {/* Background Effects */}
+      <div className="fixed inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
+      <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed bottom-0 left-0 w-[400px] h-[400px] bg-primary/3 rounded-full blur-3xl pointer-events-none" />
+
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+      <header className="sticky top-0 z-50 border-b border-border/30 bg-background/80 backdrop-blur-xl">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Logo />
+            <Logo size="md" />
             <div className="flex items-center gap-4">
               <div className="hidden md:block text-right">
                 <p className="text-sm font-medium">{profile?.full_name}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
-              <Button variant="ghost" size="icon" onClick={handleLogout}>
+              <Button variant="ghost" size="icon" onClick={handleLogout} className="text-muted-foreground hover:text-foreground">
                 <LogOut className="h-5 w-5" />
               </Button>
             </div>
@@ -168,7 +174,7 @@ export default function UnifiedDashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 py-6">
+      <main className="relative z-10 flex-1 container mx-auto px-4 py-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
