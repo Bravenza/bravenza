@@ -4,3 +4,6 @@ export { CommunityComments } from "./CommunityComments";
 export { CommunityOnlineUsers } from "./CommunityOnlineUsers";
 export { CommunityTrending } from "./CommunityTrending";
 export { CommunityNewPost } from "./CommunityNewPost";
+export { MediaGallery } from "./MediaGallery";
+export { ReactionPicker, ReactionSummary } from "./ReactionPicker";
+export type { ReactionType } from "./ReactionPicker";

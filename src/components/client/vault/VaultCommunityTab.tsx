@@ -158,6 +158,18 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
     }
   };
 
+  const handleReaction = async (postId: string, reactionType: string) => {
+    try {
+      await supabase.rpc("toggle_post_reaction", {
+        p_post_id: postId,
+        p_cpf: clientCpf,
+        p_reaction_type: reactionType,
+      });
+    } catch (error) {
+      console.error("Error toggling reaction:", error);
+    }
+  };
+
   const handleLoadMore = () => {
     if (!isLoading && hasMore) {
       fetchPosts();
@@ -340,6 +352,7 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
                     key={post.id}
                     post={post}
                     onLike={handleLike}
+                    onReaction={handleReaction}
                     onComment={setSelectedPostId}
                   />
                 ))}
