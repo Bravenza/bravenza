@@ -296,7 +296,6 @@ export const BudgetTab = ({ order, onUpdate }: BudgetTabProps) => {
       {/* Ações do Orçamento */}
       <BudgetActions
         orderId={order.order_id}
-        orderType={order.order_type}
         budgetStatus={order.budget_status}
         budgetSentAt={order.budget_sent_at}
         budgetApprovedAt={order.budget_approved_at}
@@ -313,7 +312,7 @@ export const BudgetTab = ({ order, onUpdate }: BudgetTabProps) => {
       />
 
       {/* VAULT Policy Card */}
-      {order.order_type === "VAULT" && <VaultPolicyCard />}
+      <VaultPolicyCard />
     </div>
   );
 };

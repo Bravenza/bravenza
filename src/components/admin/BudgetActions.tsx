@@ -22,7 +22,6 @@ import { formatCurrency, formatDateTime } from "@/lib/constants";
 
 interface BudgetActionsProps {
   orderId: string;
-  orderType: string;
   budgetStatus: string | null;
   budgetSentAt: string | null;
   budgetApprovedAt: string | null;
@@ -40,7 +39,6 @@ interface BudgetActionsProps {
 
 export function BudgetActions({
   orderId,
-  orderType,
   budgetStatus,
   budgetSentAt,
   budgetApprovedAt,
