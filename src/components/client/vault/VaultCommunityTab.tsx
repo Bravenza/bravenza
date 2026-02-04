@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Users, Image, MessageSquare, RefreshCw, Loader2, Settings, LogOut, UserCircle
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -34,6 +35,7 @@ interface VaultCommunityTabProps {
 
 export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps) {
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -340,15 +342,26 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
           </Button>
 
           {member && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleProfileClick(member.id)}
-              className="gap-2"
-            >
-              <UserCircle className="h-4 w-4" />
-              Meu Perfil
-            </Button>
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleProfileClick(member.id)}
+                className="gap-2"
+              >
+                <UserCircle className="h-4 w-4" />
+                Meu Perfil
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/vault/perfil")}
+                className="gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                Editar
+              </Button>
+            </>
           )}
         </div>
 

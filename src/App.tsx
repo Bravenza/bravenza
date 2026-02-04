@@ -35,6 +35,7 @@ const VaultLandingPage = lazy(() => import("./pages/vault/VaultLandingPage"));
 const VaultWaitlistPage = lazy(() => import("./pages/vault/VaultWaitlistPage"));
 const VaultRedeemPage = lazy(() => import("./pages/vault/VaultRedeemPage"));
 const VaultMatchRoom = lazy(() => import("./pages/vault/VaultMatchRoom"));
+const VaultProfilePage = lazy(() => import("./pages/vault/VaultProfilePage"));
 
 // Lazy loaded pages - Client portal
 const ClientLogin = lazy(() => import("./pages/client/ClientLogin"));
@@ -128,6 +129,7 @@ const App = () => (
                     <Route path="/vault" element={<VaultLandingPage />} />
                     <Route path="/vault/waitlist" element={<VaultWaitlistPage />} />
                     <Route path="/vault/redeem" element={<VaultRedeemPage />} />
+                    <Route path="/vault/perfil" element={<VaultProfilePage />} />
                     <Route path="/vault/app/match/:matchRoomId" element={<VaultMatchRoom />} />
                     {/* Redirect old vault/app routes to unified dashboard */}
                     <Route path="/vault/app" element={<Navigate to="/minha-conta" replace />} />

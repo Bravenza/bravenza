@@ -2486,6 +2486,7 @@ export type Database = {
           status: Database["public"]["Enums"]["order_status"]
         }[]
       }
+      get_own_community_profile: { Args: { p_cpf: string }; Returns: Json }
       get_post_comments:
         | {
             Args: { p_cpf: string; p_post_id: string }
@@ -2814,6 +2815,22 @@ export type Database = {
           sinal_value: number
           sla_vault_due_date: string
         }[]
+      }
+      update_member_profile: {
+        Args: {
+          p_avatar_url?: string
+          p_bio?: string
+          p_city?: string
+          p_cpf: string
+          p_display_name?: string
+          p_facebook_url?: string
+          p_instagram_url?: string
+          p_is_profile_public?: boolean
+          p_linkedin_url?: string
+          p_state?: string
+          p_twitter_url?: string
+        }
+        Returns: Json
       }
       update_presence: { Args: { p_cpf: string }; Returns: undefined }
       update_vault_community_opt_in: {
