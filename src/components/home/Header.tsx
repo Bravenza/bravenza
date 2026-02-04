@@ -9,7 +9,7 @@ const navLinks = [
   { label: "Início", href: "/" },
   { label: "Autenticidade", href: "/sobre-autenticidade" },
   { label: "Rastrear Pedido", href: "/rastreio" },
-  { label: "Minha Conta", href: "/cliente/login" },
+  { label: "Minha Conta", href: "/entrar" },
 ] as const;
 
 const HeaderComponent = () => {

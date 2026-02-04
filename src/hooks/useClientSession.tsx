@@ -1,0 +1,177 @@
+import { useState, useEffect, createContext, useContext, ReactNode } from "react";
+import { User, Session } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+
+interface ClientProfile {
+  id: string;
+  user_id: string;
+  cpf: string;
+  full_name: string;
+  phone: string | null;
+  vault_member_id: string | null;
+  vault_tier: string | null;
+  vault_status: string | null;
+}
+
+interface ClientSessionContextType {
+  user: User | null;
+  session: Session | null;
+  profile: ClientProfile | null;
+  isLoading: boolean;
+  isVaultMember: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, cpf: string, fullName: string, phone?: string) => Promise<{ error: Error | null }>;
+  signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
+}
+
+const ClientSessionContext = createContext<ClientSessionContextType | undefined>(undefined);
+
+export function ClientSessionProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<ClientProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await supabase.rpc("get_client_profile");
+      if (error) {
+        console.error("Error fetching profile:", error);
+        return;
+      }
+      if (data && data.length > 0) {
+        setProfile(data[0] as ClientProfile);
+      }
+    } catch (err) {
+      console.error("Error in fetchProfile:", err);
+    }
+  };
+
+  useEffect(() => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        // Defer profile fetch to avoid deadlock
+        if (session?.user) {
+          setTimeout(() => {
+            fetchProfile();
+          }, 0);
+        } else {
+          setProfile(null);
+        }
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchProfile().finally(() => setIsLoading(false));
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error: error as Error | null };
+  };
+
+  const signUp = async (
+    email: string, 
+    password: string, 
+    cpf: string, 
+    fullName: string, 
+    phone?: string
+  ) => {
+    // First, check if CPF already exists
+    const { data: existingProfile } = await supabase
+      .from("client_profiles")
+      .select("cpf")
+      .eq("cpf", cpf.replace(/\D/g, ""))
+      .maybeSingle();
+
+    if (existingProfile) {
+      return { error: new Error("Este CPF já está cadastrado no sistema.") };
+    }
+
+    // Sign up the user
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/minha-conta`,
+        data: {
+          full_name: fullName,
+        }
+      }
+    });
+
+    if (error) {
+      return { error: error as Error };
+    }
+
+    // If signup successful, create profile
+    if (data.user) {
+      const { error: profileError } = await supabase
+        .from("client_profiles")
+        .insert({
+          user_id: data.user.id,
+          cpf: cpf.replace(/\D/g, ""),
+          full_name: fullName,
+          phone: phone?.replace(/\D/g, "") || null,
+        });
+
+      if (profileError) {
+        console.error("Error creating profile:", profileError);
+        // Don't return error here - user was created, just profile failed
+      }
+    }
+
+    return { error: null };
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setProfile(null);
+  };
+
+  const refreshProfile = async () => {
+    await fetchProfile();
+  };
+
+  return (
+    <ClientSessionContext.Provider
+      value={{
+        user,
+        session,
+        profile,
+        isLoading,
+        isVaultMember: !!profile?.vault_member_id,
+        signIn,
+        signUp,
+        signOut,
+        refreshProfile,
+      }}
+    >
+      {children}
+    </ClientSessionContext.Provider>
+  );
+}
+
+export function useClientSession() {
+  const context = useContext(ClientSessionContext);
+  if (context === undefined) {
+    throw new Error("useClientSession must be used within a ClientSessionProvider");
+  }
+  return context;
+}

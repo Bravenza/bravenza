@@ -157,6 +157,36 @@ export type Database = {
         }
         Relationships: []
       }
+      client_profiles: {
+        Row: {
+          cpf: string
+          created_at: string | null
+          full_name: string
+          id: string
+          phone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cpf: string
+          created_at?: string | null
+          full_name: string
+          id?: string
+          phone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cpf?: string
+          created_at?: string | null
+          full_name?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       client_sessions: {
         Row: {
           cpf: string
@@ -1941,26 +1971,101 @@ export type Database = {
           order_id: string
         }[]
       }
-      get_client_orders: {
-        Args: { p_cpf: string }
-        Returns: {
-          balance_paid: boolean
-          balance_value: number
-          budget_status: Database["public"]["Enums"]["budget_status"]
-          created_at: string
-          current_status: Database["public"]["Enums"]["order_status"]
-          order_id: string
-          order_type: Database["public"]["Enums"]["order_type"]
-          product_brand: string
-          product_model: string
-          product_name: string
-          product_price: number
-          product_size: string
-          sinal_paid: boolean
-          sinal_value: number
-          updated_at: string
-        }[]
-      }
+      get_client_orders:
+        | {
+            Args: never
+            Returns: {
+              authenticity_code: string | null
+              authenticity_verification_count: number | null
+              authenticity_verified_at: string | null
+              balance_due_date: string | null
+              balance_paid: boolean | null
+              balance_paid_at: string | null
+              balance_payment_method:
+                | Database["public"]["Enums"]["payment_method"]
+                | null
+              balance_pix_transaction_id: string | null
+              balance_proof_url: string | null
+              balance_stripe_payment_id: string | null
+              balance_value: number | null
+              budget_approval_token: string | null
+              budget_approved_at: string | null
+              budget_expires_at: string | null
+              budget_rejected_at: string | null
+              budget_rejection_reason: string | null
+              budget_sent_at: string | null
+              budget_status: Database["public"]["Enums"]["budget_status"] | null
+              client_address: string | null
+              client_cpf: string
+              client_email: string | null
+              client_name: string
+              client_phone: string | null
+              created_at: string
+              current_status: Database["public"]["Enums"]["order_status"]
+              inspection_photos: string[] | null
+              internal_notes: string | null
+              international_carrier: string | null
+              international_tracking: string | null
+              national_carrier: string | null
+              national_tracking: string | null
+              order_id: string
+              order_type: Database["public"]["Enums"]["order_type"]
+              other_costs: number | null
+              other_costs_description: string | null
+              payment_mode: string | null
+              pix_copy_paste: string | null
+              pix_qr_code: string | null
+              product_brand: string | null
+              product_color: string | null
+              product_cost: number | null
+              product_currency: string | null
+              product_link: string | null
+              product_model: string | null
+              product_name: string
+              product_price: number | null
+              product_reference: string | null
+              product_size: string | null
+              reference_image_url: string | null
+              shipping_cost: number | null
+              sinal_paid: boolean | null
+              sinal_paid_at: string | null
+              sinal_payment_method:
+                | Database["public"]["Enums"]["payment_method"]
+                | null
+              sinal_pix_transaction_id: string | null
+              sinal_proof_url: string | null
+              sinal_stripe_payment_id: string | null
+              sinal_value: number | null
+              sla_vault_due_date: string | null
+              updated_at: string
+            }[]
+            SetofOptions: {
+              from: "*"
+              to: "orders"
+              isOneToOne: false
+              isSetofReturn: true
+            }
+          }
+        | {
+            Args: { p_cpf: string }
+            Returns: {
+              balance_paid: boolean
+              balance_value: number
+              budget_status: Database["public"]["Enums"]["budget_status"]
+              created_at: string
+              current_status: Database["public"]["Enums"]["order_status"]
+              order_id: string
+              order_type: Database["public"]["Enums"]["order_type"]
+              product_brand: string
+              product_model: string
+              product_name: string
+              product_price: number
+              product_size: string
+              sinal_paid: boolean
+              sinal_value: number
+              updated_at: string
+            }[]
+          }
       get_client_preferences: {
         Args: { p_cpf: string }
         Returns: {
@@ -1970,6 +2075,19 @@ export type Database = {
           notification_whatsapp: boolean
           preferred_colors: string[]
           preferred_sizes: string[]
+        }[]
+      }
+      get_client_profile: {
+        Args: never
+        Returns: {
+          cpf: string
+          full_name: string
+          id: string
+          phone: string
+          user_id: string
+          vault_member_id: string
+          vault_status: string
+          vault_tier: string
         }[]
       }
       get_client_referrals: {
