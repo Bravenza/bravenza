@@ -43,6 +43,16 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
     variables: ["client_name", "order_id", "product_name", "total_price", "sinal_value", "balance_value", "approval_link", "expires_at"],
   },
   {
+    id: "budget_expiring",
+    name: "Orçamento Expirando",
+    trigger: "1 dia antes do orçamento expirar",
+    description: "Lembrete automático de que o orçamento está prestes a expirar",
+    icon: <Clock className="h-5 w-5" />,
+    status: "active",
+    subject: "Seu orçamento expira amanhã! - {order_id}",
+    variables: ["client_name", "order_id", "product_name", "total_price", "expires_at", "approval_link"],
+  },
+  {
     id: "budget_approved",
     name: "Orçamento Aprovado",
     trigger: "Quando cliente aprova orçamento",
@@ -51,6 +61,16 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
     status: "active",
     subject: "Orçamento aprovado! Próximo passo: Pagamento do sinal - {order_id}",
     variables: ["client_name", "order_id", "sinal_value", "pix_qr_code", "pix_copy_paste"],
+  },
+  {
+    id: "sinal_reminder",
+    name: "Lembrete de Sinal",
+    trigger: "2 dias após aprovação sem pagamento",
+    description: "Lembrete automático para pagamento do sinal pendente",
+    icon: <AlertCircle className="h-5 w-5" />,
+    status: "active",
+    subject: "Lembrete: Pagamento do sinal pendente - {order_id}",
+    variables: ["client_name", "order_id", "product_name", "sinal_value", "payment_link"],
   },
   {
     id: "sinal_confirmed",
@@ -103,6 +123,16 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
     variables: ["client_name", "order_id", "balance_value", "payment_link"],
   },
   {
+    id: "balance_reminder",
+    name: "Lembrete de Saldo",
+    trigger: "3 dias após BALANCE_DUE sem pagamento",
+    description: "Lembrete amigável sobre pagamento do saldo pendente",
+    icon: <Clock className="h-5 w-5" />,
+    status: "active",
+    subject: "Lembrete: Pagamento pendente - {order_id}",
+    variables: ["client_name", "order_id", "balance_value", "payment_link"],
+  },
+  {
     id: "balance_confirmed",
     name: "Saldo Confirmado",
     trigger: "Quando pagamento do saldo é confirmado",
@@ -133,16 +163,6 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
     variables: ["client_name", "order_id", "product_name"],
   },
   {
-    id: "balance_reminder",
-    name: "Lembrete de Pagamento",
-    trigger: "3 dias após BALANCE_DUE sem pagamento",
-    description: "Lembrete amigável sobre pagamento pendente",
-    icon: <Clock className="h-5 w-5" />,
-    status: "optional",
-    subject: "Lembrete: Pagamento pendente - {order_id}",
-    variables: ["client_name", "order_id", "balance_value", "payment_link"],
-  },
-  {
     id: "review_request",
     name: "Avaliação Pós-Entrega",
     trigger: "3 dias após DELIVERED",
@@ -161,6 +181,16 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
     status: "active",
     subject: "Parabéns! Sua indicação foi confirmada 🎉 - {referral_code}",
     variables: ["client_name", "referral_code", "referred_name", "discount_percentage"],
+  },
+  {
+    id: "vault_welcome",
+    name: "Boas-Vindas Vault Club",
+    trigger: "Quando membro é aprovado no Vault Club",
+    description: "Email de boas-vindas exclusivo para novos membros do Vault",
+    icon: <Package className="h-5 w-5" />,
+    status: "active",
+    subject: "Bem-vindo ao Vault Club! 🎩",
+    variables: ["client_name", "tier", "max_hunts", "max_wishlist"],
   },
 ];
 
@@ -305,76 +335,168 @@ export function EmailSettingsTab() {
 function EmailPreview({ templateId }: { templateId: string }) {
   const previews: Record<string, React.ReactNode> = {
     budget_sent: (
-      <div className="bg-[#0a0a0a] text-white rounded-lg overflow-hidden text-sm">
-        <div className="bg-gradient-to-r from-[#d4af37] via-[#f4e5a3] to-[#d4af37] p-6 text-center">
-          <h2 className="text-xl font-bold text-[#0a0a0a]">BRAVENZA</h2>
-          <p className="text-[#333] text-xs">Seu orçamento está pronto!</p>
+      <div className="bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] rounded-lg overflow-hidden text-sm border border-border">
+        <div className="bg-gradient-to-r from-[hsl(var(--primary))] via-[hsl(var(--primary)/0.8)] to-[hsl(var(--primary))] p-6 text-center">
+          <h2 className="text-xl font-bold text-[hsl(var(--primary-foreground))]">BRAVENZA</h2>
+          <p className="text-[hsl(var(--primary-foreground)/0.8)] text-xs">Seu orçamento está pronto!</p>
         </div>
         <div className="p-6 space-y-4">
           <p>Olá, <strong>João</strong>!</p>
-          <p className="text-gray-400 text-xs">
-            Preparamos o orçamento do seu pedido <span className="text-[#d4af37] font-bold">BV-260126-001</span>.
+          <p className="text-muted-foreground text-xs">
+            Preparamos o orçamento do seu pedido <span className="text-primary font-bold">BV-260126-001</span>.
           </p>
-          <div className="bg-[#252525] rounded-lg p-4 space-y-2">
-            <div className="flex justify-between border-b border-gray-700 pb-2">
-              <span className="text-gray-400">Valor Total</span>
-              <span className="text-[#d4af37] font-bold">R$ 1.500,00</span>
+          <div className="bg-muted rounded-lg p-4 space-y-2">
+            <div className="flex justify-between border-b border-border pb-2">
+              <span className="text-muted-foreground">Valor Total</span>
+              <span className="text-primary font-bold">R$ 1.500,00</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-gray-400">Sinal (50%)</span>
+              <span className="text-muted-foreground">Sinal (50%)</span>
               <span>R$ 750,00</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-gray-400">Saldo (50%)</span>
+              <span className="text-muted-foreground">Saldo (50%)</span>
               <span>R$ 750,00</span>
             </div>
           </div>
           <div className="text-center">
-            <button className="bg-gradient-to-r from-[#d4af37] via-[#f4e5a3] to-[#d4af37] text-[#0a0a0a] px-6 py-2 rounded font-bold text-xs">
+            <button className="bg-gradient-to-r from-primary via-primary/80 to-primary text-primary-foreground px-6 py-2 rounded font-bold text-xs">
               Ver Orçamento e Aprovar
             </button>
           </div>
         </div>
       </div>
     ),
-    dispatched: (
-      <div className="bg-[#0a0a0a] text-white rounded-lg overflow-hidden text-sm">
-        <div className="bg-gradient-to-r from-[#d4af37] via-[#f4e5a3] to-[#d4af37] p-6 text-center">
-          <h2 className="text-xl font-bold text-[#0a0a0a]">BRAVENZA</h2>
-          <p className="text-[#333] text-xs">Pedido Enviado! 🚚</p>
+    budget_expiring: (
+      <div className="bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] rounded-lg overflow-hidden text-sm border border-border">
+        <div className="bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500 p-6 text-center">
+          <h2 className="text-xl font-bold text-white">BRAVENZA</h2>
+          <p className="text-white/80 text-xs">⏰ Seu orçamento expira amanhã!</p>
         </div>
         <div className="p-6 space-y-4">
           <p>Olá, <strong>João</strong>!</p>
-          <p className="text-gray-400 text-xs">
-            Seu pedido <span className="text-[#d4af37]">BV-260126-001</span> está a caminho!
+          <p className="text-muted-foreground text-xs">
+            Seu orçamento para <span className="text-primary font-bold">Nike Air Force 1</span> expira em <strong className="text-orange-500">24 horas</strong>.
           </p>
-          <div className="bg-[#252525] rounded-lg p-4 space-y-2">
-            <p className="text-xs text-gray-400">Código de Rastreio:</p>
-            <p className="text-white font-mono font-bold">BR123456789BR</p>
-            <p className="text-xs text-gray-400">Transportadora: Correios</p>
+          <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 text-center">
+            <p className="text-orange-500 font-bold">R$ 1.500,00</p>
+            <p className="text-xs text-muted-foreground">Pedido: BV-260126-001</p>
+          </div>
+          <p className="text-muted-foreground text-xs text-center">
+            Não perca essa oportunidade! Aprove agora e garanta seu produto.
+          </p>
+          <div className="text-center">
+            <button className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-2 rounded font-bold text-xs">
+              Aprovar Orçamento Agora
+            </button>
+          </div>
+        </div>
+      </div>
+    ),
+    sinal_reminder: (
+      <div className="bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] rounded-lg overflow-hidden text-sm border border-border">
+        <div className="bg-gradient-to-r from-[hsl(var(--primary))] via-[hsl(var(--primary)/0.8)] to-[hsl(var(--primary))] p-6 text-center">
+          <h2 className="text-xl font-bold text-[hsl(var(--primary-foreground))]">BRAVENZA</h2>
+          <p className="text-[hsl(var(--primary-foreground)/0.8)] text-xs">💳 Lembrete de Pagamento</p>
+        </div>
+        <div className="p-6 space-y-4">
+          <p>Olá, <strong>João</strong>!</p>
+          <p className="text-muted-foreground text-xs">
+            Você aprovou o orçamento do seu <span className="text-primary font-bold">Nike Air Force 1</span>, mas ainda não identificamos o pagamento do sinal.
+          </p>
+          <div className="bg-muted rounded-lg p-4 text-center">
+            <p className="text-xs text-muted-foreground">Valor do Sinal</p>
+            <p className="text-primary font-bold text-lg">R$ 750,00</p>
+            <p className="text-xs text-muted-foreground mt-2">Pedido: BV-260126-001</p>
+          </div>
+          <p className="text-muted-foreground text-xs text-center">
+            Assim que confirmarmos, iniciamos a busca do seu produto!
+          </p>
+          <div className="text-center">
+            <button className="bg-gradient-to-r from-primary via-primary/80 to-primary text-primary-foreground px-6 py-2 rounded font-bold text-xs">
+              Pagar Sinal via PIX
+            </button>
+          </div>
+        </div>
+      </div>
+    ),
+    vault_welcome: (
+      <div className="bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] rounded-lg overflow-hidden text-sm border border-border">
+        <div className="bg-gradient-to-r from-[hsl(var(--primary))] via-[hsl(var(--primary)/0.8)] to-[hsl(var(--primary))] p-6 text-center">
+          <h2 className="text-xl font-bold text-[hsl(var(--primary-foreground))]">VAULT CLUB</h2>
+          <p className="text-[hsl(var(--primary-foreground)/0.8)] text-xs">🎩 Bem-vindo ao clube exclusivo!</p>
+        </div>
+        <div className="p-6 space-y-4">
+          <p>Olá, <strong>João</strong>!</p>
+          <p className="text-muted-foreground text-xs">
+            Parabéns! Você agora faz parte do <span className="text-primary font-bold">Vault Club Gold</span>.
+          </p>
+          <div className="bg-muted rounded-lg p-4 space-y-3">
+            <p className="text-xs font-semibold text-center">Seus benefícios:</p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="flex items-center gap-1">
+                <span className="text-primary">✓</span> Curadoria exclusiva
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-primary">✓</span> Match Room
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-primary">✓</span> 3 buscas ativas
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-primary">✓</span> Intel exclusivo
+              </div>
+            </div>
+          </div>
+          <div className="text-center">
+            <button className="bg-gradient-to-r from-primary via-primary/80 to-primary text-primary-foreground px-6 py-2 rounded font-bold text-xs">
+              Acessar Vault Club
+            </button>
+          </div>
+          <p className="text-muted-foreground text-[10px] text-center">
+            Seu acesso é exclusivo por convite. Aproveite!
+          </p>
+        </div>
+      </div>
+    ),
+    dispatched: (
+      <div className="bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] rounded-lg overflow-hidden text-sm border border-border">
+        <div className="bg-gradient-to-r from-[hsl(var(--primary))] via-[hsl(var(--primary)/0.8)] to-[hsl(var(--primary))] p-6 text-center">
+          <h2 className="text-xl font-bold text-[hsl(var(--primary-foreground))]">BRAVENZA</h2>
+          <p className="text-[hsl(var(--primary-foreground)/0.8)] text-xs">Pedido Enviado! 🚚</p>
+        </div>
+        <div className="p-6 space-y-4">
+          <p>Olá, <strong>João</strong>!</p>
+          <p className="text-muted-foreground text-xs">
+            Seu pedido <span className="text-primary">BV-260126-001</span> está a caminho!
+          </p>
+          <div className="bg-muted rounded-lg p-4 space-y-2">
+            <p className="text-xs text-muted-foreground">Código de Rastreio:</p>
+            <p className="font-mono font-bold">BR123456789BR</p>
+            <p className="text-xs text-muted-foreground">Transportadora: Correios</p>
           </div>
         </div>
       </div>
     ),
     delivered: (
-      <div className="bg-[#0a0a0a] text-white rounded-lg overflow-hidden text-sm">
-        <div className="bg-gradient-to-r from-[#d4af37] via-[#f4e5a3] to-[#d4af37] p-6 text-center">
-          <h2 className="text-xl font-bold text-[#0a0a0a]">BRAVENZA</h2>
-          <p className="text-[#333] text-xs">Pedido Entregue! 🎉</p>
+      <div className="bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] rounded-lg overflow-hidden text-sm border border-border">
+        <div className="bg-gradient-to-r from-[hsl(var(--primary))] via-[hsl(var(--primary)/0.8)] to-[hsl(var(--primary))] p-6 text-center">
+          <h2 className="text-xl font-bold text-[hsl(var(--primary-foreground))]">BRAVENZA</h2>
+          <p className="text-[hsl(var(--primary-foreground)/0.8)] text-xs">Pedido Entregue! 🎉</p>
         </div>
         <div className="p-6 space-y-4">
           <p>Olá, <strong>João</strong>!</p>
-          <p className="text-gray-400 text-xs">
-            Seu pedido <span className="text-[#d4af37]">BV-260126-001</span> foi entregue com sucesso!
+          <p className="text-muted-foreground text-xs">
+            Seu pedido <span className="text-primary">BV-260126-001</span> foi entregue com sucesso!
           </p>
-          <div className="bg-[#252525] rounded-lg p-4">
-            <p className="text-center text-white">📦 Nike Air Force 1</p>
+          <div className="bg-muted rounded-lg p-4">
+            <p className="text-center">📦 Nike Air Force 1</p>
           </div>
-          <p className="text-gray-400 text-xs text-center">
+          <p className="text-muted-foreground text-xs text-center">
             Esperamos que você ame seu novo tênis! 👟
           </p>
           <div className="text-center">
-            <button className="bg-gradient-to-r from-[#d4af37] via-[#f4e5a3] to-[#d4af37] text-[#0a0a0a] px-6 py-2 rounded font-bold text-xs">
+            <button className="bg-gradient-to-r from-primary via-primary/80 to-primary text-primary-foreground px-6 py-2 rounded font-bold text-xs">
               Avaliar Minha Experiência ⭐
             </button>
           </div>
@@ -382,50 +504,50 @@ function EmailPreview({ templateId }: { templateId: string }) {
       </div>
     ),
     review_request: (
-      <div className="bg-[#0a0a0a] text-white rounded-lg overflow-hidden text-sm">
-        <div className="bg-gradient-to-r from-[#d4af37] via-[#f4e5a3] to-[#d4af37] p-6 text-center">
-          <h2 className="text-xl font-bold text-[#0a0a0a]">BRAVENZA</h2>
-          <p className="text-[#333] text-xs">Como foi sua experiência? ⭐</p>
+      <div className="bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] rounded-lg overflow-hidden text-sm border border-border">
+        <div className="bg-gradient-to-r from-[hsl(var(--primary))] via-[hsl(var(--primary)/0.8)] to-[hsl(var(--primary))] p-6 text-center">
+          <h2 className="text-xl font-bold text-[hsl(var(--primary-foreground))]">BRAVENZA</h2>
+          <p className="text-[hsl(var(--primary-foreground)/0.8)] text-xs">Como foi sua experiência? ⭐</p>
         </div>
         <div className="p-6 space-y-4">
           <p>Olá, <strong>João</strong>!</p>
-          <p className="text-gray-400 text-xs">
-            Já faz alguns dias que você recebeu seu pedido <span className="text-[#d4af37]">BV-260126-001</span>.
+          <p className="text-muted-foreground text-xs">
+            Já faz alguns dias que você recebeu seu pedido <span className="text-primary">BV-260126-001</span>.
           </p>
-          <p className="text-gray-400 text-xs">
+          <p className="text-muted-foreground text-xs">
             Gostaríamos de saber: como foi sua experiência conosco?
           </p>
           <div className="text-center">
-            <button className="bg-gradient-to-r from-[#d4af37] via-[#f4e5a3] to-[#d4af37] text-[#0a0a0a] px-6 py-2 rounded font-bold text-xs">
+            <button className="bg-gradient-to-r from-primary via-primary/80 to-primary text-primary-foreground px-6 py-2 rounded font-bold text-xs">
               Avaliar Agora ⭐⭐⭐⭐⭐
             </button>
           </div>
-          <p className="text-gray-500 text-[10px] text-center">
+          <p className="text-muted-foreground text-[10px] text-center">
             Sua opinião é muito importante para nós!
           </p>
         </div>
       </div>
     ),
     referral_confirmed: (
-      <div className="bg-[#0a0a0a] text-white rounded-lg overflow-hidden text-sm">
-        <div className="bg-gradient-to-r from-[#d4af37] via-[#f4e5a3] to-[#d4af37] p-6 text-center">
-          <h2 className="text-xl font-bold text-[#0a0a0a]">BRAVENZA</h2>
-          <p className="text-[#333] text-xs">Parabéns! Sua indicação valeu! 🎁</p>
+      <div className="bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] rounded-lg overflow-hidden text-sm border border-border">
+        <div className="bg-gradient-to-r from-[hsl(var(--primary))] via-[hsl(var(--primary)/0.8)] to-[hsl(var(--primary))] p-6 text-center">
+          <h2 className="text-xl font-bold text-[hsl(var(--primary-foreground))]">BRAVENZA</h2>
+          <p className="text-[hsl(var(--primary-foreground)/0.8)] text-xs">Parabéns! Sua indicação valeu! 🎁</p>
         </div>
         <div className="p-6 space-y-4">
           <p>Olá, <strong>João</strong>!</p>
-          <p className="text-gray-400 text-xs">
+          <p className="text-muted-foreground text-xs">
             <strong>Maria</strong> finalizou uma compra usando sua indicação!
           </p>
-          <div className="bg-[#252525] rounded-lg p-4 text-center">
-            <p className="text-[#d4af37] font-bold text-lg">5% de desconto</p>
-            <p className="text-xs text-gray-400">no seu próximo pedido</p>
+          <div className="bg-muted rounded-lg p-4 text-center">
+            <p className="text-primary font-bold text-lg">5% de desconto</p>
+            <p className="text-xs text-muted-foreground">no seu próximo pedido</p>
           </div>
-          <div className="bg-[#252525] rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-400">Seu código:</p>
-            <p className="text-white font-mono font-bold">BRVZABC123</p>
+          <div className="bg-muted rounded-lg p-3 text-center">
+            <p className="text-xs text-muted-foreground">Seu código:</p>
+            <p className="font-mono font-bold">BRVZABC123</p>
           </div>
-          <p className="text-gray-500 text-[10px] text-center">
+          <p className="text-muted-foreground text-[10px] text-center">
             Continue indicando e ganhe mais descontos!
           </p>
         </div>
