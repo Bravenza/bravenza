@@ -2506,7 +2506,6 @@ export type Database = {
         Returns: {
           attachments: string[]
           author_avatar: string
-          author_id: string
           author_name: string
           author_tier: string
           comments_count: number
@@ -2519,6 +2518,7 @@ export type Database = {
           reactions_summary: Json
           title: string
           type: string
+          user_id: string
           user_reactions: string[]
         }[]
       }
@@ -2662,7 +2662,6 @@ export type Database = {
         Returns: {
           attachments: string[]
           author_avatar: string
-          author_id: string
           author_name: string
           author_tier: string
           comments_count: number
@@ -2675,6 +2674,7 @@ export type Database = {
           reactions_summary: Json
           title: string
           type: string
+          user_id: string
           user_reactions: string[]
         }[]
       }
