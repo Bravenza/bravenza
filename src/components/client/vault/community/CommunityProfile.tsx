@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, MapPin, Calendar, ShoppingBag, Users, UserPlus,
   Instagram, Facebook, Linkedin, Twitter, Shield, Crown, Sparkles,
-  Settings, Check, Star, Award, Gem, Zap
+  Settings, Check, Award, Gem
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -530,84 +530,81 @@ export function CommunityProfile({ memberId, clientCpf, onClose, onFollowChange 
                       )}
                     </motion.div>
 
-                    {/* Collection Section */}
+                    {/* Collection Section - Clean Modern Design */}
                     {items.length > 0 && (
                       <motion.div
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.5 }}
-                        className="pt-2"
+                        className="pt-3 border-t border-border/30"
                       >
-                        <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-sm font-semibold flex items-center gap-2">
-                            <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
-                              <ShoppingBag className="h-3.5 w-3.5 text-primary" />
-                            </div>
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                             Coleção
                           </h3>
-                          <span className="text-xs text-muted-foreground font-medium">
-                            {items.length} {items.length === 1 ? 'item' : 'itens'}
+                          <span className="text-xs text-muted-foreground/70">
+                            {items.length} {items.length === 1 ? 'peça' : 'peças'}
                           </span>
                         </div>
                         
-                        <div className="grid grid-cols-3 gap-2">
-                          {items.slice(0, 6).map((item, index) => (
+                        {/* Clean Horizontal Scroll */}
+                        <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
+                          {items.slice(0, 8).map((item, index) => (
                             <motion.div
                               key={item.id}
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ delay: 0.55 + index * 0.05 }}
-                              whileHover={{ scale: 1.08, y: -4, zIndex: 10 }}
-                              className="aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-secondary to-secondary/50 relative group cursor-pointer border border-border/40 hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-xl"
+                              initial={{ opacity: 0, x: 20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.55 + index * 0.03 }}
+                              className="flex-shrink-0 group"
                             >
-                              {item.inspection_photos?.[0] ? (
-                                <img
-                                  src={item.inspection_photos[0]}
-                                  alt={item.title}
-                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-115"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <ShoppingBag className="h-5 w-5 text-muted-foreground/50" />
-                                </div>
-                              )}
-                              
-                              {/* Hover Overlay */}
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-2">
-                                <p className="text-white text-[10px] font-semibold truncate">{item.brand || item.title}</p>
-                                {item.model && (
-                                  <p className="text-white/70 text-[9px] truncate">{item.model}</p>
+                              <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-secondary/30">
+                                {item.inspection_photos?.[0] ? (
+                                  <img
+                                    src={item.inspection_photos[0]}
+                                    alt={item.title}
+                                    className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-secondary/50">
+                                    <ShoppingBag className="h-4 w-4 text-muted-foreground/30" />
+                                  </div>
+                                )}
+                                
+                                {/* Subtle Verified Indicator */}
+                                {item.verified_status === "VERIFIED" && (
+                                  <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-primary/90 flex items-center justify-center">
+                                    <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                                  </div>
                                 )}
                               </div>
                               
-                              {/* Verified Badge */}
-                              {item.verified_status === "VERIFIED" && (
-                                <motion.div 
-                                  initial={{ scale: 0 }}
-                                  animate={{ scale: 1 }}
-                                  transition={{ delay: 0.6 + index * 0.05 }}
-                                  className="absolute top-1 right-1 p-1 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground rounded-full shadow-lg"
-                                >
-                                  <Check className="h-2 w-2" />
-                                </motion.div>
-                              )}
+                              {/* Clean Label Below */}
+                              <div className="mt-1.5 w-20">
+                                <p className="text-[10px] font-medium text-foreground/80 truncate">
+                                  {item.brand || item.title}
+                                </p>
+                                {item.size && (
+                                  <p className="text-[9px] text-muted-foreground/60">
+                                    Tam. {item.size}
+                                  </p>
+                                )}
+                              </div>
                             </motion.div>
                           ))}
+                          
+                          {/* "More" Indicator */}
+                          {items.length > 8 && (
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ delay: 0.8 }}
+                              className="flex-shrink-0 w-20 h-20 rounded-lg bg-secondary/20 border border-dashed border-border/40 flex flex-col items-center justify-center"
+                            >
+                              <span className="text-lg font-semibold text-muted-foreground/50">+{items.length - 8}</span>
+                              <span className="text-[9px] text-muted-foreground/40">peças</span>
+                            </motion.div>
+                          )}
                         </div>
-                        
-                        {items.length > 6 && (
-                          <motion.div 
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.8 }}
-                            className="mt-3 text-center"
-                          >
-                            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                              <Star className="h-3 w-3 text-primary animate-pulse" />
-                              +{items.length - 6} itens na coleção
-                            </span>
-                          </motion.div>
-                        )}
                       </motion.div>
                     )}
                   </div>
