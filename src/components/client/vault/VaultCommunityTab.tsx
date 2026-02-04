@@ -176,10 +176,19 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
 
   const handleLike = async (postId: string) => {
     try {
-      await supabase.rpc("toggle_post_like", {
+      const { data, error } = await supabase.rpc("toggle_post_like", {
         p_post_id: postId,
         p_cpf: clientCpf,
       });
+      
+      if (error) {
+        console.error("Error toggling like:", error);
+        toast({
+          title: "Erro ao curtir",
+          description: "Tente novamente",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Error toggling like:", error);
     }
@@ -187,11 +196,20 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
 
   const handleReaction = async (postId: string, reactionType: string) => {
     try {
-      await supabase.rpc("toggle_post_reaction", {
+      const { data, error } = await supabase.rpc("toggle_post_reaction", {
         p_post_id: postId,
         p_cpf: clientCpf,
         p_reaction_type: reactionType,
       });
+      
+      if (error) {
+        console.error("Error toggling reaction:", error);
+        toast({
+          title: "Erro ao reagir",
+          description: "Tente novamente",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Error toggling reaction:", error);
     }

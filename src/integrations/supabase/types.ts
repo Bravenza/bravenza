@@ -2506,11 +2506,13 @@ export type Database = {
         Returns: {
           attachments: string[]
           author_avatar: string
+          author_items_count: number
           author_name: string
           author_tier: string
           comments_count: number
           content: string
           created_at: string
+          has_liked: boolean
           id: string
           is_pinned: boolean
           likes_count: number
@@ -2662,11 +2664,13 @@ export type Database = {
         Returns: {
           attachments: string[]
           author_avatar: string
+          author_items_count: number
           author_name: string
           author_tier: string
           comments_count: number
           content: string
           created_at: string
+          has_liked: boolean
           id: string
           is_pinned: boolean
           likes_count: number
