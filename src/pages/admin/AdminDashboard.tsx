@@ -26,7 +26,6 @@ interface DashboardStats {
 
 interface RecentOrder {
   order_id: string;
-  order_type: string;
   current_status: string;
   client_name: string;
   product_name: string;

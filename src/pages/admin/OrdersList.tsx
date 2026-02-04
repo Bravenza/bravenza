@@ -43,7 +43,6 @@ import {
 
 interface Order {
   order_id: string;
-  order_type: string;
   current_status: string;
   client_name: string;
   client_cpf: string;

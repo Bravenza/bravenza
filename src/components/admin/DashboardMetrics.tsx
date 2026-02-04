@@ -21,7 +21,6 @@ import { ptBR } from "date-fns/locale";
 
 interface OrderData {
   order_id: string;
-  order_type: string;
   current_status: string;
   product_price: number | null;
   sinal_value: number | null;
@@ -76,7 +75,7 @@ export function DashboardMetrics() {
     try {
       const { data: orders, error } = await supabase
         .from("orders")
-        .select("order_id, order_type, current_status, product_price, sinal_value, sinal_paid, sinal_paid_at, balance_value, balance_paid, budget_status, budget_sent_at, budget_approved_at, created_at")
+        .select("order_id, current_status, product_price, sinal_value, sinal_paid, sinal_paid_at, balance_value, balance_paid, budget_status, budget_sent_at, budget_approved_at, created_at")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
