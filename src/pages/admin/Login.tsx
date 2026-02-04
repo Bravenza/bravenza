@@ -161,9 +161,16 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col relative">
+      {/* Background decorations */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-grid-pattern opacity-20" />
+        <div className="absolute top-1/4 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
+      </div>
+
       {/* Header */}
-      <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm">
+      <header className="relative border-b border-border/30 bg-background/80 backdrop-blur-xl">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/">
             <Logo size="md" />
@@ -177,7 +184,7 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
       </header>
 
       {/* Main */}
-      <main className="flex-1 flex items-center justify-center p-4">
+      <main className="relative z-10 flex-1 flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -185,7 +192,7 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
         >
           <div className="card-premium p-8">
             <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold">Área Administrativa</h1>
+              <h1 className="text-2xl font-display font-bold">Área Administrativa</h1>
               <p className="text-muted-foreground mt-2">
                 Acesse o painel de gestão BRAVENZA
               </p>

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,7 +76,13 @@ export default function ClientLogin() {
 
   return (
     <PublicLayout showHeader={false}>
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      {/* Background decorations */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-grid-pattern opacity-30" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -85,15 +90,15 @@ export default function ClientLogin() {
         >
           <div className="flex flex-col items-center text-center mb-8">
             <Logo size="lg" className="mb-4" />
-            <h1 className="text-2xl font-bold text-foreground">Área do Cliente</h1>
+            <h1 className="text-2xl font-display font-bold text-foreground">Área do Cliente</h1>
             <p className="text-muted-foreground mt-2">
               Acompanhe seus pedidos e documentos
             </p>
           </div>
 
-          <Card className="border-border/50 bg-card/50 backdrop-blur">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+          <div className="card-premium p-6">
+            <div className="mb-6">
+              <h2 className="font-display font-semibold text-lg flex items-center gap-2">
                 {step === "cpf" ? (
                   <>
                     <Shield className="h-5 w-5 text-primary" />
@@ -105,15 +110,15 @@ export default function ClientLogin() {
                     Verificação
                   </>
                 )}
-              </CardTitle>
-              <CardDescription>
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
                 {step === "cpf" 
                   ? "Digite seu CPF para receber um código de acesso por email"
                   : maskedEmail
                 }
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+              </p>
+            </div>
+            <div>
               <AnimatePresence mode="wait">
                 {step === "cpf" ? (
                   <motion.form
@@ -209,8 +214,8 @@ export default function ClientLogin() {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Não tem um pedido?{" "}
