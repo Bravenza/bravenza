@@ -3,16 +3,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, QrCode, CheckCircle2, XCircle, ExternalLink, Mail, MessageSquare, Eye, EyeOff, Percent, Users, Loader2, HelpCircle, Activity, Truck } from "lucide-react";
+import { Settings, QrCode, CheckCircle2, XCircle, ExternalLink, Mail, MessageSquare, Percent, Users, Loader2, HelpCircle, Activity, Truck, Info } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { EmailSettingsTab } from "@/components/admin/settings/EmailSettingsTab";
 import { WhatsAppSettingsTab } from "@/components/admin/settings/WhatsAppSettingsTab";
 import { FAQSettingsTab } from "@/components/admin/settings/FAQSettingsTab";
 import { LogsSettingsTab } from "@/components/admin/settings/LogsSettingsTab";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ApiConfig {
   id: string;
@@ -21,6 +20,7 @@ interface ApiConfig {
   icon: React.ReactNode;
   requiredSecrets: { key: string; label: string; placeholder: string }[];
   docsUrl?: string;
+  configuredSecrets?: string[]; // Secrets that are confirmed configured in backend
 }
 
 const API_CONFIGS: ApiConfig[] = [
@@ -32,6 +32,7 @@ const API_CONFIGS: ApiConfig[] = [
     requiredSecrets: [
       { key: "MERCADO_PAGO_ACCESS_TOKEN", label: "Access Token", placeholder: "APP_USR-..." }
     ],
+    configuredSecrets: ["MERCADO_PAGO_ACCESS_TOKEN"],
     docsUrl: "https://www.mercadopago.com.br/developers/pt/docs",
   },
 ];
@@ -45,6 +46,7 @@ const NOTIFICATION_CONFIGS: ApiConfig[] = [
     requiredSecrets: [
       { key: "RESEND_API_KEY", label: "API Key", placeholder: "re_..." }
     ],
+    configuredSecrets: ["RESEND_API_KEY"],
     docsUrl: "https://resend.com/docs",
   },
   {
@@ -70,21 +72,10 @@ const LOGISTICS_CONFIGS: ApiConfig[] = [
     requiredSecrets: [
       { key: "SUPERFRETE_API_TOKEN", label: "API Token", placeholder: "Token da API SuperFrete" }
     ],
+    configuredSecrets: ["SUPERFRETE_API_TOKEN"],
     docsUrl: "https://docs.superfrete.com",
   },
 ];
-
-const getStoredConfig = (key: string): string | null => {
-  return localStorage.getItem(`config_${key}`);
-};
-
-const setStoredConfig = (key: string, value: string): void => {
-  localStorage.setItem(`config_${key}`, value);
-};
-
-const isConfigured = (secrets: { key: string }[]): boolean => {
-  return secrets.every(s => !!getStoredConfig(s.key));
-};
 
 function useSystemSetting(key: string, defaultValue: string = "") {
   const [value, setValue] = useState<string>(defaultValue);
@@ -175,6 +166,17 @@ export default function SettingsPage() {
         </TabsList>
 
         <TabsContent value="geral" className="space-y-6">
+          <Alert className="border-primary/20 bg-primary/5">
+            <Info className="h-4 w-4" />
+            <AlertTitle>Gerenciamento de API Keys</AlertTitle>
+            <AlertDescription className="text-sm">
+              As API keys são gerenciadas de forma segura pelo Lovable Cloud. Para adicionar ou atualizar uma chave, 
+              basta solicitar ao assistente Lovable: <strong>"adicione a API key do Mercado Pago"</strong> ou 
+              <strong>"configure o secret RESEND_API_KEY"</strong>. O assistente irá abrir um formulário seguro 
+              para você inserir a chave, que será armazenada diretamente no backend.
+            </AlertDescription>
+          </Alert>
+
           <ReferralSettingsCard />
 
           <Card>
@@ -338,166 +340,56 @@ function ReferralSettingsCard() {
 }
 
 function ApiIntegrationCard({ config }: { config: ApiConfig }) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [secretValues, setSecretValues] = useState<Record<string, string>>({});
-  const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
-  const [configured, setConfigured] = useState(() => isConfigured(config.requiredSecrets));
-
-  const handleOpenDialog = () => {
-    const existing: Record<string, string> = {};
-    config.requiredSecrets.forEach(s => {
-      const stored = getStoredConfig(s.key);
-      if (stored) existing[s.key] = stored;
-    });
-    setSecretValues(existing);
-    setIsDialogOpen(true);
-  };
-
-  const handleSave = () => {
-    const allFilled = config.requiredSecrets.every(s => secretValues[s.key]?.trim());
-    if (!allFilled) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
-
-    config.requiredSecrets.forEach(s => {
-      setStoredConfig(s.key, secretValues[s.key]);
-    });
-
-    setConfigured(true);
-    setIsDialogOpen(false);
-    toast.success(`${config.name} configurado com sucesso!`);
-  };
-
-  const handleRemove = () => {
-    config.requiredSecrets.forEach(s => {
-      localStorage.removeItem(`config_${s.key}`);
-    });
-    setSecretValues({});
-    setConfigured(false);
-    setIsDialogOpen(false);
-    toast.success(`Configuração do ${config.name} removida`);
-  };
-
-  const toggleShowSecret = (key: string) => {
-    setShowSecrets(prev => ({ ...prev, [key]: !prev[key] }));
-  };
+  // Check if the integration has configured secrets in the backend
+  const isConfiguredInBackend = config.configuredSecrets && config.configuredSecrets.length > 0;
+  const missingSecrets = config.requiredSecrets.filter(
+    s => !config.configuredSecrets?.includes(s.key)
+  );
+  const hasAllSecrets = missingSecrets.length === 0 && isConfiguredInBackend;
 
   return (
-    <>
-      <div className="flex items-center justify-between p-4 border rounded-lg bg-card">
-        <div className="flex items-center gap-4">
-          <div className="p-2 bg-muted rounded-lg">
-            {config.icon}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold">{config.name}</h3>
-              <Badge variant={configured ? "default" : "secondary"}>
-                {configured ? (
-                  <>
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    Configurado
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="h-3 w-3 mr-1" />
-                    Pendente
-                  </>
-                )}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              {config.description}
-            </p>
-          </div>
+    <div className="flex items-center justify-between p-4 border rounded-lg bg-card">
+      <div className="flex items-center gap-4">
+        <div className="p-2 bg-muted rounded-lg">
+          {config.icon}
         </div>
-        <div className="flex items-center gap-2">
-          {config.docsUrl && (
-            <Button variant="ghost" size="sm" asChild>
-              <a href={config.docsUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4 mr-1" />
-                Docs
-              </a>
-            </Button>
+        <div>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold">{config.name}</h3>
+            <Badge variant={hasAllSecrets ? "default" : "secondary"}>
+              {hasAllSecrets ? (
+                <>
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  Configurado
+                </>
+              ) : (
+                <>
+                  <XCircle className="h-3 w-3 mr-1" />
+                  Pendente
+                </>
+              )}
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            {config.description}
+          </p>
+          {!hasAllSecrets && missingSecrets.length > 0 && (
+            <p className="text-xs text-warning mt-1">
+              Secrets pendentes: {missingSecrets.map(s => s.key).join(", ")}
+            </p>
           )}
-          <Button variant="outline" size="sm" onClick={handleOpenDialog}>
-            {configured ? "Editar" : "Configurar"}
-          </Button>
         </div>
       </div>
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {config.icon}
-              Configurar {config.name}
-            </DialogTitle>
-            <DialogDescription>
-              Insira as credenciais da API para ativar a integração.
-              {config.docsUrl && (
-                <a 
-                  href={config.docsUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline ml-1"
-                >
-                  Ver documentação
-                </a>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            {config.requiredSecrets.map((secret) => (
-              <div key={secret.key} className="space-y-2">
-                <Label htmlFor={secret.key}>{secret.label}</Label>
-                <div className="relative">
-                  <Input
-                    id={secret.key}
-                    type={showSecrets[secret.key] ? "text" : "password"}
-                    placeholder={secret.placeholder}
-                    value={secretValues[secret.key] || ""}
-                    onChange={(e) => setSecretValues(prev => ({ ...prev, [secret.key]: e.target.value }))}
-                    className="pr-10"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                    onClick={() => toggleShowSecret(secret.key)}
-                  >
-                    {showSecrets[secret.key] ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Variável: <code className="bg-muted px-1 rounded">{secret.key}</code>
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            {configured && (
-              <Button variant="destructive" onClick={handleRemove} className="sm:mr-auto">
-                Remover
-              </Button>
-            )}
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave}>
-              Salvar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+      <div className="flex items-center gap-2">
+        {config.docsUrl && (
+          <Button variant="ghost" size="sm" asChild>
+            <a href={config.docsUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4 mr-1" />
+              Docs
+            </a>
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }
