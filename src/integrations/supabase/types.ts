@@ -1025,12 +1025,143 @@ export type Database = {
           },
         ]
       }
+      vault_community_comment_likes: {
+        Row: {
+          comment_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_community_comment_likes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "vault_community_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_community_comment_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_community_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          edited_at: string | null
+          id: string
+          likes_count: number | null
+          parent_id: string | null
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          edited_at?: string | null
+          id?: string
+          likes_count?: number | null
+          parent_id?: string | null
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          edited_at?: string | null
+          id?: string
+          likes_count?: number | null
+          parent_id?: string | null
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_community_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "vault_community_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_community_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "vault_community_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_community_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_community_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_community_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "vault_community_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_community_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vault_community_posts: {
         Row: {
           attachments: string[] | null
+          comments_count: number | null
           content: string | null
           created_at: string | null
+          edited_at: string | null
           id: string
+          is_pinned: boolean | null
+          likes_count: number | null
           moderated_by_admin_id: string | null
           moderation_notes: string | null
           status: Database["public"]["Enums"]["community_post_status"] | null
@@ -1040,9 +1171,13 @@ export type Database = {
         }
         Insert: {
           attachments?: string[] | null
+          comments_count?: number | null
           content?: string | null
           created_at?: string | null
+          edited_at?: string | null
           id?: string
+          is_pinned?: boolean | null
+          likes_count?: number | null
           moderated_by_admin_id?: string | null
           moderation_notes?: string | null
           status?: Database["public"]["Enums"]["community_post_status"] | null
@@ -1052,9 +1187,13 @@ export type Database = {
         }
         Update: {
           attachments?: string[] | null
+          comments_count?: number | null
           content?: string | null
           created_at?: string | null
+          edited_at?: string | null
           id?: string
+          is_pinned?: boolean | null
+          likes_count?: number | null
           moderated_by_admin_id?: string | null
           moderation_notes?: string | null
           status?: Database["public"]["Enums"]["community_post_status"] | null
@@ -1067,6 +1206,35 @@ export type Database = {
             foreignKeyName: "vault_community_posts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_community_presence: {
+        Row: {
+          id: string
+          last_seen_at: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          last_seen_at?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          last_seen_at?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_community_presence_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "vault_members"
             referencedColumns: ["id"]
           },
@@ -1869,6 +2037,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_post_comment: {
+        Args: {
+          p_content: string
+          p_cpf: string
+          p_parent_id?: string
+          p_post_id: string
+        }
+        Returns: string
+      }
       apply_cashback_to_order: {
         Args: {
           p_cpf: string
@@ -2102,6 +2279,16 @@ export type Database = {
           status: string
         }[]
       }
+      get_online_community_users: {
+        Args: { p_minutes?: number }
+        Returns: {
+          items_count: number
+          last_seen_at: string
+          user_id: string
+          user_name: string
+          user_tier: string
+        }[]
+      }
       get_order_by_token: {
         Args: { p_token: string }
         Returns: {
@@ -2132,6 +2319,30 @@ export type Database = {
           history_timestamp: string
           notes: string
           status: Database["public"]["Enums"]["order_status"]
+        }[]
+      }
+      get_post_comments: {
+        Args: { p_cpf: string; p_post_id: string }
+        Returns: {
+          author_name: string
+          author_tier: string
+          content: string
+          created_at: string
+          has_liked: boolean
+          id: string
+          likes_count: number
+          parent_id: string
+          user_id: string
+        }[]
+      }
+      get_trending_posts: {
+        Args: { p_limit?: number }
+        Returns: {
+          author_name: string
+          comments_count: number
+          id: string
+          likes_count: number
+          title: string
         }[]
       }
       get_vault_badges: {
@@ -2171,17 +2382,36 @@ export type Database = {
           vault_id: string
         }[]
       }
+      get_vault_community_feed: {
+        Args: { p_cpf: string; p_limit?: number; p_offset?: number }
+        Returns: {
+          attachments: string[]
+          author_items_count: number
+          author_name: string
+          author_tier: string
+          comments_count: number
+          content: string
+          created_at: string
+          has_liked: boolean
+          id: string
+          is_pinned: boolean
+          likes_count: number
+          title: string
+          type: string
+          user_id: string
+        }[]
+      }
       get_vault_community_posts: {
         Args: { p_cpf: string }
         Returns: {
           attachments: string[]
           author_name: string
-          author_tier: Database["public"]["Enums"]["vault_tier"]
+          author_tier: string
           content: string
           created_at: string
           id: string
           title: string
-          type: Database["public"]["Enums"]["community_post_type"]
+          type: string
         }[]
       }
       get_vault_hunt_options: {
@@ -2351,6 +2581,14 @@ export type Database = {
         Args: { p_cpf: string; p_wishlist_id: string }
         Returns: string
       }
+      toggle_comment_like: {
+        Args: { p_comment_id: string; p_cpf: string }
+        Returns: boolean
+      }
+      toggle_post_like: {
+        Args: { p_cpf: string; p_post_id: string }
+        Returns: boolean
+      }
       track_order: {
         Args: { p_cpf: string; p_order_id: string }
         Returns: {
@@ -2376,6 +2614,7 @@ export type Database = {
           sla_vault_due_date: string
         }[]
       }
+      update_presence: { Args: { p_cpf: string }; Returns: undefined }
       update_vault_community_opt_in: {
         Args: { p_cpf: string; p_opt_in: boolean }
         Returns: boolean

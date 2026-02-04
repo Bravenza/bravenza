@@ -1,31 +1,23 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Users, MessageSquare, Image, Plus, 
-  Crown, Shield, Sparkles
+  Users, Image, MessageSquare, RefreshCw, Loader2, Settings, LogOut
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
-interface CommunityPost {
-  id: string;
-  author_name: string;
-  author_tier: "member" | "collector" | "elite";
-  type: "SHOWCASE" | "DISCUSSION" | "POLL";
-  title: string;
-  content: string;
-  attachments: string[];
-  created_at: string;
-}
+import {
+  CommunityPostCard,
+  CommunityComments,
+  CommunityOnlineUsers,
+  CommunityTrending,
+  CommunityNewPost,
+  type CommunityPost,
+} from "./community";
 
 interface VaultMember {
   id: string;
@@ -37,61 +29,85 @@ interface VaultCommunityTabProps {
   member: VaultMember | null;
 }
 
-const tierIcons = {
-  member: Shield,
-  collector: Crown,
-  elite: Sparkles,
-};
-
-const tierColors = {
-  member: "text-muted-foreground",
-  collector: "text-amber-500",
-  elite: "text-primary",
-};
-
 export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps) {
   const { toast } = useToast();
   
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isOptedIn, setIsOptedIn] = useState(false);
   const [isUpdatingOptIn, setIsUpdatingOptIn] = useState(false);
-  const [showPostDialog, setShowPostDialog] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const [newPost, setNewPost] = useState({
-    type: "DISCUSSION",
-    title: "",
-    content: "",
-  });
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     checkOptIn();
-    fetchPosts();
   }, [clientCpf]);
 
+  useEffect(() => {
+    if (isOptedIn) {
+      fetchPosts();
+      setupRealtime();
+    }
+  }, [isOptedIn]);
+
   const checkOptIn = async () => {
-    const { data } = await supabase
-      .rpc("get_vault_member", { p_cpf: clientCpf });
+    const { data } = await supabase.rpc("get_vault_member", { p_cpf: clientCpf });
     
     if (data && data.length > 0) {
       setIsOptedIn(data[0].community_opt_in || false);
     }
+    setIsLoading(false);
   };
 
-  const fetchPosts = async () => {
-    setIsLoading(true);
+  const setupRealtime = () => {
+    const channel = supabase
+      .channel("community_feed")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "vault_community_posts" },
+        () => {
+          // Refresh feed when new post is added
+          fetchPosts(true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const fetchPosts = async (refresh = false) => {
+    if (refresh) {
+      setIsRefreshing(true);
+      setOffset(0);
+    }
+
     try {
-      const { data, error } = await supabase
-        .rpc("get_vault_community_posts", { p_cpf: clientCpf });
-      
+      const currentOffset = refresh ? 0 : offset;
+      const { data, error } = await supabase.rpc("get_vault_community_feed", {
+        p_cpf: clientCpf,
+        p_limit: 20,
+        p_offset: currentOffset,
+      });
+
       if (!error && data) {
-        setPosts(data as unknown as CommunityPost[]);
+        const newPosts = data as unknown as CommunityPost[];
+        if (refresh) {
+          setPosts(newPosts);
+        } else {
+          setPosts(prev => [...prev, ...newPosts]);
+        }
+        setHasMore(newPosts.length === 20);
+        setOffset(currentOffset + newPosts.length);
       }
     } catch (error) {
       console.error("Error fetching posts:", error);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -99,16 +115,26 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
     setIsUpdatingOptIn(true);
     
     try {
-      const { error } = await supabase
-        .rpc("update_vault_community_opt_in", { p_cpf: clientCpf, p_opt_in: !isOptedIn });
+      const { error } = await supabase.rpc("update_vault_community_opt_in", {
+        p_cpf: clientCpf,
+        p_opt_in: !isOptedIn,
+      });
       
       if (error) throw error;
       
-      setIsOptedIn(!isOptedIn);
+      const newOptIn = !isOptedIn;
+      setIsOptedIn(newOptIn);
+      
       toast({
-        title: !isOptedIn ? "Você entrou na comunidade!" : "Você saiu da comunidade",
-        description: !isOptedIn ? "Agora você pode ver e criar publicações" : "Você não verá mais publicações da comunidade",
+        title: newOptIn ? "Bem-vindo à comunidade! 🎉" : "Você saiu da comunidade",
+        description: newOptIn 
+          ? "Agora você pode interagir com outros membros" 
+          : "Você não verá mais publicações",
       });
+
+      if (newOptIn) {
+        fetchPosts(true);
+      }
     } catch (error) {
       console.error("Error updating opt-in:", error);
       toast({
@@ -121,239 +147,243 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
     }
   };
 
-  const handleCreatePost = async () => {
-    if (!newPost.title || !newPost.content) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha título e conteúdo",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!member) return;
-
-    setIsSubmitting(true);
-    
+  const handleLike = async (postId: string) => {
     try {
-      const { error } = await supabase
-        .from("vault_community_posts")
-        .insert({
-          user_id: member.id,
-          type: newPost.type as any,
-          title: newPost.title,
-          content: newPost.content,
-          status: "PENDING_REVIEW",
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Publicação enviada!",
-        description: "Sua publicação será revisada antes de aparecer",
+      await supabase.rpc("toggle_post_like", {
+        p_post_id: postId,
+        p_cpf: clientCpf,
       });
-
-      setShowPostDialog(false);
-      setNewPost({ type: "DISCUSSION", title: "", content: "" });
     } catch (error) {
-      console.error("Error creating post:", error);
-      toast({
-        title: "Erro ao publicar",
-        description: "Tente novamente",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+      console.error("Error toggling like:", error);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "short",
-    });
+  const handleLoadMore = () => {
+    if (!isLoading && hasMore) {
+      fetchPosts();
+    }
   };
 
-  if (!isOptedIn) {
+  const handleRefresh = () => {
+    fetchPosts(true);
+  };
+
+  const handlePostCreated = () => {
+    fetchPosts(true);
+  };
+
+  // Onboarding view for users not opted in
+  if (!isOptedIn && !isLoading) {
     return (
-      <div className="text-center py-8">
-        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-          <Users className="h-8 w-8 text-primary" />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-lg mx-auto text-center py-8"
+      >
+        <div className="relative mb-6">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 blur-3xl rounded-full" />
+          <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mx-auto border border-primary/20">
+            <Users className="h-12 w-12 text-primary" />
+          </div>
         </div>
-        <h3 className="text-lg font-semibold mb-2">Comunidade Vault</h3>
-        <p className="text-muted-foreground text-sm mb-4 max-w-md mx-auto">
-          Conecte-se com outros membros do Vault Club. Compartilhe sua coleção 
-          e participe de discussões.
+
+        <h2 className="text-2xl font-bold mb-2">Comunidade Vault</h2>
+        <p className="text-muted-foreground mb-6">
+          Conecte-se com colecionadores de elite. Compartilhe sua coleção, 
+          participe de discussões e descubra peças incríveis.
         </p>
-        
-        <Card className="mb-4 max-w-md mx-auto">
-          <CardContent className="pt-6">
-            <ul className="text-sm text-left space-y-3">
-              <li className="flex items-start gap-2">
-                <Image className="h-4 w-4 text-primary mt-0.5" />
-                <span>Showcase: exiba seus tênis do Vault</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <MessageSquare className="h-4 w-4 text-primary mt-0.5" />
-                <span>Discussões sobre mercado e tendências</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Users className="h-4 w-4 text-primary mt-0.5" />
-                <span>Networking com colecionadores</span>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {[
+            { icon: Image, title: "Showcase", desc: "Exiba seus sneakers e receba feedback" },
+            { icon: MessageSquare, title: "Discussões", desc: "Participe de conversas sobre o mercado" },
+            { icon: Users, title: "Networking", desc: "Conheça outros colecionadores" },
+          ].map((feature, i) => (
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + i * 0.1 }}
+            >
+              <Card className="card-premium h-full">
+                <CardContent className="p-4 text-center">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                    <feature.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-sm">{feature.title}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">{feature.desc}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
 
         <Button
+          size="lg"
           onClick={handleOptInToggle}
           disabled={isUpdatingOptIn}
+          className="btn-gold"
         >
-          {isUpdatingOptIn ? "Entrando..." : "Entrar na comunidade"}
+          {isUpdatingOptIn ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Entrando...
+            </>
+          ) : (
+            "Entrar na comunidade"
+          )}
         </Button>
+
+        <p className="text-xs text-muted-foreground mt-4">
+          Você pode sair a qualquer momento nas configurações
+        </p>
+      </motion.div>
+    );
+  }
+
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => (
+            <Card key={i} className="card-premium">
+              <CardContent className="p-4 space-y-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-11 w-11 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </div>
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-20 w-full" />
+                <div className="flex gap-4">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-8 w-16" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="hidden lg:block space-y-4">
+          <Skeleton className="h-48" />
+          <Skeleton className="h-64" />
+        </div>
       </div>
     );
   }
 
+  // Main community view
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Switch
-            id="opt-in"
-            checked={isOptedIn}
-            onCheckedChange={handleOptInToggle}
-            disabled={isUpdatingOptIn}
-          />
-          <Label htmlFor="opt-in" className="text-sm text-muted-foreground">
-            Participando
-          </Label>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="community-opt-in"
+              checked={isOptedIn}
+              onCheckedChange={handleOptInToggle}
+              disabled={isUpdatingOptIn}
+            />
+            <Label htmlFor="community-opt-in" className="text-sm text-muted-foreground">
+              Participando
+            </Label>
+          </div>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
         </div>
-        
-        <Dialog open={showPostDialog} onOpenChange={setShowPostDialog}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Publicar
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nova publicação</DialogTitle>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              <Tabs value={newPost.type} onValueChange={(v) => setNewPost({ ...newPost, type: v })}>
-                <TabsList className="w-full">
-                  <TabsTrigger value="DISCUSSION" className="flex-1">Discussão</TabsTrigger>
-                  <TabsTrigger value="SHOWCASE" className="flex-1">Showcase</TabsTrigger>
-                </TabsList>
-              </Tabs>
 
-              <div className="space-y-2">
-                <Label>Título</Label>
-                <Input
-                  value={newPost.title}
-                  onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-                  placeholder="Título da publicação"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Conteúdo</Label>
-                <Textarea
-                  value={newPost.content}
-                  onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
-                  className="min-h-[120px]"
-                  placeholder="Escreva sua publicação..."
-                />
-              </div>
-
-              <Button
-                onClick={handleCreatePost}
-                disabled={isSubmitting}
-                className="w-full"
-              >
-                {isSubmitting ? "Enviando..." : "Publicar"}
-              </Button>
-
-              <p className="text-xs text-muted-foreground text-center">
-                Publicações são revisadas antes de aparecer
-              </p>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {member && (
+          <CommunityNewPost 
+            memberId={member.id} 
+            onPostCreated={handlePostCreated}
+          />
+        )}
       </div>
 
-      {/* Posts Feed */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-        </div>
-      ) : posts.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="py-8 text-center">
-            <MessageSquare className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground text-sm">Nenhuma publicação ainda</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Seja o primeiro a publicar!
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
+      {/* Main content grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+        {/* Feed */}
         <div className="space-y-4">
-          {posts.map((post, index) => {
-            const TierIcon = tierIcons[post.author_tier];
-            const tierColor = tierColors[post.author_tier];
-            
-            return (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Card>
-                  <CardContent className="pt-4">
-                    {/* Author */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                        <TierIcon className={`h-5 w-5 ${tierColor}`} />
-                      </div>
-                      <div>
-                        <p className="font-medium">{post.author_name}</p>
-                        <p className="text-xs text-muted-foreground">{formatDate(post.created_at)}</p>
-                      </div>
-                      <Badge variant="outline" className="ml-auto text-xs">
-                        {post.type === "SHOWCASE" ? "Showcase" : "Discussão"}
-                      </Badge>
-                    </div>
+          {posts.length === 0 ? (
+            <Card className="card-premium border-dashed">
+              <CardContent className="py-12 text-center">
+                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="font-medium mb-2">Nenhuma publicação ainda</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Seja o primeiro a publicar algo incrível!
+                </p>
+                {member && (
+                  <CommunityNewPost 
+                    memberId={member.id} 
+                    onPostCreated={handlePostCreated}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <AnimatePresence mode="popLayout">
+                {posts.map((post) => (
+                  <CommunityPostCard
+                    key={post.id}
+                    post={post}
+                    onLike={handleLike}
+                    onComment={setSelectedPostId}
+                  />
+                ))}
+              </AnimatePresence>
 
-                    {/* Content */}
-                    <h3 className="font-semibold mb-2">{post.title}</h3>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{post.content}</p>
-
-                    {/* Attachments */}
-                    {post.attachments && post.attachments.length > 0 && (
-                      <div className="mt-4 grid grid-cols-2 gap-2">
-                        {post.attachments.map((url, i) => (
-                          <img
-                            key={i}
-                            src={url}
-                            alt=""
-                            className="rounded-lg object-cover aspect-square"
-                          />
-                        ))}
-                      </div>
+              {hasMore && (
+                <div className="text-center py-4">
+                  <Button
+                    variant="outline"
+                    onClick={handleLoadMore}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Carregando...
+                      </>
+                    ) : (
+                      "Carregar mais"
                     )}
-                  </CardContent>
-                </Card>
-              </motion.div>
-            );
-          })}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
         </div>
-      )}
+
+        {/* Sidebar */}
+        <div className="hidden lg:block space-y-4">
+          <CommunityOnlineUsers clientCpf={clientCpf} />
+          <CommunityTrending />
+        </div>
+      </div>
+
+      {/* Comments drawer */}
+      <AnimatePresence>
+        {selectedPostId && (
+          <CommunityComments
+            postId={selectedPostId}
+            clientCpf={clientCpf}
+            onClose={() => setSelectedPostId(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
