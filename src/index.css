@@ -46,23 +46,29 @@
     --input: 0 0% 18%;
     --ring: 45 100% 50%;
 
-    --radius: 0.625rem;
+    --radius: 0.5rem;
 
     /* Gold gradient */
     --gradient-gold: linear-gradient(135deg, hsl(45, 100%, 50%) 0%, hsl(38, 92%, 45%) 50%, hsl(45, 100%, 55%) 100%);
-    --gradient-gold-subtle: linear-gradient(135deg, hsl(45, 100%, 50%, 0.08) 0%, hsl(38, 92%, 45%, 0.03) 100%);
-    --gradient-dark: linear-gradient(180deg, hsl(0, 0%, 14%) 0%, hsl(0, 0%, 12%) 100%);
+    --gradient-gold-subtle: linear-gradient(135deg, hsl(45, 100%, 50%, 0.06) 0%, hsl(38, 92%, 45%, 0.02) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(0, 0%, 14%) 0%, hsl(0, 0%, 10%) 100%);
+    --gradient-radial: radial-gradient(ellipse at center, hsl(45, 100%, 50%, 0.08) 0%, transparent 70%);
     
-    /* Refined shadows - minimal and elegant */
+    /* Tech-inspired border gradients */
+    --border-gradient-gold: linear-gradient(135deg, hsl(45, 100%, 50%, 0.4) 0%, hsl(45, 100%, 50%, 0.1) 50%, hsl(45, 100%, 50%, 0.3) 100%);
+    
+    /* Refined shadows */
     --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
-    --shadow-md: 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 4px 6px -2px hsl(0 0% 0% / 0.1);
-    --shadow-gold: 0 4px 14px hsl(45, 100%, 50%, 0.15);
-    --shadow-gold-hover: 0 6px 20px hsl(45, 100%, 50%, 0.25);
+    --shadow-md: 0 4px 12px -2px hsl(0 0% 0% / 0.15);
+    --shadow-lg: 0 8px 24px -4px hsl(0 0% 0% / 0.2);
+    --shadow-gold: 0 4px 20px hsl(45, 100%, 50%, 0.12);
+    --shadow-gold-hover: 0 8px 32px hsl(45, 100%, 50%, 0.2);
+    --shadow-elevated: 0 20px 40px -12px hsl(0 0% 0% / 0.35);
     
     /* Glow effects */
-    --glow-gold: 0 0 20px hsl(45, 100%, 50%, 0.2);
-    --glow-gold-intense: 0 0 30px hsl(45, 100%, 50%, 0.35);
+    --glow-gold: 0 0 40px hsl(45, 100%, 50%, 0.15);
+    --glow-gold-intense: 0 0 60px hsl(45, 100%, 50%, 0.25);
+    --glow-line: 0 0 8px hsl(45, 100%, 50%, 0.5);
 
     /* Sidebar */
     --sidebar-background: 0 0% 10%;
@@ -136,25 +142,27 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Typography hierarchy */
+  /* Typography hierarchy - Tech Modern */
   h1, .h1 {
-    @apply text-3xl md:text-4xl font-bold tracking-tight;
-    line-height: var(--line-height-tight);
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter;
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    line-height: 1.1;
   }
 
   h2, .h2 {
-    @apply text-2xl md:text-3xl font-bold tracking-tight;
-    line-height: var(--line-height-tight);
+    @apply text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight;
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    line-height: 1.15;
   }
 
   h3, .h3 {
-    @apply text-xl md:text-2xl font-semibold;
-    line-height: var(--line-height-tight);
+    @apply text-xl md:text-2xl font-semibold tracking-tight;
+    line-height: 1.2;
   }
 
   h4, .h4 {
     @apply text-lg font-semibold;
-    line-height: var(--line-height-normal);
+    line-height: 1.3;
   }
 
   /* Custom scrollbar - refined */
@@ -192,9 +200,14 @@
     background-clip: text;
   }
 
+  /* Display font utility */
+  .font-display {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+  }
+
   /* Gold border with subtle glow */
   .border-gold-glow {
-    border: 1px solid hsl(45, 100%, 50%, 0.25);
+    border: 1px solid hsl(45, 100%, 50%, 0.3);
     box-shadow: var(--shadow-gold);
   }
 
@@ -208,34 +221,108 @@
     background: var(--gradient-gold-subtle);
   }
 
-  /* Card variants - minimalist approach */
+  /* Tech grid pattern background */
+  .bg-grid-pattern {
+    background-image: 
+      linear-gradient(hsl(45, 100%, 50%, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(45, 100%, 50%, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* Radial glow background */
+  .bg-radial-glow {
+    background: var(--gradient-radial);
+  }
+
+  /* Card variants - Tech Modern */
   .card-clean {
-    @apply bg-card border border-border/50 rounded-lg;
-    transition: border-color var(--transition-base) ease;
+    @apply bg-card/80 backdrop-blur-sm rounded-md;
+    border: 1px solid hsl(var(--border) / 0.5);
+    transition: all var(--transition-base) ease;
   }
 
   .card-clean:hover {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
 
   .card-premium {
-    @apply bg-card border border-border/60 rounded-lg;
-    transition: all var(--transition-base) ease;
+    @apply bg-card/90 backdrop-blur-sm rounded-md relative overflow-hidden;
+    border: 1px solid hsl(var(--border) / 0.6);
+    transition: all var(--transition-slow) ease;
+  }
+
+  .card-premium::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, hsl(45, 100%, 50%, 0.02) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity var(--transition-base) ease;
   }
 
   .card-premium:hover {
-    @apply border-primary/20;
+    border-color: hsl(45, 100%, 50%, 0.25);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-gold);
+  }
+
+  .card-premium:hover::before {
+    opacity: 1;
   }
 
   .card-premium-gold {
-    @apply bg-card rounded-lg;
+    @apply bg-card/90 backdrop-blur-sm rounded-md relative overflow-hidden;
     border: 1px solid hsl(45, 100%, 50%, 0.15);
-    background: linear-gradient(135deg, hsl(45, 100%, 50%, 0.03) 0%, hsl(0, 0%, 14%) 100%);
-    transition: all var(--transition-base) ease;
+    transition: all var(--transition-slow) ease;
+  }
+
+  .card-premium-gold::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, hsl(45, 100%, 50%, 0.5) 50%, transparent 100%);
+    opacity: 0;
+    transition: opacity var(--transition-base) ease;
   }
 
   .card-premium-gold:hover {
-    border-color: hsl(45, 100%, 50%, 0.3);
+    border-color: hsl(45, 100%, 50%, 0.35);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-gold-hover);
+  }
+
+  .card-premium-gold:hover::before {
+    opacity: 1;
+  }
+
+  /* Glowing border card - Tech style */
+  .card-glow {
+    @apply bg-card/95 backdrop-blur-sm rounded-md relative;
+    border: 1px solid hsl(45, 100%, 50%, 0.2);
+    transition: all var(--transition-slow) ease;
+  }
+
+  .card-glow::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: var(--border-gradient-gold);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity var(--transition-base) ease;
+  }
+
+  .card-glow:hover {
+    border-color: transparent;
+    box-shadow: var(--glow-gold);
+  }
+
+  .card-glow:hover::after {
+    opacity: 1;
   }
 
   /* Interactive card - for clickable items */
