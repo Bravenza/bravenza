@@ -93,8 +93,10 @@ export function CommunityPostCard({
   isLiking 
 }: CommunityPostCardProps) {
   const { toast } = useToast();
-  const [localLiked, setLocalLiked] = useState(post.has_liked);
-  const [localLikesCount, setLocalLikesCount] = useState(post.likes_count);
+  const [localLiked, setLocalLiked] = useState(post.has_liked ?? post.is_liked ?? false);
+  const [localLikesCount, setLocalLikesCount] = useState(post.likes_count ?? 0);
+  const [isProcessingLike, setIsProcessingLike] = useState(false);
+  const [isProcessingReaction, setIsProcessingReaction] = useState(false);
   const [localReactions, setLocalReactions] = useState<ReactionType[]>(
     (post.user_reactions || []) as ReactionType[]
   );
@@ -106,8 +108,8 @@ export function CommunityPostCard({
   const [showReportDialog, setShowReportDialog] = useState(false);
 
   const tierInfo = tierConfig[post.author_tier];
-  const TierIcon = tierInfo.icon;
-  const postTypeInfo = postTypeConfig[post.type];
+  const TierIcon = tierInfo?.icon || Shield;
+  const postTypeInfo = postTypeConfig[post.type] || postTypeConfig.DISCUSSION;
 
   // Build media items from attachments
   const mediaItems = (post.attachments || []).map((url, i) => ({
@@ -130,7 +132,14 @@ export function CommunityPostCard({
     return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
   };
 
-  const handleLike = async () => {
+  const handleLikeClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isProcessingLike || isLiking) return;
+    
+    setIsProcessingLike(true);
+    
     const newLiked = !localLiked;
     setLocalLiked(newLiked);
     setLocalLikesCount(prev => newLiked ? prev + 1 : Math.max(0, prev - 1));
@@ -140,19 +149,37 @@ export function CommunityPostCard({
       setTimeout(() => setShowHeartAnimation(false), 800);
     }
     
-    const result = await onLike(post.id);
-    
-    // Revert optimistic update if failed
-    if (!result.success) {
+    try {
+      const result = await onLike(post.id);
+      
+      // Revert optimistic update if failed
+      if (!result.success) {
+        setLocalLiked(!newLiked);
+        setLocalLikesCount(prev => newLiked ? Math.max(0, prev - 1) : prev + 1);
+        toast({
+          title: "Erro ao curtir",
+          description: "Tente novamente",
+          variant: "destructive",
+        });
+      } else if (result.likes_count !== undefined) {
+        // Sync with server count
+        setLocalLikesCount(result.likes_count);
+      }
+    } catch (error) {
+      console.error("Error in handleLikeClick:", error);
+      // Revert on error
       setLocalLiked(!newLiked);
       setLocalLikesCount(prev => newLiked ? Math.max(0, prev - 1) : prev + 1);
-    } else if (result.likes_count !== undefined) {
-      // Sync with server count
-      setLocalLikesCount(result.likes_count);
+    } finally {
+      setIsProcessingLike(false);
     }
   };
 
   const handleReaction = async (type: ReactionType) => {
+    if (isProcessingReaction) return;
+    
+    setIsProcessingReaction(true);
+    
     const isAdding = !localReactions.includes(type);
     
     // Optimistic update
@@ -170,10 +197,25 @@ export function CommunityPostCard({
       setTimeout(() => setShowHeartAnimation(false), 600);
     }
 
-    const result = await onReaction(post.id, type);
-    
-    // Revert optimistic update if failed
-    if (!result.success) {
+    try {
+      const result = await onReaction(post.id, type);
+      
+      // Revert optimistic update if failed
+      if (!result.success) {
+        setLocalReactions(prev => 
+          isAdding ? prev.filter(r => r !== type) : [...prev, type]
+        );
+        setLocalReactionsSummary(prev => ({
+          ...prev,
+          [type]: Math.max(0, (prev[type] || 0) + (isAdding ? -1 : 1))
+        }));
+      } else if (result.summary) {
+        // Sync with server summary
+        setLocalReactionsSummary(result.summary);
+      }
+    } catch (error) {
+      console.error("Error in handleReaction:", error);
+      // Revert on error
       setLocalReactions(prev => 
         isAdding ? prev.filter(r => r !== type) : [...prev, type]
       );
@@ -181,22 +223,24 @@ export function CommunityPostCard({
         ...prev,
         [type]: Math.max(0, (prev[type] || 0) + (isAdding ? -1 : 1))
       }));
-    } else if (result.summary) {
-      // Sync with server summary
-      setLocalReactionsSummary(result.summary);
+    } finally {
+      setIsProcessingReaction(false);
     }
   };
 
   const handleDoubleClick = () => {
     if (!localLiked) {
-      handleLike();
+      handleLikeClick({ preventDefault: () => {}, stopPropagation: () => {} } as React.MouseEvent);
     } else {
       setShowHeartAnimation(true);
       setTimeout(() => setShowHeartAnimation(false), 800);
     }
   };
 
-  const handleShare = async () => {
+  const handleShareClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     const shareUrl = `${window.location.origin}/vault/community/post/${post.id}`;
     
     if (navigator.share) {
@@ -218,6 +262,12 @@ export function CommunityPostCard({
     }
     
     onShare?.(post.id);
+  };
+
+  const handleCommentClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onComment(post.id);
   };
 
   const handleSave = () => {
@@ -304,7 +354,7 @@ export function CommunityPostCard({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal className="h-4 w-4" aria-label="Mais opções" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
@@ -312,7 +362,7 @@ export function CommunityPostCard({
                     <Bookmark className={cn("h-4 w-4 mr-2", isSaved && "fill-current")} />
                     {isSaved ? "Remover dos salvos" : "Salvar publicação"}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleShare}>
+              <DropdownMenuItem onClick={(e) => handleShareClick(e as unknown as React.MouseEvent)}>
                     <Send className="h-4 w-4 mr-2" />
                     Enviar para amigo
                   </DropdownMenuItem>
@@ -402,7 +452,6 @@ export function CommunityPostCard({
           {/* Actions */}
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center gap-1">
-              {/* Reaction picker */}
               <ReactionPicker
                 onSelect={handleReaction}
                 userReactions={localReactions}
@@ -411,13 +460,13 @@ export function CommunityPostCard({
               />
             </div>
 
-            <div className="flex items-center gap-1">
-              {/* Like button */}
+          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleLike}
-                disabled={isLiking}
+              onClick={handleLikeClick}
+              disabled={isLiking || isProcessingLike}
+              type="button"
                 className={cn(
                   "flex items-center gap-2 hover:text-red-500 transition-colors",
                   localLiked && "text-red-500"
@@ -432,23 +481,23 @@ export function CommunityPostCard({
                 <span className="text-sm font-medium">Curtir</span>
               </Button>
 
-              {/* Comment button */}
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onComment(post.id)}
-                className="flex items-center gap-2 hover:text-primary transition-colors"
+              onClick={handleCommentClick}
+              type="button"
+              className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"
               >
                 <MessageCircle className="h-5 w-5" />
                 <span className="text-sm font-medium">Comentar</span>
               </Button>
 
-              {/* Share button */}
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleShare}
-                className="flex items-center gap-2 hover:text-primary transition-colors"
+              onClick={handleShareClick}
+              type="button"
+              className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"
               >
                 <Share2 className="h-5 w-5" />
                 <span className="text-sm font-medium hidden sm:inline">Compartilhar</span>
