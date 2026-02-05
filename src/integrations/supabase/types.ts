@@ -2259,25 +2259,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      add_post_comment:
-        | {
-            Args: {
-              p_content: string
-              p_cpf: string
-              p_parent_id?: string
-              p_post_id: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_content: string
-              p_cpf: string
-              p_parent_id?: string
-              p_post_id: string
-            }
-            Returns: Json
-          }
+      add_post_comment: {
+        Args: {
+          p_content: string
+          p_cpf: string
+          p_parent_id?: string
+          p_post_id: string
+        }
+        Returns: Json
+      }
       apply_cashback_to_order: {
         Args: {
           p_cpf: string
@@ -2881,9 +2871,10 @@ export type Database = {
         Args: { p_cpf: string; p_wishlist_id: string }
         Returns: string
       }
-      toggle_comment_like:
-        | { Args: { p_comment_id: string; p_cpf: string }; Returns: boolean }
-        | { Args: { p_comment_id: string; p_cpf: string }; Returns: Json }
+      toggle_comment_like: {
+        Args: { p_comment_id: string; p_cpf: string }
+        Returns: Json
+      }
       toggle_comment_reaction: {
         Args: { p_comment_id: string; p_cpf: string; p_reaction_type: string }
         Returns: Json
@@ -2892,9 +2883,10 @@ export type Database = {
         Args: { p_cpf: string; p_target_member_id: string }
         Returns: Json
       }
-      toggle_post_like:
-        | { Args: { p_cpf: string; p_post_id: string }; Returns: boolean }
-        | { Args: { p_cpf: string; p_post_id: string }; Returns: Json }
+      toggle_post_like: {
+        Args: { p_cpf: string; p_post_id: string }
+        Returns: Json
+      }
       toggle_post_reaction: {
         Args: { p_cpf: string; p_post_id: string; p_reaction_type: string }
         Returns: Json

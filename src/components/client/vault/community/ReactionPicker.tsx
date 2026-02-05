@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export type ReactionType = "like" | "fire" | "clap" | "wow" | "love";
 
@@ -44,6 +45,15 @@ export function ReactionPicker({
 
   const hasUserReacted = userReactions.length > 0;
 
+  const handleToggle = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const handleSelect = (type: ReactionType) => {
+    onSelect(type);
+    setIsOpen(false);
+  };
+
   return (
     <div className="relative">
       {/* Trigger area */}
@@ -54,7 +64,10 @@ export function ReactionPicker({
       >
         {/* Reaction summary bubbles */}
         {topReactions.length > 0 && (
-          <div className="flex -space-x-1 mr-1">
+          <button 
+            onClick={handleToggle}
+            className="flex -space-x-1 mr-1 hover:opacity-80 transition-opacity"
+          >
             {topReactions.map((r) => (
               <motion.span
                 key={r.type}
@@ -69,22 +82,26 @@ export function ReactionPicker({
                 {r.emoji}
               </motion.span>
             ))}
-          </div>
+          </button>
         )}
 
         {/* Count */}
         {totalReactions > 0 && (
-          <span className={cn(
+          <button 
+            onClick={handleToggle}
+            className={cn(
             "text-muted-foreground font-medium",
-            size === "sm" ? "text-xs" : "text-sm"
+            size === "sm" ? "text-xs" : "text-sm",
+            "hover:underline"
           )}>
             {totalReactions}
-          </span>
+          </button>
         )}
 
         {/* Add reaction button */}
         {topReactions.length === 0 && (
           <button 
+            onClick={handleToggle}
             className={cn(
               "flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors",
               size === "sm" ? "text-xs" : "text-sm"
@@ -120,7 +137,7 @@ export function ReactionPicker({
                     animate={{ scale: 1 }}
                     transition={{ delay: i * 0.03 }}
                     onClick={() => {
-                      onSelect(reaction.type);
+                      handleSelect(reaction.type);
                     }}
                     className={cn(
                       "relative flex flex-col items-center p-1.5 rounded-full transition-all",
