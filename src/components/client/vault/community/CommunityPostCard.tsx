@@ -22,6 +22,18 @@ import { ReportPostDialog } from "./ReportPostDialog";
 import { FormattedText } from "./FormattedText";
 import { useToast } from "@/hooks/use-toast";
 
+export interface LikeResponse {
+  success: boolean;
+  liked?: boolean;
+  likes_count?: number;
+}
+
+export interface ReactionResponse {
+  success: boolean;
+  added?: boolean;
+  summary?: Record<string, number>;
+}
+
 export interface CommunityPost {
   id: string;
   user_id: string;
@@ -45,17 +57,6 @@ export interface CommunityPost {
   user_reactions?: string[];
 }
 
-interface CommunityPostCardProps {
-  post: CommunityPost;
-  clientCpf: string;
-  onLike: (postId: string) => void;
-  onReaction: (postId: string, reactionType: ReactionType) => void;
-  onComment: (postId: string) => void;
-  onShare?: (postId: string) => void;
-  onAuthorClick?: (authorId: string) => void;
-  isLiking?: boolean;
-}
-
 const tierConfig = {
   member: { icon: Shield, color: "text-muted-foreground", bg: "bg-muted", label: "Member", border: "border-muted" },
   collector: { icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10", label: "Privilege", border: "border-amber-500/50" },
@@ -69,6 +70,17 @@ const postTypeConfig = {
   DISCUSSION: { label: "Discussão", color: "bg-blue-500/20 text-blue-400", icon: "💬" },
   POLL: { label: "Enquete", color: "bg-purple-500/20 text-purple-400", icon: "📊" },
 };
+
+interface CommunityPostCardProps {
+  post: CommunityPost;
+  clientCpf: string;
+  onLike: (postId: string) => Promise<LikeResponse>;
+  onReaction: (postId: string, reactionType: ReactionType) => Promise<ReactionResponse>;
+  onComment: (postId: string) => void;
+  onShare?: (postId: string) => void;
+  onAuthorClick?: (authorId: string) => void;
+  isLiking?: boolean;
+}
 
 export function CommunityPostCard({ 
   post, 
@@ -118,7 +130,7 @@ export function CommunityPostCard({
     return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
   };
 
-  const handleLike = () => {
+  const handleLike = async () => {
     const newLiked = !localLiked;
     setLocalLiked(newLiked);
     setLocalLikesCount(prev => newLiked ? prev + 1 : Math.max(0, prev - 1));
@@ -128,12 +140,22 @@ export function CommunityPostCard({
       setTimeout(() => setShowHeartAnimation(false), 800);
     }
     
-    onLike(post.id);
+    const result = await onLike(post.id);
+    
+    // Revert optimistic update if failed
+    if (!result.success) {
+      setLocalLiked(!newLiked);
+      setLocalLikesCount(prev => newLiked ? Math.max(0, prev - 1) : prev + 1);
+    } else if (result.likes_count !== undefined) {
+      // Sync with server count
+      setLocalLikesCount(result.likes_count);
+    }
   };
 
-  const handleReaction = (type: ReactionType) => {
+  const handleReaction = async (type: ReactionType) => {
     const isAdding = !localReactions.includes(type);
     
+    // Optimistic update
     setLocalReactions(prev => 
       isAdding ? [...prev, type] : prev.filter(r => r !== type)
     );
@@ -148,7 +170,21 @@ export function CommunityPostCard({
       setTimeout(() => setShowHeartAnimation(false), 600);
     }
 
-    onReaction(post.id, type);
+    const result = await onReaction(post.id, type);
+    
+    // Revert optimistic update if failed
+    if (!result.success) {
+      setLocalReactions(prev => 
+        isAdding ? prev.filter(r => r !== type) : [...prev, type]
+      );
+      setLocalReactionsSummary(prev => ({
+        ...prev,
+        [type]: Math.max(0, (prev[type] || 0) + (isAdding ? -1 : 1))
+      }));
+    } else if (result.summary) {
+      // Sync with server summary
+      setLocalReactionsSummary(result.summary);
+    }
   };
 
   const handleDoubleClick = () => {

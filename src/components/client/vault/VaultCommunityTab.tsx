@@ -181,6 +181,8 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
         p_cpf: clientCpf,
       });
       
+      const response = data as { success?: boolean; liked?: boolean; likes_count?: number } | null;
+      
       if (error) {
         console.error("Error toggling like:", error);
         toast({
@@ -188,9 +190,28 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
           description: "Tente novamente",
           variant: "destructive",
         });
+        return { success: false };
       }
+      
+      // Update local state with server response
+      if (response?.success) {
+        setPosts(prev => prev.map(p => {
+          if (p.id === postId) {
+            return {
+              ...p,
+              has_liked: response.liked ?? p.has_liked,
+              likes_count: response.likes_count ?? p.likes_count,
+            };
+          }
+          return p;
+        }));
+        return { success: true, liked: response.liked, likes_count: response.likes_count };
+      }
+      
+      return { success: false };
     } catch (error) {
       console.error("Error toggling like:", error);
+      return { success: false };
     }
   };
 
@@ -202,6 +223,8 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
         p_reaction_type: reactionType,
       });
       
+      const response = data as { success?: boolean; added?: boolean; summary?: Record<string, number> } | null;
+      
       if (error) {
         console.error("Error toggling reaction:", error);
         toast({
@@ -209,9 +232,32 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
           description: "Tente novamente",
           variant: "destructive",
         });
+        return { success: false };
       }
+      
+      // Update local state with server response
+      if (response?.success) {
+        setPosts(prev => prev.map(p => {
+          if (p.id === postId) {
+            const userReactions = p.user_reactions || [];
+            const newUserReactions = response.added 
+              ? [...userReactions, reactionType]
+              : userReactions.filter(r => r !== reactionType);
+            return {
+              ...p,
+              user_reactions: newUserReactions,
+              reactions_summary: response.summary ?? p.reactions_summary,
+            };
+          }
+          return p;
+        }));
+        return { success: true, added: response.added, summary: response.summary };
+      }
+      
+      return { success: false };
     } catch (error) {
       console.error("Error toggling reaction:", error);
+      return { success: false };
     }
   };
 

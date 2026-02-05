@@ -110,21 +110,47 @@ export function CommunityComments({ postId, clientCpf, onClose }: CommunityComme
 
   const handleLikeComment = async (commentId: string) => {
     try {
-      await supabase.rpc("toggle_comment_like", {
-        p_comment_id: commentId,
-        p_cpf: clientCpf,
-      });
-      
+      // Optimistic update
       setComments(prev => prev.map(c => {
         if (c.id === commentId) {
           return {
             ...c,
             has_liked: !c.has_liked,
-            likes_count: c.has_liked ? c.likes_count - 1 : c.likes_count + 1,
+            likes_count: c.has_liked ? Math.max(0, c.likes_count - 1) : c.likes_count + 1,
           };
         }
         return c;
       }));
+      
+      const { data, error } = await supabase.rpc("toggle_comment_like", {
+        p_comment_id: commentId,
+        p_cpf: clientCpf,
+      });
+      
+      const response = data as { success?: boolean; liked?: boolean; likes_count?: number } | null;
+      
+      if (error || !response?.success) {
+        // Revert optimistic update
+        setComments(prev => prev.map(c => {
+          if (c.id === commentId) {
+            return {
+              ...c,
+              has_liked: !c.has_liked,
+              likes_count: c.has_liked ? c.likes_count + 1 : Math.max(0, c.likes_count - 1),
+            };
+          }
+          return c;
+        }));
+        console.error("Error liking comment:", error);
+      } else if (response.likes_count !== undefined) {
+        // Sync with server count
+        setComments(prev => prev.map(c => {
+          if (c.id === commentId) {
+            return { ...c, likes_count: response.likes_count! };
+          }
+          return c;
+        }));
+      }
     } catch (error) {
       console.error("Error liking comment:", error);
     }
@@ -132,12 +158,7 @@ export function CommunityComments({ postId, clientCpf, onClose }: CommunityComme
 
   const handleReaction = async (commentId: string, reactionType: ReactionType) => {
     try {
-      await supabase.rpc("toggle_comment_reaction", {
-        p_comment_id: commentId,
-        p_cpf: clientCpf,
-        p_reaction_type: reactionType,
-      });
-      
+      // Optimistic update
       setComments(prev => prev.map(c => {
         if (c.id === commentId) {
           const userReactions = c.user_reactions || [];
@@ -157,6 +178,28 @@ export function CommunityComments({ postId, clientCpf, onClose }: CommunityComme
         }
         return c;
       }));
+      
+      const { data, error } = await supabase.rpc("toggle_comment_reaction", {
+        p_comment_id: commentId,
+        p_cpf: clientCpf,
+        p_reaction_type: reactionType,
+      });
+      
+      const response = data as { success?: boolean; added?: boolean; summary?: Record<string, number> } | null;
+      
+      if (error || !response?.success) {
+        // Revert on error - refetch to be safe
+        fetchComments();
+        console.error("Error reacting to comment:", error);
+      } else if (response.summary) {
+        // Sync with server summary
+        setComments(prev => prev.map(c => {
+          if (c.id === commentId) {
+            return { ...c, reactions_summary: response.summary };
+          }
+          return c;
+        }));
+      }
     } catch (error) {
       console.error("Error reacting to comment:", error);
     }
