@@ -1,5 +1,5 @@
 export { CommunityPostCard } from "./CommunityPostCard";
-export type { CommunityPost } from "./CommunityPostCard";
+export type { CommunityPost, LikeResponse, ReactionResponse } from "./CommunityPostCard";
 export { CommunityComments } from "./CommunityComments";
 export { CommunityOnlineUsers } from "./CommunityOnlineUsers";
 export { CommunityTrending } from "./CommunityTrending";
