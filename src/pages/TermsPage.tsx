@@ -220,7 +220,10 @@ const TermsPage = () => {
             <h2 className="text-xl font-semibold text-foreground mb-4">18. Proteção de dados — LGPD (resumo)</h2>
             <p className="text-muted-foreground leading-relaxed">
               O tratamento de dados pessoais observará a Lei nº 13.709/2018 (LGPD), conforme detalhado 
-              em documento específico denominado Política de Privacidade.
+              em documento específico denominado{" "}
+              <a href="/politicas" className="text-primary hover:underline font-medium">
+                Política de Privacidade
+              </a>.
             </p>
           </section>
 
