@@ -1793,6 +1793,7 @@ export type Database = {
       }
       vault_marketplace_orders: {
         Row: {
+          admin_notes: string | null
           buyer_address: string | null
           buyer_cpf: string
           buyer_email: string | null
@@ -1805,13 +1806,24 @@ export type Database = {
           cancelled_at: string | null
           created_at: string
           delivered_at: string | null
+          dispute_opened_at: string | null
+          dispute_reason: string | null
+          dispute_resolved_at: string | null
+          dispute_status: string | null
           fee_amount: number
           fee_percent: number
           id: string
           listing_id: string
+          mp_payment_id: string | null
+          order_code: string | null
           paid_at: string | null
           payment_id: string | null
           payment_method: string | null
+          payout_method: string | null
+          payout_proof_url: string | null
+          payout_released_at: string | null
+          pix_transaction_id: string | null
+          protection_ends_at: string | null
           sale_price: number
           seller_id: string
           seller_payout: number
@@ -1823,6 +1835,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_notes?: string | null
           buyer_address?: string | null
           buyer_cpf: string
           buyer_email?: string | null
@@ -1835,13 +1848,24 @@ export type Database = {
           cancelled_at?: string | null
           created_at?: string
           delivered_at?: string | null
+          dispute_opened_at?: string | null
+          dispute_reason?: string | null
+          dispute_resolved_at?: string | null
+          dispute_status?: string | null
           fee_amount: number
           fee_percent: number
           id?: string
           listing_id: string
+          mp_payment_id?: string | null
+          order_code?: string | null
           paid_at?: string | null
           payment_id?: string | null
           payment_method?: string | null
+          payout_method?: string | null
+          payout_proof_url?: string | null
+          payout_released_at?: string | null
+          pix_transaction_id?: string | null
+          protection_ends_at?: string | null
           sale_price: number
           seller_id: string
           seller_payout: number
@@ -1853,6 +1877,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_notes?: string | null
           buyer_address?: string | null
           buyer_cpf?: string
           buyer_email?: string | null
@@ -1865,13 +1890,24 @@ export type Database = {
           cancelled_at?: string | null
           created_at?: string
           delivered_at?: string | null
+          dispute_opened_at?: string | null
+          dispute_reason?: string | null
+          dispute_resolved_at?: string | null
+          dispute_status?: string | null
           fee_amount?: number
           fee_percent?: number
           id?: string
           listing_id?: string
+          mp_payment_id?: string | null
+          order_code?: string | null
           paid_at?: string | null
           payment_id?: string | null
           payment_method?: string | null
+          payout_method?: string | null
+          payout_proof_url?: string | null
+          payout_released_at?: string | null
+          pix_transaction_id?: string | null
+          protection_ends_at?: string | null
           sale_price?: number
           seller_id?: string
           seller_payout?: number
@@ -2572,6 +2608,10 @@ export type Database = {
         Args: { p_cpf: string; p_email?: string; p_name: string }
         Returns: string
       }
+      calculate_protection_end: {
+        Args: { delivery_date: string }
+        Returns: string
+      }
       calculate_vault_tier: {
         Args: { p_total_purchases: number; p_total_spent: number }
         Returns: Database["public"]["Enums"]["vault_tier"]
@@ -2635,6 +2675,7 @@ export type Database = {
         }[]
       }
       generate_authenticity_code: { Args: never; Returns: string }
+      generate_marketplace_order_code: { Args: never; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
       generate_vault_invite_code: { Args: never; Returns: string }
       generate_vault_item_id: { Args: never; Returns: string }

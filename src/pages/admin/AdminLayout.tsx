@@ -23,6 +23,7 @@ import {
   Ticket,
   FileText,
   MessageSquare,
+  Store,
 } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "@/components/Logo";
@@ -54,6 +55,7 @@ const vaultNavItems = [
   { icon: Ticket, label: "Convites", path: "/admin/vault/convites" },
   { icon: FileText, label: "Intel", path: "/admin/vault/intel" },
   { icon: MessageSquare, label: "Comunidade", path: "/admin/vault/comunidade" },
+  { icon: Store, label: "Marketplace", path: "/admin/vault/marketplace" },
 ];
 
 const AdminLayout = () => {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Store, Search, SlidersHorizontal, Package, TrendingDown, Percent } from "lucide-react";
+import { Store, Search, SlidersHorizontal, Package, TrendingDown, Percent, ShoppingBag } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,11 +11,15 @@ import { useMarketplace, type MarketplaceListing } from "@/hooks/useMarketplace"
 import { MarketplaceListingCard } from "./MarketplaceListingCard";
 import { CreateListingDialog } from "./CreateListingDialog";
 import { ListingDetailSheet } from "./ListingDetailSheet";
+import { MarketplaceCheckoutDialog } from "./MarketplaceCheckoutDialog";
+import { MarketplaceOrdersView } from "./MarketplaceOrdersView";
 import { supabase } from "@/integrations/supabase/client";
 
 interface MarketplaceTabProps {
   clientCpf: string;
   isVaultMember: boolean;
+  buyerName?: string;
+  buyerEmail?: string;
 }
 
 interface VaultItem {
@@ -34,23 +38,32 @@ const feeTable = [
   { range: "11+ vendas", fee: "9%" },
 ];
 
-export function MarketplaceTab({ clientCpf, isVaultMember }: MarketplaceTabProps) {
+export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail }: MarketplaceTabProps) {
   const {
     listings,
     myListings,
     seller,
     total,
     isLoading,
+    myOrders,
+    mySales,
     fetchListings,
     fetchMyListings,
     createListing,
     deleteListing,
     toggleFavorite,
+    createOrder,
+    fetchMyOrders,
+    fetchMySales,
+    updateOrderStatus,
+    rateSeller,
   } = useMarketplace(clientCpf);
 
   const [innerTab, setInnerTab] = useState("explorar");
   const [selectedListing, setSelectedListing] = useState<MarketplaceListing | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [checkoutListing, setCheckoutListing] = useState<MarketplaceListing | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("recent");
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
@@ -78,6 +91,21 @@ export function MarketplaceTab({ clientCpf, isVaultMember }: MarketplaceTabProps
   const handleSelect = (listing: MarketplaceListing) => {
     setSelectedListing(listing);
     setDetailOpen(true);
+  };
+
+  const handleBuy = (listing: MarketplaceListing) => {
+    setDetailOpen(false);
+    setCheckoutListing(listing);
+    setCheckoutOpen(true);
+  };
+
+  const handleCheckoutConfirm = async (data: any) => {
+    const result = await createOrder(data);
+    if (result) {
+      fetchListings({ sort: sortBy });
+      return result;
+    }
+    return null;
   };
 
   const handleSearch = () => {
@@ -121,8 +149,12 @@ export function MarketplaceTab({ clientCpf, isVaultMember }: MarketplaceTabProps
       </div>
 
       <Tabs value={innerTab} onValueChange={setInnerTab}>
-        <TabsList>
+        <TabsList className="flex flex-wrap">
           <TabsTrigger value="explorar">Explorar</TabsTrigger>
+          <TabsTrigger value="pedidos" className="gap-1">
+            <ShoppingBag className="h-3.5 w-3.5" />
+            Pedidos
+          </TabsTrigger>
           {isVaultMember && (
             <TabsTrigger value="meus-anuncios">Meus anúncios</TabsTrigger>
           )}
@@ -193,6 +225,19 @@ export function MarketplaceTab({ clientCpf, isVaultMember }: MarketplaceTabProps
           )}
         </TabsContent>
 
+        {/* Orders Tab */}
+        <TabsContent value="pedidos" className="mt-4">
+          <MarketplaceOrdersView
+            orders={myOrders}
+            sales={mySales}
+            isVaultMember={isVaultMember}
+            onRefreshOrders={fetchMyOrders}
+            onRefreshSales={fetchMySales}
+            onUpdateOrderStatus={updateOrderStatus}
+            onRateSeller={rateSeller}
+          />
+        </TabsContent>
+
         {/* My Listings Tab */}
         {isVaultMember && (
           <TabsContent value="meus-anuncios" className="mt-4 space-y-4">
@@ -250,6 +295,8 @@ export function MarketplaceTab({ clientCpf, isVaultMember }: MarketplaceTabProps
                           ? "bg-success/20 text-success"
                           : listing.status === "sold"
                           ? "bg-primary/20 text-primary"
+                          : listing.status === "reserved"
+                          ? "bg-warning/20 text-warning"
                           : "bg-muted text-muted-foreground"
                       }`}
                     >
@@ -257,6 +304,8 @@ export function MarketplaceTab({ clientCpf, isVaultMember }: MarketplaceTabProps
                         ? "Ativo"
                         : listing.status === "sold"
                         ? "Vendido"
+                        : listing.status === "reserved"
+                        ? "Reservado"
                         : listing.status === "draft"
                         ? "Rascunho"
                         : listing.status}
@@ -317,18 +366,23 @@ export function MarketplaceTab({ clientCpf, isVaultMember }: MarketplaceTabProps
                 },
                 {
                   step: "2",
-                  title: "Receba interessados",
-                  desc: "Compradores demonstram interesse e a Bravenza intermedia o contato para segurança de ambos.",
+                  title: "Comprador finaliza a compra",
+                  desc: "O comprador paga via PIX ou cartão pelo Mercado Pago. O anúncio é reservado automaticamente.",
                 },
                 {
                   step: "3",
-                  title: "Escolha o envio",
+                  title: "Envie o produto",
                   desc: "Envie direto ao comprador ou via Bravenza para autenticação física e emissão de certificado Vault ID.",
                 },
                 {
                   step: "4",
+                  title: "Período de proteção",
+                  desc: "Após a entrega, o comprador tem 7 dias úteis para reportar problemas. Após esse prazo, o valor é liberado.",
+                },
+                {
+                  step: "5",
                   title: "Receba o pagamento",
-                  desc: "Após confirmação de entrega, o valor é liberado descontada a taxa de serviço.",
+                  desc: "O valor é liberado via PIX/transferência, descontada a taxa de serviço progressiva.",
                 },
               ].map((item) => (
                 <div key={item.step} className="flex gap-4">
@@ -352,9 +406,17 @@ export function MarketplaceTab({ clientCpf, isVaultMember }: MarketplaceTabProps
         open={detailOpen}
         onOpenChange={setDetailOpen}
         onToggleFavorite={toggleFavorite}
-        isOwnListing={
-          selectedListing?.seller_id === seller?.id
-        }
+        onBuy={handleBuy}
+        isOwnListing={selectedListing?.seller_id === seller?.id}
+      />
+
+      {/* Checkout Dialog */}
+      <MarketplaceCheckoutDialog
+        listing={checkoutListing}
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        onConfirm={handleCheckoutConfirm}
+        buyerDefaults={{ name: buyerName, email: buyerEmail }}
       />
     </div>
   );

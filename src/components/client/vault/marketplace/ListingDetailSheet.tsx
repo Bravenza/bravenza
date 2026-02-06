@@ -1,4 +1,5 @@
-import { Heart, ShieldCheck, Eye, Star, Send, Truck, Package } from "lucide-react";
+import { useState } from "react";
+import { Heart, ShieldCheck, Eye, Star, Truck, Package, ShoppingCart } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -10,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { MarketplaceListing } from "@/hooks/useMarketplace";
-import { useState } from "react";
 
 const conditionLabels: Record<string, string> = {
   novo: "Novo",
@@ -24,6 +24,7 @@ interface ListingDetailSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onToggleFavorite: (id: string) => void;
+  onBuy?: (listing: MarketplaceListing) => void;
   isOwnListing?: boolean;
 }
 
@@ -32,6 +33,7 @@ export function ListingDetailSheet({
   open,
   onOpenChange,
   onToggleFavorite,
+  onBuy,
   isOwnListing = false,
 }: ListingDetailSheetProps) {
   const [activePhoto, setActivePhoto] = useState(0);
@@ -39,6 +41,7 @@ export function ListingDetailSheet({
   if (!listing) return null;
 
   const photos = listing.photos?.length ? listing.photos : [];
+  const totalPrice = listing.price + (listing.shipping_cost_estimate || 0);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -121,6 +124,11 @@ export function ListingDetailSheet({
               {listing.original_purchase_price && listing.original_purchase_price > listing.price && (
                 <p className="text-sm text-muted-foreground line-through">
                   R$ {listing.original_purchase_price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </p>
+              )}
+              {listing.shipping_cost_estimate > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  + R$ {listing.shipping_cost_estimate.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} de frete
                 </p>
               )}
             </div>
@@ -212,11 +220,23 @@ export function ListingDetailSheet({
             </>
           )}
 
+          {/* Protection info */}
+          {!isOwnListing && (
+            <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg text-xs text-muted-foreground">
+              <p>🔒 <strong>Compra protegida:</strong> 7 dias úteis após entrega para reportar problemas.</p>
+              <p>📦 O vendedor só recebe após o período de proteção.</p>
+            </div>
+          )}
+
           {/* Action */}
           {!isOwnListing && (
-            <Button className="w-full btn-gold gap-2" size="lg">
-              <Send className="h-4 w-4" />
-              Tenho interesse
+            <Button
+              className="w-full btn-gold gap-2"
+              size="lg"
+              onClick={() => onBuy?.(listing)}
+            >
+              <ShoppingCart className="h-4 w-4" />
+              Comprar por R$ {totalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </Button>
           )}
         </div>
