@@ -88,7 +88,18 @@ export interface SellerProfile {
   is_active: boolean;
 }
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/vault-marketplace`;
+const FUNCTION_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+
+const ACTION_TO_FUNCTION: Record<string, string> = {
+  "listings": "marketplace-listings", "listing-detail": "marketplace-listings", "my-listings": "marketplace-listings",
+  "create-listing": "marketplace-listings", "update-listing": "marketplace-listings", "delete-listing": "marketplace-listings",
+  "toggle-favorite": "marketplace-listings", "seller-profile": "marketplace-listings", "seller-public-profile": "marketplace-listings",
+  "create-order": "marketplace-orders", "confirm-payment": "marketplace-orders", "my-orders": "marketplace-orders",
+  "my-sales": "marketplace-orders", "update-order-status": "marketplace-orders", "resolve-dispute": "marketplace-orders",
+  "rate-seller": "marketplace-orders", "admin-orders": "marketplace-orders", "open-dispute": "marketplace-orders",
+  "chat-messages": "marketplace-chat", "send-message": "marketplace-chat",
+  "make-offer": "marketplace-offers", "listing-offers": "marketplace-offers", "my-offers": "marketplace-offers", "respond-offer": "marketplace-offers",
+};
 
 async function marketplaceRequest(
   cpf: string,
