@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus, Upload, X, ShieldCheck } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -66,11 +67,23 @@ export function CreateListingDialog({ onSubmit, vaultItems = [] }: CreateListing
     }
   };
 
-  const handlePhotoUrl = () => {
-    const url = prompt("Cole a URL da foto:");
-    if (url && url.startsWith("http")) {
-      setForm((prev) => ({ ...prev, photos: [...prev.photos, url] }));
+  const [uploading, setUploading] = useState(false);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files?.length) return;
+    setUploading(true);
+    const newPhotos = [...form.photos];
+    for (const file of Array.from(files)) {
+      const ext = file.name.split(".").pop();
+      const path = `listings/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error } = await supabase.storage.from("marketplace").upload(path, file, { cacheControl: "3600", upsert: false });
+      if (error) { toast({ title: "Erro no upload", description: error.message, variant: "destructive" }); continue; }
+      const { data: urlData } = supabase.storage.from("marketplace").getPublicUrl(path);
+      newPhotos.push(urlData.publicUrl);
     }
+    setForm((prev) => ({ ...prev, photos: newPhotos }));
+    setUploading(false);
   };
 
   const removePhoto = (index: number) => {
@@ -320,13 +333,11 @@ export function CreateListingDialog({ onSubmit, vaultItems = [] }: CreateListing
                   </button>
                 </div>
               ))}
-              <button
-                onClick={handlePhotoUrl}
-                className="w-20 h-20 rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-              >
+              <label className="w-20 h-20 rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
                 <Upload className="h-5 w-5" />
-                <span className="text-[10px] mt-1">Adicionar</span>
-              </button>
+                <span className="text-[10px] mt-1">{uploading ? "..." : "Upload"}</span>
+                <input type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" disabled={uploading} />
+              </label>
             </div>
           </div>
 

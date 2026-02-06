@@ -7,10 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { useMarketplace, type MarketplaceListing } from "@/hooks/useMarketplace";
 import { MarketplaceListingCard } from "./MarketplaceListingCard";
 import { CreateListingDialog } from "./CreateListingDialog";
+import { EditListingDialog } from "./EditListingDialog";
 import { ListingDetailSheet } from "./ListingDetailSheet";
 import { MarketplaceCheckoutDialog } from "./MarketplaceCheckoutDialog";
 import { MarketplaceOrdersView } from "./MarketplaceOrdersView";
 import { MarketplaceFilters, type MarketplaceFilterValues } from "./MarketplaceFilters";
+import { SellerProfileSheet } from "./SellerProfileSheet";
+import { OffersListDialog } from "./OffersListDialog";
 import { supabase } from "@/integrations/supabase/client";
 
 interface MarketplaceTabProps {
@@ -48,6 +51,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
     fetchListings,
     fetchMyListings,
     createListing,
+    updateListing,
     deleteListing,
     toggleFavorite,
     createOrder,
@@ -55,6 +59,9 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
     fetchMySales,
     updateOrderStatus,
     rateSeller,
+    makeOffer,
+    fetchListingOffers,
+    respondOffer,
   } = useMarketplace(clientCpf);
 
   const [innerTab, setInnerTab] = useState("explorar");
@@ -64,6 +71,9 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
   const [checkoutListing, setCheckoutListing] = useState<MarketplaceListing | null>(null);
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
   const [filters, setFilters] = useState<MarketplaceFilterValues>({ sort: "recent" });
+  const [sellerProfileOpen, setSellerProfileOpen] = useState(false);
+  const [sellerProfileId, setSellerProfileId] = useState<string | null>(null);
+  const [listingOffers, setListingOffers] = useState<Record<string, any[]>>({});
 
   useEffect(() => {
     handleSearch();
@@ -75,6 +85,16 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
       fetchVaultItems();
     }
   }, [innerTab, isVaultMember]);
+
+  // Fetch offers for my listings when tab is active
+  useEffect(() => {
+    if (innerTab === "meus-anuncios" && myListings.length > 0) {
+      myListings.forEach(async (listing) => {
+        const offers = await fetchListingOffers(listing.id);
+        setListingOffers((prev) => ({ ...prev, [listing.id]: offers }));
+      });
+    }
+  }, [innerTab, myListings.length]);
 
   const fetchVaultItems = async () => {
     const { data } = await supabase
@@ -103,6 +123,22 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
       return result;
     }
     return null;
+  };
+
+  const handleViewSellerProfile = (sellerId: string) => {
+    setDetailOpen(false);
+    setSellerProfileId(sellerId);
+    setSellerProfileOpen(true);
+  };
+
+  const handleMakeOffer = async (data: { listing_id: string; offer_price: number; message?: string }) => {
+    return makeOffer({ ...data, buyer_name: buyerName });
+  };
+
+  const handleRespondOffer = async (offerId: string, action: string, extra?: any) => {
+    const success = await respondOffer(offerId, action, extra);
+    if (success) fetchMyListings();
+    return success;
   };
 
   const handleSearch = () => {
@@ -287,18 +323,35 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {myListings.map((listing) => (
-                  <div key={listing.id} className="relative">
+                  <div key={listing.id} className="relative space-y-2">
                     <MarketplaceListingCard listing={listing} onSelect={handleSelect} onToggleFavorite={toggleFavorite} />
                     <Badge
                       className={`absolute top-2 right-2 text-xs ${
                         listing.status === "active" ? "bg-success/20 text-success"
                         : listing.status === "sold" ? "bg-primary/20 text-primary"
                         : listing.status === "reserved" ? "bg-warning/20 text-warning"
+                        : listing.status === "paused" ? "bg-muted text-muted-foreground"
                         : "bg-muted text-muted-foreground"
                       }`}
                     >
-                      {listing.status === "active" ? "Ativo" : listing.status === "sold" ? "Vendido" : listing.status === "reserved" ? "Reservado" : listing.status === "draft" ? "Rascunho" : listing.status}
+                      {listing.status === "active" ? "Ativo" : listing.status === "sold" ? "Vendido" : listing.status === "reserved" ? "Reservado" : listing.status === "paused" ? "Pausado" : listing.status === "draft" ? "Rascunho" : listing.status}
                     </Badge>
+                    <div className="flex gap-1">
+                      <EditListingDialog
+                        listing={listing}
+                        onUpdate={updateListing}
+                        onDelete={deleteListing}
+                        onRefresh={fetchMyListings}
+                      />
+                      <OffersListDialog
+                        listingId={listing.id}
+                        listingTitle={listing.title}
+                        listingPrice={listing.price}
+                        offers={listingOffers[listing.id] || []}
+                        onRespond={handleRespondOffer}
+                        onRefresh={() => fetchListingOffers(listing.id).then((o) => setListingOffers((p) => ({ ...p, [listing.id]: o })))}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -367,6 +420,8 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
         onOpenChange={setDetailOpen}
         onToggleFavorite={toggleFavorite}
         onBuy={handleBuy}
+        onMakeOffer={handleMakeOffer}
+        onViewSellerProfile={handleViewSellerProfile}
         isOwnListing={selectedListing?.seller_id === seller?.id}
       />
 
@@ -376,6 +431,15 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
         onOpenChange={setCheckoutOpen}
         onConfirm={handleCheckoutConfirm}
         buyerDefaults={{ name: buyerName, email: buyerEmail }}
+      />
+
+      <SellerProfileSheet
+        sellerId={sellerProfileId}
+        open={sellerProfileOpen}
+        onOpenChange={setSellerProfileOpen}
+        onSelectListing={handleSelect}
+        onToggleFavorite={toggleFavorite}
+        clientCpf={clientCpf}
       />
     </div>
   );
