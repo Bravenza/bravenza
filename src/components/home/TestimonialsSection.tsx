@@ -11,13 +11,13 @@ const testimonials = [{
   name: "Fernanda S.",
   location: "Rio de Janeiro, RJ",
   rating: 5,
-  text: "Atendimento absurdo de bom. Me mandaram foto do tênis na China, foto na inspeção, rastreio até em casa. Nunca vi algo assim. Estou no terceiro pedido já.",
+  text: "Atendimento absurdo de bom. Me mandaram foto do tênis na inspeção, certificado de autenticidade, rastreio até em casa. Nunca vi algo assim. Estou no terceiro pedido já.",
   product: "Nike Dunk Low"
 }, {
   name: "Ricardo P.",
   location: "Belo Horizonte, MG",
   rating: 5,
-  text: "O Yeezy que eu queria não tinha em lugar nenhum do Brasil. Eles conseguiram na Europa e em 3 semanas estava na minha casa. Preço justo, tênis perfeito.",
+  text: "O Yeezy que eu queria não tinha em lugar nenhum. A Bravenza conseguiu com um parceiro verificado e em poucas semanas estava na minha casa. Preço justo, tênis perfeito.",
   product: "Yeezy Boost 350 V2"
 }];
 const TestimonialsSectionComponent = () => {

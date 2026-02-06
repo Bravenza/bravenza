@@ -48,7 +48,7 @@ Seu orçamento para *{product_name}* está pronto!
 Acesse o link abaixo para aprovar:
 {budget_url}
 
-_Bravenza - Sua loja de sneakers premium_`,
+_Bravenza - Curadoria e autenticação premium_`,
     variables: ["client_name", "product_name", "product_price", "budget_url"],
   },
   {
@@ -67,7 +67,7 @@ Olá {client_name}, recebemos o sinal do seu pedido *{order_id}*.
 
 Já estamos trabalhando na sua encomenda!
 
-_Bravenza - Sua loja de sneakers premium_`,
+_Bravenza - Curadoria e autenticação premium_`,
     variables: ["client_name", "order_id", "product_name", "sinal_value"],
   },
   {
@@ -86,7 +86,7 @@ Olá {client_name}, recebemos o pagamento completo do pedido *{order_id}*.
 
 Seu produto será enviado em breve!
 
-_Bravenza - Sua loja de sneakers premium_`,
+_Bravenza - Curadoria e autenticação premium_`,
     variables: ["client_name", "order_id", "product_name", "balance_value"],
   },
   {
@@ -104,7 +104,7 @@ Novo status: *{status_label}*
 {notes}
 {tracking}
 
-_Bravenza - Sua loja de sneakers premium_`,
+_Bravenza - Curadoria e autenticação premium_`,
     variables: ["order_id", "client_name", "status_label", "notes", "tracking"],
   },
   {
@@ -125,7 +125,7 @@ O pedido *{order_id}* está a caminho!
 
 Acompanhe a entrega pelo código acima.
 
-_Bravenza - Sua loja de sneakers premium_`,
+_Bravenza - Curadoria e autenticação premium_`,
     variables: ["client_name", "order_id", "tracking_code", "carrier"],
   },
   {
@@ -143,11 +143,11 @@ Seu pedido *{order_id}* foi entregue com sucesso!
 
 📦 Produto: {product_name}
 
-Esperamos que você ame seu novo sneaker! 👟
+Esperamos que você ame seu novo tênis! 👟
 
 Em alguns dias, enviaremos um link para você avaliar sua experiência.
 
-_Bravenza - Sua loja de sneakers premium_`,
+_Bravenza - Curadoria e autenticação premium_`,
     variables: ["client_name", "order_id", "product_name"],
   },
   {
@@ -168,7 +168,7 @@ Gostaríamos de saber: como foi sua experiência conosco?
 Sua opinião é muito importante! Clique no link abaixo para avaliar:
 {review_link}
 
-_Bravenza - Sua loja de sneakers premium_`,
+_Bravenza - Curadoria e autenticação premium_`,
     variables: ["client_name", "order_id", "review_link"],
   },
   {
@@ -188,7 +188,7 @@ Você ganhou *{discount_percentage}% de desconto* no seu próximo pedido.
 
 Use seu código: *{referral_code}*
 
-_Bravenza - Sua loja de sneakers premium_`,
+_Bravenza - Curadoria e autenticação premium_`,
     variables: ["client_name", "referred_name", "discount_percentage", "referral_code"],
   },
 ];

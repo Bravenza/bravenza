@@ -73,7 +73,7 @@ function FeaturedReviewsComponent() {
             Avaliações <span className="text-gradient-gold">Reais</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            O que nossos clientes escreveram depois de receber seus sneakers
+            O que nossos clientes escreveram depois de receber seus tênis
           </p>
         </motion.div>
 

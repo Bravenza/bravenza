@@ -102,7 +102,7 @@ const PrivacyPage = () => {
               Utilizamos seus dados pessoais para:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2">
-              <li>Processar e gerenciar seus pedidos de importação</li>
+              <li>Processar e gerenciar seus pedidos de curadoria e autenticação</li>
               <li>Enviar atualizações sobre o status do seu pedido (e-mail, WhatsApp, push)</li>
               <li>Gerar orçamentos, certificados de autenticidade e documentos fiscais</li>
               <li>Comunicar sobre pagamentos, prazos e vencimentos</li>
@@ -141,7 +141,7 @@ const PrivacyPage = () => {
               <li><strong>Resend:</strong> Envio de e-mails transacionais (orçamentos, atualizações, certificados)</li>
               <li><strong>Twilio/WhatsApp:</strong> Envio de mensagens e notificações via WhatsApp</li>
               <li><strong>Autoridades fiscais:</strong> Quando exigido por lei</li>
-              <li><strong>Despachantes aduaneiros:</strong> Para desembaraço de importações</li>
+              <li><strong>Parceiros e vendedores:</strong> Para processamento e envio de pedidos</li>
             </ul>
             <div className="bg-success/10 border border-success/30 rounded-lg p-4 mt-4">
               <p className="text-muted-foreground text-sm">
@@ -248,8 +248,8 @@ const PrivacyPage = () => {
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-4">11. Transferência Internacional</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Em função da natureza do nosso serviço (importação internacional), alguns dados 
-              podem ser compartilhados com fornecedores no exterior exclusivamente para 
+              Em função da natureza do nosso serviço (curadoria com parceiros globais), alguns dados 
+              podem ser compartilhados com vendedores e parceiros no exterior exclusivamente para 
               processamento de pedidos. Nesses casos, garantimos que os parceiros internacionais 
               adotam níveis adequados de proteção de dados compatíveis com a LGPD.
             </p>
