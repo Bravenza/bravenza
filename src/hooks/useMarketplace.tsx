@@ -349,6 +349,56 @@ export function useMarketplace(cpf: string | null) {
     [cpf, toast]
   );
 
+  // ===== OFFER FUNCTIONS =====
+
+  const makeOffer = useCallback(
+    async (body: { listing_id: string; offer_price: number; message?: string; buyer_name?: string }) => {
+      if (!cpf) return false;
+      try {
+        await marketplaceRequest(cpf, "make-offer", "POST", body);
+        toast({ title: "Oferta enviada!", description: "O vendedor tem 48h para responder." });
+        return true;
+      } catch (err: any) {
+        toast({ title: "Erro ao enviar oferta", description: err.message, variant: "destructive" });
+        return false;
+      }
+    },
+    [cpf, toast]
+  );
+
+  const fetchListingOffers = useCallback(
+    async (listingId: string) => {
+      if (!cpf) return [];
+      try {
+        const data = await marketplaceRequest(cpf, "listing-offers", "GET", undefined, { listing_id: listingId });
+        return data.offers || [];
+      } catch (err: any) {
+        console.error("Fetch offers error:", err);
+        return [];
+      }
+    },
+    [cpf]
+  );
+
+  const respondOffer = useCallback(
+    async (offerId: string, response: string, extra?: any) => {
+      if (!cpf) return false;
+      try {
+        await marketplaceRequest(cpf, "respond-offer", "PUT", {
+          offer_id: offerId,
+          response,
+          ...extra,
+        });
+        toast({ title: response === "accept" ? "Oferta aceita!" : response === "reject" ? "Oferta recusada" : "Contra-proposta enviada!" });
+        return true;
+      } catch (err: any) {
+        toast({ title: "Erro", description: err.message, variant: "destructive" });
+        return false;
+      }
+    },
+    [cpf, toast]
+  );
+
   return {
     listings,
     myListings,
@@ -371,5 +421,8 @@ export function useMarketplace(cpf: string | null) {
     fetchMySales,
     updateOrderStatus,
     rateSeller,
+    makeOffer,
+    fetchListingOffers,
+    respondOffer,
   };
 }

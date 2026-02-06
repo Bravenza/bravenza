@@ -1842,6 +1842,59 @@ export type Database = {
           },
         ]
       }
+      vault_marketplace_offers: {
+        Row: {
+          buyer_cpf: string
+          buyer_name: string
+          counter_message: string | null
+          counter_price: number | null
+          created_at: string
+          expires_at: string
+          id: string
+          listing_id: string
+          message: string | null
+          offer_price: number
+          responded_at: string | null
+          status: string
+        }
+        Insert: {
+          buyer_cpf: string
+          buyer_name: string
+          counter_message?: string | null
+          counter_price?: number | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          listing_id: string
+          message?: string | null
+          offer_price: number
+          responded_at?: string | null
+          status?: string
+        }
+        Update: {
+          buyer_cpf?: string
+          buyer_name?: string
+          counter_message?: string | null
+          counter_price?: number | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          listing_id?: string
+          message?: string | null
+          offer_price?: number
+          responded_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_marketplace_offers_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "vault_marketplace_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vault_marketplace_orders: {
         Row: {
           admin_notes: string | null

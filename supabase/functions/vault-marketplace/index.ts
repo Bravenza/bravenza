@@ -868,6 +868,157 @@ Deno.serve(async (req) => {
       return jsonResponse({ orders: orders || [] });
     }
 
+    // ===================== SELLER PUBLIC PROFILE =====================
+
+    if (req.method === "GET" && action === "seller-public-profile") {
+      const sellerId = url.searchParams.get("seller_id");
+      if (!sellerId) throw new Error("seller_id obrigatório");
+
+      const { data: seller } = await supabase
+        .from("vault_seller_profiles")
+        .select(`
+          id, bio, total_sales_count, total_sales_value, average_rating, ratings_count, current_fee_percent,
+          member:vault_members!inner(client_name, tier, created_at)
+        `)
+        .eq("id", sellerId)
+        .single();
+
+      if (!seller) throw new Error("Vendedor não encontrado");
+
+      // Active listings
+      const { data: listings } = await supabase
+        .from("vault_marketplace_listings")
+        .select("*")
+        .eq("seller_id", sellerId)
+        .eq("status", "active")
+        .order("published_at", { ascending: false });
+
+      // Recent reviews
+      const { data: reviews } = await supabase
+        .from("vault_marketplace_orders")
+        .select("buyer_name, buyer_rating, buyer_review, created_at")
+        .eq("seller_id", sellerId)
+        .not("buyer_rating", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      return jsonResponse({
+        ...seller,
+        listings: listings || [],
+        recent_reviews: reviews || [],
+      });
+    }
+
+    // ===================== OFFERS =====================
+
+    // POST: Make offer
+    if (req.method === "POST" && action === "make-offer") {
+      const body = await req.json();
+
+      const { data: listing } = await supabase
+        .from("vault_marketplace_listings")
+        .select(`
+          id, title, price, seller_id,
+          seller:vault_seller_profiles!inner(member:vault_members!inner(client_cpf))
+        `)
+        .eq("id", body.listing_id)
+        .eq("status", "active")
+        .single();
+
+      if (!listing) throw new Error("Anúncio não encontrado");
+      if (listing.seller?.member?.client_cpf === clientCpf) throw new Error("Não pode fazer oferta no próprio anúncio");
+
+      const { data: offer, error } = await supabase
+        .from("vault_marketplace_offers")
+        .insert({
+          listing_id: body.listing_id,
+          buyer_cpf: clientCpf,
+          buyer_name: body.buyer_name || "Comprador",
+          offer_price: body.offer_price,
+          message: body.message || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await createNotification(supabase, "💰 Nova oferta recebida!", `${body.buyer_name || "Um comprador"} ofereceu R$ ${body.offer_price.toFixed(2)} por "${listing.title}".`, listing.seller.member.client_cpf, listing.id, "marketplace_offer");
+
+      return jsonResponse({ success: true, offer });
+    }
+
+    // GET: Offers for a listing (seller)
+    if (req.method === "GET" && action === "listing-offers") {
+      const listingId = url.searchParams.get("listing_id");
+      if (!listingId) throw new Error("listing_id obrigatório");
+
+      const { data: offers, error } = await supabase
+        .from("vault_marketplace_offers")
+        .select("*")
+        .eq("listing_id", listingId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return jsonResponse({ offers: offers || [] });
+    }
+
+    // GET: My sent offers (buyer)
+    if (req.method === "GET" && action === "my-offers") {
+      const { data: offers, error } = await supabase
+        .from("vault_marketplace_offers")
+        .select(`
+          *,
+          listing:vault_marketplace_listings!inner(title, photos, price)
+        `)
+        .eq("buyer_cpf", clientCpf)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return jsonResponse({ offers: offers || [] });
+    }
+
+    // PUT: Respond to offer (seller: accept/reject/counter)
+    if (req.method === "PUT" && action === "respond-offer") {
+      const body = await req.json();
+      const offerId = body.offer_id;
+      const responseAction = body.response; // accept, reject, counter
+
+      const { data: offer } = await supabase
+        .from("vault_marketplace_offers")
+        .select(`
+          id, listing_id, buyer_cpf, buyer_name, offer_price,
+          listing:vault_marketplace_listings!inner(title, seller_id)
+        `)
+        .eq("id", offerId)
+        .single();
+
+      if (!offer) throw new Error("Oferta não encontrada");
+
+      const updateData: any = { responded_at: new Date().toISOString() };
+
+      if (responseAction === "accept") {
+        updateData.status = "accepted";
+        // Notify buyer
+        await createNotification(supabase, "✅ Oferta aceita!", `Sua oferta de R$ ${offer.offer_price.toFixed(2)} por "${offer.listing?.title}" foi aceita! Finalize a compra.`, offer.buyer_cpf, offer.listing_id, "marketplace_offer");
+      } else if (responseAction === "reject") {
+        updateData.status = "rejected";
+        await createNotification(supabase, "❌ Oferta recusada", `Sua oferta por "${offer.listing?.title}" foi recusada pelo vendedor.`, offer.buyer_cpf, offer.listing_id, "marketplace_offer");
+      } else if (responseAction === "counter") {
+        updateData.status = "counter";
+        updateData.counter_price = body.counter_price;
+        updateData.counter_message = body.counter_message || null;
+        await createNotification(supabase, "🔄 Contra-proposta!", `O vendedor fez uma contra-proposta de R$ ${body.counter_price?.toFixed(2)} por "${offer.listing?.title}".`, offer.buyer_cpf, offer.listing_id, "marketplace_offer");
+      }
+
+      const { error } = await supabase
+        .from("vault_marketplace_offers")
+        .update(updateData)
+        .eq("id", offerId);
+
+      if (error) throw error;
+      return jsonResponse({ success: true });
+    }
+
     return jsonResponse({ error: "Ação não encontrada" }, 404);
   } catch (error: any) {
     console.error("Marketplace error:", error);

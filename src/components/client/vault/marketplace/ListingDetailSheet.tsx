@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Heart, ShieldCheck, Eye, Star, Truck, Package, ShoppingCart } from "lucide-react";
+import { Heart, ShieldCheck, Eye, Star, Truck, Package, ShoppingCart, User } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { MarketplaceListing } from "@/hooks/useMarketplace";
+import { OfferDialog } from "./OfferDialog";
 
 const conditionLabels: Record<string, string> = {
   novo: "Novo",
@@ -25,6 +26,8 @@ interface ListingDetailSheetProps {
   onOpenChange: (open: boolean) => void;
   onToggleFavorite: (id: string) => void;
   onBuy?: (listing: MarketplaceListing) => void;
+  onMakeOffer?: (data: { listing_id: string; offer_price: number; message?: string }) => Promise<boolean>;
+  onViewSellerProfile?: (sellerId: string) => void;
   isOwnListing?: boolean;
 }
 
@@ -34,6 +37,8 @@ export function ListingDetailSheet({
   onOpenChange,
   onToggleFavorite,
   onBuy,
+  onMakeOffer,
+  onViewSellerProfile,
   isOwnListing = false,
 }: ListingDetailSheetProps) {
   const [activePhoto, setActivePhoto] = useState(0);
@@ -194,10 +199,14 @@ export function ListingDetailSheet({
           {listing.seller && (
             <>
               <Separator />
-              <div className="flex items-center justify-between">
+              <div
+                className={cn("flex items-center justify-between", !isOwnListing && "cursor-pointer hover:bg-muted/30 -mx-2 px-2 py-1 rounded-lg transition-colors")}
+                onClick={() => !isOwnListing && listing.seller && onViewSellerProfile?.(listing.seller.id)}
+              >
                 <div>
-                  <p className="text-sm font-medium">
+                  <p className="text-sm font-medium flex items-center gap-1">
                     {listing.seller.member.client_name}
+                    {!isOwnListing && <User className="h-3 w-3 text-primary" />}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {listing.seller.total_sales_count} venda{listing.seller.total_sales_count !== 1 ? "s" : ""} no marketplace
@@ -230,14 +239,23 @@ export function ListingDetailSheet({
 
           {/* Action */}
           {!isOwnListing && (
-            <Button
-              className="w-full btn-gold gap-2"
-              size="lg"
-              onClick={() => onBuy?.(listing)}
-            >
-              <ShoppingCart className="h-4 w-4" />
-              Comprar por R$ {totalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                className="flex-1 btn-gold gap-2"
+                size="lg"
+                onClick={() => onBuy?.(listing)}
+              >
+                <ShoppingCart className="h-4 w-4" />
+                Comprar R$ {totalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </Button>
+              {onMakeOffer && (
+                <OfferDialog
+                  listingId={listing.id}
+                  listingPrice={listing.price}
+                  onSubmit={onMakeOffer}
+                />
+              )}
+            </div>
           )}
         </div>
       </SheetContent>
