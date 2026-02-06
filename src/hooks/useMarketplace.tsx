@@ -130,13 +130,17 @@ export function useMarketplace(cpf: string | null) {
   const [mySales, setMySales] = useState<MarketplaceOrder[]>([]);
 
   const fetchListings = useCallback(
-    async (filters?: { brand?: string; size?: string; sort?: string; page?: number }) => {
+    async (filters?: { search?: string; brand?: string; size?: string; condition?: string; priceMin?: number; priceMax?: number; sort?: string; page?: number }) => {
       if (!cpf) return;
       setIsLoading(true);
       try {
         const params: Record<string, string> = {};
+        if (filters?.search) params.search = filters.search;
         if (filters?.brand) params.brand = filters.brand;
         if (filters?.size) params.size = filters.size;
+        if (filters?.condition) params.condition = filters.condition;
+        if (filters?.priceMin) params.price_min = String(filters.priceMin);
+        if (filters?.priceMax) params.price_max = String(filters.priceMax);
         if (filters?.sort) params.sort = filters.sort;
         if (filters?.page) params.page = String(filters.page);
 

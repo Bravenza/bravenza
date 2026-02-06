@@ -13,6 +13,29 @@ function jsonResponse(data: any, status = 200) {
   });
 }
 
+async function createNotification(
+  supabase: any,
+  title: string,
+  message: string,
+  targetCpf: string,
+  referenceId?: string,
+  referenceType?: string
+) {
+  try {
+    await supabase.from("notifications").insert({
+      title,
+      message,
+      target: "client",
+      target_client_cpf: targetCpf,
+      type: "info",
+      reference_id: referenceId || null,
+      reference_type: referenceType || "marketplace",
+    });
+  } catch (e) {
+    console.error("Notification error:", e);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -34,13 +57,17 @@ Deno.serve(async (req) => {
   try {
     // ===================== LISTINGS =====================
 
-    // GET: List active listings
+    // GET: List active listings with advanced search
     if (req.method === "GET" && action === "listings") {
       const page = parseInt(url.searchParams.get("page") || "1");
       const limit = 20;
       const offset = (page - 1) * limit;
       const brand = url.searchParams.get("brand");
       const size = url.searchParams.get("size");
+      const condition = url.searchParams.get("condition");
+      const priceMin = url.searchParams.get("price_min");
+      const priceMax = url.searchParams.get("price_max");
+      const search = url.searchParams.get("search");
       const sort = url.searchParams.get("sort") || "recent";
 
       let query = supabase
@@ -57,11 +84,18 @@ Deno.serve(async (req) => {
         `, { count: "exact" })
         .eq("status", "active");
 
+      if (search) {
+        query = query.or(`title.ilike.%${search}%,brand.ilike.%${search}%,model.ilike.%${search}%,colorway.ilike.%${search}%`);
+      }
       if (brand) query = query.ilike("brand", `%${brand}%`);
       if (size) query = query.eq("size", size);
+      if (condition) query = query.eq("condition", condition);
+      if (priceMin) query = query.gte("price", parseFloat(priceMin));
+      if (priceMax) query = query.lte("price", parseFloat(priceMax));
 
       if (sort === "price_asc") query = query.order("price", { ascending: true });
       else if (sort === "price_desc") query = query.order("price", { ascending: false });
+      else if (sort === "popular") query = query.order("views_count", { ascending: false });
       else query = query.order("published_at", { ascending: false });
 
       query = query.range(offset, offset + limit - 1);
@@ -131,9 +165,7 @@ Deno.serve(async (req) => {
         .eq("client_cpf", clientCpf)
         .single();
 
-      if (!member) {
-        return jsonResponse({ listings: [], seller: null });
-      }
+      if (!member) return jsonResponse({ listings: [], seller: null });
 
       const { data: seller } = await supabase
         .from("vault_seller_profiles")
@@ -141,9 +173,7 @@ Deno.serve(async (req) => {
         .eq("member_id", member.id)
         .maybeSingle();
 
-      if (!seller) {
-        return jsonResponse({ listings: [], seller: null });
-      }
+      if (!seller) return jsonResponse({ listings: [], seller: null });
 
       const { data: listings } = await supabase
         .from("vault_marketplace_listings")
@@ -264,15 +294,10 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (existing) {
-        await supabase
-          .from("vault_marketplace_favorites")
-          .delete()
-          .eq("id", existing.id);
+        await supabase.from("vault_marketplace_favorites").delete().eq("id", existing.id);
         return jsonResponse({ favorited: false });
       } else {
-        await supabase
-          .from("vault_marketplace_favorites")
-          .insert({ listing_id, user_cpf: clientCpf });
+        await supabase.from("vault_marketplace_favorites").insert({ listing_id, user_cpf: clientCpf });
         return jsonResponse({ favorited: true });
       }
     }
@@ -313,9 +338,7 @@ Deno.serve(async (req) => {
         .eq("client_cpf", clientCpf)
         .single();
 
-      if (!member) {
-        return jsonResponse({ seller: null });
-      }
+      if (!member) return jsonResponse({ seller: null });
 
       const { data: seller } = await supabase
         .from("vault_seller_profiles")
@@ -333,7 +356,6 @@ Deno.serve(async (req) => {
       const body = await req.json();
       const listingId = body.listing_id;
 
-      // Get listing
       const { data: listing, error: listingErr } = await supabase
         .from("vault_marketplace_listings")
         .select(`
@@ -341,7 +363,7 @@ Deno.serve(async (req) => {
           seller:vault_seller_profiles!inner(
             id,
             current_fee_percent,
-            member:vault_members!inner(client_cpf)
+            member:vault_members!inner(client_cpf, client_name)
           )
         `)
         .eq("id", listingId)
@@ -350,7 +372,6 @@ Deno.serve(async (req) => {
 
       if (listingErr || !listing) throw new Error("Anúncio não encontrado ou já vendido");
 
-      // Check buyer is not the seller
       if (listing.seller.member.client_cpf === clientCpf) {
         throw new Error("Você não pode comprar seu próprio anúncio");
       }
@@ -360,7 +381,6 @@ Deno.serve(async (req) => {
       const feeAmount = Math.round(listing.price * (feePercent / 100) * 100) / 100;
       const sellerPayout = listing.price - feeAmount;
 
-      // Create order
       const { data: order, error: orderErr } = await supabase
         .from("vault_marketplace_orders")
         .insert({
@@ -385,14 +405,22 @@ Deno.serve(async (req) => {
 
       if (orderErr) throw orderErr;
 
-      // Mark listing as reserved
       await supabase
         .from("vault_marketplace_listings")
         .update({ status: "reserved" })
         .eq("id", listingId);
 
-      console.log(`Marketplace order created: ${order.order_code} by ${clientCpf}`);
+      // Notify seller
+      await createNotification(
+        supabase,
+        "🛒 Nova venda no Marketplace!",
+        `${body.buyer_name} quer comprar "${listing.title}". Aguardando pagamento.`,
+        listing.seller.member.client_cpf,
+        order.id,
+        "marketplace_order"
+      );
 
+      console.log(`Marketplace order created: ${order.order_code} by ${clientCpf}`);
       return jsonResponse({ success: true, order });
     }
 
@@ -400,6 +428,17 @@ Deno.serve(async (req) => {
     if (req.method === "PUT" && action === "confirm-payment") {
       const body = await req.json();
       const orderId = body.order_id;
+
+      const { data: order } = await supabase
+        .from("vault_marketplace_orders")
+        .select(`
+          id, seller_id,
+          listing:vault_marketplace_listings!inner(title),
+          seller:vault_seller_profiles!inner(member:vault_members!inner(client_cpf))
+        `)
+        .eq("id", orderId)
+        .eq("buyer_cpf", clientCpf)
+        .single();
 
       const { error } = await supabase
         .from("vault_marketplace_orders")
@@ -415,6 +454,18 @@ Deno.serve(async (req) => {
         .eq("buyer_cpf", clientCpf);
 
       if (error) throw error;
+
+      // Notify seller about payment
+      if (order) {
+        await createNotification(
+          supabase,
+          "💰 Pagamento confirmado!",
+          `O pagamento de "${order.listing?.title}" foi confirmado. Envie o produto!`,
+          order.seller?.member?.client_cpf,
+          orderId,
+          "marketplace_order"
+        );
+      }
 
       console.log(`Payment confirmed for order ${orderId}`);
       return jsonResponse({ success: true });
@@ -470,54 +521,85 @@ Deno.serve(async (req) => {
       return jsonResponse({ orders: orders || [] });
     }
 
-    // PUT: Update order status (seller ships, admin confirms delivery/payout)
+    // PUT: Update order status
     if (req.method === "PUT" && action === "update-order-status") {
       const body = await req.json();
       const orderId = body.order_id;
       const newStatus = body.status;
+
+      // Get order details for notifications
+      const { data: orderDetail } = await supabase
+        .from("vault_marketplace_orders")
+        .select(`
+          id, buyer_cpf, buyer_name, order_code,
+          listing:vault_marketplace_listings!inner(title),
+          seller:vault_seller_profiles!inner(member:vault_members!inner(client_cpf, client_name))
+        `)
+        .eq("id", orderId)
+        .single();
 
       const updateData: any = { status: newStatus };
 
       if (newStatus === "shipped") {
         updateData.shipped_at = new Date().toISOString();
         updateData.tracking_code = body.tracking_code || null;
+        // Notify buyer
+        if (orderDetail) {
+          await createNotification(
+            supabase,
+            "📦 Seu pedido foi enviado!",
+            `O pedido "${orderDetail.listing?.title}" foi enviado.${body.tracking_code ? ` Rastreio: ${body.tracking_code}` : ""}`,
+            orderDetail.buyer_cpf,
+            orderId,
+            "marketplace_order"
+          );
+        }
       } else if (newStatus === "delivered") {
         updateData.delivered_at = new Date().toISOString();
-        // Calculate protection end (7 business days)
         const { data: protectionData } = await supabase.rpc("calculate_protection_end", {
           delivery_date: new Date().toISOString(),
         });
-        if (protectionData) {
-          updateData.protection_ends_at = protectionData;
+        if (protectionData) updateData.protection_ends_at = protectionData;
+        // Notify both
+        if (orderDetail) {
+          await createNotification(supabase, "✅ Pedido entregue!", `"${orderDetail.listing?.title}" foi entregue. Você tem 7 dias úteis para reportar problemas.`, orderDetail.buyer_cpf, orderId, "marketplace_order");
+          await createNotification(supabase, "✅ Entrega confirmada!", `"${orderDetail.listing?.title}" foi entregue ao comprador. O repasse será liberado após o período de proteção.`, orderDetail.seller?.member?.client_cpf, orderId, "marketplace_order");
         }
       } else if (newStatus === "completed") {
         updateData.payout_released_at = new Date().toISOString();
         updateData.payout_method = body.payout_method || "pix";
         updateData.payout_proof_url = body.payout_proof_url || null;
+        if (orderDetail) {
+          await createNotification(supabase, "💸 Repasse liberado!", `O valor da venda de "${orderDetail.listing?.title}" foi liberado via ${body.payout_method || "PIX"}.`, orderDetail.seller?.member?.client_cpf, orderId, "marketplace_order");
+        }
       } else if (newStatus === "cancelled") {
         updateData.cancelled_at = new Date().toISOString();
         updateData.cancellation_reason = body.reason || null;
-        // Re-activate the listing
-        const { data: order } = await supabase
+        const { data: cancelOrder } = await supabase
           .from("vault_marketplace_orders")
           .select("listing_id")
           .eq("id", orderId)
           .single();
-        if (order) {
+        if (cancelOrder) {
           await supabase
             .from("vault_marketplace_listings")
             .update({ status: "active" })
-            .eq("id", order.listing_id);
+            .eq("id", cancelOrder.listing_id);
+        }
+        if (orderDetail) {
+          await createNotification(supabase, "❌ Pedido cancelado", `O pedido "${orderDetail.listing?.title}" foi cancelado.`, orderDetail.buyer_cpf, orderId, "marketplace_order");
         }
       } else if (newStatus === "disputed") {
         updateData.dispute_status = "open";
         updateData.dispute_reason = body.reason || null;
         updateData.dispute_opened_at = new Date().toISOString();
+        // Notify admin + seller
+        if (orderDetail) {
+          await createNotification(supabase, "⚠️ Disputa aberta", `O comprador ${orderDetail.buyer_name} abriu uma disputa no pedido "${orderDetail.listing?.title}".`, orderDetail.seller?.member?.client_cpf, orderId, "marketplace_order");
+        }
       }
 
-      if (body.admin_notes) {
-        updateData.admin_notes = body.admin_notes;
-      }
+      if (body.admin_notes) updateData.admin_notes = body.admin_notes;
 
       const { error } = await supabase
         .from("vault_marketplace_orders")
@@ -530,12 +612,67 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: true });
     }
 
+    // PUT: Resolve dispute (admin)
+    if (req.method === "PUT" && action === "resolve-dispute") {
+      const body = await req.json();
+      const orderId = body.order_id;
+
+      const { data: order } = await supabase
+        .from("vault_marketplace_orders")
+        .select(`
+          id, buyer_cpf, seller_id,
+          listing:vault_marketplace_listings!inner(title),
+          seller:vault_seller_profiles!inner(member:vault_members!inner(client_cpf))
+        `)
+        .eq("id", orderId)
+        .single();
+
+      const updateData: any = {
+        dispute_status: "resolved",
+        dispute_resolved_at: new Date().toISOString(),
+        dispute_resolution: body.resolution,
+        admin_notes: body.admin_notes || null,
+      };
+
+      if (body.resolution === "refund_buyer") {
+        updateData.status = "cancelled";
+        updateData.cancelled_at = new Date().toISOString();
+        updateData.dispute_refund_amount = body.refund_amount || 0;
+        // Re-activate listing
+        if (order) {
+          const { data: lo } = await supabase.from("vault_marketplace_orders").select("listing_id").eq("id", orderId).single();
+          if (lo) await supabase.from("vault_marketplace_listings").update({ status: "active" }).eq("id", lo.listing_id);
+        }
+      } else if (body.resolution === "favor_seller") {
+        updateData.status = "completed";
+        updateData.payout_released_at = new Date().toISOString();
+        updateData.payout_method = "pix";
+      } else {
+        // partial_refund or other
+        updateData.dispute_refund_amount = body.refund_amount || 0;
+      }
+
+      const { error } = await supabase
+        .from("vault_marketplace_orders")
+        .update(updateData)
+        .eq("id", orderId);
+
+      if (error) throw error;
+
+      // Notify both parties
+      if (order) {
+        await createNotification(supabase, "📋 Disputa resolvida", `A disputa de "${order.listing?.title}" foi resolvida: ${body.resolution === "refund_buyer" ? "reembolso ao comprador" : body.resolution === "favor_seller" ? "decisão a favor do vendedor" : "acordo parcial"}.`, order.buyer_cpf, orderId, "marketplace_order");
+        await createNotification(supabase, "📋 Disputa resolvida", `A disputa de "${order.listing?.title}" foi resolvida.`, order.seller?.member?.client_cpf, orderId, "marketplace_order");
+      }
+
+      return jsonResponse({ success: true });
+    }
+
     // POST: Rate seller
     if (req.method === "POST" && action === "rate-seller") {
       const body = await req.json();
       const orderId = body.order_id;
 
-      // Verify buyer
       const { data: order, error: orderErr } = await supabase
         .from("vault_marketplace_orders")
         .select("id, seller_id, status")
@@ -548,7 +685,6 @@ Deno.serve(async (req) => {
         throw new Error("Só é possível avaliar após a entrega");
       }
 
-      // Save rating
       const { error } = await supabase
         .from("vault_marketplace_orders")
         .update({
@@ -560,7 +696,6 @@ Deno.serve(async (req) => {
 
       if (error) throw error;
 
-      // Update seller average rating
       const { data: allRatings } = await supabase
         .from("vault_marketplace_orders")
         .select("buyer_rating")
@@ -571,12 +706,141 @@ Deno.serve(async (req) => {
         const avg = allRatings.reduce((sum: number, r: any) => sum + r.buyer_rating, 0) / allRatings.length;
         await supabase
           .from("vault_seller_profiles")
-          .update({
-            average_rating: Math.round(avg * 10) / 10,
-            ratings_count: allRatings.length,
-          })
+          .update({ average_rating: Math.round(avg * 10) / 10, ratings_count: allRatings.length })
           .eq("id", order.seller_id);
       }
+
+      return jsonResponse({ success: true });
+    }
+
+    // ===================== CHAT =====================
+
+    // GET: Chat messages for an order or listing
+    if (req.method === "GET" && action === "chat-messages") {
+      const orderId = url.searchParams.get("order_id");
+      const listingId = url.searchParams.get("listing_id");
+
+      let query = supabase
+        .from("vault_marketplace_messages")
+        .select("*")
+        .order("created_at", { ascending: true });
+
+      if (orderId) query = query.eq("order_id", orderId);
+      else if (listingId) query = query.eq("listing_id", listingId);
+      else throw new Error("order_id ou listing_id obrigatório");
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // Mark messages as read
+      if (data && data.length > 0) {
+        const unreadIds = data.filter((m: any) => m.sender_cpf !== clientCpf && !m.read_at).map((m: any) => m.id);
+        if (unreadIds.length > 0) {
+          await supabase
+            .from("vault_marketplace_messages")
+            .update({ read_at: new Date().toISOString() })
+            .in("id", unreadIds);
+        }
+      }
+
+      return jsonResponse({ messages: data || [] });
+    }
+
+    // POST: Send chat message
+    if (req.method === "POST" && action === "send-message") {
+      const body = await req.json();
+
+      const { data: msg, error } = await supabase
+        .from("vault_marketplace_messages")
+        .insert({
+          order_id: body.order_id || null,
+          listing_id: body.listing_id || null,
+          sender_cpf: clientCpf,
+          sender_name: body.sender_name,
+          message: body.message,
+          is_admin: body.is_admin || false,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Notify the other party
+      if (body.order_id) {
+        const { data: order } = await supabase
+          .from("vault_marketplace_orders")
+          .select(`
+            buyer_cpf, buyer_name,
+            listing:vault_marketplace_listings!inner(title),
+            seller:vault_seller_profiles!inner(member:vault_members!inner(client_cpf, client_name))
+          `)
+          .eq("id", body.order_id)
+          .single();
+
+        if (order) {
+          const recipientCpf = clientCpf === order.buyer_cpf
+            ? order.seller?.member?.client_cpf
+            : order.buyer_cpf;
+          const senderName = clientCpf === order.buyer_cpf ? order.buyer_name : order.seller?.member?.client_name;
+          if (recipientCpf) {
+            await createNotification(supabase, "💬 Nova mensagem", `${senderName} enviou uma mensagem sobre "${order.listing?.title}".`, recipientCpf, body.order_id, "marketplace_chat");
+          }
+        }
+      }
+
+      return jsonResponse({ success: true, message: msg });
+    }
+
+    // POST: Open dispute
+    if (req.method === "POST" && action === "open-dispute") {
+      const body = await req.json();
+      const orderId = body.order_id;
+
+      // Verify buyer owns order and it's delivered
+      const { data: order, error: oErr } = await supabase
+        .from("vault_marketplace_orders")
+        .select(`
+          id, status, protection_ends_at, buyer_name,
+          listing:vault_marketplace_listings!inner(title),
+          seller:vault_seller_profiles!inner(member:vault_members!inner(client_cpf))
+        `)
+        .eq("id", orderId)
+        .eq("buyer_cpf", clientCpf)
+        .single();
+
+      if (oErr || !order) throw new Error("Pedido não encontrado");
+      if (order.status !== "delivered") throw new Error("Disputas só podem ser abertas após a entrega");
+
+      // Check protection window
+      if (order.protection_ends_at && new Date(order.protection_ends_at) < new Date()) {
+        throw new Error("O período de proteção já expirou");
+      }
+
+      const { error } = await supabase
+        .from("vault_marketplace_orders")
+        .update({
+          status: "disputed",
+          dispute_status: "open",
+          dispute_reason: body.reason,
+          dispute_opened_at: new Date().toISOString(),
+        })
+        .eq("id", orderId);
+
+      if (error) throw error;
+
+      // Notify seller
+      if (order.seller?.member?.client_cpf) {
+        await createNotification(supabase, "⚠️ Disputa aberta", `O comprador ${order.buyer_name} abriu uma disputa: "${body.reason}"`, order.seller.member.client_cpf, orderId, "marketplace_order");
+      }
+
+      // Create system message in chat
+      await supabase.from("vault_marketplace_messages").insert({
+        order_id: orderId,
+        sender_cpf: clientCpf,
+        sender_name: "Sistema",
+        message: `⚠️ Disputa aberta: ${body.reason}`,
+        is_admin: false,
+      });
 
       return jsonResponse({ success: true });
     }
@@ -596,9 +860,7 @@ Deno.serve(async (req) => {
         .order("created_at", { ascending: false })
         .limit(100);
 
-      if (status && status !== "all") {
-        query = query.eq("status", status);
-      }
+      if (status && status !== "all") query = query.eq("status", status);
 
       const { data: orders, error } = await query;
       if (error) throw error;

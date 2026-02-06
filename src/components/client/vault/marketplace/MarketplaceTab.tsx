@@ -1,18 +1,16 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Store, Search, SlidersHorizontal, Package, TrendingDown, Percent, ShoppingBag } from "lucide-react";
+import { Store, Package, TrendingDown, Percent, ShoppingBag } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useMarketplace, type MarketplaceListing } from "@/hooks/useMarketplace";
 import { MarketplaceListingCard } from "./MarketplaceListingCard";
 import { CreateListingDialog } from "./CreateListingDialog";
 import { ListingDetailSheet } from "./ListingDetailSheet";
 import { MarketplaceCheckoutDialog } from "./MarketplaceCheckoutDialog";
 import { MarketplaceOrdersView } from "./MarketplaceOrdersView";
+import { MarketplaceFilters, type MarketplaceFilterValues } from "./MarketplaceFilters";
 import { supabase } from "@/integrations/supabase/client";
 
 interface MarketplaceTabProps {
@@ -64,13 +62,12 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
   const [detailOpen, setDetailOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutListing, setCheckoutListing] = useState<MarketplaceListing | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("recent");
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
+  const [filters, setFilters] = useState<MarketplaceFilterValues>({ sort: "recent" });
 
   useEffect(() => {
-    fetchListings({ sort: sortBy });
-  }, [sortBy]);
+    handleSearch();
+  }, []);
 
   useEffect(() => {
     if (innerTab === "meus-anuncios" && isVaultMember) {
@@ -102,33 +99,32 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
   const handleCheckoutConfirm = async (data: any) => {
     const result = await createOrder(data);
     if (result) {
-      fetchListings({ sort: sortBy });
+      handleSearch();
       return result;
     }
     return null;
   };
 
   const handleSearch = () => {
-    fetchListings({ brand: searchQuery, sort: sortBy });
+    fetchListings({
+      search: filters.search,
+      brand: filters.brand,
+      size: filters.size,
+      condition: filters.condition,
+      priceMin: filters.priceMin,
+      priceMax: filters.priceMax,
+      sort: filters.sort,
+    });
   };
 
   const handleCreateListing = async (data: any) => {
     const result = await createListing(data);
     if (result) {
       fetchMyListings();
-      fetchListings({ sort: sortBy });
+      handleSearch();
     }
     return result;
   };
-
-  const filteredListings = searchQuery
-    ? listings.filter(
-        (l) =>
-          l.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          l.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          l.model?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : listings;
 
   return (
     <div className="space-y-6">
@@ -163,51 +159,64 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
 
         {/* Explore Tab */}
         <TabsContent value="explorar" className="mt-4 space-y-4">
-          {/* Search & Filters */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por marca, modelo..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="pl-9"
-              />
+          {/* Advanced Filters */}
+          <MarketplaceFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            onSearch={handleSearch}
+          />
+
+          {/* Active filter badges */}
+          {(filters.condition || filters.size || filters.priceMin || filters.priceMax) && (
+            <div className="flex flex-wrap gap-2">
+              {filters.condition && (
+                <Badge variant="secondary" className="gap-1 text-xs">
+                  Condição: {filters.condition.replace("usado_", "").replace("_", " ")}
+                </Badge>
+              )}
+              {filters.size && (
+                <Badge variant="secondary" className="gap-1 text-xs">
+                  Tam. {filters.size}
+                </Badge>
+              )}
+              {filters.priceMin && (
+                <Badge variant="secondary" className="text-xs">
+                  Min R$ {filters.priceMin}
+                </Badge>
+              )}
+              {filters.priceMax && (
+                <Badge variant="secondary" className="text-xs">
+                  Max R$ {filters.priceMax}
+                </Badge>
+              )}
             </div>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-40">
-                <SlidersHorizontal className="h-4 w-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recent">Mais recentes</SelectItem>
-                <SelectItem value="price_asc">Menor preço</SelectItem>
-                <SelectItem value="price_desc">Maior preço</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          )}
+
+          {/* Results count */}
+          {!isLoading && (
+            <p className="text-xs text-muted-foreground">{total} anúncio{total !== 1 ? "s" : ""} encontrado{total !== 1 ? "s" : ""}</p>
+          )}
 
           {/* Listings Grid */}
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
             </div>
-          ) : filteredListings.length === 0 ? (
+          ) : listings.length === 0 ? (
             <Card className="card-premium">
               <CardContent className="py-12 text-center">
                 <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-30" />
                 <h3 className="font-medium mb-1">Nenhum anúncio encontrado</h3>
                 <p className="text-sm text-muted-foreground">
-                  {searchQuery
-                    ? "Tente outra busca"
+                  {filters.search || filters.condition || filters.size
+                    ? "Tente outros filtros"
                     : "Seja o primeiro a anunciar no marketplace!"}
                 </p>
               </CardContent>
             </Card>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filteredListings.map((listing, i) => (
+              {listings.map((listing, i) => (
                 <motion.div
                   key={listing.id}
                   initial={{ opacity: 0, y: 10 }}
@@ -231,6 +240,8 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
             orders={myOrders}
             sales={mySales}
             isVaultMember={isVaultMember}
+            clientCpf={clientCpf}
+            clientName={buyerName || ""}
             onRefreshOrders={fetchMyOrders}
             onRefreshSales={fetchMySales}
             onUpdateOrderStatus={updateOrderStatus}
@@ -241,7 +252,6 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
         {/* My Listings Tab */}
         {isVaultMember && (
           <TabsContent value="meus-anuncios" className="mt-4 space-y-4">
-            {/* Seller Stats */}
             {seller && (
               <Card className="card-premium">
                 <CardContent className="p-4">
@@ -251,17 +261,11 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
                       <p className="text-xs text-muted-foreground">Vendas</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-primary">
-                        {seller.current_fee_percent}%
-                      </p>
+                      <p className="text-2xl font-bold text-primary">{seller.current_fee_percent}%</p>
                       <p className="text-xs text-muted-foreground">Taxa atual</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold">
-                        {seller.average_rating
-                          ? seller.average_rating.toFixed(1)
-                          : "—"}
-                      </p>
+                      <p className="text-2xl font-bold">{seller.average_rating ? seller.average_rating.toFixed(1) : "—"}</p>
                       <p className="text-xs text-muted-foreground">Avaliação</p>
                     </div>
                   </div>
@@ -284,31 +288,16 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {myListings.map((listing) => (
                   <div key={listing.id} className="relative">
-                    <MarketplaceListingCard
-                      listing={listing}
-                      onSelect={handleSelect}
-                      onToggleFavorite={toggleFavorite}
-                    />
+                    <MarketplaceListingCard listing={listing} onSelect={handleSelect} onToggleFavorite={toggleFavorite} />
                     <Badge
                       className={`absolute top-2 right-2 text-xs ${
-                        listing.status === "active"
-                          ? "bg-success/20 text-success"
-                          : listing.status === "sold"
-                          ? "bg-primary/20 text-primary"
-                          : listing.status === "reserved"
-                          ? "bg-warning/20 text-warning"
-                          : "bg-muted text-muted-foreground"
+                        listing.status === "active" ? "bg-success/20 text-success"
+                        : listing.status === "sold" ? "bg-primary/20 text-primary"
+                        : listing.status === "reserved" ? "bg-warning/20 text-warning"
+                        : "bg-muted text-muted-foreground"
                       }`}
                     >
-                      {listing.status === "active"
-                        ? "Ativo"
-                        : listing.status === "sold"
-                        ? "Vendido"
-                        : listing.status === "reserved"
-                        ? "Reservado"
-                        : listing.status === "draft"
-                        ? "Rascunho"
-                        : listing.status}
+                      {listing.status === "active" ? "Ativo" : listing.status === "sold" ? "Vendido" : listing.status === "reserved" ? "Reservado" : listing.status === "draft" ? "Rascunho" : listing.status}
                     </Badge>
                   </div>
                 ))}
@@ -325,21 +314,14 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
                 <Percent className="h-5 w-5 text-primary" />
                 Taxa de serviço progressiva
               </CardTitle>
-              <CardDescription>
-                Quanto mais você vende, menor a taxa
-              </CardDescription>
+              <CardDescription>Quanto mais você vende, menor a taxa</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {feeTable.map((row) => (
-                  <div
-                    key={row.range}
-                    className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30"
-                  >
+                  <div key={row.range} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
                     <span className="text-sm">{row.range}</span>
-                    <Badge variant="outline" className="text-primary border-primary/30">
-                      {row.fee}
-                    </Badge>
+                    <Badge variant="outline" className="text-primary border-primary/30">{row.fee}</Badge>
                   </div>
                 ))}
               </div>
@@ -347,7 +329,6 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
                 <p className="text-xs text-muted-foreground">
                   <TrendingDown className="h-3 w-3 inline mr-1 text-primary" />
                   A taxa diminui automaticamente conforme seu número de vendas aumenta.
-                  Apenas membros do Vault Club podem vender no marketplace.
                 </p>
               </div>
             </CardContent>
@@ -359,31 +340,11 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
             </CardHeader>
             <CardContent className="space-y-4">
               {[
-                {
-                  step: "1",
-                  title: "Crie seu anúncio",
-                  desc: "Descreva o produto, defina o preço e adicione fotos. Itens certificados pelo Vault têm destaque especial.",
-                },
-                {
-                  step: "2",
-                  title: "Comprador finaliza a compra",
-                  desc: "O comprador paga via PIX ou cartão pelo Mercado Pago. O anúncio é reservado automaticamente.",
-                },
-                {
-                  step: "3",
-                  title: "Envie o produto",
-                  desc: "Envie direto ao comprador ou via Bravenza para autenticação física e emissão de certificado Vault ID.",
-                },
-                {
-                  step: "4",
-                  title: "Período de proteção",
-                  desc: "Após a entrega, o comprador tem 7 dias úteis para reportar problemas. Após esse prazo, o valor é liberado.",
-                },
-                {
-                  step: "5",
-                  title: "Receba o pagamento",
-                  desc: "O valor é liberado via PIX/transferência, descontada a taxa de serviço progressiva.",
-                },
+                { step: "1", title: "Crie seu anúncio", desc: "Descreva o produto, defina o preço e adicione fotos." },
+                { step: "2", title: "Comprador finaliza a compra", desc: "O comprador paga via PIX ou cartão pelo Mercado Pago." },
+                { step: "3", title: "Envie o produto", desc: "Envie direto ao comprador ou via Bravenza para autenticação." },
+                { step: "4", title: "Período de proteção", desc: "O comprador tem 7 dias úteis para reportar problemas." },
+                { step: "5", title: "Receba o pagamento", desc: "O valor é liberado via PIX, descontada a taxa de serviço." },
               ].map((item) => (
                 <div key={item.step} className="flex gap-4">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-bold">
@@ -400,7 +361,6 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
         </TabsContent>
       </Tabs>
 
-      {/* Detail Sheet */}
       <ListingDetailSheet
         listing={selectedListing}
         open={detailOpen}
@@ -410,7 +370,6 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
         isOwnListing={selectedListing?.seller_id === seller?.id}
       />
 
-      {/* Checkout Dialog */}
       <MarketplaceCheckoutDialog
         listing={checkoutListing}
         open={checkoutOpen}

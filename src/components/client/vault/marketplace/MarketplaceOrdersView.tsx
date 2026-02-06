@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Package, Truck, CheckCircle2, Clock, AlertTriangle, Star, XCircle } from "lucide-react";
+import { Package, Truck, CheckCircle2, Clock, AlertTriangle, Star, XCircle, MessageCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -14,6 +13,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { MarketplaceOrder } from "@/hooks/useMarketplace";
+import { MarketplaceChatDialog } from "./MarketplaceChatDialog";
+import { DisputeDialog } from "./DisputeDialog";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   pending_payment: { label: "Aguardando pagamento", color: "bg-warning/20 text-warning", icon: Clock },
@@ -29,6 +30,8 @@ interface MarketplaceOrdersViewProps {
   orders: MarketplaceOrder[];
   sales: MarketplaceOrder[];
   isVaultMember: boolean;
+  clientCpf: string;
+  clientName: string;
   onRefreshOrders: () => void;
   onRefreshSales: () => void;
   onUpdateOrderStatus: (orderId: string, status: string, extra?: Record<string, any>) => Promise<boolean>;
@@ -39,6 +42,8 @@ export function MarketplaceOrdersView({
   orders,
   sales,
   isVaultMember,
+  clientCpf,
+  clientName,
   onRefreshOrders,
   onRefreshSales,
   onUpdateOrderStatus,
@@ -131,7 +136,18 @@ export function MarketplaceOrdersView({
                 )}
 
                 {/* Actions */}
-                <div className="flex gap-2 mt-3">
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {/* Chat button - available for all non-cancelled orders */}
+                  {!["cancelled"].includes(order.status) && (
+                    <MarketplaceChatDialog
+                      orderId={order.id}
+                      orderCode={order.order_code}
+                      clientCpf={clientCpf}
+                      clientName={clientName}
+                    />
+                  )}
+
+                  {/* Rate seller (buyer, delivered) */}
                   {!isSale && order.status === "delivered" && !order.buyer_rating && (
                     <Button
                       size="sm"
@@ -143,6 +159,18 @@ export function MarketplaceOrdersView({
                       Avaliar vendedor
                     </Button>
                   )}
+
+                  {/* Open dispute (buyer, delivered, within protection) */}
+                  {!isSale && order.status === "delivered" && (
+                    <DisputeDialog
+                      orderId={order.id}
+                      clientCpf={clientCpf}
+                      protectionEndsAt={order.protection_ends_at}
+                      onSuccess={onRefreshOrders}
+                    />
+                  )}
+
+                  {/* Ship button (seller, paid) */}
                   {isSale && order.status === "paid" && (
                     <Button
                       size="sm"
@@ -153,11 +181,20 @@ export function MarketplaceOrdersView({
                       Informar envio
                     </Button>
                   )}
+
+                  {/* Rating display */}
                   {order.buyer_rating && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Star className="h-3 w-3 fill-primary text-primary" />
                       {order.buyer_rating}/5
                     </div>
+                  )}
+
+                  {/* Dispute status */}
+                  {order.dispute_status && (
+                    <Badge variant="outline" className="text-xs text-destructive border-destructive/30">
+                      Disputa: {order.dispute_status === "open" ? "Aberta" : "Resolvida"}
+                    </Badge>
                   )}
                 </div>
               </div>
@@ -172,13 +209,9 @@ export function MarketplaceOrdersView({
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="compras">
-            Minhas compras ({orders.length})
-          </TabsTrigger>
+          <TabsTrigger value="compras">Minhas compras ({orders.length})</TabsTrigger>
           {isVaultMember && (
-            <TabsTrigger value="vendas">
-              Minhas vendas ({sales.length})
-            </TabsTrigger>
+            <TabsTrigger value="vendas">Minhas vendas ({sales.length})</TabsTrigger>
           )}
         </TabsList>
 
@@ -188,9 +221,7 @@ export function MarketplaceOrdersView({
               <CardContent className="py-12 text-center">
                 <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-30" />
                 <p className="font-medium">Nenhuma compra realizada</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Explore o marketplace para encontrar tênis incríveis
-                </p>
+                <p className="text-sm text-muted-foreground mt-1">Explore o marketplace para encontrar tênis incríveis</p>
               </CardContent>
             </Card>
           ) : (
@@ -205,9 +236,7 @@ export function MarketplaceOrdersView({
                 <CardContent className="py-12 text-center">
                   <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-30" />
                   <p className="font-medium">Nenhuma venda realizada</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Crie anúncios para começar a vender
-                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">Crie anúncios para começar a vender</p>
                 </CardContent>
               </Card>
             ) : (
@@ -227,22 +256,12 @@ export function MarketplaceOrdersView({
             <div className="flex justify-center gap-2">
               {[1, 2, 3, 4, 5].map((v) => (
                 <button key={v} onClick={() => setRating(v)}>
-                  <Star
-                    className={`h-8 w-8 transition ${
-                      v <= rating ? "fill-primary text-primary" : "text-muted-foreground/30"
-                    }`}
-                  />
+                  <Star className={`h-8 w-8 transition ${v <= rating ? "fill-primary text-primary" : "text-muted-foreground/30"}`} />
                 </button>
               ))}
             </div>
-            <Input
-              value={review}
-              onChange={(e) => setReview(e.target.value)}
-              placeholder="Comentário (opcional)"
-            />
-            <Button onClick={handleRate} className="w-full btn-gold">
-              Enviar avaliação
-            </Button>
+            <Input value={review} onChange={(e) => setReview(e.target.value)} placeholder="Comentário (opcional)" />
+            <Button onClick={handleRate} className="w-full btn-gold">Enviar avaliação</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -256,12 +275,7 @@ export function MarketplaceOrdersView({
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium">Código de rastreio</label>
-              <Input
-                value={trackingCode}
-                onChange={(e) => setTrackingCode(e.target.value)}
-                placeholder="Ex: AA123456789BR"
-                className="mt-1"
-              />
+              <Input value={trackingCode} onChange={(e) => setTrackingCode(e.target.value)} placeholder="Ex: AA123456789BR" className="mt-1" />
             </div>
             <Button onClick={handleShip} className="w-full btn-gold gap-2">
               <Truck className="h-4 w-4" />
