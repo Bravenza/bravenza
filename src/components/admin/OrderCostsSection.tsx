@@ -49,7 +49,7 @@ interface OrderCostsSectionProps {
 
 const COST_TYPES = [
   { value: "shipping", label: "Frete Nacional" },
-  { value: "customs", label: "Taxas de Importação" },
+  { value: "customs", label: "Taxas e Impostos" },
   { value: "packaging", label: "Embalagem" },
   { value: "insurance", label: "Seguro" },
   { value: "other", label: "Outros" },

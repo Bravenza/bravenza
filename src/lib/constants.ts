@@ -23,7 +23,7 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   INSPECTION_APPROVED: "Inspeção Aprovada",
   BALANCE_DUE: "Saldo Pendente",
   INTERNATIONAL_DISPATCH: "Despacho Internacional",
-  CUSTOMS: "Alfândega",
+  CUSTOMS: "Em Processamento",
   NATIONAL_TRANSIT: "Trânsito Nacional",
   DISPATCHED: "Despachado",
 };
@@ -52,7 +52,7 @@ export const ORDER_STATUS_DESCRIPTIONS: Record<string, string> = {
   INSPECTION_APPROVED: "Produto inspecionado e aprovado.",
   BALANCE_DUE: "Aguardando pagamento do saldo restante.",
   INTERNATIONAL_DISPATCH: "Preparando despacho internacional.",
-  CUSTOMS: "Seu pacote está na alfândega.",
+  CUSTOMS: "Seu produto está sendo processado.",
   NATIONAL_TRANSIT: "Em trânsito pelo Brasil.",
   DISPATCHED: "Pacote despachado para entrega.",
 };

@@ -298,7 +298,7 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {[
-            { icon: Image, title: "Showcase", desc: "Exiba seus sneakers e receba feedback" },
+            { icon: Image, title: "Showcase", desc: "Exiba seus tênis e receba feedback" },
             { icon: MessageSquare, title: "Discussões", desc: "Participe de conversas sobre o mercado" },
             { icon: Users, title: "Networking", desc: "Conheça outros colecionadores" },
           ].map((feature, i) => (
