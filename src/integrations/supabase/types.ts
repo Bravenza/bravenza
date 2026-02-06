@@ -2581,37 +2581,22 @@ export type Database = {
         }[]
       }
       get_own_community_profile: { Args: { p_cpf: string }; Returns: Json }
-      get_post_comments:
-        | {
-            Args: { p_cpf: string; p_post_id: string }
-            Returns: {
-              author_name: string
-              author_tier: string
-              content: string
-              created_at: string
-              has_liked: boolean
-              id: string
-              likes_count: number
-              parent_id: string
-              user_id: string
-            }[]
-          }
-        | {
-            Args: { p_cpf: string; p_post_id: string }
-            Returns: {
-              author_name: string
-              author_tier: string
-              content: string
-              created_at: string
-              has_liked: boolean
-              id: string
-              likes_count: number
-              parent_id: string
-              reactions_summary: Json
-              user_id: string
-              user_reactions: string[]
-            }[]
-          }
+      get_post_comments: {
+        Args: { p_cpf: string; p_post_id: string }
+        Returns: {
+          author_name: string
+          author_tier: string
+          content: string
+          created_at: string
+          has_liked: boolean
+          id: string
+          likes_count: number
+          parent_id: string
+          reactions_summary: Json
+          user_id: string
+          user_reactions: string[]
+        }[]
+      }
       get_trending_posts: {
         Args: { p_limit?: number }
         Returns: {
@@ -2755,6 +2740,7 @@ export type Database = {
           client_name: string
           community_opt_in: boolean
           created_at: string
+          following_count: number
           id: string
           invites_remaining: number
           joined_via: string
