@@ -35,7 +35,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 function FAQSectionComponent() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState("importacao");
+  const [activeCategory, setActiveCategory] = useState("curadoria");
   const fetchFAQs = useCallback(async () => {
     try {
       const {
