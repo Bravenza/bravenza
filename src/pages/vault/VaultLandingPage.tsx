@@ -133,7 +133,7 @@ export default function VaultLandingPage() {
           </h1>
           
           <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Curadoria global exclusiva de tênis para colecionadores. 
+            Curadoria sob demanda exclusiva de sneakers para colecionadores. 
             Não existe catálogo. Existe a sua busca e a nossa dedicação.
           </p>
           

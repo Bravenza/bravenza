@@ -54,9 +54,9 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
           <div className="md:col-span-5">
             <Logo size="lg" className="mb-4" />
             <p className="text-sm text-muted-foreground max-w-sm leading-relaxed mb-6">
-              Especialistas em importação de tênis exclusivos. 
-              Autenticidade garantida, rastreamento em tempo real e 
-              entrega segura em todo o Brasil.
+              Curadoria sob demanda e autenticação premium de sneakers. 
+              Encontramos, verificamos e entregamos com segurança 
+              e rastreamento completo.
             </p>
             
             {/* Social Links */}

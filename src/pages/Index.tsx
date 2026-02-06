@@ -20,16 +20,16 @@ const Index = () => {
     <>
       {/* SEO Meta Tags */}
       <Helmet>
-        <title>BRAVENZA | Importação Premium de Tênis Exclusivos</title>
-        <meta name="description" content="Especialistas em importação de tênis exclusivos. Nike, Jordan, Adidas, Yeezy e mais. Autenticidade garantida, rastreamento completo e entrega segura no Brasil." />
+        <title>BRAVENZA | Curadoria e Autenticação Premium de Sneakers</title>
+        <meta name="description" content="Plataforma premium de curadoria sob demanda e autenticação de sneakers. Encontramos, verificamos e garantimos a autenticidade do tênis que você procura." />
         <link rel="canonical" href="https://bravenza.lovable.app/" />
       </Helmet>
       
       {/* Structured Data */}
       <LocalBusinessSchema />
       <ServiceSchema 
-        name="Importação de Tênis Exclusivos"
-        description="Serviço premium de importação de tênis raros e exclusivos com garantia de autenticidade e rastreamento completo."
+        name="Curadoria e Autenticação de Sneakers"
+        description="Plataforma premium de curadoria sob demanda e verificação de autenticidade de sneakers, conectando clientes a vendedores com segurança."
       />
 
       <div className="min-h-screen bg-background space-y-0">

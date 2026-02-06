@@ -65,8 +65,8 @@ const VaultClubSectionComponent = () => {
             </div>
 
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-5 tracking-tight">
-              Mais do que importação.{" "}
-              <span className="text-gradient-gold">Curadoria global.</span>
+              Curadoria sob demanda.{" "}
+              <span className="text-gradient-gold">Autenticidade garantida.</span>
             </h2>
 
             <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">

@@ -41,7 +41,7 @@ const BrandsCarouselComponent = () => {
             As marcas mais <span className="text-gradient-gold text-3xl">desejadas do mundo</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto text-base">
-            Acesso direto às coleções internacionais. Se existe, nós conseguimos trazer para você.
+            Curadoria das marcas mais desejadas. Se existe, nós encontramos para você.
           </p>
         </motion.div>
       </div>

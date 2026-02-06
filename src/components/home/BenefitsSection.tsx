@@ -6,12 +6,12 @@ const benefits = [
   {
     icon: BadgeCheck,
     title: "Garantia de autenticidade",
-    description: "Inspeção rigorosa antes do envio. Se não for original, você não paga.",
+    description: "Verificação técnica digital e presencial. Se não for autêntico, você não paga.",
   },
   {
     icon: Globe,
-    title: "Acesso mundial",
-    description: "EUA, Europa, Ásia... Onde estiver, nós buscamos para você.",
+    title: "Rede global de parceiros",
+    description: "Vendedores verificados no mundo todo. Nós encontramos para você.",
   },
   {
     icon: Shield,
@@ -72,7 +72,7 @@ const BenefitsSectionComponent = () => {
             Por que a <span className="text-gradient-gold">BRAVENZA</span>?
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Sua conexão direta com os tênis mais exclusivos do planeta.
+            Curadoria, autenticação e segurança em cada compra.
           </p>
         </motion.div>
 
