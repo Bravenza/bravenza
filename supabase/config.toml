@@ -63,5 +63,5 @@ verify_jwt = false
 [functions.verify-authenticity]
 verify_jwt = false
 
-[functions.vault-marketplace]
+[functions.marketplace]
 verify_jwt = false
