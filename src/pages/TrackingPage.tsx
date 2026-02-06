@@ -38,7 +38,6 @@ interface OrderData {
   product_name: string;
   product_reference: string | null;
   sla_vault_due_date: string | null;
-  balance_due_date: string | null;
   international_tracking: string | null;
   national_tracking: string | null;
   national_carrier: string | null;
@@ -46,9 +45,6 @@ interface OrderData {
   budget_status: string | null;
   budget_approval_token: string | null;
   sinal_paid: boolean | null;
-  sinal_value: number | null;
-  balance_paid: boolean | null;
-  balance_value: number | null;
   product_price: number | null;
   product_currency: string | null;
 }
@@ -250,7 +246,7 @@ const TrackingPage = () => {
             </motion.div>
           )}
 
-          {/* Payment Action Card - Sinal */}
+          {/* Payment Action Card */}
           {order.budget_status === "APPROVED" && !order.sinal_paid && order.budget_approval_token && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -266,49 +262,15 @@ const TrackingPage = () => {
                         <CreditCard className="h-5 w-5 text-amber-500" />
                       </div>
                       <div>
-                        <h3 className="font-semibold">Pagamento do Sinal Pendente</h3>
+                        <h3 className="font-semibold">Pagamento Pendente</h3>
                         <p className="text-sm text-muted-foreground">
-                          Efetue o pagamento do sinal de {order.sinal_value ? formatCurrency(order.sinal_value, order.product_currency || "BRL") : "50%"} para confirmar seu pedido
+                          Efetue o pagamento de {order.product_price ? formatCurrency(order.product_price, order.product_currency || "BRL") : "100%"} para confirmar seu pedido
                         </p>
                       </div>
                     </div>
                     <Button asChild className="bg-amber-500 hover:bg-amber-600 text-black">
                       <Link to={`/pagamento/${order.budget_approval_token}`}>
-                        Pagar Sinal
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-
-          {/* Payment Action Card - Saldo */}
-          {order.sinal_paid && !order.balance_paid && order.budget_approval_token && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-              className="mb-6"
-            >
-              <Card className="border-primary/50 bg-primary/5">
-                <CardContent className="p-6">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-full bg-primary/20">
-                        <CreditCard className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold">Pagamento do Saldo</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Pague o saldo de {order.balance_value ? formatCurrency(order.balance_value, order.product_currency || "BRL") : "50%"} para liberar o envio
-                        </p>
-                      </div>
-                    </div>
-                    <Button asChild className="btn-gold">
-                      <Link to={`/pagamento/${order.budget_approval_token}`}>
-                        Pagar Saldo
+                        Pagar Agora
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
                     </Button>
@@ -385,24 +347,6 @@ const TrackingPage = () => {
                 </InfoCard>
               )}
 
-              {/* Balance due */}
-              {order.balance_due_date && (
-                <InfoCard
-                  title="Pagamentos"
-                  icon={<CreditCard className="h-5 w-5" />}
-                  variant="gold"
-                >
-                  <InfoRow
-                    label="Vencimento saldo"
-                    value={formatDateTime(order.balance_due_date)}
-                    highlight
-                  />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    O saldo deve ser pago em até 24h após chegada no Brasil.
-                  </p>
-                </InfoCard>
-              )}
-
               {/* Tracking info */}
               {(order.international_tracking || order.national_tracking) && (
                 <InfoCard
@@ -440,11 +384,7 @@ const TrackingPage = () => {
                   <ul className="space-y-2 text-xs text-muted-foreground">
                     <li className="flex items-start gap-2">
                       <span className="text-primary">•</span>
-                      <span><strong>Sinal (50%)</strong> não é reembolsável após pagamento</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary">•</span>
-                      <span>Saldo em até 24h após chegada no Brasil</span>
+                      <span>Pagamento <strong>não é reembolsável</strong> após confirmação</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-amber-500">•</span>

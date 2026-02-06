@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { Calculator, Copy, Send, Check, CreditCard, Banknote } from "lucide-react";
+import { Calculator, Copy, Send, Check, CreditCard } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
@@ -26,8 +25,6 @@ const INSTALLMENT_RATES: Record<number, number> = {
   12: 0.2211,  // 22.11%
 };
 
-type PaymentMode = "full" | "split";
-
 interface InstallmentOption {
   installments: number;
   rate: number;
@@ -41,7 +38,6 @@ const InstallmentCalculatorPage = () => {
   const [baseValue, setBaseValue] = useState<string>("");
   const [clientName, setClientName] = useState<string>("");
   const [productName, setProductName] = useState<string>("");
-  const [paymentMode, setPaymentMode] = useState<PaymentMode>("full");
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const numericValue = parseFloat(baseValue.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
@@ -76,28 +72,13 @@ const InstallmentCalculatorPage = () => {
     }).format(value);
   };
 
-  const getPaymentModeLabel = () => {
-    return paymentMode === "full" ? "valor total" : "saldo restante (50%)";
-  };
-
-  const getPaymentModeDescription = () => {
-    return paymentMode === "full" 
-      ? "Pagamento único de 100% do valor"
-      : "50% restante, pago após o produto chegar ao Brasil";
-  };
-
   const generateQuoteText = (option: InstallmentOption) => {
-    const valueLabel = paymentMode === "full" ? "valor total" : "saldo";
-    const valueDescription = paymentMode === "full" 
-      ? "_Pagamento único de 100% do valor do pedido._"
-      : "_Este valor se refere ao saldo restante (50%), pago após o produto chegar ao Brasil._";
-
     const lines = [
       clientName ? `Olá ${clientName}!` : "Olá!",
       "",
       productName 
-        ? `Segue a cotação do *${valueLabel}* para *${productName}*:` 
-        : `Segue a cotação do *${valueLabel}*:`,
+        ? `Segue a cotação do *valor total* para *${productName}*:` 
+        : `Segue a cotação do *valor total*:`,
       "",
     ];
 
@@ -111,7 +92,7 @@ const InstallmentCalculatorPage = () => {
     }
 
     lines.push("");
-    lines.push(valueDescription);
+    lines.push("_Pagamento único de 100% do valor do pedido._");
     lines.push("");
     lines.push("Ficou alguma dúvida? Estou à disposição! 😊");
 
@@ -134,17 +115,12 @@ const InstallmentCalculatorPage = () => {
   const generateFullQuoteText = () => {
     if (installmentOptions.length === 0) return "";
 
-    const valueLabel = paymentMode === "full" ? "valor total" : "saldo";
-    const valueDescription = paymentMode === "full" 
-      ? "_Pagamento único de 100% do valor do pedido._"
-      : "_Este valor se refere ao saldo restante (50%), pago após o produto chegar ao Brasil._";
-
     const lines = [
       clientName ? `Olá ${clientName}!` : "Olá!",
       "",
       productName 
-        ? `Segue as opções de pagamento do *${valueLabel}* para *${productName}*:` 
-        : `Segue as opções de pagamento do *${valueLabel}*:`,
+        ? `Segue as opções de pagamento do *valor total* para *${productName}*:` 
+        : `Segue as opções de pagamento do *valor total*:`,
       "",
       `💰 *Valor à vista (PIX ou 1x cartão):* ${formatCurrency(numericValue)}`,
       "",
@@ -163,7 +139,7 @@ const InstallmentCalculatorPage = () => {
     });
 
     lines.push("");
-    lines.push(valueDescription);
+    lines.push("_Pagamento único de 100% do valor do pedido._");
     lines.push("_Juros aplicados a partir de 2x são da operadora do cartão._");
     lines.push("");
     lines.push("Ficou alguma dúvida? Estou à disposição! 😊");
@@ -193,51 +169,11 @@ const InstallmentCalculatorPage = () => {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Dados da Cotação</CardTitle>
-            <CardDescription>Configure o modo de pagamento e valor</CardDescription>
+            <CardDescription>Informe o valor total do pedido</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Payment Mode Selection */}
-            <div className="space-y-3">
-              <Label>Modo de Pagamento</Label>
-              <RadioGroup 
-                value={paymentMode} 
-                onValueChange={(v) => setPaymentMode(v as PaymentMode)}
-                className="grid grid-cols-2 gap-2"
-              >
-                <Label
-                  htmlFor="mode-full"
-                  className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                    paymentMode === 'full' 
-                      ? 'border-primary bg-primary/5' 
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                >
-                  <RadioGroupItem value="full" id="mode-full" className="sr-only" />
-                  <Banknote className="h-5 w-5 text-primary" />
-                  <span className="font-medium text-sm">100%</span>
-                  <span className="text-xs text-muted-foreground text-center">Valor Total</span>
-                </Label>
-
-                <Label
-                  htmlFor="mode-split"
-                  className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                    paymentMode === 'split' 
-                      ? 'border-primary bg-primary/5' 
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                >
-                  <RadioGroupItem value="split" id="mode-split" className="sr-only" />
-                  <CreditCard className="h-5 w-5 text-primary" />
-                  <span className="font-medium text-sm">50/50</span>
-                  <span className="text-xs text-muted-foreground text-center">Saldo (50%)</span>
-                </Label>
-              </RadioGroup>
-            </div>
-
             <div className="space-y-2">
-              <Label htmlFor="baseValue">
-                {paymentMode === "full" ? "Valor Total (R$)" : "Valor do Saldo (R$)"}
-              </Label>
+              <Label htmlFor="baseValue">Valor Total (R$)</Label>
               <Input
                 id="baseValue"
                 type="text"
@@ -250,7 +186,7 @@ const InstallmentCalculatorPage = () => {
                 className="text-lg font-semibold"
               />
               <p className="text-xs text-muted-foreground">
-                {getPaymentModeDescription()}
+                Pagamento único de 100% do valor
               </p>
             </div>
 
@@ -287,15 +223,10 @@ const InstallmentCalculatorPage = () => {
 
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle className="text-lg">
-              Opções de Parcelamento
-              {paymentMode === "split" && (
-                <Badge variant="secondary" className="ml-2">Saldo 50%</Badge>
-              )}
-            </CardTitle>
+            <CardTitle className="text-lg">Opções de Parcelamento</CardTitle>
             <CardDescription>
               {numericValue > 0
-                ? `${paymentMode === "full" ? "Valor total" : "Valor do saldo"}: ${formatCurrency(numericValue)}`
+                ? `Valor total: ${formatCurrency(numericValue)}`
                 : "Digite o valor para ver as opções"}
             </CardDescription>
           </CardHeader>
