@@ -5,13 +5,13 @@ import { Search, FileCheck, CreditCard, Package, Truck } from "lucide-react";
 const steps = [
   {
     icon: Search,
-    title: "Você pede",
-    description: "Envie o link, foto ou nome do tênis.",
+    title: "Você descreve",
+    description: "Modelo, tamanho, condição e budget.",
   },
   {
     icon: FileCheck,
-    title: "Orçamento completo",
-    description: "Preço final, prazo e condições. Sem surpresas.",
+    title: "Curadoria ativa",
+    description: "Buscamos as melhores opções com parceiros verificados.",
   },
   {
     icon: CreditCard,
@@ -20,8 +20,8 @@ const steps = [
   },
   {
     icon: Package,
-    title: "Inspeção rigorosa",
-    description: "Fotos detalhadas antes do envio.",
+    title: "Autenticação técnica",
+    description: "Verificação digital e/ou presencial com parecer.",
   },
   {
     icon: Truck,

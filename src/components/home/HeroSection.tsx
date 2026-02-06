@@ -55,7 +55,7 @@ const HeroSectionComponent = () => {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/20 backdrop-blur-sm mb-8">
               <Crown className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary tracking-wide">
-                A elite da importação de tênis
+                Curadoria e autenticação premium
               </span>
             </div>
           </motion.div>
@@ -67,10 +67,10 @@ const HeroSectionComponent = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="font-display text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 tracking-tighter leading-[1.05]"
           >
-            O tênis que você deseja
+            O tênis que você quer,
             <br />
-            <span className="text-gradient-gold">existe.</span>
-            <span className="text-muted-foreground font-normal"> E nós trazemos.</span>
+            <span className="text-gradient-gold">encontrado</span>
+            <span className="text-muted-foreground font-normal"> e autenticado.</span>
           </motion.h1>
 
           {/* Subheadline */}
@@ -80,9 +80,9 @@ const HeroSectionComponent = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-base md:text-lg text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed"
           >
-            Acesso exclusivo aos tênis mais raros do mundo. Localizamos, 
-            inspecionamos e entregamos em suas mãos com{" "}
-            <span className="text-foreground font-medium">garantia de autenticidade</span> e 
+            A Bravenza encontra o tênis que você quer e valida a autenticidade 
+            com um processo técnico, para você comprar com{" "}
+            <span className="text-foreground font-medium">confiança total</span> e 
             rastreamento completo.
           </motion.p>
 

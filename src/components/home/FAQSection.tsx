@@ -14,6 +14,7 @@ interface FAQ {
 }
 const CATEGORY_ICONS: Record<string, any> = {
   importacao: Package,
+  curadoria: Package,
   pagamentos: CreditCard,
   prazos: Truck,
   garantia: Shield,
@@ -22,7 +23,8 @@ const CATEGORY_ICONS: Record<string, any> = {
   geral: HelpCircle
 };
 const CATEGORY_LABELS: Record<string, string> = {
-  importacao: "Importação",
+  importacao: "Curadoria",
+  curadoria: "Curadoria",
   pagamentos: "Pagamentos",
   prazos: "Prazos",
   garantia: "Garantia",
