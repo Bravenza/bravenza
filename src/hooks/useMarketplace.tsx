@@ -108,8 +108,9 @@ async function marketplaceRequest(
   body?: any,
   extraParams?: Record<string, string>
 ) {
+  const fnName = ACTION_TO_FUNCTION[action] || "marketplace-listings";
   const params = new URLSearchParams({ action, ...extraParams });
-  const url = `${FUNCTION_URL}?${params}`;
+  const url = `${FUNCTION_BASE}/${fnName}?${params}`;
 
   const res = await fetch(url, {
     method,
