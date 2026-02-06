@@ -1669,6 +1669,236 @@ export type Database = {
           },
         ]
       }
+      vault_marketplace_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          user_cpf: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          user_cpf: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          user_cpf?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_marketplace_favorites_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "vault_marketplace_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_marketplace_listings: {
+        Row: {
+          brand: string | null
+          colorway: string | null
+          condition: string
+          created_at: string
+          description: string | null
+          favorites_count: number
+          id: string
+          is_vault_certified: boolean
+          model: string | null
+          original_purchase_price: number | null
+          photos: string[]
+          price: number
+          published_at: string | null
+          seller_id: string
+          shipping_cost_estimate: number | null
+          shipping_mode: string
+          size: string | null
+          sold_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          vault_item_id: string | null
+          views_count: number
+        }
+        Insert: {
+          brand?: string | null
+          colorway?: string | null
+          condition?: string
+          created_at?: string
+          description?: string | null
+          favorites_count?: number
+          id?: string
+          is_vault_certified?: boolean
+          model?: string | null
+          original_purchase_price?: number | null
+          photos?: string[]
+          price: number
+          published_at?: string | null
+          seller_id: string
+          shipping_cost_estimate?: number | null
+          shipping_mode?: string
+          size?: string | null
+          sold_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          vault_item_id?: string | null
+          views_count?: number
+        }
+        Update: {
+          brand?: string | null
+          colorway?: string | null
+          condition?: string
+          created_at?: string
+          description?: string | null
+          favorites_count?: number
+          id?: string
+          is_vault_certified?: boolean
+          model?: string | null
+          original_purchase_price?: number | null
+          photos?: string[]
+          price?: number
+          published_at?: string | null
+          seller_id?: string
+          shipping_cost_estimate?: number | null
+          shipping_mode?: string
+          size?: string | null
+          sold_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          vault_item_id?: string | null
+          views_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_marketplace_listings_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "vault_seller_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_marketplace_listings_vault_item_id_fkey"
+            columns: ["vault_item_id"]
+            isOneToOne: false
+            referencedRelation: "vault_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_marketplace_orders: {
+        Row: {
+          buyer_address: string | null
+          buyer_cpf: string
+          buyer_email: string | null
+          buyer_name: string
+          buyer_phone: string | null
+          buyer_rated_at: string | null
+          buyer_rating: number | null
+          buyer_review: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          created_at: string
+          delivered_at: string | null
+          fee_amount: number
+          fee_percent: number
+          id: string
+          listing_id: string
+          paid_at: string | null
+          payment_id: string | null
+          payment_method: string | null
+          sale_price: number
+          seller_id: string
+          seller_payout: number
+          shipped_at: string | null
+          shipping_cost: number | null
+          shipping_mode: string
+          status: string
+          tracking_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          buyer_address?: string | null
+          buyer_cpf: string
+          buyer_email?: string | null
+          buyer_name: string
+          buyer_phone?: string | null
+          buyer_rated_at?: string | null
+          buyer_rating?: number | null
+          buyer_review?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          fee_amount: number
+          fee_percent: number
+          id?: string
+          listing_id: string
+          paid_at?: string | null
+          payment_id?: string | null
+          payment_method?: string | null
+          sale_price: number
+          seller_id: string
+          seller_payout: number
+          shipped_at?: string | null
+          shipping_cost?: number | null
+          shipping_mode?: string
+          status?: string
+          tracking_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          buyer_address?: string | null
+          buyer_cpf?: string
+          buyer_email?: string | null
+          buyer_name?: string
+          buyer_phone?: string | null
+          buyer_rated_at?: string | null
+          buyer_rating?: number | null
+          buyer_review?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          fee_amount?: number
+          fee_percent?: number
+          id?: string
+          listing_id?: string
+          paid_at?: string | null
+          payment_id?: string | null
+          payment_method?: string | null
+          sale_price?: number
+          seller_id?: string
+          seller_payout?: number
+          shipped_at?: string | null
+          shipping_cost?: number | null
+          shipping_mode?: string
+          status?: string
+          tracking_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_marketplace_orders_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "vault_marketplace_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_marketplace_orders_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "vault_seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vault_match_options: {
         Row: {
           condition: string | null
@@ -2086,6 +2316,56 @@ export type Database = {
             columns: ["wishlist_item_id"]
             isOneToOne: false
             referencedRelation: "vault_wishlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_seller_profiles: {
+        Row: {
+          average_rating: number | null
+          bio: string | null
+          created_at: string
+          current_fee_percent: number
+          id: string
+          is_active: boolean
+          member_id: string
+          ratings_count: number
+          total_sales_count: number
+          total_sales_value: number
+          updated_at: string
+        }
+        Insert: {
+          average_rating?: number | null
+          bio?: string | null
+          created_at?: string
+          current_fee_percent?: number
+          id?: string
+          is_active?: boolean
+          member_id: string
+          ratings_count?: number
+          total_sales_count?: number
+          total_sales_value?: number
+          updated_at?: string
+        }
+        Update: {
+          average_rating?: number | null
+          bio?: string | null
+          created_at?: string
+          current_fee_percent?: number
+          id?: string
+          is_active?: boolean
+          member_id?: string
+          ratings_count?: number
+          total_sales_count?: number
+          total_sales_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_seller_profiles_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
+            referencedRelation: "vault_members"
             referencedColumns: ["id"]
           },
         ]
@@ -2531,6 +2811,10 @@ export type Database = {
           user_id: string
           user_reactions: string[]
         }[]
+      }
+      get_marketplace_fee_percent: {
+        Args: { sales_count: number }
+        Returns: number
       }
       get_member_connections: {
         Args: {

@@ -13,7 +13,8 @@ import {
   CheckCircle2,
   Truck,
   Newspaper,
-  Users
+  Users,
+  Store,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import { VaultWishlistTab } from "@/components/client/vault/VaultWishlistTab";
 import { VaultMyItemsTab } from "@/components/client/vault/VaultMyItemsTab";
 import { VaultIntelTab } from "@/components/client/vault/VaultIntelTab";
 import { VaultCommunityTab } from "@/components/client/vault/VaultCommunityTab";
+import { MarketplaceTab } from "@/components/client/vault/marketplace";
 
 interface Order {
   order_id: string;
@@ -234,6 +236,10 @@ export default function UnifiedDashboard() {
                     <Users className="h-4 w-4" />
                     Comunidade
                   </TabsTrigger>
+                  <TabsTrigger value="marketplace" className="flex items-center gap-2">
+                    <Store className="h-4 w-4" />
+                    Marketplace
+                  </TabsTrigger>
                 </>
               )}
             </TabsList>
@@ -327,6 +333,10 @@ export default function UnifiedDashboard() {
 
                 <TabsContent value="comunidade" className="mt-6">
                   <VaultCommunityTab clientCpf={profile.cpf} member={vaultMember} />
+                </TabsContent>
+
+                <TabsContent value="marketplace" className="mt-6">
+                  <MarketplaceTab clientCpf={profile.cpf} isVaultMember={isVaultMember} />
                 </TabsContent>
               </>
             )}
