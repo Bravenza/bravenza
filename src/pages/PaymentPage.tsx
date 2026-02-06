@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/constants";
 import { MAX_CASHBACK_PERCENTAGE } from "@/components/client/CashbackBanner";
 import { CardPaymentForm } from "@/components/payment/CardPaymentForm";
+import { ServiceContract } from "@/components/payment/ServiceContract";
 
 interface OrderData {
   order_id: string;
@@ -31,6 +32,7 @@ interface OrderData {
   budget_status: string;
   client_name: string;
   client_cpf: string;
+  client_address: string | null;
   product_name: string;
   product_brand: string | null;
   product_model: string | null;
@@ -45,6 +47,7 @@ interface OrderData {
   budget_expires_at: string | null;
   created_at: string;
   payment_mode: 'full' | 'split' | null;
+  contract_accepted_at: string | null;
 }
 
 interface CashbackData {
@@ -74,6 +77,8 @@ export default function PaymentPage() {
   const [cashbackData, setCashbackData] = useState<CashbackData | null>(null);
   const [applyCashback, setApplyCashback] = useState(false);
   const [isApplyingCashback, setIsApplyingCashback] = useState(false);
+  const [contractAccepted, setContractAccepted] = useState(false);
+  const [isAcceptingContract, setIsAcceptingContract] = useState(false);
 
   // Handle payment result from URL params
   useEffect(() => {
@@ -116,8 +121,13 @@ export default function PaymentPage() {
           return;
         }
 
-        const orderData = data[0] as OrderData;
+        const orderData = data[0] as unknown as OrderData;
         setOrder(orderData);
+        
+        // Check if contract was already accepted
+        if (orderData.contract_accepted_at) {
+          setContractAccepted(true);
+        }
 
         // Determine which payment to show based on payment_mode
         const isFullPayment = orderData.payment_mode !== 'split';
@@ -310,6 +320,36 @@ export default function PaymentPage() {
     console.error("Card payment error:", error);
   };
 
+  // Handle contract acceptance
+  const handleContractAccept = async () => {
+    if (!order || !token) return;
+    setIsAcceptingContract(true);
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ contract_accepted_at: new Date().toISOString() })
+        .eq("order_id", order.order_id);
+      
+      if (error) throw error;
+      
+      setContractAccepted(true);
+      setOrder({ ...order, contract_accepted_at: new Date().toISOString() });
+      toast({
+        title: "Contrato assinado!",
+        description: "Agora você pode prosseguir com o pagamento.",
+      });
+    } catch (err: any) {
+      console.error("Error accepting contract:", err);
+      toast({
+        title: "Erro ao assinar contrato",
+        description: err.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAcceptingContract(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -402,6 +442,23 @@ export default function PaymentPage() {
             </p>
           </div>
 
+          {/* Contract step - show before first payment if not yet accepted */}
+          {!contractAccepted && (paymentType === "full" || paymentType === "sinal") && (
+            <>
+              <ServiceContract
+                clientName={order.client_name}
+                clientCpf={order.client_cpf}
+                clientAddress={order.client_address}
+                serviceValue={order.product_price}
+                onAccept={handleContractAccept}
+                isSubmitting={isAcceptingContract}
+              />
+            </>
+          )}
+
+          {/* Payment UI - only show after contract is accepted (or for balance payments) */}
+          {(contractAccepted || paymentType === "balance") && (
+          <>
           {/* Payment status - Different UI based on payment mode */}
           {isFullPayment ? (
             // Full payment mode: single card showing total
@@ -707,6 +764,8 @@ export default function PaymentPage() {
               </div>
             </CardContent>
           </Card>
+          </>
+          )}
         </motion.div>
       </main>
     </div>
