@@ -1,31 +1,18 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
-  Store,
-  Package,
-  Clock,
-  CheckCircle2,
-  Truck,
-  XCircle,
-  AlertTriangle,
-  DollarSign,
-  Eye,
-  Loader2,
-  ShieldCheck,
+  Store, Package, Clock, CheckCircle2, Truck, XCircle, AlertTriangle,
+  DollarSign, Loader2, ShieldCheck, MessageCircle,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
 interface AdminOrder {
@@ -61,6 +48,9 @@ interface AdminOrder {
   admin_notes: string | null;
   dispute_status: string | null;
   dispute_reason: string | null;
+  dispute_resolution: string | null;
+  dispute_opened_at: string | null;
+  dispute_resolved_at: string | null;
   listing?: {
     title: string;
     brand: string | null;
@@ -93,17 +83,22 @@ export default function MarketplaceOrdersPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [adminNotes, setAdminNotes] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [resolveOpen, setResolveOpen] = useState(false);
+  const [resolution, setResolution] = useState("refund_buyer");
+  const [refundAmount, setRefundAmount] = useState("");
+  const [resolveNotes, setResolveNotes] = useState("");
+
+  // Admin chat
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatMsg, setChatMsg] = useState("");
 
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams({ action: "admin-orders", status: statusFilter });
       const res = await fetch(`${FUNCTION_URL}?${params}`, {
-        headers: {
-          "Content-Type": "application/json",
-          "x-client-cpf": "admin",
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
+        headers: { "Content-Type": "application/json", "x-client-cpf": "admin", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
       });
       const data = await res.json();
       setOrders(data.orders || []);
@@ -114,20 +109,14 @@ export default function MarketplaceOrdersPage() {
     }
   };
 
-  useEffect(() => {
-    fetchOrders();
-  }, [statusFilter]);
+  useEffect(() => { fetchOrders(); }, [statusFilter]);
 
   const updateStatus = async (orderId: string, status: string, extra?: Record<string, any>) => {
     setActionLoading(true);
     try {
       const res = await fetch(`${FUNCTION_URL}?action=update-order-status`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "x-client-cpf": "admin",
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
+        headers: { "Content-Type": "application/json", "x-client-cpf": "admin", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
         body: JSON.stringify({ order_id: orderId, status, admin_notes: adminNotes, ...extra }),
       });
       if (!res.ok) throw new Error("Erro ao atualizar");
@@ -141,19 +130,69 @@ export default function MarketplaceOrdersPage() {
     }
   };
 
+  const resolveDispute = async () => {
+    if (!selectedOrder) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`${FUNCTION_URL}?action=resolve-dispute`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "x-client-cpf": "admin", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        body: JSON.stringify({
+          order_id: selectedOrder.id,
+          resolution,
+          refund_amount: refundAmount ? parseFloat(refundAmount) : 0,
+          admin_notes: resolveNotes,
+        }),
+      });
+      if (!res.ok) throw new Error("Erro ao resolver disputa");
+      toast({ title: "Disputa resolvida!" });
+      setResolveOpen(false);
+      fetchOrders();
+      setDetailOpen(false);
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const fetchChat = async (orderId: string) => {
+    try {
+      const params = new URLSearchParams({ action: "chat-messages", order_id: orderId });
+      const res = await fetch(`${FUNCTION_URL}?${params}`, {
+        headers: { "Content-Type": "application/json", "x-client-cpf": "admin", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+      });
+      const data = await res.json();
+      setChatMessages(data.messages || []);
+    } catch (err) {
+      console.error("Fetch chat error:", err);
+    }
+  };
+
+  const sendAdminMsg = async () => {
+    if (!selectedOrder || !chatMsg.trim()) return;
+    try {
+      await fetch(`${FUNCTION_URL}?action=send-message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-client-cpf": "admin", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        body: JSON.stringify({ order_id: selectedOrder.id, sender_name: "Admin Bravenza", message: chatMsg.trim(), is_admin: true }),
+      });
+      setChatMsg("");
+      fetchChat(selectedOrder.id);
+    } catch (err) {
+      console.error("Send admin msg error:", err);
+    }
+  };
+
   const openDetail = (order: AdminOrder) => {
     setSelectedOrder(order);
     setAdminNotes(order.admin_notes || "");
     setDetailOpen(true);
   };
 
-  const totalRevenue = orders
-    .filter((o) => ["completed", "delivered"].includes(o.status))
-    .reduce((sum, o) => sum + o.fee_amount, 0);
-
-  const pendingPayout = orders
-    .filter((o) => o.status === "delivered" && !o.payout_released_at)
-    .reduce((sum, o) => sum + o.seller_payout, 0);
+  const totalRevenue = orders.filter((o) => ["completed", "delivered"].includes(o.status)).reduce((sum, o) => sum + o.fee_amount, 0);
+  const pendingPayout = orders.filter((o) => o.status === "delivered" && !o.payout_released_at).reduce((sum, o) => sum + o.seller_payout, 0);
+  const disputeCount = orders.filter((o) => o.dispute_status === "open").length;
 
   return (
     <div className="space-y-6">
@@ -162,48 +201,20 @@ export default function MarketplaceOrdersPage() {
           <Store className="h-6 w-6 text-primary" />
           Marketplace - Pedidos
         </h1>
-        <p className="text-muted-foreground">Gerencie as transações do marketplace</p>
+        <p className="text-muted-foreground">Gerencie transações e disputas do marketplace</p>
       </div>
 
       {/* Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="card-premium">
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold">{orders.length}</p>
-            <p className="text-xs text-muted-foreground">Total de pedidos</p>
-          </CardContent>
-        </Card>
-        <Card className="card-premium">
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-primary">
-              R$ {totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </p>
-            <p className="text-xs text-muted-foreground">Receita (comissões)</p>
-          </CardContent>
-        </Card>
-        <Card className="card-premium">
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-warning">
-              R$ {pendingPayout.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </p>
-            <p className="text-xs text-muted-foreground">Repasses pendentes</p>
-          </CardContent>
-        </Card>
-        <Card className="card-premium">
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold">
-              {orders.filter((o) => o.status === "disputed").length}
-            </p>
-            <p className="text-xs text-muted-foreground">Disputas abertas</p>
-          </CardContent>
-        </Card>
+        <Card className="card-premium"><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{orders.length}</p><p className="text-xs text-muted-foreground">Total de pedidos</p></CardContent></Card>
+        <Card className="card-premium"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-primary">R$ {totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p><p className="text-xs text-muted-foreground">Receita (comissões)</p></CardContent></Card>
+        <Card className="card-premium"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-warning">R$ {pendingPayout.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p><p className="text-xs text-muted-foreground">Repasses pendentes</p></CardContent></Card>
+        <Card className="card-premium"><CardContent className="p-4 text-center"><p className={`text-2xl font-bold ${disputeCount > 0 ? "text-destructive" : ""}`}>{disputeCount}</p><p className="text-xs text-muted-foreground">Disputas abertas</p></CardContent></Card>
       </div>
 
       {/* Filter */}
       <Select value={statusFilter} onValueChange={setStatusFilter}>
-        <SelectTrigger className="w-48">
-          <SelectValue placeholder="Filtrar por status" />
-        </SelectTrigger>
+        <SelectTrigger className="w-48"><SelectValue placeholder="Filtrar por status" /></SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todos</SelectItem>
           <SelectItem value="pending_payment">Aguardando pagamento</SelectItem>
@@ -218,63 +229,32 @@ export default function MarketplaceOrdersPage() {
 
       {/* Orders list */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+        <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
       ) : orders.length === 0 ? (
-        <Card className="card-premium">
-          <CardContent className="py-12 text-center">
-            <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-30" />
-            <p className="font-medium">Nenhum pedido encontrado</p>
-          </CardContent>
-        </Card>
+        <Card className="card-premium"><CardContent className="py-12 text-center"><Package className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-30" /><p className="font-medium">Nenhum pedido encontrado</p></CardContent></Card>
       ) : (
         <div className="space-y-3">
           {orders.map((order, i) => {
             const status = statusConfig[order.status] || statusConfig.pending_payment;
             const StatusIcon = status.icon;
-
             return (
-              <motion.div
-                key={order.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.02 }}
-              >
-                <Card
-                  className="card-premium cursor-pointer hover:border-primary/40 transition-colors"
-                  onClick={() => openDetail(order)}
-                >
+              <motion.div key={order.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}>
+                <Card className="card-premium cursor-pointer hover:border-primary/40 transition-colors" onClick={() => openDetail(order)}>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3 min-w-0">
-                        {order.listing?.photos?.[0] && (
-                          <img
-                            src={order.listing.photos[0]}
-                            alt=""
-                            className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                          />
-                        )}
+                        {order.listing?.photos?.[0] && <img src={order.listing.photos[0]} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />}
                         <div className="min-w-0">
                           <p className="font-medium text-sm line-clamp-1">{order.listing?.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {order.order_code} · Comprador: {order.buyer_name}
-                          </p>
+                          <p className="text-xs text-muted-foreground">{order.order_code} · {order.buyer_name}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 flex-shrink-0">
                         <div className="text-right hidden sm:block">
-                          <p className="font-bold text-sm">
-                            R$ {order.sale_price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground">
-                            Comissão: R$ {order.fee_amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                          </p>
+                          <p className="font-bold text-sm">R$ {order.sale_price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                          <p className="text-[10px] text-muted-foreground">Comissão: R$ {order.fee_amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
                         </div>
-                        <Badge className={`${status.color} text-xs gap-1`}>
-                          <StatusIcon className="h-3 w-3" />
-                          {status.label}
-                        </Badge>
+                        <Badge className={`${status.color} text-xs gap-1`}><StatusIcon className="h-3 w-3" />{status.label}</Badge>
                       </div>
                     </div>
                   </CardContent>
@@ -290,29 +270,15 @@ export default function MarketplaceOrdersPage() {
         <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
           {selectedOrder && (
             <div className="space-y-5">
-              <SheetHeader>
-                <SheetTitle>{selectedOrder.order_code}</SheetTitle>
-              </SheetHeader>
+              <SheetHeader><SheetTitle>{selectedOrder.order_code}</SheetTitle></SheetHeader>
 
               {/* Product */}
               <div className="flex gap-3 p-3 bg-muted/30 rounded-lg">
-                {selectedOrder.listing?.photos?.[0] && (
-                  <img
-                    src={selectedOrder.listing.photos[0]}
-                    alt=""
-                    className="w-16 h-16 rounded-lg object-cover"
-                  />
-                )}
+                {selectedOrder.listing?.photos?.[0] && <img src={selectedOrder.listing.photos[0]} alt="" className="w-16 h-16 rounded-lg object-cover" />}
                 <div>
                   <p className="font-medium text-sm">{selectedOrder.listing?.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {selectedOrder.listing?.brand} · {selectedOrder.listing?.model} · Tam. {selectedOrder.listing?.size}
-                  </p>
-                  {selectedOrder.listing?.is_vault_certified && (
-                    <Badge className="bg-primary/20 text-primary text-xs mt-1 gap-0.5">
-                      <ShieldCheck className="h-3 w-3" /> Vault ID
-                    </Badge>
-                  )}
+                  <p className="text-xs text-muted-foreground">{selectedOrder.listing?.brand} · {selectedOrder.listing?.model} · Tam. {selectedOrder.listing?.size}</p>
+                  {selectedOrder.listing?.is_vault_certified && <Badge className="bg-primary/20 text-primary text-xs mt-1 gap-0.5"><ShieldCheck className="h-3 w-3" /> Vault ID</Badge>}
                 </div>
               </div>
 
@@ -320,23 +286,11 @@ export default function MarketplaceOrdersPage() {
 
               {/* Financial */}
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Valor da venda</span>
-                  <span className="font-medium">R$ {selectedOrder.sale_price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Frete</span>
-                  <span>R$ {selectedOrder.shipping_cost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-                </div>
-                <div className="flex justify-between text-primary">
-                  <span>Comissão ({selectedOrder.fee_percent}%)</span>
-                  <span className="font-medium">R$ {selectedOrder.fee_amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-                </div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Valor da venda</span><span className="font-medium">R$ {selectedOrder.sale_price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Frete</span><span>R$ {selectedOrder.shipping_cost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span></div>
+                <div className="flex justify-between text-primary"><span>Comissão ({selectedOrder.fee_percent}%)</span><span className="font-medium">R$ {selectedOrder.fee_amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span></div>
                 <Separator />
-                <div className="flex justify-between font-bold">
-                  <span>Repasse ao vendedor</span>
-                  <span>R$ {selectedOrder.seller_payout.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-                </div>
+                <div className="flex justify-between font-bold"><span>Repasse ao vendedor</span><span>R$ {selectedOrder.seller_payout.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span></div>
               </div>
 
               <Separator />
@@ -349,6 +303,19 @@ export default function MarketplaceOrdersPage() {
                 {selectedOrder.buyer_phone && <p>{selectedOrder.buyer_phone}</p>}
                 {selectedOrder.buyer_address && <p className="text-muted-foreground">{selectedOrder.buyer_address}</p>}
               </div>
+
+              {/* Dispute info */}
+              {selectedOrder.dispute_status && (
+                <>
+                  <Separator />
+                  <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-sm space-y-1">
+                    <p className="font-medium text-destructive flex items-center gap-1"><AlertTriangle className="h-4 w-4" /> Disputa {selectedOrder.dispute_status === "open" ? "aberta" : "resolvida"}</p>
+                    {selectedOrder.dispute_reason && <p className="text-muted-foreground">{selectedOrder.dispute_reason}</p>}
+                    {selectedOrder.dispute_opened_at && <p className="text-xs text-muted-foreground">Aberta em: {new Date(selectedOrder.dispute_opened_at).toLocaleString("pt-BR")}</p>}
+                    {selectedOrder.dispute_resolution && <p className="text-xs">Resolução: {selectedOrder.dispute_resolution}</p>}
+                  </div>
+                </>
+              )}
 
               {/* Timeline */}
               <div className="space-y-1 text-xs text-muted-foreground">
@@ -367,58 +334,45 @@ export default function MarketplaceOrdersPage() {
               {/* Admin notes */}
               <div>
                 <p className="text-sm font-medium mb-2">Notas do admin</p>
-                <Textarea
-                  value={adminNotes}
-                  onChange={(e) => setAdminNotes(e.target.value)}
-                  placeholder="Anotações internas..."
-                  rows={3}
-                />
+                <Textarea value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} placeholder="Anotações internas..." rows={3} />
               </div>
 
               {/* Actions */}
               <div className="space-y-2">
                 <p className="text-sm font-medium">Ações</p>
+
+                {/* Chat */}
+                <Button className="w-full gap-2" variant="outline" onClick={() => { fetchChat(selectedOrder.id); setChatOpen(true); }}>
+                  <MessageCircle className="h-4 w-4" />
+                  Ver/enviar mensagens
+                </Button>
+
                 {selectedOrder.status === "paid" && (
-                  <Button
-                    className="w-full gap-2"
-                    variant="outline"
-                    disabled={actionLoading}
-                    onClick={() => updateStatus(selectedOrder.id, "shipped")}
-                  >
-                    <Truck className="h-4 w-4" />
-                    Marcar como enviado
+                  <Button className="w-full gap-2" variant="outline" disabled={actionLoading} onClick={() => updateStatus(selectedOrder.id, "shipped")}>
+                    <Truck className="h-4 w-4" /> Marcar como enviado
                   </Button>
                 )}
                 {selectedOrder.status === "shipped" && (
-                  <Button
-                    className="w-full gap-2"
-                    variant="outline"
-                    disabled={actionLoading}
-                    onClick={() => updateStatus(selectedOrder.id, "delivered")}
-                  >
-                    <CheckCircle2 className="h-4 w-4" />
-                    Confirmar entrega
+                  <Button className="w-full gap-2" variant="outline" disabled={actionLoading} onClick={() => updateStatus(selectedOrder.id, "delivered")}>
+                    <CheckCircle2 className="h-4 w-4" /> Confirmar entrega
                   </Button>
                 )}
                 {selectedOrder.status === "delivered" && !selectedOrder.payout_released_at && (
-                  <Button
-                    className="w-full gap-2 btn-gold"
-                    disabled={actionLoading}
-                    onClick={() => updateStatus(selectedOrder.id, "completed", { payout_method: "pix" })}
-                  >
-                    <DollarSign className="h-4 w-4" />
-                    Liberar repasse ao vendedor
+                  <Button className="w-full gap-2 btn-gold" disabled={actionLoading} onClick={() => updateStatus(selectedOrder.id, "completed", { payout_method: "pix" })}>
+                    <DollarSign className="h-4 w-4" /> Liberar repasse ao vendedor
                   </Button>
                 )}
+
+                {/* Resolve dispute */}
+                {selectedOrder.dispute_status === "open" && (
+                  <Button className="w-full gap-2" variant="outline" onClick={() => { setResolveOpen(true); setResolveNotes(""); setRefundAmount(String(selectedOrder.sale_price)); }}>
+                    <AlertTriangle className="h-4 w-4" /> Resolver disputa
+                  </Button>
+                )}
+
                 {!["cancelled", "completed"].includes(selectedOrder.status) && (
-                  <Button
-                    className="w-full gap-2"
-                    variant="destructive"
-                    disabled={actionLoading}
-                    onClick={() => updateStatus(selectedOrder.id, "cancelled", { reason: "Cancelado pelo admin" })}
-                  >
-                    <XCircle className="h-4 w-4" />
-                    Cancelar pedido
+                  <Button className="w-full gap-2" variant="destructive" disabled={actionLoading} onClick={() => updateStatus(selectedOrder.id, "cancelled", { reason: "Cancelado pelo admin" })}>
+                    <XCircle className="h-4 w-4" /> Cancelar pedido
                   </Button>
                 )}
               </div>
@@ -426,6 +380,69 @@ export default function MarketplaceOrdersPage() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Resolve Dispute Dialog */}
+      <Dialog open={resolveOpen} onOpenChange={setResolveOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Resolver disputa</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Resolução</label>
+              <Select value={resolution} onValueChange={setResolution}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="refund_buyer">Reembolso total ao comprador</SelectItem>
+                  <SelectItem value="favor_seller">Decisão a favor do vendedor</SelectItem>
+                  <SelectItem value="partial_refund">Reembolso parcial</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {(resolution === "refund_buyer" || resolution === "partial_refund") && (
+              <div>
+                <label className="text-sm font-medium mb-2 block">Valor do reembolso (R$)</label>
+                <Input type="number" value={refundAmount} onChange={(e) => setRefundAmount(e.target.value)} />
+              </div>
+            )}
+            <div>
+              <label className="text-sm font-medium mb-2 block">Notas da resolução</label>
+              <Textarea value={resolveNotes} onChange={(e) => setResolveNotes(e.target.value)} placeholder="Detalhes da resolução..." rows={3} />
+            </div>
+            <Button onClick={resolveDispute} disabled={actionLoading} className="w-full btn-gold">
+              {actionLoading ? "Processando..." : "Confirmar resolução"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Admin Chat Dialog */}
+      <Dialog open={chatOpen} onOpenChange={setChatOpen}>
+        <DialogContent className="sm:max-w-md max-h-[80vh] flex flex-col">
+          <DialogHeader><DialogTitle>Chat do pedido</DialogTitle></DialogHeader>
+          <div className="flex-1 overflow-y-auto min-h-[200px] max-h-[400px] space-y-2 py-2">
+            {chatMessages.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhuma mensagem</p>
+            ) : (
+              chatMessages.map((msg: any) => (
+                <div key={msg.id} className={`flex flex-col max-w-[80%] ${msg.is_admin ? "ml-auto items-end" : "items-start"}`}>
+                  <div className={`rounded-2xl px-3 py-2 text-sm ${msg.is_admin ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-muted rounded-bl-sm"}`}>
+                    <p className="text-[10px] font-medium mb-0.5 opacity-70">{msg.is_admin ? "Admin" : msg.sender_name}</p>
+                    <p className="whitespace-pre-line">{msg.message}</p>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground mt-0.5">
+                    {new Date(msg.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="flex gap-2 pt-2 border-t">
+            <Input value={chatMsg} onChange={(e) => setChatMsg(e.target.value)} placeholder="Mensagem do admin..." onKeyDown={(e) => e.key === "Enter" && sendAdminMsg()} />
+            <Button onClick={sendAdminMsg} disabled={!chatMsg.trim()} size="icon" className="shrink-0">
+              <MessageCircle className="h-4 w-4" />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1791,6 +1791,57 @@ export type Database = {
           },
         ]
       }
+      vault_marketplace_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_admin: boolean | null
+          listing_id: string | null
+          message: string
+          order_id: string | null
+          read_at: string | null
+          sender_cpf: string
+          sender_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_admin?: boolean | null
+          listing_id?: string | null
+          message: string
+          order_id?: string | null
+          read_at?: string | null
+          sender_cpf: string
+          sender_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_admin?: boolean | null
+          listing_id?: string | null
+          message?: string
+          order_id?: string | null
+          read_at?: string | null
+          sender_cpf?: string
+          sender_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_marketplace_messages_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "vault_marketplace_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_marketplace_messages_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "vault_marketplace_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vault_marketplace_orders: {
         Row: {
           admin_notes: string | null
@@ -1808,6 +1859,8 @@ export type Database = {
           delivered_at: string | null
           dispute_opened_at: string | null
           dispute_reason: string | null
+          dispute_refund_amount: number | null
+          dispute_resolution: string | null
           dispute_resolved_at: string | null
           dispute_status: string | null
           fee_amount: number
@@ -1850,6 +1903,8 @@ export type Database = {
           delivered_at?: string | null
           dispute_opened_at?: string | null
           dispute_reason?: string | null
+          dispute_refund_amount?: number | null
+          dispute_resolution?: string | null
           dispute_resolved_at?: string | null
           dispute_status?: string | null
           fee_amount: number
@@ -1892,6 +1947,8 @@ export type Database = {
           delivered_at?: string | null
           dispute_opened_at?: string | null
           dispute_reason?: string | null
+          dispute_refund_amount?: number | null
+          dispute_resolution?: string | null
           dispute_resolved_at?: string | null
           dispute_status?: string | null
           fee_amount?: number
