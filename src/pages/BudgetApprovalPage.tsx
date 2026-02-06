@@ -74,7 +74,7 @@ export default function BudgetApprovalPage() {
           return;
         }
 
-        const orderData = data[0] as OrderData;
+        const orderData = data[0] as unknown as OrderData;
         setOrder(orderData);
 
         if (orderData.budget_status === "APPROVED") {

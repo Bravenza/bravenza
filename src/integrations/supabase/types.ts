@@ -509,6 +509,8 @@ export type Database = {
           client_email: string | null
           client_name: string
           client_phone: string | null
+          contract_accepted_at: string | null
+          contract_accepted_ip: string | null
           created_at: string
           current_status: Database["public"]["Enums"]["order_status"]
           inspection_photos: string[] | null
@@ -574,6 +576,8 @@ export type Database = {
           client_email?: string | null
           client_name: string
           client_phone?: string | null
+          contract_accepted_at?: string | null
+          contract_accepted_ip?: string | null
           created_at?: string
           current_status?: Database["public"]["Enums"]["order_status"]
           inspection_photos?: string[] | null
@@ -639,6 +643,8 @@ export type Database = {
           client_email?: string | null
           client_name?: string
           client_phone?: string | null
+          contract_accepted_at?: string | null
+          contract_accepted_ip?: string | null
           created_at?: string
           current_status?: Database["public"]["Enums"]["order_status"]
           inspection_photos?: string[] | null
@@ -2399,6 +2405,8 @@ export type Database = {
               client_email: string | null
               client_name: string
               client_phone: string | null
+              contract_accepted_at: string | null
+              contract_accepted_ip: string | null
               created_at: string
               current_status: Database["public"]["Enums"]["order_status"]
               inspection_photos: string[] | null
@@ -2548,30 +2556,19 @@ export type Database = {
           user_tier: string
         }[]
       }
-      get_order_by_token: {
-        Args: { p_token: string }
-        Returns: {
-          balance_paid: boolean
-          balance_value: number
-          budget_expires_at: string
-          budget_status: Database["public"]["Enums"]["budget_status"]
-          client_cpf: string
-          client_name: string
-          created_at: string
-          order_id: string
-          order_type: Database["public"]["Enums"]["order_type"]
-          payment_mode: string
-          product_brand: string
-          product_color: string
-          product_currency: string
-          product_model: string
-          product_name: string
-          product_price: number
-          product_size: string
-          sinal_paid: boolean
-          sinal_value: number
-        }[]
-      }
+      get_order_by_token:
+        | {
+            Args: { p_token: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.get_order_by_token(p_token => text), public.get_order_by_token(p_token => uuid). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
+          }
+        | {
+            Args: { p_token: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.get_order_by_token(p_token => text), public.get_order_by_token(p_token => uuid). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
+          }
       get_order_history: {
         Args: { p_cpf: string; p_order_id: string }
         Returns: {
