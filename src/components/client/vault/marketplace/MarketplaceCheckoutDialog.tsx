@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShoppingCart, ShieldCheck, Truck, CreditCard, Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -47,6 +47,16 @@ export function MarketplaceCheckoutDialog({
     buyer_address: "",
     payment_method: "pix",
   });
+
+  // Sync form with buyerDefaults when they change
+  useEffect(() => {
+    setForm((prev) => ({
+      ...prev,
+      buyer_name: buyerDefaults?.name || prev.buyer_name,
+      buyer_email: buyerDefaults?.email || prev.buyer_email,
+      buyer_phone: buyerDefaults?.phone || prev.buyer_phone,
+    }));
+  }, [buyerDefaults?.name, buyerDefaults?.email, buyerDefaults?.phone]);
 
   if (!listing) return null;
 
