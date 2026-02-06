@@ -2785,7 +2785,6 @@ export type Database = {
         }[]
       }
       generate_authenticity_code: { Args: never; Returns: string }
-      generate_marketplace_order_code: { Args: never; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
       generate_vault_invite_code: { Args: never; Returns: string }
       generate_vault_item_id: { Args: never; Returns: string }

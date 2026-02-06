@@ -97,10 +97,22 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
   }, [innerTab, myListings.length]);
 
   const fetchVaultItems = async () => {
+    // First get member id from CPF, then fetch their vault items
+    const { data: member } = await supabase
+      .from("vault_members")
+      .select("id")
+      .eq("client_cpf", clientCpf)
+      .maybeSingle();
+    
+    if (!member) {
+      setVaultItems([]);
+      return;
+    }
+
     const { data } = await supabase
       .from("vault_items")
       .select("id, title, brand, model, size, colorway")
-      .eq("user_id", clientCpf)
+      .eq("user_id", member.id)
       .order("created_at", { ascending: false });
     setVaultItems((data || []) as VaultItem[]);
   };
