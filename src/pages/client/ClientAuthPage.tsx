@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Loader2, Mail, Lock, User, Phone, CreditCard } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Lock, User, Phone, CreditCard, ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useClientSession } from "@/hooks/useClientSession";
 import { Logo } from "@/components/Logo";
+import { supabase } from "@/integrations/supabase/client";
 
 // Validation schemas
 const loginSchema = z.object({
@@ -59,6 +60,9 @@ export default function ClientAuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetSent, setResetSent] = useState(false);
   
   // Login form
   const [loginEmail, setLoginEmail] = useState("");
@@ -115,6 +119,34 @@ export default function ClientAuthPage() {
       description: "Login realizado com sucesso.",
     });
     navigate("/minha-conta");
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail) {
+      toast({ title: "Informe seu email", variant: "destructive" });
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/entrar`,
+      });
+      if (error) throw error;
+      setResetSent(true);
+      toast({
+        title: "Email enviado!",
+        description: "Verifique sua caixa de entrada para redefinir a senha.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Erro",
+        description: err.message || "Erro ao enviar email de recuperação.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -214,54 +246,106 @@ export default function ClientAuthPage() {
 
                 {/* Login Tab */}
                 <TabsContent value="login">
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="login-email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="login-email"
-                          type="email"
-                          placeholder="seu@email.com"
-                          value={loginEmail}
-                          onChange={(e) => setLoginEmail(e.target.value)}
-                          className="pl-10"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="login-password">Senha</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="login-password"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          value={loginPassword}
-                          onChange={(e) => setLoginPassword(e.target.value)}
-                          className="pl-10 pr-10"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <Button type="submit" className="w-full btn-gold" disabled={isLoading}>
-                      {isLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                  {showForgotPassword ? (
+                    <div className="space-y-4">
+                      <button
+                        type="button"
+                        onClick={() => { setShowForgotPassword(false); setResetSent(false); }}
+                        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                      >
+                        <ArrowLeft className="h-3 w-3" /> Voltar ao login
+                      </button>
+                      {resetSent ? (
+                        <div className="text-center py-4 space-y-2">
+                          <p className="text-sm text-muted-foreground">
+                            Um email de recuperação foi enviado para <strong>{resetEmail}</strong>.
+                            Verifique sua caixa de entrada e siga as instruções.
+                          </p>
+                        </div>
                       ) : (
-                        "Entrar"
+                        <form onSubmit={handleForgotPassword} className="space-y-4">
+                          <p className="text-sm text-muted-foreground">
+                            Informe seu email para receber o link de redefinição de senha.
+                          </p>
+                          <div className="space-y-2">
+                            <Label htmlFor="reset-email">Email</Label>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                id="reset-email"
+                                type="email"
+                                placeholder="seu@email.com"
+                                value={resetEmail}
+                                onChange={(e) => setResetEmail(e.target.value)}
+                                className="pl-10"
+                              />
+                            </div>
+                          </div>
+                          <Button type="submit" className="w-full btn-gold" disabled={isLoading}>
+                            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar link de recuperação"}
+                          </Button>
+                        </form>
                       )}
-                    </Button>
-                  </form>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleLogin} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="login-email">Email</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="login-email"
+                            type="email"
+                            placeholder="seu@email.com"
+                            value={loginEmail}
+                            onChange={(e) => setLoginEmail(e.target.value)}
+                            className="pl-10"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="login-password">Senha</Label>
+                          <button
+                            type="button"
+                            onClick={() => { setShowForgotPassword(true); setResetEmail(loginEmail); }}
+                            className="text-xs text-primary hover:underline"
+                          >
+                            Esqueceu a senha?
+                          </button>
+                        </div>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="login-password"
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            value={loginPassword}
+                            onChange={(e) => setLoginPassword(e.target.value)}
+                            className="pl-10 pr-10"
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <Button type="submit" className="w-full btn-gold" disabled={isLoading}>
+                        {isLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Entrar"
+                        )}
+                      </Button>
+                    </form>
+                  )}
                 </TabsContent>
 
                 {/* Signup Tab */}
