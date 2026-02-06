@@ -63,14 +63,14 @@ verify_jwt = false
 [functions.verify-authenticity]
 verify_jwt = false
 
-[functions.marketplace-listings]
+[functions.mklist]
 verify_jwt = false
 
-[functions.marketplace-orders]
+[functions.mkord]
 verify_jwt = false
 
-[functions.marketplace-chat]
+[functions.mkchat]
 verify_jwt = false
 
-[functions.marketplace-offers]
+[functions.mkoff]
 verify_jwt = false
