@@ -336,7 +336,12 @@ export default function UnifiedDashboard() {
                 </TabsContent>
 
                 <TabsContent value="marketplace" className="mt-6">
-                  <MarketplaceTab clientCpf={profile.cpf} isVaultMember={isVaultMember} />
+                  <MarketplaceTab
+                    clientCpf={profile.cpf}
+                    isVaultMember={isVaultMember}
+                    buyerName={profile.full_name || undefined}
+                    buyerEmail={user?.email || undefined}
+                  />
                 </TabsContent>
               </>
             )}

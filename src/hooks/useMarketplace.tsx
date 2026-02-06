@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export interface MarketplaceListing {
@@ -35,6 +34,45 @@ export interface MarketplaceListing {
       client_name: string;
       tier: string;
     };
+  };
+}
+
+export interface MarketplaceOrder {
+  id: string;
+  order_code: string;
+  listing_id: string;
+  buyer_cpf: string;
+  buyer_name: string;
+  seller_id: string;
+  sale_price: number;
+  fee_percent: number;
+  fee_amount: number;
+  seller_payout: number;
+  shipping_mode: string;
+  shipping_cost: number;
+  tracking_code: string | null;
+  status: string;
+  payment_method: string | null;
+  paid_at: string | null;
+  shipped_at: string | null;
+  delivered_at: string | null;
+  cancelled_at: string | null;
+  protection_ends_at: string | null;
+  payout_released_at: string | null;
+  payout_method: string | null;
+  buyer_rating: number | null;
+  buyer_review: string | null;
+  created_at: string;
+  admin_notes: string | null;
+  dispute_status: string | null;
+  listing?: {
+    title: string;
+    brand: string | null;
+    model: string | null;
+    size: string | null;
+    photos: string[];
+    condition: string;
+    is_vault_certified?: boolean;
   };
 }
 
@@ -88,6 +126,8 @@ export function useMarketplace(cpf: string | null) {
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [currentListing, setCurrentListing] = useState<MarketplaceListing | null>(null);
+  const [myOrders, setMyOrders] = useState<MarketplaceOrder[]>([]);
+  const [mySales, setMySales] = useState<MarketplaceOrder[]>([]);
 
   const fetchListings = useCallback(
     async (filters?: { brand?: string; size?: string; sort?: string; page?: number }) => {
@@ -196,7 +236,6 @@ export function useMarketplace(cpf: string | null) {
         const data = await marketplaceRequest(cpf, "toggle-favorite", "POST", {
           listing_id: listingId,
         });
-        // Update local state
         setListings((prev) =>
           prev.map((l) =>
             l.id === listingId ? { ...l, is_favorited: data.favorited } : l
@@ -212,6 +251,100 @@ export function useMarketplace(cpf: string | null) {
     [cpf, currentListing]
   );
 
+  // ===== ORDER FUNCTIONS =====
+
+  const createOrder = useCallback(
+    async (body: { listing_id: string; buyer_name: string; buyer_email?: string; buyer_phone?: string; buyer_address?: string; payment_method?: string }) => {
+      if (!cpf) return null;
+      try {
+        const data = await marketplaceRequest(cpf, "create-order", "POST", body);
+        toast({ title: "Pedido criado!", description: `Código: ${data.order?.order_code}` });
+        return data.order;
+      } catch (err: any) {
+        toast({ title: "Erro ao comprar", description: err.message, variant: "destructive" });
+        return null;
+      }
+    },
+    [cpf, toast]
+  );
+
+  const confirmPayment = useCallback(
+    async (orderId: string, paymentMethod: string, paymentId?: string) => {
+      if (!cpf) return false;
+      try {
+        await marketplaceRequest(cpf, "confirm-payment", "PUT", {
+          order_id: orderId,
+          payment_method: paymentMethod,
+          payment_id: paymentId,
+        });
+        toast({ title: "Pagamento confirmado!" });
+        return true;
+      } catch (err: any) {
+        toast({ title: "Erro no pagamento", description: err.message, variant: "destructive" });
+        return false;
+      }
+    },
+    [cpf, toast]
+  );
+
+  const fetchMyOrders = useCallback(async () => {
+    if (!cpf) return;
+    try {
+      const data = await marketplaceRequest(cpf, "my-orders");
+      setMyOrders(data.orders || []);
+    } catch (err: any) {
+      console.error("Fetch my orders error:", err);
+    }
+  }, [cpf]);
+
+  const fetchMySales = useCallback(async () => {
+    if (!cpf) return;
+    try {
+      const data = await marketplaceRequest(cpf, "my-sales");
+      setMySales(data.orders || []);
+    } catch (err: any) {
+      console.error("Fetch my sales error:", err);
+    }
+  }, [cpf]);
+
+  const updateOrderStatus = useCallback(
+    async (orderId: string, status: string, extra?: Record<string, any>) => {
+      if (!cpf) return false;
+      try {
+        await marketplaceRequest(cpf, "update-order-status", "PUT", {
+          order_id: orderId,
+          status,
+          ...extra,
+        });
+        toast({ title: "Status atualizado!" });
+        return true;
+      } catch (err: any) {
+        toast({ title: "Erro ao atualizar", description: err.message, variant: "destructive" });
+        return false;
+      }
+    },
+    [cpf, toast]
+  );
+
+  const rateSeller = useCallback(
+    async (orderId: string, rating: number, review?: string) => {
+      if (!cpf) return false;
+      try {
+        await marketplaceRequest(cpf, "rate-seller", "POST", {
+          order_id: orderId,
+          rating,
+          review,
+        });
+        toast({ title: "Avaliação enviada!" });
+        return true;
+      } catch (err: any) {
+        toast({ title: "Erro ao avaliar", description: err.message, variant: "destructive" });
+        return false;
+      }
+    },
+    [cpf, toast]
+  );
+
   return {
     listings,
     myListings,
@@ -219,6 +352,8 @@ export function useMarketplace(cpf: string | null) {
     total,
     isLoading,
     currentListing,
+    myOrders,
+    mySales,
     fetchListings,
     fetchMyListings,
     fetchListingDetail,
@@ -226,5 +361,11 @@ export function useMarketplace(cpf: string | null) {
     updateListing,
     deleteListing,
     toggleFavorite,
+    createOrder,
+    confirmPayment,
+    fetchMyOrders,
+    fetchMySales,
+    updateOrderStatus,
+    rateSeller,
   };
 }
