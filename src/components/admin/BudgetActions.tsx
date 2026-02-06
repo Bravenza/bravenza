@@ -30,8 +30,6 @@ interface BudgetActionsProps {
   budgetApprovalToken: string | null;
   productCost: number | null;
   productPrice: number | null;
-  sinalValue: number | null;
-  balanceValue: number | null;
   clientEmail: string | null;
   clientName: string;
   onUpdate: () => void;
@@ -47,8 +45,6 @@ export function BudgetActions({
   budgetApprovalToken,
   productCost,
   productPrice,
-  sinalValue,
-  balanceValue,
   clientEmail,
   clientName,
   onUpdate,
@@ -76,10 +72,10 @@ export function BudgetActions({
   };
 
   const handleSendBudget = async () => {
-    if (!productPrice || !sinalValue) {
+    if (!productPrice) {
       toast({
         title: "Erro",
-        description: "Defina o valor do produto e do sinal antes de enviar.",
+        description: "Defina o valor do produto antes de enviar.",
         variant: "destructive",
       });
       return;
@@ -114,8 +110,6 @@ export function BudgetActions({
               client_name: clientName,
               client_email: clientEmail,
               product_price: productPrice,
-              sinal_value: sinalValue,
-              balance_value: balanceValue,
               approval_link: approvalLink,
               expires_at: expiresAt.toISOString(),
             },
@@ -197,24 +191,13 @@ export function BudgetActions({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Price summary */}
-        <div className="grid grid-cols-3 gap-4 p-4 bg-secondary/30 rounded-lg">
+        <div className="p-4 bg-secondary/30 rounded-lg">
           <div>
             <p className="text-xs text-muted-foreground">Valor Total</p>
             <p className="font-bold text-primary">
               {productPrice ? formatCurrency(productPrice) : "-"}
             </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Sinal (50%)</p>
-            <p className="font-medium">
-              {sinalValue ? formatCurrency(sinalValue) : "-"}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Saldo (50%)</p>
-            <p className="font-medium">
-              {balanceValue ? formatCurrency(balanceValue) : "-"}
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">Pix ou Cartão até 12x</p>
           </div>
         </div>
 
@@ -346,19 +329,12 @@ export function BudgetActions({
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="p-4 bg-primary/10 rounded-lg">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">Valor Total</p>
-                  <p className="font-bold text-primary">
-                    {productPrice ? formatCurrency(productPrice) : "-"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Sinal (50%)</p>
-                  <p className="font-medium">
-                    {sinalValue ? formatCurrency(sinalValue) : "-"}
-                  </p>
-                </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Valor Total</p>
+                <p className="font-bold text-primary">
+                  {productPrice ? formatCurrency(productPrice) : "-"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">Pix ou Cartão até 12x</p>
               </div>
             </div>
 

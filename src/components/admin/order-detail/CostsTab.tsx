@@ -43,14 +43,11 @@ export const CostsTab = ({
   const handleCostChange = (newCost: number | null) => {
     const cost = newCost || 0;
     const calculatedPrice = cost > 0 ? calculateProductPrice(cost, DEFAULT_MULTIPLIER) : null;
-    const halfPrice = calculatedPrice ? calculatedPrice / 2 : null;
     
     setEditData((prev) => ({
       ...prev,
       product_cost: newCost,
       product_price: calculatedPrice,
-      sinal_value: halfPrice,
-      balance_value: halfPrice,
     }));
   };
 
@@ -60,21 +57,16 @@ export const CostsTab = ({
       setEditData((prev) => ({
         ...prev,
         product_price: null,
-        sinal_value: null,
-        balance_value: null,
       }));
       return;
     }
     
     // Arredondar para ,90
     const roundedPrice = roundUpTo90(newPrice);
-    const halfPrice = roundedPrice / 2;
     
     setEditData((prev) => ({
       ...prev,
       product_price: roundedPrice,
-      sinal_value: halfPrice,
-      balance_value: halfPrice,
     }));
   };
 
@@ -168,28 +160,6 @@ export const CostsTab = ({
                   </div>
                 </div>
               )}
-
-              {/* Sinal e Saldo - Calculados automaticamente */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Sinal (50%)</Label>
-                  <div className="p-2.5 bg-muted rounded-md border">
-                    <p className="font-medium">
-                      {editData.sinal_value ? formatCurrency(editData.sinal_value) : "-"}
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Calculado automaticamente</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Saldo (50%)</Label>
-                  <div className="p-2.5 bg-muted rounded-md border">
-                    <p className="font-medium">
-                      {editData.balance_value ? formatCurrency(editData.balance_value) : "-"}
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Calculado automaticamente</p>
-                </div>
-              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -206,21 +176,6 @@ export const CostsTab = ({
                   <p className="text-sm text-muted-foreground">Preço de Venda (PIX)</p>
                   <p className="font-bold text-2xl text-primary">
                     {order.product_price ? formatCurrency(order.product_price) : "-"}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="p-4 bg-secondary/50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Sinal (50%)</p>
-                  <p className="font-semibold text-lg">
-                    {order.sinal_value ? formatCurrency(order.sinal_value) : "-"}
-                  </p>
-                </div>
-                <div className="p-4 bg-secondary/50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Saldo (50%)</p>
-                  <p className="font-semibold text-lg">
-                    {order.balance_value ? formatCurrency(order.balance_value) : "-"}
                   </p>
                 </div>
               </div>

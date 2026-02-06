@@ -40,13 +40,9 @@ interface OrderData {
   product_color: string | null;
   product_price: number | null;
   product_currency: string | null;
-  sinal_value: number | null;
   sinal_paid: boolean;
-  balance_value: number | null;
-  balance_paid: boolean;
   budget_expires_at: string | null;
   created_at: string;
-  payment_mode: 'full' | 'split' | null;
   contract_accepted_at: string | null;
 }
 
@@ -56,7 +52,7 @@ interface CashbackData {
   discountAmount: number;
 }
 
-type PaymentType = "full" | "sinal" | "balance";
+type PaymentType = "full";
 
 export default function PaymentPage() {
   const { token } = useParams<{ token: string }>();
@@ -129,21 +125,9 @@ export default function PaymentPage() {
           setContractAccepted(true);
         }
 
-        // Determine which payment to show based on payment_mode
-        const isFullPayment = orderData.payment_mode !== 'split';
-        
-        if (isFullPayment) {
-          // Full payment mode: single 100% payment
-          if (!orderData.sinal_paid) {
-            setPaymentType("full");
-          }
-        } else {
-          // Split payment mode: 50/50
-          if (orderData.sinal_paid && !orderData.balance_paid) {
-            setPaymentType("balance");
-          } else if (!orderData.sinal_paid) {
-            setPaymentType("sinal");
-          }
+        // Always full payment mode
+        if (!orderData.sinal_paid) {
+          setPaymentType("full");
         }
 
         // Fetch available cashback for this client
@@ -251,24 +235,9 @@ export default function PaymentPage() {
     setIsGeneratingPix(true);
 
     try {
-      // Determine the base amount based on payment type
-      let baseAmount: number | null;
-      let paymentDescription: string;
-      let actualPaymentType: "sinal" | "balance" | "full";
-
-      if (paymentType === "full") {
-        baseAmount = order.product_price;
-        paymentDescription = "Pagamento Total";
-        actualPaymentType = "full";
-      } else if (paymentType === "sinal") {
-        baseAmount = order.sinal_value;
-        paymentDescription = "Sinal (50%)";
-        actualPaymentType = "sinal";
-      } else {
-        baseAmount = order.balance_value;
-        paymentDescription = "Saldo (50%)";
-        actualPaymentType = "balance";
-      }
+      const baseAmount = order.product_price;
+      const paymentDescription = "Pagamento Total";
+      const actualPaymentType: "full" = "full";
 
       const amount = getPaymentAmount(baseAmount);
 
@@ -374,13 +343,8 @@ export default function PaymentPage() {
     );
   }
 
-  // All payments complete - check based on payment mode
-  const isFullPayment = order.payment_mode !== 'split';
-  const isPaymentComplete = isFullPayment 
-    ? order.sinal_paid // In full mode, sinal_paid means everything is paid
-    : (order.sinal_paid && order.balance_paid); // In split mode, both must be paid
-
-  if (isPaymentComplete) {
+  // Payment complete check
+  if (order.sinal_paid) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full text-center">
@@ -388,10 +352,7 @@ export default function PaymentPage() {
             <CheckCircle2 className="h-16 w-16 text-success mx-auto mb-4" />
             <h1 className="text-2xl font-bold mb-2">Pagamento Completo!</h1>
             <p className="text-muted-foreground mb-4">
-              {isFullPayment 
-                ? "O pagamento do seu pedido foi confirmado. Obrigado!"
-                : "Todos os pagamentos do seu pedido foram confirmados. Obrigado!"
-              }
+              O pagamento do seu pedido foi confirmado. Obrigado!
             </p>
             <Button onClick={() => navigate(`/rastreio/${order.order_id}`)}>
               Acompanhar Pedido
@@ -402,20 +363,8 @@ export default function PaymentPage() {
     );
   }
 
-  // Calculate amounts based on payment type
-  let baseAmount: number | null;
-  let currentLabel: string;
-
-  if (paymentType === "full") {
-    baseAmount = order.product_price;
-    currentLabel = "Valor Total";
-  } else if (paymentType === "sinal") {
-    baseAmount = order.sinal_value;
-    currentLabel = "Sinal (50%)";
-  } else {
-    baseAmount = order.balance_value;
-    currentLabel = "Saldo (50%)";
-  }
+  const baseAmount = order.product_price;
+  const currentLabel = "Valor Total";
 
   const finalAmount = getPaymentAmount(baseAmount);
 
@@ -442,8 +391,8 @@ export default function PaymentPage() {
             </p>
           </div>
 
-          {/* Contract step - show before first payment if not yet accepted */}
-          {!contractAccepted && (paymentType === "full" || paymentType === "sinal") && (
+          {/* Contract step - show before payment if not yet accepted */}
+          {!contractAccepted && (
             <>
               <ServiceContract
                 clientName={order.client_name}
@@ -456,117 +405,35 @@ export default function PaymentPage() {
             </>
           )}
 
-          {/* Payment UI - only show after contract is accepted (or for balance payments) */}
-          {(contractAccepted || paymentType === "balance") && (
+          {/* Payment UI - only show after contract is accepted */}
+          {contractAccepted && (
           <>
-          {/* Payment status - Different UI based on payment mode */}
-          {isFullPayment ? (
-            // Full payment mode: single card showing total
-            <Card className="mb-8 ring-2 ring-primary">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Valor Total</p>
-                    <p className="text-2xl font-bold text-primary">
-                      {order.product_price
-                        ? formatCurrency(order.product_price)
-                        : "-"}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Pix ou Cartão de Crédito até 12x
-                    </p>
-                  </div>
-                  {order.sinal_paid ? (
-                    <Badge className="bg-success/20 text-success">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                      Pago
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline">A pagar</Badge>
-                  )}
+          {/* Payment status card */}
+          <Card className="mb-8 ring-2 ring-primary">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Valor Total</p>
+                  <p className="text-2xl font-bold text-primary">
+                    {order.product_price
+                      ? formatCurrency(order.product_price)
+                      : "-"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Pix ou Cartão de Crédito até 12x
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          ) : (
-            // Split payment mode: two cards for sinal and balance
-            <div className="grid md:grid-cols-2 gap-4 mb-8">
-              <Card
-                className={`cursor-pointer transition-all ${
-                  paymentType === "sinal"
-                    ? "ring-2 ring-primary"
-                    : order.sinal_paid
-                      ? "opacity-60"
-                      : ""
-                }`}
-                onClick={() => !order.sinal_paid && setPaymentType("sinal")}
-              >
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Sinal (50%)</p>
-                      <p className="text-xl font-bold">
-                        {order.sinal_value
-                          ? formatCurrency(order.sinal_value)
-                          : "-"}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Pix ou Cartão até 12x
-                      </p>
-                    </div>
-                    {order.sinal_paid ? (
-                      <Badge className="bg-success/20 text-success">
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                        Pago
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline">Pendente</Badge>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card
-                className={`cursor-pointer transition-all ${
-                  paymentType === "balance"
-                    ? "ring-2 ring-primary"
-                    : order.balance_paid || !order.sinal_paid
-                      ? "opacity-60"
-                      : ""
-                }`}
-                onClick={() =>
-                  order.sinal_paid &&
-                  !order.balance_paid &&
-                  setPaymentType("balance")
-                }
-              >
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Saldo (50%)</p>
-                      <p className="text-xl font-bold">
-                        {order.balance_value
-                          ? formatCurrency(order.balance_value)
-                          : "-"}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Pix ou Cartão até 12x
-                      </p>
-                    </div>
-                    {order.balance_paid ? (
-                      <Badge className="bg-success/20 text-success">
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                        Pago
-                      </Badge>
-                    ) : !order.sinal_paid ? (
-                      <Badge variant="secondary">Aguardando sinal</Badge>
-                    ) : (
-                      <Badge variant="outline">Pendente</Badge>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                {order.sinal_paid ? (
+                  <Badge className="bg-success/20 text-success">
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    Pago
+                  </Badge>
+                ) : (
+                  <Badge variant="outline">A pagar</Badge>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Cashback Section */}
           {cashbackData && cashbackData.maxApplicable > 0 && !pixData && (
@@ -728,7 +595,7 @@ export default function PaymentPage() {
                       orderId={order.order_id}
                       productName={order.product_name}
                       amount={finalAmount}
-                      paymentType={paymentType === "full" ? "full" : paymentType === "sinal" ? "sinal" : "balance"}
+                      paymentType="full"
                       onSuccess={handleCardPaymentSuccess}
                       onError={handleCardPaymentError}
                     />

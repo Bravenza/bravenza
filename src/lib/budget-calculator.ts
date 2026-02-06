@@ -109,7 +109,7 @@ export function generateInstallmentOptions(basePrice: number): InstallmentOption
 }
 
 /**
- * Calcula valores para pagamento 50/50
+ * @deprecated Split payment removed. Use full payment only.
  */
 export interface SplitPaymentValues {
   halfValue: number;
@@ -120,12 +120,7 @@ export interface SplitPaymentValues {
 export function calculateSplitPayment(totalPrice: number): SplitPaymentValues {
   const halfValue = Math.round((totalPrice * 0.5) * 100) / 100;
   const cardOptions = generateInstallmentOptions(halfValue);
-  
-  return {
-    halfValue,
-    pixHalf: halfValue,
-    cardOptions,
-  };
+  return { halfValue, pixHalf: halfValue, cardOptions };
 }
 
 /**
