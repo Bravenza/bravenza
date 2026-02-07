@@ -2848,19 +2848,28 @@ export type Database = {
       vault_seller_profiles: {
         Row: {
           average_rating: number | null
+          bank_name: string | null
           bio: string | null
           cancellation_rate: number | null
+          cpf_cnpj: string | null
           created_at: string
           current_fee_percent: number
           dispute_rate: number | null
+          full_name: string | null
           id: string
           is_active: boolean
+          kyc_status: string
           member_id: string
           on_time_shipping_rate: number | null
+          onboarding_completed_at: string | null
           payout_speed_days: number | null
+          phone: string | null
+          pix_key: string | null
+          pix_key_type: string | null
           pro_approval_rate: number | null
           ratings_count: number
           seller_cep: string | null
+          terms_accepted_at: string | null
           tier: string
           tier_updated_at: string | null
           total_sales_count: number
@@ -2869,19 +2878,28 @@ export type Database = {
         }
         Insert: {
           average_rating?: number | null
+          bank_name?: string | null
           bio?: string | null
           cancellation_rate?: number | null
+          cpf_cnpj?: string | null
           created_at?: string
           current_fee_percent?: number
           dispute_rate?: number | null
+          full_name?: string | null
           id?: string
           is_active?: boolean
+          kyc_status?: string
           member_id: string
           on_time_shipping_rate?: number | null
+          onboarding_completed_at?: string | null
           payout_speed_days?: number | null
+          phone?: string | null
+          pix_key?: string | null
+          pix_key_type?: string | null
           pro_approval_rate?: number | null
           ratings_count?: number
           seller_cep?: string | null
+          terms_accepted_at?: string | null
           tier?: string
           tier_updated_at?: string | null
           total_sales_count?: number
@@ -2890,19 +2908,28 @@ export type Database = {
         }
         Update: {
           average_rating?: number | null
+          bank_name?: string | null
           bio?: string | null
           cancellation_rate?: number | null
+          cpf_cnpj?: string | null
           created_at?: string
           current_fee_percent?: number
           dispute_rate?: number | null
+          full_name?: string | null
           id?: string
           is_active?: boolean
+          kyc_status?: string
           member_id?: string
           on_time_shipping_rate?: number | null
+          onboarding_completed_at?: string | null
           payout_speed_days?: number | null
+          phone?: string | null
+          pix_key?: string | null
+          pix_key_type?: string | null
           pro_approval_rate?: number | null
           ratings_count?: number
           seller_cep?: string | null
+          terms_accepted_at?: string | null
           tier?: string
           tier_updated_at?: string | null
           total_sales_count?: number
