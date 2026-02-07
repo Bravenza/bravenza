@@ -1,10 +1,7 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  // NOTE: supabase-js adds `x-supabase-client-platform` in browser requests.
-  // If it's not whitelisted here, the browser blocks the request during the CORS preflight (OPTIONS).
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, x-supabase-client-platform, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -17,7 +14,7 @@ interface PixRequest {
   description: string;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
