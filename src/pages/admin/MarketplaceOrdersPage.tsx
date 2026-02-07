@@ -82,7 +82,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
   payout_released: { label: "Pago", color: "bg-success/20 text-success", icon: CheckCircle2 },
 };
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/vault-marketplace`;
+const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub`;
 
 export default function MarketplaceOrdersPage() {
   const { toast } = useToast();
@@ -97,6 +97,7 @@ export default function MarketplaceOrdersPage() {
   const [resolution, setResolution] = useState("refund_buyer");
   const [refundAmount, setRefundAmount] = useState("");
   const [resolveNotes, setResolveNotes] = useState("");
+  const [payoutProofUrl, setPayoutProofUrl] = useState("");
 
   // Admin chat
   const [chatOpen, setChatOpen] = useState(false);
@@ -231,6 +232,8 @@ export default function MarketplaceOrdersPage() {
           <SelectItem value="paid">Pagos</SelectItem>
           <SelectItem value="shipped">Enviados</SelectItem>
           <SelectItem value="delivered">Entregues</SelectItem>
+          <SelectItem value="payout_pending">Repasse pendente</SelectItem>
+          <SelectItem value="payout_released">Repasse realizado</SelectItem>
           <SelectItem value="completed">Concluídos</SelectItem>
           <SelectItem value="disputed">Em disputa</SelectItem>
           <SelectItem value="cancelled">Cancelados</SelectItem>
@@ -368,9 +371,28 @@ export default function MarketplaceOrdersPage() {
                   </Button>
                 )}
                 {selectedOrder.status === "delivered" && !selectedOrder.payout_released_at && (
-                  <Button className="w-full gap-2 btn-gold" disabled={actionLoading} onClick={() => updateStatus(selectedOrder.id, "completed", { payout_method: "pix" })}>
-                    <DollarSign className="h-4 w-4" /> Liberar repasse ao vendedor
-                  </Button>
+                  <div className="space-y-2">
+                    <Input
+                      value={payoutProofUrl}
+                      onChange={(e) => setPayoutProofUrl(e.target.value)}
+                      placeholder="URL comprovante PIX (opcional)"
+                    />
+                    <Button className="w-full gap-2 btn-gold" disabled={actionLoading} onClick={() => updateStatus(selectedOrder.id, "payout_released", { payout_method: "pix", payout_proof_url: payoutProofUrl || null })}>
+                      <DollarSign className="h-4 w-4" /> Liberar repasse ao vendedor
+                    </Button>
+                  </div>
+                )}
+                {selectedOrder.status === "payout_pending" && (
+                  <div className="space-y-2">
+                    <Input
+                      value={payoutProofUrl}
+                      onChange={(e) => setPayoutProofUrl(e.target.value)}
+                      placeholder="URL comprovante PIX (opcional)"
+                    />
+                    <Button className="w-full gap-2 btn-gold" disabled={actionLoading} onClick={() => updateStatus(selectedOrder.id, "payout_released", { payout_method: "pix", payout_proof_url: payoutProofUrl || null })}>
+                      <DollarSign className="h-4 w-4" /> Processar repasse (R$ {selectedOrder.seller_payout.toLocaleString("pt-BR", { minimumFractionDigits: 2 })})
+                    </Button>
+                  </div>
                 )}
 
                 {/* Resolve dispute */}

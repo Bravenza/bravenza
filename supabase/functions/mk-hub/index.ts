@@ -270,6 +270,43 @@ Deno.serve(async (req) => {
       } else if (b.status === "payout_released") {
         u.payout_released_at = new Date().toISOString();
         u.payout_method = b.payout_method || "pix";
+        u.payout_proof_url = b.payout_proof_url || null;
+        // Mark offer as sold for analytics
+        const { data: od } = await sb.from("vault_marketplace_orders").select("listing_id, sale_price, seller_id").eq("id", b.order_id).single();
+        if (od?.listing_id) {
+          // Update the listing's linked offer to "sold"
+          const { data: listing } = await sb.from("vault_marketplace_listings").select("product_id").eq("id", od.listing_id).maybeSingle();
+          if (listing?.product_id) {
+            await sb.from("marketplace_offers").update({ status: "sold", sold_at: new Date().toISOString() })
+              .eq("listing_id", od.listing_id).eq("status", "active");
+            // Update product stats
+            const { data: activeOffers } = await sb.from("marketplace_offers").select("price").eq("product_id", listing.product_id).eq("status", "active");
+            const prices = (activeOffers || []).map((o: any) => o.price);
+            await sb.from("marketplace_products").update({
+              lowest_price: prices.length > 0 ? Math.min(...prices) : null,
+              total_offers: prices.length,
+            }).eq("id", listing.product_id);
+          }
+          // Update seller sales count
+          if (od.seller_id) {
+            const { data: completedSales } = await sb.from("vault_marketplace_orders").select("id")
+              .eq("seller_id", od.seller_id).eq("status", "payout_released");
+            await sb.from("vault_seller_profiles").update({
+              total_sales_count: (completedSales?.length || 0) + 1,
+              total_sales_value: 0, // Will be calculated by tier check
+            }).eq("id", od.seller_id);
+          }
+          // Notify seller about payout
+          if (od.seller_id) {
+            const { data: sl } = await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf)").eq("id", od.seller_id).single();
+            if (sl?.member?.client_cpf) {
+              const { data: orderInfo } = await sb.from("vault_marketplace_orders").select("order_code, seller_payout").eq("id", b.order_id).single();
+              await nt(sb, "💸 Repasse realizado!", `Pedido ${orderInfo?.order_code} — R$ ${orderInfo?.seller_payout?.toFixed(2)} transferido via PIX.`, sl.member.client_cpf, b.order_id, "marketplace_payout");
+            }
+          }
+        }
+      } else if (b.status === "in_transit_to_hub") {
+        u.hub_tracking_code = b.hub_tracking_code || null;
       }
       if (b.admin_notes) u.admin_notes = b.admin_notes;
       const { error } = await sb.from("vault_marketplace_orders").update(u).eq("id", b.order_id);
