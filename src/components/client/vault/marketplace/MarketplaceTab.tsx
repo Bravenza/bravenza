@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useMarketplace, type MarketplaceListing } from "@/hooks/useMarketplace";
 import { useMarketplaceCatalog } from "@/hooks/useMarketplaceCatalog";
 import { MarketplaceListingCard } from "./MarketplaceListingCard";
+import { CatalogProductCard } from "./CatalogProductCard";
 import { CreateListingDialog } from "./CreateListingDialog";
 import { EditListingDialog } from "./EditListingDialog";
 import { ListingDetailSheet } from "./ListingDetailSheet";
@@ -74,7 +75,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
     fetchPriceDropSuggestions,
   } = useMarketplace(clientCpf);
 
-  const { searchProducts, createProduct, createOffer } = useMarketplaceCatalog(clientCpf);
+  const { searchProducts, createProduct, createOffer, products: catalogProducts, totalProducts, isLoading: catalogLoading, fetchProducts: fetchCatalogProducts } = useMarketplaceCatalog(clientCpf);
 
   const [innerTab, setInnerTab] = useState("explorar");
   const [selectedListing, setSelectedListing] = useState<MarketplaceListing | null>(null);
@@ -91,6 +92,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
 
   useEffect(() => {
     handleSearch();
+    fetchCatalogProducts();
     if (isVaultMember) {
       checkOnboardingStatus().then((res) => setSellerOnboarded(res.onboarded));
     }
@@ -171,6 +173,11 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
   };
 
   const handleSearch = () => {
+    fetchCatalogProducts({
+      search: filters.search,
+      brand: filters.brand,
+      category: filters.condition,
+    });
     fetchListings({
       search: filters.search,
       brand: filters.brand,
@@ -265,7 +272,6 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
           <TabsTrigger value="como-funciona">Como funciona</TabsTrigger>
         </TabsList>
 
-        {/* Explore Tab */}
         <TabsContent value="explorar" className="mt-4 space-y-4">
           {/* Advanced Filters (includes active chips internally) */}
           <MarketplaceFilters
@@ -275,44 +281,40 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
           />
 
           {/* Results count */}
-          {!isLoading && (
-            <p className="text-xs text-muted-foreground">{total} anúncio{total !== 1 ? "s" : ""} encontrado{total !== 1 ? "s" : ""}</p>
+          {!catalogLoading && (
+            <p className="text-xs text-muted-foreground">{totalProducts} modelo{totalProducts !== 1 ? "s" : ""} encontrado{totalProducts !== 1 ? "s" : ""}</p>
           )}
 
-          {/* Listings Grid */}
-          {isLoading ? (
+          {/* Catalog Products Grid */}
+          {catalogLoading ? (
             <div className="flex items-center justify-center py-16">
               <div className="flex flex-col items-center gap-3">
                 <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
-                <p className="text-xs text-muted-foreground">Buscando anúncios...</p>
+                <p className="text-xs text-muted-foreground">Buscando modelos...</p>
               </div>
             </div>
-          ) : listings.length === 0 ? (
+          ) : catalogProducts.length === 0 ? (
             <Card className="card-premium">
               <CardContent className="py-16 text-center">
                 <Package className="h-14 w-14 mx-auto text-muted-foreground mb-4 opacity-20" />
-                <h3 className="font-semibold mb-1.5 text-foreground">Nenhum anúncio encontrado</h3>
+                <h3 className="font-semibold mb-1.5 text-foreground">Nenhum modelo encontrado</h3>
                 <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                  {filters.search || filters.condition || filters.size || filters.brand
+                  {filters.search || filters.brand
                     ? "Tente ajustar os filtros para encontrar o que procura"
-                    : "Seja o primeiro a anunciar no marketplace!"}
+                    : "Nenhum produto cadastrado no catálogo ainda."}
                 </p>
               </CardContent>
             </Card>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {listings.map((listing, i) => (
+              {catalogProducts.map((product, i) => (
                 <motion.div
-                  key={listing.id}
+                  key={product.id}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04, duration: 0.3 }}
                 >
-                  <MarketplaceListingCard
-                    listing={listing}
-                    onSelect={handleSelect}
-                    onToggleFavorite={handleToggleFavorite}
-                  />
+                  <CatalogProductCard product={product} />
                 </motion.div>
               ))}
             </div>
