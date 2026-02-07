@@ -8,8 +8,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useMarketplaceCatalog, type ProductOffer } from "@/hooks/useMarketplaceCatalog";
+import { useMarketplace, type MarketplaceListing } from "@/hooks/useMarketplace";
 import { useClientSession } from "@/hooks/useClientSession";
 import { Logo } from "@/components/Logo";
+import { MarketplaceCheckoutDialog } from "@/components/client/vault/marketplace/MarketplaceCheckoutDialog";
 
 const conditionLabels: Record<string, string> = {
   novo: "Novo",
@@ -37,10 +39,59 @@ export default function ProductDetailPage() {
   const { profile } = useClientSession();
   const cpf = profile?.cpf;
   const { product, offers, sizes, isLoading, fetchProduct, fetchOffersBySize } = useMarketplaceCatalog(cpf || "visitor");
+  const { createOrder } = useMarketplace(cpf || null);
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [loadingOffers, setLoadingOffers] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [checkoutListing, setCheckoutListing] = useState<MarketplaceListing | null>(null);
+
+  const offerToListing = (offer: ProductOffer): MarketplaceListing => ({
+    id: offer.listing_id || offer.id,
+    seller_id: offer.seller_id,
+    vault_item_id: null,
+    title: product ? `${product.brand} ${product.model}` : "",
+    description: offer.description,
+    brand: product?.brand || null,
+    model: product?.model || null,
+    colorway: product?.colorway || null,
+    size: offer.size,
+    condition: offer.condition,
+    photos: offer.photos?.length ? offer.photos : (product?.images || []),
+    price: offer.price,
+    original_purchase_price: offer.original_purchase_price,
+    shipping_mode: offer.shipping_mode,
+    shipping_cost_estimate: 0,
+    is_vault_certified: false,
+    status: offer.status,
+    views_count: offer.views_count,
+    favorites_count: 0,
+    published_at: offer.created_at,
+    created_at: offer.created_at,
+    seller: offer.seller ? {
+      id: offer.seller.id,
+      average_rating: offer.seller.average_rating,
+      total_sales_count: offer.seller.total_sales_count,
+      current_fee_percent: offer.seller.current_fee_percent,
+      bio: null,
+      member: offer.seller.member,
+    } : undefined,
+  });
+
+  const handleBuyOffer = (offer: ProductOffer) => {
+    setCheckoutListing(offerToListing(offer));
+    setCheckoutOpen(true);
+  };
+
+  const handleCheckoutConfirm = async (data: any) => {
+    const result = await createOrder(data);
+    if (result) {
+      setCheckoutOpen(false);
+      return result;
+    }
+    return null;
+  };
 
   useEffect(() => {
     if (slug) fetchProduct(slug);
@@ -254,11 +305,7 @@ export default function ProductDetailPage() {
                         key={offer.id}
                         offer={offer}
                         isBest={index === 0}
-                        onBuy={() => {
-                          // Navigate to checkout with offer data
-                          // For now we'll handle this in-component
-                          navigate(`/minha-conta?buy_offer=${offer.id}`);
-                        }}
+                        onBuy={() => handleBuyOffer(offer)}
                       />
                     ))}
                   </motion.div>
@@ -276,6 +323,14 @@ export default function ProductDetailPage() {
           </div>
         )}
       </main>
+
+      <MarketplaceCheckoutDialog
+        listing={checkoutListing}
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        onConfirm={handleCheckoutConfirm}
+        buyerDefaults={{ name: profile?.full_name }}
+      />
     </div>
   );
 }

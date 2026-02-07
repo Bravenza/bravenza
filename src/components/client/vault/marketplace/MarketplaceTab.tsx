@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useMarketplace, type MarketplaceListing } from "@/hooks/useMarketplace";
+import { useMarketplaceCatalog } from "@/hooks/useMarketplaceCatalog";
 import { MarketplaceListingCard } from "./MarketplaceListingCard";
 import { CreateListingDialog } from "./CreateListingDialog";
 import { EditListingDialog } from "./EditListingDialog";
@@ -63,6 +64,8 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
     fetchListingOffers,
     respondOffer,
   } = useMarketplace(clientCpf);
+
+  const { searchProducts, createProduct, createOffer } = useMarketplaceCatalog(clientCpf);
 
   const [innerTab, setInnerTab] = useState("explorar");
   const [selectedListing, setSelectedListing] = useState<MarketplaceListing | null>(null);
@@ -173,8 +176,8 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
     }
   };
 
-  const handleCreateListing = async (data: any) => {
-    const result = await createListing(data);
+  const handleCreateOffer = async (data: any) => {
+    const result = await createOffer(data);
     if (result) {
       fetchMyListings();
       handleSearch();
@@ -196,7 +199,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
           </p>
         </div>
         {isVaultMember && (
-          <CreateListingDialog onSubmit={handleCreateListing} vaultItems={vaultItems} />
+          <CreateListingDialog onSubmit={handleCreateOffer} searchProducts={searchProducts} createProduct={createProduct} vaultItems={vaultItems} />
         )}
       </div>
 
@@ -314,7 +317,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
                   <p className="text-sm text-muted-foreground mb-4">
                     Comece a vender seus tênis no marketplace
                   </p>
-                  <CreateListingDialog onSubmit={handleCreateListing} vaultItems={vaultItems} />
+                  <CreateListingDialog onSubmit={handleCreateOffer} searchProducts={searchProducts} createProduct={createProduct} vaultItems={vaultItems} />
                 </CardContent>
               </Card>
             ) : (
