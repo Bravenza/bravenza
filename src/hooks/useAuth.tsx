@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -7,6 +7,8 @@ interface AuthContextType {
   session: Session | null;
   isAdmin: boolean;
   isLoading: boolean;
+  isPasswordRecovery: boolean;
+  clearPasswordRecovery: () => void;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -19,6 +21,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  // Check URL hash immediately (before any async work) for recovery detection
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(() => {
+    return window.location.hash.includes('type=recovery');
+  });
+  // Also use a ref so the redirect check always has the latest value
+  const recoveryRef = useRef(isPasswordRecovery);
+
+  const clearPasswordRecovery = () => {
+    setIsPasswordRecovery(false);
+    recoveryRef.current = false;
+  };
 
   const checkAdminRole = async (userId: string) => {
     try {
@@ -44,10 +57,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let isMounted = true;
 
-    // Listener for ONGOING auth changes (does NOT control isLoading)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!isMounted) return;
+
+        // Detect PASSWORD_RECOVERY event from Supabase
+        if (event === "PASSWORD_RECOVERY") {
+          setIsPasswordRecovery(true);
+          recoveryRef.current = true;
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
 
@@ -63,7 +82,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    // INITIAL load (controls isLoading) - await admin check before setting loading false
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -129,6 +147,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         session,
         isAdmin,
         isLoading,
+        isPasswordRecovery,
+        clearPasswordRecovery,
         signIn,
         signUp,
         signOut,

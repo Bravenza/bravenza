@@ -31,7 +31,7 @@ const signupSchema = z.object({
 const Login = forwardRef<HTMLDivElement>((_, ref) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, isAdmin, signIn, signUp, isLoading: authLoading } = useAuth();
+  const { user, isAdmin, signIn, signUp, isLoading: authLoading, isPasswordRecovery, clearPasswordRecovery } = useAuth();
 
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [isLoading, setIsLoading] = useState(false);
@@ -39,11 +39,14 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetSent, setResetSent] = useState(false);
-  const [showResetPassword, setShowResetPassword] = useState(() => {
-    // Check URL hash on mount to detect recovery before any redirect can fire
-    const hash = window.location.hash;
-    return hash.includes('type=recovery');
-  });
+  const [showResetPassword, setShowResetPassword] = useState(false);
+
+  // Sync with global recovery flag
+  useEffect(() => {
+    if (isPasswordRecovery) {
+      setShowResetPassword(true);
+    }
+  }, [isPasswordRecovery]);
 
   // Login form
   const [loginEmail, setLoginEmail] = useState("");
@@ -55,7 +58,7 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
 
-  // Detect PASSWORD_RECOVERY event
+  // Detect PASSWORD_RECOVERY event (backup for hash check)
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
@@ -66,10 +69,11 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
   }, []);
 
   useEffect(() => {
-    if (user && isAdmin && !showResetPassword) {
+    // Don't redirect if we're in password recovery mode (check both local and global flags)
+    if (user && isAdmin && !showResetPassword && !isPasswordRecovery) {
       navigate("/admin");
     }
-  }, [user, isAdmin, navigate, showResetPassword]);
+  }, [user, isAdmin, navigate, showResetPassword, isPasswordRecovery]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,6 +247,7 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
               <ResetPasswordForm
                 onComplete={() => {
                   setShowResetPassword(false);
+                  clearPasswordRecovery();
                   supabase.auth.signOut();
                   toast({
                     title: "Senha atualizada!",
