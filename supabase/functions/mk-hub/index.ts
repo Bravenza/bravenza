@@ -511,6 +511,142 @@ serve(async (req) => {
       return j({ quotes, legs, shipping_mode: listing.shipping_mode });
     }
 
+    // ==================== CATALOG ====================
+
+    if (mt === "GET" && a === "catalog-products") {
+      const pg = parseInt(url.searchParams.get("page") || "1"), lm = 24, of = (pg - 1) * lm;
+      let q = sb.from("marketplace_products").select("*", { count: "exact" }).eq("is_active", true);
+      const sr = url.searchParams.get("search"), br = url.searchParams.get("brand"), cat = url.searchParams.get("category");
+      if (sr) q = q.or(`brand.ilike.%${sr}%,model.ilike.%${sr}%,colorway.ilike.%${sr}%`);
+      if (br) q = q.ilike("brand", `%${br}%`);
+      if (cat) q = q.eq("category", cat);
+      q = q.order("total_offers", { ascending: false }).order("created_at", { ascending: false });
+      q = q.range(of, of + lm - 1);
+      const { data, count, error } = await q;
+      if (error) throw error;
+      return j({ products: data || [], total: count });
+    }
+
+    if (mt === "GET" && a === "catalog-product") {
+      const slug = url.searchParams.get("slug");
+      if (!slug) throw new Error("slug obrigatório");
+      const { data: prod, error } = await sb.from("marketplace_products").select("*").eq("slug", slug).eq("is_active", true).single();
+      if (error || !prod) throw new Error("Produto não encontrado");
+      // Get distinct sizes with active offers
+      const { data: offersRaw } = await sb.from("marketplace_offers").select("size").eq("product_id", prod.id).eq("status", "active");
+      const sizes = [...new Set((offersRaw || []).map((o: any) => o.size))].sort((a, b) => {
+        const na = parseFloat(a), nb = parseFloat(b);
+        return isNaN(na) || isNaN(nb) ? a.localeCompare(b) : na - nb;
+      });
+      // Get all active offers with seller info
+      const { data: offers } = await sb.from("marketplace_offers").select(
+        `*, seller:vault_seller_profiles!inner(id, seller_cep, average_rating, total_sales_count, current_fee_percent, member:vault_members!inner(client_name, tier))`
+      ).eq("product_id", prod.id).eq("status", "active").order("price", { ascending: true });
+      return j({ product: prod, sizes, offers: offers || [] });
+    }
+
+    if (mt === "GET" && a === "catalog-offers") {
+      const pid = url.searchParams.get("product_id"), sz = url.searchParams.get("size");
+      if (!pid) throw new Error("product_id obrigatório");
+      let q = sb.from("marketplace_offers").select(
+        `*, seller:vault_seller_profiles!inner(id, seller_cep, average_rating, total_sales_count, current_fee_percent, member:vault_members!inner(client_name, tier))`
+      ).eq("product_id", pid).eq("status", "active");
+      if (sz) q = q.eq("size", sz);
+      q = q.order("price", { ascending: true });
+      const { data, error } = await q;
+      if (error) throw error;
+      return j({ offers: data || [] });
+    }
+
+    if (mt === "GET" && a === "catalog-search") {
+      const q = url.searchParams.get("q") || "";
+      if (!q || q.length < 2) return j({ products: [] });
+      const { data } = await sb.from("marketplace_products").select("id, slug, brand, model, colorway, images, lowest_price, total_offers")
+        .eq("is_active", true)
+        .or(`brand.ilike.%${q}%,model.ilike.%${q}%,colorway.ilike.%${q}%`)
+        .order("total_offers", { ascending: false })
+        .limit(10);
+      return j({ products: data || [] });
+    }
+
+    if (mt === "POST" && a === "catalog-create-product") {
+      const b = await req.json();
+      if (!b.brand || !b.model) throw new Error("brand e model obrigatórios");
+      // Check if product already exists
+      const { data: existing } = await sb.from("marketplace_products")
+        .select("id, slug")
+        .ilike("brand", b.brand)
+        .ilike("model", b.model)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (existing) return j({ product: existing, already_exists: true });
+      const mb = await gm(sb, cpf);
+      const { data: prod, error } = await sb.from("marketplace_products").insert({
+        brand: b.brand,
+        model: b.model,
+        colorway: b.colorway || null,
+        sku: b.sku || null,
+        category: b.category || "sneakers",
+        images: b.images || [],
+        description: b.description || null,
+        created_by_seller_id: mb?.id || null,
+      }).select().single();
+      if (error) throw error;
+      return j({ product: prod, already_exists: false });
+    }
+
+    if (mt === "POST" && a === "catalog-create-offer") {
+      const b = await req.json();
+      if (!b.product_id || !b.size || !b.price) throw new Error("product_id, size e price obrigatórios");
+      const mb = await gm(sb, cpf);
+      if (!mb) throw new Error("Membro não encontrado");
+      let sl = await gs(sb, mb.id);
+      if (!sl) {
+        const { data: ns, error: se } = await sb.from("vault_seller_profiles").insert({ member_id: mb.id }).select().single();
+        if (se) throw se;
+        sl = ns;
+      }
+      // Also create a legacy listing for backward compatibility
+      const { data: li } = await sb.from("vault_marketplace_listings").insert({
+        seller_id: sl.id,
+        vault_item_id: b.vault_item_id || null,
+        title: `${b.brand || ""} ${b.model || ""} ${b.size || ""}`.trim(),
+        description: b.description || null,
+        brand: b.brand || null,
+        model: b.model || null,
+        size: b.size,
+        condition: b.condition || "novo",
+        photos: b.photos || [],
+        price: b.price,
+        original_purchase_price: b.original_purchase_price || null,
+        shipping_mode: b.price >= 2000 ? "bravenza" : (b.shipping_mode || "direct"),
+        shipping_cost_estimate: 0,
+        is_vault_certified: !!b.vault_item_id,
+        status: "active",
+        published_at: new Date().toISOString(),
+        product_id: b.product_id,
+      }).select().single();
+      const { data: offer, error } = await sb.from("marketplace_offers").insert({
+        product_id: b.product_id,
+        seller_id: sl.id,
+        listing_id: li?.id || null,
+        size: b.size,
+        condition: b.condition || "novo",
+        price: b.price,
+        original_purchase_price: b.original_purchase_price || null,
+        description: b.description || null,
+        defects: b.defects || null,
+        photos: b.photos || [],
+        proof_photos: b.proof_photos || [],
+        has_receipt: b.has_receipt || false,
+        shipping_mode: b.price >= 2000 ? "bravenza" : (b.shipping_mode || "direct"),
+        status: "active",
+        published_at: new Date().toISOString(),
+      }).select().single();
+      if (error) throw error;
+      return j({ offer, listing: li });
+    }
+
     return j({ error: "Ação não encontrada" }, 404);
   } catch (e: any) {
     console.error("vault-marketplace error:", e);
