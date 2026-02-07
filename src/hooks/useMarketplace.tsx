@@ -91,14 +91,14 @@ export interface SellerProfile {
 const FUNCTION_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
 const ACTION_TO_FUNCTION: Record<string, string> = {
-  "listings": "marketplace-listings", "listing-detail": "marketplace-listings", "my-listings": "marketplace-listings",
-  "create-listing": "marketplace-listings", "update-listing": "marketplace-listings", "delete-listing": "marketplace-listings",
-  "toggle-favorite": "marketplace-listings", "seller-profile": "marketplace-listings", "seller-public-profile": "marketplace-listings",
-  "create-order": "marketplace-orders", "confirm-payment": "marketplace-orders", "my-orders": "marketplace-orders",
-  "my-sales": "marketplace-orders", "update-order-status": "marketplace-orders", "resolve-dispute": "marketplace-orders",
-  "rate-seller": "marketplace-orders", "admin-orders": "marketplace-orders", "open-dispute": "marketplace-orders",
-  "chat-messages": "marketplace-chat", "send-message": "marketplace-chat",
-  "make-offer": "marketplace-offers", "listing-offers": "marketplace-offers", "my-offers": "marketplace-offers", "respond-offer": "marketplace-offers",
+  "listings": "mklist", "listing-detail": "mklist", "my-listings": "mklist",
+  "create-listing": "mklist", "update-listing": "mklist", "delete-listing": "mklist",
+  "toggle-favorite": "mklist", "seller-profile": "mklist", "seller-public-profile": "mklist",
+  "create-order": "mkord", "confirm-payment": "mkord", "my-orders": "mkord",
+  "my-sales": "mkord", "update-order-status": "mkord", "resolve-dispute": "mkord",
+  "rate-seller": "mkord", "admin-orders": "mkord", "open-dispute": "mkord",
+  "chat-messages": "mkchat", "send-message": "mkchat",
+  "make-offer": "mkoff", "listing-offers": "mkoff", "my-offers": "mkoff", "respond-offer": "mkoff",
 };
 
 async function marketplaceRequest(
