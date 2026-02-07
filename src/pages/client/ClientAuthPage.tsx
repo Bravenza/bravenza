@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useClientSession } from "@/hooks/useClientSession";
 import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
+import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 
 // Validation schemas
 const loginSchema = z.object({
@@ -63,7 +64,8 @@ export default function ClientAuthPage() {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetSent, setResetSent] = useState(false);
-  
+  const [showResetPassword, setShowResetPassword] = useState(false);
+
   // Login form
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -76,12 +78,22 @@ export default function ClientAuthPage() {
   const [signupPassword, setSignupPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  // Detect PASSWORD_RECOVERY event
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setShowResetPassword(true);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
   // Redirect if already logged in
   useEffect(() => {
-    if (!sessionLoading && user) {
+    if (!sessionLoading && user && !showResetPassword) {
       navigate("/minha-conta");
     }
-  }, [user, sessionLoading, navigate]);
+  }, [user, sessionLoading, navigate, showResetPassword]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -231,6 +243,21 @@ export default function ClientAuthPage() {
           className="w-full max-w-md"
         >
           <Card className="card-premium">
+            {showResetPassword ? (
+              <CardContent className="pt-6">
+                <ResetPasswordForm
+                  onComplete={() => {
+                    setShowResetPassword(false);
+                    supabase.auth.signOut();
+                    toast({
+                      title: "Senha atualizada!",
+                      description: "Faça login com sua nova senha.",
+                    });
+                  }}
+                />
+              </CardContent>
+            ) : (
+            <>
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Área do Cliente</CardTitle>
               <CardDescription>
@@ -480,6 +507,8 @@ export default function ClientAuthPage() {
                 </TabsContent>
               </Tabs>
             </CardContent>
+            </>
+            )}
           </Card>
 
           {/* Info text */}

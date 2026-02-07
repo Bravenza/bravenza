@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -38,6 +39,7 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetSent, setResetSent] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
 
   // Login form
   const [loginEmail, setLoginEmail] = useState("");
@@ -49,11 +51,21 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
 
+  // Detect PASSWORD_RECOVERY event
   useEffect(() => {
-    if (user && isAdmin) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setShowResetPassword(true);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (user && isAdmin && !showResetPassword) {
       navigate("/admin");
     }
-  }, [user, isAdmin, navigate]);
+  }, [user, isAdmin, navigate, showResetPassword]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -223,6 +235,19 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
           className="w-full max-w-md"
         >
           <div className="card-premium p-8">
+            {showResetPassword ? (
+              <ResetPasswordForm
+                onComplete={() => {
+                  setShowResetPassword(false);
+                  supabase.auth.signOut();
+                  toast({
+                    title: "Senha atualizada!",
+                    description: "Faça login com sua nova senha.",
+                  });
+                }}
+              />
+            ) : (
+            <>
             <div className="text-center mb-8">
               <h1 className="text-2xl font-display font-bold">Área Administrativa</h1>
               <p className="text-muted-foreground mt-2">
@@ -414,6 +439,8 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
             <p className="text-xs text-muted-foreground text-center mt-6">
               Apenas usuários autorizados podem acessar o painel.
             </p>
+            </>
+            )}
           </div>
         </motion.div>
       </main>
