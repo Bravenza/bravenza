@@ -74,3 +74,6 @@ verify_jwt = false
 
 [functions.mkoff]
 verify_jwt = false
+
+[functions.vault-marketplace]
+verify_jwt = false
