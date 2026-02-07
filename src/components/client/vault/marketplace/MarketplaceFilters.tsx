@@ -25,6 +25,8 @@ export interface MarketplaceFilterValues {
   priceMax?: number;
   sort: string;
   favoritesOnly?: boolean;
+  modality?: string;
+  trustedOnly?: boolean;
 }
 
 const conditionOptions = [
@@ -58,6 +60,8 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
     filters.priceMin,
     filters.priceMax,
     filters.favoritesOnly,
+    filters.modality,
+    filters.trustedOnly,
   ].filter(Boolean).length;
 
   const clearFilters = () => {
@@ -205,6 +209,55 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
 
               <Separator className="bg-border/30" />
 
+              {/* Modality */}
+              <div>
+                <label className="text-sm font-medium mb-3 block text-foreground">Modalidade de envio</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: "direct", label: "Envio Direto" },
+                    { value: "pro", label: "PRO Hub" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => onFiltersChange({
+                        ...filters,
+                        modality: filters.modality === opt.value ? undefined : opt.value,
+                      })}
+                      className={cn(
+                        "p-3 rounded-lg text-sm border transition-all duration-200 font-medium",
+                        filters.modality === opt.value
+                          ? "bg-primary/10 border-primary/40 text-foreground"
+                          : "bg-[hsl(0,0%,16%)] border-border/30 text-muted-foreground hover:border-primary/20"
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <Separator className="bg-border/30" />
+
+              {/* Trusted seller */}
+              <div>
+                <button
+                  onClick={() => onFiltersChange({ ...filters, trustedOnly: !filters.trustedOnly })}
+                  className={cn(
+                    "w-full p-3 rounded-lg text-sm border transition-all duration-200 flex items-center justify-between",
+                    filters.trustedOnly
+                      ? "bg-primary/10 border-primary/40 text-foreground"
+                      : "bg-[hsl(0,0%,16%)] border-border/30 text-muted-foreground hover:border-primary/20"
+                  )}
+                >
+                  <span className="font-medium">Apenas vendedores confiáveis</span>
+                  <Badge variant={filters.trustedOnly ? "default" : "outline"} className="text-[10px]">
+                    Ouro / Elite
+                  </Badge>
+                </button>
+              </div>
+
+              <Separator className="bg-border/30" />
+
               {/* Sort */}
               <div>
                 <label className="text-sm font-medium mb-2 block text-foreground">Ordenar por</label>
@@ -217,6 +270,7 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
                     <SelectItem value="price_asc">Menor preço</SelectItem>
                     <SelectItem value="price_desc">Maior preço</SelectItem>
                     <SelectItem value="popular">Mais populares</SelectItem>
+                    <SelectItem value="best_seller">Melhor vendedor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -325,6 +379,26 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
               >
                 <Heart className="h-3 w-3 fill-red-400 text-red-400" />
                 Favoritos
+                <X className="h-3 w-3" />
+              </Badge>
+            )}
+            {filters.modality && (
+              <Badge
+                variant="secondary"
+                className="gap-1 text-xs cursor-pointer hover:bg-destructive/20"
+                onClick={() => { onFiltersChange({ ...filters, modality: undefined }); onSearch(); }}
+              >
+                {filters.modality === "pro" ? "PRO Hub" : "Direto"}
+                <X className="h-3 w-3" />
+              </Badge>
+            )}
+            {filters.trustedOnly && (
+              <Badge
+                variant="secondary"
+                className="gap-1 text-xs cursor-pointer hover:bg-destructive/20"
+                onClick={() => { onFiltersChange({ ...filters, trustedOnly: undefined }); onSearch(); }}
+              >
+                Confiáveis
                 <X className="h-3 w-3" />
               </Badge>
             )}
