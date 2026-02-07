@@ -296,6 +296,11 @@ export default function ClientAuthPage() {
                           <Input
                             id="login-email"
                             type="email"
+                            inputMode="email"
+                            autoComplete="username"
+                            autoCapitalize="none"
+                            autoCorrect="off"
+                            spellCheck={false}
                             placeholder="seu@email.com"
                             value={loginEmail}
                             onChange={(e) => setLoginEmail(e.target.value)}
@@ -321,6 +326,7 @@ export default function ClientAuthPage() {
                           <Input
                             id="login-password"
                             type={showPassword ? "text" : "password"}
+                            autoComplete="current-password"
                             placeholder="••••••••"
                             value={loginPassword}
                             onChange={(e) => setLoginPassword(e.target.value)}
