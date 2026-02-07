@@ -64,7 +64,9 @@ export default function ClientAuthPage() {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetSent, setResetSent] = useState(false);
-  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(() => {
+    return window.location.hash.includes('type=recovery');
+  });
 
   // Login form
   const [loginEmail, setLoginEmail] = useState("");
@@ -90,7 +92,8 @@ export default function ClientAuthPage() {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (!sessionLoading && user && !showResetPassword) {
+    const isRecovery = showResetPassword || window.location.hash.includes('type=recovery');
+    if (!sessionLoading && user && !isRecovery) {
       navigate("/minha-conta");
     }
   }, [user, sessionLoading, navigate, showResetPassword]);
