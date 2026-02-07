@@ -277,6 +277,101 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_activity_feed: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_type: string
+          id: string
+          listing_id: string | null
+          metadata: Json | null
+          product_id: string | null
+          seller_id: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_type: string
+          id?: string
+          listing_id?: string | null
+          metadata?: Json | null
+          product_id?: string | null
+          seller_id?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_type?: string
+          id?: string
+          listing_id?: string | null
+          metadata?: Json | null
+          product_id?: string | null
+          seller_id?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      marketplace_coupons: {
+        Row: {
+          code: string
+          created_at: string
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean
+          listing_ids: string[] | null
+          max_uses: number | null
+          min_purchase: number | null
+          seller_id: string
+          updated_at: string
+          uses_count: number
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          discount_type?: string
+          discount_value: number
+          id?: string
+          is_active?: boolean
+          listing_ids?: string[] | null
+          max_uses?: number | null
+          min_purchase?: number | null
+          seller_id: string
+          updated_at?: string
+          uses_count?: number
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          listing_ids?: string[] | null
+          max_uses?: number | null
+          min_purchase?: number | null
+          seller_id?: string
+          updated_at?: string
+          uses_count?: number
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_coupons_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "vault_seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_inspections: {
         Row: {
           checklist: Json | null

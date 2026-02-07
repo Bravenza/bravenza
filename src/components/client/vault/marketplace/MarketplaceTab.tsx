@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Store, Package, TrendingDown, Percent, ShoppingBag } from "lucide-react";
+import { Store, Package, TrendingDown, Percent, ShoppingBag, BarChart3, Tag, Activity } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,9 @@ import { SellerProfileSheet } from "./SellerProfileSheet";
 import { OffersListDialog } from "./OffersListDialog";
 import { SellerOnboardingDialog } from "./SellerOnboardingDialog";
 import { PriceDropSuggestions } from "./PriceDropSuggestions";
+import { SellerAnalyticsDashboard } from "./SellerAnalyticsDashboard";
+import { CouponsManager } from "./CouponsManager";
+import { ActivityFeed } from "./ActivityFeed";
 import { supabase } from "@/integrations/supabase/client";
 
 interface MarketplaceTabProps {
@@ -238,11 +241,27 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
             <TabsTrigger value="meus-anuncios">Meus anúncios</TabsTrigger>
           )}
           {isVaultMember && sellerOnboarded && (
+            <TabsTrigger value="analytics" className="gap-1">
+              <BarChart3 className="h-3.5 w-3.5" />
+              Analytics
+            </TabsTrigger>
+          )}
+          {isVaultMember && sellerOnboarded && (
+            <TabsTrigger value="cupons" className="gap-1">
+              <Tag className="h-3.5 w-3.5" />
+              Cupons
+            </TabsTrigger>
+          )}
+          {isVaultMember && sellerOnboarded && (
             <TabsTrigger value="sugestoes" className="gap-1">
               <TrendingDown className="h-3.5 w-3.5" />
               Sugestões
             </TabsTrigger>
           )}
+          <TabsTrigger value="feed" className="gap-1">
+            <Activity className="h-3.5 w-3.5" />
+            Feed
+          </TabsTrigger>
           <TabsTrigger value="como-funciona">Como funciona</TabsTrigger>
         </TabsList>
 
@@ -389,6 +408,20 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
           </TabsContent>
         )}
 
+        {/* Analytics Tab */}
+        {isVaultMember && sellerOnboarded && (
+          <TabsContent value="analytics" className="mt-4">
+            <SellerAnalyticsDashboard clientCpf={clientCpf} />
+          </TabsContent>
+        )}
+
+        {/* Coupons Tab */}
+        {isVaultMember && sellerOnboarded && (
+          <TabsContent value="cupons" className="mt-4">
+            <CouponsManager clientCpf={clientCpf} />
+          </TabsContent>
+        )}
+
         {/* Price Drop Suggestions Tab */}
         {isVaultMember && sellerOnboarded && (
           <TabsContent value="sugestoes" className="mt-4">
@@ -398,6 +431,11 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
             />
           </TabsContent>
         )}
+
+        {/* Activity Feed Tab */}
+        <TabsContent value="feed" className="mt-4">
+          <ActivityFeed clientCpf={clientCpf} />
+        </TabsContent>
 
         {/* How it works Tab */}
         <TabsContent value="como-funciona" className="mt-4 space-y-4">

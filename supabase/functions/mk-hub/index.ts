@@ -140,6 +140,12 @@ Deno.serve(async (req) => {
         is_vault_certified: !!b.vault_item_id, status: "active", published_at: new Date().toISOString(),
       }).select().single();
       if (error) throw error;
+      // Log activity
+      await sb.from("marketplace_activity_feed").insert({
+        event_type: "new_listing", title: `Novo anúncio: ${b.title}`,
+        description: `${b.brand || ""} ${b.model || ""} — R$ ${b.price}`,
+        listing_id: li.id, seller_id: sl.id,
+      }).then(() => {});
       return j({ success: true, listing: li });
     }
 
@@ -221,6 +227,12 @@ Deno.serve(async (req) => {
       if (error) throw error;
       await sb.from("vault_marketplace_listings").update({ status: "reserved" }).eq("id", li.id);
       await nt(sb, "🛒 Nova venda!", `${b.buyer_name} comprou "${li.title}".`, li.seller.member.client_cpf, od.id, "marketplace_order");
+      // Log activity
+      await sb.from("marketplace_activity_feed").insert({
+        event_type: "sale", title: `Venda: ${li.title}`,
+        description: `R$ ${li.price} — comprador: ${b.buyer_name}`,
+        listing_id: li.id, seller_id: li.seller.id,
+      }).then(() => {});
       return j({ success: true, order: od });
     }
 
@@ -1121,6 +1133,150 @@ Deno.serve(async (req) => {
       };
 
       return j({ ...data, tierInfo: tierConfig[data.tier] || tierConfig.bronze });
+    }
+
+    // ==================== COUPONS ====================
+
+    if (mt === "POST" && a === "create-coupon") {
+      const b = await req.json();
+      const mb = await gm(sb, cpf);
+      if (!mb) throw new Error("Membro não encontrado");
+      const sl = await gs(sb, mb.id);
+      if (!sl) throw new Error("Vendedor não encontrado");
+      if (!b.code || !b.discount_value) throw new Error("code e discount_value obrigatórios");
+      const { data: coupon, error } = await sb.from("marketplace_coupons").insert({
+        seller_id: sl.id, code: b.code.toUpperCase().trim(),
+        discount_type: b.discount_type || "percent", discount_value: b.discount_value,
+        min_purchase: b.min_purchase || 0, max_uses: b.max_uses || null,
+        valid_until: b.valid_until || null, listing_ids: b.listing_ids || null,
+      }).select().single();
+      if (error) throw error;
+      return j({ success: true, coupon });
+    }
+
+    if (mt === "GET" && a === "my-coupons") {
+      const mb = await gm(sb, cpf);
+      if (!mb) return j({ coupons: [] });
+      const sl = await gs(sb, mb.id);
+      if (!sl) return j({ coupons: [] });
+      const { data } = await sb.from("marketplace_coupons").select("*").eq("seller_id", sl.id).order("created_at", { ascending: false });
+      return j({ coupons: data || [] });
+    }
+
+    if (mt === "PUT" && a === "update-coupon") {
+      const b = await req.json();
+      const mb = await gm(sb, cpf);
+      if (!mb) throw new Error("Membro não encontrado");
+      const sl = await gs(sb, mb.id);
+      if (!sl) throw new Error("Vendedor não encontrado");
+      const { error } = await sb.from("marketplace_coupons").update({
+        is_active: b.is_active, max_uses: b.max_uses, valid_until: b.valid_until,
+        discount_value: b.discount_value, min_purchase: b.min_purchase,
+      }).eq("id", b.coupon_id).eq("seller_id", sl.id);
+      if (error) throw error;
+      return j({ success: true });
+    }
+
+    if (mt === "DELETE" && a === "delete-coupon") {
+      const id = url.searchParams.get("id");
+      if (!id) throw new Error("ID obrigatório");
+      const mb = await gm(sb, cpf);
+      if (!mb) throw new Error("Membro não encontrado");
+      const sl = await gs(sb, mb.id);
+      if (!sl) throw new Error("Vendedor não encontrado");
+      await sb.from("marketplace_coupons").delete().eq("id", id).eq("seller_id", sl.id);
+      return j({ success: true });
+    }
+
+    if (mt === "POST" && a === "validate-coupon") {
+      const b = await req.json();
+      if (!b.code || !b.listing_id) throw new Error("code e listing_id obrigatórios");
+      const { data: listing } = await sb.from("vault_marketplace_listings").select("seller_id, price").eq("id", b.listing_id).single();
+      if (!listing) throw new Error("Anúncio não encontrado");
+      const { data: coupon } = await sb.from("marketplace_coupons").select("*")
+        .eq("seller_id", listing.seller_id).eq("code", b.code.toUpperCase().trim()).eq("is_active", true).maybeSingle();
+      if (!coupon) return j({ valid: false, reason: "Cupom não encontrado ou inativo" });
+      if (coupon.valid_until && new Date(coupon.valid_until) < new Date()) return j({ valid: false, reason: "Cupom expirado" });
+      if (coupon.max_uses && coupon.uses_count >= coupon.max_uses) return j({ valid: false, reason: "Cupom esgotado" });
+      if (coupon.min_purchase && listing.price < coupon.min_purchase) return j({ valid: false, reason: `Compra mínima: R$ ${coupon.min_purchase}` });
+      if (coupon.listing_ids && coupon.listing_ids.length > 0 && !coupon.listing_ids.includes(b.listing_id)) return j({ valid: false, reason: "Cupom não válido para este anúncio" });
+      const discount = coupon.discount_type === "percent" ? Math.round(listing.price * coupon.discount_value / 100) : coupon.discount_value;
+      return j({ valid: true, coupon_id: coupon.id, discount, discount_type: coupon.discount_type, discount_value: coupon.discount_value, final_price: Math.max(0, listing.price - discount) });
+    }
+
+    if (mt === "POST" && a === "use-coupon") {
+      const b = await req.json();
+      if (!b.coupon_id) throw new Error("coupon_id obrigatório");
+      await sb.from("marketplace_coupons").update({ uses_count: sb.rpc ? undefined : 0 }).eq("id", b.coupon_id);
+      // Increment uses_count
+      const { data: c } = await sb.from("marketplace_coupons").select("uses_count").eq("id", b.coupon_id).single();
+      if (c) await sb.from("marketplace_coupons").update({ uses_count: (c.uses_count || 0) + 1 }).eq("id", b.coupon_id);
+      return j({ success: true });
+    }
+
+    // ==================== SELLER ANALYTICS ====================
+
+    if (mt === "GET" && a === "seller-analytics") {
+      const mb = await gm(sb, cpf);
+      if (!mb) return j({ analytics: null });
+      const sl = await gs(sb, mb.id);
+      if (!sl) return j({ analytics: null });
+
+      // Total views from all listings
+      const { data: listings } = await sb.from("vault_marketplace_listings").select("id, views_count, price, status, created_at, published_at").eq("seller_id", sl.id);
+      const totalViews = (listings || []).reduce((s: number, l: any) => s + (l.views_count || 0), 0);
+      const activeListings = (listings || []).filter((l: any) => l.status === "active").length;
+
+      // Orders (sales)
+      const { data: orders } = await sb.from("vault_marketplace_orders").select("id, status, sale_price, fee_amount, seller_payout, created_at, paid_at, payout_released_at").eq("seller_id", sl.id);
+      const completedOrders = (orders || []).filter((o: any) => ["delivered", "payout_released", "payout_pending", "completed"].includes(o.status));
+      const totalRevenue = completedOrders.reduce((s: number, o: any) => s + (o.seller_payout || 0), 0);
+      const totalFees = completedOrders.reduce((s: number, o: any) => s + (o.fee_amount || 0), 0);
+      const conversionRate = totalViews > 0 ? Math.round((completedOrders.length / totalViews) * 10000) / 100 : 0;
+
+      // Monthly breakdown (last 6 months)
+      const monthlyData: Record<string, { revenue: number; sales: number; views: number }> = {};
+      const now = new Date();
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        monthlyData[key] = { revenue: 0, sales: 0, views: 0 };
+      }
+      for (const o of completedOrders) {
+        const key = o.created_at.slice(0, 7);
+        if (monthlyData[key]) { monthlyData[key].revenue += o.seller_payout || 0; monthlyData[key].sales += 1; }
+      }
+
+      return j({
+        analytics: {
+          total_views: totalViews, active_listings: activeListings,
+          total_sales: completedOrders.length, total_revenue: Math.round(totalRevenue * 100) / 100,
+          total_fees: Math.round(totalFees * 100) / 100, conversion_rate: conversionRate,
+          average_order_value: completedOrders.length > 0 ? Math.round(totalRevenue / completedOrders.length) : 0,
+          monthly: Object.entries(monthlyData).map(([month, data]) => ({ month, ...data })),
+          tier: sl.tier || "bronze", fee_percent: sl.current_fee_percent || 14,
+          rating: sl.average_rating, ratings_count: sl.ratings_count || 0,
+        },
+      });
+    }
+
+    // ==================== ACTIVITY FEED ====================
+
+    if (mt === "GET" && a === "activity-feed") {
+      const limit = parseInt(url.searchParams.get("limit") || "20");
+      const { data, error } = await sb.from("marketplace_activity_feed").select("*").order("created_at", { ascending: false }).limit(limit);
+      if (error) throw error;
+      return j({ events: data || [] });
+    }
+
+    if (mt === "POST" && a === "log-activity") {
+      const b = await req.json();
+      await sb.from("marketplace_activity_feed").insert({
+        event_type: b.event_type, title: b.title, description: b.description || null,
+        listing_id: b.listing_id || null, product_id: b.product_id || null,
+        seller_id: b.seller_id || null, metadata: b.metadata || {},
+      });
+      return j({ success: true });
     }
 
     if (mt === "GET" && a === "price-drop-suggestions") {
