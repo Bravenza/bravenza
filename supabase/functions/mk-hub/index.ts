@@ -57,7 +57,7 @@ serve(async (req) => {
     if (mt === "GET" && a === "listings") {
       const pg = parseInt(url.searchParams.get("page") || "1"), lm = 20, of = (pg - 1) * lm;
       let q = sb.from("vault_marketplace_listings").select(
-        `*, seller:vault_seller_profiles!inner(id, member:vault_members!inner(client_name, tier), average_rating, total_sales_count, current_fee_percent)`,
+        `*, seller:vault_seller_profiles!inner(id, seller_cep, member:vault_members!inner(client_name, tier), average_rating, total_sales_count, current_fee_percent)`,
         { count: "exact" }
       ).eq("status", "active");
       const sr = url.searchParams.get("search"), br = url.searchParams.get("brand"),
@@ -97,7 +97,7 @@ serve(async (req) => {
       const id = url.searchParams.get("id");
       if (!id) throw new Error("ID obrigatório");
       const { data, error } = await sb.from("vault_marketplace_listings").select(
-        `*, seller:vault_seller_profiles!inner(id, member:vault_members!inner(client_name, tier), average_rating, total_sales_count, current_fee_percent, bio)`
+        `*, seller:vault_seller_profiles!inner(id, seller_cep, member:vault_members!inner(client_name, tier), average_rating, total_sales_count, current_fee_percent, bio)`
       ).eq("id", id).single();
       if (error) throw error;
       await sb.from("vault_marketplace_listings").update({ views_count: (data.views_count || 0) + 1 }).eq("id", id);
@@ -412,6 +412,101 @@ serve(async (req) => {
       const { error } = await sb.from("vault_marketplace_offers").update(u).eq("id", b.offer_id);
       if (error) throw error;
       return j({ success: true });
+    }
+
+    // ==================== FREIGHT QUOTE ====================
+    if (mt === "POST" && a === "freight-quote") {
+      const b = await req.json();
+      const { listing_id, buyer_cep } = b;
+      if (!listing_id || !buyer_cep) throw new Error("listing_id e buyer_cep obrigatórios");
+
+      // Get listing with seller info
+      const { data: listing } = await sb.from("vault_marketplace_listings").select(
+        `*, seller:vault_seller_profiles!inner(seller_cep)`
+      ).eq("id", listing_id).single();
+      if (!listing) throw new Error("Anúncio não encontrado");
+
+      const sellerCep = listing.seller?.seller_cep;
+      const isBravenza = listing.shipping_mode === "bravenza";
+
+      // Get Bravenza warehouse CEP
+      const { data: whSetting } = await sb.from("system_settings").select("value").eq("key", "bravenza_warehouse_cep").maybeSingle();
+      const bravenzaCep = whSetting?.value ? String(whSetting.value).replace(/"/g, "") : "90040191";
+
+      // Default package for sneakers
+      const pkg = { weight: 1.2, height: 15, width: 35, length: 30 };
+      const insuranceValue = listing.price || 0;
+
+      // SuperFrete API
+      const sfToken = Deno.env.get("SUPERFRETE_API_TOKEN");
+      if (!sfToken) throw new Error("Token SuperFrete não configurado");
+
+      const sfHeaders = {
+        "Authorization": `Bearer ${sfToken}`,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "User-Agent": "Bravenza/1.0",
+      };
+
+      const quotePayload = (fromCep: string, toCep: string) => ({
+        from: { postal_code: fromCep.replace(/\D/g, "") },
+        to: { postal_code: toCep.replace(/\D/g, "") },
+        services: "1,2,3",
+        package: pkg,
+        options: { insurance_value: insuranceValue, receipt: false, own_hand: false },
+      });
+
+      const doQuote = async (fromCep: string, toCep: string) => {
+        const res = await fetch("https://api.superfrete.com/api/v0/calculator", {
+          method: "POST",
+          headers: sfHeaders,
+          body: JSON.stringify(quotePayload(fromCep, toCep)),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          console.error("SuperFrete quote error:", data);
+          return [];
+        }
+        return Array.isArray(data) ? data : [];
+      };
+
+      let quotes: any[] = [];
+      let legs: any = null;
+
+      if (isBravenza) {
+        // Two-leg: seller → Bravenza, then Bravenza → buyer
+        const fromCep = sellerCep || bravenzaCep;
+        const leg1 = await doQuote(fromCep, bravenzaCep);
+        const leg2 = await doQuote(bravenzaCep, buyer_cep);
+
+        // Combine: for each service, sum prices from both legs
+        const leg2Map: Record<number, any> = {};
+        for (const q of leg2) { if (q.id) leg2Map[q.id] = q; }
+
+        for (const q1 of leg1) {
+          const q2 = leg2Map[q1.id];
+          if (q2 && !q1.error && !q2.error) {
+            quotes.push({
+              ...q1,
+              price: (parseFloat(q1.price || "0") + parseFloat(q2.price || "0")).toFixed(2),
+              delivery_time: Math.max(q1.delivery_time || 0, q2.delivery_time || 0) + (q1.delivery_time || 0),
+              legs: {
+                seller_to_bravenza: { price: q1.price, delivery_time: q1.delivery_time },
+                bravenza_to_buyer: { price: q2.price, delivery_time: q2.delivery_time },
+              },
+            });
+          }
+        }
+        legs = { mode: "bravenza", seller_cep: fromCep, warehouse_cep: bravenzaCep, buyer_cep: buyer_cep };
+      } else {
+        // Direct: seller → buyer
+        const fromCep = sellerCep || bravenzaCep;
+        quotes = await doQuote(fromCep, buyer_cep);
+        quotes = quotes.filter((q: any) => !q.error);
+        legs = { mode: "direct", seller_cep: fromCep, buyer_cep: buyer_cep };
+      }
+
+      return j({ quotes, legs, shipping_mode: listing.shipping_mode });
     }
 
     return j({ error: "Ação não encontrada" }, 404);
