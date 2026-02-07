@@ -111,6 +111,7 @@ export default function MarketplaceInspectionPage() {
   const [inspectionNotes, setInspectionNotes] = useState("");
   const [rejectionReason, setRejectionReason] = useState("");
   const [inspectDialogOpen, setInspectDialogOpen] = useState(false);
+  const [inspectionPhotos, setInspectionPhotos] = useState<string[]>([]);
 
   const fetchHubOrders = useCallback(async () => {
     setIsLoading(true);
@@ -160,13 +161,19 @@ export default function MarketplaceInspectionPage() {
           checklist,
           notes: inspectionNotes,
           rejection_reason: result === "rejected" ? rejectionReason : null,
+          inspection_photos: inspectionPhotos.length > 0 ? inspectionPhotos : null,
         }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "Erro na inspeção");
       }
-      toast({ title: result === "approved" ? "Inspeção aprovada! ✓" : "Inspeção reprovada" });
+      const data = await res.json();
+      if (result === "approved" && data.laudo_id) {
+        toast({ title: `Inspeção aprovada! ✓`, description: `Laudo: ${data.laudo_id}` });
+      } else {
+        toast({ title: result === "approved" ? "Inspeção aprovada! ✓" : "Inspeção reprovada" });
+      }
       setInspectDialogOpen(false);
       fetchHubOrders();
       setDetailOpen(false);
@@ -181,6 +188,7 @@ export default function MarketplaceInspectionPage() {
     setChecklist({ ...DEFAULT_CHECKLIST });
     setInspectionNotes("");
     setRejectionReason("");
+    setInspectionPhotos([]);
     setInspectDialogOpen(true);
   };
 
@@ -457,6 +465,45 @@ export default function MarketplaceInspectionPage() {
                   <Label htmlFor={key} className="text-sm cursor-pointer">{label}</Label>
                 </div>
               ))}
+            </div>
+
+            <Separator />
+
+            {/* Inspection Photos */}
+            <div>
+              <Label className="text-sm font-medium flex items-center gap-1">
+                <Camera className="h-3.5 w-3.5" /> Fotos da inspeção
+              </Label>
+              <div className="mt-1.5 space-y-2">
+                <Input
+                  type="url"
+                  placeholder="Cole a URL da foto e pressione Enter"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const val = (e.target as HTMLInputElement).value.trim();
+                      if (val) {
+                        setInspectionPhotos(prev => [...prev, val]);
+                        (e.target as HTMLInputElement).value = "";
+                      }
+                      e.preventDefault();
+                    }
+                  }}
+                />
+                {inspectionPhotos.length > 0 && (
+                  <div className="flex gap-2 flex-wrap">
+                    {inspectionPhotos.map((url, i) => (
+                      <div key={i} className="relative group">
+                        <img src={url} alt={`Foto ${i + 1}`} className="w-14 h-14 rounded-lg object-cover border border-border/50" />
+                        <button
+                          onClick={() => setInspectionPhotos(prev => prev.filter((_, idx) => idx !== i))}
+                          className="absolute -top-1 -right-1 bg-destructive text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                        >×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[10px] text-muted-foreground">{inspectionPhotos.length} foto(s) adicionada(s)</p>
+              </div>
             </div>
 
             <Separator />

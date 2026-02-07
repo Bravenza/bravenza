@@ -21,7 +21,7 @@ const disputeReasons = [
   { value: "other", label: "Outro motivo" },
 ];
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/vault-marketplace`;
+const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub`;
 
 interface DisputeDialogProps {
   orderId: string;
