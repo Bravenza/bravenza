@@ -91,14 +91,14 @@ export interface SellerProfile {
 const FUNCTION_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
 const ACTION_TO_FUNCTION: Record<string, string> = {
-  "listings": "mklist", "listing-detail": "mklist", "my-listings": "mklist",
-  "create-listing": "mklist", "update-listing": "mklist", "delete-listing": "mklist",
-  "toggle-favorite": "mklist", "seller-profile": "mklist", "seller-public-profile": "mklist",
-  "create-order": "mkord", "confirm-payment": "mkord", "my-orders": "mkord",
-  "my-sales": "mkord", "update-order-status": "mkord", "resolve-dispute": "mkord",
-  "rate-seller": "mkord", "admin-orders": "mkord", "open-dispute": "mkord",
-  "chat-messages": "mkchat", "send-message": "mkchat",
-  "make-offer": "mkoff", "listing-offers": "mkoff", "my-offers": "mkoff", "respond-offer": "mkoff",
+  "listings": "vault-marketplace", "listing-detail": "vault-marketplace", "my-listings": "vault-marketplace",
+  "create-listing": "vault-marketplace", "update-listing": "vault-marketplace", "delete-listing": "vault-marketplace",
+  "toggle-favorite": "vault-marketplace", "seller-profile": "vault-marketplace", "seller-public-profile": "vault-marketplace",
+  "create-order": "vault-marketplace", "confirm-payment": "vault-marketplace", "my-orders": "vault-marketplace",
+  "my-sales": "vault-marketplace", "update-order-status": "vault-marketplace", "resolve-dispute": "vault-marketplace",
+  "rate-seller": "vault-marketplace", "admin-orders": "vault-marketplace", "open-dispute": "vault-marketplace",
+  "chat-messages": "vault-marketplace", "send-message": "vault-marketplace",
+  "make-offer": "vault-marketplace", "listing-offers": "vault-marketplace", "my-offers": "vault-marketplace", "respond-offer": "vault-marketplace",
 };
 
 async function marketplaceRequest(
