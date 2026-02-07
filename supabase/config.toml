@@ -63,17 +63,5 @@ verify_jwt = false
 [functions.verify-authenticity]
 verify_jwt = false
 
-[functions.mklist]
-verify_jwt = false
-
-[functions.mkord]
-verify_jwt = false
-
-[functions.mkchat]
-verify_jwt = false
-
-[functions.mkoff]
-verify_jwt = false
-
-[functions.vault-marketplace]
+[functions.mk-hub]
 verify_jwt = false

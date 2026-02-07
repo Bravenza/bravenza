@@ -91,14 +91,14 @@ export interface SellerProfile {
 const FUNCTION_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
 const ACTION_TO_FUNCTION: Record<string, string> = {
-  "listings": "vault-marketplace", "listing-detail": "vault-marketplace", "my-listings": "vault-marketplace",
-  "create-listing": "vault-marketplace", "update-listing": "vault-marketplace", "delete-listing": "vault-marketplace",
-  "toggle-favorite": "vault-marketplace", "seller-profile": "vault-marketplace", "seller-public-profile": "vault-marketplace",
-  "create-order": "vault-marketplace", "confirm-payment": "vault-marketplace", "my-orders": "vault-marketplace",
-  "my-sales": "vault-marketplace", "update-order-status": "vault-marketplace", "resolve-dispute": "vault-marketplace",
-  "rate-seller": "vault-marketplace", "admin-orders": "vault-marketplace", "open-dispute": "vault-marketplace",
-  "chat-messages": "vault-marketplace", "send-message": "vault-marketplace",
-  "make-offer": "vault-marketplace", "listing-offers": "vault-marketplace", "my-offers": "vault-marketplace", "respond-offer": "vault-marketplace",
+  "listings": "mk-hub", "listing-detail": "mk-hub", "my-listings": "mk-hub",
+  "create-listing": "mk-hub", "update-listing": "mk-hub", "delete-listing": "mk-hub",
+  "toggle-favorite": "mk-hub", "seller-profile": "mk-hub", "seller-public-profile": "mk-hub",
+  "create-order": "mk-hub", "confirm-payment": "mk-hub", "my-orders": "mk-hub",
+  "my-sales": "mk-hub", "update-order-status": "mk-hub", "resolve-dispute": "mk-hub",
+  "rate-seller": "mk-hub", "admin-orders": "mk-hub", "open-dispute": "mk-hub",
+  "chat-messages": "mk-hub", "send-message": "mk-hub",
+  "make-offer": "mk-hub", "listing-offers": "mk-hub", "my-offers": "mk-hub", "respond-offer": "mk-hub",
 };
 
 async function marketplaceRequest(
