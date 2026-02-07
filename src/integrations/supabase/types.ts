@@ -2476,6 +2476,7 @@ export type Database = {
           is_active: boolean
           member_id: string
           ratings_count: number
+          seller_cep: string | null
           total_sales_count: number
           total_sales_value: number
           updated_at: string
@@ -2489,6 +2490,7 @@ export type Database = {
           is_active?: boolean
           member_id: string
           ratings_count?: number
+          seller_cep?: string | null
           total_sales_count?: number
           total_sales_value?: number
           updated_at?: string
@@ -2502,6 +2504,7 @@ export type Database = {
           is_active?: boolean
           member_id?: string
           ratings_count?: number
+          seller_cep?: string | null
           total_sales_count?: number
           total_sales_value?: number
           updated_at?: string
