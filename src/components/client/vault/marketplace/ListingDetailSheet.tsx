@@ -136,7 +136,7 @@ export function ListingDetailSheet({
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-4 right-4 h-10 w-10 rounded-full bg-black/40 backdrop-blur-md hover:bg-black/60 border-0"
+              className="absolute top-4 right-14 h-10 w-10 rounded-full bg-black/40 backdrop-blur-md hover:bg-black/60 border-0 z-20"
               onClick={() => onToggleFavorite(listing.id)}
             >
               <Heart

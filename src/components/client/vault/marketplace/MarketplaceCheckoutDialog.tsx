@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ShoppingCart, ShieldCheck, Truck, CreditCard, Loader2 } from "lucide-react";
+import { ShoppingCart, ShieldCheck, Truck, CreditCard, Loader2, MapPin } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { MobileSelect } from "@/components/ui/mobile-select";
 import type { MarketplaceListing } from "@/hooks/useMarketplace";
+
+const BR_STATES = [
+  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
+  "PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
+];
+
+const formatCep = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+  if (digits.length > 5) return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+  return digits;
+};
 
 interface MarketplaceCheckoutDialogProps {
   listing: MarketplaceListing | null;
@@ -40,15 +52,21 @@ export function MarketplaceCheckoutDialog({
   buyerDefaults,
 }: MarketplaceCheckoutDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [form, setForm] = useState({
     buyer_name: buyerDefaults?.name || "",
     buyer_email: buyerDefaults?.email || "",
     buyer_phone: buyerDefaults?.phone || "",
-    buyer_address: "",
+    address_cep: "",
+    address_street: "",
+    address_number: "",
+    address_complement: "",
+    address_neighborhood: "",
+    address_city: "",
+    address_state: "",
     payment_method: "pix",
   });
 
-  // Sync form with buyerDefaults when they change
   useEffect(() => {
     setForm((prev) => ({
       ...prev,
@@ -58,17 +76,63 @@ export function MarketplaceCheckoutDialog({
     }));
   }, [buyerDefaults?.name, buyerDefaults?.email, buyerDefaults?.phone]);
 
+  const updateField = (field: string, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleCepChange = async (cep: string) => {
+    const digits = cep.replace(/\D/g, "");
+    if (digits.length !== 8) return;
+    setIsLoadingCep(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+      const data = await res.json();
+      if (!data.erro) {
+        setForm((prev) => ({
+          ...prev,
+          address_street: data.logradouro || prev.address_street,
+          address_neighborhood: data.bairro || prev.address_neighborhood,
+          address_city: data.localidade || prev.address_city,
+          address_state: data.uf || prev.address_state,
+        }));
+      }
+    } catch {
+      // ignore
+    } finally {
+      setIsLoadingCep(false);
+    }
+  };
+
   if (!listing) return null;
 
   const totalPrice = listing.price + (listing.shipping_cost_estimate || 0);
 
+  const buildAddressString = () => {
+    const parts = [
+      form.address_street,
+      form.address_number,
+      form.address_complement,
+      form.address_neighborhood,
+      form.address_city,
+      form.address_state,
+      form.address_cep,
+    ].filter(Boolean);
+    return parts.join(", ");
+  };
+
+  const isAddressValid = form.address_cep && form.address_street && form.address_number && form.address_neighborhood && form.address_city && form.address_state;
+
   const handleSubmit = async () => {
-    if (!form.buyer_name || !form.buyer_address) return;
+    if (!form.buyer_name || !isAddressValid) return;
     setIsSubmitting(true);
     try {
       const result = await onConfirm({
         listing_id: listing.id,
-        ...form,
+        buyer_name: form.buyer_name,
+        buyer_email: form.buyer_email,
+        buyer_phone: form.buyer_phone,
+        buyer_address: buildAddressString(),
+        payment_method: form.payment_method,
       });
       if (result) {
         onOpenChange(false);
@@ -77,6 +141,8 @@ export function MarketplaceCheckoutDialog({
       setIsSubmitting(false);
     }
   };
+
+  const stateOptions = BR_STATES.map((s) => ({ value: s, label: s }));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -143,7 +209,7 @@ export function MarketplaceCheckoutDialog({
               <Label>Seu nome *</Label>
               <Input
                 value={form.buyer_name}
-                onChange={(e) => setForm((prev) => ({ ...prev, buyer_name: e.target.value }))}
+                onChange={(e) => updateField("buyer_name", e.target.value)}
                 placeholder="Nome completo"
                 className="mt-1"
               />
@@ -153,7 +219,7 @@ export function MarketplaceCheckoutDialog({
                 <Label>E-mail</Label>
                 <Input
                   value={form.buyer_email}
-                  onChange={(e) => setForm((prev) => ({ ...prev, buyer_email: e.target.value }))}
+                  onChange={(e) => updateField("buyer_email", e.target.value)}
                   placeholder="seu@email.com"
                   className="mt-1"
                 />
@@ -162,22 +228,110 @@ export function MarketplaceCheckoutDialog({
                 <Label>Telefone</Label>
                 <Input
                   value={form.buyer_phone}
-                  onChange={(e) => setForm((prev) => ({ ...prev, buyer_phone: e.target.value }))}
+                  onChange={(e) => updateField("buyer_phone", e.target.value)}
                   placeholder="(11) 99999-9999"
                   className="mt-1"
                 />
               </div>
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Address - Detailed fields matching system pattern */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 mb-1">
+              <MapPin className="h-4 w-4 text-primary" />
+              <Label className="text-sm font-semibold">Endereço de entrega</Label>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">CEP *</Label>
+                <div className="relative">
+                  <Input
+                    value={form.address_cep}
+                    onChange={(e) => {
+                      const formatted = formatCep(e.target.value);
+                      updateField("address_cep", formatted);
+                      if (formatted.replace(/\D/g, "").length === 8) {
+                        handleCepChange(formatted);
+                      }
+                    }}
+                    placeholder="00000-000"
+                    className="mt-1"
+                  />
+                  {isLoadingCep && (
+                    <Loader2 className="h-4 w-4 animate-spin absolute right-3 top-3.5 text-muted-foreground" />
+                  )}
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Estado *</Label>
+                <MobileSelect
+                  value={form.address_state}
+                  onValueChange={(v) => updateField("address_state", v)}
+                  options={stateOptions}
+                  placeholder="UF"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
             <div>
-              <Label>Endereço de entrega *</Label>
+              <Label className="text-xs">Rua *</Label>
               <Input
-                value={form.buyer_address}
-                onChange={(e) => setForm((prev) => ({ ...prev, buyer_address: e.target.value }))}
-                placeholder="Rua, número, bairro, cidade - UF, CEP"
+                value={form.address_street}
+                onChange={(e) => updateField("address_street", e.target.value)}
+                placeholder="Nome da rua"
                 className="mt-1"
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Número *</Label>
+                <Input
+                  value={form.address_number}
+                  onChange={(e) => updateField("address_number", e.target.value)}
+                  placeholder="123"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Complemento</Label>
+                <Input
+                  value={form.address_complement}
+                  onChange={(e) => updateField("address_complement", e.target.value)}
+                  placeholder="Apto, bloco..."
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Bairro *</Label>
+                <Input
+                  value={form.address_neighborhood}
+                  onChange={(e) => updateField("address_neighborhood", e.target.value)}
+                  placeholder="Bairro"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Cidade *</Label>
+                <Input
+                  value={form.address_city}
+                  onChange={(e) => updateField("address_city", e.target.value)}
+                  placeholder="Cidade"
+                  className="mt-1"
+                />
+              </div>
+            </div>
           </div>
+
+          <Separator />
 
           {/* Payment method */}
           <div>
@@ -189,7 +343,7 @@ export function MarketplaceCheckoutDialog({
               ].map((opt) => (
                 <button
                   key={opt.value}
-                  onClick={() => setForm((prev) => ({ ...prev, payment_method: opt.value }))}
+                  onClick={() => updateField("payment_method", opt.value)}
                   className={`p-3 rounded-lg border text-sm font-medium transition-all ${
                     form.payment_method === opt.value
                       ? "border-primary bg-primary/10 text-primary"
@@ -211,7 +365,7 @@ export function MarketplaceCheckoutDialog({
 
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || !form.buyer_name || !form.buyer_address}
+            disabled={isSubmitting || !form.buyer_name || !isAddressValid}
             className="w-full btn-gold gap-2"
             size="lg"
           >

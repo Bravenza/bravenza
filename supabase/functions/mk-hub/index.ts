@@ -63,7 +63,14 @@ serve(async (req) => {
       const sr = url.searchParams.get("search"), br = url.searchParams.get("brand"),
         sz = url.searchParams.get("size"), cn = url.searchParams.get("condition"),
         pm = url.searchParams.get("price_min"), px = url.searchParams.get("price_max"),
-        so = url.searchParams.get("sort") || "recent";
+        so = url.searchParams.get("sort") || "recent",
+        fo = url.searchParams.get("favorites_only");
+      if (fo === "true") {
+        const { data: favs } = await sb.from("vault_marketplace_favorites").select("listing_id").eq("user_cpf", cpf);
+        const favIds = (favs || []).map((f: any) => f.listing_id);
+        if (favIds.length === 0) return j({ listings: [], total: 0 });
+        q = q.in("id", favIds);
+      }
       if (sr) q = q.or(`title.ilike.%${sr}%,brand.ilike.%${sr}%,model.ilike.%${sr}%`);
       if (br) q = q.ilike("brand", `%${br}%`);
       if (sz) q = q.eq("size", sz);
