@@ -1,6 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ShieldCheck, Star, Verified, Heart, Share2, ChevronRight, AlertTriangle, Package, Eye } from "lucide-react";
+import {
+  ArrowLeft, ShieldCheck, Star, Verified, Heart, Share2,
+  ChevronRight, AlertTriangle, Package, Eye, Tag, Calendar,
+  Palette, Hash, DollarSign, Info, ShoppingBag
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +19,9 @@ import { MarketplaceCheckoutDialog } from "@/components/client/vault/marketplace
 import { ProductWatchlistButton } from "@/components/marketplace/ProductWatchlistButton";
 import { ProductComments } from "@/components/marketplace/ProductComments";
 import { ProductAnalyticsChart } from "@/components/marketplace/ProductAnalyticsChart";
+import { formatProductName } from "@/lib/text-utils";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const conditionLabels: Record<string, string> = {
   novo: "Novo",
@@ -41,7 +48,8 @@ export default function ProductDetailPage() {
   const navigate = useNavigate();
   const { profile } = useClientSession();
   const cpf = profile?.cpf;
-  const { product, offers, sizes, isLoading, fetchProduct, fetchOffersBySize, watchlistStatus, checkWatchlist, toggleWatchlist, comments, commentsLoading, fetchComments, submitComment, analytics, analyticsLoading, fetchAnalytics } = useMarketplaceCatalog(cpf || "visitor");
+  const catalog = useMarketplaceCatalog(cpf || "visitor");
+  const { product, offers, sizes, isLoading, fetchProduct, fetchOffersBySize, watchlistStatus, checkWatchlist, toggleWatchlist, comments, commentsLoading, fetchComments, submitComment, analytics, analyticsLoading, fetchAnalytics } = catalog;
   const { createOrder } = useMarketplace(cpf || null);
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -100,14 +108,12 @@ export default function ProductDetailPage() {
     if (slug) fetchProduct(slug);
   }, [slug, fetchProduct]);
 
-  // When sizes load, auto-select first
   useEffect(() => {
     if (sizes.length > 0 && !selectedSize) {
       setSelectedSize(sizes[0]);
     }
   }, [sizes, selectedSize]);
 
-  // Fetch offers when size changes
   useEffect(() => {
     if (product && selectedSize) {
       setLoadingOffers(true);
@@ -116,7 +122,6 @@ export default function ProductDetailPage() {
     }
   }, [product, selectedSize, fetchOffersBySize, checkWatchlist]);
 
-  // Fetch comments + analytics when product loads
   useEffect(() => {
     if (product) {
       fetchComments(product.id);
@@ -124,18 +129,9 @@ export default function ProductDetailPage() {
     }
   }, [product, fetchComments, fetchAnalytics]);
 
-  // Sort offers by price
   const sortedOffers = useMemo(() => {
     return [...offers].sort((a, b) => a.price - b.price);
   }, [offers]);
-
-  // Count offers per size
-  const sizeOfferCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    sizes.forEach(s => { counts[s] = 0; });
-    // We only have current size offers loaded, so we use product total_offers as an indicator
-    return counts;
-  }, [sizes]);
 
   if (isLoading && !product) {
     return (
@@ -170,6 +166,7 @@ export default function ProductDetailPage() {
   }
 
   const images = product.images?.length > 0 ? product.images : ["/placeholder.svg"];
+  const formattedName = formatProductName(product.brand, product.model);
 
   return (
     <div className="min-h-screen bg-background">
@@ -180,100 +177,71 @@ export default function ProductDetailPage() {
             <ArrowLeft className="h-4 w-4" /> Voltar
           </Button>
           <Logo size="sm" />
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Share2 className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {selectedSize && cpf && cpf !== "visitor" && (
+              <ProductWatchlistButton
+                isWatching={watchlistStatus.active}
+                maxPrice={watchlistStatus.max_price}
+                lowestPrice={product.lowest_price}
+                onToggle={async (mp) => {
+                  await toggleWatchlist(product.id, selectedSize, mp);
+                }}
+              />
+            )}
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-6 pb-24">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* LEFT: Gallery */}
-          <div className="space-y-3">
-            <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted/30">
-              <img
-                src={images[selectedImage]}
-                alt={`${product.brand} ${product.model}`}
-                className="w-full h-full object-contain"
-              />
-              {product.is_high_risk && (
-                <Badge className="absolute top-3 left-3 bg-amber-500/90 text-white text-[10px] gap-1">
-                  <AlertTriangle className="h-3 w-3" /> Alto risco — PRO recomendado
-                </Badge>
-              )}
-            </div>
-            {images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedImage(i)}
-                    className={cn(
-                      "w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors",
-                      selectedImage === i ? "border-primary" : "border-transparent opacity-60 hover:opacity-100"
-                    )}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-4">
+          <button onClick={() => navigate("/minha-conta")} className="hover:text-foreground transition-colors">
+            Market+
+          </button>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-foreground font-medium truncate">{formattedName}</span>
+        </div>
 
-          {/* RIGHT: Product Info + Size + Offers */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* LEFT: Info + Details */}
           <div className="space-y-6">
-            {/* Brand & Model */}
+            {/* Brand badge + Title */}
             <div>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-1">
+              <Badge variant="outline" className="mb-2 text-[10px] uppercase tracking-widest font-semibold">
                 {product.brand}
-              </p>
+              </Badge>
               <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">
-                {product.model}
+                {formattedName}
               </h1>
               {product.colorway && (
                 <p className="text-sm text-muted-foreground mt-1">{product.colorway}</p>
               )}
-              {product.sku && (
-                <p className="text-xs text-muted-foreground mt-0.5 font-mono">{product.sku}</p>
-              )}
             </div>
 
-            {/* Price + Watchlist */}
-            <div className="flex items-center justify-between">
+            {/* Price */}
+            <div className="flex items-baseline gap-3">
+              <span className="text-3xl font-bold text-foreground">
+                {product.lowest_price
+                  ? `R$ ${product.lowest_price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+                  : "Sem ofertas"}
+              </span>
               {product.lowest_price && (
-                <div className="flex items-baseline gap-2">
-                  <span className="text-sm text-muted-foreground">A partir de</span>
-                  <span className="text-2xl font-bold text-foreground">
-                    R$ {product.lowest_price.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
-                  </span>
-                </div>
-              )}
-              {selectedSize && cpf && cpf !== "visitor" && (
-                <ProductWatchlistButton
-                  isWatching={watchlistStatus.active}
-                  maxPrice={watchlistStatus.max_price}
-                  lowestPrice={product.lowest_price}
-                  onToggle={async (mp) => {
-                    await toggleWatchlist(product.id, selectedSize, mp);
-                  }}
-                />
+                <span className="text-xs text-muted-foreground">
+                  ou 6x de R$ {(product.lowest_price / 6).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </span>
               )}
             </div>
 
-            {product.total_offers === 0 && (
-              <div className="p-4 bg-muted/30 rounded-xl text-center">
-                <p className="text-sm text-muted-foreground">Nenhuma oferta disponível para este produto.</p>
-                <p className="text-xs text-muted-foreground mt-1">Seja o primeiro a vender!</p>
-              </div>
-            )}
-
-            {/* Size Grid */}
+            {/* Size Selector */}
             {sizes.length > 0 && (
               <div>
-                <label className="text-sm font-semibold text-foreground mb-2.5 block">
+                <label className="text-sm font-semibold text-foreground mb-2.5 flex items-center gap-1.5">
                   Selecione o tamanho
                 </label>
-                <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-5 lg:grid-cols-6 gap-2">
+                <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
                   {sizes.map((size) => (
                     <button
                       key={size}
@@ -294,70 +262,145 @@ export default function ProductDetailPage() {
 
             <Separator />
 
-            {/* Offers List */}
+            {/* ===== PRODUCT SPECS TABLE ===== */}
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-foreground">
-                  Ofertas {selectedSize ? `— Tam. ${selectedSize}` : ""}
-                </h2>
-                <span className="text-xs text-muted-foreground">
-                  {sortedOffers.length} oferta{sortedOffers.length !== 1 ? "s" : ""}
-                </span>
+              <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5">
+                <Info className="h-4 w-4 text-primary" />
+                Ficha Técnica
+              </h3>
+              <div className="rounded-xl border border-border/50 overflow-hidden">
+                <SpecRow icon={<Hash className="h-3.5 w-3.5" />} label="SKU" value={product.sku || "—"} />
+                <SpecRow icon={<Calendar className="h-3.5 w-3.5" />} label="Lançamento" value={
+                  product.release_date
+                    ? format(parseISO(product.release_date), "dd/MM/yyyy", { locale: ptBR })
+                    : "—"
+                } even />
+                <SpecRow icon={<Tag className="h-3.5 w-3.5" />} label="Marca" value={product.brand} />
+                <SpecRow icon={<ShoppingBag className="h-3.5 w-3.5" />} label="Modelo" value={product.model} even />
+                <SpecRow icon={<DollarSign className="h-3.5 w-3.5" />} label="Preço de lançamento" value={
+                  product.retail_price
+                    ? `R$ ${product.retail_price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+                    : "—"
+                } />
+                <SpecRow icon={<Palette className="h-3.5 w-3.5" />} label="Cor" value={product.colorway || "—"} even />
               </div>
+            </div>
 
-              {loadingOffers ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
-                </div>
-              ) : sortedOffers.length === 0 ? (
-                <div className="p-6 bg-muted/20 rounded-xl text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Nenhuma oferta para o tamanho {selectedSize}.
+            {/* Description */}
+            {product.description && (
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+                  <Info className="h-4 w-4 text-primary" />
+                  Descrição
+                </h3>
+                <div className="p-4 bg-muted/20 rounded-xl border border-border/30">
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                    {product.description}
                   </p>
                 </div>
-              ) : (
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={selectedSize}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="space-y-2.5"
-                  >
-                    {sortedOffers.map((offer, index) => (
-                      <OfferCard
-                        key={offer.id}
-                        offer={offer}
-                        isBest={index === 0}
-                        onBuy={() => handleBuyOffer(offer)}
-                      />
-                    ))}
-                  </motion.div>
-                </AnimatePresence>
+              </div>
+            )}
+
+            {product.is_high_risk && (
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs">
+                <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <div>
+                  <span className="font-semibold">Modelo de alto risco.</span> Recomendamos utilizar o serviço PRO de autenticação para garantir a procedência.
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT: Gallery */}
+          <div className="space-y-3 order-first lg:order-last">
+            <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted/20 border border-border/30">
+              <img
+                src={images[selectedImage]}
+                alt={formattedName}
+                className="w-full h-full object-contain p-4"
+              />
+              {product.is_high_risk && (
+                <Badge className="absolute top-3 left-3 bg-amber-500/90 text-white text-[10px] gap-1">
+                  <AlertTriangle className="h-3 w-3" /> Alto risco
+                </Badge>
               )}
             </div>
+            {images.length > 1 && (
+              <div className="grid grid-cols-4 gap-2">
+                {images.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedImage(i)}
+                    className={cn(
+                      "aspect-square rounded-lg overflow-hidden border-2 transition-all bg-muted/10",
+                      selectedImage === i ? "border-primary ring-1 ring-primary/30" : "border-transparent opacity-60 hover:opacity-100"
+                    )}
+                  >
+                    <img src={img} alt="" className="w-full h-full object-contain p-1" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Description */}
-        {product.description && (
-          <div className="mt-10 max-w-2xl">
-            <h3 className="text-sm font-semibold mb-2">Sobre este modelo</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
+        {/* ===== SELLER OFFERS SECTION ===== */}
+        <div className="mt-10">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-foreground">
+              Ofertas de Vendedores {selectedSize ? `— Tam. ${selectedSize}` : ""}
+            </h2>
+            <span className="text-xs text-muted-foreground">
+              {sortedOffers.length} oferta{sortedOffers.length !== 1 ? "s" : ""}
+            </span>
           </div>
-        )}
 
-        {/* Market+ Analytics */}
-        <div className="mt-8 max-w-2xl">
+          {loadingOffers ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-36 rounded-xl" />)}
+            </div>
+          ) : sortedOffers.length === 0 ? (
+            <div className="p-8 bg-muted/20 rounded-xl text-center border border-border/30">
+              <p className="text-sm text-muted-foreground">
+                {product.total_offers === 0
+                  ? "Nenhuma oferta disponível para este produto. Seja o primeiro a vender!"
+                  : `Nenhuma oferta para o tamanho ${selectedSize}.`}
+              </p>
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={selectedSize}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+              >
+                {sortedOffers.map((offer, index) => (
+                  <OfferCard
+                    key={offer.id}
+                    offer={offer}
+                    isBest={index === 0}
+                    productImages={images}
+                    onBuy={() => handleBuyOffer(offer)}
+                  />
+                ))}
+              </motion.div>
+            </AnimatePresence>
+          )}
+        </div>
+
+        {/* ===== ANALYTICS / PRICE HISTORY ===== */}
+        <div className="mt-10 max-w-3xl">
           <ProductAnalyticsChart
             analytics={analytics}
             isLoading={analyticsLoading}
-            productName={`${product.brand} ${product.model}`}
+            productName={formattedName}
           />
         </div>
 
-        {/* Comments / Q&A */}
-        <div className="mt-8 max-w-2xl">
+        {/* ===== COMMENTS / Q&A ===== */}
+        <div className="mt-10 max-w-3xl">
           <ProductComments
             productId={product.id}
             comments={comments}
@@ -382,39 +425,67 @@ export default function ProductDetailPage() {
   );
 }
 
-// ---- Offer Card sub-component ----
+// ---- Spec Row ----
+function SpecRow({ icon, label, value, even }: { icon: React.ReactNode; label: string; value: string; even?: boolean }) {
+  return (
+    <div className={cn(
+      "flex items-center justify-between px-4 py-2.5 text-sm",
+      even ? "bg-muted/10" : "bg-transparent"
+    )}>
+      <span className="flex items-center gap-2 text-muted-foreground">
+        {icon}
+        {label}
+      </span>
+      <span className="font-medium text-foreground text-right">{value}</span>
+    </div>
+  );
+}
 
-function OfferCard({ offer, isBest, onBuy }: { offer: ProductOffer; isBest: boolean; onBuy: () => void }) {
+// ---- Offer Card ----
+function OfferCard({ offer, isBest, productImages, onBuy }: { offer: ProductOffer; isBest: boolean; productImages: string[]; onBuy: () => void }) {
   const pro = proLabels[offer.pro_recommendation] || proLabels.direct_allowed;
   const ProIcon = pro.icon;
   const sellerName = offer.seller?.member?.client_name?.split(" ")[0] || "Vendedor";
+  const offerImage = offer.photos?.length ? offer.photos[0] : productImages[0];
 
   return (
     <div className={cn(
-      "flex items-center gap-3 p-3.5 rounded-xl border transition-all",
-      isBest ? "border-primary/40 bg-primary/5" : "border-border/40 hover:border-border"
+      "rounded-xl border overflow-hidden transition-all hover:shadow-md",
+      isBest ? "border-primary/40 ring-1 ring-primary/20" : "border-border/40"
     )}>
-      {/* Seller info */}
-      <div className="flex-1 min-w-0 space-y-1">
+      {/* Offer photo */}
+      <div className="relative aspect-[4/3] bg-muted/10">
+        <img src={offerImage} alt="" className="w-full h-full object-contain p-2" />
+        {isBest && (
+          <Badge className="absolute top-2 left-2 text-[10px] px-1.5 py-0 bg-primary text-primary-foreground">
+            Melhor preço
+          </Badge>
+        )}
+        <Badge variant="outline" className={cn("absolute top-2 right-2 text-[10px] px-1.5 py-0 gap-0.5", conditionColors[offer.condition])}>
+          {conditionLabels[offer.condition] || offer.condition}
+        </Badge>
+      </div>
+
+      <div className="p-3 space-y-2">
+        {/* Seller */}
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-foreground">{sellerName}</span>
+          <span className="text-xs font-medium text-foreground">{sellerName}</span>
           {offer.seller?.total_sales_count && offer.seller.total_sales_count > 0 ? (
             <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
               <Verified className="h-2.5 w-2.5 text-primary" />
-              {offer.seller.total_sales_count}
+              {offer.seller.total_sales_count} vendas
             </span>
           ) : null}
           {offer.seller?.average_rating && offer.seller.average_rating > 0 ? (
-            <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
+            <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground ml-auto">
               <Star className="h-2.5 w-2.5 text-primary fill-primary" />
               {offer.seller.average_rating.toFixed(1)}
             </span>
           ) : null}
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 gap-0.5", conditionColors[offer.condition])}>
-            {conditionLabels[offer.condition] || offer.condition}
-          </Badge>
+
+        {/* Badges */}
+        <div className="flex flex-wrap gap-1">
           <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 gap-0.5", pro.color)}>
             <ProIcon className="h-2.5 w-2.5" />
             {pro.text}
@@ -424,22 +495,22 @@ function OfferCard({ offer, isBest, onBuy }: { offer: ProductOffer; isBest: bool
               NF
             </Badge>
           )}
-          {isBest && (
-            <Badge className="text-[10px] px-1.5 py-0 bg-primary text-primary-foreground">
-              Melhor preço
-            </Badge>
-          )}
         </div>
-      </div>
 
-      {/* Price + CTA */}
-      <div className="text-right flex-shrink-0 space-y-1.5">
-        <p className="text-lg font-bold text-foreground">
-          R$ {offer.price.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
-        </p>
-        <Button size="sm" className="btn-gold text-xs h-8 gap-1" onClick={(e) => { e.stopPropagation(); onBuy(); }}>
-          Comprar <ChevronRight className="h-3 w-3" />
-        </Button>
+        {/* Price + CTA */}
+        <div className="flex items-center justify-between pt-1">
+          <div>
+            <p className="text-lg font-bold text-foreground">
+              R$ {offer.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              6x R$ {(offer.price / 6).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </p>
+          </div>
+          <Button size="sm" className="btn-gold text-xs h-8 gap-1" onClick={(e) => { e.stopPropagation(); onBuy(); }}>
+            Comprar <ChevronRight className="h-3 w-3" />
+          </Button>
+        </div>
       </div>
     </div>
   );
