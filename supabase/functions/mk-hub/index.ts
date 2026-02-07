@@ -63,7 +63,9 @@ Deno.serve(async (req) => {
         sz = url.searchParams.get("size"), cn = url.searchParams.get("condition"),
         pm = url.searchParams.get("price_min"), px = url.searchParams.get("price_max"),
         so = url.searchParams.get("sort") || "recent",
-        fo = url.searchParams.get("favorites_only");
+        fo = url.searchParams.get("favorites_only"),
+        md = url.searchParams.get("modality"),
+        to = url.searchParams.get("trusted_only");
       if (fo === "true") {
         const { data: favs } = await sb.from("vault_marketplace_favorites").select("listing_id").eq("user_cpf", cpf);
         const favIds = (favs || []).map((f: any) => f.listing_id);
@@ -76,6 +78,12 @@ Deno.serve(async (req) => {
       if (cn) q = q.eq("condition", cn);
       if (pm) q = q.gte("price", parseFloat(pm));
       if (px) q = q.lte("price", parseFloat(px));
+      if (md === "pro") q = q.eq("shipping_mode", "pro");
+      else if (md === "direct") q = q.eq("shipping_mode", "direct");
+      if (to === "true") {
+        // Filter by trusted sellers (ouro or elite tier)
+        q = q.in("seller.member.tier", ["ouro", "elite"]);
+      }
       if (so === "price_asc") q = q.order("price", { ascending: true });
       else if (so === "price_desc") q = q.order("price", { ascending: false });
       else if (so === "popular") q = q.order("views_count", { ascending: false });
@@ -1034,6 +1042,47 @@ Deno.serve(async (req) => {
       };
 
       return j({ ...data, tierInfo: tierConfig[data.tier] || tierConfig.bronze });
+    }
+
+    if (mt === "GET" && a === "price-drop-suggestions") {
+      const mb = await gm(sb, cpf);
+      if (!mb) return j({ suggestions: [] });
+      const sl = await gs(sb, mb.id);
+      if (!sl) return j({ suggestions: [] });
+
+      // Fetch active listings older than 7 days with low views
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: staleListings } = await sb
+        .from("vault_marketplace_listings")
+        .select("id, title, price, views_count, created_at, published_at")
+        .eq("seller_id", sl.id)
+        .eq("status", "active")
+        .lt("published_at", sevenDaysAgo)
+        .order("published_at", { ascending: true });
+
+      if (!staleListings || staleListings.length === 0) return j({ suggestions: [] });
+
+      const suggestions = staleListings.map((l: any) => {
+        const daysListed = Math.floor((Date.now() - new Date(l.published_at || l.created_at).getTime()) / (1000 * 60 * 60 * 24));
+        let dropPercent = 5;
+        let reason = "Sem vendas há mais de 7 dias";
+        if (daysListed > 30) { dropPercent = 15; reason = "Anúncio parado há mais de 30 dias — redução agressiva recomendada"; }
+        else if (daysListed > 14) { dropPercent = 10; reason = "Sem interesse há 2+ semanas — considere reduzir o preço"; }
+        if (l.views_count < 5) { dropPercent += 3; reason += ". Poucas visualizações"; }
+
+        const suggestedPrice = Math.round(l.price * (1 - dropPercent / 100));
+        return {
+          listing_id: l.id,
+          title: l.title,
+          current_price: l.price,
+          suggested_price: suggestedPrice,
+          days_listed: daysListed,
+          views: l.views_count || 0,
+          reason,
+        };
+      });
+
+      return j({ suggestions });
     }
 
     return j({ error: "Ação não encontrada" }, 404);

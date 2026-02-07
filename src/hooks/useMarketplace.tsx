@@ -107,6 +107,7 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
   "chat-messages": "mk-hub", "send-message": "mk-hub",
   "make-offer": "mk-hub", "listing-offers": "mk-hub", "my-offers": "mk-hub", "respond-offer": "mk-hub",
   "seller-onboarding": "mk-hub", "seller-onboarding-status": "mk-hub",
+  "price-drop-suggestions": "mk-hub",
 };
 
 async function marketplaceRequest(
@@ -150,7 +151,7 @@ export function useMarketplace(cpf: string | null) {
   const [mySales, setMySales] = useState<MarketplaceOrder[]>([]);
 
   const fetchListings = useCallback(
-    async (filters?: { search?: string; brand?: string; size?: string; condition?: string; priceMin?: number; priceMax?: number; sort?: string; page?: number; favoritesOnly?: boolean }) => {
+    async (filters?: { search?: string; brand?: string; size?: string; condition?: string; priceMin?: number; priceMax?: number; sort?: string; page?: number; favoritesOnly?: boolean; modality?: string; trustedOnly?: boolean }) => {
       if (!cpf) return;
       setIsLoading(true);
       try {
@@ -164,6 +165,8 @@ export function useMarketplace(cpf: string | null) {
         if (filters?.sort) params.sort = filters.sort;
         if (filters?.page) params.page = String(filters.page);
         if (filters?.favoritesOnly) params.favorites_only = "true";
+        if (filters?.modality) params.modality = filters.modality;
+        if (filters?.trustedOnly) params.trusted_only = "true";
 
         const data = await marketplaceRequest(cpf, "listings", "GET", undefined, params);
         setListings(data.listings || []);
@@ -446,6 +449,17 @@ export function useMarketplace(cpf: string | null) {
     [cpf, toast]
   );
 
+  const fetchPriceDropSuggestions = useCallback(async () => {
+    if (!cpf) return [];
+    try {
+      const data = await marketplaceRequest(cpf, "price-drop-suggestions");
+      return data.suggestions || [];
+    } catch (err: any) {
+      console.error("Fetch price drop suggestions error:", err);
+      return [];
+    }
+  }, [cpf]);
+
   return {
     listings,
     myListings,
@@ -473,5 +487,6 @@ export function useMarketplace(cpf: string | null) {
     respondOffer,
     checkOnboardingStatus,
     completeOnboarding,
+    fetchPriceDropSuggestions,
   };
 }

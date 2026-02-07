@@ -17,6 +17,7 @@ import { MarketplaceFilters, type MarketplaceFilterValues } from "./MarketplaceF
 import { SellerProfileSheet } from "./SellerProfileSheet";
 import { OffersListDialog } from "./OffersListDialog";
 import { SellerOnboardingDialog } from "./SellerOnboardingDialog";
+import { PriceDropSuggestions } from "./PriceDropSuggestions";
 import { supabase } from "@/integrations/supabase/client";
 
 interface MarketplaceTabProps {
@@ -67,6 +68,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
     respondOffer,
     checkOnboardingStatus,
     completeOnboarding,
+    fetchPriceDropSuggestions,
   } = useMarketplace(clientCpf);
 
   const { searchProducts, createProduct, createOffer } = useMarketplaceCatalog(clientCpf);
@@ -175,7 +177,15 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
       priceMax: filters.priceMax,
       sort: filters.sort,
       favoritesOnly: filters.favoritesOnly,
+      modality: filters.modality,
+      trustedOnly: filters.trustedOnly,
     });
+  };
+
+  const handleApplyPriceDrop = async (listingId: string, newPrice: number) => {
+    const success = await updateListing({ listing_id: listingId, price: newPrice });
+    if (success) fetchMyListings();
+    return success;
   };
 
   const handleToggleFavorite = async (listingId: string) => {
@@ -226,6 +236,12 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
           </TabsTrigger>
           {isVaultMember && (
             <TabsTrigger value="meus-anuncios">Meus anúncios</TabsTrigger>
+          )}
+          {isVaultMember && sellerOnboarded && (
+            <TabsTrigger value="sugestoes" className="gap-1">
+              <TrendingDown className="h-3.5 w-3.5" />
+              Sugestões
+            </TabsTrigger>
           )}
           <TabsTrigger value="como-funciona">Como funciona</TabsTrigger>
         </TabsList>
@@ -370,6 +386,16 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
                 ))}
               </div>
             )}
+          </TabsContent>
+        )}
+
+        {/* Price Drop Suggestions Tab */}
+        {isVaultMember && sellerOnboarded && (
+          <TabsContent value="sugestoes" className="mt-4">
+            <PriceDropSuggestions
+              fetchSuggestions={fetchPriceDropSuggestions}
+              onApplyDrop={handleApplyPriceDrop}
+            />
           </TabsContent>
         )}
 
