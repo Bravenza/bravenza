@@ -258,6 +258,24 @@ export function useMarketplaceCatalog(clientCpf: string) {
     }
   }, [clientCpf, toast]);
 
+  // ===== ANALYTICS =====
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+  const fetchAnalytics = useCallback(async (productId: string) => {
+    setAnalyticsLoading(true);
+    try {
+      const params = new URLSearchParams({ action: "product-analytics", product_id: productId });
+      const res = await fetch(`${BASE}?${params}`, { headers: headers(clientCpf) });
+      const data = await res.json();
+      setAnalytics(data.analytics || null);
+    } catch {
+      setAnalytics(null);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }, [clientCpf]);
+
   return {
     products,
     product,
@@ -278,5 +296,8 @@ export function useMarketplaceCatalog(clientCpf: string) {
     commentsLoading,
     fetchComments,
     submitComment,
+    analytics,
+    analyticsLoading,
+    fetchAnalytics,
   };
 }

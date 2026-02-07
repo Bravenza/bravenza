@@ -14,6 +14,7 @@ import { Logo } from "@/components/Logo";
 import { MarketplaceCheckoutDialog } from "@/components/client/vault/marketplace/MarketplaceCheckoutDialog";
 import { ProductWatchlistButton } from "@/components/marketplace/ProductWatchlistButton";
 import { ProductComments } from "@/components/marketplace/ProductComments";
+import { ProductAnalyticsChart } from "@/components/marketplace/ProductAnalyticsChart";
 
 const conditionLabels: Record<string, string> = {
   novo: "Novo",
@@ -40,7 +41,7 @@ export default function ProductDetailPage() {
   const navigate = useNavigate();
   const { profile } = useClientSession();
   const cpf = profile?.cpf;
-  const { product, offers, sizes, isLoading, fetchProduct, fetchOffersBySize, watchlistStatus, checkWatchlist, toggleWatchlist, comments, commentsLoading, fetchComments, submitComment } = useMarketplaceCatalog(cpf || "visitor");
+  const { product, offers, sizes, isLoading, fetchProduct, fetchOffersBySize, watchlistStatus, checkWatchlist, toggleWatchlist, comments, commentsLoading, fetchComments, submitComment, analytics, analyticsLoading, fetchAnalytics } = useMarketplaceCatalog(cpf || "visitor");
   const { createOrder } = useMarketplace(cpf || null);
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -115,10 +116,13 @@ export default function ProductDetailPage() {
     }
   }, [product, selectedSize, fetchOffersBySize, checkWatchlist]);
 
-  // Fetch comments when product loads
+  // Fetch comments + analytics when product loads
   useEffect(() => {
-    if (product) fetchComments(product.id);
-  }, [product, fetchComments]);
+    if (product) {
+      fetchComments(product.id);
+      fetchAnalytics(product.id);
+    }
+  }, [product, fetchComments, fetchAnalytics]);
 
   // Sort offers by price
   const sortedOffers = useMemo(() => {
@@ -342,6 +346,15 @@ export default function ProductDetailPage() {
             <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
           </div>
         )}
+
+        {/* Market+ Analytics */}
+        <div className="mt-8 max-w-2xl">
+          <ProductAnalyticsChart
+            analytics={analytics}
+            isLoading={analyticsLoading}
+            productName={`${product.brand} ${product.model}`}
+          />
+        </div>
 
         {/* Comments / Q&A */}
         <div className="mt-8 max-w-2xl">
