@@ -108,6 +108,9 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
   "make-offer": "mk-hub", "listing-offers": "mk-hub", "my-offers": "mk-hub", "respond-offer": "mk-hub",
   "seller-onboarding": "mk-hub", "seller-onboarding-status": "mk-hub",
   "price-drop-suggestions": "mk-hub",
+  "seller-analytics": "mk-hub", "my-coupons": "mk-hub", "create-coupon": "mk-hub",
+  "update-coupon": "mk-hub", "delete-coupon": "mk-hub", "validate-coupon": "mk-hub",
+  "use-coupon": "mk-hub", "activity-feed": "mk-hub", "log-activity": "mk-hub",
 };
 
 async function marketplaceRequest(
