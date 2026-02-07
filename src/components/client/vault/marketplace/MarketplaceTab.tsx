@@ -166,6 +166,13 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
     });
   };
 
+  const handleToggleFavorite = async (listingId: string) => {
+    await toggleFavorite(listingId);
+    if (filters.favoritesOnly) {
+      handleSearch();
+    }
+  };
+
   const handleCreateListing = async (data: any) => {
     const result = await createListing(data);
     if (result) {
@@ -252,7 +259,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
                   <MarketplaceListingCard
                     listing={listing}
                     onSelect={handleSelect}
-                    onToggleFavorite={toggleFavorite}
+                    onToggleFavorite={handleToggleFavorite}
                   />
                 </motion.div>
               ))}
@@ -314,7 +321,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {myListings.map((listing) => (
                   <div key={listing.id} className="relative space-y-2">
-                    <MarketplaceListingCard listing={listing} onSelect={handleSelect} onToggleFavorite={toggleFavorite} />
+                    <MarketplaceListingCard listing={listing} onSelect={handleSelect} onToggleFavorite={handleToggleFavorite} />
                     <Badge
                       className={`absolute top-2 right-2 text-xs ${
                         listing.status === "active" ? "bg-success/20 text-success"
@@ -408,7 +415,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
         listing={selectedListing}
         open={detailOpen}
         onOpenChange={setDetailOpen}
-        onToggleFavorite={toggleFavorite}
+        onToggleFavorite={handleToggleFavorite}
         onBuy={handleBuy}
         onMakeOffer={handleMakeOffer}
         onViewSellerProfile={handleViewSellerProfile}
@@ -428,7 +435,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
         open={sellerProfileOpen}
         onOpenChange={setSellerProfileOpen}
         onSelectListing={handleSelect}
-        onToggleFavorite={toggleFavorite}
+        onToggleFavorite={handleToggleFavorite}
         clientCpf={clientCpf}
       />
     </div>
