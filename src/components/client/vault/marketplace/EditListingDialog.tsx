@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Pencil, X, Upload, Pause, Play, Trash2 } from "lucide-react";
+import { Pencil, X, Upload, Pause, Play, Trash2, ShieldCheck } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -172,7 +172,14 @@ export function EditListingDialog({ listing, onUpdate, onDelete, onRefresh }: Ed
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Preço (R$) *</Label>
-              <Input type="number" value={form.price} onChange={(e) => setForm((p) => ({ ...p, price: e.target.value }))} className="mt-1" />
+              <Input type="number" value={form.price} onChange={(e) => {
+                const val = e.target.value;
+                setForm((p) => ({
+                  ...p,
+                  price: val,
+                  shipping_mode: parseFloat(val || "0") >= 2000 ? "bravenza" : p.shipping_mode,
+                }));
+              }} className="mt-1" />
             </div>
             <div>
               <Label>Frete estimado (R$)</Label>
@@ -182,13 +189,20 @@ export function EditListingDialog({ listing, onUpdate, onDelete, onRefresh }: Ed
 
           <div>
             <Label>Envio</Label>
-            <Select value={form.shipping_mode} onValueChange={(v) => setForm((p) => ({ ...p, shipping_mode: v }))}>
-              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="direct">Envio direto</SelectItem>
-                <SelectItem value="bravenza">Via Bravenza</SelectItem>
-              </SelectContent>
-            </Select>
+            {parseFloat(form.price || "0") >= 2000 ? (
+              <div className="mt-1 p-2.5 bg-primary/10 border border-primary/30 rounded-lg text-xs text-primary flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>Via Bravenza obrigatório para itens ≥ R$ 2.000</span>
+              </div>
+            ) : (
+              <Select value={form.shipping_mode} onValueChange={(v) => setForm((p) => ({ ...p, shipping_mode: v }))}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="direct">Envio direto</SelectItem>
+                  <SelectItem value="bravenza">Via Bravenza</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {/* Photos with upload */}
