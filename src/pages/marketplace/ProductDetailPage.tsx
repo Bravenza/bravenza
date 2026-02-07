@@ -12,6 +12,8 @@ import { useMarketplace, type MarketplaceListing } from "@/hooks/useMarketplace"
 import { useClientSession } from "@/hooks/useClientSession";
 import { Logo } from "@/components/Logo";
 import { MarketplaceCheckoutDialog } from "@/components/client/vault/marketplace/MarketplaceCheckoutDialog";
+import { ProductWatchlistButton } from "@/components/marketplace/ProductWatchlistButton";
+import { ProductComments } from "@/components/marketplace/ProductComments";
 
 const conditionLabels: Record<string, string> = {
   novo: "Novo",
@@ -38,7 +40,7 @@ export default function ProductDetailPage() {
   const navigate = useNavigate();
   const { profile } = useClientSession();
   const cpf = profile?.cpf;
-  const { product, offers, sizes, isLoading, fetchProduct, fetchOffersBySize } = useMarketplaceCatalog(cpf || "visitor");
+  const { product, offers, sizes, isLoading, fetchProduct, fetchOffersBySize, watchlistStatus, checkWatchlist, toggleWatchlist, comments, commentsLoading, fetchComments, submitComment } = useMarketplaceCatalog(cpf || "visitor");
   const { createOrder } = useMarketplace(cpf || null);
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -109,8 +111,14 @@ export default function ProductDetailPage() {
     if (product && selectedSize) {
       setLoadingOffers(true);
       fetchOffersBySize(product.id, selectedSize).finally(() => setLoadingOffers(false));
+      checkWatchlist(product.id, selectedSize);
     }
-  }, [product, selectedSize, fetchOffersBySize]);
+  }, [product, selectedSize, fetchOffersBySize, checkWatchlist]);
+
+  // Fetch comments when product loads
+  useEffect(() => {
+    if (product) fetchComments(product.id);
+  }, [product, fetchComments]);
 
   // Sort offers by price
   const sortedOffers = useMemo(() => {
@@ -226,15 +234,27 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* Price indicator */}
-            {product.lowest_price && (
-              <div className="flex items-baseline gap-2">
-                <span className="text-sm text-muted-foreground">A partir de</span>
-                <span className="text-2xl font-bold text-foreground">
-                  R$ {product.lowest_price.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
-                </span>
-              </div>
-            )}
+            {/* Price + Watchlist */}
+            <div className="flex items-center justify-between">
+              {product.lowest_price && (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-sm text-muted-foreground">A partir de</span>
+                  <span className="text-2xl font-bold text-foreground">
+                    R$ {product.lowest_price.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
+                  </span>
+                </div>
+              )}
+              {selectedSize && cpf && cpf !== "visitor" && (
+                <ProductWatchlistButton
+                  isWatching={watchlistStatus.active}
+                  maxPrice={watchlistStatus.max_price}
+                  lowestPrice={product.lowest_price}
+                  onToggle={async (mp) => {
+                    await toggleWatchlist(product.id, selectedSize, mp);
+                  }}
+                />
+              )}
+            </div>
 
             {product.total_offers === 0 && (
               <div className="p-4 bg-muted/30 rounded-xl text-center">
@@ -322,6 +342,20 @@ export default function ProductDetailPage() {
             <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
           </div>
         )}
+
+        {/* Comments / Q&A */}
+        <div className="mt-8 max-w-2xl">
+          <ProductComments
+            productId={product.id}
+            comments={comments}
+            isLoading={commentsLoading}
+            onSubmit={async (content, parentId) => {
+              return submitComment(product.id, content, parentId);
+            }}
+            onRefresh={() => fetchComments(product.id)}
+            currentUserName={profile?.full_name}
+          />
+        </div>
       </main>
 
       <MarketplaceCheckoutDialog

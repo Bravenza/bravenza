@@ -646,6 +646,95 @@ Deno.serve(async (req) => {
       return j({ offer, listing: li });
     }
 
+    // ==================== WATCHLIST ====================
+
+    if (mt === "GET" && a === "watchlist-check") {
+      const pid = url.searchParams.get("product_id"), sz = url.searchParams.get("size") || "";
+      if (!pid) throw new Error("product_id obrigatório");
+      const { data } = await sb.from("marketplace_watchlist").select("id, max_price, is_active")
+        .eq("product_id", pid).eq("size", sz).eq("user_cpf", cpf).eq("is_active", true).maybeSingle();
+      return j({ active: !!data, max_price: data?.max_price || null });
+    }
+
+    if (mt === "POST" && a === "watchlist-toggle") {
+      const b = await req.json();
+      const { product_id, size, max_price } = b;
+      if (!product_id) throw new Error("product_id obrigatório");
+      const sz = size || "";
+      // Check existing
+      const { data: ex } = await sb.from("marketplace_watchlist").select("id, is_active")
+        .eq("product_id", product_id).eq("size", sz).eq("user_cpf", cpf).maybeSingle();
+      if (ex) {
+        if (ex.is_active) {
+          // Deactivate
+          await sb.from("marketplace_watchlist").update({ is_active: false }).eq("id", ex.id);
+          return j({ active: false, max_price: null });
+        } else {
+          // Reactivate
+          await sb.from("marketplace_watchlist").update({ is_active: true, max_price: max_price || null }).eq("id", ex.id);
+          return j({ active: true, max_price: max_price || null });
+        }
+      }
+      // Create new
+      await sb.from("marketplace_watchlist").insert({
+        product_id, size: sz, user_cpf: cpf, max_price: max_price || null,
+        is_active: true, notify_email: true, notify_push: true,
+      });
+      return j({ active: true, max_price: max_price || null });
+    }
+
+    // ==================== PRODUCT COMMENTS ====================
+
+    if (mt === "GET" && a === "product-comments") {
+      const pid = url.searchParams.get("product_id");
+      if (!pid) throw new Error("product_id obrigatório");
+      const { data, error } = await sb.from("marketplace_product_comments").select("*")
+        .eq("product_id", pid).eq("is_visible", true).order("created_at", { ascending: true });
+      if (error) throw error;
+      return j({ comments: data || [] });
+    }
+
+    if (mt === "POST" && a === "product-comment") {
+      const b = await req.json();
+      if (!b.product_id || !b.content) throw new Error("product_id e content obrigatórios");
+      // Get user name
+      const { data: member } = await sb.from("vault_members").select("client_name").eq("client_cpf", cpf).maybeSingle();
+      const userName = member?.client_name || "Usuário";
+      const { data: comment, error } = await sb.from("marketplace_product_comments").insert({
+        product_id: b.product_id,
+        user_cpf: cpf,
+        user_name: userName,
+        content: b.content,
+        parent_id: b.parent_id || null,
+        is_seller_reply: false,
+      }).select().single();
+      if (error) throw error;
+      return j({ comment });
+    }
+
+    // ==================== AUTO PAYOUT CHECK ====================
+
+    if (mt === "GET" && a === "check-auto-payout") {
+      // Find orders where protection has expired and payout not yet released
+      const { data: orders, error } = await sb.from("vault_marketplace_orders").select("id, order_code, seller_id, seller_payout, protection_ends_at")
+        .eq("status", "delivered").is("payout_released_at", null).is("dispute_status", null);
+      if (error) throw error;
+      const now = new Date();
+      const eligible = (orders || []).filter((o: any) => o.protection_ends_at && new Date(o.protection_ends_at) < now);
+      // Mark as payout_pending
+      for (const o of eligible) {
+        await sb.from("vault_marketplace_orders").update({
+          status: "payout_pending",
+        }).eq("id", o.id);
+        // Notify seller
+        const { data: sl } = await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf)").eq("id", o.seller_id).single();
+        if (sl?.member?.client_cpf) {
+          await nt(sb, "💰 Pagamento liberado!", `Pedido ${o.order_code} — R$ ${o.seller_payout.toFixed(2)} será transferido.`, sl.member.client_cpf, o.id, "marketplace_payout");
+        }
+      }
+      return j({ checked: (orders || []).length, eligible: eligible.length });
+    }
+
     return j({ error: "Ação não encontrada" }, 404);
   } catch (e: any) {
     console.error("vault-marketplace error:", e);
