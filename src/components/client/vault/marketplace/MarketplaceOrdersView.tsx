@@ -15,6 +15,7 @@ import {
 import type { MarketplaceOrder } from "@/hooks/useMarketplace";
 import { MarketplaceChatDialog } from "./MarketplaceChatDialog";
 import { DisputeDialog } from "./DisputeDialog";
+import { ContestationBanner } from "@/components/marketplace/ContestationBanner";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   pending_payment: { label: "Aguardando pagamento", color: "bg-warning/20 text-warning", icon: Clock },
@@ -24,6 +25,8 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
   completed: { label: "Concluído", color: "bg-success/20 text-success", icon: CheckCircle2 },
   cancelled: { label: "Cancelado", color: "bg-destructive/20 text-destructive", icon: XCircle },
   disputed: { label: "Em disputa", color: "bg-destructive/20 text-destructive", icon: AlertTriangle },
+  payout_pending: { label: "Pagamento pendente", color: "bg-primary/20 text-primary", icon: Clock },
+  payout_released: { label: "Pago ao vendedor", color: "bg-success/20 text-success", icon: CheckCircle2 },
 };
 
 interface MarketplaceOrdersViewProps {
@@ -129,10 +132,18 @@ export function MarketplaceOrdersView({
                   </p>
                 )}
 
-                {order.protection_ends_at && order.status === "delivered" && (
-                  <p className="text-xs text-warning mt-1">
-                    🛡️ Proteção até {new Date(order.protection_ends_at).toLocaleDateString("pt-BR")}
-                  </p>
+                {!isSale && (order.status === "delivered" || order.status === "completed" || order.dispute_status) && (
+                  <ContestationBanner
+                    deliveredAt={order.delivered_at}
+                    protectionEndsAt={order.protection_ends_at}
+                    status={order.status}
+                    disputeStatus={order.dispute_status}
+                    onOpenDispute={() => {
+                      // Trigger existing dispute dialog
+                      const disputeBtn = document.querySelector(`[data-dispute-order="${order.id}"]`) as HTMLButtonElement;
+                      disputeBtn?.click();
+                    }}
+                  />
                 )}
 
                 {/* Actions */}

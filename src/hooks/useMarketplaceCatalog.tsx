@@ -195,6 +195,69 @@ export function useMarketplaceCatalog(clientCpf: string) {
     }
   }, [clientCpf]);
 
+  // ===== WATCHLIST =====
+  const [watchlistStatus, setWatchlistStatus] = useState<{ active: boolean; max_price: number | null }>({ active: false, max_price: null });
+
+  const checkWatchlist = useCallback(async (productId: string, size: string) => {
+    try {
+      const params = new URLSearchParams({ action: "watchlist-check", product_id: productId, size });
+      const res = await fetch(`${BASE}?${params}`, { headers: headers(clientCpf) });
+      const data = await res.json();
+      setWatchlistStatus({ active: !!data.active, max_price: data.max_price || null });
+    } catch {
+      setWatchlistStatus({ active: false, max_price: null });
+    }
+  }, [clientCpf]);
+
+  const toggleWatchlist = useCallback(async (productId: string, size: string, maxPrice?: number | null) => {
+    try {
+      const res = await fetch(`${BASE}?action=watchlist-toggle`, {
+        method: "POST",
+        headers: headers(clientCpf),
+        body: JSON.stringify({ product_id: productId, size, max_price: maxPrice }),
+      });
+      const data = await res.json();
+      setWatchlistStatus({ active: data.active, max_price: data.max_price || null });
+      toast({ title: data.active ? "🔔 Alerta ativado!" : "Alerta removido" });
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
+  }, [clientCpf, toast]);
+
+  // ===== COMMENTS =====
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+
+  const fetchComments = useCallback(async (productId: string) => {
+    setCommentsLoading(true);
+    try {
+      const params = new URLSearchParams({ action: "product-comments", product_id: productId });
+      const res = await fetch(`${BASE}?${params}`, { headers: headers(clientCpf) });
+      const data = await res.json();
+      setComments(data.comments || []);
+    } catch {
+      setComments([]);
+    } finally {
+      setCommentsLoading(false);
+    }
+  }, [clientCpf]);
+
+  const submitComment = useCallback(async (productId: string, content: string, parentId?: string) => {
+    try {
+      const res = await fetch(`${BASE}?action=product-comment`, {
+        method: "POST",
+        headers: headers(clientCpf),
+        body: JSON.stringify({ product_id: productId, content, parent_id: parentId }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      return true;
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      return false;
+    }
+  }, [clientCpf, toast]);
+
   return {
     products,
     product,
@@ -208,5 +271,12 @@ export function useMarketplaceCatalog(clientCpf: string) {
     createProduct,
     createOffer,
     searchProducts,
+    watchlistStatus,
+    checkWatchlist,
+    toggleWatchlist,
+    comments,
+    commentsLoading,
+    fetchComments,
+    submitComment,
   };
 }
