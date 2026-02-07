@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, SlidersHorizontal, X, ChevronDown } from "lucide-react";
+import { Search, SlidersHorizontal, X, ChevronDown, Heart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ export interface MarketplaceFilterValues {
   priceMin?: number;
   priceMax?: number;
   sort: string;
+  favoritesOnly?: boolean;
 }
 
 const conditionOptions = [
@@ -56,6 +57,7 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
     filters.brand,
     filters.priceMin,
     filters.priceMax,
+    filters.favoritesOnly,
   ].filter(Boolean).length;
 
   const clearFilters = () => {
@@ -245,6 +247,25 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
             <SelectItem value="popular">Populares</SelectItem>
           </SelectContent>
         </Select>
+
+        {/* Favorites toggle */}
+        <Button
+          variant="outline"
+          size="icon"
+          className={cn(
+            "h-10 w-10 flex-shrink-0 border-border/50",
+            filters.favoritesOnly
+              ? "bg-red-500/20 border-red-500/40 text-red-400 hover:bg-red-500/30"
+              : "bg-[hsl(0,0%,16%)] hover:border-primary/40"
+          )}
+          onClick={() => {
+            onFiltersChange({ ...filters, favoritesOnly: !filters.favoritesOnly });
+            setTimeout(onSearch, 0);
+          }}
+          title="Meus favoritos"
+        >
+          <Heart className={cn("h-4 w-4", filters.favoritesOnly && "fill-red-400")} />
+        </Button>
       </div>
 
       {/* Active filter chips */}
@@ -294,6 +315,17 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
             {filters.priceMax && (
               <Badge variant="secondary" className="text-xs">
                 Max R$ {filters.priceMax}
+              </Badge>
+            )}
+            {filters.favoritesOnly && (
+              <Badge
+                variant="secondary"
+                className="gap-1 text-xs cursor-pointer hover:bg-destructive/20"
+                onClick={() => { onFiltersChange({ ...filters, favoritesOnly: undefined }); onSearch(); }}
+              >
+                <Heart className="h-3 w-3 fill-red-400 text-red-400" />
+                Favoritos
+                <X className="h-3 w-3" />
               </Badge>
             )}
             <button

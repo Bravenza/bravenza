@@ -162,6 +162,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
       priceMin: filters.priceMin,
       priceMax: filters.priceMax,
       sort: filters.sort,
+      favoritesOnly: filters.favoritesOnly,
     });
   };
 

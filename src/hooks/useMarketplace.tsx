@@ -142,7 +142,7 @@ export function useMarketplace(cpf: string | null) {
   const [mySales, setMySales] = useState<MarketplaceOrder[]>([]);
 
   const fetchListings = useCallback(
-    async (filters?: { search?: string; brand?: string; size?: string; condition?: string; priceMin?: number; priceMax?: number; sort?: string; page?: number }) => {
+    async (filters?: { search?: string; brand?: string; size?: string; condition?: string; priceMin?: number; priceMax?: number; sort?: string; page?: number; favoritesOnly?: boolean }) => {
       if (!cpf) return;
       setIsLoading(true);
       try {
@@ -155,6 +155,7 @@ export function useMarketplace(cpf: string | null) {
         if (filters?.priceMax) params.price_max = String(filters.priceMax);
         if (filters?.sort) params.sort = filters.sort;
         if (filters?.page) params.page = String(filters.page);
+        if (filters?.favoritesOnly) params.favorites_only = "true";
 
         const data = await marketplaceRequest(cpf, "listings", "GET", undefined, params);
         setListings(data.listings || []);
