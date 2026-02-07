@@ -959,6 +959,65 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ==================== SELLER ONBOARDING ====================
+
+    if (mt === "GET" && a === "seller-onboarding-status") {
+      const mb = await gm(sb, cpf);
+      if (!mb) return j({ onboarded: false, seller: null });
+      const sl = await gs(sb, mb.id);
+      if (!sl) return j({ onboarded: false, seller: null });
+      return j({
+        onboarded: !!sl.onboarding_completed_at,
+        seller: {
+          id: sl.id,
+          full_name: sl.full_name,
+          cpf_cnpj: sl.cpf_cnpj ? `***${sl.cpf_cnpj.slice(-4)}` : null,
+          phone: sl.phone ? `***${sl.phone.slice(-4)}` : null,
+          pix_key_type: sl.pix_key_type,
+          pix_key: sl.pix_key ? `${sl.pix_key.slice(0, 3)}***` : null,
+          bank_name: sl.bank_name,
+          kyc_status: sl.kyc_status,
+          terms_accepted_at: sl.terms_accepted_at,
+          onboarding_completed_at: sl.onboarding_completed_at,
+        },
+      });
+    }
+
+    if (mt === "POST" && a === "seller-onboarding") {
+      const b = await req.json();
+      const mb = await gm(sb, cpf);
+      if (!mb) throw new Error("Membro não encontrado");
+
+      // Validate required fields
+      if (!b.full_name || !b.cpf_cnpj || !b.phone || !b.seller_cep || !b.pix_key_type || !b.pix_key || !b.terms_accepted) {
+        throw new Error("Todos os campos obrigatórios devem ser preenchidos");
+      }
+
+      let sl = await gs(sb, mb.id);
+      const onboardingData = {
+        full_name: b.full_name,
+        cpf_cnpj: b.cpf_cnpj,
+        phone: b.phone,
+        seller_cep: b.seller_cep,
+        pix_key_type: b.pix_key_type,
+        pix_key: b.pix_key,
+        bank_name: b.bank_name || null,
+        terms_accepted_at: new Date().toISOString(),
+        kyc_status: "approved", // Auto-approve for now; can add manual review later
+        onboarding_completed_at: new Date().toISOString(),
+      };
+
+      if (sl) {
+        await sb.from("vault_seller_profiles").update(onboardingData).eq("id", sl.id);
+      } else {
+        const { error } = await sb.from("vault_seller_profiles").insert({ member_id: mb.id, ...onboardingData });
+        if (error) throw error;
+      }
+
+      console.log("Seller onboarding completed for CPF:", cpf);
+      return j({ success: true });
+    }
+
     if (mt === "GET" && a === "seller-tier-info") {
       const sid = url.searchParams.get("seller_id");
       if (!sid) throw new Error("seller_id obrigatório");

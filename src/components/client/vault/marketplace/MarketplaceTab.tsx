@@ -4,6 +4,7 @@ import { Store, Package, TrendingDown, Percent, ShoppingBag } from "lucide-react
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useMarketplace, type MarketplaceListing } from "@/hooks/useMarketplace";
 import { useMarketplaceCatalog } from "@/hooks/useMarketplaceCatalog";
 import { MarketplaceListingCard } from "./MarketplaceListingCard";
@@ -15,6 +16,7 @@ import { MarketplaceOrdersView } from "./MarketplaceOrdersView";
 import { MarketplaceFilters, type MarketplaceFilterValues } from "./MarketplaceFilters";
 import { SellerProfileSheet } from "./SellerProfileSheet";
 import { OffersListDialog } from "./OffersListDialog";
+import { SellerOnboardingDialog } from "./SellerOnboardingDialog";
 import { supabase } from "@/integrations/supabase/client";
 
 interface MarketplaceTabProps {
@@ -63,6 +65,8 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
     makeOffer,
     fetchListingOffers,
     respondOffer,
+    checkOnboardingStatus,
+    completeOnboarding,
   } = useMarketplace(clientCpf);
 
   const { searchProducts, createProduct, createOffer } = useMarketplaceCatalog(clientCpf);
@@ -77,9 +81,14 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
   const [sellerProfileOpen, setSellerProfileOpen] = useState(false);
   const [sellerProfileId, setSellerProfileId] = useState<string | null>(null);
   const [listingOffers, setListingOffers] = useState<Record<string, any[]>>({});
+  const [sellerOnboarded, setSellerOnboarded] = useState<boolean | null>(null);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
 
   useEffect(() => {
     handleSearch();
+    if (isVaultMember) {
+      checkOnboardingStatus().then((res) => setSellerOnboarded(res.onboarded));
+    }
   }, []);
 
   useEffect(() => {
@@ -198,8 +207,13 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
             Compre e venda tênis entre colecionadores
           </p>
         </div>
-        {isVaultMember && (
+        {isVaultMember && sellerOnboarded === true && (
           <CreateListingDialog onSubmit={handleCreateOffer} searchProducts={searchProducts} createProduct={createProduct} vaultItems={vaultItems} />
+        )}
+        {isVaultMember && sellerOnboarded === false && (
+          <Button className="btn-gold" onClick={() => setOnboardingOpen(true)}>
+            Começar a vender
+          </Button>
         )}
       </div>
 
@@ -440,6 +454,16 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
         onSelectListing={handleSelect}
         onToggleFavorite={handleToggleFavorite}
         clientCpf={clientCpf}
+      />
+
+      <SellerOnboardingDialog
+        open={onboardingOpen}
+        onOpenChange={setOnboardingOpen}
+        onComplete={async (data) => {
+          const success = await completeOnboarding(data);
+          if (success) setSellerOnboarded(true);
+          return success;
+        }}
       />
     </div>
   );

@@ -106,6 +106,7 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
   "rate-seller": "mk-hub", "admin-orders": "mk-hub", "open-dispute": "mk-hub",
   "chat-messages": "mk-hub", "send-message": "mk-hub",
   "make-offer": "mk-hub", "listing-offers": "mk-hub", "my-offers": "mk-hub", "respond-offer": "mk-hub",
+  "seller-onboarding": "mk-hub", "seller-onboarding-status": "mk-hub",
 };
 
 async function marketplaceRequest(
@@ -419,6 +420,32 @@ export function useMarketplace(cpf: string | null) {
     [cpf, toast]
   );
 
+  // ===== SELLER ONBOARDING =====
+
+  const checkOnboardingStatus = useCallback(async () => {
+    if (!cpf) return { onboarded: false, seller: null };
+    try {
+      return await marketplaceRequest(cpf, "seller-onboarding-status");
+    } catch {
+      return { onboarded: false, seller: null };
+    }
+  }, [cpf]);
+
+  const completeOnboarding = useCallback(
+    async (data: any) => {
+      if (!cpf) return false;
+      try {
+        await marketplaceRequest(cpf, "seller-onboarding", "POST", data);
+        toast({ title: "Cadastro concluído!", description: "Agora você pode criar anúncios no marketplace." });
+        return true;
+      } catch (err: any) {
+        toast({ title: "Erro no cadastro", description: err.message, variant: "destructive" });
+        return false;
+      }
+    },
+    [cpf, toast]
+  );
+
   return {
     listings,
     myListings,
@@ -444,5 +471,7 @@ export function useMarketplace(cpf: string | null) {
     makeOffer,
     fetchListingOffers,
     respondOffer,
+    checkOnboardingStatus,
+    completeOnboarding,
   };
 }
