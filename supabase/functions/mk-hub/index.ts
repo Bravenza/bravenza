@@ -735,6 +735,77 @@ Deno.serve(async (req) => {
       return j({ checked: (orders || []).length, eligible: eligible.length });
     }
 
+    // ==================== PRODUCT ANALYTICS ====================
+
+    if (mt === "GET" && a === "product-analytics") {
+      const pid = url.searchParams.get("product_id");
+      if (!pid) throw new Error("product_id obrigatório");
+
+      // Get all offers (active + sold) for price history
+      const { data: allOffers } = await sb.from("marketplace_offers")
+        .select("price, created_at, status, sold_at")
+        .eq("product_id", pid)
+        .order("created_at", { ascending: true });
+
+      // Build daily price points (last 90 days)
+      const now = new Date();
+      const cutoff = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      const dailyMap: Record<string, { prices: number[] }> = {};
+
+      for (const o of (allOffers || [])) {
+        const d = new Date(o.created_at);
+        if (d < cutoff) continue;
+        const key = d.toISOString().slice(0, 10);
+        if (!dailyMap[key]) dailyMap[key] = { prices: [] };
+        dailyMap[key].prices.push(o.price);
+      }
+
+      const priceHistory = Object.entries(dailyMap)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, { prices }]) => ({
+          date,
+          min_price: Math.min(...prices),
+          avg_price: Math.round(prices.reduce((s, p) => s + p, 0) / prices.length),
+          max_price: Math.max(...prices),
+          offers_count: prices.length,
+        }));
+
+      // Sales stats
+      const soldOffers = (allOffers || []).filter((o: any) => o.status === "sold" || o.sold_at);
+      const totalSold = soldOffers.length;
+      const avgSalePrice = totalSold > 0
+        ? Math.round(soldOffers.reduce((s: number, o: any) => s + o.price, 0) / totalSold)
+        : null;
+
+      // Price trend (compare first half vs second half of recent offers)
+      let priceTrend: "up" | "down" | "stable" = "stable";
+      let trendPercent = 0;
+      const recentOffers = (allOffers || []).filter((o: any) => new Date(o.created_at) >= cutoff);
+      if (recentOffers.length >= 4) {
+        const mid = Math.floor(recentOffers.length / 2);
+        const firstHalf = recentOffers.slice(0, mid);
+        const secondHalf = recentOffers.slice(mid);
+        const avgFirst = firstHalf.reduce((s: number, o: any) => s + o.price, 0) / firstHalf.length;
+        const avgSecond = secondHalf.reduce((s: number, o: any) => s + o.price, 0) / secondHalf.length;
+        if (avgFirst > 0) {
+          trendPercent = Math.abs(((avgSecond - avgFirst) / avgFirst) * 100);
+          if (trendPercent > 2) {
+            priceTrend = avgSecond > avgFirst ? "up" : "down";
+          }
+        }
+      }
+
+      return j({
+        analytics: {
+          price_history: priceHistory,
+          total_sold: totalSold,
+          avg_sale_price: avgSalePrice,
+          price_trend: priceTrend,
+          trend_percent: trendPercent,
+        },
+      });
+    }
+
     return j({ error: "Ação não encontrada" }, 404);
   } catch (e: any) {
     console.error("vault-marketplace error:", e);
