@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Package, Truck, CheckCircle2, Clock, AlertTriangle, Star, XCircle, MessageCircle } from "lucide-react";
+import { Package, Truck, CheckCircle2, Clock, AlertTriangle, Star, XCircle, MessageCircle, ShieldCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -83,9 +83,18 @@ export function MarketplaceOrdersView({
     }
   };
 
-  const handleShip = async () => {
+  const handleShip = async (order?: MarketplaceOrder) => {
     if (!shipDialog) return;
-    const success = await onUpdateOrderStatus(shipDialog.orderId, "shipped", { tracking_code: trackingCode });
+    // Find the order to determine shipping mode
+    const targetOrder = order || sales.find(s => s.id === shipDialog.orderId);
+    const isBravenza = targetOrder?.shipping_mode === "bravenza";
+    
+    const status = isBravenza ? "in_transit_to_hub" : "shipped";
+    const extra: Record<string, any> = isBravenza 
+      ? { hub_tracking_code: trackingCode }
+      : { tracking_code: trackingCode };
+    
+    const success = await onUpdateOrderStatus(shipDialog.orderId, status, extra);
     if (success) {
       setShipDialog(null);
       setTrackingCode("");
@@ -299,16 +308,33 @@ export function MarketplaceOrdersView({
       <Dialog open={!!shipDialog} onOpenChange={(o) => !o && setShipDialog(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Informar envio</DialogTitle>
+            <DialogTitle>
+              {(() => {
+                const o = sales.find(s => s.id === shipDialog?.orderId);
+                return o?.shipping_mode === "bravenza" ? "Enviar ao Hub Bravenza" : "Informar envio";
+              })()}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {(() => {
+              const o = sales.find(s => s.id === shipDialog?.orderId);
+              return o?.shipping_mode === "bravenza" ? (
+                <div className="p-2.5 bg-primary/5 border border-primary/20 rounded-lg text-xs text-muted-foreground">
+                  <ShieldCheck className="h-3 w-3 inline mr-1 text-primary" />
+                  Envie o produto para o Hub Bravenza em Porto Alegre/RS. Após o recebimento, faremos a inspeção de autenticidade.
+                </div>
+              ) : null;
+            })()}
             <div>
               <label className="text-sm font-medium">Código de rastreio</label>
               <Input value={trackingCode} onChange={(e) => setTrackingCode(e.target.value)} placeholder="Ex: AA123456789BR" className="mt-1" />
             </div>
-            <Button onClick={handleShip} className="w-full btn-gold gap-2">
+            <Button onClick={() => handleShip()} className="w-full btn-gold gap-2">
               <Truck className="h-4 w-4" />
-              Confirmar envio
+              {(() => {
+                const o = sales.find(s => s.id === shipDialog?.orderId);
+                return o?.shipping_mode === "bravenza" ? "Confirmar envio ao Hub" : "Confirmar envio";
+              })()}
             </Button>
           </div>
         </DialogContent>

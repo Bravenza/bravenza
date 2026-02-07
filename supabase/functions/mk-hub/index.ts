@@ -863,6 +863,16 @@ Deno.serve(async (req) => {
     if (mt === "POST" && a === "hub-inspect") {
       const b = await req.json();
       if (!b.order_id || !b.result) throw new Error("order_id e result obrigatórios");
+
+      // Generate laudo ID and QR for approved inspections
+      let laudoId: string | null = null;
+      let laudoQrUrl: string | null = null;
+      if (b.result === "approved") {
+        laudoId = `BRV-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+        const baseUrl = Deno.env.get("SITE_URL") || "https://bravenza.lovable.app";
+        laudoQrUrl = `${baseUrl}/autenticidade?laudo=${laudoId}`;
+      }
+
       // Create inspection record
       const { data: insp, error: ie } = await sb.from("marketplace_inspections").insert({
         order_id: b.order_id,
@@ -873,8 +883,11 @@ Deno.serve(async (req) => {
         rejection_reason: b.rejection_reason || null,
         inspection_photos: b.inspection_photos || null,
         inspected_at: new Date().toISOString(),
+        laudo_id: laudoId,
+        laudo_qr_url: laudoQrUrl,
       }).select().single();
       if (ie) throw ie;
+
       // Update order
       const newStatus = b.result === "approved" ? "inspection_approved" : "inspection_rejected";
       await sb.from("vault_marketplace_orders").update({
@@ -882,21 +895,50 @@ Deno.serve(async (req) => {
         inspection_id: insp.id,
         inspection_result: b.result,
       }).eq("id", b.order_id);
+
       // Notify buyer
       const { data: od } = await sb.from("vault_marketplace_orders").select("buyer_cpf, order_code, seller_id").eq("id", b.order_id).single();
       if (od?.buyer_cpf) {
         if (b.result === "approved") {
-          await nt(sb, "✅ Inspeção aprovada!", `Pedido ${od.order_code} foi autenticado com sucesso!`, od.buyer_cpf, b.order_id, "marketplace_inspection");
+          await nt(sb, "✅ Inspeção aprovada!", `Pedido ${od.order_code} autenticado! Laudo: ${laudoId}`, od.buyer_cpf, b.order_id, "marketplace_inspection");
         } else {
           await nt(sb, "❌ Inspeção reprovada", `Pedido ${od.order_code} não passou na inspeção. Motivo: ${b.rejection_reason || "Veja detalhes"}`, od.buyer_cpf, b.order_id, "marketplace_inspection");
-          // Also notify seller
           const { data: sl } = await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf)").eq("id", od.seller_id).single();
           if (sl?.member?.client_cpf) {
             await nt(sb, "❌ Item reprovado na inspeção", `Pedido ${od.order_code}: ${b.rejection_reason || "Não passou na autenticação"}.`, sl.member.client_cpf, b.order_id, "marketplace_inspection");
           }
         }
       }
-      return j({ success: true, inspection: insp });
+      return j({ success: true, inspection: insp, laudo_id: laudoId, laudo_qr_url: laudoQrUrl });
+    }
+
+    // ==================== LAUDO LOOKUP ====================
+    if (mt === "GET" && a === "laudo-lookup") {
+      const laudoId = url.searchParams.get("laudo_id");
+      if (!laudoId) throw new Error("laudo_id obrigatório");
+      const { data: insp } = await sb.from("marketplace_inspections").select(
+        `*, order:vault_marketplace_orders!inner(order_code, buyer_name, sale_price, listing:vault_marketplace_listings!inner(title, brand, model, size, photos, condition))`
+      ).eq("laudo_id", laudoId).eq("result", "approved").maybeSingle();
+      if (!insp) return j({ found: false });
+      return j({
+        found: true,
+        laudo: {
+          laudo_id: insp.laudo_id,
+          inspected_at: insp.inspected_at,
+          checklist: insp.checklist,
+          notes: insp.notes,
+          inspection_photos: insp.inspection_photos,
+          order_code: insp.order?.order_code,
+          product: {
+            title: insp.order?.listing?.title,
+            brand: insp.order?.listing?.brand,
+            model: insp.order?.listing?.model,
+            size: insp.order?.listing?.size,
+            condition: insp.order?.listing?.condition,
+            photos: insp.order?.listing?.photos,
+          },
+        },
+      });
     }
 
     // ==================== SELLER TIER CALCULATION ====================
