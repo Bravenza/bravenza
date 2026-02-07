@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { Heart, ShieldCheck, Eye, Star, Truck, Package, ShoppingCart, User } from "lucide-react";
+import { Heart, ShieldCheck, Eye, Star, Truck, Package, ShoppingCart, User, ChevronLeft, ChevronRight, Shield, Clock, Verified } from "lucide-react";
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,12 +10,20 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { MarketplaceListing } from "@/hooks/useMarketplace";
 import { OfferDialog } from "./OfferDialog";
+import { motion, AnimatePresence } from "framer-motion";
 
 const conditionLabels: Record<string, string> = {
   novo: "Novo",
   usado_excelente: "Usado - Excelente",
   usado_bom: "Usado - Bom",
   usado_regular: "Usado - Regular",
+};
+
+const conditionDescriptions: Record<string, string> = {
+  novo: "Item nunca utilizado, com etiquetas e embalagem original.",
+  usado_excelente: "Utilizado poucas vezes, sem marcas visíveis de uso.",
+  usado_bom: "Utilizado com marcas leves de uso, bom estado geral.",
+  usado_regular: "Marcas visíveis de uso, ainda funcional.",
 };
 
 interface ListingDetailSheetProps {
@@ -47,206 +53,287 @@ export function ListingDetailSheet({
 
   const photos = listing.photos?.length ? listing.photos : [];
   const totalPrice = listing.price + (listing.shipping_cost_estimate || 0);
+  const hasDiscount = listing.original_purchase_price && listing.original_purchase_price > listing.price;
+  const discountPercent = hasDiscount
+    ? Math.round(((listing.original_purchase_price! - listing.price) / listing.original_purchase_price!) * 100)
+    : 0;
+
+  const nextPhoto = () => setActivePhoto((p) => (p + 1) % photos.length);
+  const prevPhoto = () => setActivePhoto((p) => (p - 1 + photos.length) % photos.length);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto p-0">
-        {/* Photo Gallery */}
-        <div className="relative aspect-square bg-muted/30">
-          {photos.length > 0 ? (
-            <>
-              <img
+      <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto p-0 border-l border-border/30">
+        {/* Photo Gallery - Enhanced */}
+        <div className="relative aspect-square bg-[hsl(0,0%,16%)]">
+          <AnimatePresence mode="wait">
+            {photos.length > 0 ? (
+              <motion.img
+                key={activePhoto}
                 src={photos[activePhoto]}
                 alt={listing.title}
                 className="w-full h-full object-cover"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
               />
-              {photos.length > 1 && (
-                <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2">
-                  {photos.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setActivePhoto(i)}
-                      className={cn(
-                        "w-2 h-2 rounded-full transition",
-                        i === activePhoto ? "bg-primary" : "bg-foreground/40"
-                      )}
-                    />
-                  ))}
-                </div>
-              )}
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                <Package className="h-16 w-16 opacity-20" />
+              </div>
+            )}
+          </AnimatePresence>
+
+          {/* Photo navigation arrows */}
+          {photos.length > 1 && (
+            <>
+              <button
+                onClick={prevPhoto}
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center hover:bg-black/70 transition"
+              >
+                <ChevronLeft className="h-4 w-4 text-white" />
+              </button>
+              <button
+                onClick={nextPhoto}
+                className="absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center hover:bg-black/70 transition"
+              >
+                <ChevronRight className="h-4 w-4 text-white" />
+              </button>
             </>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-              <Package className="h-16 w-16 opacity-20" />
+          )}
+
+          {/* Photo thumbnails */}
+          {photos.length > 1 && (
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 px-4">
+              {photos.map((photo, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActivePhoto(i)}
+                  className={cn(
+                    "w-12 h-12 rounded-lg overflow-hidden border-2 transition-all",
+                    i === activePhoto ? "border-primary ring-1 ring-primary/30" : "border-transparent opacity-60 hover:opacity-100"
+                  )}
+                >
+                  <img src={photo} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
             </div>
           )}
 
-          {/* Top badges */}
+          {/* Certification badge */}
           <div className="absolute top-4 left-4 flex gap-2">
             {listing.is_vault_certified && (
-              <Badge className="bg-primary text-primary-foreground gap-1">
-                <ShieldCheck className="h-3 w-3" />
-                Vault ID
-              </Badge>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary/90 text-primary-foreground text-xs font-bold uppercase tracking-wide backdrop-blur-sm">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Vault Certified
+              </span>
             )}
           </div>
 
+          {/* Favorite */}
           {!isOwnListing && (
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-4 right-4 h-10 w-10 bg-background/60 backdrop-blur-sm"
+              className="absolute top-4 right-4 h-10 w-10 rounded-full bg-black/40 backdrop-blur-md hover:bg-black/60 border-0"
               onClick={() => onToggleFavorite(listing.id)}
             >
               <Heart
                 className={cn(
                   "h-5 w-5",
-                  listing.is_favorited ? "fill-red-500 text-red-500" : "text-foreground"
+                  listing.is_favorited ? "fill-red-500 text-red-500" : "text-white"
                 )}
               />
             </Button>
+          )}
+
+          {/* Photo counter */}
+          {photos.length > 1 && (
+            <span className="absolute top-4 right-16 px-2 py-1 rounded-md bg-black/50 backdrop-blur-sm text-white text-[11px] font-medium">
+              {activePhoto + 1}/{photos.length}
+            </span>
           )}
         </div>
 
         {/* Details */}
         <div className="p-6 space-y-5">
-          <SheetHeader className="text-left p-0 space-y-1">
-            <SheetTitle className="text-xl">{listing.title}</SheetTitle>
-            {listing.brand && (
-              <p className="text-sm text-muted-foreground">
-                {listing.brand}
-                {listing.model ? ` · ${listing.model}` : ""}
-                {listing.colorway ? ` · ${listing.colorway}` : ""}
-              </p>
-            )}
-          </SheetHeader>
+          {/* Brand breadcrumb */}
+          {listing.brand && (
+            <p className="text-xs text-primary uppercase tracking-widest font-semibold">
+              {listing.brand}
+              {listing.model ? ` — ${listing.model}` : ""}
+            </p>
+          )}
 
+          {/* Title */}
+          <h2 className="text-xl font-bold leading-tight text-foreground">
+            {listing.title}
+          </h2>
+          {listing.colorway && (
+            <p className="text-sm text-muted-foreground -mt-3">{listing.colorway}</p>
+          )}
+
+          {/* Price block */}
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-3xl font-bold">
-                R$ {listing.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
-              {listing.original_purchase_price && listing.original_purchase_price > listing.price && (
-                <p className="text-sm text-muted-foreground line-through">
-                  R$ {listing.original_purchase_price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              <div className="flex items-baseline gap-2">
+                <p className="text-3xl font-bold text-foreground">
+                  R$ {listing.price.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
+                </p>
+                {hasDiscount && (
+                  <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-xs">
+                    -{discountPercent}%
+                  </Badge>
+                )}
+              </div>
+              {hasDiscount && (
+                <p className="text-sm text-muted-foreground line-through mt-0.5">
+                  R$ {listing.original_purchase_price!.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </p>
               )}
               {listing.shipping_cost_estimate > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  + R$ {listing.shipping_cost_estimate.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} de frete
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <Truck className="h-3 w-3" />
+                  + R$ {listing.shipping_cost_estimate.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} frete
                 </p>
               )}
             </div>
             {listing.size && (
-              <Badge variant="outline" className="text-sm px-3 py-1">
-                Tam. {listing.size}
-              </Badge>
+              <div className="text-right">
+                <p className="text-[10px] text-muted-foreground uppercase">Tamanho</p>
+                <p className="text-lg font-bold text-foreground">{listing.size}</p>
+              </div>
             )}
           </div>
 
+          {/* Stats */}
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
               <Eye className="h-4 w-4" />
-              {listing.views_count} views
+              {listing.views_count}
             </span>
             <span className="flex items-center gap-1">
               <Heart className="h-4 w-4" />
-              {listing.favorites_count} favs
+              {listing.favorites_count}
             </span>
           </div>
 
-          <Separator />
+          <Separator className="bg-border/30" />
 
-          {/* Condition & Shipping */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-3 bg-muted/30 rounded-lg">
-              <p className="text-xs text-muted-foreground">Condição</p>
-              <p className="text-sm font-medium mt-1">
+          {/* Condition & Shipping - Enhanced info cards */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 bg-[hsl(0,0%,16%)] rounded-xl border border-border/20">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Condição</p>
+              <p className="text-sm font-semibold mt-1 text-foreground">
                 {conditionLabels[listing.condition] || listing.condition}
               </p>
+              <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                {conditionDescriptions[listing.condition] || ""}
+              </p>
             </div>
-            <div className="p-3 bg-muted/30 rounded-lg">
-              <p className="text-xs text-muted-foreground">Envio</p>
-              <p className="text-sm font-medium mt-1 flex items-center gap-1">
+            <div className="p-3 bg-[hsl(0,0%,16%)] rounded-xl border border-border/20">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Envio</p>
+              <p className="text-sm font-semibold mt-1 flex items-center gap-1 text-foreground">
                 {listing.shipping_mode === "bravenza" ? (
                   <>
-                    <ShieldCheck className="h-3 w-3 text-primary" />
+                    <ShieldCheck className="h-3.5 w-3.5 text-primary" />
                     Via Bravenza
                   </>
                 ) : (
                   <>
-                    <Truck className="h-3 w-3" />
+                    <Truck className="h-3.5 w-3.5" />
                     Direto
                   </>
                 )}
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {listing.shipping_mode === "bravenza"
+                  ? "Autenticação garantida"
+                  : "Envio entre membros"}
               </p>
             </div>
           </div>
 
           {listing.description && (
             <>
-              <Separator />
+              <Separator className="bg-border/30" />
               <div>
-                <p className="text-sm font-medium mb-2">Descrição</p>
-                <p className="text-sm text-muted-foreground whitespace-pre-line">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Descrição</p>
+                <p className="text-sm text-foreground/80 whitespace-pre-line leading-relaxed">
                   {listing.description}
                 </p>
               </div>
             </>
           )}
 
-          {/* Seller Info */}
+          {/* Seller - Enhanced profile card */}
           {listing.seller && (
             <>
-              <Separator />
+              <Separator className="bg-border/30" />
               <div
-                className={cn("flex items-center justify-between", !isOwnListing && "cursor-pointer hover:bg-muted/30 -mx-2 px-2 py-1 rounded-lg transition-colors")}
+                className={cn(
+                  "flex items-center gap-3 p-3 rounded-xl transition-all border border-border/20",
+                  !isOwnListing && "cursor-pointer hover:bg-[hsl(0,0%,18%)] hover:border-primary/20"
+                )}
                 onClick={() => !isOwnListing && listing.seller && onViewSellerProfile?.(listing.seller.id)}
               >
-                <div>
-                  <p className="text-sm font-medium flex items-center gap-1">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <User className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground flex items-center gap-1">
                     {listing.seller.member.client_name}
-                    {!isOwnListing && <User className="h-3 w-3 text-primary" />}
+                    <Verified className="h-3.5 w-3.5 text-primary" />
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    {listing.seller.total_sales_count} venda{listing.seller.total_sales_count !== 1 ? "s" : ""} no marketplace
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{listing.seller.total_sales_count} venda{listing.seller.total_sales_count !== 1 ? "s" : ""}</span>
                     {listing.seller.average_rating && (
-                      <span className="inline-flex items-center gap-0.5 ml-2">
+                      <span className="inline-flex items-center gap-0.5">
                         <Star className="h-3 w-3 text-primary fill-primary" />
                         {listing.seller.average_rating.toFixed(1)}
                       </span>
                     )}
-                  </p>
+                  </div>
                 </div>
-                <Badge variant="outline" className="text-xs capitalize">
+                <Badge variant="outline" className="text-[10px] capitalize border-primary/20 text-primary">
                   {listing.seller.member.tier === "elite"
-                    ? "Vault Black"
+                    ? "Black"
                     : listing.seller.member.tier === "collector"
-                    ? "Vault Privilege"
-                    : "Vault Access"}
+                    ? "Privilege"
+                    : "Access"}
                 </Badge>
               </div>
             </>
           )}
 
-          {/* Protection info */}
+          {/* Trust signals - Droper-inspired */}
           {!isOwnListing && (
-            <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg text-xs text-muted-foreground">
-              <p>🔒 <strong>Compra protegida:</strong> 7 dias úteis após entrega para reportar problemas.</p>
-              <p>📦 O vendedor só recebe após o período de proteção.</p>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="flex flex-col items-center gap-1.5 p-3 bg-[hsl(0,0%,16%)] rounded-xl border border-border/20">
+                <Shield className="h-5 w-5 text-primary" />
+                <span className="text-[10px] text-muted-foreground text-center leading-tight">Compra<br/>Protegida</span>
+              </div>
+              <div className="flex flex-col items-center gap-1.5 p-3 bg-[hsl(0,0%,16%)] rounded-xl border border-border/20">
+                <ShieldCheck className="h-5 w-5 text-emerald-400" />
+                <span className="text-[10px] text-muted-foreground text-center leading-tight">100%<br/>Original</span>
+              </div>
+              <div className="flex flex-col items-center gap-1.5 p-3 bg-[hsl(0,0%,16%)] rounded-xl border border-border/20">
+                <Clock className="h-5 w-5 text-sky-400" />
+                <span className="text-[10px] text-muted-foreground text-center leading-tight">7 dias<br/>garantia</span>
+              </div>
             </div>
           )}
 
-          {/* Action */}
+          {/* Action buttons */}
           {!isOwnListing && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-2 sticky bottom-0 bg-card pb-safe">
               <Button
-                className="flex-1 btn-gold gap-2"
-                size="lg"
+                className="flex-1 btn-gold gap-2 h-12 text-sm font-bold"
                 onClick={() => onBuy?.(listing)}
               >
                 <ShoppingCart className="h-4 w-4" />
-                Comprar R$ {totalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                Comprar — R$ {totalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
               </Button>
               {onMakeOffer && (
                 <OfferDialog
