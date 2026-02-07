@@ -806,6 +806,177 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ==================== HUB PRO ====================
+
+    if (mt === "GET" && a === "hub-orders") {
+      // Get all PRO (bravenza) orders
+      const { data, error } = await sb.from("vault_marketplace_orders").select(
+        `*, listing:vault_marketplace_listings!inner(title, brand, model, size, photos, condition)`
+      ).eq("shipping_mode", "bravenza").order("created_at", { ascending: false });
+      if (error) throw error;
+      return j({ orders: data || [] });
+    }
+
+    if (mt === "PUT" && a === "hub-update-status") {
+      const b = await req.json();
+      const u: Record<string, any> = { status: b.status };
+      if (b.status === "hub_received") {
+        u.hub_received_at = new Date().toISOString();
+        u.status = "hub_received";
+      } else if (b.status === "in_transit_to_hub") {
+        u.hub_tracking_code = b.hub_tracking_code || null;
+      } else if (b.status === "in_transit_to_buyer") {
+        u.hub_tracking_to_buyer = b.hub_tracking_to_buyer || null;
+        u.hub_shipped_at = new Date().toISOString();
+      } else if (b.status === "cancelled" && b.refund_amount) {
+        u.refund_amount = b.refund_amount;
+        u.refund_at = new Date().toISOString();
+        // Re-activate listing
+        const { data: od } = await sb.from("vault_marketplace_orders").select("listing_id, buyer_cpf").eq("id", b.order_id).single();
+        if (od?.listing_id) await sb.from("vault_marketplace_listings").update({ status: "active" }).eq("id", od.listing_id);
+        if (od?.buyer_cpf) await nt(sb, "💰 Reembolso processado", `Pedido cancelado — inspeção reprovada. Reembolso de R$ ${b.refund_amount.toFixed(2)}.`, od.buyer_cpf, b.order_id, "marketplace_refund");
+      }
+      const { error } = await sb.from("vault_marketplace_orders").update(u).eq("id", b.order_id);
+      if (error) throw error;
+      // Notify buyer on key state changes
+      if (["hub_received", "in_transit_to_buyer"].includes(b.status)) {
+        const { data: od } = await sb.from("vault_marketplace_orders").select("buyer_cpf, order_code").eq("id", b.order_id).single();
+        if (od?.buyer_cpf) {
+          const msgs: Record<string, string> = {
+            hub_received: `Pedido ${od.order_code} recebido no Hub Bravenza para inspeção.`,
+            in_transit_to_buyer: `Pedido ${od.order_code} aprovado e enviado para você!`,
+          };
+          await nt(sb, "📦 Atualização do pedido", msgs[b.status] || "Status atualizado.", od.buyer_cpf, b.order_id, "marketplace_order");
+        }
+      }
+      return j({ success: true });
+    }
+
+    if (mt === "POST" && a === "hub-inspect") {
+      const b = await req.json();
+      if (!b.order_id || !b.result) throw new Error("order_id e result obrigatórios");
+      // Create inspection record
+      const { data: insp, error: ie } = await sb.from("marketplace_inspections").insert({
+        order_id: b.order_id,
+        status: b.result === "approved" ? "inspection_approved" : "inspection_rejected",
+        result: b.result,
+        checklist: b.checklist || null,
+        notes: b.notes || null,
+        rejection_reason: b.rejection_reason || null,
+        inspection_photos: b.inspection_photos || null,
+        inspected_at: new Date().toISOString(),
+      }).select().single();
+      if (ie) throw ie;
+      // Update order
+      const newStatus = b.result === "approved" ? "inspection_approved" : "inspection_rejected";
+      await sb.from("vault_marketplace_orders").update({
+        status: newStatus,
+        inspection_id: insp.id,
+        inspection_result: b.result,
+      }).eq("id", b.order_id);
+      // Notify buyer
+      const { data: od } = await sb.from("vault_marketplace_orders").select("buyer_cpf, order_code, seller_id").eq("id", b.order_id).single();
+      if (od?.buyer_cpf) {
+        if (b.result === "approved") {
+          await nt(sb, "✅ Inspeção aprovada!", `Pedido ${od.order_code} foi autenticado com sucesso!`, od.buyer_cpf, b.order_id, "marketplace_inspection");
+        } else {
+          await nt(sb, "❌ Inspeção reprovada", `Pedido ${od.order_code} não passou na inspeção. Motivo: ${b.rejection_reason || "Veja detalhes"}`, od.buyer_cpf, b.order_id, "marketplace_inspection");
+          // Also notify seller
+          const { data: sl } = await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf)").eq("id", od.seller_id).single();
+          if (sl?.member?.client_cpf) {
+            await nt(sb, "❌ Item reprovado na inspeção", `Pedido ${od.order_code}: ${b.rejection_reason || "Não passou na autenticação"}.`, sl.member.client_cpf, b.order_id, "marketplace_inspection");
+          }
+        }
+      }
+      return j({ success: true, inspection: insp });
+    }
+
+    // ==================== SELLER TIER CALCULATION ====================
+
+    if (mt === "POST" && a === "recalc-seller-tier") {
+      const b = await req.json();
+      const sid = b.seller_id;
+      if (!sid) throw new Error("seller_id obrigatório");
+
+      // Get all completed orders for this seller
+      const { data: allOrders } = await sb.from("vault_marketplace_orders")
+        .select("status, shipped_at, paid_at, dispute_status, inspection_result, created_at")
+        .eq("seller_id", sid);
+
+      const orders = allOrders || [];
+      const total = orders.length;
+      if (total === 0) {
+        await sb.from("vault_seller_profiles").update({ tier: "bronze", tier_updated_at: new Date().toISOString() }).eq("id", sid);
+        return j({ tier: "bronze", metrics: {} });
+      }
+
+      // Calculate metrics
+      const completed = orders.filter((o: any) => ["completed", "delivered", "payout_released", "payout_pending"].includes(o.status));
+      const cancelled = orders.filter((o: any) => o.status === "cancelled");
+      const disputed = orders.filter((o: any) => o.dispute_status === "open" || o.dispute_status === "resolved_buyer");
+      const proOrders = orders.filter((o: any) => o.inspection_result);
+      const proApproved = proOrders.filter((o: any) => o.inspection_result === "approved");
+
+      // On-time: shipped within 3 days of paid
+      const shippedOrders = orders.filter((o: any) => o.shipped_at && o.paid_at);
+      const onTime = shippedOrders.filter((o: any) => {
+        const diff = (new Date(o.shipped_at).getTime() - new Date(o.paid_at).getTime()) / (1000 * 60 * 60 * 24);
+        return diff <= 3;
+      });
+
+      const onTimeRate = shippedOrders.length > 0 ? Math.round((onTime.length / shippedOrders.length) * 100) : 100;
+      const cancellationRate = total > 0 ? Math.round((cancelled.length / total) * 100) : 0;
+      const disputeRate = total > 0 ? Math.round((disputed.length / total) * 100) : 0;
+      const proApprovalRate = proOrders.length > 0 ? Math.round((proApproved.length / proOrders.length) * 100) : 100;
+
+      // Determine tier
+      let tier = "bronze";
+      let payoutDays = 10;
+      let feePercent = 14;
+
+      if (completed.length >= 50 && onTimeRate >= 95 && disputeRate <= 2 && cancellationRate <= 3 && proApprovalRate >= 98) {
+        tier = "elite"; payoutDays = 3; feePercent = 8;
+      } else if (completed.length >= 20 && onTimeRate >= 90 && disputeRate <= 5 && cancellationRate <= 5 && proApprovalRate >= 95) {
+        tier = "ouro"; payoutDays = 5; feePercent = 10;
+      } else if (completed.length >= 5 && onTimeRate >= 80 && disputeRate <= 10 && cancellationRate <= 10) {
+        tier = "prata"; payoutDays = 7; feePercent = 12;
+      }
+
+      await sb.from("vault_seller_profiles").update({
+        tier, tier_updated_at: new Date().toISOString(),
+        on_time_shipping_rate: onTimeRate,
+        cancellation_rate: cancellationRate,
+        dispute_rate: disputeRate,
+        pro_approval_rate: proApprovalRate,
+        payout_speed_days: payoutDays,
+        current_fee_percent: feePercent,
+      }).eq("id", sid);
+
+      return j({
+        tier,
+        metrics: { total_orders: total, completed: completed.length, onTimeRate, cancellationRate, disputeRate, proApprovalRate },
+        benefits: { payout_days: payoutDays, fee_percent: feePercent },
+      });
+    }
+
+    if (mt === "GET" && a === "seller-tier-info") {
+      const sid = url.searchParams.get("seller_id");
+      if (!sid) throw new Error("seller_id obrigatório");
+      const { data } = await sb.from("vault_seller_profiles").select(
+        "tier, on_time_shipping_rate, cancellation_rate, dispute_rate, pro_approval_rate, payout_speed_days, current_fee_percent, total_sales_count, average_rating"
+      ).eq("id", sid).single();
+      if (!data) throw new Error("Vendedor não encontrado");
+
+      const tierConfig: Record<string, { label: string; color: string; nextTier: string | null; nextReqs: string }> = {
+        bronze: { label: "Bronze", color: "#CD7F32", nextTier: "prata", nextReqs: "5 vendas, 80% no prazo" },
+        prata: { label: "Prata", color: "#C0C0C0", nextTier: "ouro", nextReqs: "20 vendas, 90% no prazo, <5% disputas" },
+        ouro: { label: "Ouro", color: "#D4AF37", nextTier: "elite", nextReqs: "50 vendas, 95% no prazo, <2% disputas" },
+        elite: { label: "Elite", color: "#B9F2FF", nextTier: null, nextReqs: "Nível máximo alcançado!" },
+      };
+
+      return j({ ...data, tierInfo: tierConfig[data.tier] || tierConfig.bronze });
+    }
+
     return j({ error: "Ação não encontrada" }, 404);
   } catch (e: any) {
     console.error("vault-marketplace error:", e);

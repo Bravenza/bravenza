@@ -65,11 +65,21 @@ interface AdminOrder {
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   pending_payment: { label: "Aguardando pagamento", color: "bg-warning/20 text-warning", icon: Clock },
   paid: { label: "Pago", color: "bg-blue-500/20 text-blue-400", icon: CheckCircle2 },
+  ship_to_hub_pending: { label: "Envio ao Hub", color: "bg-warning/20 text-warning", icon: Clock },
+  in_transit_to_hub: { label: "→ Hub", color: "bg-purple-500/20 text-purple-400", icon: Truck },
+  hub_received: { label: "No Hub", color: "bg-blue-500/20 text-blue-400", icon: CheckCircle2 },
+  inspection_pending: { label: "Inspeção", color: "bg-amber-500/20 text-amber-400", icon: ShieldCheck },
+  inspection_approved: { label: "Aprovado", color: "bg-emerald-500/20 text-emerald-400", icon: CheckCircle2 },
+  inspection_rejected: { label: "Reprovado", color: "bg-destructive/20 text-destructive", icon: XCircle },
+  ship_to_buyer_pending: { label: "Pronto envio", color: "bg-blue-500/20 text-blue-400", icon: Package },
+  in_transit_to_buyer: { label: "→ Comprador", color: "bg-purple-500/20 text-purple-400", icon: Truck },
   shipped: { label: "Enviado", color: "bg-purple-500/20 text-purple-400", icon: Truck },
   delivered: { label: "Entregue", color: "bg-emerald-500/20 text-emerald-400", icon: CheckCircle2 },
   completed: { label: "Concluído", color: "bg-success/20 text-success", icon: CheckCircle2 },
   cancelled: { label: "Cancelado", color: "bg-destructive/20 text-destructive", icon: XCircle },
   disputed: { label: "Em disputa", color: "bg-destructive/20 text-destructive", icon: AlertTriangle },
+  payout_pending: { label: "Repasse pendente", color: "bg-primary/20 text-primary", icon: Clock },
+  payout_released: { label: "Pago", color: "bg-success/20 text-success", icon: CheckCircle2 },
 };
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/vault-marketplace`;

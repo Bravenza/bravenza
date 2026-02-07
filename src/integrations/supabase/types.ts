@@ -2258,8 +2258,13 @@ export type Database = {
           dispute_status: string | null
           fee_amount: number
           fee_percent: number
+          hub_received_at: string | null
+          hub_shipped_at: string | null
+          hub_tracking_code: string | null
+          hub_tracking_to_buyer: string | null
           id: string
           inspection_id: string | null
+          inspection_result: string | null
           listing_id: string
           mp_payment_id: string | null
           order_code: string | null
@@ -2273,6 +2278,8 @@ export type Database = {
           payout_status: string | null
           pix_transaction_id: string | null
           protection_ends_at: string | null
+          refund_amount: number | null
+          refund_at: string | null
           sale_price: number
           seller_id: string
           seller_payout: number
@@ -2306,8 +2313,13 @@ export type Database = {
           dispute_status?: string | null
           fee_amount: number
           fee_percent: number
+          hub_received_at?: string | null
+          hub_shipped_at?: string | null
+          hub_tracking_code?: string | null
+          hub_tracking_to_buyer?: string | null
           id?: string
           inspection_id?: string | null
+          inspection_result?: string | null
           listing_id: string
           mp_payment_id?: string | null
           order_code?: string | null
@@ -2321,6 +2333,8 @@ export type Database = {
           payout_status?: string | null
           pix_transaction_id?: string | null
           protection_ends_at?: string | null
+          refund_amount?: number | null
+          refund_at?: string | null
           sale_price: number
           seller_id: string
           seller_payout: number
@@ -2354,8 +2368,13 @@ export type Database = {
           dispute_status?: string | null
           fee_amount?: number
           fee_percent?: number
+          hub_received_at?: string | null
+          hub_shipped_at?: string | null
+          hub_tracking_code?: string | null
+          hub_tracking_to_buyer?: string | null
           id?: string
           inspection_id?: string | null
+          inspection_result?: string | null
           listing_id?: string
           mp_payment_id?: string | null
           order_code?: string | null
@@ -2369,6 +2388,8 @@ export type Database = {
           payout_status?: string | null
           pix_transaction_id?: string | null
           protection_ends_at?: string | null
+          refund_amount?: number | null
+          refund_at?: string | null
           sale_price?: number
           seller_id?: string
           seller_payout?: number
@@ -2828,13 +2849,20 @@ export type Database = {
         Row: {
           average_rating: number | null
           bio: string | null
+          cancellation_rate: number | null
           created_at: string
           current_fee_percent: number
+          dispute_rate: number | null
           id: string
           is_active: boolean
           member_id: string
+          on_time_shipping_rate: number | null
+          payout_speed_days: number | null
+          pro_approval_rate: number | null
           ratings_count: number
           seller_cep: string | null
+          tier: string
+          tier_updated_at: string | null
           total_sales_count: number
           total_sales_value: number
           updated_at: string
@@ -2842,13 +2870,20 @@ export type Database = {
         Insert: {
           average_rating?: number | null
           bio?: string | null
+          cancellation_rate?: number | null
           created_at?: string
           current_fee_percent?: number
+          dispute_rate?: number | null
           id?: string
           is_active?: boolean
           member_id: string
+          on_time_shipping_rate?: number | null
+          payout_speed_days?: number | null
+          pro_approval_rate?: number | null
           ratings_count?: number
           seller_cep?: string | null
+          tier?: string
+          tier_updated_at?: string | null
           total_sales_count?: number
           total_sales_value?: number
           updated_at?: string
@@ -2856,13 +2891,20 @@ export type Database = {
         Update: {
           average_rating?: number | null
           bio?: string | null
+          cancellation_rate?: number | null
           created_at?: string
           current_fee_percent?: number
+          dispute_rate?: number | null
           id?: string
           is_active?: boolean
           member_id?: string
+          on_time_shipping_rate?: number | null
+          payout_speed_days?: number | null
+          pro_approval_rate?: number | null
           ratings_count?: number
           seller_cep?: string | null
+          tier?: string
+          tier_updated_at?: string | null
           total_sales_count?: number
           total_sales_value?: number
           updated_at?: string

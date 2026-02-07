@@ -60,7 +60,7 @@ interface MarketplaceCheckoutDialogProps {
   };
 }
 
-type Step = "address" | "freight" | "payment";
+type Step = "modality" | "address" | "freight" | "payment";
 
 export function MarketplaceCheckoutDialog({
   listing,
@@ -69,13 +69,14 @@ export function MarketplaceCheckoutDialog({
   onConfirm,
   buyerDefaults,
 }: MarketplaceCheckoutDialogProps) {
-  const [step, setStep] = useState<Step>("address");
+  const [step, setStep] = useState<Step>("modality");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [isLoadingFreight, setIsLoadingFreight] = useState(false);
   const [freightOptions, setFreightOptions] = useState<FreightOption[]>([]);
   const [selectedFreight, setSelectedFreight] = useState<FreightOption | null>(null);
   const [freightError, setFreightError] = useState<string | null>(null);
+  const [chosenMode, setChosenMode] = useState<"direct" | "bravenza">("direct");
   const [form, setForm] = useState({
     buyer_name: buyerDefaults?.name || "",
     buyer_email: buyerDefaults?.email || "",
@@ -90,15 +91,21 @@ export function MarketplaceCheckoutDialog({
     payment_method: "pix",
   });
 
+  // Determine if PRO is mandatory/recommended
+  const isProMandatory = listing ? (listing.price >= 2000 || listing.shipping_mode === "bravenza") : false;
+  const isProRecommended = listing ? (listing.price >= 800 && listing.condition !== "novo") : false;
+
   // Reset when dialog opens
   useEffect(() => {
-    if (open) {
-      setStep("address");
+    if (open && listing) {
+      const defaultMode = isProMandatory ? "bravenza" : (listing.shipping_mode === "bravenza" ? "bravenza" : "direct");
+      setChosenMode(defaultMode);
+      setStep(isProMandatory ? "address" : "modality");
       setFreightOptions([]);
       setSelectedFreight(null);
       setFreightError(null);
     }
-  }, [open]);
+  }, [open, listing, isProMandatory]);
 
   useEffect(() => {
     setForm((prev) => ({
@@ -234,20 +241,23 @@ export function MarketplaceCheckoutDialog({
 
         {/* Progress Steps */}
         <div className="flex items-center gap-1 mb-2">
-          {(["address", "freight", "payment"] as Step[]).map((s, i) => (
+          {(isProMandatory
+            ? (["address", "freight", "payment"] as Step[])
+            : (["modality", "address", "freight", "payment"] as Step[])
+          ).map((s, i, arr) => (
             <div key={s} className="flex items-center gap-1 flex-1">
               <div className={cn(
                 "flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold transition-colors",
                 step === s ? "bg-primary text-primary-foreground" :
-                (["address", "freight", "payment"].indexOf(step) > i) ? "bg-primary/30 text-primary" :
+                (arr.indexOf(step) > i) ? "bg-primary/30 text-primary" :
                 "bg-muted text-muted-foreground"
               )}>
                 {i + 1}
               </div>
               <span className={cn("text-[10px] font-medium hidden sm:inline", step === s ? "text-foreground" : "text-muted-foreground")}>
-                {s === "address" ? "Endereço" : s === "freight" ? "Frete" : "Pagamento"}
+                {s === "modality" ? "Modalidade" : s === "address" ? "Endereço" : s === "freight" ? "Frete" : "Pagamento"}
               </span>
-              {i < 2 && <ChevronRight className="h-3 w-3 text-muted-foreground flex-shrink-0" />}
+              {i < arr.length - 1 && <ChevronRight className="h-3 w-3 text-muted-foreground flex-shrink-0" />}
             </div>
           ))}
         </div>
@@ -278,6 +288,55 @@ export function MarketplaceCheckoutDialog({
             R$ {listing.price.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
           </p>
         </div>
+
+        {/* ========== STEP 0: MODALITY ========== */}
+        {step === "modality" && (
+          <div className="space-y-4 mt-1">
+            <div className="space-y-3">
+              <button
+                onClick={() => setChosenMode("direct")}
+                className={cn(
+                  "w-full p-4 rounded-lg border text-left transition-all",
+                  chosenMode === "direct" ? "border-primary bg-primary/10" : "border-border/50 hover:border-primary/40"
+                )}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Truck className="h-4 w-4" />
+                  <p className="font-medium text-sm">Envio Direto</p>
+                </div>
+                <p className="text-xs text-muted-foreground">Vendedor envia diretamente para você. Mais rápido.</p>
+              </button>
+              <button
+                onClick={() => setChosenMode("bravenza")}
+                className={cn(
+                  "w-full p-4 rounded-lg border text-left transition-all",
+                  chosenMode === "bravenza" ? "border-primary bg-primary/10" : "border-border/50 hover:border-primary/40"
+                )}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  <p className="font-medium text-sm">PRO — Via Bravenza</p>
+                  {isProRecommended && <Badge className="bg-primary/20 text-primary text-[10px] px-1.5 py-0">Recomendado</Badge>}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Passa pelo Hub Bravenza para autenticação física + embalagem premium. +5 dias úteis.
+                </p>
+              </button>
+            </div>
+
+            {isProRecommended && chosenMode === "direct" && (
+              <div className="p-2.5 bg-warning/10 border border-warning/30 rounded-lg text-[11px] text-muted-foreground">
+                <AlertCircle className="h-3 w-3 inline mr-1 text-warning" />
+                Recomendamos o envio PRO para itens usados acima de R$ 800. A cobertura Direto é limitada.
+              </div>
+            )}
+
+            <Button onClick={() => setStep("address")} className="w-full btn-gold gap-2" size="lg">
+              Continuar
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
 
         {/* ========== STEP 1: ADDRESS ========== */}
         {step === "address" && (
@@ -358,10 +417,17 @@ export function MarketplaceCheckoutDialog({
               </div>
             </div>
 
-            <Button onClick={goToFreight} disabled={!form.buyer_name || !isAddressValid} className="w-full btn-gold gap-2" size="lg">
-              Calcular frete
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-2">
+              {!isProMandatory && (
+                <Button variant="outline" onClick={() => setStep("modality")} className="gap-1">
+                  <ArrowLeft className="h-4 w-4" /> Voltar
+                </Button>
+              )}
+              <Button onClick={goToFreight} disabled={!form.buyer_name || !isAddressValid} className="flex-1 btn-gold gap-2" size="lg">
+                Calcular frete
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         )}
 

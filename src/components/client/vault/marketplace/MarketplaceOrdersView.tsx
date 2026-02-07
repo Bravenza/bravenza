@@ -20,6 +20,14 @@ import { ContestationBanner } from "@/components/marketplace/ContestationBanner"
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   pending_payment: { label: "Aguardando pagamento", color: "bg-warning/20 text-warning", icon: Clock },
   paid: { label: "Pago", color: "bg-blue-500/20 text-blue-400", icon: CheckCircle2 },
+  ship_to_hub_pending: { label: "Aguardando envio ao Hub", color: "bg-warning/20 text-warning", icon: Clock },
+  in_transit_to_hub: { label: "Em trânsito → Hub", color: "bg-purple-500/20 text-purple-400", icon: Truck },
+  hub_received: { label: "Recebido no Hub", color: "bg-blue-500/20 text-blue-400", icon: CheckCircle2 },
+  inspection_pending: { label: "Em inspeção", color: "bg-amber-500/20 text-amber-400", icon: Package },
+  inspection_approved: { label: "Aprovado ✓", color: "bg-success/20 text-success", icon: CheckCircle2 },
+  inspection_rejected: { label: "Reprovado ✗", color: "bg-destructive/20 text-destructive", icon: AlertTriangle },
+  ship_to_buyer_pending: { label: "Pronto p/ envio", color: "bg-blue-500/20 text-blue-400", icon: Package },
+  in_transit_to_buyer: { label: "Em trânsito → Você", color: "bg-purple-500/20 text-purple-400", icon: Truck },
   shipped: { label: "Enviado", color: "bg-purple-500/20 text-purple-400", icon: Truck },
   delivered: { label: "Entregue", color: "bg-success/20 text-success", icon: CheckCircle2 },
   completed: { label: "Concluído", color: "bg-success/20 text-success", icon: CheckCircle2 },
@@ -132,6 +140,16 @@ export function MarketplaceOrdersView({
                   </p>
                 )}
 
+                {/* PRO Hub tracking */}
+                {order.shipping_mode === "bravenza" && (order.hub_tracking_code || order.hub_tracking_to_buyer) && (
+                  <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                    {order.hub_tracking_code && <p>📦 → Hub: <span className="font-mono">{order.hub_tracking_code}</span></p>}
+                    {order.hub_received_at && <p>✅ Recebido no Hub: {new Date(order.hub_received_at).toLocaleDateString("pt-BR")}</p>}
+                    {order.inspection_result && <p>{order.inspection_result === "approved" ? "✅ Aprovado" : "❌ Reprovado"}</p>}
+                    {order.hub_tracking_to_buyer && <p>📦 → Você: <span className="font-mono">{order.hub_tracking_to_buyer}</span></p>}
+                  </div>
+                )}
+
                 {!isSale && (order.status === "delivered" || order.status === "completed" || order.dispute_status) && (
                   <ContestationBanner
                     deliveredAt={order.delivered_at}
@@ -181,7 +199,7 @@ export function MarketplaceOrdersView({
                     />
                   )}
 
-                  {/* Ship button (seller, paid) */}
+                  {/* Ship button (seller, paid) — different label for PRO */}
                   {isSale && order.status === "paid" && (
                     <Button
                       size="sm"
@@ -189,7 +207,7 @@ export function MarketplaceOrdersView({
                       onClick={() => setShipDialog({ orderId: order.id })}
                     >
                       <Truck className="h-3 w-3" />
-                      Informar envio
+                      {order.shipping_mode === "bravenza" ? "Enviar ao Hub" : "Informar envio"}
                     </Button>
                   )}
 

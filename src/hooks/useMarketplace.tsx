@@ -65,6 +65,13 @@ export interface MarketplaceOrder {
   created_at: string;
   admin_notes: string | null;
   dispute_status: string | null;
+  // PRO hub fields
+  hub_tracking_code: string | null;
+  hub_received_at: string | null;
+  hub_shipped_at: string | null;
+  hub_tracking_to_buyer: string | null;
+  inspection_id: string | null;
+  inspection_result: string | null;
   listing?: {
     title: string;
     brand: string | null;
