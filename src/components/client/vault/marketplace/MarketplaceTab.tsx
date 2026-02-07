@@ -323,7 +323,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
                   <div key={listing.id} className="relative space-y-2">
                     <MarketplaceListingCard listing={listing} onSelect={handleSelect} onToggleFavorite={handleToggleFavorite} />
                     <Badge
-                      className={`absolute top-2 right-2 text-xs ${
+                      className={`absolute top-12 right-2 text-xs z-10 ${
                         listing.status === "active" ? "bg-success/20 text-success"
                         : listing.status === "sold" ? "bg-primary/20 text-primary"
                         : listing.status === "reserved" ? "bg-warning/20 text-warning"
