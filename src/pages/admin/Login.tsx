@@ -282,6 +282,11 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
                       <Input
                         id="login-email"
                         type="email"
+                        inputMode="email"
+                        autoComplete="username"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
                         placeholder="seu@email.com"
                         value={loginEmail}
                         onChange={(e) => setLoginEmail(e.target.value)}
@@ -304,6 +309,7 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
                         <Input
                           id="login-password"
                           type={showPassword ? "text" : "password"}
+                          autoComplete="current-password"
                           placeholder="••••••••"
                           value={loginPassword}
                           onChange={(e) => setLoginPassword(e.target.value)}
