@@ -23,7 +23,7 @@ interface ChatMessage {
   read_at: string | null;
 }
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/vault-marketplace`;
+const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub`;
 
 interface MarketplaceChatDialogProps {
   orderId: string;

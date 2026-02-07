@@ -1,4 +1,4 @@
-// Vault Marketplace - Unified Edge Function
+// Marketplace Hub - All marketplace actions
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -49,7 +49,7 @@ serve(async (req) => {
   const a = url.searchParams.get("action");
   const mt = req.method;
 
-  console.log("vault-marketplace", a, mt);
+  console.log("mk-hub", a, mt);
 
   try {
     // ==================== LISTINGS (mklist) ====================
