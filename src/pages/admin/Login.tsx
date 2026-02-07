@@ -39,7 +39,11 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetSent, setResetSent] = useState(false);
-  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(() => {
+    // Check URL hash on mount to detect recovery before any redirect can fire
+    const hash = window.location.hash;
+    return hash.includes('type=recovery');
+  });
 
   // Login form
   const [loginEmail, setLoginEmail] = useState("");
