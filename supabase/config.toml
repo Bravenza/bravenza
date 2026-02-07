@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.mk-hub]
 verify_jwt = false
+
+[functions.mk-notifications]
+verify_jwt = false

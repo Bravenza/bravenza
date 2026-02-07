@@ -407,16 +407,26 @@ export default function MarketplaceInspectionPage() {
 
                   {/* Rejection: refund */}
                   {selectedOrder.status === "inspection_rejected" && (
-                    <Button
-                      className="w-full gap-2"
-                      variant="destructive"
-                      disabled={actionLoading}
-                      onClick={() => updateHubStatus(selectedOrder.id, "cancelled", {
-                        refund_amount: selectedOrder.sale_price,
-                      })}
-                    >
-                      <XCircle className="h-4 w-4" /> Processar reembolso ao comprador
-                    </Button>
+                    <div className="space-y-2">
+                      <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-sm space-y-1">
+                        <p className="font-medium text-destructive flex items-center gap-1">
+                          <AlertTriangle className="h-4 w-4" /> Item reprovado na inspeção
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          O comprador será reembolsado e o anúncio reativado. O vendedor será notificado para retirar o item.
+                        </p>
+                      </div>
+                      <Button
+                        className="w-full gap-2"
+                        variant="destructive"
+                        disabled={actionLoading}
+                        onClick={() => updateHubStatus(selectedOrder.id, "cancelled", {
+                          refund_amount: selectedOrder.sale_price,
+                        })}
+                      >
+                        <XCircle className="h-4 w-4" /> Processar reembolso (R$ {selectedOrder.sale_price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })})
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>
