@@ -636,6 +636,38 @@ Deno.serve(async (req) => {
         .eq("is_active", true)
         .maybeSingle();
       if (existing) return j({ product: existing, already_exists: true });
+
+      // Auto-generate description via AI if not provided
+      let description = b.description || null;
+      if (!description) {
+        try {
+          const aiKey = Deno.env.get("LOVABLE_API_KEY");
+          if (aiKey) {
+            const colorInfo = b.colorway ? ` no colorway "${b.colorway}"` : "";
+            const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: { "Authorization": `Bearer ${aiKey}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                model: "google/gemini-2.5-flash-lite",
+                messages: [
+                  { role: "system", content: "Você é um especialista em tênis e sneakers. Escreva descrições em português brasileiro para catálogos de marketplace de sneakers. O texto deve ser envolvente, informativo e conter detalhes sobre a história do modelo, materiais, tecnologia e relevância cultural. Máximo 3 frases. Não use aspas no início/fim." },
+                  { role: "user", content: `Escreva uma descrição de catálogo para o tênis ${b.brand} ${b.model}${colorInfo}. SKU: ${b.sku || "N/A"}.` }
+                ],
+                max_tokens: 200,
+                temperature: 0.7,
+              }),
+            });
+            if (aiRes.ok) {
+              const aiData = await aiRes.json();
+              description = aiData.choices?.[0]?.message?.content?.trim() || null;
+              console.log("AI description generated for", b.brand, b.model);
+            }
+          }
+        } catch (aiErr) {
+          console.error("AI description generation failed:", aiErr);
+        }
+      }
+
       const mb = await gm(sb, cpf);
       const { data: prod, error } = await sb.from("marketplace_products").insert({
         brand: b.brand,
@@ -644,7 +676,7 @@ Deno.serve(async (req) => {
         sku: b.sku || null,
         category: b.category || "sneakers",
         images: b.images || [],
-        description: b.description || null,
+        description,
         created_by_seller_id: mb?.id || null,
       }).select().single();
       if (error) throw error;
