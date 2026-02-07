@@ -277,6 +277,332 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_inspections: {
+        Row: {
+          checklist: Json | null
+          created_at: string
+          id: string
+          inspected_at: string | null
+          inspection_photos: string[] | null
+          inspector_admin_id: string | null
+          laudo_id: string | null
+          laudo_qr_url: string | null
+          notes: string | null
+          offer_id: string | null
+          order_id: string | null
+          received_at: string | null
+          rejection_reason: string | null
+          result: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          checklist?: Json | null
+          created_at?: string
+          id?: string
+          inspected_at?: string | null
+          inspection_photos?: string[] | null
+          inspector_admin_id?: string | null
+          laudo_id?: string | null
+          laudo_qr_url?: string | null
+          notes?: string | null
+          offer_id?: string | null
+          order_id?: string | null
+          received_at?: string | null
+          rejection_reason?: string | null
+          result?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          checklist?: Json | null
+          created_at?: string
+          id?: string
+          inspected_at?: string | null
+          inspection_photos?: string[] | null
+          inspector_admin_id?: string | null
+          laudo_id?: string | null
+          laudo_qr_url?: string | null
+          notes?: string | null
+          offer_id?: string | null
+          order_id?: string | null
+          received_at?: string | null
+          rejection_reason?: string | null
+          result?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_inspections_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_offers: {
+        Row: {
+          condition: string
+          created_at: string
+          defects: string | null
+          description: string | null
+          has_receipt: boolean
+          id: string
+          listing_id: string | null
+          original_purchase_price: number | null
+          photos: string[] | null
+          price: number
+          pro_recommendation: string | null
+          product_id: string
+          proof_photos: string[] | null
+          published_at: string | null
+          seller_id: string
+          shipping_cost_estimate: number | null
+          shipping_mode: string
+          size: string
+          size_system: string
+          sold_at: string | null
+          status: string
+          updated_at: string
+          views_count: number
+        }
+        Insert: {
+          condition?: string
+          created_at?: string
+          defects?: string | null
+          description?: string | null
+          has_receipt?: boolean
+          id?: string
+          listing_id?: string | null
+          original_purchase_price?: number | null
+          photos?: string[] | null
+          price: number
+          pro_recommendation?: string | null
+          product_id: string
+          proof_photos?: string[] | null
+          published_at?: string | null
+          seller_id: string
+          shipping_cost_estimate?: number | null
+          shipping_mode?: string
+          size: string
+          size_system?: string
+          sold_at?: string | null
+          status?: string
+          updated_at?: string
+          views_count?: number
+        }
+        Update: {
+          condition?: string
+          created_at?: string
+          defects?: string | null
+          description?: string | null
+          has_receipt?: boolean
+          id?: string
+          listing_id?: string | null
+          original_purchase_price?: number | null
+          photos?: string[] | null
+          price?: number
+          pro_recommendation?: string | null
+          product_id?: string
+          proof_photos?: string[] | null
+          published_at?: string | null
+          seller_id?: string
+          shipping_cost_estimate?: number | null
+          shipping_mode?: string
+          size?: string
+          size_system?: string
+          sold_at?: string | null
+          status?: string
+          updated_at?: string
+          views_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_offers_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "vault_marketplace_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_offers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_offers_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "vault_seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_product_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_seller_reply: boolean
+          is_visible: boolean
+          parent_id: string | null
+          product_id: string
+          user_cpf: string
+          user_name: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_seller_reply?: boolean
+          is_visible?: boolean
+          parent_id?: string | null
+          product_id: string
+          user_cpf: string
+          user_name?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_seller_reply?: boolean
+          is_visible?: boolean
+          parent_id?: string | null
+          product_id?: string
+          user_cpf?: string
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_product_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_product_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_product_comments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_products: {
+        Row: {
+          brand: string
+          category: string
+          colorway: string | null
+          created_at: string
+          created_by_admin_id: string | null
+          created_by_seller_id: string | null
+          description: string | null
+          id: string
+          images: string[] | null
+          is_active: boolean
+          is_high_risk: boolean
+          lowest_price: number | null
+          model: string
+          release_date: string | null
+          retail_price: number | null
+          sku: string | null
+          slug: string | null
+          total_offers: number
+          updated_at: string
+        }
+        Insert: {
+          brand: string
+          category?: string
+          colorway?: string | null
+          created_at?: string
+          created_by_admin_id?: string | null
+          created_by_seller_id?: string | null
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          is_active?: boolean
+          is_high_risk?: boolean
+          lowest_price?: number | null
+          model: string
+          release_date?: string | null
+          retail_price?: number | null
+          sku?: string | null
+          slug?: string | null
+          total_offers?: number
+          updated_at?: string
+        }
+        Update: {
+          brand?: string
+          category?: string
+          colorway?: string | null
+          created_at?: string
+          created_by_admin_id?: string | null
+          created_by_seller_id?: string | null
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          is_active?: boolean
+          is_high_risk?: boolean
+          lowest_price?: number | null
+          model?: string
+          release_date?: string | null
+          retail_price?: number | null
+          sku?: string | null
+          slug?: string | null
+          total_offers?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marketplace_watchlist: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          max_price: number | null
+          notify_email: boolean
+          notify_push: boolean
+          product_id: string
+          size: string
+          user_cpf: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_price?: number | null
+          notify_email?: boolean
+          notify_push?: boolean
+          product_id: string
+          size: string
+          user_cpf: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_price?: number | null
+          notify_email?: boolean
+          notify_push?: boolean
+          product_id?: string
+          size?: string
+          user_cpf?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_watchlist_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
@@ -1712,6 +2038,8 @@ export type Database = {
           original_purchase_price: number | null
           photos: string[]
           price: number
+          pro_recommendation: string | null
+          product_id: string | null
           published_at: string | null
           seller_id: string
           shipping_cost_estimate: number | null
@@ -1737,6 +2065,8 @@ export type Database = {
           original_purchase_price?: number | null
           photos?: string[]
           price: number
+          pro_recommendation?: string | null
+          product_id?: string | null
           published_at?: string | null
           seller_id: string
           shipping_cost_estimate?: number | null
@@ -1762,6 +2092,8 @@ export type Database = {
           original_purchase_price?: number | null
           photos?: string[]
           price?: number
+          pro_recommendation?: string | null
+          product_id?: string | null
           published_at?: string | null
           seller_id?: string
           shipping_cost_estimate?: number | null
@@ -1775,6 +2107,13 @@ export type Database = {
           views_count?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "vault_marketplace_listings_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vault_marketplace_listings_seller_id_fkey"
             columns: ["seller_id"]
@@ -1908,6 +2247,7 @@ export type Database = {
           buyer_review: string | null
           cancellation_reason: string | null
           cancelled_at: string | null
+          contest_window_ends_at: string | null
           created_at: string
           delivered_at: string | null
           dispute_opened_at: string | null
@@ -1919,15 +2259,18 @@ export type Database = {
           fee_amount: number
           fee_percent: number
           id: string
+          inspection_id: string | null
           listing_id: string
           mp_payment_id: string | null
           order_code: string | null
           paid_at: string | null
           payment_id: string | null
           payment_method: string | null
+          payout_amount: number | null
           payout_method: string | null
           payout_proof_url: string | null
           payout_released_at: string | null
+          payout_status: string | null
           pix_transaction_id: string | null
           protection_ends_at: string | null
           sale_price: number
@@ -1952,6 +2295,7 @@ export type Database = {
           buyer_review?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          contest_window_ends_at?: string | null
           created_at?: string
           delivered_at?: string | null
           dispute_opened_at?: string | null
@@ -1963,15 +2307,18 @@ export type Database = {
           fee_amount: number
           fee_percent: number
           id?: string
+          inspection_id?: string | null
           listing_id: string
           mp_payment_id?: string | null
           order_code?: string | null
           paid_at?: string | null
           payment_id?: string | null
           payment_method?: string | null
+          payout_amount?: number | null
           payout_method?: string | null
           payout_proof_url?: string | null
           payout_released_at?: string | null
+          payout_status?: string | null
           pix_transaction_id?: string | null
           protection_ends_at?: string | null
           sale_price: number
@@ -1996,6 +2343,7 @@ export type Database = {
           buyer_review?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          contest_window_ends_at?: string | null
           created_at?: string
           delivered_at?: string | null
           dispute_opened_at?: string | null
@@ -2007,15 +2355,18 @@ export type Database = {
           fee_amount?: number
           fee_percent?: number
           id?: string
+          inspection_id?: string | null
           listing_id?: string
           mp_payment_id?: string | null
           order_code?: string | null
           paid_at?: string | null
           payment_id?: string | null
           payment_method?: string | null
+          payout_amount?: number | null
           payout_method?: string | null
           payout_proof_url?: string | null
           payout_released_at?: string | null
+          payout_status?: string | null
           pix_transaction_id?: string | null
           protection_ends_at?: string | null
           sale_price?: number
@@ -2029,6 +2380,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "vault_marketplace_orders_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_inspections"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vault_marketplace_orders_listing_id_fkey"
             columns: ["listing_id"]

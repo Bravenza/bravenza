@@ -1,0 +1,212 @@
+import { useState, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
+
+const BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub`;
+const KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+export interface CatalogProduct {
+  id: string;
+  slug: string;
+  brand: string;
+  model: string;
+  colorway: string | null;
+  sku: string | null;
+  release_date: string | null;
+  retail_price: number | null;
+  description: string | null;
+  category: string;
+  images: string[];
+  is_high_risk: boolean;
+  total_offers: number;
+  lowest_price: number | null;
+  created_at: string;
+}
+
+export interface ProductOffer {
+  id: string;
+  product_id: string;
+  seller_id: string;
+  listing_id: string | null;
+  size: string;
+  size_system: string;
+  condition: string;
+  price: number;
+  original_purchase_price: number | null;
+  description: string | null;
+  defects: string | null;
+  photos: string[];
+  proof_photos: string[];
+  has_receipt: boolean;
+  shipping_mode: string;
+  pro_recommendation: string;
+  status: string;
+  views_count: number;
+  created_at: string;
+  seller?: {
+    id: string;
+    seller_cep: string | null;
+    average_rating: number | null;
+    total_sales_count: number;
+    current_fee_percent: number;
+    member: {
+      client_name: string;
+      tier: string;
+    };
+  };
+}
+
+function headers(cpf: string) {
+  return {
+    "Content-Type": "application/json",
+    apikey: KEY,
+    "x-client-cpf": cpf,
+  };
+}
+
+export function useMarketplaceCatalog(clientCpf: string) {
+  const { toast } = useToast();
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [product, setProduct] = useState<CatalogProduct | null>(null);
+  const [offers, setOffers] = useState<ProductOffer[]>([]);
+  const [sizes, setSizes] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [totalProducts, setTotalProducts] = useState(0);
+
+  const fetchProducts = useCallback(async (filters?: {
+    search?: string;
+    brand?: string;
+    category?: string;
+    page?: number;
+  }) => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams({ action: "catalog-products" });
+      if (filters?.search) params.set("search", filters.search);
+      if (filters?.brand) params.set("brand", filters.brand);
+      if (filters?.category) params.set("category", filters.category);
+      if (filters?.page) params.set("page", String(filters.page));
+      const res = await fetch(`${BASE}?${params}`, { headers: headers(clientCpf) });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setProducts(data.products || []);
+      setTotalProducts(data.total || 0);
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [clientCpf, toast]);
+
+  const fetchProduct = useCallback(async (slug: string) => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams({ action: "catalog-product", slug });
+      const res = await fetch(`${BASE}?${params}`, { headers: headers(clientCpf) });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setProduct(data.product || null);
+      setSizes(data.sizes || []);
+      setOffers(data.offers || []);
+      return data;
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [clientCpf, toast]);
+
+  const fetchOffersBySize = useCallback(async (productId: string, size: string) => {
+    try {
+      const params = new URLSearchParams({ action: "catalog-offers", product_id: productId, size });
+      const res = await fetch(`${BASE}?${params}`, { headers: headers(clientCpf) });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setOffers(data.offers || []);
+      return data.offers || [];
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      return [];
+    }
+  }, [clientCpf, toast]);
+
+  const createProduct = useCallback(async (productData: {
+    brand: string;
+    model: string;
+    colorway?: string;
+    sku?: string;
+    category?: string;
+    images?: string[];
+    description?: string;
+  }) => {
+    try {
+      const res = await fetch(`${BASE}?action=catalog-create-product`, {
+        method: "POST",
+        headers: headers(clientCpf),
+        body: JSON.stringify(productData),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      return data.product;
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      return null;
+    }
+  }, [clientCpf, toast]);
+
+  const createOffer = useCallback(async (offerData: {
+    product_id: string;
+    size: string;
+    condition: string;
+    price: number;
+    original_purchase_price?: number;
+    description?: string;
+    defects?: string;
+    photos: string[];
+    proof_photos?: string[];
+    has_receipt?: boolean;
+    shipping_mode?: string;
+    vault_item_id?: string;
+  }) => {
+    try {
+      const res = await fetch(`${BASE}?action=catalog-create-offer`, {
+        method: "POST",
+        headers: headers(clientCpf),
+        body: JSON.stringify(offerData),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      toast({ title: "Oferta criada!", description: "Sua oferta foi publicada no marketplace." });
+      return data.offer;
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      return null;
+    }
+  }, [clientCpf, toast]);
+
+  const searchProducts = useCallback(async (query: string) => {
+    try {
+      const params = new URLSearchParams({ action: "catalog-search", q: query });
+      const res = await fetch(`${BASE}?${params}`, { headers: headers(clientCpf) });
+      const data = await res.json();
+      return data.products || [];
+    } catch {
+      return [];
+    }
+  }, [clientCpf]);
+
+  return {
+    products,
+    product,
+    offers,
+    sizes,
+    totalProducts,
+    isLoading,
+    fetchProducts,
+    fetchProduct,
+    fetchOffersBySize,
+    createProduct,
+    createOffer,
+    searchProducts,
+  };
+}
