@@ -68,6 +68,7 @@ const VaultInvitesPage = lazy(() => import("./pages/admin/VaultInvitesPage"));
 const VaultIntelAdminPage = lazy(() => import("./pages/admin/VaultIntelAdminPage"));
 const VaultCommunityAdminPage = lazy(() => import("./pages/admin/VaultCommunityAdminPage"));
 const MarketplaceOrdersPage = lazy(() => import("./pages/admin/MarketplaceOrdersPage"));
+const MarketplaceInspectionPage = lazy(() => import("./pages/admin/MarketplaceInspectionPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -170,6 +171,7 @@ const App = () => (
                       <Route path="vault/intel" element={<VaultIntelAdminPage />} />
                       <Route path="vault/comunidade" element={<VaultCommunityAdminPage />} />
                       <Route path="vault/marketplace" element={<MarketplaceOrdersPage />} />
+                      <Route path="vault/marketplace/inspecao" element={<MarketplaceInspectionPage />} />
                     </Route>
 
                     {/* 404 */}
