@@ -486,12 +486,14 @@ serve(async (req) => {
         for (const q1 of leg1) {
           const q2 = leg2Map[q1.id];
           if (q2 && !q1.error && !q2.error) {
+            const BRAVENZA_PROCESSING_DAYS = 5;
             quotes.push({
               ...q1,
               price: (parseFloat(q1.price || "0") + parseFloat(q2.price || "0")).toFixed(2),
-              delivery_time: Math.max(q1.delivery_time || 0, q2.delivery_time || 0) + (q1.delivery_time || 0),
+              delivery_time: (q1.delivery_time || 0) + BRAVENZA_PROCESSING_DAYS + (q2.delivery_time || 0),
               legs: {
                 seller_to_bravenza: { price: q1.price, delivery_time: q1.delivery_time },
+                bravenza_processing: { delivery_time: BRAVENZA_PROCESSING_DAYS },
                 bravenza_to_buyer: { price: q2.price, delivery_time: q2.delivery_time },
               },
             });

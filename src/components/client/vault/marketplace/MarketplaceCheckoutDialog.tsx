@@ -34,6 +34,7 @@ interface FreightOption {
   company?: { name: string; picture?: string };
   legs?: {
     seller_to_bravenza?: { price: string; delivery_time: number };
+    bravenza_processing?: { delivery_time: number };
     bravenza_to_buyer?: { price: string; delivery_time: number };
   };
 }
@@ -416,7 +417,7 @@ export function MarketplaceCheckoutDialog({
                         {opt.delivery_time} dia{opt.delivery_time !== 1 ? "s" : ""} útei{opt.delivery_time !== 1 ? "s" : ""}
                         {opt.legs && (
                           <span className="text-[10px]">
-                            ({opt.legs.seller_to_bravenza?.delivery_time}d + {opt.legs.bravenza_to_buyer?.delivery_time}d)
+                            ({opt.legs.seller_to_bravenza?.delivery_time}d + {opt.legs.bravenza_processing?.delivery_time || 5}d verificação + {opt.legs.bravenza_to_buyer?.delivery_time}d)
                           </span>
                         )}
                       </div>
