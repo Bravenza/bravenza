@@ -207,38 +207,12 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
 
         {/* Explore Tab */}
         <TabsContent value="explorar" className="mt-4 space-y-4">
-          {/* Advanced Filters */}
+          {/* Advanced Filters (includes active chips internally) */}
           <MarketplaceFilters
             filters={filters}
             onFiltersChange={setFilters}
             onSearch={handleSearch}
           />
-
-          {/* Active filter badges */}
-          {(filters.condition || filters.size || filters.priceMin || filters.priceMax) && (
-            <div className="flex flex-wrap gap-2">
-              {filters.condition && (
-                <Badge variant="secondary" className="gap-1 text-xs">
-                  Condição: {filters.condition.replace("usado_", "").replace("_", " ")}
-                </Badge>
-              )}
-              {filters.size && (
-                <Badge variant="secondary" className="gap-1 text-xs">
-                  Tam. {filters.size}
-                </Badge>
-              )}
-              {filters.priceMin && (
-                <Badge variant="secondary" className="text-xs">
-                  Min R$ {filters.priceMin}
-                </Badge>
-              )}
-              {filters.priceMax && (
-                <Badge variant="secondary" className="text-xs">
-                  Max R$ {filters.priceMax}
-                </Badge>
-              )}
-            </div>
-          )}
 
           {/* Results count */}
           {!isLoading && (
@@ -247,29 +221,32 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
 
           {/* Listings Grid */}
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            <div className="flex items-center justify-center py-16">
+              <div className="flex flex-col items-center gap-3">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+                <p className="text-xs text-muted-foreground">Buscando anúncios...</p>
+              </div>
             </div>
           ) : listings.length === 0 ? (
             <Card className="card-premium">
-              <CardContent className="py-12 text-center">
-                <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-30" />
-                <h3 className="font-medium mb-1">Nenhum anúncio encontrado</h3>
-                <p className="text-sm text-muted-foreground">
-                  {filters.search || filters.condition || filters.size
-                    ? "Tente outros filtros"
+              <CardContent className="py-16 text-center">
+                <Package className="h-14 w-14 mx-auto text-muted-foreground mb-4 opacity-20" />
+                <h3 className="font-semibold mb-1.5 text-foreground">Nenhum anúncio encontrado</h3>
+                <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                  {filters.search || filters.condition || filters.size || filters.brand
+                    ? "Tente ajustar os filtros para encontrar o que procura"
                     : "Seja o primeiro a anunciar no marketplace!"}
                 </p>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
               {listings.map((listing, i) => (
                 <motion.div
                   key={listing.id}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.03 }}
+                  transition={{ delay: i * 0.04, duration: 0.3 }}
                 >
                   <MarketplaceListingCard
                     listing={listing}
