@@ -129,7 +129,7 @@ serve(async (req) => {
         description: b.description || null, brand: b.brand || null, model: b.model || null,
         colorway: b.colorway || null, size: b.size || null, condition: b.condition || "usado_bom",
         photos: b.photos || [], price: b.price, original_purchase_price: b.original_purchase_price || null,
-        shipping_mode: b.shipping_mode || "direct", shipping_cost_estimate: b.shipping_cost_estimate || 0,
+        shipping_mode: (b.price >= 2000) ? "bravenza" : (b.shipping_mode || "direct"), shipping_cost_estimate: b.shipping_cost_estimate || 0,
         is_vault_certified: !!b.vault_item_id, status: "active", published_at: new Date().toISOString(),
       }).select().single();
       if (error) throw error;
@@ -144,7 +144,7 @@ serve(async (req) => {
       if (!sl) throw new Error("Vendedor não encontrado");
       const { error } = await sb.from("vault_marketplace_listings").update({
         title: b.title, description: b.description, price: b.price, condition: b.condition,
-        shipping_mode: b.shipping_mode, shipping_cost_estimate: b.shipping_cost_estimate,
+        shipping_mode: (b.price >= 2000) ? "bravenza" : b.shipping_mode, shipping_cost_estimate: b.shipping_cost_estimate,
         photos: b.photos, status: b.status,
       }).eq("id", b.id).eq("seller_id", sl.id);
       if (error) throw error;

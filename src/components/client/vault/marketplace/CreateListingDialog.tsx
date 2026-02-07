@@ -268,7 +268,14 @@ export function CreateListingDialog({ onSubmit, vaultItems = [] }: CreateListing
               <Input
                 type="number"
                 value={form.price}
-                onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setForm((prev) => ({
+                    ...prev,
+                    price: val,
+                    shipping_mode: parseFloat(val || "0") >= 2000 ? "bravenza" : prev.shipping_mode,
+                  }));
+                }}
                 placeholder="1.500"
                 className="mt-1"
               />
@@ -291,18 +298,25 @@ export function CreateListingDialog({ onSubmit, vaultItems = [] }: CreateListing
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Envio</Label>
-              <Select
-                value={form.shipping_mode}
-                onValueChange={(v) => setForm((prev) => ({ ...prev, shipping_mode: v }))}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="direct">Envio direto ao comprador</SelectItem>
-                  <SelectItem value="bravenza">Via Bravenza (autenticação)</SelectItem>
-                </SelectContent>
-              </Select>
+              {parseFloat(form.price || "0") >= 2000 ? (
+                <div className="mt-1 p-2.5 bg-primary/10 border border-primary/30 rounded-lg text-xs text-primary flex items-center gap-1.5">
+                  <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span>Via Bravenza obrigatório para itens ≥ R$ 2.000</span>
+                </div>
+              ) : (
+                <Select
+                  value={form.shipping_mode}
+                  onValueChange={(v) => setForm((prev) => ({ ...prev, shipping_mode: v }))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="direct">Envio direto ao comprador</SelectItem>
+                    <SelectItem value="bravenza">Via Bravenza (autenticação)</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <div>
               <Label>Frete estimado (R$)</Label>
