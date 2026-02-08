@@ -28,6 +28,7 @@ interface ProductReviewsProps {
   average: number;
   total: number;
   isLoading: boolean;
+  canReview?: boolean;
   onSubmit: (rating: number, comment?: string, details?: {
     product_quality?: number;
     authenticity_score?: number;
@@ -74,6 +75,7 @@ export function ProductReviews({
   average,
   total,
   isLoading,
+  canReview = false,
   onSubmit,
   onRefresh,
   currentUserName,
@@ -119,9 +121,11 @@ export function ProductReviews({
           <Star className="h-4 w-4 text-primary fill-primary" />
           Avaliações ({total})
         </h3>
-        <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setShowForm(!showForm)}>
-          {showForm ? "Cancelar" : "Avaliar"}
-        </Button>
+        {canReview && (
+          <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setShowForm(!showForm)}>
+            {showForm ? "Cancelar" : "Avaliar"}
+          </Button>
+        )}
       </div>
 
       {/* Summary */}

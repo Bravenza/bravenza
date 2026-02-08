@@ -135,11 +135,7 @@ export default function ProductDetailPage() {
     if (slug) fetchProduct(slug);
   }, [slug, fetchProduct]);
 
-  useEffect(() => {
-    if (sizes.length > 0 && !selectedSize) {
-      setSelectedSize(sizes[0]);
-    }
-  }, [sizes, selectedSize]);
+  // Initial size selection is handled by filteredSizes useEffect below
 
   useEffect(() => {
     if (product && selectedSize) {
@@ -156,6 +152,27 @@ export default function ProductDetailPage() {
     }
   }, [product, fetchReviews, fetchAnalytics]);
 
+  // Filter sizes based on condition filter
+  const filteredSizes = useMemo(() => {
+    if (conditionFilter === "all") return sizes;
+    return sizes.filter((size) =>
+      offers.some((o) => {
+        const matchSize = o.size === size;
+        const matchCondition = conditionFilter === "novo" ? o.condition === "novo" : o.condition !== "novo";
+        return matchSize && matchCondition;
+      })
+    );
+  }, [sizes, offers, conditionFilter]);
+
+  // Reset selectedSize if it's no longer in filteredSizes
+  useEffect(() => {
+    if (filteredSizes.length > 0 && selectedSize && !filteredSizes.includes(selectedSize)) {
+      setSelectedSize(filteredSizes[0]);
+    } else if (filteredSizes.length > 0 && !selectedSize) {
+      setSelectedSize(filteredSizes[0]);
+    }
+  }, [filteredSizes, selectedSize]);
+
   const sortedOffers = useMemo(() => {
     const filtered = offers.filter((o) => {
       if (conditionFilter === "novo") return o.condition === "novo";
@@ -164,6 +181,33 @@ export default function ProductDetailPage() {
     });
     return [...filtered].sort((a, b) => a.price - b.price);
   }, [offers, conditionFilter]);
+
+  // Check if user has purchased this product (for review permission)
+  const [canReview, setCanReview] = useState(false);
+  useEffect(() => {
+    if (!cpf || cpf === "visitor" || !product) {
+      setCanReview(false);
+      return;
+    }
+    // Check via backend if user bought this product
+    const checkPurchase = async () => {
+      try {
+        const params = new URLSearchParams({ action: "check-purchase", product_id: product.id });
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub?${params}`, {
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "x-client-cpf": cpf,
+          },
+        });
+        const data = await res.json();
+        setCanReview(!!data.has_purchased);
+      } catch {
+        setCanReview(false);
+      }
+    };
+    checkPurchase();
+  }, [cpf, product]);
 
   if (isLoading && !product) {
     return (
@@ -330,13 +374,13 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Size Selector */}
-            {sizes.length > 0 && (
+            {filteredSizes.length > 0 && (
               <div>
                 <label className="text-sm font-semibold text-foreground mb-2.5 flex items-center gap-1.5">
                   Selecione o tamanho
                 </label>
                 <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
-                  {sizes.map((size) => (
+                  {filteredSizes.map((size) => (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
@@ -352,6 +396,9 @@ export default function ProductDetailPage() {
                   ))}
                 </div>
               </div>
+            )}
+            {filteredSizes.length === 0 && sizes.length > 0 && (
+              <p className="text-xs text-muted-foreground">Nenhum tamanho disponível para este filtro.</p>
             )}
 
             <Separator />
@@ -369,8 +416,19 @@ export default function ProductDetailPage() {
                     ? format(parseISO(product.release_date), "dd/MM/yyyy", { locale: ptBR })
                     : "—"
                 } even />
-                <SpecRow icon={<Tag className="h-3.5 w-3.5" />} label="Marca" value={product.brand} />
-                <SpecRow icon={<ShoppingBag className="h-3.5 w-3.5" />} label="Modelo" value={product.model} even />
+                <SpecRow
+                  icon={<Tag className="h-3.5 w-3.5" />}
+                  label="Marca"
+                  value={product.brand}
+                  onClick={() => navigate(`/minha-conta?tab=marketplace&search=${encodeURIComponent(product.brand)}`)}
+                />
+                <SpecRow
+                  icon={<ShoppingBag className="h-3.5 w-3.5" />}
+                  label="Modelo"
+                  value={product.model}
+                  even
+                  onClick={() => navigate(`/minha-conta?tab=marketplace&search=${encodeURIComponent(product.model)}`)}
+                />
                 <SpecRow icon={<DollarSign className="h-3.5 w-3.5" />} label="Preço de lançamento" value={
                   product.retail_price
                     ? `R$ ${product.retail_price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
@@ -505,6 +563,7 @@ export default function ProductDetailPage() {
             average={reviewsAverage}
             total={reviewsTotal}
             isLoading={reviewsLoading}
+            canReview={canReview}
             onSubmit={async (rating, comment, details) => {
               return submitReview(product.id, rating, comment, details);
             }}
@@ -545,7 +604,7 @@ export default function ProductDetailPage() {
 }
 
 // ---- Spec Row ----
-function SpecRow({ icon, label, value, even }: { icon: React.ReactNode; label: string; value: string; even?: boolean }) {
+function SpecRow({ icon, label, value, even, onClick }: { icon: React.ReactNode; label: string; value: string; even?: boolean; onClick?: () => void }) {
   return (
     <div className={cn(
       "flex items-center justify-between px-4 py-2.5 text-sm",
@@ -555,7 +614,13 @@ function SpecRow({ icon, label, value, even }: { icon: React.ReactNode; label: s
         {icon}
         {label}
       </span>
-      <span className="font-medium text-foreground text-right">{value}</span>
+      {onClick ? (
+        <button onClick={onClick} className="font-medium text-primary hover:underline text-right">
+          {value} →
+        </button>
+      ) : (
+        <span className="font-medium text-foreground text-right">{value}</span>
+      )}
     </div>
   );
 }
