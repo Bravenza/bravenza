@@ -280,11 +280,11 @@ export function OrdersTab({ orders, isLoading, sessionToken }: OrdersTabProps) {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Badge className={cn("text-xs", statusConfig.color)}>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge className={cn("text-[10px] sm:text-xs whitespace-nowrap", statusConfig.color)}>
                         {statusConfig.label}
                       </Badge>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground hidden sm:block" />
                     </div>
                   </div>
                 </CardContent>
