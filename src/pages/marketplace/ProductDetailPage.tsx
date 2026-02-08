@@ -16,6 +16,7 @@ import { useMarketplace, type MarketplaceListing } from "@/hooks/useMarketplace"
 import { useClientSession } from "@/hooks/useClientSession";
 import { Logo } from "@/components/Logo";
 import { MarketplaceCheckoutDialog } from "@/components/client/vault/marketplace/MarketplaceCheckoutDialog";
+import { ListingDetailSheet } from "@/components/client/vault/marketplace/ListingDetailSheet";
 import { ProductWatchlistButton } from "@/components/marketplace/ProductWatchlistButton";
 import { ProductComments } from "@/components/marketplace/ProductComments";
 import { ProductAnalyticsChart } from "@/components/marketplace/ProductAnalyticsChart";
@@ -57,6 +58,8 @@ export default function ProductDetailPage() {
   const [loadingOffers, setLoadingOffers] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutListing, setCheckoutListing] = useState<MarketplaceListing | null>(null);
+  const [detailOffer, setDetailOffer] = useState<ProductOffer | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const offerToListing = (offer: ProductOffer): MarketplaceListing => {
     // Normalize shipping_mode to expected values
@@ -99,6 +102,17 @@ export default function ProductDetailPage() {
 
   const handleBuyOffer = (offer: ProductOffer) => {
     setCheckoutListing(offerToListing(offer));
+    setCheckoutOpen(true);
+  };
+
+  const handleViewOffer = (offer: ProductOffer) => {
+    setDetailOffer(offer);
+    setDetailOpen(true);
+  };
+
+  const handleBuyFromDetail = (listing: MarketplaceListing) => {
+    setDetailOpen(false);
+    setCheckoutListing(listing);
     setCheckoutOpen(true);
   };
 
@@ -390,6 +404,7 @@ export default function ProductDetailPage() {
                     isBest={index === 0}
                     productImages={images}
                     onBuy={() => handleBuyOffer(offer)}
+                    onClick={() => handleViewOffer(offer)}
                   />
                 ))}
               </motion.div>
@@ -421,6 +436,15 @@ export default function ProductDetailPage() {
         </div>
       </main>
 
+      {/* Offer Detail Sheet */}
+      <ListingDetailSheet
+        listing={detailOffer ? offerToListing(detailOffer) : null}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        onToggleFavorite={() => {}}
+        onBuy={handleBuyFromDetail}
+      />
+
       <MarketplaceCheckoutDialog
         listing={checkoutListing}
         open={checkoutOpen}
@@ -449,7 +473,7 @@ function SpecRow({ icon, label, value, even }: { icon: React.ReactNode; label: s
 }
 
 // ---- Offer Card ----
-function OfferCard({ offer, isBest, productImages, onBuy }: { offer: ProductOffer; isBest: boolean; productImages: string[]; onBuy: () => void }) {
+function OfferCard({ offer, isBest, productImages, onBuy, onClick }: { offer: ProductOffer; isBest: boolean; productImages: string[]; onBuy: () => void; onClick: () => void }) {
   // Derive pro recommendation from shipping_mode if not explicitly set
   const normalizedMode = offer.shipping_mode === "seller_ships" ? "direct" 
     : offer.shipping_mode === "hub" ? "bravenza" 
@@ -462,10 +486,13 @@ function OfferCard({ offer, isBest, productImages, onBuy }: { offer: ProductOffe
   const offerImage = offer.photos?.length ? offer.photos[0] : productImages[0];
 
   return (
-    <div className={cn(
-      "rounded-xl border overflow-hidden transition-all hover:shadow-md",
-      isBest ? "border-primary/40 ring-1 ring-primary/20" : "border-border/40"
-    )}>
+    <div
+      onClick={onClick}
+      className={cn(
+        "rounded-xl border overflow-hidden transition-all hover:shadow-md cursor-pointer",
+        isBest ? "border-primary/40 ring-1 ring-primary/20" : "border-border/40"
+      )}
+    >
       {/* Offer photo */}
       <div className="relative aspect-[4/3] bg-muted/10">
         <img src={offerImage} alt="" className="w-full h-full object-contain p-2" />
