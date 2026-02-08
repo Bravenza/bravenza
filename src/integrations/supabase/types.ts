@@ -3005,6 +3005,7 @@ export type Database = {
       }
       vault_seller_profiles: {
         Row: {
+          account_type: string | null
           average_rating: number | null
           bank_name: string | null
           bio: string | null
@@ -3022,6 +3023,7 @@ export type Database = {
           onboarding_completed_at: string | null
           payout_speed_days: number | null
           phone: string | null
+          pix_beneficiary: string | null
           pix_key: string | null
           pix_key_type: string | null
           pro_approval_rate: number | null
@@ -3035,6 +3037,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          account_type?: string | null
           average_rating?: number | null
           bank_name?: string | null
           bio?: string | null
@@ -3052,6 +3055,7 @@ export type Database = {
           onboarding_completed_at?: string | null
           payout_speed_days?: number | null
           phone?: string | null
+          pix_beneficiary?: string | null
           pix_key?: string | null
           pix_key_type?: string | null
           pro_approval_rate?: number | null
@@ -3065,6 +3069,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          account_type?: string | null
           average_rating?: number | null
           bank_name?: string | null
           bio?: string | null
@@ -3082,6 +3087,7 @@ export type Database = {
           onboarding_completed_at?: string | null
           payout_speed_days?: number | null
           phone?: string | null
+          pix_beneficiary?: string | null
           pix_key?: string | null
           pix_key_type?: string | null
           pro_approval_rate?: number | null
