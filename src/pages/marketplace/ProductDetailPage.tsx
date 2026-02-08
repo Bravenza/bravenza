@@ -323,10 +323,13 @@ export default function ProductDetailPage() {
             )}
 
             {product.is_high_risk && (
-              <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs">
-                <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs">
+                <ShieldCheck className="h-4 w-4 mt-0.5 flex-shrink-0" />
                 <div>
-                  <span className="font-semibold">Modelo de alto risco.</span> Recomendamos utilizar o serviço PRO de autenticação para garantir a procedência.
+                  <span className="font-semibold">Autenticação recomendada.</span> Este modelo possui alto índice de réplicas no mercado.
+                  {product.lowest_price && product.lowest_price >= 2000
+                    ? " Para sua segurança, a verificação PRO via Bravenza é obrigatória nesta faixa de preço."
+                    : " Recomendamos o envio Via Bravenza para certificação de autenticidade antes da entrega."}
                 </div>
               </div>
             )}
@@ -341,8 +344,8 @@ export default function ProductDetailPage() {
                 className="w-full h-full object-contain p-4"
               />
               {product.is_high_risk && (
-                <Badge className="absolute top-3 left-3 bg-amber-500/90 text-white text-[10px] gap-1">
-                  <AlertTriangle className="h-3 w-3" /> Alto risco
+                <Badge className="absolute top-3 left-3 bg-primary/90 text-primary-foreground text-[10px] gap-1">
+                  <ShieldCheck className="h-3 w-3" /> Autenticação recomendada
                 </Badge>
               )}
             </div>
