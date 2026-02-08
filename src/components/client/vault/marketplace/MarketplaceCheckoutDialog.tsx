@@ -272,31 +272,71 @@ export function MarketplaceCheckoutDialog({
           ))}
         </div>
 
-        {/* Product summary - always visible */}
-        <div className="flex gap-3 p-3 bg-muted/30 rounded-lg border border-border/30">
-          {listing.photos?.[0] && (
-            <img src={listing.photos[0]} alt={listing.title} className="w-14 h-14 rounded-lg object-cover" />
-          )}
-          <div className="flex-1 min-w-0">
-            <p className="font-medium text-sm line-clamp-1">{listing.title}</p>
-            <p className="text-xs text-muted-foreground">
-              {listing.brand} {listing.model ? `· ${listing.model}` : ""} {listing.size ? `· Tam. ${listing.size}` : ""}
-            </p>
-            <div className="flex items-center gap-2 mt-1">
-              {listing.is_vault_certified && (
-                <Badge className="bg-primary/20 text-primary text-[10px] gap-0.5 px-1.5 py-0">
-                  <ShieldCheck className="h-2.5 w-2.5" /> Vault ID
-                </Badge>
-              )}
-              <Badge variant="outline" className="text-[10px] gap-0.5 px-1.5 py-0">
-                <Truck className="h-2.5 w-2.5" />
-                {normalizedShippingMode === "bravenza" ? "Via Bravenza" : "Direto"}
-              </Badge>
+        {/* Product summary - always visible with running total */}
+        <div className="p-3 bg-muted/30 rounded-lg border border-border/30 space-y-2">
+          <div className="flex gap-3">
+            {listing.photos?.[0] && (
+              <img src={listing.photos[0]} alt={listing.title} className="w-14 h-14 rounded-lg object-cover" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm line-clamp-1">{listing.title}</p>
+              <p className="text-xs text-muted-foreground">
+                {listing.brand} {listing.model ? `· ${listing.model}` : ""} {listing.size ? `· Tam. ${listing.size}` : ""}
+              </p>
+              <div className="flex items-center gap-2 mt-1">
+                {listing.is_vault_certified && (
+                  <Badge className="bg-primary/20 text-primary text-[10px] gap-0.5 px-1.5 py-0">
+                    <ShieldCheck className="h-2.5 w-2.5" /> Vault ID
+                  </Badge>
+                )}
+                {chosenMode === "bravenza" && (
+                  <Badge className="bg-primary/20 text-primary text-[10px] gap-0.5 px-1.5 py-0">
+                    <ShieldCheck className="h-2.5 w-2.5" /> Via Bravenza
+                  </Badge>
+                )}
+                {chosenMode === "direct" && (
+                  <Badge variant="outline" className="text-[10px] gap-0.5 px-1.5 py-0">
+                    <Truck className="h-2.5 w-2.5" /> Direto
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
-          <p className="text-sm font-bold text-foreground whitespace-nowrap">
-            R$ {listing.price.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
-          </p>
+          {/* Running cost breakdown */}
+          <div className="space-y-1 text-[11px] pt-1 border-t border-border/20">
+            <div className="flex justify-between text-muted-foreground">
+              <span>Produto</span>
+              <span>R$ {listing.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+            </div>
+            {authFee > 0 && (
+              <div className="flex justify-between text-muted-foreground">
+                <span className="flex items-center gap-1"><ShieldCheck className="h-2.5 w-2.5" /> Autenticação PRO</span>
+                <span>R$ {authFee.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+              </div>
+            )}
+            {isProMandatory && chosenMode === "bravenza" && (
+              <div className="flex justify-between text-muted-foreground/60">
+                <span className="flex items-center gap-1"><ShieldCheck className="h-2.5 w-2.5" /> Autenticação PRO</span>
+                <span>Inclusa</span>
+              </div>
+            )}
+            {shippingCost > 0 && (
+              <div className="flex justify-between text-muted-foreground">
+                <span className="flex items-center gap-1"><Truck className="h-2.5 w-2.5" /> Frete</span>
+                <span>R$ {shippingCost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+              </div>
+            )}
+            {!selectedFreight && step !== "modality" && (
+              <div className="flex justify-between text-muted-foreground/60">
+                <span className="flex items-center gap-1"><Truck className="h-2.5 w-2.5" /> Frete</span>
+                <span>A calcular</span>
+              </div>
+            )}
+            <div className="flex justify-between font-bold text-sm text-foreground pt-1 border-t border-border/20">
+              <span>Total</span>
+              <span className="text-primary">R$ {totalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+            </div>
+          </div>
         </div>
 
         {/* ========== STEP 0: MODALITY ========== */}
