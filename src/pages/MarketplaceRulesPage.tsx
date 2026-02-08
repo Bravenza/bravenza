@@ -88,7 +88,7 @@ const MarketplaceRulesPage = () => {
             </div>
             <div className="p-4 rounded-xl border border-border bg-card/50">
               <h3 className="font-semibold text-foreground mb-2 text-sm">5.2 Prazo Padrão</h3>
-              <p className="text-sm text-muted-foreground">O saldo se torna disponível em até <strong className="text-foreground">8 dias</strong> após confirmação de recebimento.</p>
+              <p className="text-sm text-muted-foreground">O saldo se torna disponível em até <strong className="text-foreground">8 dias úteis</strong> após confirmação de recebimento.</p>
             </div>
             <div className="p-4 rounded-xl border border-border bg-card/50">
               <h3 className="font-semibold text-foreground mb-2 text-sm">5.3 Retenção Preventiva</h3>

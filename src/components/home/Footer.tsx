@@ -16,7 +16,7 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
   ];
 
   const features = [
-    { icon: Shield, label: "100% Autêntico" },
+    { icon: Shield, label: "Autenticidade verificada" },
     { icon: Truck, label: "Entrega Segura" },
     { icon: Award, label: "Garantia Total" },
   ];

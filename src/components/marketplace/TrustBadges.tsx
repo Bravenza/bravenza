@@ -6,7 +6,7 @@ export function TrustBadges() {
       <TrustCard
         icon={<ShieldCheck className="h-5 w-5 text-primary" />}
         title="Autenticidade"
-        description="Verificamos os anúncios utilizando diversos fatores que garantem que seu item seja 100% original e autêntico."
+        description="Verificamos os anúncios utilizando critérios técnicos rigorosos para classificar cada item como Autêntico ou Réplica."
       />
       <TrustCard
         icon={<Repeat className="h-5 w-5 text-primary" />}

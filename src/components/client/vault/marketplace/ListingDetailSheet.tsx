@@ -329,11 +329,11 @@ export function ListingDetailSheet({
               </div>
               <div className="flex flex-col items-center gap-1.5 p-3 bg-[hsl(0,0%,16%)] rounded-xl border border-border/20">
                 <ShieldCheck className="h-5 w-5 text-emerald-400" />
-                <span className="text-[10px] text-muted-foreground text-center leading-tight">100%<br/>Original</span>
+                <span className="text-[10px] text-muted-foreground text-center leading-tight">Verificação<br/>técnica</span>
               </div>
               <div className="flex flex-col items-center gap-1.5 p-3 bg-[hsl(0,0%,16%)] rounded-xl border border-border/20">
                 <Clock className="h-5 w-5 text-sky-400" />
-                <span className="text-[10px] text-muted-foreground text-center leading-tight">7 dias<br/>garantia</span>
+                <span className="text-[10px] text-muted-foreground text-center leading-tight">7 dias úteis<br/>proteção</span>
               </div>
             </div>
           )}

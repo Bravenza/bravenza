@@ -318,7 +318,7 @@ export default function AuthenticityPage() {
                   </div>
                   
                   <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                    Produto 100% autêntico
+                    Produto autêntico
                   </h1>
                   <p className="text-muted-foreground">
                     Este produto passou por rigorosa verificação de autenticidade

@@ -95,7 +95,7 @@ export function DisputeDialog({ orderId, clientCpf, protectionEndsAt, onSuccess 
           <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg text-sm">
             <p className="font-medium text-destructive">Período de proteção expirado</p>
             <p className="text-muted-foreground mt-1">
-              O prazo de 7 dias úteis para abertura de disputas já passou.
+              O prazo de 7 dias úteis para abertura de disputas já encerrou.
             </p>
           </div>
         ) : (

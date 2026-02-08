@@ -477,7 +477,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
                 { step: "2", title: "Comprador finaliza a compra", desc: "O comprador paga via PIX ou cartão pelo Mercado Pago." },
                 { step: "3", title: "Envie o produto", desc: "Envie direto ao comprador ou via Bravenza para autenticação." },
                 { step: "4", title: "Período de proteção", desc: "O comprador tem 7 dias úteis para reportar problemas." },
-                { step: "5", title: "Receba o pagamento", desc: "O valor é liberado via PIX, descontada a taxa de serviço." },
+                { step: "5", title: "Receba o pagamento", desc: "O valor é liberado em até 8 dias úteis via PIX, descontada a taxa de serviço." },
               ].map((item) => (
                 <div key={item.step} className="flex gap-4">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-bold">

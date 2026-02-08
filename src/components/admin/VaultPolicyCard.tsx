@@ -16,7 +16,7 @@ export const VaultPolicyCard = ({ compact = false }: VaultPolicyCardProps) => {
             <ul className="text-xs text-muted-foreground space-y-0.5">
               <li>• Troca/reembolso somente por defeito no produto</li>
               <li>• Tamanho não é trocável/reembolsável</li>
-              <li>• Prazo para suporte: até 7 dias após recebimento</li>
+              <li>• Prazo para suporte: até 7 dias úteis após recebimento</li>
             </ul>
           </div>
         </div>
@@ -58,7 +58,7 @@ export const VaultPolicyCard = ({ compact = false }: VaultPolicyCardProps) => {
           <div>
             <p className="text-sm font-medium">Prazo para Suporte</p>
             <p className="text-xs text-muted-foreground">
-              Até 7 dias após o recebimento do produto
+              Até 7 dias úteis após o recebimento do produto
             </p>
           </div>
         </div>

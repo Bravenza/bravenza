@@ -180,8 +180,8 @@ const AdGuidelinesPage = () => {
             { num: "9.1.", text: "Itens acima de R$ 2.000,00: verificação BRAVENZA obrigatória." },
             { num: "9.2.", text: "Itens até R$ 2.000,00: verificação opcional (por escolha do comprador, regra do anúncio ou vendedor)." },
             { num: "9.3.", text: "A verificação é opinativa e de melhor esforço, baseada em evidências (fotos/vídeos/inspeção física)." },
-            { num: "9.4.", text: "Resultado possível: Aprovado / Provavelmente aprovado / Inconclusivo / Reprovado." },
-            { num: "9.5.", text: "Em caso de reprovação na verificação obrigatória, a BRAVENZA poderá cancelar a transação e aplicar medidas ao vendedor." },
+            { num: "9.4.", text: "Resultado possível: Autêntico ou Réplica." },
+            { num: "9.5.", text: "Em caso de classificação como Réplica na verificação obrigatória, a BRAVENZA poderá cancelar a transação e aplicar medidas ao vendedor." },
           ]} />
         </PolicySection>
 

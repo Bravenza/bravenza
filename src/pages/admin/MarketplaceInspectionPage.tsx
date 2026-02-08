@@ -71,8 +71,8 @@ const hubStatusConfig: Record<string, { label: string; color: string; icon: any 
   in_transit_to_hub: { label: "Em trânsito → Hub", color: "bg-purple-500/20 text-purple-400", icon: Package },
   hub_received: { label: "Recebido no Hub", color: "bg-blue-500/20 text-blue-400", icon: CheckCircle2 },
   inspection_pending: { label: "Em inspeção", color: "bg-amber-500/20 text-amber-400", icon: Search },
-  inspection_approved: { label: "Aprovado ✓", color: "bg-success/20 text-success", icon: CheckCircle2 },
-  inspection_rejected: { label: "Reprovado ✗", color: "bg-destructive/20 text-destructive", icon: XCircle },
+  inspection_approved: { label: "Autêntico ✓", color: "bg-success/20 text-success", icon: CheckCircle2 },
+  inspection_rejected: { label: "Réplica ✗", color: "bg-destructive/20 text-destructive", icon: XCircle },
   ship_to_buyer_pending: { label: "Pronto p/ envio", color: "bg-blue-500/20 text-blue-400", icon: Package },
   in_transit_to_buyer: { label: "Em trânsito → Comprador", color: "bg-purple-500/20 text-purple-400", icon: Package },
   delivered: { label: "Entregue", color: "bg-success/20 text-success", icon: CheckCircle2 },
@@ -170,9 +170,9 @@ export default function MarketplaceInspectionPage() {
       }
       const data = await res.json();
       if (result === "approved" && data.laudo_id) {
-        toast({ title: `Inspeção aprovada! ✓`, description: `Laudo: ${data.laudo_id}` });
+        toast({ title: `Autêntico! ✓`, description: `Laudo: ${data.laudo_id}` });
       } else {
-        toast({ title: result === "approved" ? "Inspeção aprovada! ✓" : "Inspeção reprovada" });
+        toast({ title: result === "approved" ? "Autêntico! ✓" : "Réplica identificada" });
       }
       setInspectDialogOpen(false);
       fetchHubOrders();
@@ -229,13 +229,13 @@ export default function MarketplaceInspectionPage() {
         <Card className="card-premium">
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-success">{inspectedOrders.filter(o => o.inspection_result === "approved").length}</p>
-            <p className="text-xs text-muted-foreground">Aprovados</p>
+            <p className="text-xs text-muted-foreground">Autênticos</p>
           </CardContent>
         </Card>
         <Card className="card-premium">
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-destructive">{inspectedOrders.filter(o => o.inspection_result === "rejected").length}</p>
-            <p className="text-xs text-muted-foreground">Reprovados</p>
+            <p className="text-xs text-muted-foreground">Réplicas</p>
           </CardContent>
         </Card>
       </div>
@@ -347,7 +347,7 @@ export default function MarketplaceInspectionPage() {
                   {selectedOrder.hub_tracking_code && <p>📦 Rastreio → Hub: <span className="font-mono">{selectedOrder.hub_tracking_code}</span></p>}
                   {selectedOrder.hub_received_at && <p>✅ Recebido no Hub: {new Date(selectedOrder.hub_received_at).toLocaleString("pt-BR")}</p>}
                   {selectedOrder.inspection_result && (
-                    <p>{selectedOrder.inspection_result === "approved" ? "✅" : "❌"} Inspeção: {selectedOrder.inspection_result === "approved" ? "Aprovado" : "Reprovado"}</p>
+                    <p>{selectedOrder.inspection_result === "approved" ? "✅" : "❌"} Inspeção: {selectedOrder.inspection_result === "approved" ? "Autêntico" : "Réplica"}</p>
                   )}
                   {selectedOrder.hub_tracking_to_buyer && <p>📦 Rastreio → Comprador: <span className="font-mono">{selectedOrder.hub_tracking_to_buyer}</span></p>}
                   {selectedOrder.hub_shipped_at && <p>🚀 Enviado ao comprador: {new Date(selectedOrder.hub_shipped_at).toLocaleString("pt-BR")}</p>}
@@ -410,7 +410,7 @@ export default function MarketplaceInspectionPage() {
                     <div className="space-y-2">
                       <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-sm space-y-1">
                         <p className="font-medium text-destructive flex items-center gap-1">
-                          <AlertTriangle className="h-4 w-4" /> Item reprovado na inspeção
+                          <AlertTriangle className="h-4 w-4" /> Item classificado como réplica
                         </p>
                         <p className="text-xs text-muted-foreground">
                           O comprador será reembolsado e o anúncio reativado. O vendedor será notificado para retirar o item.
