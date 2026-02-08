@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -47,8 +48,8 @@ export function CatalogProductCard({ product }: CatalogProductCardProps) {
 
         {product.is_high_risk && (
           <div className="absolute top-2 left-2">
-            <Badge className="text-[9px] bg-amber-500/90 text-white border-0">
-              Alto risco
+            <Badge className="text-[9px] bg-primary/90 text-primary-foreground border-0 gap-0.5">
+              <ShieldCheck className="h-2.5 w-2.5" /> PRO recomendado
             </Badge>
           </div>
         )}
