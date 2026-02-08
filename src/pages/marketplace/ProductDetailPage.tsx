@@ -418,18 +418,13 @@ export default function ProductDetailPage() {
           )}
         </div>
 
-        {/* ===== ANALYTICS / PRICE HISTORY ===== */}
+        {/* ===== PRICE INSIGHTS ===== */}
         <div className="mt-10 max-w-3xl">
           <ProductAnalyticsChart
             analytics={analytics}
             isLoading={analyticsLoading}
             productName={formattedName}
           />
-        </div>
-
-        {/* ===== TRUST BADGES ===== */}
-        <div className="mt-10 max-w-3xl">
-          <TrustBadges />
         </div>
 
         {/* ===== REVIEWS ===== */}
