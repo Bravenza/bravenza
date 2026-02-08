@@ -89,12 +89,16 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
   const [sellerProfileId, setSellerProfileId] = useState<string | null>(null);
   const [listingOffers, setListingOffers] = useState<Record<string, any[]>>({});
   const [sellerOnboarded, setSellerOnboarded] = useState<boolean | null>(null);
+  const [sellerKycStatus, setSellerKycStatus] = useState<string | null>(null);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
 
   useEffect(() => {
     handleSearch();
     if (isVaultMember) {
-      checkOnboardingStatus().then((res) => setSellerOnboarded(res.onboarded));
+      checkOnboardingStatus().then((res) => {
+        setSellerOnboarded(res.onboarded);
+        setSellerKycStatus(res.seller?.kyc_status || null);
+      });
     }
   }, []);
 
@@ -227,8 +231,13 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
             Compre e venda tênis entre colecionadores
           </p>
         </div>
-        {isVaultMember && sellerOnboarded === true && (
+        {isVaultMember && sellerOnboarded === true && sellerKycStatus === "approved" && (
           <CreateListingDialog onSubmit={handleCreateOffer} searchProducts={searchProducts} createProduct={createProduct} vaultItems={vaultItems} />
+        )}
+        {isVaultMember && sellerOnboarded === true && sellerKycStatus === "pending_review" && (
+          <Badge variant="outline" className="border-amber-500/50 text-amber-600 dark:text-amber-400 py-1.5 px-3">
+            ⏳ Documentos em análise
+          </Badge>
         )}
         {isVaultMember && sellerOnboarded === false && (
           <Button className="btn-gold" onClick={() => setOnboardingOpen(true)}>
@@ -247,19 +256,19 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
           {isVaultMember && (
             <TabsTrigger value="meus-anuncios">Meus anúncios</TabsTrigger>
           )}
-          {isVaultMember && sellerOnboarded && (
+          {isVaultMember && sellerOnboarded && sellerKycStatus === "approved" && (
             <TabsTrigger value="analytics" className="gap-1">
               <BarChart3 className="h-3.5 w-3.5" />
               Analytics
             </TabsTrigger>
           )}
-          {isVaultMember && sellerOnboarded && (
+          {isVaultMember && sellerOnboarded && sellerKycStatus === "approved" && (
             <TabsTrigger value="cupons" className="gap-1">
               <Tag className="h-3.5 w-3.5" />
               Cupons
             </TabsTrigger>
           )}
-          {isVaultMember && sellerOnboarded && (
+          {isVaultMember && sellerOnboarded && sellerKycStatus === "approved" && (
             <TabsTrigger value="sugestoes" className="gap-1">
               <TrendingDown className="h-3.5 w-3.5" />
               Sugestões
@@ -525,9 +534,12 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
       <SellerOnboardingDialog
         open={onboardingOpen}
         onOpenChange={setOnboardingOpen}
-        onComplete={async (data) => {
-          const success = await completeOnboarding(data);
-          if (success) setSellerOnboarded(true);
+        onComplete={async (data, documents) => {
+          const success = await completeOnboarding(data, documents);
+          if (success) {
+            setSellerOnboarded(true);
+            setSellerKycStatus("pending_review");
+          }
           return success;
         }}
       />

@@ -1,25 +1,22 @@
 import { useState } from "react";
-import { UserCheck, Banknote, FileCheck, ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
+import { UserCheck, Banknote, FileCheck, ChevronRight, ChevronLeft, Loader2, ShieldCheck } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { KycStep } from "./seller-onboarding/KycStep";
+import { PayoutStep } from "./seller-onboarding/PayoutStep";
+import { IdVerificationStep, type IdDocuments } from "./seller-onboarding/IdVerificationStep";
+import { TermsStep } from "./seller-onboarding/TermsStep";
 
 interface SellerOnboardingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onComplete: (data: SellerOnboardingData) => Promise<boolean>;
+  onComplete: (data: SellerOnboardingData, documents: IdDocuments) => Promise<boolean>;
 }
 
 export interface SellerOnboardingData {
@@ -35,42 +32,14 @@ export interface SellerOnboardingData {
   terms_accepted: boolean;
 }
 
-type Step = "kyc" | "payout" | "terms";
+type Step = "kyc" | "payout" | "docs" | "terms";
 
 const STEPS: { key: Step; label: string; icon: React.ReactNode }[] = [
   { key: "kyc", label: "Dados pessoais", icon: <UserCheck className="h-4 w-4" /> },
-  { key: "payout", label: "Dados de repasse", icon: <Banknote className="h-4 w-4" /> },
+  { key: "payout", label: "Repasse", icon: <Banknote className="h-4 w-4" /> },
+  { key: "docs", label: "Identidade", icon: <ShieldCheck className="h-4 w-4" /> },
   { key: "terms", label: "Termos", icon: <FileCheck className="h-4 w-4" /> },
 ];
-
-function formatCPF(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 14);
-  if (digits.length <= 11) {
-    return digits.replace(/(\d{3})(\d{3})?(\d{3})?(\d{2})?/, (_, a, b, c, d) =>
-      [a, b, c].filter(Boolean).join(".") + (d ? `-${d}` : "")
-    );
-  }
-  return digits.replace(/(\d{2})(\d{3})?(\d{3})?(\d{4})?(\d{2})?/, (_, a, b, c, d, e) =>
-    [a, b, c].filter(Boolean).join(".") + (d ? `/${d}` : "") + (e ? `-${e}` : "")
-  );
-}
-
-function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
-  if (digits.length <= 10) {
-    return digits.replace(/(\d{2})(\d{4})?(\d{4})?/, (_, a, b, c) =>
-      `(${a})${b ? ` ${b}` : ""}${c ? `-${c}` : ""}`
-    );
-  }
-  return digits.replace(/(\d{2})(\d{5})?(\d{4})?/, (_, a, b, c) =>
-    `(${a})${b ? ` ${b}` : ""}${c ? `-${c}` : ""}`
-  );
-}
-
-function formatCEP(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 8);
-  return digits.replace(/(\d{5})(\d{3})?/, (_, a, b) => (b ? `${a}-${b}` : a));
-}
 
 export function SellerOnboardingDialog({ open, onOpenChange, onComplete }: SellerOnboardingDialogProps) {
   const { toast } = useToast();
@@ -86,7 +55,8 @@ export function SellerOnboardingDialog({ open, onOpenChange, onComplete }: Selle
   const [pixKey, setPixKey] = useState("");
   const [pixBeneficiary, setPixBeneficiary] = useState("");
   const [bankName, setBankName] = useState("");
-  const [accountType, setAccountType] = useState("pf");
+
+  const [documents, setDocuments] = useState<IdDocuments>({ front: null, back: null, selfie: null });
 
   const [termsAccepted, setTermsAccepted] = useState(false);
 
@@ -97,36 +67,42 @@ export function SellerOnboardingDialog({ open, onOpenChange, onComplete }: Selle
 
   const isKycValid = fullName.trim().length >= 3 && cpfCnpj.replace(/\D/g, "").length >= 11 && phone.replace(/\D/g, "").length >= 10 && sellerCep.replace(/\D/g, "").length === 8;
   const isPayoutValid = pixKeyType.length > 0 && pixKey.trim().length >= 3 && pixBeneficiary.trim().length >= 3 && bankName.trim().length >= 2;
+  const isDocsValid = !!documents.front && !!documents.back && !!documents.selfie;
   const isTermsValid = termsAccepted;
 
-  const canAdvance = step === "kyc" ? isKycValid : step === "payout" ? isPayoutValid : isTermsValid;
+  const canAdvance = step === "kyc" ? isKycValid : step === "payout" ? isPayoutValid : step === "docs" ? isDocsValid : isTermsValid;
 
   const handleNext = () => {
     if (step === "kyc") setStep("payout");
-    else if (step === "payout") setStep("terms");
+    else if (step === "payout") setStep("docs");
+    else if (step === "docs") setStep("terms");
   };
 
   const handleBack = () => {
     if (step === "payout") setStep("kyc");
-    else if (step === "terms") setStep("payout");
+    else if (step === "docs") setStep("payout");
+    else if (step === "terms") setStep("docs");
   };
 
   const handleSubmit = async () => {
     if (!canAdvance) return;
     setIsSubmitting(true);
     try {
-      const success = await onComplete({
-        full_name: fullName.trim(),
-        cpf_cnpj: cpfCnpj.replace(/\D/g, ""),
-        phone: phone.replace(/\D/g, ""),
-        seller_cep: sellerCep.replace(/\D/g, ""),
-        pix_key_type: pixKeyType,
-        pix_key: pixKey.trim(),
-        pix_beneficiary: pixBeneficiary.trim(),
-        bank_name: bankName.trim(),
-        account_type: derivedAccountType,
-        terms_accepted: true,
-      });
+      const success = await onComplete(
+        {
+          full_name: fullName.trim(),
+          cpf_cnpj: cpfCnpj.replace(/\D/g, ""),
+          phone: phone.replace(/\D/g, ""),
+          seller_cep: sellerCep.replace(/\D/g, ""),
+          pix_key_type: pixKeyType,
+          pix_key: pixKey.trim(),
+          pix_beneficiary: pixBeneficiary.trim(),
+          bank_name: bankName.trim(),
+          account_type: derivedAccountType,
+          terms_accepted: true,
+        },
+        documents
+      );
       if (success) {
         onOpenChange(false);
       }
@@ -164,132 +140,34 @@ export function SellerOnboardingDialog({ open, onOpenChange, onComplete }: Selle
           ))}
         </div>
 
-        {/* Step: KYC */}
+        {/* Steps */}
         {step === "kyc" && (
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Precisamos de algumas informações para validar seu perfil de vendedor.
-            </p>
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="fullName">Nome completo *</Label>
-                <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Seu nome completo" />
-              </div>
-              <div>
-                <Label htmlFor="cpfCnpj">CPF ou CNPJ *</Label>
-                <Input id="cpfCnpj" value={cpfCnpj} onChange={(e) => setCpfCnpj(formatCPF(e.target.value))} placeholder="000.000.000-00" />
-              </div>
-              <div>
-                <Label htmlFor="phone">Telefone *</Label>
-                <Input id="phone" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="(51) 99999-9999" />
-              </div>
-              <div>
-                <Label htmlFor="cep">CEP de envio *</Label>
-                <Input id="cep" value={sellerCep} onChange={(e) => setSellerCep(formatCEP(e.target.value))} placeholder="00000-000" />
-              </div>
-            </div>
-          </div>
+          <KycStep
+            fullName={fullName} setFullName={setFullName}
+            cpfCnpj={cpfCnpj} setCpfCnpj={setCpfCnpj}
+            phone={phone} setPhone={setPhone}
+            sellerCep={sellerCep} setSellerCep={setSellerCep}
+          />
         )}
-
-        {/* Step: Payout */}
         {step === "payout" && (
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Configure como deseja receber os repasses das suas vendas.
-            </p>
-
-            {isCnpj && (
-              <Card className="bg-destructive/10 border-destructive/30">
-                <CardContent className="p-3 text-xs text-destructive flex items-center gap-2">
-                  <Badge variant="outline" className="border-destructive/50 text-destructive">PJ</Badge>
-                  CNPJ detectado — a conta bancária deve ser Pessoa Jurídica.
-                </CardContent>
-              </Card>
-            )}
-
-            <div className="space-y-3">
-              <div>
-                <Label>Tipo de chave PIX *</Label>
-                <Select value={pixKeyType} onValueChange={setPixKeyType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cpf">CPF</SelectItem>
-                    <SelectItem value="cnpj">CNPJ</SelectItem>
-                    <SelectItem value="email">E-mail</SelectItem>
-                    <SelectItem value="phone">Telefone</SelectItem>
-                    <SelectItem value="random">Chave aleatória</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="pixKey">Chave PIX *</Label>
-                <Input id="pixKey" value={pixKey} onChange={(e) => setPixKey(e.target.value)} placeholder="Sua chave PIX" />
-              </div>
-              <div>
-                <Label htmlFor="pixBeneficiary">Beneficiário da conta *</Label>
-                <Input id="pixBeneficiary" value={pixBeneficiary} onChange={(e) => setPixBeneficiary(e.target.value)} placeholder="Nome do titular da conta" />
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  ⚠️ O beneficiário deve ser o mesmo titular do cadastro ({isCnpj ? "razão social do CNPJ" : "nome do CPF"}).
-                </p>
-              </div>
-              <div>
-                <Label htmlFor="bankName">Banco *</Label>
-                <Input id="bankName" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Ex: Nubank, Itaú, Bradesco..." />
-              </div>
-            </div>
-
-            <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="p-3 text-xs text-muted-foreground">
-                <strong className="text-foreground">Segurança:</strong> Seus dados bancários são criptografados e utilizados exclusivamente para repasses de vendas.
-              </CardContent>
-            </Card>
-          </div>
+          <PayoutStep
+            isCnpj={isCnpj}
+            pixKeyType={pixKeyType} setPixKeyType={setPixKeyType}
+            pixKey={pixKey} setPixKey={setPixKey}
+            pixBeneficiary={pixBeneficiary} setPixBeneficiary={setPixBeneficiary}
+            bankName={bankName} setBankName={setBankName}
+          />
         )}
-
-        {/* Step: Terms */}
+        {step === "docs" && (
+          <IdVerificationStep documents={documents} setDocuments={setDocuments} />
+        )}
         {step === "terms" && (
-          <div className="space-y-4">
-            <Card className="card-premium">
-              <CardContent className="p-4 space-y-3 text-sm">
-                <h4 className="font-semibold">Termos do Vendedor Bravenza</h4>
-                <div className="max-h-48 overflow-y-auto space-y-2 text-xs text-muted-foreground pr-2">
-                  <p><strong>1. Responsabilidade:</strong> O vendedor garante a autenticidade e veracidade das informações dos produtos anunciados.</p>
-                  <p><strong>2. Prazos de envio:</strong> Após a confirmação de pagamento, o vendedor tem até 3 dias úteis para enviar o produto. O não cumprimento pode resultar em cancelamento e penalidades.</p>
-                  <p><strong>3. Taxas:</strong> A Bravenza cobra uma taxa de serviço sobre cada venda, variando de 8% a 14% conforme o nível do vendedor.</p>
-                  <p><strong>4. Repasses:</strong> Os valores são repassados via PIX após a confirmação de entrega e encerramento da janela de proteção (48h a 10 dias, conforme tier).</p>
-                  <p><strong>5. Disputas:</strong> Em caso de disputa, a Bravenza atuará como mediadora. O vendedor deve fornecer evidências solicitadas em até 48h.</p>
-                  <p><strong>6. PRO Hub:</strong> Itens enviados via PRO Hub passam por inspeção física. Reprovações resultam em devolução ao vendedor, sem custos para o comprador.</p>
-                  <p><strong>7. Penalidades:</strong> Cancelamentos recorrentes, atrasos no envio ou anúncios falsos podem resultar em rebaixamento de tier ou suspensão.</p>
-                  <p><strong>8. Dados bancários:</strong> O vendedor é responsável por manter seus dados de repasse atualizados.</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="flex items-start gap-2">
-              <Checkbox
-                id="terms"
-                checked={termsAccepted}
-                onCheckedChange={(v) => setTermsAccepted(!!v)}
-              />
-              <label htmlFor="terms" className="text-sm leading-tight cursor-pointer">
-                Li e aceito os <strong>Termos do Vendedor Bravenza</strong> e me comprometo a seguir as regras da plataforma.
-              </label>
-            </div>
-
-            <div className="p-3 bg-muted/50 rounded-lg">
-              <h5 className="text-xs font-semibold mb-1.5">Resumo do seu cadastro:</h5>
-              <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
-                <span>Nome: <strong className="text-foreground">{fullName}</strong></span>
-                <span>CPF/CNPJ: <strong className="text-foreground">{cpfCnpj}</strong></span>
-                <span>Tipo conta: <strong className="text-foreground">{derivedAccountType === "pj" ? "PJ" : "PF"}</strong></span>
-                <span>Banco: <strong className="text-foreground">{bankName}</strong></span>
-                <span>PIX: <strong className="text-foreground">{pixKeyType.toUpperCase()}</strong></span>
-                <span>Beneficiário: <strong className="text-foreground">{pixBeneficiary}</strong></span>
-              </div>
-            </div>
-          </div>
+          <TermsStep
+            fullName={fullName} cpfCnpj={cpfCnpj}
+            derivedAccountType={derivedAccountType} bankName={bankName}
+            pixKeyType={pixKeyType} pixBeneficiary={pixBeneficiary}
+            termsAccepted={termsAccepted} setTermsAccepted={setTermsAccepted}
+          />
         )}
 
         {/* Navigation */}

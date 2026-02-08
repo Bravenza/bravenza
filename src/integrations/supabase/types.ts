@@ -3016,7 +3016,13 @@ export type Database = {
           dispute_rate: number | null
           full_name: string | null
           id: string
+          id_back_url: string | null
+          id_front_url: string | null
+          id_selfie_url: string | null
           is_active: boolean
+          kyc_rejection_reason: string | null
+          kyc_reviewed_at: string | null
+          kyc_reviewed_by: string | null
           kyc_status: string
           member_id: string
           on_time_shipping_rate: number | null
@@ -3048,7 +3054,13 @@ export type Database = {
           dispute_rate?: number | null
           full_name?: string | null
           id?: string
+          id_back_url?: string | null
+          id_front_url?: string | null
+          id_selfie_url?: string | null
           is_active?: boolean
+          kyc_rejection_reason?: string | null
+          kyc_reviewed_at?: string | null
+          kyc_reviewed_by?: string | null
           kyc_status?: string
           member_id: string
           on_time_shipping_rate?: number | null
@@ -3080,7 +3092,13 @@ export type Database = {
           dispute_rate?: number | null
           full_name?: string | null
           id?: string
+          id_back_url?: string | null
+          id_front_url?: string | null
+          id_selfie_url?: string | null
           is_active?: boolean
+          kyc_rejection_reason?: string | null
+          kyc_reviewed_at?: string | null
+          kyc_reviewed_by?: string | null
           kyc_status?: string
           member_id?: string
           on_time_shipping_rate?: number | null

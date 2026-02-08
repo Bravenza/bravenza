@@ -1189,9 +1189,11 @@ Deno.serve(async (req) => {
         throw new Error("Todos os campos obrigatórios devem ser preenchidos");
       }
 
+      const hasDocuments = b.id_front_url && b.id_back_url && b.id_selfie_url;
+
       let sl = await gs(sb, mb.id);
       const isCnpj = b.cpf_cnpj.length > 11;
-      const onboardingData = {
+      const onboardingData: Record<string, unknown> = {
         full_name: b.full_name,
         cpf_cnpj: b.cpf_cnpj,
         phone: b.phone,
@@ -1202,9 +1204,15 @@ Deno.serve(async (req) => {
         bank_name: b.bank_name,
         account_type: isCnpj ? "pj" : "pf",
         terms_accepted_at: new Date().toISOString(),
-        kyc_status: "approved",
+        kyc_status: hasDocuments ? "pending_review" : "pending_docs",
         onboarding_completed_at: new Date().toISOString(),
       };
+
+      if (hasDocuments) {
+        onboardingData.id_front_url = b.id_front_url;
+        onboardingData.id_back_url = b.id_back_url;
+        onboardingData.id_selfie_url = b.id_selfie_url;
+      }
 
       if (sl) {
         await sb.from("vault_seller_profiles").update(onboardingData).eq("id", sl.id);
@@ -1213,7 +1221,18 @@ Deno.serve(async (req) => {
         if (error) throw error;
       }
 
-      console.log("Seller onboarding completed for CPF:", cpf);
+      // Notify admins about new seller pending review
+      if (hasDocuments) {
+        await sb.from("notifications").insert({
+          title: "Novo vendedor aguardando aprovação",
+          message: `${b.full_name} enviou documentos para verificação de identidade.`,
+          target: "admin",
+          type: "info",
+          reference_type: "seller_kyc",
+        });
+      }
+
+      console.log("Seller onboarding completed for CPF:", cpf, "kyc_status:", hasDocuments ? "pending_review" : "pending_docs");
       return j({ success: true });
     }
 
