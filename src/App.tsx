@@ -32,6 +32,7 @@ const AuthenticityPage = lazy(() => import("./pages/AuthenticityPage"));
 const AuthenticityInfoPage = lazy(() => import("./pages/AuthenticityInfoPage"));
 const AdGuidelinesPage = lazy(() => import("./pages/AdGuidelinesPage"));
 const MarketplaceRulesPage = lazy(() => import("./pages/MarketplaceRulesPage"));
+const VerificationPolicyPage = lazy(() => import("./pages/VerificationPolicyPage"));
 
 // Lazy loaded pages - Vault Club
 const VaultLandingPage = lazy(() => import("./pages/vault/VaultLandingPage"));
@@ -133,6 +134,7 @@ const App = () => (
                     <Route path="/sobre-autenticidade" element={<AuthenticityInfoPage />} />
                     <Route path="/diretrizes-anuncio" element={<AdGuidelinesPage />} />
                     <Route path="/regras-marketplace" element={<MarketplaceRulesPage />} />
+                    <Route path="/politica-verificacao" element={<VerificationPolicyPage />} />
                     <Route path="/marketplace/:slug" element={<ProductDetailPage />} />
 
                     {/* Vault Club public routes */}
