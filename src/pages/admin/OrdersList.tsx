@@ -165,8 +165,8 @@ const OrdersList = () => {
         </Select>
       </div>
 
-      {/* Table */}
-      <div className="card-premium overflow-hidden">
+      {/* Desktop Table */}
+      <div className="card-premium overflow-hidden hidden md:block">
         <Table>
           <TableHeader>
             <TableRow className="border-border hover:bg-transparent">
@@ -251,6 +251,39 @@ const OrdersList = () => {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="md:hidden space-y-3">
+        {filteredOrders.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground card-premium rounded-lg">
+            Nenhum pedido encontrado
+          </div>
+        ) : (
+          filteredOrders.map((order) => (
+            <div
+              key={order.order_id}
+              className="card-premium p-4 cursor-pointer active:scale-[0.98] transition-transform"
+              onClick={() => navigate(`/admin/pedidos/${order.order_id}`)}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono text-sm font-medium">{order.order_id}</span>
+                <span
+                  className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                    order.current_status
+                  )}`}
+                >
+                  {ORDER_STATUS_LABELS[order.current_status] || order.current_status}
+                </span>
+              </div>
+              <p className="font-medium text-sm truncate">{order.product_name}</p>
+              <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+                <span>{order.client_name}</span>
+                <span>{formatDate(order.created_at)}</span>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Results count */}

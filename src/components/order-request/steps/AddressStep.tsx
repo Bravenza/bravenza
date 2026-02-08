@@ -61,6 +61,8 @@ export const AddressStep = ({
               }}
               placeholder="00000-000"
               className="h-12"
+              inputMode="numeric"
+              autoFocus
             />
             {isLoadingCep && (
               <Loader2 className="h-4 w-4 animate-spin absolute right-3 top-4 text-muted-foreground" />
