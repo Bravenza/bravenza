@@ -20,6 +20,7 @@ import { ListingDetailSheet } from "@/components/client/vault/marketplace/Listin
 import { ProductWatchlistButton } from "@/components/marketplace/ProductWatchlistButton";
 import { ProductReviews } from "@/components/marketplace/ProductReviews";
 import { ProductAnalyticsChart } from "@/components/marketplace/ProductAnalyticsChart";
+import { TrustBadges } from "@/components/marketplace/TrustBadges";
 import { formatProductName } from "@/lib/text-utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -424,6 +425,11 @@ export default function ProductDetailPage() {
             isLoading={analyticsLoading}
             productName={formattedName}
           />
+        </div>
+
+        {/* ===== TRUST BADGES ===== */}
+        <div className="mt-10 max-w-3xl">
+          <TrustBadges />
         </div>
 
         {/* ===== REVIEWS ===== */}

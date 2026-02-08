@@ -181,8 +181,13 @@ export function ProductReviews({
       {isLoading ? (
         <div className="py-6 text-center text-sm text-muted-foreground">Carregando avaliações...</div>
       ) : reviews.length === 0 && !showForm ? (
-        <div className="py-6 text-center text-sm text-muted-foreground">
-          Nenhuma avaliação ainda. Seja o primeiro a avaliar!
+        <div className="py-6 text-center space-y-1.5">
+          <p className="text-sm text-muted-foreground">
+            Ainda não temos avaliações para este item, mas fique tranquilo: a Bravenza já intermediou milhares de negócios com sucesso e possui inúmeras avaliações positivas em outros produtos.
+          </p>
+          <p className="text-xs text-muted-foreground/60">
+            Seja o primeiro a avaliar!
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
