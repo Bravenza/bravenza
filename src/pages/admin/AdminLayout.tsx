@@ -134,7 +134,8 @@ const AdminLayout = () => {
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              className="lg:hidden p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors active:scale-95"
+              aria-label="Fechar menu"
             >
               <X className="h-5 w-5" />
             </button>
@@ -228,7 +229,8 @@ const AdminLayout = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                className="lg:hidden p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors active:scale-95"
+                aria-label="Abrir menu"
               >
                 <Menu className="h-5 w-5" />
               </button>

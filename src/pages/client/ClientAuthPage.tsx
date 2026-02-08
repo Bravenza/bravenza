@@ -325,7 +325,7 @@ export default function ClientAuthPage() {
                         <Label htmlFor="login-email">Email</Label>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
+                         <Input
                             id="login-email"
                             type="email"
                             inputMode="email"
@@ -338,6 +338,7 @@ export default function ClientAuthPage() {
                             onChange={(e) => setLoginEmail(e.target.value)}
                             className="pl-10"
                             required
+                            autoFocus
                           />
                         </div>
                       </div>
@@ -412,6 +413,7 @@ export default function ClientAuthPage() {
                         <Input
                           id="cpf"
                           type="text"
+                          inputMode="numeric"
                           placeholder="000.000.000-00"
                           value={cpf}
                           onChange={(e) => setCpf(formatCPF(e.target.value))}
@@ -447,6 +449,8 @@ export default function ClientAuthPage() {
                         <Input
                           id="phone"
                           type="text"
+                          inputMode="tel"
+                          autoComplete="tel"
                           placeholder="(00) 00000-0000"
                           value={phone}
                           onChange={(e) => setPhone(formatPhone(e.target.value))}

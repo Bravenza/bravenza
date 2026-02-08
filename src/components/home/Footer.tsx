@@ -66,7 +66,7 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="group flex items-center justify-center w-10 h-10 rounded-xl bg-muted/50 border border-border/50 hover:border-primary/50 hover:bg-primary/10 transition-all duration-300"
-                aria-label="WhatsApp"
+                aria-label="Fale conosco no WhatsApp"
               >
                 <MessageCircle className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
               </a>
@@ -75,7 +75,7 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="group flex items-center justify-center w-10 h-10 rounded-xl bg-muted/50 border border-border/50 hover:border-primary/50 hover:bg-primary/10 transition-all duration-300"
-                aria-label="Instagram"
+                aria-label="Siga-nos no Instagram"
               >
                 <Instagram className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
               </a>
@@ -153,12 +153,15 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
               Admin
             </Link>
           </div>
-          <div className="flex gap-6 text-xs">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs">
             <Link to="/politicas" className="text-muted-foreground hover:text-foreground transition-colors">
-              Políticas
+              Privacidade
             </Link>
             <Link to="/termos" className="text-muted-foreground hover:text-foreground transition-colors">
-              Termos de Uso
+              Termos de uso
+            </Link>
+            <Link to="/trocas" className="text-muted-foreground hover:text-foreground transition-colors">
+              Trocas e devoluções
             </Link>
           </div>
         </div>
