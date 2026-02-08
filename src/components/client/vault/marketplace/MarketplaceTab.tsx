@@ -238,7 +238,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
       </div>
 
       <Tabs value={innerTab} onValueChange={setInnerTab}>
-        <TabsList className="flex flex-wrap">
+        <TabsList className="flex overflow-x-auto scrollbar-hide w-full justify-start gap-0.5">
           <TabsTrigger value="explorar">Explorar</TabsTrigger>
           <TabsTrigger value="pedidos" className="gap-1">
             <ShoppingBag className="h-3.5 w-3.5" />
