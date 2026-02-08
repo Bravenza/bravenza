@@ -230,7 +230,7 @@ export default function VaultAppLayout() {
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border/30">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border/30 safe-bottom">
         <div className="flex justify-around">
           {navItems.slice(0, 5).map((item) => {
             const isActive = item.exact 
@@ -241,7 +241,7 @@ export default function VaultAppLayout() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex flex-col items-center gap-1 py-3 px-3 text-xs transition ${
+                className={`flex flex-col items-center gap-1 py-3 px-3 min-h-[56px] text-xs transition ${
                   isActive ? "text-primary" : "text-muted-foreground"
                 }`}
               >

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { OrdersTabSkeleton } from "@/components/skeletons/DashboardSkeleton";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -213,11 +214,7 @@ export function OrdersTab({ orders, isLoading, sessionToken }: OrdersTabProps) {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
+    return <OrdersTabSkeleton />;
   }
 
   if (orders.length === 0) {

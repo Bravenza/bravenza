@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -57,6 +57,8 @@ import {
 } from "@/components/client/vault";
 import { MarketplaceTab } from "@/components/client/vault/marketplace";
 import { Loader2 } from "lucide-react";
+import { useScrollRestoration } from "@/hooks/useScrollRestoration";
+import { OrdersTabSkeleton, SectionHeaderSkeleton } from "@/components/skeletons/DashboardSkeleton";
 
 interface OrderData {
   order_id: string;
@@ -157,6 +159,14 @@ export default function UnifiedDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
   const isMobile = useIsMobile();
+  const { saveScrollPosition, restoreScrollPosition } = useScrollRestoration();
+
+  const handleSectionChange = useCallback((newSection: string) => {
+    saveScrollPosition(activeSection);
+    setActiveSection(newSection);
+    setSearchParams({ tab: newSection }, { replace: true });
+    restoreScrollPosition(newSection);
+  }, [activeSection, saveScrollPosition, restoreScrollPosition, setSearchParams]);
 
   // Sync tab param on change
   useEffect(() => {
@@ -240,7 +250,7 @@ export default function UnifiedDashboard() {
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-2">
               <button
-                onClick={() => setActiveSection("pedidos")}
+                onClick={() => handleSectionChange("pedidos")}
                 className={cn(
                   "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300",
                   activeSection === "pedidos"
@@ -282,7 +292,7 @@ export default function UnifiedDashboard() {
                     {vaultMenuItems.map((item) => (
                       <DropdownMenuItem
                         key={item.id}
-                        onClick={() => setActiveSection(item.id)}
+                        onClick={() => handleSectionChange(item.id)}
                         className={cn(
                           "flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors",
                           activeSection === item.id && "bg-primary/10"
@@ -359,7 +369,7 @@ export default function UnifiedDashboard() {
           >
             <div className="p-4 space-y-1">
               <button
-                onClick={() => { setActiveSection("pedidos"); setMobileMenuOpen(false); }}
+                onClick={() => { handleSectionChange("pedidos"); setMobileMenuOpen(false); }}
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200",
                   activeSection === "pedidos"
@@ -384,7 +394,7 @@ export default function UnifiedDashboard() {
                   {vaultMenuItems.map((item) => (
                     <button
                       key={item.id}
-                      onClick={() => { setActiveSection(item.id); setMobileMenuOpen(false); }}
+                      onClick={() => { handleSectionChange(item.id); setMobileMenuOpen(false); }}
                       className={cn(
                         "w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200",
                         activeSection === item.id
