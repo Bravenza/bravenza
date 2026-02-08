@@ -99,8 +99,11 @@ export function MarketplaceCheckoutDialog({
   ) : "direct";
 
   // Determine if PRO is mandatory/recommended
+  const PRO_AUTH_FEE = 49.90;
   const isProMandatory = listing ? (listing.price >= 2000 || normalizedShippingMode === "bravenza") : false;
   const isProRecommended = listing ? (listing.price >= 800 && listing.condition !== "novo") : false;
+  // Auth fee applies only when user chooses PRO on non-mandatory items
+  const authFee = (chosenMode === "bravenza" && !isProMandatory) ? PRO_AUTH_FEE : 0;
 
   // Reset when dialog opens
   useEffect(() => {
@@ -198,7 +201,7 @@ export function MarketplaceCheckoutDialog({
   if (!listing) return null;
 
   const shippingCost = selectedFreight ? parseFloat(selectedFreight.price) : 0;
-  const totalPrice = listing.price + shippingCost;
+  const totalPrice = listing.price + shippingCost + authFee;
   const isAddressValid = form.address_cep?.replace(/\D/g, "").length === 8 && form.address_street && form.address_number && form.address_neighborhood && form.address_city && form.address_state;
   const stateOptions = BR_STATES.map((s) => ({ value: s, label: s }));
 
@@ -327,6 +330,9 @@ export function MarketplaceCheckoutDialog({
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Passa pelo Hub Bravenza para autenticação física + embalagem premium. +5 dias úteis.
+                </p>
+                <p className="text-xs text-primary font-medium mt-1">
+                  + R$ {PRO_AUTH_FEE.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} taxa de autenticação
                 </p>
               </button>
             </div>
@@ -534,6 +540,24 @@ export function MarketplaceCheckoutDialog({
                 </span>
                 <span>R$ {shippingCost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
               </div>
+              {authFee > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <ShieldCheck className="h-3 w-3" />
+                    Autenticação PRO
+                  </span>
+                  <span>R$ {authFee.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                </div>
+              )}
+              {isProMandatory && chosenMode === "bravenza" && (
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-muted-foreground/70 flex items-center gap-1">
+                    <ShieldCheck className="h-3 w-3" />
+                    Autenticação PRO
+                  </span>
+                  <span className="text-muted-foreground/70">Inclusa</span>
+                </div>
+              )}
               <Separator />
               <div className="flex justify-between font-bold text-base">
                 <span>Total</span>
