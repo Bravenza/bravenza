@@ -96,6 +96,8 @@ export const TrackingForm = () => {
             value={orderId}
             onChange={(e) => setOrderId(e.target.value.toUpperCase())}
             className="pl-10 h-12 bg-secondary/50 border-border focus:border-primary focus:ring-1 focus:ring-primary/30 uppercase"
+            autoFocus
+            autoComplete="off"
           />
         </div>
       </div>
@@ -107,6 +109,7 @@ export const TrackingForm = () => {
         <Input
           id="cpf"
           type="text"
+          inputMode="numeric"
           placeholder="000.000.000-00"
           value={cpf}
           onChange={handleCPFChange}

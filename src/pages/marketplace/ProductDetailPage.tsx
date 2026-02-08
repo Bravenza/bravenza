@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, ShieldCheck, Star, Verified, Heart, Share2,
@@ -57,6 +57,7 @@ export default function ProductDetailPage() {
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
+  const touchStartX = React.useRef<number | null>(null);
   const [loadingOffers, setLoadingOffers] = useState(false);
   const [conditionFilter, setConditionFilter] = useState<"all" | "novo" | "usado">("all");
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -499,7 +500,18 @@ export default function ProductDetailPage() {
 
           {/* RIGHT: Gallery */}
           <div className="space-y-3 order-first lg:order-last">
-            <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted/20 border border-border/30">
+            <div
+              className="relative aspect-square rounded-2xl overflow-hidden bg-muted/20 border border-border/30 touch-pan-y"
+              onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+              onTouchEnd={(e) => {
+                if (touchStartX.current === null || images.length <= 1) return;
+                const diff = touchStartX.current - e.changedTouches[0].clientX;
+                if (Math.abs(diff) > 50) {
+                  setSelectedImage((prev) => diff > 0 ? (prev + 1) % images.length : (prev - 1 + images.length) % images.length);
+                }
+                touchStartX.current = null;
+              }}
+            >
               <img
                 src={images[selectedImage]}
                 alt={formattedName}

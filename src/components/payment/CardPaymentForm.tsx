@@ -335,6 +335,7 @@ export function CardPaymentForm({
             id="cardNumber"
             type="text"
             inputMode="numeric"
+            autoComplete="cc-number"
             placeholder="0000 0000 0000 0000"
             value={formData.cardNumber}
             onChange={(e) => handleInputChange("cardNumber", e.target.value)}
@@ -360,6 +361,7 @@ export function CardPaymentForm({
         <Input
           id="cardholderName"
           type="text"
+          autoComplete="cc-name"
           placeholder="NOME COMO NO CARTÃO"
           value={formData.cardholderName}
           onChange={(e) => handleInputChange("cardholderName", e.target.value.toUpperCase())}
@@ -410,6 +412,7 @@ export function CardPaymentForm({
             id="securityCode"
             type="text"
             inputMode="numeric"
+            autoComplete="cc-csc"
             placeholder="123"
             value={formData.securityCode}
             onChange={(e) => handleInputChange("securityCode", e.target.value.replace(/\D/g, ""))}
@@ -446,6 +449,8 @@ export function CardPaymentForm({
         <Input
           id="email"
           type="email"
+          inputMode="email"
+          autoComplete="email"
           placeholder="seu@email.com"
           value={formData.email}
           onChange={(e) => handleInputChange("email", e.target.value)}
