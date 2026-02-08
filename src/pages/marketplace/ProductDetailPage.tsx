@@ -194,7 +194,7 @@ export default function ProductDetailPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/30">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-1.5">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/minha-conta?tab=marketplace")} className="gap-1.5">
             <ArrowLeft className="h-4 w-4" /> Voltar
           </Button>
           <Logo size="sm" />
@@ -219,7 +219,7 @@ export default function ProductDetailPage() {
       <main className="max-w-6xl mx-auto px-4 py-6 pb-24">
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-4">
-          <button onClick={() => navigate("/minha-conta")} className="hover:text-foreground transition-colors">
+          <button onClick={() => navigate("/minha-conta?tab=marketplace")} className="hover:text-foreground transition-colors">
             Market+
           </button>
           <ChevronRight className="h-3 w-3" />
