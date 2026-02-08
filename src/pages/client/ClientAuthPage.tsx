@@ -226,9 +226,11 @@ export default function ClientAuthPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col relative">
       {/* Background Effects */}
-      <div className="fixed inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
-      <div className="fixed top-1/4 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="fixed bottom-1/4 left-0 w-[300px] h-[300px] bg-primary/3 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="absolute inset-0 bg-grid-pattern opacity-20" />
+        <div className="absolute top-1/4 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 left-0 w-[300px] h-[300px] bg-primary/3 rounded-full blur-3xl" />
+      </div>
 
       {/* Header */}
       <header className="relative border-b border-border/30 bg-background/80 backdrop-blur-xl">

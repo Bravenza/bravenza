@@ -215,7 +215,7 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
   return (
     <div className="min-h-screen bg-background flex flex-col relative">
       {/* Background decorations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <div className="absolute inset-0 bg-grid-pattern opacity-20" />
         <div className="absolute top-1/4 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
       </div>
