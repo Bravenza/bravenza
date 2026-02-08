@@ -279,8 +279,14 @@ Deno.serve(async (req) => {
 
     if (mt === "PUT" && a === "confirm-payment") {
       const b = await req.json();
+      // 8 dias úteis ≈ adicionar dias pulando fins de semana
       const pe = new Date();
-      pe.setDate(pe.getDate() + 10);
+      let bizDays = 0;
+      while (bizDays < 8) {
+        pe.setDate(pe.getDate() + 1);
+        const dow = pe.getDay();
+        if (dow !== 0 && dow !== 6) bizDays++;
+      }
       const { error } = await sb.from("vault_marketplace_orders").update({
         status: "paid", payment_method: b.payment_method, paid_at: new Date().toISOString(),
         protection_ends_at: pe.toISOString(),
