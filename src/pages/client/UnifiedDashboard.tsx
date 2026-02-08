@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LogOut,
@@ -144,15 +144,27 @@ const sectionTitles: Record<string, { title: string; subtitle: string; icon: Rea
 
 export default function UnifiedDashboard() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, profile, isLoading: sessionLoading, isVaultMember, signOut } = useClientSession();
 
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [vaultMember, setVaultMember] = useState<VaultMemberData | null>(null);
-  const [activeSection, setActiveSection] = useState("pedidos");
+  const [activeSection, setActiveSection] = useState(() => {
+    const tabParam = searchParams.get("tab");
+    return tabParam || "pedidos";
+  });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
   const isMobile = useIsMobile();
+
+  // Sync tab param on change
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && tabParam !== activeSection) {
+      setActiveSection(tabParam);
+    }
+  }, [searchParams]);
 
   const isSuperAdmin = user?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
   const hasVaultAccess = isSuperAdmin || !!vaultMember || isVaultMember;
