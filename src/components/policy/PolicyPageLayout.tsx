@@ -115,7 +115,7 @@ export function PolicyPartHeader({ title, subtitle }: { title: string; subtitle:
 /* Bullet list with primary dots */
 export function PolicyBulletList({ items }: { items: string[] }) {
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-3">
       {items.map((item, i) => (
         <li key={i} className="flex items-start gap-2 text-muted-foreground">
           <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
@@ -129,7 +129,7 @@ export function PolicyBulletList({ items }: { items: string[] }) {
 /* Prohibited items list with red icon */
 export function PolicyProhibitedList({ items }: { items: string[] }) {
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-3">
       {items.map((item, i) => (
         <li key={i} className="flex items-start gap-2 text-muted-foreground">
           <span className="w-1.5 h-1.5 rounded-full bg-destructive mt-2 shrink-0" />
@@ -143,7 +143,7 @@ export function PolicyProhibitedList({ items }: { items: string[] }) {
 /* Numbered paragraphs */
 export function PolicyParagraphs({ items }: { items: { num: string; text: ReactNode }[] }) {
   return (
-    <div className="space-y-3 text-muted-foreground">
+    <div className="space-y-4 text-muted-foreground">
       {items.map((item, i) => (
         <p key={i}>
           <strong className="text-foreground">{item.num}</strong> {item.text}

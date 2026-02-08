@@ -54,7 +54,7 @@ const MarketplaceRulesPage = () => {
         </PolicySection>
 
         <PolicySection icon={Package} number="3" title="Modalidades de Venda">
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div className="p-4 rounded-xl border border-border bg-card/50">
               <h3 className="font-semibold text-foreground mb-2 text-sm">3.1 Pronta Entrega</h3>
               <PolicyBulletList items={["Produto em posse física do vendedor;", "Postagem obrigatória em até 3 dias úteis após confirmação do pagamento."]} />
@@ -81,7 +81,7 @@ const MarketplaceRulesPage = () => {
         </PolicySection>
 
         <PolicySection icon={Wallet} number="5" title="Saldo do Vendedor">
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div className="p-4 rounded-xl border border-border bg-card/50">
               <h3 className="font-semibold text-foreground mb-2 text-sm">5.1 Status do saldo</h3>
               <PolicyBulletList items={["Saldo a Liberar: período de proteção após entrega;", "Saldo Disponível: liberado para saque."]} />
