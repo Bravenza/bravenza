@@ -500,25 +500,24 @@
   }
 }
 
-/* PWA Standalone Mode Optimizations */
-html.pwa-standalone {
-  /* Safe area insets for notch devices */
+/* Safe Area Insets — always available (not just PWA) */
+:root {
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-left: env(safe-area-inset-left, 0px);
   --safe-area-right: env(safe-area-inset-right, 0px);
 }
 
+/* PWA Standalone Mode Optimizations */
 html.pwa-standalone body {
   /* Add padding for safe areas */
   padding-top: var(--safe-area-top);
-  padding-bottom: var(--safe-area-bottom);
   padding-left: var(--safe-area-left);
   padding-right: var(--safe-area-right);
-  
+
   /* Prevent overscroll bounce */
   overscroll-behavior: none;
-  
+
   /* Prevent text selection on UI elements */
   -webkit-user-select: none;
   user-select: none;
@@ -527,43 +526,66 @@ html.pwa-standalone body {
 html.pwa-standalone input,
 html.pwa-standalone textarea,
 html.pwa-standalone [contenteditable] {
-  /* Allow text selection in inputs */
   -webkit-user-select: text;
   user-select: text;
 }
 
 /* Fix for iOS standalone header */
-html.pwa-standalone header.fixed {
+html.pwa-standalone header.fixed,
+html.pwa-standalone header.sticky {
   top: var(--safe-area-top);
 }
 
+/* Universal safe-area: fixed bottom elements */
+.safe-bottom {
+  padding-bottom: var(--safe-area-bottom);
+}
+
 /* Fix for floating elements on notch devices */
-html.pwa-standalone .fixed.bottom-4,
-html.pwa-standalone .fixed.bottom-6 {
+.fixed.bottom-0 {
+  padding-bottom: var(--safe-area-bottom);
+}
+
+.fixed.bottom-4,
+.fixed.bottom-6 {
   bottom: calc(1rem + var(--safe-area-bottom));
 }
 
 @media (min-width: 640px) {
-  html.pwa-standalone .fixed.sm\\:bottom-6 {
+  .fixed.sm\:bottom-6 {
     bottom: calc(1.5rem + var(--safe-area-bottom));
   }
 }
 
-/* Improve touch targets for mobile PWA */
+/* Touch target improvements for all touch devices */
 @media (hover: none) and (pointer: coarse) {
-  button,
-  a,
+  /* Ensure clickable elements meet 44px minimum */
+  button:not([class*="h-5"]):not([class*="h-4"]):not([class*="h-3"]),
   [role="button"] {
+    min-height: 44px;
+  }
+
+  /* Icon-only buttons get proper tap areas via padding */
+  button[class*="size-icon"],
+  button[class*="w-9"][class*="h-9"],
+  button[class*="w-8"][class*="h-8"] {
     min-height: 44px;
     min-width: 44px;
   }
-  
+
   /* Slightly larger form controls */
   input,
   select,
   textarea {
     min-height: 48px;
     font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Larger tap targets for nav links */
+  nav a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
   }
 }
 
