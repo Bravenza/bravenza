@@ -76,7 +76,7 @@ export function ProductAnalyticsChart({
     <div className="space-y-4">
       <h3 className="text-sm font-semibold flex items-center gap-1.5">
         <BarChart3 className="h-4 w-4 text-primary" />
-        Market+ Analytics
+        Histórico de preços
       </h3>
 
       {/* Stats row */}
