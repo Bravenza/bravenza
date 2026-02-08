@@ -91,8 +91,15 @@ export function MarketplaceCheckoutDialog({
     payment_method: "pix",
   });
 
+  // Normalize shipping_mode from offer data
+  const normalizedShippingMode = listing ? (
+    listing.shipping_mode === "seller_ships" ? "direct" 
+    : listing.shipping_mode === "hub" ? "bravenza" 
+    : listing.shipping_mode || "direct"
+  ) : "direct";
+
   // Determine if PRO is mandatory/recommended
-  const isProMandatory = listing ? (listing.price >= 2000 || listing.shipping_mode === "bravenza") : false;
+  const isProMandatory = listing ? (listing.price >= 2000 || normalizedShippingMode === "bravenza") : false;
   const isProRecommended = listing ? (listing.price >= 800 && listing.condition !== "novo") : false;
 
   // Reset when dialog opens
@@ -280,7 +287,7 @@ export function MarketplaceCheckoutDialog({
               )}
               <Badge variant="outline" className="text-[10px] gap-0.5 px-1.5 py-0">
                 <Truck className="h-2.5 w-2.5" />
-                {listing.shipping_mode === "bravenza" ? "Via Bravenza" : "Direto"}
+                {normalizedShippingMode === "bravenza" ? "Via Bravenza" : "Direto"}
               </Badge>
             </div>
           </div>
@@ -437,14 +444,14 @@ export function MarketplaceCheckoutDialog({
             <div className="flex items-center gap-2">
               <Truck className="h-4 w-4 text-primary" />
               <Label className="text-sm font-semibold">Opções de envio</Label>
-              {listing.shipping_mode === "bravenza" && (
+             {normalizedShippingMode === "bravenza" && (
                 <Badge className="bg-primary/20 text-primary text-[10px] gap-0.5 px-1.5">
                   <ShieldCheck className="h-2.5 w-2.5" /> Via Bravenza
                 </Badge>
               )}
             </div>
 
-            {listing.shipping_mode === "bravenza" && (
+            {normalizedShippingMode === "bravenza" && (
               <div className="p-2.5 bg-primary/5 border border-primary/20 rounded-lg text-[11px] text-muted-foreground">
                 <ShieldCheck className="h-3 w-3 inline mr-1 text-primary" />
                 O produto passará pela BRAVENZA para autenticação antes de chegar a você. O frete inclui os dois trechos.

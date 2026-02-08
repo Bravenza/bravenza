@@ -209,29 +209,70 @@ Deno.serve(async (req) => {
 
     if (mt === "POST" && a === "create-order") {
       const b = await req.json();
-      const { data: li } = await sb.from("vault_marketplace_listings").select(
+      // Try listing first, then fall back to finding via offer
+      let li: any = null;
+      const { data: directListing } = await sb.from("vault_marketplace_listings").select(
         `*, seller:vault_seller_profiles!inner(id, current_fee_percent, member:vault_members!inner(client_cpf, client_name))`
-      ).eq("id", b.listing_id).eq("status", "active").single();
-      if (!li) throw new Error("Anúncio não encontrado");
+      ).eq("id", b.listing_id).eq("status", "active").maybeSingle();
+      
+      if (directListing) {
+        li = directListing;
+      } else {
+        // listing_id might be an offer id — find the offer and its linked listing or create order from offer
+        const { data: offer } = await sb.from("marketplace_offers").select(
+          `*, seller:vault_seller_profiles!inner(id, current_fee_percent, member:vault_members!inner(client_cpf, client_name))`
+        ).eq("id", b.listing_id).eq("status", "active").maybeSingle();
+        if (offer) {
+          // If offer has a linked listing, use it; otherwise create a virtual listing object
+          if (offer.listing_id) {
+            const { data: linked } = await sb.from("vault_marketplace_listings").select(
+              `*, seller:vault_seller_profiles!inner(id, current_fee_percent, member:vault_members!inner(client_cpf, client_name))`
+            ).eq("id", offer.listing_id).maybeSingle();
+            if (linked) li = linked;
+          }
+          if (!li) {
+            // Use offer data directly
+            const normalizedMode = offer.shipping_mode === "seller_ships" ? "direct" : offer.shipping_mode === "hub" ? "bravenza" : offer.shipping_mode || "direct";
+            li = {
+              id: offer.id,
+              title: `${offer.description || "Tênis"}`,
+              price: offer.price,
+              shipping_mode: normalizedMode,
+              shipping_cost_estimate: offer.shipping_cost_estimate || 0,
+              seller: offer.seller,
+              _is_offer: true,
+            };
+          }
+        }
+      }
+      if (!li) throw new Error("Anúncio não encontrado ou já vendido");
       if (li.seller?.member?.client_cpf === cpf) throw new Error("Não pode comprar próprio anúncio");
       const fp = li.seller?.current_fee_percent || 14;
       const fa = Math.round(li.price * fp) / 100;
       const sp = li.price - fa;
       const oc = gc();
+      const shippingCost = b.shipping_cost || li.shipping_cost_estimate || 0;
       const { data: od, error } = await sb.from("vault_marketplace_orders").insert({
-        order_code: oc, listing_id: li.id, buyer_cpf: cpf, buyer_name: b.buyer_name,
+        order_code: oc, listing_id: li._is_offer ? null : li.id, buyer_cpf: cpf, buyer_name: b.buyer_name,
         seller_id: li.seller.id, sale_price: li.price, fee_percent: fp, fee_amount: fa,
-        seller_payout: sp, shipping_mode: li.shipping_mode,
-        shipping_cost: li.shipping_cost_estimate || 0, status: "pending_payment",
+        seller_payout: sp, shipping_mode: li.shipping_mode || "direct",
+        shipping_cost: shippingCost, status: "pending_payment",
       }).select().single();
       if (error) throw error;
-      await sb.from("vault_marketplace_listings").update({ status: "reserved" }).eq("id", li.id);
-      await nt(sb, "🛒 Nova venda!", `${b.buyer_name} comprou "${li.title}".`, li.seller.member.client_cpf, od.id, "marketplace_order");
-      // Log activity
+      // Reserve the listing/offer
+      if (!li._is_offer) {
+        await sb.from("vault_marketplace_listings").update({ status: "reserved" }).eq("id", li.id);
+      }
+      // Also reserve the offer if it exists
+      if (li._is_offer) {
+        await sb.from("marketplace_offers").update({ status: "reserved" }).eq("id", b.listing_id);
+      }
+      const titleForNotification = li.title || "Tênis";
+      await nt(sb, "🛒 Nova venda!", `${b.buyer_name} comprou "${titleForNotification}".`, li.seller.member.client_cpf, od.id, "marketplace_order");
       await sb.from("marketplace_activity_feed").insert({
-        event_type: "sale", title: `Venda: ${li.title}`,
+        event_type: "sale", title: `Venda: ${titleForNotification}`,
         description: `R$ ${li.price} — comprador: ${b.buyer_name}`,
-        listing_id: li.id, seller_id: li.seller.id,
+        listing_id: li._is_offer ? null : li.id, seller_id: li.seller.id,
       }).then(() => {});
       return j({ success: true, order: od });
     }
@@ -476,10 +517,26 @@ Deno.serve(async (req) => {
       const { listing_id, buyer_cep } = b;
       if (!listing_id || !buyer_cep) throw new Error("listing_id e buyer_cep obrigatórios");
 
-      // Get listing with seller info
-      const { data: listing } = await sb.from("vault_marketplace_listings").select(
+      // Try to get listing first, fall back to offer if not found
+      let listing: any = null;
+      const { data: li } = await sb.from("vault_marketplace_listings").select(
         `*, seller:vault_seller_profiles!inner(seller_cep)`
-      ).eq("id", listing_id).single();
+      ).eq("id", listing_id).maybeSingle();
+      
+      if (li) {
+        listing = li;
+      } else {
+        // listing_id might actually be an offer id - check marketplace_offers
+        const { data: offer } = await sb.from("marketplace_offers").select(
+          `*, seller:vault_seller_profiles!inner(seller_cep)`
+        ).eq("id", listing_id).maybeSingle();
+        if (offer) {
+          listing = {
+            ...offer,
+            shipping_mode: offer.shipping_mode === "seller_ships" ? "direct" : offer.shipping_mode === "hub" ? "bravenza" : offer.shipping_mode || "direct",
+          };
+        }
+      }
       if (!listing) throw new Error("Anúncio não encontrado");
 
       const sellerCep = listing.seller?.seller_cep;
@@ -727,7 +784,7 @@ Deno.serve(async (req) => {
         photos: b.photos || [],
         proof_photos: b.proof_photos || [],
         has_receipt: b.has_receipt || false,
-        shipping_mode: b.price >= 2000 ? "bravenza" : (b.shipping_mode || "direct"),
+        shipping_mode: b.price >= 2000 ? "bravenza" : (b.shipping_mode === "hub" ? "bravenza" : b.shipping_mode === "seller_ships" ? "direct" : b.shipping_mode || "direct"),
         status: "active",
         published_at: new Date().toISOString(),
       }).select().single();
