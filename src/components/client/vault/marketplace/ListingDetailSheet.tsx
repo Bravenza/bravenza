@@ -85,6 +85,7 @@ export function ListingDetailSheet({
                 src={photos[activePhoto]}
                 alt={listing.title}
                 className="w-full h-full object-cover"
+                loading="eager"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}

@@ -275,7 +275,18 @@ export default function ProductDetailPage() {
                 }}
               />
             )}
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({ title: formattedName, url: window.location.href });
+                } else {
+                  navigator.clipboard.writeText(window.location.href);
+                }
+              }}
+            >
               <Share2 className="h-4 w-4" />
             </Button>
           </div>
@@ -493,6 +504,7 @@ export default function ProductDetailPage() {
                 src={images[selectedImage]}
                 alt={formattedName}
                 className="w-full h-full object-contain p-4"
+                loading="eager"
               />
               {product.is_high_risk && (
                 <Badge className="absolute top-3 left-3 bg-primary/90 text-primary-foreground text-[10px] gap-1">
@@ -511,7 +523,7 @@ export default function ProductDetailPage() {
                       selectedImage === i ? "border-primary ring-1 ring-primary/30" : "border-transparent opacity-60 hover:opacity-100"
                     )}
                   >
-                    <img src={img} alt="" className="w-full h-full object-contain p-1" />
+                    <img src={img} alt="" className="w-full h-full object-contain p-1" loading="lazy" />
                   </button>
                 ))}
               </div>
@@ -668,7 +680,7 @@ function OfferCard({ offer, isBest, productImages, onBuy, onClick }: { offer: Pr
     >
       {/* Offer photo */}
       <div className="relative aspect-[4/3] bg-muted/10">
-        <img src={offerImage} alt="" className="w-full h-full object-contain p-2" />
+        <img src={offerImage} alt="" className="w-full h-full object-contain p-2" loading="lazy" />
         {isBest && (
           <Badge className="absolute top-2 left-2 text-[10px] px-1.5 py-0 bg-primary text-primary-foreground">
             Melhor preço
@@ -716,9 +728,14 @@ function OfferCard({ offer, isBest, productImages, onBuy, onClick }: { offer: Pr
             <p className="text-lg font-bold text-foreground">
               R$ {offer.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </p>
-            <p className="text-[10px] text-muted-foreground">
-              6x R$ {(offer.price / 6).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </p>
+            {(() => {
+              const inst12 = generateInstallmentOptions(offer.price).find(o => o.installments === 12);
+              return inst12 ? (
+                <p className="text-[10px] text-muted-foreground">
+                  12x de {formatPriceBR(inst12.installmentValue)}
+                </p>
+              ) : null;
+            })()}
           </div>
           <Button size="sm" className="btn-gold text-xs h-8 gap-1" onClick={(e) => { e.stopPropagation(); onBuy(); }}>
             Comprar <ChevronRight className="h-3 w-3" />

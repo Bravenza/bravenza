@@ -66,10 +66,10 @@ export function CatalogProductCard({ product }: CatalogProductCardProps) {
         {product.colorway && (
           <p className="text-[11px] text-muted-foreground">{product.colorway}</p>
         )}
-        <div className="flex items-baseline gap-2 pt-0.5">
+        <div className="flex flex-col gap-0.5 pt-0.5">
           {product.lowest_price ? (
             <>
-              <span className="text-xs text-muted-foreground">A partir de</span>
+              <span className="text-[10px] text-muted-foreground">A partir de</span>
               <span className="text-base font-bold text-foreground">
                 R$ {product.lowest_price.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
               </span>
