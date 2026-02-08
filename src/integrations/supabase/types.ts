@@ -588,6 +588,69 @@ export type Database = {
           },
         ]
       }
+      marketplace_product_reviews: {
+        Row: {
+          authenticity_score: number | null
+          comment: string | null
+          created_at: string
+          id: string
+          is_verified_purchase: boolean | null
+          is_visible: boolean | null
+          offer_id: string | null
+          product_id: string
+          product_quality: number | null
+          rating: number
+          reviewer_cpf: string
+          reviewer_name: string | null
+          shipping_speed: number | null
+        }
+        Insert: {
+          authenticity_score?: number | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_verified_purchase?: boolean | null
+          is_visible?: boolean | null
+          offer_id?: string | null
+          product_id: string
+          product_quality?: number | null
+          rating: number
+          reviewer_cpf: string
+          reviewer_name?: string | null
+          shipping_speed?: number | null
+        }
+        Update: {
+          authenticity_score?: number | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_verified_purchase?: boolean | null
+          is_visible?: boolean | null
+          offer_id?: string | null
+          product_id?: string
+          product_quality?: number | null
+          rating?: number
+          reviewer_cpf?: string
+          reviewer_name?: string | null
+          shipping_speed?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_product_reviews_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_products: {
         Row: {
           brand: string

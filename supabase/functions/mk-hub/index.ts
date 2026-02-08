@@ -1409,6 +1409,84 @@ Deno.serve(async (req) => {
       return j({ suggestions });
     }
 
+    // ==================== PRODUCT COMMENTS (Q&A) ====================
+    if (mt === "GET" && a === "product-comments") {
+      const pid = url.searchParams.get("product_id");
+      if (!pid) return j({ error: "product_id obrigatório" }, 400);
+      const { data: cmts } = await sb.from("marketplace_product_comments")
+        .select("*")
+        .eq("product_id", pid)
+        .eq("is_visible", true)
+        .order("created_at", { ascending: true });
+      return j({ comments: cmts || [] });
+    }
+
+    if (mt === "POST" && a === "product-comment") {
+      const body = await req.json();
+      const { product_id, content, parent_id } = body;
+      if (!product_id || !content) return j({ error: "product_id e content obrigatórios" }, 400);
+
+      const m = await gm(sb, cpf);
+      let userName = "Anônimo";
+      if (m) {
+        const { data: mem } = await sb.from("vault_members").select("client_name").eq("id", m.id).single();
+        if (mem) userName = mem.client_name;
+      }
+
+      const { data, error } = await sb.from("marketplace_product_comments").insert({
+        product_id,
+        user_cpf: cpf,
+        user_name: userName,
+        content,
+        parent_id: parent_id || null,
+      }).select().single();
+
+      if (error) return j({ error: error.message }, 400);
+      return j({ comment: data });
+    }
+
+    // ==================== PRODUCT REVIEWS ====================
+    if (mt === "GET" && a === "product-reviews") {
+      const pid = url.searchParams.get("product_id");
+      if (!pid) return j({ error: "product_id obrigatório" }, 400);
+      const { data: reviews } = await sb.from("marketplace_product_reviews")
+        .select("*")
+        .eq("product_id", pid)
+        .eq("is_visible", true)
+        .order("created_at", { ascending: false });
+
+      const list = reviews || [];
+      const avg = list.length > 0 ? list.reduce((s: number, r: any) => s + r.rating, 0) / list.length : 0;
+      return j({ reviews: list, average: Math.round(avg * 10) / 10, total: list.length });
+    }
+
+    if (mt === "POST" && a === "product-review") {
+      const body = await req.json();
+      const { product_id, rating, comment, product_quality, authenticity_score, shipping_speed } = body;
+      if (!product_id || !rating) return j({ error: "product_id e rating obrigatórios" }, 400);
+
+      const m = await gm(sb, cpf);
+      let reviewerName = "Anônimo";
+      if (m) {
+        const { data: mem } = await sb.from("vault_members").select("client_name").eq("id", m.id).single();
+        if (mem) reviewerName = mem.client_name;
+      }
+
+      const { data, error } = await sb.from("marketplace_product_reviews").insert({
+        product_id,
+        reviewer_cpf: cpf,
+        reviewer_name: reviewerName,
+        rating,
+        comment: comment || null,
+        product_quality: product_quality || null,
+        authenticity_score: authenticity_score || null,
+        shipping_speed: shipping_speed || null,
+      }).select().single();
+
+      if (error) return j({ error: error.message }, 400);
+      return j({ review: data });
+    }
+
     return j({ error: "Ação não encontrada" }, 404);
   } catch (e: any) {
     console.error("vault-marketplace error:", e);
