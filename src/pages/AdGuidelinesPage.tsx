@@ -72,7 +72,7 @@ const AdGuidelinesPage = () => {
 
         <PolicySection icon={ClipboardList} number="4" title="Informações obrigatórias no anúncio">
           <p className="text-muted-foreground mb-4">Todo anúncio deve conter informações verdadeiras, completas e consistentes.</p>
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
               <h3 className="font-semibold text-foreground mb-2">4.1. Identificação do produto</h3>
               <PolicyBulletList items={['Marca e modelo (ex.: Nike SB Dunk "Mummy")', 'Tamanho (padrão BR e/ou US) e forma (se "calça grande/pequeno")', "Colorway / variação (quando aplicável)", "Gênero (masc/fem/unissex) quando relevante"]} />
@@ -107,7 +107,7 @@ const AdGuidelinesPage = () => {
         </PolicySection>
 
         <PolicySection icon={Camera} number="5" title="Fotos obrigatórias (padrão mínimo)">
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div>
               <h3 className="font-semibold text-foreground mb-2">5.1. Regras gerais</h3>
               <PolicyBulletList items={["Fotos reais do item (nada de foto de catálogo).", "Boa luz, fundo limpo, sem filtros pesados.", "Proibido: imagens com logos de outras plataformas, prints de terceiros, colagens confusas, marca d'água de revenda concorrente."]} />
@@ -130,7 +130,7 @@ const AdGuidelinesPage = () => {
         </PolicySection>
 
         <PolicySection icon={FileText} number="6" title="Título e descrição (padrões)">
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div>
               <h3 className="font-semibold text-foreground mb-2">6.1. Título</h3>
               <p className="text-muted-foreground text-sm mb-2">Use: Marca + Modelo + Apelido (se houver) + Tamanho + Condição</p>
