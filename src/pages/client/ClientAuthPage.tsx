@@ -433,6 +433,10 @@ export default function ClientAuthPage() {
                         <Input
                           id="signup-email"
                           type="email"
+                          inputMode="email"
+                          autoComplete="email"
+                          autoCapitalize="none"
+                          autoCorrect="off"
                           placeholder="seu@email.com"
                           value={signupEmail}
                           onChange={(e) => setSignupEmail(e.target.value)}
