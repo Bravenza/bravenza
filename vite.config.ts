@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => ({
         name: "BRAVENZA - Curadoria & Autenticação Premium",
         short_name: "BRAVENZA",
         description: "Plataforma premium de curadoria e autenticação de tênis. Segurança e autenticidade garantidas.",
+        id: "/",
         theme_color: "#1f1f1f",
         background_color: "#1f1f1f",
         display: "standalone",
@@ -48,9 +49,15 @@ export default defineConfig(({ mode }) => ({
             sizes: "512x512",
             type: "image/png",
             purpose: "maskable"
+          },
+          {
+            src: "/favicon.png",
+            sizes: "512x512",
+            type: "image/png"
           }
         ],
         categories: ["shopping", "lifestyle"],
+        prefer_related_applications: false,
         shortcuts: [
           {
             name: "Rastrear Pedido",
@@ -62,6 +69,12 @@ export default defineConfig(({ mode }) => ({
             name: "Solicitar Orçamento",
             short_name: "Solicitar",
             url: "/solicitar",
+            icons: [{ src: "/pwa-192x192.png", sizes: "192x192" }]
+          },
+          {
+            name: "Minha Conta",
+            short_name: "Conta",
+            url: "/minha-conta",
             icons: [{ src: "/pwa-192x192.png", sizes: "192x192" }]
           }
         ]
