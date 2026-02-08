@@ -51,12 +51,12 @@ export function PolicyPageLayout({
         </div>
 
         {/* Content */}
-        <div className="space-y-10">
+        <div className="space-y-12">
           {children}
         </div>
 
         {/* Related links */}
-        <div className="mt-12 pt-6 border-t border-border">
+        <div className="mt-16 pt-8 border-t border-border">
           <h3 className="text-sm font-semibold text-foreground mb-3">Políticas relacionadas</h3>
           <div className="flex flex-wrap gap-2">
             {links.map((link) => (
@@ -97,7 +97,7 @@ export function PolicySection({
           {number}. {title}
         </h2>
       </div>
-      <div className="ml-[3.25rem]">{children}</div>
+      <div className="ml-[3.25rem] space-y-4">{children}</div>
     </section>
   );
 }
