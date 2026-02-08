@@ -785,3 +785,24 @@ main {
   transform: scaleX(0);
   animation: hero-line-expand 1.5s ease-out 0.5s forwards;
 }
+
+/* Brands carousel infinite scroll */
+@keyframes brands-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-150px * 10)); }
+}
+
+.animate-brands-scroll {
+  animation: brands-scroll 25s linear infinite;
+}
+
+/* WhatsApp button pop-in */
+@keyframes whatsapp-pop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-whatsapp-pop {
+  animation: whatsapp-pop 0.4s ease-out 1s both;
+}

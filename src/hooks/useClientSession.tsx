@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ClientProfile {
   id: string;
@@ -28,10 +29,10 @@ interface ClientSessionContextType {
 const ClientSessionContext = createContext<ClientSessionContextType | undefined>(undefined);
 
 export function ClientSessionProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  // Reuse session from the parent AuthProvider — avoids duplicate getSession() call
+  const { user, session, isLoading: authLoading } = useAuth();
   const [profile, setProfile] = useState<ClientProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   const fetchProfile = async () => {
     try {
@@ -48,38 +49,18 @@ export function ClientSessionProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Fetch profile whenever user changes (derived from parent auth)
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Defer profile fetch to avoid deadlock
-        if (session?.user) {
-          setTimeout(() => {
-            fetchProfile();
-          }, 0);
-        } else {
-          setProfile(null);
-        }
-      }
-    );
+    if (authLoading) return;
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchProfile().finally(() => setIsLoading(false));
-      } else {
-        setIsLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    if (user) {
+      setProfileLoading(true);
+      fetchProfile().finally(() => setProfileLoading(false));
+    } else {
+      setProfile(null);
+      setProfileLoading(false);
+    }
+  }, [user, authLoading]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -133,7 +114,6 @@ export function ClientSessionProvider({ children }: { children: ReactNode }) {
 
       if (profileError) {
         console.error("Error creating profile:", profileError);
-        // Don't return error here - user was created, just profile failed
       }
     }
 
@@ -148,6 +128,8 @@ export function ClientSessionProvider({ children }: { children: ReactNode }) {
   const refreshProfile = async () => {
     await fetchProfile();
   };
+
+  const isLoading = authLoading || profileLoading;
 
   return (
     <ClientSessionContext.Provider
