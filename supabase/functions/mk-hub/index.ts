@@ -1167,9 +1167,11 @@ Deno.serve(async (req) => {
           full_name: sl.full_name,
           cpf_cnpj: sl.cpf_cnpj ? `***${sl.cpf_cnpj.slice(-4)}` : null,
           phone: sl.phone ? `***${sl.phone.slice(-4)}` : null,
-          pix_key_type: sl.pix_key_type,
-          pix_key: sl.pix_key ? `${sl.pix_key.slice(0, 3)}***` : null,
-          bank_name: sl.bank_name,
+           pix_key_type: sl.pix_key_type,
+           pix_key: sl.pix_key ? `${sl.pix_key.slice(0, 3)}***` : null,
+           pix_beneficiary: sl.pix_beneficiary,
+           bank_name: sl.bank_name,
+           account_type: sl.account_type || "pf",
           kyc_status: sl.kyc_status,
           terms_accepted_at: sl.terms_accepted_at,
           onboarding_completed_at: sl.onboarding_completed_at,
@@ -1183,11 +1185,12 @@ Deno.serve(async (req) => {
       if (!mb) throw new Error("Membro não encontrado");
 
       // Validate required fields
-      if (!b.full_name || !b.cpf_cnpj || !b.phone || !b.seller_cep || !b.pix_key_type || !b.pix_key || !b.terms_accepted) {
+      if (!b.full_name || !b.cpf_cnpj || !b.phone || !b.seller_cep || !b.pix_key_type || !b.pix_key || !b.pix_beneficiary || !b.bank_name || !b.terms_accepted) {
         throw new Error("Todos os campos obrigatórios devem ser preenchidos");
       }
 
       let sl = await gs(sb, mb.id);
+      const isCnpj = b.cpf_cnpj.length > 11;
       const onboardingData = {
         full_name: b.full_name,
         cpf_cnpj: b.cpf_cnpj,
@@ -1195,9 +1198,11 @@ Deno.serve(async (req) => {
         seller_cep: b.seller_cep,
         pix_key_type: b.pix_key_type,
         pix_key: b.pix_key,
-        bank_name: b.bank_name || null,
+        pix_beneficiary: b.pix_beneficiary,
+        bank_name: b.bank_name,
+        account_type: isCnpj ? "pj" : "pf",
         terms_accepted_at: new Date().toISOString(),
-        kyc_status: "approved", // Auto-approve for now; can add manual review later
+        kyc_status: "approved",
         onboarding_completed_at: new Date().toISOString(),
       };
 

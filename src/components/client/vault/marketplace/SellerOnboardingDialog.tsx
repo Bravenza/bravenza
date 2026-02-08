@@ -29,7 +29,9 @@ export interface SellerOnboardingData {
   seller_cep: string;
   pix_key_type: string;
   pix_key: string;
+  pix_beneficiary: string;
   bank_name: string;
+  account_type: string;
   terms_accepted: boolean;
 }
 
@@ -82,14 +84,19 @@ export function SellerOnboardingDialog({ open, onOpenChange, onComplete }: Selle
 
   const [pixKeyType, setPixKeyType] = useState("");
   const [pixKey, setPixKey] = useState("");
+  const [pixBeneficiary, setPixBeneficiary] = useState("");
   const [bankName, setBankName] = useState("");
+  const [accountType, setAccountType] = useState("pf");
 
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   const stepIndex = STEPS.findIndex((s) => s.key === step);
 
+  const isCnpj = cpfCnpj.replace(/\D/g, "").length > 11;
+  const derivedAccountType = isCnpj ? "pj" : "pf";
+
   const isKycValid = fullName.trim().length >= 3 && cpfCnpj.replace(/\D/g, "").length >= 11 && phone.replace(/\D/g, "").length >= 10 && sellerCep.replace(/\D/g, "").length === 8;
-  const isPayoutValid = pixKeyType.length > 0 && pixKey.trim().length >= 3;
+  const isPayoutValid = pixKeyType.length > 0 && pixKey.trim().length >= 3 && pixBeneficiary.trim().length >= 3 && bankName.trim().length >= 2;
   const isTermsValid = termsAccepted;
 
   const canAdvance = step === "kyc" ? isKycValid : step === "payout" ? isPayoutValid : isTermsValid;
@@ -115,7 +122,9 @@ export function SellerOnboardingDialog({ open, onOpenChange, onComplete }: Selle
         seller_cep: sellerCep.replace(/\D/g, ""),
         pix_key_type: pixKeyType,
         pix_key: pixKey.trim(),
+        pix_beneficiary: pixBeneficiary.trim(),
         bank_name: bankName.trim(),
+        account_type: derivedAccountType,
         terms_accepted: true,
       });
       if (success) {
@@ -188,6 +197,16 @@ export function SellerOnboardingDialog({ open, onOpenChange, onComplete }: Selle
             <p className="text-sm text-muted-foreground">
               Configure como deseja receber os repasses das suas vendas.
             </p>
+
+            {isCnpj && (
+              <Card className="bg-destructive/10 border-destructive/30">
+                <CardContent className="p-3 text-xs text-destructive flex items-center gap-2">
+                  <Badge variant="outline" className="border-destructive/50 text-destructive">PJ</Badge>
+                  CNPJ detectado — a conta bancária deve ser Pessoa Jurídica.
+                </CardContent>
+              </Card>
+            )}
+
             <div className="space-y-3">
               <div>
                 <Label>Tipo de chave PIX *</Label>
@@ -209,8 +228,15 @@ export function SellerOnboardingDialog({ open, onOpenChange, onComplete }: Selle
                 <Input id="pixKey" value={pixKey} onChange={(e) => setPixKey(e.target.value)} placeholder="Sua chave PIX" />
               </div>
               <div>
-                <Label htmlFor="bankName">Banco (opcional)</Label>
-                <Input id="bankName" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Ex: Nubank, Itaú..." />
+                <Label htmlFor="pixBeneficiary">Beneficiário da conta *</Label>
+                <Input id="pixBeneficiary" value={pixBeneficiary} onChange={(e) => setPixBeneficiary(e.target.value)} placeholder="Nome do titular da conta" />
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  ⚠️ O beneficiário deve ser o mesmo titular do cadastro ({isCnpj ? "razão social do CNPJ" : "nome do CPF"}).
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="bankName">Banco *</Label>
+                <Input id="bankName" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Ex: Nubank, Itaú, Bradesco..." />
               </div>
             </div>
 
@@ -257,8 +283,10 @@ export function SellerOnboardingDialog({ open, onOpenChange, onComplete }: Selle
               <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
                 <span>Nome: <strong className="text-foreground">{fullName}</strong></span>
                 <span>CPF/CNPJ: <strong className="text-foreground">{cpfCnpj}</strong></span>
+                <span>Tipo conta: <strong className="text-foreground">{derivedAccountType === "pj" ? "PJ" : "PF"}</strong></span>
+                <span>Banco: <strong className="text-foreground">{bankName}</strong></span>
                 <span>PIX: <strong className="text-foreground">{pixKeyType.toUpperCase()}</strong></span>
-                <span>Chave: <strong className="text-foreground">{pixKey}</strong></span>
+                <span>Beneficiário: <strong className="text-foreground">{pixBeneficiary}</strong></span>
               </div>
             </div>
           </div>
