@@ -6,13 +6,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/hooks/useAuth";
-import { ClientAuthProvider } from "@/hooks/useClientAuth";
-import { ClientSessionProvider } from "@/hooks/useClientSession";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { usePWAOptimizations } from "@/hooks/usePWAOptimizations";
 import { SkipToContent } from "@/components/a11y/SkipToContent";
+import { ProtectedProviders } from "@/components/providers/ProtectedProviders";
 
 // Eagerly loaded pages (critical path)
 import Index from "./pages/Index";
@@ -90,7 +89,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 30, // 30 minutes (formerly cacheTime)
+      gcTime: 1000 * 60 * 30, // 30 minutes
       retry: 1,
       refetchOnWindowFocus: false,
     },
@@ -108,89 +107,103 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <ClientAuthProvider>
-            <ClientSessionProvider>
-              <Toaster />
-              <Sonner />
-              <OfflineIndicator />
-              <BrowserRouter>
-                <SkipToContent />
-                <AppShell>
-                <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    {/* Public routes */}
-                    <Route path="/" element={<Index />} />
-                    <Route path="/solicitar" element={<OrderRequestPage />} />
-                    <Route path="/rastreio" element={<TrackingPortalPage />} />
-                    <Route path="/rastreio/:orderId" element={<TrackingPage />} />
-                    <Route path="/orcamento/:token" element={<BudgetApprovalPage />} />
-                    <Route path="/pagamento/:token" element={<PaymentPage />} />
-                    <Route path="/termos" element={<TermsPage />} />
-                    <Route path="/politicas" element={<PrivacyPage />} />
-                    <Route path="/trocas-devolucoes" element={<ReturnsPage />} />
-                    <Route path="/instalar" element={<InstallPage />} />
-                    <Route path="/autenticidade" element={<AuthenticityPage />} />
-                    <Route path="/autenticidade/:code" element={<AuthenticityPage />} />
-                    <Route path="/sobre-autenticidade" element={<AuthenticityInfoPage />} />
-                    <Route path="/diretrizes-anuncio" element={<AdGuidelinesPage />} />
-                    <Route path="/regras-marketplace" element={<MarketplaceRulesPage />} />
-                    <Route path="/verificacao-autenticidade" element={<VerificationPolicyPage />} />
-                    <Route path="/marketplace/:slug" element={<ProductDetailPage />} />
+          <Toaster />
+          <Sonner />
+          <OfflineIndicator />
+          <BrowserRouter>
+            <SkipToContent />
+            <AppShell>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                {/* Public routes - NO client auth providers, minimal overhead */}
+                <Route path="/" element={<Index />} />
+                <Route path="/solicitar" element={<OrderRequestPage />} />
+                <Route path="/rastreio" element={<TrackingPortalPage />} />
+                <Route path="/rastreio/:orderId" element={<TrackingPage />} />
+                <Route path="/orcamento/:token" element={<BudgetApprovalPage />} />
+                <Route path="/pagamento/:token" element={<PaymentPage />} />
+                <Route path="/termos" element={<TermsPage />} />
+                <Route path="/politicas" element={<PrivacyPage />} />
+                <Route path="/trocas-devolucoes" element={<ReturnsPage />} />
+                <Route path="/instalar" element={<InstallPage />} />
+                <Route path="/autenticidade" element={<AuthenticityPage />} />
+                <Route path="/autenticidade/:code" element={<AuthenticityPage />} />
+                <Route path="/sobre-autenticidade" element={<AuthenticityInfoPage />} />
+                <Route path="/diretrizes-anuncio" element={<AdGuidelinesPage />} />
+                <Route path="/regras-marketplace" element={<MarketplaceRulesPage />} />
+                <Route path="/verificacao-autenticidade" element={<VerificationPolicyPage />} />
 
-                    {/* Vault Club public routes */}
-                    <Route path="/vault" element={<VaultLandingPage />} />
-                    <Route path="/vault/waitlist" element={<VaultWaitlistPage />} />
-                    <Route path="/vault/redeem" element={<VaultRedeemPage />} />
-                    <Route path="/vault/perfil" element={<VaultProfilePage />} />
-                    <Route path="/vault/app/match/:matchRoomId" element={<VaultMatchRoom />} />
-                    {/* Redirect old vault/app routes to unified dashboard */}
-                    <Route path="/vault/app" element={<Navigate to="/minha-conta" replace />} />
-                    <Route path="/vault/app/*" element={<Navigate to="/minha-conta" replace />} />
+                {/* Marketplace - needs client session for favorites */}
+                <Route path="/marketplace/:slug" element={
+                  <ProtectedProviders><ProductDetailPage /></ProtectedProviders>
+                } />
 
-                    {/* Client portal routes - New unified system */}
-                    <Route path="/entrar" element={<ClientAuthPage />} />
-                    <Route path="/minha-conta" element={<UnifiedDashboard />} />
-                    {/* Legacy routes - redirect to new system */}
-                    <Route path="/cliente/login" element={<Navigate to="/entrar" replace />} />
-                    <Route path="/cliente" element={<Navigate to="/minha-conta" replace />} />
+                {/* Vault Club public routes */}
+                <Route path="/vault" element={<VaultLandingPage />} />
+                <Route path="/vault/waitlist" element={<VaultWaitlistPage />} />
+                <Route path="/vault/redeem" element={
+                  <ProtectedProviders><VaultRedeemPage /></ProtectedProviders>
+                } />
+                <Route path="/vault/perfil" element={
+                  <ProtectedProviders><VaultProfilePage /></ProtectedProviders>
+                } />
+                <Route path="/vault/app/match/:matchRoomId" element={
+                  <ProtectedProviders><VaultMatchRoom /></ProtectedProviders>
+                } />
+                {/* Redirect old vault/app routes to unified dashboard */}
+                <Route path="/vault/app" element={<Navigate to="/minha-conta" replace />} />
+                <Route path="/vault/app/*" element={<Navigate to="/minha-conta" replace />} />
 
-                    {/* Admin routes */}
-                    <Route path="/admin/login" element={<Login />} />
-                    <Route path="/admin" element={<AdminLayout />}>
-                      <Route index element={<AdminDashboard />} />
-                      <Route path="pedidos" element={<OrdersList />} />
-                      <Route path="pedidos/novo" element={<NewOrder />} />
-                      <Route path="pedidos/:orderId" element={<OrderDetail />} />
-                      <Route path="solicitacoes" element={<OrderRequestsPage />} />
-                      <Route path="financeiro" element={<FinancePage />} />
-                      <Route path="calculadora" element={<InstallmentCalculatorPage />} />
-                      <Route path="modelos" element={<FeaturedModelsPage />} />
-                      <Route path="fornecedores" element={<SuppliersPage />} />
-                      <Route path="avaliacoes" element={<ReviewsPage />} />
-                      <Route path="indicacoes" element={<ReferralsPage />} />
-                      <Route path="usuarios" element={<UsersPage />} />
-                      <Route path="configuracoes" element={<SettingsPage />} />
-                      {/* Vault Club Admin */}
-                      <Route path="vault/membros" element={<VaultMembersPage />} />
-                      <Route path="vault/buscas" element={<VaultSearchesPage />} />
-                      <Route path="vault/match-rooms" element={<VaultMatchRoomsPage />} />
-                      <Route path="vault/items" element={<VaultItemsPage />} />
-                      <Route path="vault/convites" element={<VaultInvitesPage />} />
-                      <Route path="vault/intel" element={<VaultIntelAdminPage />} />
-                      <Route path="vault/comunidade" element={<VaultCommunityAdminPage />} />
-                      <Route path="vault/marketplace" element={<MarketplaceOrdersPage />} />
-                      <Route path="vault/marketplace/inspecao" element={<MarketplaceInspectionPage />} />
-                    </Route>
+                {/* Client portal routes - Need auth providers */}
+                <Route path="/entrar" element={
+                  <ProtectedProviders><ClientAuthPage /></ProtectedProviders>
+                } />
+                <Route path="/minha-conta" element={
+                  <ProtectedProviders><UnifiedDashboard /></ProtectedProviders>
+                } />
+                {/* Legacy routes - redirect to new system */}
+                <Route path="/cliente/login" element={<Navigate to="/entrar" replace />} />
+                <Route path="/cliente" element={<Navigate to="/minha-conta" replace />} />
 
-                    {/* 404 */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
-                </AppShell>
-                <PWAInstallBanner />
-              </BrowserRouter>
-            </ClientSessionProvider>
-          </ClientAuthProvider>
+                {/* Admin routes - Need auth providers for profile checks */}
+                <Route path="/admin/login" element={
+                  <ProtectedProviders><Login /></ProtectedProviders>
+                } />
+                <Route path="/admin" element={
+                  <ProtectedProviders><AdminLayout /></ProtectedProviders>
+                }>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="pedidos" element={<OrdersList />} />
+                  <Route path="pedidos/novo" element={<NewOrder />} />
+                  <Route path="pedidos/:orderId" element={<OrderDetail />} />
+                  <Route path="solicitacoes" element={<OrderRequestsPage />} />
+                  <Route path="financeiro" element={<FinancePage />} />
+                  <Route path="calculadora" element={<InstallmentCalculatorPage />} />
+                  <Route path="modelos" element={<FeaturedModelsPage />} />
+                  <Route path="fornecedores" element={<SuppliersPage />} />
+                  <Route path="avaliacoes" element={<ReviewsPage />} />
+                  <Route path="indicacoes" element={<ReferralsPage />} />
+                  <Route path="usuarios" element={<UsersPage />} />
+                  <Route path="configuracoes" element={<SettingsPage />} />
+                  {/* Vault Club Admin */}
+                  <Route path="vault/membros" element={<VaultMembersPage />} />
+                  <Route path="vault/buscas" element={<VaultSearchesPage />} />
+                  <Route path="vault/match-rooms" element={<VaultMatchRoomsPage />} />
+                  <Route path="vault/items" element={<VaultItemsPage />} />
+                  <Route path="vault/convites" element={<VaultInvitesPage />} />
+                  <Route path="vault/intel" element={<VaultIntelAdminPage />} />
+                  <Route path="vault/comunidade" element={<VaultCommunityAdminPage />} />
+                  <Route path="vault/marketplace" element={<MarketplaceOrdersPage />} />
+                  <Route path="vault/marketplace/inspecao" element={<MarketplaceInspectionPage />} />
+                </Route>
+
+                {/* 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+            </AppShell>
+            <PWAInstallBanner />
+          </BrowserRouter>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

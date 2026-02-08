@@ -1,7 +1,8 @@
-import { useEffect, useState, memo, useCallback } from "react";
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { Star, Quote, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 interface Review {
   id: string;
@@ -23,11 +24,9 @@ const formatName = (name: string) => {
 };
 
 function FeaturedReviewsComponent() {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchReviews = useCallback(async () => {
-    try {
+  const { data: reviews } = useQuery({
+    queryKey: ["featured-reviews"],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("reviews")
         .select("id, client_name, rating, comment, product_quality, delivery_speed, customer_service, created_at")
@@ -37,23 +36,12 @@ function FeaturedReviewsComponent() {
         .limit(6);
 
       if (error) throw error;
-      setReviews(data || []);
-    } catch (err) {
-      console.error("Error fetching reviews:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+      return data as Review[];
+    },
+    staleTime: 1000 * 60 * 10, // 10 minutes — rarely changes
+  });
 
-  useEffect(() => {
-    fetchReviews();
-  }, [fetchReviews]);
-
-  if (isLoading || reviews.length === 0) {
-    return null;
-  }
-
-  if (isLoading || reviews.length === 0) {
+  if (!reviews || reviews.length === 0) {
     return null;
   }
 
