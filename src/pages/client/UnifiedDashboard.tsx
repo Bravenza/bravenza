@@ -534,6 +534,7 @@ export default function UnifiedDashboard() {
                       isVaultMember={!!vaultMember || isSuperAdmin}
                       buyerName={profile.full_name || undefined}
                       buyerEmail={user?.email || undefined}
+                      initialSearch={searchParams.get("search") || undefined}
                     />
                   )}
                 </>

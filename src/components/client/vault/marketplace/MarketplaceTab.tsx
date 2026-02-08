@@ -29,6 +29,7 @@ interface MarketplaceTabProps {
   isVaultMember: boolean;
   buyerName?: string;
   buyerEmail?: string;
+  initialSearch?: string;
 }
 
 interface VaultItem {
@@ -47,7 +48,7 @@ const feeTable = [
   { range: "11+ vendas", fee: "9%" },
 ];
 
-export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail }: MarketplaceTabProps) {
+export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail, initialSearch }: MarketplaceTabProps) {
   const {
     listings,
     myListings,
@@ -83,7 +84,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutListing, setCheckoutListing] = useState<MarketplaceListing | null>(null);
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
-  const [filters, setFilters] = useState<MarketplaceFilterValues>({ sort: "recent" });
+  const [filters, setFilters] = useState<MarketplaceFilterValues>({ sort: "recent", search: initialSearch });
   const [sellerProfileOpen, setSellerProfileOpen] = useState(false);
   const [sellerProfileId, setSellerProfileId] = useState<string | null>(null);
   const [listingOffers, setListingOffers] = useState<Record<string, any[]>>({});
@@ -92,7 +93,6 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
 
   useEffect(() => {
     handleSearch();
-    fetchCatalogProducts();
     if (isVaultMember) {
       checkOnboardingStatus().then((res) => setSellerOnboarded(res.onboarded));
     }
