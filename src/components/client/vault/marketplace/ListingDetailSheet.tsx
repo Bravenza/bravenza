@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import type { MarketplaceListing } from "@/hooks/useMarketplace";
 import { OfferDialog } from "./OfferDialog";
 import { motion, AnimatePresence } from "framer-motion";
+import { ProductComments, type ProductComment } from "@/components/marketplace/ProductComments";
 
 const conditionLabels: Record<string, string> = {
   novo: "Novo",
@@ -35,6 +36,12 @@ interface ListingDetailSheetProps {
   onMakeOffer?: (data: { listing_id: string; offer_price: number; message?: string }) => Promise<boolean>;
   onViewSellerProfile?: (sellerId: string) => void;
   isOwnListing?: boolean;
+  // Q&A props
+  comments?: ProductComment[];
+  commentsLoading?: boolean;
+  onSubmitComment?: (content: string, parentId?: string) => Promise<boolean>;
+  onRefreshComments?: () => void;
+  currentUserName?: string;
 }
 
 export function ListingDetailSheet({
@@ -46,6 +53,11 @@ export function ListingDetailSheet({
   onMakeOffer,
   onViewSellerProfile,
   isOwnListing = false,
+  comments,
+  commentsLoading,
+  onSubmitComment,
+  onRefreshComments,
+  currentUserName,
 }: ListingDetailSheetProps) {
   const [activePhoto, setActivePhoto] = useState(0);
 
@@ -323,6 +335,21 @@ export function ListingDetailSheet({
                 <span className="text-[10px] text-muted-foreground text-center leading-tight">7 dias<br/>garantia</span>
               </div>
             </div>
+          )}
+
+          {/* Q&A Section */}
+          {onSubmitComment && (
+            <>
+              <Separator className="bg-border/30" />
+              <ProductComments
+                productId={listing.id}
+                comments={comments || []}
+                isLoading={commentsLoading || false}
+                onSubmit={onSubmitComment}
+                onRefresh={onRefreshComments || (() => {})}
+                currentUserName={currentUserName}
+              />
+            </>
           )}
 
           {/* Action buttons */}

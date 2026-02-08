@@ -18,7 +18,7 @@ import { Logo } from "@/components/Logo";
 import { MarketplaceCheckoutDialog } from "@/components/client/vault/marketplace/MarketplaceCheckoutDialog";
 import { ListingDetailSheet } from "@/components/client/vault/marketplace/ListingDetailSheet";
 import { ProductWatchlistButton } from "@/components/marketplace/ProductWatchlistButton";
-import { ProductComments } from "@/components/marketplace/ProductComments";
+import { ProductReviews } from "@/components/marketplace/ProductReviews";
 import { ProductAnalyticsChart } from "@/components/marketplace/ProductAnalyticsChart";
 import { formatProductName } from "@/lib/text-utils";
 import { format, parseISO } from "date-fns";
@@ -50,7 +50,7 @@ export default function ProductDetailPage() {
   const { profile } = useClientSession();
   const cpf = profile?.cpf;
   const catalog = useMarketplaceCatalog(cpf || "visitor");
-  const { product, offers, sizes, isLoading, fetchProduct, fetchOffersBySize, watchlistStatus, checkWatchlist, toggleWatchlist, comments, commentsLoading, fetchComments, submitComment, analytics, analyticsLoading, fetchAnalytics } = catalog;
+  const { product, offers, sizes, isLoading, fetchProduct, fetchOffersBySize, watchlistStatus, checkWatchlist, toggleWatchlist, reviews, reviewsLoading, reviewsAverage, reviewsTotal, fetchReviews, submitReview, comments, commentsLoading, fetchComments, submitComment, analytics, analyticsLoading, fetchAnalytics } = catalog;
   const { createOrder } = useMarketplace(cpf || null);
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -108,6 +108,8 @@ export default function ProductDetailPage() {
   const handleViewOffer = (offer: ProductOffer) => {
     setDetailOffer(offer);
     setDetailOpen(true);
+    // Fetch Q&A for this product when opening offer detail
+    if (product) fetchComments(product.id);
   };
 
   const handleBuyFromDetail = (listing: MarketplaceListing) => {
@@ -145,10 +147,10 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     if (product) {
-      fetchComments(product.id);
+      fetchReviews(product.id);
       fetchAnalytics(product.id);
     }
-  }, [product, fetchComments, fetchAnalytics]);
+  }, [product, fetchReviews, fetchAnalytics]);
 
   const sortedOffers = useMemo(() => {
     return [...offers].sort((a, b) => a.price - b.price);
@@ -424,16 +426,18 @@ export default function ProductDetailPage() {
           />
         </div>
 
-        {/* ===== COMMENTS / Q&A ===== */}
+        {/* ===== REVIEWS ===== */}
         <div className="mt-10 max-w-3xl">
-          <ProductComments
+          <ProductReviews
             productId={product.id}
-            comments={comments}
-            isLoading={commentsLoading}
-            onSubmit={async (content, parentId) => {
-              return submitComment(product.id, content, parentId);
+            reviews={reviews}
+            average={reviewsAverage}
+            total={reviewsTotal}
+            isLoading={reviewsLoading}
+            onSubmit={async (rating, comment, details) => {
+              return submitReview(product.id, rating, comment, details);
             }}
-            onRefresh={() => fetchComments(product.id)}
+            onRefresh={() => fetchReviews(product.id)}
             currentUserName={profile?.full_name}
           />
         </div>
@@ -446,6 +450,16 @@ export default function ProductDetailPage() {
         onOpenChange={setDetailOpen}
         onToggleFavorite={() => {}}
         onBuy={handleBuyFromDetail}
+        comments={comments}
+        commentsLoading={commentsLoading}
+        onSubmitComment={async (content, parentId) => {
+          if (!product) return false;
+          const ok = await submitComment(product.id, content, parentId);
+          if (ok) fetchComments(product.id);
+          return ok;
+        }}
+        onRefreshComments={() => product && fetchComments(product.id)}
+        currentUserName={profile?.full_name}
       />
 
       <MarketplaceCheckoutDialog

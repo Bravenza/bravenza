@@ -258,6 +258,44 @@ export function useMarketplaceCatalog(clientCpf: string) {
     }
   }, [clientCpf, toast]);
 
+  // ===== REVIEWS =====
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsAverage, setReviewsAverage] = useState(0);
+  const [reviewsTotal, setReviewsTotal] = useState(0);
+
+  const fetchReviews = useCallback(async (productId: string) => {
+    setReviewsLoading(true);
+    try {
+      const params = new URLSearchParams({ action: "product-reviews", product_id: productId });
+      const res = await fetch(`${BASE}?${params}`, { headers: headers(clientCpf) });
+      const data = await res.json();
+      setReviews(data.reviews || []);
+      setReviewsAverage(data.average || 0);
+      setReviewsTotal(data.total || 0);
+    } catch {
+      setReviews([]);
+    } finally {
+      setReviewsLoading(false);
+    }
+  }, [clientCpf]);
+
+  const submitReview = useCallback(async (productId: string, rating: number, comment?: string, details?: { product_quality?: number; authenticity_score?: number; shipping_speed?: number }) => {
+    try {
+      const res = await fetch(`${BASE}?action=product-review`, {
+        method: "POST",
+        headers: headers(clientCpf),
+        body: JSON.stringify({ product_id: productId, rating, comment, ...details }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      return true;
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      return false;
+    }
+  }, [clientCpf, toast]);
+
   // ===== ANALYTICS =====
   const [analytics, setAnalytics] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
@@ -296,6 +334,12 @@ export function useMarketplaceCatalog(clientCpf: string) {
     commentsLoading,
     fetchComments,
     submitComment,
+    reviews,
+    reviewsLoading,
+    reviewsAverage,
+    reviewsTotal,
+    fetchReviews,
+    submitReview,
     analytics,
     analyticsLoading,
     fetchAnalytics,
