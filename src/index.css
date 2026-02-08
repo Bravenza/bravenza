@@ -733,3 +733,55 @@ main {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Hero Section CSS Animations — replaces framer-motion on critical path */
+@keyframes hero-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-glow-1 {
+  from { opacity: 0; }
+  to { opacity: 0.6; }
+}
+
+@keyframes hero-glow-2 {
+  from { opacity: 0; }
+  to { opacity: 0.4; }
+}
+
+@keyframes hero-line-expand {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.animate-hero-fade-up {
+  opacity: 0;
+  animation: hero-fade-up 0.6s ease-out forwards;
+}
+
+.animate-hero-glow-1 {
+  opacity: 0;
+  animation: hero-glow-1 2s ease-out 0.5s forwards;
+}
+
+.animate-hero-glow-2 {
+  opacity: 0;
+  animation: hero-glow-2 2s ease-out 0.8s forwards;
+}
+
+.animate-hero-line-1 {
+  transform: scaleX(0);
+  animation: hero-line-expand 1.5s ease-out 0.3s forwards;
+}
+
+.animate-hero-line-2 {
+  transform: scaleX(0);
+  animation: hero-line-expand 1.5s ease-out 0.5s forwards;
+}
