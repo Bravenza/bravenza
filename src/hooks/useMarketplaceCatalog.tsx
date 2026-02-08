@@ -68,6 +68,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [product, setProduct] = useState<CatalogProduct | null>(null);
   const [offers, setOffers] = useState<ProductOffer[]>([]);
+  const [allOffers, setAllOffers] = useState<ProductOffer[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [totalProducts, setTotalProducts] = useState(0);
@@ -107,6 +108,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
       setProduct(data.product || null);
       setSizes(data.sizes || []);
       setOffers(data.offers || []);
+      setAllOffers(data.offers || []);
       return data;
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
@@ -318,6 +320,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
     products,
     product,
     offers,
+    allOffers,
     sizes,
     totalProducts,
     isLoading,

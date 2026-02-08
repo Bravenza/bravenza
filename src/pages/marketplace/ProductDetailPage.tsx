@@ -52,7 +52,7 @@ export default function ProductDetailPage() {
   const { profile } = useClientSession();
   const cpf = profile?.cpf;
   const catalog = useMarketplaceCatalog(cpf || "visitor");
-  const { product, offers, sizes, isLoading, fetchProduct, fetchOffersBySize, watchlistStatus, checkWatchlist, toggleWatchlist, reviews, reviewsLoading, reviewsAverage, reviewsTotal, fetchReviews, submitReview, comments, commentsLoading, fetchComments, submitComment, analytics, analyticsLoading, fetchAnalytics } = catalog;
+  const { product, offers, allOffers, sizes, isLoading, fetchProduct, fetchOffersBySize, watchlistStatus, checkWatchlist, toggleWatchlist, reviews, reviewsLoading, reviewsAverage, reviewsTotal, fetchReviews, submitReview, comments, commentsLoading, fetchComments, submitComment, analytics, analyticsLoading, fetchAnalytics } = catalog;
   const { createOrder } = useMarketplace(cpf || null);
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -152,17 +152,28 @@ export default function ProductDetailPage() {
     }
   }, [product, fetchReviews, fetchAnalytics]);
 
-  // Filter sizes based on condition filter
+  // Determine which conditions exist across ALL offers (not just current size)
+  const hasNewOffers = useMemo(() => allOffers.some((o) => o.condition === "novo"), [allOffers]);
+  const hasUsedOffers = useMemo(() => allOffers.some((o) => o.condition !== "novo"), [allOffers]);
+
+  // Auto-set conditionFilter if only one type exists
+  useEffect(() => {
+    if (hasNewOffers && !hasUsedOffers) setConditionFilter("novo");
+    else if (hasUsedOffers && !hasNewOffers) setConditionFilter("usado");
+    else if (hasNewOffers && hasUsedOffers) setConditionFilter("all");
+  }, [hasNewOffers, hasUsedOffers]);
+
+  // Filter sizes based on condition filter using ALL offers
   const filteredSizes = useMemo(() => {
     if (conditionFilter === "all") return sizes;
     return sizes.filter((size) =>
-      offers.some((o) => {
+      allOffers.some((o) => {
         const matchSize = o.size === size;
         const matchCondition = conditionFilter === "novo" ? o.condition === "novo" : o.condition !== "novo";
         return matchSize && matchCondition;
       })
     );
-  }, [sizes, offers, conditionFilter]);
+  }, [sizes, allOffers, conditionFilter]);
 
   // Reset selectedSize if it's no longer in filteredSizes
   useEffect(() => {
@@ -351,27 +362,36 @@ export default function ProductDetailPage() {
               );
             })()}
 
-            {/* Condition Filter */}
-            <div className="flex gap-2">
-              {([
-                { value: "all", label: "Todos" },
-                { value: "novo", label: "Novos" },
-                { value: "usado", label: "Usados" },
-              ] as const).map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => setConditionFilter(opt.value)}
-                  className={cn(
-                    "px-3.5 py-1.5 rounded-full text-xs font-medium transition-all border",
-                    conditionFilter === opt.value
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border/50 text-muted-foreground hover:border-primary/40"
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+            {/* Condition Filter - only show if both types exist */}
+            {hasNewOffers && hasUsedOffers && (
+              <div className="flex gap-2">
+                {([
+                  { value: "all" as const, label: "Todos" },
+                  { value: "novo" as const, label: "Novos" },
+                  { value: "usado" as const, label: "Usados" },
+                ]).map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setConditionFilter(opt.value)}
+                    className={cn(
+                      "px-3.5 py-1.5 rounded-full text-xs font-medium transition-all border",
+                      conditionFilter === opt.value
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border/50 text-muted-foreground hover:border-primary/40"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* Show single label if only one type */}
+            {hasNewOffers && !hasUsedOffers && (
+              <Badge variant="secondary" className="text-xs w-fit">Somente Novos</Badge>
+            )}
+            {hasUsedOffers && !hasNewOffers && (
+              <Badge variant="secondary" className="text-xs w-fit">Somente Usados</Badge>
+            )}
 
             {/* Size Selector */}
             {filteredSizes.length > 0 && (
