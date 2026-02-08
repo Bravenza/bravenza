@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, ShieldCheck, Star, Verified, Heart, Share2,
   ChevronRight, AlertTriangle, Package, Eye, Tag, Calendar,
-  Palette, Hash, DollarSign, Info, ShoppingBag
+  Palette, Hash, DollarSign, Info, ShoppingBag, CreditCard
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import { ProductWatchlistButton } from "@/components/marketplace/ProductWatchlis
 import { ProductReviews } from "@/components/marketplace/ProductReviews";
 import { ProductAnalyticsChart } from "@/components/marketplace/ProductAnalyticsChart";
 import { TrustBadges } from "@/components/marketplace/TrustBadges";
+import { generateInstallmentOptions, formatPriceBR } from "@/lib/budget-calculator";
 import { formatProductName } from "@/lib/text-utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -57,10 +58,12 @@ export default function ProductDetailPage() {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [loadingOffers, setLoadingOffers] = useState(false);
+  const [conditionFilter, setConditionFilter] = useState<"all" | "novo" | "usado">("all");
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutListing, setCheckoutListing] = useState<MarketplaceListing | null>(null);
   const [detailOffer, setDetailOffer] = useState<ProductOffer | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [showInstallments, setShowInstallments] = useState(false);
 
   const offerToListing = (offer: ProductOffer): MarketplaceListing => {
     // Normalize shipping_mode to expected values
@@ -154,8 +157,13 @@ export default function ProductDetailPage() {
   }, [product, fetchReviews, fetchAnalytics]);
 
   const sortedOffers = useMemo(() => {
-    return [...offers].sort((a, b) => a.price - b.price);
-  }, [offers]);
+    const filtered = offers.filter((o) => {
+      if (conditionFilter === "novo") return o.condition === "novo";
+      if (conditionFilter === "usado") return o.condition !== "novo";
+      return true;
+    });
+    return [...filtered].sort((a, b) => a.price - b.price);
+  }, [offers, conditionFilter]);
 
   if (isLoading && !product) {
     return (
@@ -251,23 +259,75 @@ export default function ProductDetailPage() {
               const displayPrice = lowestForSize ?? product.lowest_price;
               const multipleOffers = sortedOffers.length > 1;
               const hasSize = !!selectedSize;
+              const showPrefix = !hasSize || multipleOffers;
+              const installments12 = displayPrice ? generateInstallmentOptions(displayPrice).find(o => o.installments === 12) : null;
               return (
-                <div className="flex items-baseline gap-3">
+                <div className="space-y-1">
                   {displayPrice ? (
                     <>
-                      <span className="text-3xl font-bold text-foreground">
-                        {(hasSize && !multipleOffers ? "" : "A partir de ")}{`R$ ${displayPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        ou 6x de R$ {(displayPrice / 6).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                      </span>
+                      {showPrefix && (
+                        <span className="text-xs text-muted-foreground">A partir de</span>
+                      )}
+                      <p className="text-3xl font-bold text-foreground">
+                        R$ {displayPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </p>
+                      {installments12 && (
+                        <p className="text-sm text-muted-foreground">
+                          ou <span className="font-medium text-foreground">12x de {formatPriceBR(installments12.installmentValue)}</span>
+                        </p>
+                      )}
+                      <button
+                        onClick={() => setShowInstallments(!showInstallments)}
+                        className="text-xs text-primary hover:underline mt-0.5"
+                      >
+                        {showInstallments ? "Ocultar parcelas" : "Ver todas as parcelas"}
+                      </button>
+                      {showInstallments && (
+                        <div className="mt-2 p-3 bg-muted/20 rounded-xl border border-border/30 space-y-1">
+                          {generateInstallmentOptions(displayPrice).map((opt) => (
+                            <div key={opt.installments} className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground">
+                                {opt.installments}x de <span className="font-medium text-foreground">{formatPriceBR(opt.installmentValue)}</span>
+                              </span>
+                              <span className="text-muted-foreground/60">
+                                {opt.installments === 1 ? "sem juros" : `total ${formatPriceBR(opt.totalWithInterest)}`}
+                              </span>
+                            </div>
+                          ))}
+                          <p className="text-[10px] text-muted-foreground/50 pt-1 border-t border-border/20 mt-1">
+                            PIX à vista: {formatPriceBR(displayPrice)} · Cartão 1x sem juros
+                          </p>
+                        </div>
+                      )}
                     </>
                   ) : (
-                    <span className="text-3xl font-bold text-foreground">Sem ofertas</span>
+                    <p className="text-3xl font-bold text-foreground">Sem ofertas</p>
                   )}
                 </div>
               );
             })()}
+
+            {/* Condition Filter */}
+            <div className="flex gap-2">
+              {([
+                { value: "all", label: "Todos" },
+                { value: "novo", label: "Novos" },
+                { value: "usado", label: "Usados" },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setConditionFilter(opt.value)}
+                  className={cn(
+                    "px-3.5 py-1.5 rounded-full text-xs font-medium transition-all border",
+                    conditionFilter === opt.value
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border/50 text-muted-foreground hover:border-primary/40"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
 
             {/* Size Selector */}
             {sizes.length > 0 && (
