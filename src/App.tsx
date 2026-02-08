@@ -26,6 +26,7 @@ const PaymentPage = lazy(() => import("./pages/PaymentPage"));
 const OrderRequestPage = lazy(() => import("./pages/OrderRequestPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
+const ReturnsPage = lazy(() => import("./pages/ReturnsPage"));
 const InstallPage = lazy(() => import("./pages/InstallPage"));
 const AuthenticityPage = lazy(() => import("./pages/AuthenticityPage"));
 const AuthenticityInfoPage = lazy(() => import("./pages/AuthenticityInfoPage"));
@@ -123,6 +124,7 @@ const App = () => (
                     <Route path="/pagamento/:token" element={<PaymentPage />} />
                     <Route path="/termos" element={<TermsPage />} />
                     <Route path="/politicas" element={<PrivacyPage />} />
+                    <Route path="/trocas-devolucoes" element={<ReturnsPage />} />
                     <Route path="/instalar" element={<InstallPage />} />
                     <Route path="/autenticidade" element={<AuthenticityPage />} />
                     <Route path="/autenticidade/:code" element={<AuthenticityPage />} />
