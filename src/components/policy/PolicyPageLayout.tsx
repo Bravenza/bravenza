@@ -89,11 +89,11 @@ export function PolicySection({
 }) {
   return (
     <section>
-      <div className="flex items-start gap-3 mb-4">
-        <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0 mt-0.5">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0">
           <Icon className="h-5 w-5 text-primary" />
         </div>
-        <h2 className="text-xl md:text-2xl font-bold text-foreground">
+        <h2 className="text-xl md:text-2xl font-bold text-foreground leading-none">
           {number}. {title}
         </h2>
       </div>
