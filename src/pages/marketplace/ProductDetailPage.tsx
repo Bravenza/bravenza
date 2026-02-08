@@ -58,37 +58,44 @@ export default function ProductDetailPage() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutListing, setCheckoutListing] = useState<MarketplaceListing | null>(null);
 
-  const offerToListing = (offer: ProductOffer): MarketplaceListing => ({
-    id: offer.listing_id || offer.id,
-    seller_id: offer.seller_id,
-    vault_item_id: null,
-    title: product ? `${product.brand} ${product.model}` : "",
-    description: offer.description,
-    brand: product?.brand || null,
-    model: product?.model || null,
-    colorway: product?.colorway || null,
-    size: offer.size,
-    condition: offer.condition,
-    photos: offer.photos?.length ? offer.photos : (product?.images || []),
-    price: offer.price,
-    original_purchase_price: offer.original_purchase_price,
-    shipping_mode: offer.shipping_mode,
-    shipping_cost_estimate: 0,
-    is_vault_certified: false,
-    status: offer.status,
-    views_count: offer.views_count,
-    favorites_count: 0,
-    published_at: offer.created_at,
-    created_at: offer.created_at,
-    seller: offer.seller ? {
-      id: offer.seller.id,
-      average_rating: offer.seller.average_rating,
-      total_sales_count: offer.seller.total_sales_count,
-      current_fee_percent: offer.seller.current_fee_percent,
-      bio: null,
-      member: offer.seller.member,
-    } : undefined,
-  });
+  const offerToListing = (offer: ProductOffer): MarketplaceListing => {
+    // Normalize shipping_mode to expected values
+    const normalizedShippingMode = offer.shipping_mode === "seller_ships" ? "direct" 
+      : offer.shipping_mode === "hub" ? "bravenza" 
+      : offer.shipping_mode || "direct";
+    
+    return {
+      id: offer.listing_id || offer.id,
+      seller_id: offer.seller_id,
+      vault_item_id: null,
+      title: product ? `${product.brand} ${product.model}` : "",
+      description: offer.description,
+      brand: product?.brand || null,
+      model: product?.model || null,
+      colorway: product?.colorway || null,
+      size: offer.size,
+      condition: offer.condition,
+      photos: offer.photos?.length ? offer.photos : (product?.images || []),
+      price: offer.price,
+      original_purchase_price: offer.original_purchase_price,
+      shipping_mode: normalizedShippingMode,
+      shipping_cost_estimate: 0,
+      is_vault_certified: false,
+      status: offer.status,
+      views_count: offer.views_count,
+      favorites_count: 0,
+      published_at: offer.created_at,
+      created_at: offer.created_at,
+      seller: offer.seller ? {
+        id: offer.seller.id,
+        average_rating: offer.seller.average_rating,
+        total_sales_count: offer.seller.total_sales_count,
+        current_fee_percent: offer.seller.current_fee_percent,
+        bio: null,
+        member: offer.seller.member,
+      } : undefined,
+    };
+  };
 
   const handleBuyOffer = (offer: ProductOffer) => {
     setCheckoutListing(offerToListing(offer));
@@ -443,7 +450,13 @@ function SpecRow({ icon, label, value, even }: { icon: React.ReactNode; label: s
 
 // ---- Offer Card ----
 function OfferCard({ offer, isBest, productImages, onBuy }: { offer: ProductOffer; isBest: boolean; productImages: string[]; onBuy: () => void }) {
-  const pro = proLabels[offer.pro_recommendation] || proLabels.direct_allowed;
+  // Derive pro recommendation from shipping_mode if not explicitly set
+  const normalizedMode = offer.shipping_mode === "seller_ships" ? "direct" 
+    : offer.shipping_mode === "hub" ? "bravenza" 
+    : offer.shipping_mode || "direct";
+  const proKey = offer.pro_recommendation 
+    || (normalizedMode === "bravenza" ? (offer.price >= 2000 ? "pro_mandatory" : "pro_recommended") : "direct_allowed");
+  const pro = proLabels[proKey] || proLabels.direct_allowed;
   const ProIcon = pro.icon;
   const sellerName = offer.seller?.member?.client_name?.split(" ")[0] || "Vendedor";
   const offerImage = offer.photos?.length ? offer.photos[0] : productImages[0];
