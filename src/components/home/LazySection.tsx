@@ -11,15 +11,18 @@ interface LazySectionProps {
 
 /**
  * Renders children only when the section enters the viewport.
- * Prevents below-fold sections from mounting, fetching data, or running animations
- * until the user scrolls near them.
+ * Adds a smooth fade-in animation when content appears.
  */
 export function LazySection({ children, minHeight = "200px", rootMargin = "200px" }: LazySectionProps) {
   const { ref, hasTriggered } = useLazySection({ rootMargin });
 
   return (
     <div ref={ref} style={hasTriggered ? undefined : { minHeight }}>
-      {hasTriggered ? children : null}
+      {hasTriggered ? (
+        <div className="animate-fade-in" style={{ animationDuration: "0.5s", animationFillMode: "both" }}>
+          {children}
+        </div>
+      ) : null}
     </div>
   );
 }
