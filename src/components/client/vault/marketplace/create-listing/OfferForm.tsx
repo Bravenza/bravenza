@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, ShieldCheck, Upload, X, Loader2, Package } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Upload, X, Loader2, Package, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,8 +29,9 @@ export function OfferForm({ product, onBack, onSubmit, vaultItems = [] }: OfferF
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [sizeInput, setSizeInput] = useState("");
   const [form, setForm] = useState({
-    size: "",
+    sizes: [] as string[],
     condition: "usado_bom",
     price: "",
     original_purchase_price: "",
@@ -42,6 +43,28 @@ export function OfferForm({ product, onBack, onSubmit, vaultItems = [] }: OfferF
     shipping_mode: "direct",
     vault_item_id: "",
   });
+
+  const addSize = () => {
+    const trimmed = sizeInput.trim();
+    if (!trimmed) return;
+    if (form.sizes.includes(trimmed)) {
+      toast({ title: "Tamanho já adicionado", variant: "destructive" });
+      return;
+    }
+    setForm((p) => ({ ...p, sizes: [...p.sizes, trimmed] }));
+    setSizeInput("");
+  };
+
+  const removeSize = (size: string) => {
+    setForm((p) => ({ ...p, sizes: p.sizes.filter((s) => s !== size) }));
+  };
+
+  const handleSizeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addSize();
+    }
+  };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: "photos" | "proof_photos") => {
     const files = e.target.files;
@@ -68,35 +91,40 @@ export function OfferForm({ product, onBack, onSubmit, vaultItems = [] }: OfferF
   const isBravenzaRequired = priceNum >= 2000 || product.is_high_risk;
 
   const handleSubmit = async () => {
-    if (!form.size || !form.price) {
-      toast({ title: "Preencha tamanho e preço", variant: "destructive" });
+    if (form.sizes.length === 0 || !form.price) {
+      toast({ title: "Adicione pelo menos um tamanho e informe o preço", variant: "destructive" });
       return;
     }
     setIsSubmitting(true);
     try {
-      const result = await onSubmit({
-        product_id: product.id,
-        brand: product.brand,
-        model: product.model,
-        size: form.size,
-        condition: form.condition,
-        price: parseFloat(form.price),
-        original_purchase_price: form.original_purchase_price ? parseFloat(form.original_purchase_price) : undefined,
-        description: form.description || undefined,
-        defects: form.defects || undefined,
-        photos: form.photos,
-        proof_photos: form.proof_photos,
-        has_receipt: form.has_receipt,
-        shipping_mode: isBravenzaRequired ? "bravenza" : form.shipping_mode,
-        vault_item_id: form.vault_item_id || undefined,
-      });
-      if (result) return result;
+      let lastResult = null;
+      for (const size of form.sizes) {
+        const result = await onSubmit({
+          product_id: product.id,
+          brand: product.brand,
+          model: product.model,
+          size,
+          condition: form.condition,
+          price: parseFloat(form.price),
+          original_purchase_price: form.original_purchase_price ? parseFloat(form.original_purchase_price) : undefined,
+          description: form.description || undefined,
+          defects: form.defects || undefined,
+          photos: form.photos,
+          proof_photos: form.proof_photos,
+          has_receipt: form.has_receipt,
+          shipping_mode: isBravenzaRequired ? "bravenza" : form.shipping_mode,
+          vault_item_id: form.vault_item_id || undefined,
+        });
+        if (result) lastResult = result;
+      }
+      if (form.sizes.length > 1 && lastResult) {
+        toast({ title: `${form.sizes.length} ofertas criadas!`, description: "Uma oferta para cada tamanho selecionado." });
+      }
+      return lastResult;
     } finally {
       setIsSubmitting(false);
     }
-    return null;
   };
-
   return (
     <div className="space-y-4">
       <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -142,23 +170,51 @@ export function OfferForm({ product, onBack, onSubmit, vaultItems = [] }: OfferF
         </div>
       )}
 
-      {/* Size + Condition */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label>Tamanho *</Label>
-          <Input value={form.size} onChange={(e) => setForm((p) => ({ ...p, size: e.target.value }))} placeholder="42" className="mt-1" />
+      {/* Sizes */}
+      <div>
+        <Label>Tamanhos disponíveis *</Label>
+        <div className="flex gap-2 mt-1">
+          <Input
+            value={sizeInput}
+            onChange={(e) => setSizeInput(e.target.value)}
+            onKeyDown={handleSizeKeyDown}
+            placeholder="Ex: 42"
+            className="flex-1"
+          />
+          <Button type="button" variant="outline" size="icon" onClick={addSize} disabled={!sizeInput.trim()}>
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
-        <div>
-          <Label>Condição *</Label>
-          <Select value={form.condition} onValueChange={(v) => setForm((p) => ({ ...p, condition: v }))}>
-            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {conditions.map((c) => (
-                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {form.sizes.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {form.sizes.map((size) => (
+              <Badge key={size} variant="secondary" className="gap-1 text-xs px-2 py-1">
+                {size}
+                <button type="button" onClick={() => removeSize(size)} className="ml-0.5 hover:text-destructive transition-colors">
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
+          </div>
+        )}
+        <p className="text-[10px] text-muted-foreground mt-1">
+          {form.sizes.length === 0
+            ? "Digite o tamanho e pressione Enter ou clique em +"
+            : `${form.sizes.length} tamanho${form.sizes.length > 1 ? "s" : ""} selecionado${form.sizes.length > 1 ? "s" : ""}. Uma oferta será criada para cada tamanho.`}
+        </p>
+      </div>
+
+      {/* Condition */}
+      <div>
+        <Label>Condição *</Label>
+        <Select value={form.condition} onValueChange={(v) => setForm((p) => ({ ...p, condition: v }))}>
+          <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {conditions.map((c) => (
+              <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Price */}
@@ -252,8 +308,12 @@ export function OfferForm({ product, onBack, onSubmit, vaultItems = [] }: OfferF
         </div>
       </div>
 
-      <Button onClick={handleSubmit} disabled={isSubmitting || !form.size || !form.price || form.photos.length === 0} className="w-full btn-gold">
-        {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Publicando...</> : "Publicar oferta"}
+      <Button onClick={handleSubmit} disabled={isSubmitting || form.sizes.length === 0 || !form.price || form.photos.length === 0} className="w-full btn-gold">
+        {isSubmitting
+          ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Publicando...</>
+          : form.sizes.length > 1
+            ? `Publicar ${form.sizes.length} ofertas`
+            : "Publicar oferta"}
       </Button>
     </div>
   );
