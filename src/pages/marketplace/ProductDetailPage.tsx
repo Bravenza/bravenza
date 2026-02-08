@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, ShieldCheck, Star, Verified, Heart, Share2,
-  ChevronRight, AlertTriangle, Package, Eye, Tag, Calendar,
-  Palette, Hash, DollarSign, Info, ShoppingBag, CreditCard
+  ArrowLeft, ShieldCheck, Share2,
+  ChevronRight, Package, Tag, Calendar,
+  Palette, Hash, DollarSign, Info, ShoppingBag
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -21,28 +21,20 @@ import { ProductWatchlistButton } from "@/components/marketplace/ProductWatchlis
 import { ProductReviews } from "@/components/marketplace/ProductReviews";
 import { ProductAnalyticsChart } from "@/components/marketplace/ProductAnalyticsChart";
 import { TrustBadges } from "@/components/marketplace/TrustBadges";
+import { SpecRow } from "@/components/marketplace/SpecRow";
+import { OfferCard } from "@/components/marketplace/OfferCard";
+import { ProductGallery } from "@/components/marketplace/ProductGallery";
+import { ProductPriceBlock } from "@/components/marketplace/ProductPriceBlock";
+import { conditionLabels, conditionColors, normalizeShippingMode } from "@/lib/marketplace-constants";
 import { generateInstallmentOptions, formatPriceBR } from "@/lib/budget-calculator";
 import { formatProductName } from "@/lib/text-utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const conditionLabels: Record<string, string> = {
-  novo: "Novo",
-  usado_excelente: "Excelente",
-  usado_bom: "Bom",
-  usado_regular: "Regular",
-};
-
-const conditionColors: Record<string, string> = {
-  novo: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  usado_excelente: "bg-sky-500/20 text-sky-400 border-sky-500/30",
-  usado_bom: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-  usado_regular: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30",
-};
-
+// Pro labels kept locally since they reference icon components
 const proLabels: Record<string, { text: string; color: string; icon: typeof ShieldCheck }> = {
   pro_mandatory: { text: "PRO obrigatório", color: "bg-primary/20 text-primary border-primary/30", icon: ShieldCheck },
-  pro_recommended: { text: "PRO recomendado", color: "bg-amber-500/20 text-amber-400 border-amber-500/30", icon: AlertTriangle },
+  pro_recommended: { text: "PRO recomendado", color: "bg-amber-500/20 text-amber-400 border-amber-500/30", icon: ShieldCheck },
   direct_allowed: { text: "Direto", color: "bg-muted text-muted-foreground border-border", icon: Package },
 };
 
@@ -57,14 +49,14 @@ export default function ProductDetailPage() {
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const touchStartX = React.useRef<number | null>(null);
+  
   const [loadingOffers, setLoadingOffers] = useState(false);
   const [conditionFilter, setConditionFilter] = useState<"all" | "novo" | "usado">("all");
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutListing, setCheckoutListing] = useState<MarketplaceListing | null>(null);
   const [detailOffer, setDetailOffer] = useState<ProductOffer | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [showInstallments, setShowInstallments] = useState(false);
+  
 
   const offerToListing = (offer: ProductOffer): MarketplaceListing => {
     // Normalize shipping_mode to expected values
@@ -327,50 +319,11 @@ export default function ProductDetailPage() {
               const multipleOffers = sortedOffers.length > 1;
               const hasSize = !!selectedSize;
               const showPrefix = !hasSize || multipleOffers;
-              const installments12 = displayPrice ? generateInstallmentOptions(displayPrice).find(o => o.installments === 12) : null;
               return (
-                <div className="space-y-1">
-                  {displayPrice ? (
-                    <>
-                      {showPrefix && (
-                        <span className="text-xs text-muted-foreground">A partir de</span>
-                      )}
-                      <p className="text-3xl font-bold text-foreground">
-                        R$ {displayPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                      </p>
-                      {installments12 && (
-                        <p className="text-sm text-muted-foreground">
-                          ou <span className="font-medium text-foreground">12x de {formatPriceBR(installments12.installmentValue)}</span>
-                        </p>
-                      )}
-                      <button
-                        onClick={() => setShowInstallments(!showInstallments)}
-                        className="text-xs text-primary hover:underline mt-0.5"
-                      >
-                        {showInstallments ? "Ocultar parcelas" : "Ver todas as parcelas"}
-                      </button>
-                      {showInstallments && (
-                        <div className="mt-2 p-3 bg-muted/20 rounded-xl border border-border/30 space-y-1">
-                          {generateInstallmentOptions(displayPrice).map((opt) => (
-                            <div key={opt.installments} className="flex items-center justify-between text-xs">
-                              <span className="text-muted-foreground">
-                                {opt.installments}x de <span className="font-medium text-foreground">{formatPriceBR(opt.installmentValue)}</span>
-                              </span>
-                              <span className="text-muted-foreground/60">
-                                {opt.installments === 1 ? "sem juros" : `total ${formatPriceBR(opt.totalWithInterest)}`}
-                              </span>
-                            </div>
-                          ))}
-                          <p className="text-[10px] text-muted-foreground/50 pt-1 border-t border-border/20 mt-1">
-                            PIX à vista: {formatPriceBR(displayPrice)} · Cartão 1x sem juros
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-3xl font-bold text-foreground">Sem ofertas</p>
-                  )}
-                </div>
+                <ProductPriceBlock
+                  displayPrice={displayPrice}
+                  showPrefix={showPrefix}
+                />
               );
             })()}
 
@@ -499,48 +452,13 @@ export default function ProductDetailPage() {
           </div>
 
           {/* RIGHT: Gallery */}
-          <div className="space-y-3 order-first lg:order-last">
-            <div
-              className="relative aspect-square rounded-2xl overflow-hidden bg-muted/20 border border-border/30 touch-pan-y"
-              onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
-              onTouchEnd={(e) => {
-                if (touchStartX.current === null || images.length <= 1) return;
-                const diff = touchStartX.current - e.changedTouches[0].clientX;
-                if (Math.abs(diff) > 50) {
-                  setSelectedImage((prev) => diff > 0 ? (prev + 1) % images.length : (prev - 1 + images.length) % images.length);
-                }
-                touchStartX.current = null;
-              }}
-            >
-              <img
-                src={images[selectedImage]}
-                alt={formattedName}
-                className="w-full h-full object-contain p-4"
-                loading="eager"
-              />
-              {product.is_high_risk && (
-                <Badge className="absolute top-3 left-3 bg-primary/90 text-primary-foreground text-[10px] gap-1">
-                  <ShieldCheck className="h-3 w-3" /> Autenticação recomendada
-                </Badge>
-              )}
-            </div>
-            {images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedImage(i)}
-                    className={cn(
-                      "aspect-square rounded-lg overflow-hidden border-2 transition-all bg-muted/10",
-                      selectedImage === i ? "border-primary ring-1 ring-primary/30" : "border-transparent opacity-60 hover:opacity-100"
-                    )}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-contain p-1" loading="lazy" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <ProductGallery
+            images={images}
+            selectedImage={selectedImage}
+            onSelectImage={setSelectedImage}
+            productName={formattedName}
+            isHighRisk={product.is_high_risk}
+          />
         </div>
 
         {/* ===== SELLER OFFERS SECTION ===== */}
@@ -643,117 +561,6 @@ export default function ProductDetailPage() {
         onConfirm={handleCheckoutConfirm}
         buyerDefaults={{ name: profile?.full_name }}
       />
-    </div>
-  );
-}
-
-// ---- Spec Row ----
-function SpecRow({ icon, label, value, even, onClick }: { icon: React.ReactNode; label: string; value: string; even?: boolean; onClick?: () => void }) {
-  return (
-    <div className={cn(
-      "flex items-center justify-between px-4 py-2.5 text-sm",
-      even ? "bg-muted/10" : "bg-transparent"
-    )}>
-      <span className="flex items-center gap-2 text-muted-foreground">
-        {icon}
-        {label}
-      </span>
-      {onClick ? (
-        <button onClick={onClick} className="font-medium text-primary hover:underline text-right">
-          {value} →
-        </button>
-      ) : (
-        <span className="font-medium text-foreground text-right">{value}</span>
-      )}
-    </div>
-  );
-}
-
-// ---- Offer Card ----
-function OfferCard({ offer, isBest, productImages, onBuy, onClick }: { offer: ProductOffer; isBest: boolean; productImages: string[]; onBuy: () => void; onClick: () => void }) {
-  // Derive pro recommendation from shipping_mode if not explicitly set
-  const normalizedMode = offer.shipping_mode === "seller_ships" ? "direct" 
-    : offer.shipping_mode === "hub" ? "bravenza" 
-    : offer.shipping_mode || "direct";
-  const proKey = offer.pro_recommendation 
-    || (normalizedMode === "bravenza" ? (offer.price >= 2000 ? "pro_mandatory" : "pro_recommended") : "direct_allowed");
-  const pro = proLabels[proKey] || proLabels.direct_allowed;
-  const ProIcon = pro.icon;
-  const sellerName = offer.seller?.member?.client_name?.split(" ")[0] || "Vendedor";
-  const offerImage = offer.photos?.length ? offer.photos[0] : productImages[0];
-
-  return (
-    <div
-      onClick={onClick}
-      className={cn(
-        "rounded-xl border overflow-hidden transition-all hover:shadow-md cursor-pointer",
-        isBest ? "border-primary/40 ring-1 ring-primary/20" : "border-border/40"
-      )}
-    >
-      {/* Offer photo */}
-      <div className="relative aspect-[4/3] bg-muted/10">
-        <img src={offerImage} alt="" className="w-full h-full object-contain p-2" loading="lazy" />
-        {isBest && (
-          <Badge className="absolute top-2 left-2 text-[10px] px-1.5 py-0 bg-primary text-primary-foreground">
-            Melhor preço
-          </Badge>
-        )}
-        <Badge variant="outline" className={cn("absolute top-2 right-2 text-[10px] px-1.5 py-0 gap-0.5", conditionColors[offer.condition])}>
-          {conditionLabels[offer.condition] || offer.condition}
-        </Badge>
-      </div>
-
-      <div className="p-3 space-y-2">
-        {/* Seller */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-foreground">{sellerName}</span>
-          {offer.seller?.total_sales_count && offer.seller.total_sales_count > 0 ? (
-            <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
-              <Verified className="h-2.5 w-2.5 text-primary" />
-              {offer.seller.total_sales_count} vendas
-            </span>
-          ) : null}
-          {offer.seller?.average_rating && offer.seller.average_rating > 0 ? (
-            <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground ml-auto">
-              <Star className="h-2.5 w-2.5 text-primary fill-primary" />
-              {offer.seller.average_rating.toFixed(1)}
-            </span>
-          ) : null}
-        </div>
-
-        {/* Badges */}
-        <div className="flex flex-wrap gap-1">
-          <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 gap-0.5", pro.color)}>
-            <ProIcon className="h-2.5 w-2.5" />
-            {pro.text}
-          </Badge>
-          {offer.has_receipt && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-              NF
-            </Badge>
-          )}
-        </div>
-
-        {/* Price + CTA */}
-        <div className="flex items-center justify-between pt-1">
-          <div>
-            <p className="text-lg font-bold text-foreground">
-              R$ {offer.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </p>
-            {(() => {
-              const inst12 = generateInstallmentOptions(offer.price).find(o => o.installments === 12);
-              return inst12 ? (
-                <p className="text-[10px] text-muted-foreground">
-                  12x de {formatPriceBR(inst12.installmentValue)}
-                </p>
-              ) : null;
-            })()}
-          </div>
-          <Button size="sm" className="btn-gold text-xs h-8 gap-1" onClick={(e) => { e.stopPropagation(); onBuy(); }}>
-            Comprar <ChevronRight className="h-3 w-3" />
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }
