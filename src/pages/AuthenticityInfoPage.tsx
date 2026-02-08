@@ -63,8 +63,8 @@ const AUTHENTICITY_POINTS = [
   },
   {
     icon: Shield,
-    title: "Garantia total",
-    description: "Se houver qualquer dúvida sobre a autenticidade, devolvemos 100% do seu dinheiro."
+    title: "Proteção ao comprador",
+    description: "Se o item for classificado como réplica na nossa verificação técnica, o comprador é reembolsado integralmente."
   },
   {
     icon: Lock,
@@ -128,7 +128,7 @@ function AuthenticityInfoPageComponent() {
             <motion.div variants={fadeInUp} className="mb-6">
               <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary">
                 <Shield className="h-4 w-4" />
-                100% autêntico ou seu dinheiro de volta
+                Verificação técnica rigorosa em cada produto
               </span>
             </motion.div>
 
@@ -146,8 +146,8 @@ function AuthenticityInfoPageComponent() {
               variants={fadeInUp}
               className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto"
             >
-              Cada tênis que passa pela Bravenza é submetido a um rigoroso processo de verificação. 
-              Não aceitamos nada menos que 100% de certeza sobre a autenticidade.
+              Cada tênis que passa pela Bravenza é submetido a um rigoroso processo de verificação técnica. 
+              Nosso compromisso é reduzir riscos e garantir transparência em cada transação.
             </motion.p>
 
             <motion.div variants={fadeInUp} className="flex flex-wrap gap-4 justify-center">
@@ -173,7 +173,7 @@ function AuthenticityInfoPageComponent() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { value: "100%", label: "Taxa de autenticidade" },
+              { value: "100%", label: "Compromisso com qualidade" },
               { value: "6", label: "Etapas de verificação" },
               { value: "48h", label: "Tempo de inspeção" },
               { value: "0", label: "Produtos falsos entregues" }
@@ -490,12 +490,12 @@ function AuthenticityInfoPageComponent() {
                   </div>
                   <div className="text-center md:text-left">
                     <h2 className="text-2xl md:text-3xl font-bold mb-3">
-                      Garantia de autenticidade ou dinheiro de volta
+                      Proteção ao comprador
                     </h2>
                     <p className="text-muted-foreground mb-6">
-                      Estamos tão confiantes em nosso processo de verificação que oferecemos garantia total. 
-                      Se, por qualquer motivo, for comprovado que o produto não é autêntico, devolvemos 
-                      100% do valor pago. Sem perguntas, sem burocracia.
+                      Nosso processo de verificação técnica é rigoroso e transparente. 
+                      Se o item for classificado como réplica durante a inspeção, a transação é cancelada 
+                      e o comprador é reembolsado integralmente, conforme nossas políticas.
                     </p>
                     <div className="flex flex-wrap gap-4 justify-center md:justify-start">
                       <div className="flex items-center gap-2 text-sm">
@@ -533,7 +533,7 @@ function AuthenticityInfoPageComponent() {
             </h2>
             <p className="text-muted-foreground mb-8">
               Solicite um orçamento e deixe nossa equipe encontrar o tênis dos seus sonhos 
-              com garantia total de autenticidade.
+              com verificação técnica e proteção em cada etapa.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Button asChild size="lg" className="rounded-full">

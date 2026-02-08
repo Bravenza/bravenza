@@ -69,7 +69,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
   in_transit_to_hub: { label: "→ Hub", color: "bg-purple-500/20 text-purple-400", icon: Truck },
   hub_received: { label: "No Hub", color: "bg-blue-500/20 text-blue-400", icon: CheckCircle2 },
   inspection_pending: { label: "Inspeção", color: "bg-amber-500/20 text-amber-400", icon: ShieldCheck },
-  inspection_approved: { label: "Aprovado", color: "bg-emerald-500/20 text-emerald-400", icon: CheckCircle2 },
+  inspection_approved: { label: "Autêntico", color: "bg-emerald-500/20 text-emerald-400", icon: CheckCircle2 },
   inspection_rejected: { label: "Reprovado", color: "bg-destructive/20 text-destructive", icon: XCircle },
   ship_to_buyer_pending: { label: "Pronto envio", color: "bg-blue-500/20 text-blue-400", icon: Package },
   in_transit_to_buyer: { label: "→ Comprador", color: "bg-purple-500/20 text-purple-400", icon: Truck },

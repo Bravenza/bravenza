@@ -207,11 +207,10 @@ const TermsPage = () => {
             "Itens de até R$ 2.000,00: verificação é opcional, mediante escolha do comprador ou regra do anúncio.",
           ]} />
           <PolicyParagraphs items={[
-            { num: "13.3.", text: "O resultado pode ser: Aprovado / Provavelmente aprovado / Inconclusivo / Reprovado, conforme critérios internos." },
+            { num: "13.3.", text: "O resultado pode ser: Autêntico ou Réplica, conforme critérios internos." },
             { num: "13.4.", text: "O parecer não é certificação oficial de marcas e não constitui garantia absoluta." },
             { num: "13.5.", text: "Por sigilo e proteção do ecossistema, laudos detalhados podem ter compartilhamento restrito para evitar disseminação de técnicas de falsificação." },
             { num: "13.6.", text: "O USUÁRIO reconhece que a verificação não elimina totalmente o risco de falsificação sofisticada, adulteração posterior, fraude documental, ou limitações de evidência, não havendo garantia absoluta de originalidade." },
-            { num: "13.7.", text: "Nos casos de inconclusivo, a BRAVENZA poderá: (i) solicitar evidências adicionais, (ii) exigir verificação presencial, (iii) cancelar preventivamente a transação, (iv) restringir vendedor e/ou comprador, conforme critérios internos de risco." },
           ]} />
         </PolicySection>
 

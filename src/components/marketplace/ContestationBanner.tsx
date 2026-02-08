@@ -74,7 +74,7 @@ export function ContestationBanner({
         <div className="flex-1">
           <p className="text-sm font-medium text-foreground">Proteção encerrada</p>
           <p className="text-xs text-muted-foreground">
-            Período de proteção concluído. Pagamento liberado ao vendedor.
+            Período de proteção de 7 dias úteis concluído. Pagamento liberado ao vendedor em até 8 dias úteis.
           </p>
         </div>
         <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px]">

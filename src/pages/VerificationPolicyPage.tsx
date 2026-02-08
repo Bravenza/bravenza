@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import {
   Shield, ShieldCheck, ShieldAlert, Camera, Eye, Package,
   AlertTriangle, FileText, Lock, Scale, Clock, RefreshCw,
-  CheckCircle2, HelpCircle, XCircle, Search
+  CheckCircle2, XCircle, Search
 } from "lucide-react";
 import {
   PolicyPageLayout, PolicySection, PolicyBulletList, PolicyParagraphs, PolicyNotice
@@ -99,10 +99,8 @@ const VerificationPolicyPage = () => {
         <PolicySection icon={ShieldAlert} number="4" title="Resultados possíveis">
           <p className="text-muted-foreground mb-4">Após análise, o resultado poderá ser classificado como:</p>
           <div className="grid gap-3 md:grid-cols-2">
-            <ResultCard icon={CheckCircle2} label="Aprovado" description="Não foram identificados indícios relevantes de falsificação." color="border-green-500/30" />
-            <ResultCard icon={ShieldCheck} label="Provavelmente aprovado" description="Indícios positivos, porém com limitações de evidência." color="border-emerald-500/30" />
-            <ResultCard icon={HelpCircle} label="Inconclusivo" description="Evidências insuficientes ou conflitantes." color="border-yellow-500/30" />
-            <ResultCard icon={XCircle} label="Reprovado" description="Indícios relevantes de não originalidade ou divergência grave." color="border-red-500/30" />
+            <ResultCard icon={CheckCircle2} label="Autêntico" description="Não foram identificados indícios relevantes de falsificação. O item é considerado original." color="border-green-500/30" />
+            <ResultCard icon={XCircle} label="Réplica" description="Foram identificados indícios relevantes de não originalidade ou divergência grave com padrões de referência." color="border-red-500/30" />
           </div>
         </PolicySection>
 
@@ -139,8 +137,8 @@ const VerificationPolicyPage = () => {
           ]} />
         </PolicySection>
 
-        <PolicySection icon={AlertTriangle} number="8" title="Reprovação e consequências">
-          <p className="text-muted-foreground mb-3">Quando o item for reprovado:</p>
+        <PolicySection icon={AlertTriangle} number="8" title="Classificação como Réplica e consequências">
+          <p className="text-muted-foreground mb-3">Quando o item for classificado como Réplica:</p>
           <PolicyBulletList items={[
             "A transação poderá ser cancelada",
             "O comprador poderá ser reembolsado conforme regras de pagamento",

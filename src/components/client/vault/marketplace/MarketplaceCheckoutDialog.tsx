@@ -645,7 +645,7 @@ export function MarketplaceCheckoutDialog({
             {/* Trust box */}
             <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg text-xs text-muted-foreground space-y-1">
               <p>🔒 <strong>Compra protegida:</strong> 7 dias úteis para reportar problemas após a entrega.</p>
-              <p>📦 O vendedor só recebe o pagamento após o período de proteção.</p>
+              <p>📦 O vendedor recebe o pagamento após 8 dias úteis do período de proteção.</p>
             </div>
 
             <div className="flex gap-2 pt-1">

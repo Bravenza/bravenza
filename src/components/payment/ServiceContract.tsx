@@ -95,7 +95,7 @@ export function ServiceContract({
               <p>Pelo presente instrumento particular, de um lado:</p>
 
               <p>
-                <strong className="text-foreground">BRAVENZA</strong>, operada por HALLOW LTDA, inscrita no CNPJ nº 52.077.512/0001-50, 
+                <strong className="text-foreground">BRAVENZA</strong>, operada por BRAVENZA LTDA, inscrita no CNPJ nº 52.077.512/0001-50, 
                 com sede em Rua Dr. Egydio Michaelsen, 176 - Cavalhada, Porto Alegre/RS, doravante denominada CONTRATADA;
               </p>
 

@@ -184,7 +184,10 @@ const PrivacyPage = () => {
 
         <PolicySection icon={Phone} number="14" title="Contato e encarregado de dados (DPO)">
           <p className="text-muted-foreground mb-3">Para exercer seus direitos, esclarecer dúvidas sobre esta política ou reportar incidentes de segurança:</p>
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+            <a href="mailto:contato@bravenza.com.br" className="text-primary hover:underline font-medium">
+              E-mail: contato@bravenza.com.br
+            </a>
             <a href="https://wa.me/5551981055425" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
               WhatsApp: 51 98105.5425
             </a>

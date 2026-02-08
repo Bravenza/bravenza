@@ -118,7 +118,7 @@ const HeroSectionComponent = () => {
             className="grid grid-cols-3 gap-3 md:gap-6 max-w-xl mx-auto"
           >
             {[
-              { icon: Shield, label: "100% Autêntico" },
+              { icon: Shield, label: "Autenticidade verificada" },
               { icon: Truck, label: "Rastreio total" },
               { icon: CreditCard, label: "Até 12x" },
             ].map((item, index) => (
