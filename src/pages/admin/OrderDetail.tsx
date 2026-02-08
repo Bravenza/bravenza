@@ -68,6 +68,8 @@ import {
   Order,
   HistoryItem,
 } from "@/components/admin/order-detail";
+import { OrderDetailHeader } from "@/components/admin/order-detail/OrderDetailHeader";
+import { StatusChangeDialog, DeleteOrderDialog, DangerZone } from "@/components/admin/order-detail/OrderDetailDialogs";
 
 const OrderDetail = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -446,68 +448,17 @@ const OrderDetail = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link to="/admin/pedidos">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold">{order.order_id}</h1>
-            </div>
-            <p className="text-muted-foreground">
-              Criado em {formatDateTime(order.created_at)}
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          {isEditing ? (
-            <>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsEditing(false);
-                  setEditData(order);
-                }}
-              >
-                <X className="mr-2 h-4 w-4" />
-                Cancelar
-              </Button>
-              <Button
-                className="btn-gold"
-                onClick={handleSave}
-                disabled={isSaving}
-              >
-                {isSaving ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="mr-2 h-4 w-4" />
-                )}
-                Salvar
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="outline" onClick={() => setIsEditing(true)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Editar
-              </Button>
-              {nextStatuses.length > 0 && (
-                <Button
-                  className="btn-gold"
-                  onClick={() => setShowStatusModal(true)}
-                >
-                  <ArrowRight className="mr-2 h-4 w-4" />
-                  Avançar Status
-                </Button>
-              )}
-            </>
-          )}
-        </div>
-      </div>
+      <OrderDetailHeader
+        orderId={order.order_id}
+        createdAt={order.created_at}
+        isEditing={isEditing}
+        isSaving={isSaving}
+        hasNextStatuses={nextStatuses.length > 0}
+        onEdit={() => setIsEditing(true)}
+        onCancelEdit={() => { setIsEditing(false); setEditData(order); }}
+        onSave={handleSave}
+        onAdvanceStatus={() => setShowStatusModal(true)}
+      />
 
       {/* Current status */}
       <motion.div
@@ -634,119 +585,32 @@ const OrderDetail = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Danger zone */}
-      <Card className="card-premium border-destructive/30">
-        <CardHeader>
-          <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-3">
-          {order.current_status !== "LOST" && order.current_status !== "DELIVERED" && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-orange-500/50 text-orange-500 hover:bg-orange-500/10"
-              onClick={() => handleMarkAsLost()}
-              disabled={isSaving}
-            >
-              <X className="mr-2 h-4 w-4" />
-              Marcar como Perdido
-            </Button>
-          )}
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setShowDeleteDialog(true)}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Excluir Pedido
-          </Button>
-        </CardContent>
-      </Card>
+      <DangerZone
+        currentStatus={order.current_status}
+        isSaving={isSaving}
+        onMarkAsLost={handleMarkAsLost}
+        onDelete={() => setShowDeleteDialog(true)}
+      />
 
-      {/* Status change modal */}
-      <Dialog open={showStatusModal} onOpenChange={setShowStatusModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Avançar Status</DialogTitle>
-            <DialogDescription>
-              Selecione o próximo status do pedido
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Novo status</Label>
-              <Select value={newStatus} onValueChange={setNewStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {nextStatuses.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {ORDER_STATUS_LABELS[status]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Observações (opcional)</Label>
-              <Textarea
-                value={statusNotes}
-                onChange={(e) => setStatusNotes(e.target.value)}
-                placeholder="Adicione uma nota sobre esta transição..."
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowStatusModal(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              className="btn-gold"
-              onClick={handleStatusChange}
-              disabled={!newStatus || isSaving}
-            >
-              {isSaving ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <ArrowRight className="mr-2 h-4 w-4" />
-              )}
-              Confirmar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <StatusChangeDialog
+        open={showStatusModal}
+        onOpenChange={setShowStatusModal}
+        nextStatuses={nextStatuses}
+        newStatus={newStatus}
+        onStatusChange={setNewStatus}
+        statusNotes={statusNotes}
+        onNotesChange={setStatusNotes}
+        onConfirm={handleStatusChange}
+        isSaving={isSaving}
+      />
 
-      {/* Delete confirmation */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir pedido?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação não pode ser desfeita. O pedido {order.order_id} será
-              permanentemente removido do sistema.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isSaving ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="mr-2 h-4 w-4" />
-              )}
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteOrderDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        orderId={order.order_id}
+        onDelete={handleDelete}
+        isSaving={isSaving}
+      />
     </div>
   );
 };
