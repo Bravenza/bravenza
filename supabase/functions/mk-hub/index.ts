@@ -1445,6 +1445,32 @@ Deno.serve(async (req) => {
       return j({ comment: data });
     }
 
+    // ==================== CHECK PURCHASE (for review permission) ====================
+    if (mt === "GET" && a === "check-purchase") {
+      const pid = url.searchParams.get("product_id");
+      if (!pid) return j({ error: "product_id obrigatório" }, 400);
+      // Check if user has a delivered/completed marketplace order for an offer of this product
+      const { data: orders } = await sb.from("vault_marketplace_orders")
+        .select("id")
+        .eq("buyer_cpf", cpf)
+        .in("status", ["delivered", "completed"])
+        .limit(100);
+
+      let hasPurchased = false;
+      if (orders && orders.length > 0) {
+        // Check if any sold offer exists for this product
+        const { data: soldOffers } = await sb.from("marketplace_offers")
+          .select("id")
+          .eq("product_id", pid)
+          .eq("status", "sold")
+          .limit(1);
+        if (soldOffers && soldOffers.length > 0) {
+          hasPurchased = true;
+        }
+      }
+      return j({ has_purchased: hasPurchased });
+    }
+
     // ==================== PRODUCT REVIEWS ====================
     if (mt === "GET" && a === "product-reviews") {
       const pid = url.searchParams.get("product_id");
