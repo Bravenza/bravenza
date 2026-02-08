@@ -7,6 +7,24 @@ import { LocalBusinessSchema, ServiceSchema } from "@/components/seo/StructuredD
 import { Helmet } from "react-helmet-async";
 import { LazySection } from "@/components/home/LazySection";
 import { lazy, Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+/** Lightweight skeleton shown while a lazy section's JS chunk loads */
+function SectionSkeleton({ height = "400px" }: { height?: string }) {
+  return (
+    <div className="w-full px-4 py-12" style={{ minHeight: height }}>
+      <div className="max-w-6xl mx-auto space-y-6">
+        <Skeleton className="h-8 w-48 mx-auto" />
+        <Skeleton className="h-4 w-72 mx-auto" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+          <Skeleton className="h-48 rounded-xl" />
+          <Skeleton className="h-48 rounded-xl" />
+          <Skeleton className="h-48 rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Lazy-load below-fold sections — they won't be in the initial bundle
 const FeaturedModelsSection = lazy(() => import("@/components/home/FeaturedModelsSection"));
@@ -45,49 +63,65 @@ const Index = () => {
           <BrandsCarousel />
           
           {/* Below-the-fold — lazy rendered + lazy imported */}
-          <Suspense fallback={null}>
-            <LazySection minHeight="400px">
+          <LazySection minHeight="400px">
+            <Suspense fallback={<SectionSkeleton height="400px" />}>
               <FeaturedModelsSection />
-            </LazySection>
-            
-            <LazySection minHeight="500px">
+            </Suspense>
+          </LazySection>
+          
+          <LazySection minHeight="500px">
+            <Suspense fallback={<SectionSkeleton height="500px" />}>
               <div id="como-funciona">
                 <HowItWorksSection />
               </div>
-            </LazySection>
-            
-            <LazySection minHeight="400px">
+            </Suspense>
+          </LazySection>
+          
+          <LazySection minHeight="400px">
+            <Suspense fallback={<SectionSkeleton height="400px" />}>
               <BenefitsSection />
-            </LazySection>
+            </Suspense>
+          </LazySection>
 
-            <LazySection minHeight="500px">
+          <LazySection minHeight="500px">
+            <Suspense fallback={<SectionSkeleton height="500px" />}>
               <div id="vault-club">
                 <VaultClubSection />
               </div>
-            </LazySection>
-            
-            <LazySection minHeight="400px">
+            </Suspense>
+          </LazySection>
+          
+          <LazySection minHeight="400px">
+            <Suspense fallback={<SectionSkeleton height="400px" />}>
               <div id="indicacao">
                 <ReferralSection />
               </div>
-            </LazySection>
-            
-            <LazySection minHeight="300px">
+            </Suspense>
+          </LazySection>
+          
+          <LazySection minHeight="300px">
+            <Suspense fallback={<SectionSkeleton height="300px" />}>
               <FeaturedReviews />
-            </LazySection>
-            
-            <LazySection minHeight="300px">
+            </Suspense>
+          </LazySection>
+          
+          <LazySection minHeight="300px">
+            <Suspense fallback={<SectionSkeleton height="300px" />}>
               <TestimonialsSection />
-            </LazySection>
-            
-            <LazySection minHeight="400px">
+            </Suspense>
+          </LazySection>
+          
+          <LazySection minHeight="400px">
+            <Suspense fallback={<SectionSkeleton height="400px" />}>
               <FAQSection />
-            </LazySection>
-            
-            <LazySection minHeight="300px">
+            </Suspense>
+          </LazySection>
+          
+          <LazySection minHeight="300px">
+            <Suspense fallback={<SectionSkeleton height="300px" />}>
               <CTASection />
-            </LazySection>
-          </Suspense>
+            </Suspense>
+          </LazySection>
         </main>
 
         <Footer />
