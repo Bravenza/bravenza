@@ -246,18 +246,28 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Price */}
-            <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-bold text-foreground">
-                {product.lowest_price
-                  ? `R$ ${product.lowest_price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
-                  : "Sem ofertas"}
-              </span>
-              {product.lowest_price && (
-                <span className="text-xs text-muted-foreground">
-                  ou 6x de R$ {(product.lowest_price / 6).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </span>
-              )}
-            </div>
+            {(() => {
+              const lowestForSize = sortedOffers.length > 0 ? sortedOffers[0].price : null;
+              const displayPrice = lowestForSize ?? product.lowest_price;
+              const multipleOffers = sortedOffers.length > 1;
+              const hasSize = !!selectedSize;
+              return (
+                <div className="flex items-baseline gap-3">
+                  {displayPrice ? (
+                    <>
+                      <span className="text-3xl font-bold text-foreground">
+                        {(hasSize && !multipleOffers ? "" : "A partir de ")}{`R$ ${displayPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        ou 6x de R$ {(displayPrice / 6).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-3xl font-bold text-foreground">Sem ofertas</span>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Size Selector */}
             {sizes.length > 0 && (
