@@ -96,7 +96,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// PWA App Shell component
+// PWA App Shell component — ensures consistent hook count across HMR
 function AppShell({ children }: { children: React.ReactNode }) {
   usePWAOptimizations();
   return <>{children}</>;
