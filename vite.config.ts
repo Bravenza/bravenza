@@ -18,11 +18,11 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "robots.txt", "placeholder.svg"],
+      includeAssets: ["favicon.png", "robots.txt", "placeholder.svg"],
       manifest: {
-        name: "BRAVENZA - Importação Premium de Sneakers",
+        name: "BRAVENZA - Curadoria & Autenticação Premium",
         short_name: "BRAVENZA",
-        description: "Especialistas em importação de sneakers exclusivos. Autenticidade garantida.",
+        description: "Plataforma premium de curadoria e autenticação de tênis. Segurança e autenticidade garantidas.",
         theme_color: "#1f1f1f",
         background_color: "#1f1f1f",
         display: "standalone",
