@@ -2,9 +2,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Heart, MessageCircle, Share2, MoreHorizontal, Bookmark,
-  Crown, Shield, Sparkles, Box, Send, Flag, EyeOff
+  Crown, Shield, Sparkles, Send, Flag, EyeOff
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -58,17 +57,11 @@ export interface CommunityPost {
 }
 
 const tierConfig = {
-  member: { icon: Shield, color: "text-muted-foreground", bg: "bg-muted", label: "Member", border: "border-muted" },
-  collector: { icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10", label: "Privilege", border: "border-amber-500/50" },
-  privilege: { icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10", label: "Privilege", border: "border-amber-500/50" },
-  elite: { icon: Sparkles, color: "text-primary", bg: "bg-primary/10", label: "Black", border: "border-primary/50" },
-  black: { icon: Sparkles, color: "text-primary", bg: "bg-primary/10", label: "Black", border: "border-primary/50" },
-};
-
-const postTypeConfig = {
-  SHOWCASE: { label: "Showcase", color: "bg-emerald-500/20 text-emerald-400", icon: "✨" },
-  DISCUSSION: { label: "Discussão", color: "bg-blue-500/20 text-blue-400", icon: "💬" },
-  POLL: { label: "Enquete", color: "bg-purple-500/20 text-purple-400", icon: "📊" },
+  member: { icon: Shield, color: "text-muted-foreground", bg: "bg-muted", label: "Member", ring: "ring-muted" },
+  collector: { icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10", label: "Privilege", ring: "ring-amber-500/60" },
+  privilege: { icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10", label: "Privilege", ring: "ring-amber-500/60" },
+  elite: { icon: Sparkles, color: "text-primary", bg: "bg-primary/10", label: "Black", ring: "ring-primary/60" },
+  black: { icon: Sparkles, color: "text-primary", bg: "bg-primary/10", label: "Black", ring: "ring-primary/60" },
 };
 
 interface CommunityPostCardProps {
@@ -109,9 +102,7 @@ export function CommunityPostCard({
 
   const tierInfo = tierConfig[post.author_tier];
   const TierIcon = tierInfo?.icon || Shield;
-  const postTypeInfo = postTypeConfig[post.type] || postTypeConfig.DISCUSSION;
 
-  // Build media items from attachments
   const mediaItems = (post.attachments || []).map((url, i) => ({
     url,
     type: (post.media_types?.[i] === "video" ? "video" : "image") as "image" | "video"
@@ -135,39 +126,24 @@ export function CommunityPostCard({
   const handleLikeClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
     if (isProcessingLike || isLiking) return;
-    
     setIsProcessingLike(true);
-    
     const newLiked = !localLiked;
     setLocalLiked(newLiked);
     setLocalLikesCount(prev => newLiked ? prev + 1 : Math.max(0, prev - 1));
-    
     if (newLiked) {
       setShowHeartAnimation(true);
       setTimeout(() => setShowHeartAnimation(false), 800);
     }
-    
     try {
       const result = await onLike(post.id);
-      
-      // Revert optimistic update if failed
       if (!result.success) {
         setLocalLiked(!newLiked);
         setLocalLikesCount(prev => newLiked ? Math.max(0, prev - 1) : prev + 1);
-        toast({
-          title: "Erro ao curtir",
-          description: "Tente novamente",
-          variant: "destructive",
-        });
       } else if (result.likes_count !== undefined) {
-        // Sync with server count
         setLocalLikesCount(result.likes_count);
       }
-    } catch (error) {
-      console.error("Error in handleLikeClick:", error);
-      // Revert on error
+    } catch {
       setLocalLiked(!newLiked);
       setLocalLikesCount(prev => newLiked ? Math.max(0, prev - 1) : prev + 1);
     } finally {
@@ -177,48 +153,30 @@ export function CommunityPostCard({
 
   const handleReaction = async (type: ReactionType) => {
     if (isProcessingReaction) return;
-    
     setIsProcessingReaction(true);
-    
     const isAdding = !localReactions.includes(type);
-    
-    // Optimistic update
-    setLocalReactions(prev => 
-      isAdding ? [...prev, type] : prev.filter(r => r !== type)
-    );
-    
+    setLocalReactions(prev => isAdding ? [...prev, type] : prev.filter(r => r !== type));
     setLocalReactionsSummary(prev => ({
       ...prev,
       [type]: Math.max(0, (prev[type] || 0) + (isAdding ? 1 : -1))
     }));
-
     if (isAdding) {
       setShowHeartAnimation(true);
       setTimeout(() => setShowHeartAnimation(false), 600);
     }
-
     try {
       const result = await onReaction(post.id, type);
-      
-      // Revert optimistic update if failed
       if (!result.success) {
-        setLocalReactions(prev => 
-          isAdding ? prev.filter(r => r !== type) : [...prev, type]
-        );
+        setLocalReactions(prev => isAdding ? prev.filter(r => r !== type) : [...prev, type]);
         setLocalReactionsSummary(prev => ({
           ...prev,
           [type]: Math.max(0, (prev[type] || 0) + (isAdding ? -1 : 1))
         }));
       } else if (result.summary) {
-        // Sync with server summary
         setLocalReactionsSummary(result.summary);
       }
-    } catch (error) {
-      console.error("Error in handleReaction:", error);
-      // Revert on error
-      setLocalReactions(prev => 
-        isAdding ? prev.filter(r => r !== type) : [...prev, type]
-      );
+    } catch {
+      setLocalReactions(prev => isAdding ? prev.filter(r => r !== type) : [...prev, type]);
       setLocalReactionsSummary(prev => ({
         ...prev,
         [type]: Math.max(0, (prev[type] || 0) + (isAdding ? -1 : 1))
@@ -240,190 +198,138 @@ export function CommunityPostCard({
   const handleShareClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
     const shareUrl = `${window.location.origin}/vault/community/post/${post.id}`;
-    
     if (navigator.share) {
-      try {
-        await navigator.share({
-          title: post.title,
-          text: post.content?.slice(0, 100),
-          url: shareUrl,
-        });
-      } catch (err) {
-        // User cancelled or error
-      }
+      try { await navigator.share({ title: post.title, url: shareUrl }); } catch {}
     } else {
       await navigator.clipboard.writeText(shareUrl);
-      toast({
-        title: "Link copiado!",
-        description: "Compartilhe com seus amigos",
-      });
+      toast({ title: "Link copiado!" });
     }
-    
     onShare?.(post.id);
   };
 
-  const handleCommentClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onComment(post.id);
-  };
-
-  const handleSave = () => {
-    setIsSaved(!isSaved);
-    toast({
-      title: isSaved ? "Removido dos salvos" : "Salvo! 🔖",
-      description: isSaved ? "" : "Acesse em seus itens salvos",
-    });
-  };
-
-  const getInitials = (name: string) => {
-    return name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
-  };
-
+  const getInitials = (name: string) => name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
   const totalReactions = Object.values(localReactionsSummary).reduce((a, b) => a + b, 0);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
+    <motion.article
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       layout
+      className="relative"
     >
-      <Card className="card-premium overflow-hidden hover:shadow-xl transition-shadow duration-300">
-        {/* Pinned indicator */}
-        {post.is_pinned && (
-          <div className="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent px-4 py-1.5 text-xs font-medium text-primary flex items-center gap-1.5">
-            <Sparkles className="h-3 w-3" />
-            Publicação fixada
-          </div>
-        )}
+      {/* Pinned */}
+      {post.is_pinned && (
+        <div className="flex items-center gap-1.5 text-[11px] font-medium text-primary mb-2 ml-14">
+          <Sparkles className="h-3 w-3" />
+          Publicação fixada
+        </div>
+      )}
 
-        <CardContent className="p-4">
+      <div className="flex gap-3">
+        {/* Avatar column */}
+        <button 
+          className="shrink-0 mt-0.5"
+          onClick={() => onAuthorClick?.(post.author_id || post.user_id)}
+        >
+          <div className={cn("p-[2px] rounded-full bg-gradient-to-br", 
+            post.author_tier === "elite" || post.author_tier === "black" 
+              ? "from-primary via-amber-400 to-primary" 
+              : post.author_tier === "collector" || post.author_tier === "privilege"
+                ? "from-violet-400 via-purple-500 to-violet-400"
+                : "from-muted-foreground/30 to-muted-foreground/10"
+          )}>
+            <Avatar className="h-10 w-10 border-2 border-background">
+              {post.author_avatar && <AvatarImage src={post.author_avatar} alt={post.author_name} />}
+              <AvatarFallback className="text-xs font-semibold bg-secondary">
+                {getInitials(post.author_name)}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+        </button>
+
+        {/* Content column */}
+        <div className="flex-1 min-w-0">
           {/* Header */}
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center gap-3">
+          <div className="flex items-start justify-between mb-1">
+            <div className="flex items-center gap-2 min-w-0">
               <button 
-                className="relative"
+                className="font-semibold text-sm hover:underline truncate"
                 onClick={() => onAuthorClick?.(post.author_id || post.user_id)}
               >
-                <Avatar className={cn("h-12 w-12 border-2 hover:opacity-80 transition-opacity", tierInfo.border)}>
-                  {post.author_avatar && (
-                    <AvatarImage src={post.author_avatar} alt={post.author_name} />
-                  )}
-                  <AvatarFallback className={cn(tierInfo.bg, tierInfo.color, "font-semibold")}>
-                    {getInitials(post.author_name)}
-                  </AvatarFallback>
-                </Avatar>
-                {/* Tier badge */}
-                <div className={cn(
-                  "absolute -bottom-1 -right-1 rounded-full p-0.5",
-                  tierInfo.bg, "border-2 border-card"
-                )}>
-                  <TierIcon className={cn("h-3 w-3", tierInfo.color)} />
-                </div>
+                {post.author_name}
               </button>
-              <div>
-                <div className="flex items-center gap-2">
-                  <button 
-                    className="font-semibold hover:underline cursor-pointer text-left"
-                    onClick={() => onAuthorClick?.(post.author_id || post.user_id)}
-                  >
-                    {post.author_name}
-                  </button>
-                  <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", tierInfo.color)}>
-                    {tierInfo.label}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Box className="h-3 w-3" />
-                    {post.author_items_count} itens
-                  </span>
-                  <span>•</span>
-                  <span>{formatDate(post.created_at)}</span>
-                </div>
-              </div>
+              {(post.author_tier === "elite" || post.author_tier === "black") && (
+                <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
+              )}
+              {(post.author_tier === "collector" || post.author_tier === "privilege") && (
+                <Crown className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+              )}
+              <span className="text-xs text-muted-foreground shrink-0">{formatDate(post.created_at)}</span>
             </div>
 
-            <div className="flex items-center gap-1">
-              <Badge className={cn("text-xs gap-1", postTypeInfo.color)}>
-                <span>{postTypeInfo.icon}</span>
-                {postTypeInfo.label}
-              </Badge>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" aria-label="Mais opções" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={handleSave}>
-                    <Bookmark className={cn("h-4 w-4 mr-2", isSaved && "fill-current")} />
-                    {isSaved ? "Remover dos salvos" : "Salvar publicação"}
-                  </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => handleShareClick(e as unknown as React.MouseEvent)}>
-                    <Send className="h-4 w-4 mr-2" />
-                    Enviar para amigo
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <EyeOff className="h-4 w-4 mr-2" />
-                    Não tenho interesse
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="text-destructive"
-                    onClick={() => setShowReportDialog(true)}
-                  >
-                    <Flag className="h-4 w-4 mr-2" />
-                    Denunciar
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="p-1.5 -mr-1.5 rounded-full hover:bg-muted/50 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center">
+                  <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => { setIsSaved(!isSaved); toast({ title: isSaved ? "Removido" : "Salvo! 🔖" }); }}>
+                  <Bookmark className={cn("h-4 w-4 mr-2", isSaved && "fill-current")} />
+                  {isSaved ? "Remover dos salvos" : "Salvar"}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => handleShareClick(e as unknown as React.MouseEvent)}>
+                  <Send className="h-4 w-4 mr-2" /> Enviar
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <EyeOff className="h-4 w-4 mr-2" /> Não tenho interesse
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-destructive" onClick={() => setShowReportDialog(true)}>
+                  <Flag className="h-4 w-4 mr-2" /> Denunciar
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
-          {/* Content */}
-          <div 
-            className="mb-4 relative cursor-pointer"
-            onDoubleClick={handleDoubleClick}
-          >
-            <h3 className="font-semibold text-lg mb-2">{post.title}</h3>
+          {/* Post content */}
+          <div className="relative" onDoubleClick={handleDoubleClick}>
+            {post.title && (
+              <h3 className="font-semibold text-[15px] leading-snug mb-1">{post.title}</h3>
+            )}
             {post.content && (
               <FormattedText 
                 content={post.content} 
-                className="text-muted-foreground leading-relaxed"
+                className="text-sm text-foreground/80 leading-relaxed"
               />
             )}
 
-            {/* Heart animation on double click */}
+            {/* Heart animation */}
             <AnimatePresence>
               {showHeartAnimation && (
                 <motion.div
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 1.5, opacity: 0 }}
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
                 >
-                  <Heart className="h-24 w-24 text-red-500 fill-red-500 drop-shadow-lg" />
+                  <Heart className="h-20 w-20 text-destructive fill-destructive drop-shadow-lg" />
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          {/* Media Gallery */}
+          {/* Media */}
           {mediaItems.length > 0 && (
-            <div className="mb-4">
-              <MediaGallery 
-                items={mediaItems} 
-                onDoubleClick={handleDoubleClick}
-              />
+            <div className="mt-3 rounded-2xl overflow-hidden">
+              <MediaGallery items={mediaItems} onDoubleClick={handleDoubleClick} />
             </div>
           )}
 
-          {/* Reactions & Stats Summary */}
-          <div className="flex items-center justify-between text-sm text-muted-foreground py-2 border-y border-border/50">
-            <div className="flex items-center gap-4">
+          {/* Reactions summary */}
+          {(totalReactions > 0 || localLikesCount > 0) && (
+            <div className="flex items-center gap-2 mt-2.5 text-xs text-muted-foreground">
               {totalReactions > 0 && (
                 <ReactionSummary 
                   summary={localReactionsSummary}
@@ -432,80 +338,63 @@ export function CommunityPostCard({
               )}
               {localLikesCount > 0 && totalReactions === 0 && (
                 <span className="flex items-center gap-1">
-                  <Heart className="h-4 w-4 text-red-500 fill-red-500" />
-                  {localLikesCount}
+                  <Heart className="h-3 w-3 text-destructive fill-destructive" />
+                  {localLikesCount} curtida{localLikesCount !== 1 ? "s" : ""}
                 </span>
               )}
-            </div>
-            <div className="flex items-center gap-3">
               {post.comments_count > 0 && (
-                <button 
-                  onClick={() => onComment(post.id)}
-                  className="hover:underline"
-                >
-                  {post.comments_count} comentário{post.comments_count !== 1 ? "s" : ""}
-                </button>
+                <>
+                  <span className="text-muted-foreground/30">·</span>
+                  <button onClick={() => onComment(post.id)} className="hover:underline">
+                    {post.comments_count} comentário{post.comments_count !== 1 ? "s" : ""}
+                  </button>
+                </>
               )}
             </div>
-          </div>
+          )}
 
-          {/* Actions */}
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-1">
+          {/* Actions row */}
+          <div className="flex items-center gap-1 mt-2 -ml-2">
+            <button
+              onClick={handleLikeClick}
+              disabled={isLiking || isProcessingLike}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors min-h-[36px]",
+                localLiked 
+                  ? "text-destructive" 
+                  : "text-muted-foreground hover:text-destructive"
+              )}
+            >
+              <motion.div animate={localLiked ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.3 }}>
+                <Heart className={cn("h-[18px] w-[18px]", localLiked && "fill-current")} />
+              </motion.div>
+            </button>
+
+            <button
+              onClick={(e) => { e.preventDefault(); onComment(post.id); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-muted-foreground hover:text-foreground transition-colors min-h-[36px]"
+            >
+              <MessageCircle className="h-[18px] w-[18px]" />
+            </button>
+
+            <button
+              onClick={handleShareClick}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-muted-foreground hover:text-foreground transition-colors min-h-[36px]"
+            >
+              <Share2 className="h-[18px] w-[18px]" />
+            </button>
+
+            <div className="ml-auto">
               <ReactionPicker
                 onSelect={handleReaction}
                 userReactions={localReactions}
                 summary={localReactionsSummary}
-                showLabels
+                size="sm"
               />
             </div>
-
-          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-              <Button
-                variant="ghost"
-                size="sm"
-              onClick={handleLikeClick}
-              disabled={isLiking || isProcessingLike}
-              type="button"
-                className={cn(
-                  "flex items-center gap-2 hover:text-red-500 transition-colors",
-                  localLiked && "text-red-500"
-                )}
-              >
-                <motion.div
-                  animate={localLiked ? { scale: [1, 1.3, 1] } : {}}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Heart className={cn("h-5 w-5", localLiked && "fill-current")} />
-                </motion.div>
-                <span className="text-sm font-medium">Curtir</span>
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="sm"
-              onClick={handleCommentClick}
-              type="button"
-              className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"
-              >
-                <MessageCircle className="h-5 w-5" />
-                <span className="text-sm font-medium">Comentar</span>
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="sm"
-              onClick={handleShareClick}
-              type="button"
-              className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"
-              >
-                <Share2 className="h-5 w-5" />
-                <span className="text-sm font-medium hidden sm:inline">Compartilhar</span>
-              </Button>
-            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Report Dialog */}
       <ReportPostDialog
@@ -515,6 +404,6 @@ export function CommunityPostCard({
         postTitle={post.title}
         clientCpf={clientCpf}
       />
-    </motion.div>
+    </motion.article>
   );
 }

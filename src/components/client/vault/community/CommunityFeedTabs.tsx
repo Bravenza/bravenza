@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Sparkles, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface CommunityFeedTabsProps {
   activeTab: "for_you" | "following";
@@ -8,52 +9,39 @@ interface CommunityFeedTabsProps {
 }
 
 export function CommunityFeedTabs({ activeTab, onTabChange, followingCount = 0 }: CommunityFeedTabsProps) {
+  const tabs = [
+    { id: "for_you" as const, label: "Para você", icon: Sparkles },
+    { id: "following" as const, label: "Seguindo", icon: Users, count: followingCount },
+  ];
+
   return (
-    <div className="flex gap-1 p-1 bg-secondary/50 rounded-lg border border-border/50">
-      <button
-        onClick={() => onTabChange("for_you")}
-        className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${
-          activeTab === "for_you"
-            ? "text-foreground"
-            : "text-muted-foreground hover:text-foreground/80"
-        }`}
-      >
-        {activeTab === "for_you" && (
-          <motion.div
-            layoutId="feedTab"
-            className="absolute inset-0 bg-card border border-border/50 rounded-md shadow-sm"
-            transition={{ type: "spring", duration: 0.3 }}
-          />
-        )}
-        <span className="relative flex items-center gap-2">
-          <Sparkles className="h-4 w-4" />
-          Para Você
-        </span>
-      </button>
-      
-      <button
-        onClick={() => onTabChange("following")}
-        className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${
-          activeTab === "following"
-            ? "text-foreground"
-            : "text-muted-foreground hover:text-foreground/80"
-        }`}
-      >
-        {activeTab === "following" && (
-          <motion.div
-            layoutId="feedTab"
-            className="absolute inset-0 bg-card border border-border/50 rounded-md shadow-sm"
-            transition={{ type: "spring", duration: 0.3 }}
-          />
-        )}
-        <span className="relative flex items-center gap-2">
-          <Users className="h-4 w-4" />
-          Seguindo
-          {followingCount > 0 && (
-            <span className="text-xs text-muted-foreground">({followingCount})</span>
-          )}
-        </span>
-      </button>
+    <div className="flex border-b border-border/30">
+      {tabs.map((tab) => {
+        const isActive = activeTab === tab.id;
+        return (
+          <button
+            key={tab.id}
+            onClick={() => onTabChange(tab.id)}
+            className={cn(
+              "relative flex-1 flex items-center justify-center gap-2 py-3.5 text-sm font-medium transition-colors min-h-[48px]",
+              isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground/70"
+            )}
+          >
+            <tab.icon className="h-4 w-4" />
+            <span>{tab.label}</span>
+            {tab.count !== undefined && tab.count > 0 && (
+              <span className="text-[10px] text-muted-foreground/60">({tab.count})</span>
+            )}
+            {isActive && (
+              <motion.div
+                layoutId="community-feed-indicator"
+                className="absolute bottom-0 left-1/4 right-1/4 h-[2px] bg-primary rounded-full"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
