@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { 
   Camera, Instagram, Facebook, Linkedin, Twitter, 
   Globe, MapPin, Save, Loader2, ArrowLeft, Shield, Crown, Sparkles,
-  User, Check
+  User, Check, ShoppingBag, Box
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,16 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useClientSession } from "@/hooks/useClientSession";
 import { supabase } from "@/integrations/supabase/client";
+
+interface VaultItem {
+  id: string;
+  title: string;
+  brand: string | null;
+  model: string | null;
+  size: string | null;
+  inspection_photos: string[] | null;
+  verified_status: string | null;
+}
 
 interface ProfileData {
   id: string;
@@ -60,6 +70,7 @@ export default function VaultProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
   
   const [formData, setFormData] = useState({
     display_name: "",
@@ -125,6 +136,18 @@ export default function VaultProfilePage() {
     } finally {
       setIsLoading(false);
     }
+
+    // Fetch vault items (collection)
+    try {
+      const { data: itemsData } = await supabase
+        .from("vault_items" as any)
+        .select("id, title, brand, model, size, inspection_photos, verified_status")
+        .eq("member_id", clientProfile.vault_member_id || "")
+        .order("created_at", { ascending: false })
+        .limit(12);
+      
+      if (itemsData) setVaultItems(itemsData as unknown as VaultItem[]);
+    } catch (_) {}
   };
 
   const handleChange = (field: string, value: string | boolean) => {
@@ -484,6 +507,65 @@ export default function VaultProfilePage() {
                 onCheckedChange={(checked) => handleChange("is_profile_public", checked)}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* My Collection */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Box className="h-5 w-5 text-primary" />
+              Minha Coleção
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {vaultItems.length === 0 ? (
+              <div className="text-center py-8">
+                <ShoppingBag className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">Nenhum tênis na coleção ainda</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">
+                  Seus tênis verificados aparecerão aqui
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                {vaultItems.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.04 }}
+                    className="group relative"
+                  >
+                    <div className="aspect-square rounded-xl overflow-hidden bg-secondary/30 border border-border/30">
+                      {item.inspection_photos?.[0] ? (
+                        <img
+                          src={item.inspection_photos[0]}
+                          alt={item.title}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ShoppingBag className="h-6 w-6 text-muted-foreground/20" />
+                        </div>
+                      )}
+                      {item.verified_status === "VERIFIED" && (
+                        <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-primary/90 flex items-center justify-center shadow-sm">
+                          <Check className="h-3 w-3 text-primary-foreground" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-1.5 px-0.5">
+                      <p className="text-xs font-medium truncate">{item.brand || item.title}</p>
+                      {item.size && (
+                        <p className="text-[10px] text-muted-foreground">Tam. {item.size}</p>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
