@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Store, Package, TrendingDown, Percent, ShoppingBag, BarChart3, Tag, Activity } from "lucide-react";
+import { Store, Package, TrendingDown, ShoppingBag, BarChart3, Tag, Activity, Megaphone, HelpCircle, ChevronRight } from "lucide-react";
 import { MarketplaceHowItWorks } from "./MarketplaceHowItWorks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -42,13 +42,6 @@ interface VaultItem {
   colorway: string | null;
 }
 
-const feeTable = [
-  { range: "0-2 vendas", fee: "14%" },
-  { range: "3-5 vendas", fee: "12%" },
-  { range: "6-10 vendas", fee: "10%" },
-  { range: "11+ vendas", fee: "9%" },
-];
-
 export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail, initialSearch }: MarketplaceTabProps) {
   const {
     listings,
@@ -80,6 +73,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
   const { searchProducts, createProduct, createOffer, products: catalogProducts, totalProducts, isLoading: catalogLoading, fetchProducts: fetchCatalogProducts } = useMarketplaceCatalog(clientCpf);
 
   const [innerTab, setInnerTab] = useState("explorar");
+  const [sellerSubTab, setSellerSubTab] = useState("anuncios");
   const [selectedListing, setSelectedListing] = useState<MarketplaceListing | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -104,7 +98,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
   }, []);
 
   useEffect(() => {
-    if (innerTab === "meus-anuncios" && isVaultMember) {
+    if (innerTab === "minha-loja" && isVaultMember) {
       fetchMyListings();
       fetchVaultItems();
     }
@@ -112,7 +106,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
 
   // Fetch offers for my listings when tab is active
   useEffect(() => {
-    if (innerTab === "meus-anuncios" && myListings.length > 0) {
+    if (innerTab === "minha-loja" && myListings.length > 0) {
       myListings.forEach(async (listing) => {
         const offers = await fetchListingOffers(listing.id);
         setListingOffers((prev) => ({ ...prev, [listing.id]: offers }));
@@ -219,6 +213,19 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
     return result;
   };
 
+  const isSellerApproved = sellerOnboarded === true && sellerKycStatus === "approved";
+  const isSellerPending = sellerOnboarded === true && sellerKycStatus === "pending_review";
+
+  const sellerSubItems = [
+    { id: "anuncios", label: "Meus anúncios", icon: Megaphone },
+    ...(isSellerApproved ? [
+      { id: "analytics", label: "Analytics", icon: BarChart3 },
+      { id: "cupons", label: "Cupons", icon: Tag },
+      { id: "sugestoes", label: "Sugestões", icon: TrendingDown },
+    ] : []),
+    { id: "como-funciona", label: "Como funciona", icon: HelpCircle },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -232,11 +239,11 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
             Compre e venda tênis entre colecionadores
           </p>
         </div>
-        {isVaultMember && sellerOnboarded === true && sellerKycStatus === "approved" && (
+        {isSellerApproved && (
           <CreateListingDialog onSubmit={handleCreateOffer} searchProducts={searchProducts} createProduct={createProduct} vaultItems={vaultItems} />
         )}
-        {isVaultMember && sellerOnboarded === true && sellerKycStatus === "pending_review" && (
-          <Badge variant="outline" className="border-amber-500/50 text-amber-600 dark:text-amber-400 py-1.5 px-3">
+        {isSellerPending && (
+          <Badge variant="outline" className="border-warning/50 text-warning py-1.5 px-3">
             ⏳ Documentos em análise
           </Badge>
         )}
@@ -254,48 +261,30 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
             <ShoppingBag className="h-3.5 w-3.5" />
             Pedidos
           </TabsTrigger>
-          {isVaultMember && (
-            <TabsTrigger value="meus-anuncios">Meus anúncios</TabsTrigger>
-          )}
-          {isVaultMember && sellerOnboarded && sellerKycStatus === "approved" && (
-            <TabsTrigger value="analytics" className="gap-1">
-              <BarChart3 className="h-3.5 w-3.5" />
-              Analytics
-            </TabsTrigger>
-          )}
-          {isVaultMember && sellerOnboarded && sellerKycStatus === "approved" && (
-            <TabsTrigger value="cupons" className="gap-1">
-              <Tag className="h-3.5 w-3.5" />
-              Cupons
-            </TabsTrigger>
-          )}
-          {isVaultMember && sellerOnboarded && sellerKycStatus === "approved" && (
-            <TabsTrigger value="sugestoes" className="gap-1">
-              <TrendingDown className="h-3.5 w-3.5" />
-              Sugestões
-            </TabsTrigger>
-          )}
           <TabsTrigger value="feed" className="gap-1">
             <Activity className="h-3.5 w-3.5" />
             Feed
           </TabsTrigger>
-          <TabsTrigger value="como-funciona">Como funciona</TabsTrigger>
+          {isVaultMember && (
+            <TabsTrigger value="minha-loja" className="gap-1">
+              <Store className="h-3.5 w-3.5" />
+              Minha loja
+            </TabsTrigger>
+          )}
         </TabsList>
 
+        {/* Explorar */}
         <TabsContent value="explorar" className="mt-4 space-y-4">
-          {/* Advanced Filters (includes active chips internally) */}
           <MarketplaceFilters
             filters={filters}
             onFiltersChange={setFilters}
             onSearch={handleSearch}
           />
 
-          {/* Results count */}
           {!catalogLoading && (
             <p className="text-xs text-muted-foreground">{totalProducts} modelo{totalProducts !== 1 ? "s" : ""} encontrado{totalProducts !== 1 ? "s" : ""}</p>
           )}
 
-          {/* Catalog Products Grid */}
           {catalogLoading ? (
             <div className="flex items-center justify-center py-16">
               <div className="flex flex-col items-center gap-3">
@@ -331,7 +320,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
           )}
         </TabsContent>
 
-        {/* Orders Tab */}
+        {/* Pedidos */}
         <TabsContent value="pedidos" className="mt-4">
           <MarketplaceOrdersView
             orders={myOrders}
@@ -346,113 +335,166 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
           />
         </TabsContent>
 
-        {/* My Listings Tab */}
-        {isVaultMember && (
-          <TabsContent value="meus-anuncios" className="mt-4 space-y-4">
-            {seller && (
-              <Card className="card-premium">
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <p className="text-2xl font-bold">{seller.total_sales_count}</p>
-                      <p className="text-xs text-muted-foreground">Vendas</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-primary">{seller.current_fee_percent}%</p>
-                      <p className="text-xs text-muted-foreground">Taxa atual</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{seller.average_rating ? seller.average_rating.toFixed(1) : "—"}</p>
-                      <p className="text-xs text-muted-foreground">Avaliação</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {myListings.length === 0 ? (
-              <Card className="card-premium">
-                <CardContent className="py-12 text-center">
-                  <Store className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-30" />
-                  <h3 className="font-medium mb-1">Nenhum anúncio criado</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Comece a vender seus tênis no marketplace
-                  </p>
-                  <CreateListingDialog onSubmit={handleCreateOffer} searchProducts={searchProducts} createProduct={createProduct} vaultItems={vaultItems} />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {myListings.map((listing) => (
-                  <div key={listing.id} className="relative space-y-2">
-                    <MarketplaceListingCard listing={listing} onSelect={handleSelect} onToggleFavorite={handleToggleFavorite} />
-                    <Badge
-                      className={`absolute top-12 right-2 text-xs z-10 ${
-                        listing.status === "active" ? "bg-success/20 text-success"
-                        : listing.status === "sold" ? "bg-primary/20 text-primary"
-                        : listing.status === "reserved" ? "bg-warning/20 text-warning"
-                        : listing.status === "paused" ? "bg-muted text-muted-foreground"
-                        : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {listing.status === "active" ? "Ativo" : listing.status === "sold" ? "Vendido" : listing.status === "reserved" ? "Reservado" : listing.status === "paused" ? "Pausado" : listing.status === "draft" ? "Rascunho" : listing.status}
-                    </Badge>
-                    <div className="flex gap-1">
-                      <EditListingDialog
-                        listing={listing}
-                        onUpdate={updateListing}
-                        onDelete={deleteListing}
-                        onRefresh={fetchMyListings}
-                      />
-                      <OffersListDialog
-                        listingId={listing.id}
-                        listingTitle={listing.title}
-                        listingPrice={listing.price}
-                        offers={listingOffers[listing.id] || []}
-                        onRespond={handleRespondOffer}
-                        onRefresh={() => fetchListingOffers(listing.id).then((o) => setListingOffers((p) => ({ ...p, [listing.id]: o })))}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        )}
-
-        {/* Analytics Tab */}
-        {isVaultMember && sellerOnboarded && (
-          <TabsContent value="analytics" className="mt-4">
-            <SellerAnalyticsDashboard clientCpf={clientCpf} />
-          </TabsContent>
-        )}
-
-        {/* Coupons Tab */}
-        {isVaultMember && sellerOnboarded && (
-          <TabsContent value="cupons" className="mt-4">
-            <CouponsManager clientCpf={clientCpf} />
-          </TabsContent>
-        )}
-
-        {/* Price Drop Suggestions Tab */}
-        {isVaultMember && sellerOnboarded && (
-          <TabsContent value="sugestoes" className="mt-4">
-            <PriceDropSuggestions
-              fetchSuggestions={fetchPriceDropSuggestions}
-              onApplyDrop={handleApplyPriceDrop}
-            />
-          </TabsContent>
-        )}
-
-        {/* Activity Feed Tab */}
+        {/* Feed */}
         <TabsContent value="feed" className="mt-4">
           <ActivityFeed clientCpf={clientCpf} />
         </TabsContent>
 
-        {/* How it works Tab */}
-        <TabsContent value="como-funciona" className="mt-4">
-          <MarketplaceHowItWorks />
-        </TabsContent>
+        {/* Minha Loja — seller hub */}
+        {isVaultMember && (
+          <TabsContent value="minha-loja" className="mt-4 space-y-4">
+            {/* Seller not onboarded */}
+            {sellerOnboarded === false && (
+              <Card className="card-premium">
+                <CardContent className="py-12 text-center">
+                  <Store className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-30" />
+                  <h3 className="font-medium mb-1">Comece a vender</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Complete o cadastro de vendedor para acessar as ferramentas
+                  </p>
+                  <Button className="btn-gold" onClick={() => setOnboardingOpen(true)}>
+                    Iniciar cadastro
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Seller pending review */}
+            {isSellerPending && (
+              <Card className="card-premium border-warning/20">
+                <CardContent className="py-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-warning border-t-transparent mx-auto mb-4" />
+                  <h3 className="font-medium mb-1">Documentos em análise</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Sua documentação está sendo verificada pela nossa equipe. Você será notificado quando for aprovado.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Seller onboarded */}
+            {sellerOnboarded === true && (
+              <>
+                {/* Sub-navigation */}
+                <div className="flex gap-1 overflow-x-auto scrollbar-hide pb-1">
+                  {sellerSubItems.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setSellerSubTab(item.id)}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                        sellerSubTab === item.id
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      }`}
+                    >
+                      <item.icon className="h-3.5 w-3.5" />
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Seller stats */}
+                {seller && sellerSubTab === "anuncios" && (
+                  <Card className="card-premium">
+                    <CardContent className="p-4">
+                      <div className="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                          <p className="text-2xl font-bold">{seller.total_sales_count}</p>
+                          <p className="text-xs text-muted-foreground">Vendas</p>
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-primary">{seller.current_fee_percent}%</p>
+                          <p className="text-xs text-muted-foreground">Taxa atual</p>
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold">{seller.average_rating ? seller.average_rating.toFixed(1) : "—"}</p>
+                          <p className="text-xs text-muted-foreground">Avaliação</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Anúncios sub-tab */}
+                {sellerSubTab === "anuncios" && (
+                  <>
+                    {myListings.length === 0 ? (
+                      <Card className="card-premium">
+                        <CardContent className="py-12 text-center">
+                          <Store className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-30" />
+                          <h3 className="font-medium mb-1">Nenhum anúncio criado</h3>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Comece a vender seus tênis no marketplace
+                          </p>
+                          {isSellerApproved && (
+                            <CreateListingDialog onSubmit={handleCreateOffer} searchProducts={searchProducts} createProduct={createProduct} vaultItems={vaultItems} />
+                          )}
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {myListings.map((listing) => (
+                          <div key={listing.id} className="relative space-y-2">
+                            <MarketplaceListingCard listing={listing} onSelect={handleSelect} onToggleFavorite={handleToggleFavorite} />
+                            <Badge
+                              className={`absolute top-12 right-2 text-xs z-10 ${
+                                listing.status === "active" ? "bg-success/20 text-success"
+                                : listing.status === "sold" ? "bg-primary/20 text-primary"
+                                : listing.status === "reserved" ? "bg-warning/20 text-warning"
+                                : "bg-muted text-muted-foreground"
+                              }`}
+                            >
+                              {listing.status === "active" ? "Ativo" : listing.status === "sold" ? "Vendido" : listing.status === "reserved" ? "Reservado" : listing.status === "paused" ? "Pausado" : listing.status === "draft" ? "Rascunho" : listing.status}
+                            </Badge>
+                            <div className="flex gap-1">
+                              <EditListingDialog
+                                listing={listing}
+                                onUpdate={updateListing}
+                                onDelete={deleteListing}
+                                onRefresh={fetchMyListings}
+                              />
+                              <OffersListDialog
+                                listingId={listing.id}
+                                listingTitle={listing.title}
+                                listingPrice={listing.price}
+                                offers={listingOffers[listing.id] || []}
+                                onRespond={handleRespondOffer}
+                                onRefresh={() => fetchListingOffers(listing.id).then((o) => setListingOffers((p) => ({ ...p, [listing.id]: o })))}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Analytics sub-tab */}
+                {sellerSubTab === "analytics" && isSellerApproved && (
+                  <SellerAnalyticsDashboard clientCpf={clientCpf} />
+                )}
+
+                {/* Cupons sub-tab */}
+                {sellerSubTab === "cupons" && isSellerApproved && (
+                  <CouponsManager clientCpf={clientCpf} />
+                )}
+
+                {/* Sugestões sub-tab */}
+                {sellerSubTab === "sugestoes" && isSellerApproved && (
+                  <PriceDropSuggestions
+                    fetchSuggestions={fetchPriceDropSuggestions}
+                    onApplyDrop={handleApplyPriceDrop}
+                  />
+                )}
+
+                {/* Como funciona sub-tab */}
+                {sellerSubTab === "como-funciona" && (
+                  <MarketplaceHowItWorks />
+                )}
+              </>
+            )}
+          </TabsContent>
+        )}
       </Tabs>
 
       <ListingDetailSheet

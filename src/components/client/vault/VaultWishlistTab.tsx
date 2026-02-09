@@ -216,8 +216,46 @@ export function VaultWishlistTab({ clientCpf }: VaultWishlistTabProps) {
     );
   }
 
+  const pendingMatches = activeSearches.filter(
+    s => s.has_match_room && s.match_room_id && 
+    (s.status === "AWAITING_DECISION" || s.status === "MATCH_SENT")
+  );
+
   return (
     <div className="space-y-4">
+      {/* Pending Match Rooms Banner */}
+      {pendingMatches.length > 0 && !selectedMatchRoom && (
+        <div className="space-y-3">
+          {pendingMatches.map((match) => (
+            <motion.div
+              key={match.search_id}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <Card className="border-primary/30 bg-primary/5 cursor-pointer hover:border-primary/50 transition-all"
+                onClick={() => setSelectedMatchRoom({ id: match.match_room_id!, title: match.wishlist_title })}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-primary/10">
+                      <AlertCircle className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">Match encontrado!</p>
+                      <p className="text-xs text-muted-foreground truncate">{match.wishlist_title}</p>
+                    </div>
+                    <Badge className="bg-primary/20 text-primary animate-pulse">
+                      Decidir
+                    </Badge>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <p className="text-sm text-muted-foreground">
