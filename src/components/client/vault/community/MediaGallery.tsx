@@ -120,147 +120,146 @@ export function MediaGallery({ items, onDoubleClick }: MediaGalleryProps) {
         ))}
       </div>
 
-      {/* Fullscreen Modal */}
+      {/* Fullscreen Lightbox */}
       <AnimatePresence>
         {selectedIndex !== null && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[100] bg-black/98 backdrop-blur-xl flex flex-col"
             onClick={() => setSelectedIndex(null)}
           >
-            {/* Close button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-4 right-4 z-10 text-white hover:bg-white/20"
-              onClick={() => setSelectedIndex(null)}
-            >
-              <X className="h-6 w-6" />
-            </Button>
+            {/* Top bar */}
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 shrink-0">
+              <span className="text-white/60 text-sm font-medium tracking-wide">
+                {selectedIndex + 1} / {items.length}
+              </span>
+              <button
+                onClick={() => setSelectedIndex(null)}
+                className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              >
+                <X className="h-5 w-5 text-white" />
+              </button>
+            </div>
 
-            {/* Navigation */}
-            {items.length > 1 && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute left-4 z-10 text-white hover:bg-white/20 h-12 w-12"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedIndex(selectedIndex === 0 ? items.length - 1 : selectedIndex - 1);
-                  }}
-                >
-                  <ChevronLeft className="h-8 w-8" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-4 z-10 text-white hover:bg-white/20 h-12 w-12"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedIndex(selectedIndex === items.length - 1 ? 0 : selectedIndex + 1);
-                  }}
-                >
-                  <ChevronRight className="h-8 w-8" />
-                </Button>
-              </>
-            )}
-
-            {/* Content */}
-            <motion.div
-              key={selectedIndex}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="max-w-[90vw] max-h-[85vh] relative"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {items[selectedIndex]?.type === "video" ? (
-                <div className="relative">
-                  <video
-                    ref={videoRef}
-                    src={items[selectedIndex].url}
-                    className="max-w-full max-h-[80vh] rounded-lg"
-                    onTimeUpdate={handleVideoTimeUpdate}
-                    onEnded={() => setIsPlaying(false)}
-                    muted={isMuted}
-                    playsInline
-                    onClick={togglePlay}
-                  />
-                  
-                  {/* Video Controls */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-white hover:bg-white/20 h-10 w-10"
-                        onClick={togglePlay}
-                      >
-                        {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                      </Button>
-                      
-                      <Slider
-                        value={[progress]}
-                        onValueChange={handleSeek}
-                        max={100}
-                        step={0.1}
-                        className="flex-1"
-                      />
-                      
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-white hover:bg-white/20 h-10 w-10"
-                        onClick={() => setIsMuted(!isMuted)}
-                      >
-                        {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <img
-                  src={items[selectedIndex]?.url}
-                  alt=""
-                  className="max-w-full max-h-[85vh] rounded-lg object-contain"
-                />
-              )}
-            </motion.div>
-
-            {/* Thumbnails */}
-            {items.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 max-w-[90vw] overflow-x-auto px-2 pb-1 scrollbar-hide">
-                {items.map((item, i) => (
+            {/* Main content area */}
+            <div className="flex-1 flex items-center justify-center relative min-h-0 px-4 sm:px-16">
+              {/* Navigation arrows */}
+              {items.length > 1 && (
+                <>
                   <button
-                    key={i}
+                    className="absolute left-2 sm:left-4 z-10 h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedIndex(i);
+                      setSelectedIndex(selectedIndex === 0 ? items.length - 1 : selectedIndex - 1);
                     }}
-                    className={cn(
-                      "w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0",
-                      i === selectedIndex ? "border-white scale-110" : "border-transparent opacity-60 hover:opacity-100"
-                    )}
                   >
-                    {item.type === "video" ? (
-                      <div className="w-full h-full bg-muted flex items-center justify-center">
-                        <Play className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
-                      </div>
-                    ) : (
-                      <img src={item.url} alt="" className="w-full h-full object-cover" />
-                    )}
+                    <ChevronLeft className="h-6 w-6 text-white" />
                   </button>
-                ))}
+                  <button
+                    className="absolute right-2 sm:right-4 z-10 h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedIndex(selectedIndex === items.length - 1 ? 0 : selectedIndex + 1);
+                    }}
+                  >
+                    <ChevronRight className="h-6 w-6 text-white" />
+                  </button>
+                </>
+              )}
+
+              {/* Media content */}
+              <motion.div
+                key={selectedIndex}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="max-w-full max-h-full flex items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {items[selectedIndex]?.type === "video" ? (
+                  <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                    <video
+                      ref={videoRef}
+                      src={items[selectedIndex].url}
+                      className="max-w-[90vw] max-h-[75vh] sm:max-h-[80vh] rounded-2xl"
+                      onTimeUpdate={handleVideoTimeUpdate}
+                      onEnded={() => setIsPlaying(false)}
+                      muted={isMuted}
+                      playsInline
+                      onClick={togglePlay}
+                    />
+                    
+                    {/* Video Controls */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent rounded-b-2xl">
+                      <div className="flex items-center gap-3">
+                        <button
+                          className="h-10 w-10 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors"
+                          onClick={togglePlay}
+                        >
+                          {isPlaying ? <Pause className="h-5 w-5 text-white" /> : <Play className="h-5 w-5 text-white" />}
+                        </button>
+                        
+                        <Slider
+                          value={[progress]}
+                          onValueChange={handleSeek}
+                          max={100}
+                          step={0.1}
+                          className="flex-1"
+                        />
+                        
+                        <button
+                          className="h-10 w-10 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors"
+                          onClick={() => setIsMuted(!isMuted)}
+                        >
+                          {isMuted ? <VolumeX className="h-5 w-5 text-white" /> : <Volume2 className="h-5 w-5 text-white" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src={items[selectedIndex]?.url}
+                    alt=""
+                    className="max-w-[90vw] max-h-[75vh] sm:max-h-[80vh] rounded-2xl object-contain shadow-2xl"
+                  />
+                )}
+              </motion.div>
+            </div>
+
+            {/* Bottom thumbnails */}
+            {items.length > 1 && (
+              <div className="shrink-0 flex justify-center py-3 px-4">
+                <div className="flex gap-2 max-w-[90vw] overflow-x-auto px-2 pb-1 scrollbar-hide">
+                  {items.map((item, i) => (
+                    <button
+                      key={i}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedIndex(i);
+                      }}
+                      className={cn(
+                        "w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0",
+                        i === selectedIndex 
+                          ? "border-white ring-2 ring-white/30 scale-105" 
+                          : "border-white/10 opacity-50 hover:opacity-80"
+                      )}
+                    >
+                      {item.type === "video" ? (
+                        <div className="w-full h-full bg-white/10 flex items-center justify-center">
+                          <Play className="h-4 w-4 text-white" />
+                        </div>
+                      ) : (
+                        <img src={item.url} alt="" className="w-full h-full object-cover" />
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
-
-            {/* Counter */}
-            <div className="absolute top-4 left-4 text-white/80 text-sm font-medium">
-              {selectedIndex + 1} / {items.length}
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
