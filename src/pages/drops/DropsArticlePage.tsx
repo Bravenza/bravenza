@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import {
   ArrowLeft, Clock, Calendar, ExternalLink, Share2,
-  Radar, BookOpen, AlertTriangle, Sparkles, Eye,
+  Radar, BookOpen, AlertTriangle, Sparkles, Bookmark, Heart,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useClientSession } from "@/hooks/useClientSession";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
-import { FormattedText } from "@/components/client/vault/community/FormattedText";
 import { toast } from "sonner";
 
 interface DropsPost {
@@ -51,31 +50,33 @@ export default function DropsArticlePage() {
   const [post, setPost] = useState<DropsPost | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [relatedPosts, setRelatedPosts] = useState<DropsPost[]>([]);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+
+  // Reading progress
+  const { scrollYProgress } = useScroll();
+  const progressWidth = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+
+  // Parallax for hero
+  const heroY = useTransform(scrollYProgress, [0, 0.3], [0, 80]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.3], [1, 1.1]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0.3]);
 
   useEffect(() => {
-    if (postId && profile?.cpf) {
-      fetchPost();
-    }
+    if (postId && profile?.cpf) fetchPost();
   }, [postId, profile?.cpf]);
 
   const fetchPost = async () => {
     if (!profile?.cpf || !postId) return;
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .rpc("get_vault_intel_posts", { p_cpf: profile.cpf });
-
+      const { data, error } = await supabase.rpc("get_vault_intel_posts", { p_cpf: profile.cpf });
       if (!error && data) {
         const allPosts = data as unknown as DropsPost[];
         const found = allPosts.find((p) => p.id === postId);
         if (found) {
           setPost(found);
-          // Get related posts of same type, excluding current
-          setRelatedPosts(
-            allPosts
-              .filter((p) => p.id !== postId)
-              .slice(0, 3)
-          );
+          setRelatedPosts(allPosts.filter((p) => p.id !== postId).slice(0, 3));
         }
       }
     } catch (err) {
@@ -86,13 +87,9 @@ export default function DropsArticlePage() {
   };
 
   const formatFullDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
+    new Date(dateString).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
 
-  const handleShare = async () => {
+  const handleShare = useCallback(async () => {
     if (navigator.share && post) {
       try {
         await navigator.share({ title: post.title, url: window.location.href });
@@ -101,17 +98,16 @@ export default function DropsArticlePage() {
       await navigator.clipboard.writeText(window.location.href);
       toast.success("Link copiado!");
     }
-  };
+  }, [post]);
 
   if (sessionLoading || isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        {/* Skeleton hero */}
-        <div className="h-[50vh] bg-muted/20 animate-pulse" />
+        <div className="h-[55vh] bg-muted/10 animate-pulse" />
         <div className="max-w-3xl mx-auto px-4 -mt-16 relative z-10 space-y-4">
-          <div className="h-8 w-64 bg-muted/30 rounded animate-pulse" />
-          <div className="h-4 w-full bg-muted/20 rounded animate-pulse" />
-          <div className="h-4 w-3/4 bg-muted/20 rounded animate-pulse" />
+          <div className="h-10 w-72 bg-muted/15 rounded-lg animate-pulse" />
+          <div className="h-4 w-full bg-muted/10 rounded animate-pulse" />
+          <div className="h-4 w-3/4 bg-muted/10 rounded animate-pulse" />
         </div>
       </div>
     );
@@ -133,58 +129,84 @@ export default function DropsArticlePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Fixed top bar */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-xl border-b border-border/20">
+      {/* Reading progress bar */}
+      <motion.div
+        className="fixed top-0 left-0 right-0 h-[3px] bg-primary z-[60] origin-left"
+        style={{ width: progressWidth }}
+      />
+
+      {/* Fixed top bar - glassmorphism */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/40 backdrop-blur-2xl border-b border-border/10">
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-14">
           <button
             onClick={() => navigate("/minha-conta?tab=drops")}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
             <span className="hidden sm:inline">Drops</span>
           </button>
           <Link to="/">
             <Logo size="sm" />
           </Link>
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleShare}>
-            <Share2 className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn("h-9 w-9 transition-colors", isBookmarked && "text-primary")}
+              onClick={() => { setIsBookmarked(!isBookmarked); toast.success(isBookmarked ? "Removido dos salvos" : "Salvo!"); }}
+            >
+              <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-primary")} />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleShare}>
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
-      {/* Hero cover */}
-      <div className="relative h-[45vh] sm:h-[55vh] overflow-hidden">
-        {post.cover_image ? (
-          <img
-            src={post.cover_image}
-            alt={post.title}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        ) : (
-          <div className={cn("absolute inset-0 bg-gradient-to-br", placeholderGradients[post.type])} />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+      {/* Hero cover with parallax */}
+      <motion.div
+        className="relative h-[50vh] sm:h-[60vh] overflow-hidden"
+        style={{ y: heroY }}
+      >
+        <motion.div className="absolute inset-0" style={{ scale: heroScale, opacity: heroOpacity }}>
+          {post.cover_image ? (
+            <img
+              src={post.cover_image}
+              alt={post.title}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div className={cn("absolute inset-0 bg-gradient-to-br", placeholderGradients[post.type])} />
+          )}
+        </motion.div>
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
 
         {/* Title overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
-          <div className="max-w-3xl mx-auto">
-            <div className="flex items-center gap-3 mb-4">
-              <div className={cn("p-2 rounded-xl bg-gradient-to-br", config.gradient)}>
+        <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 z-10">
+          <motion.div
+            className="max-w-3xl mx-auto"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="flex items-center gap-3 mb-5">
+              <div className={cn("p-2.5 rounded-2xl bg-gradient-to-br shadow-lg", config.gradient)}>
                 <TypeIcon className="h-4 w-4 text-white" />
               </div>
-              <Badge className={cn("bg-gradient-to-r text-white border-0 text-xs", config.gradient)}>
+              <Badge className={cn("bg-gradient-to-r text-white border-0 text-xs font-semibold", config.gradient)}>
                 {config.label}
               </Badge>
               {post.visibility !== "ALL" && (
-                <Badge className="bg-white/10 backdrop-blur-sm text-white border-0 text-xs">
+                <Badge className="bg-white/10 backdrop-blur-md text-white border-0 text-xs">
                   🔒 {post.visibility === "BLACK_ONLY" ? "Black" : "Privilege+"}
                 </Badge>
               )}
             </div>
-            <h1 className="text-2xl sm:text-4xl font-bold text-foreground leading-tight mb-3">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground leading-[1.1] tracking-tight mb-4">
               {post.title}
             </h1>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-5 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5" />
                 {formatFullDate(post.published_at)}
@@ -196,52 +218,72 @@ export default function DropsArticlePage() {
                 </span>
               )}
             </div>
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Article body */}
-      <article className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <article className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
         {/* Excerpt */}
         {post.excerpt && (
-          <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-8 font-light italic border-l-2 border-primary/30 pl-5">
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-10 font-light italic border-l-2 border-primary/30 pl-6"
+          >
             {post.excerpt}
-          </p>
+          </motion.p>
         )}
 
         {/* Rich HTML content */}
-        <div
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
           className="prose prose-lg prose-invert max-w-none
-            prose-headings:text-foreground prose-headings:font-bold prose-headings:tracking-tight
-            prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4
-            prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3
-            prose-p:text-foreground/80 prose-p:leading-relaxed prose-p:mb-5
-            prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+            prose-headings:text-foreground prose-headings:font-bold prose-headings:tracking-tight prose-headings:font-display
+            prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-5
+            prose-h3:text-xl sm:prose-h3:text-2xl prose-h3:mt-10 prose-h3:mb-4
+            prose-p:text-foreground/75 prose-p:leading-[1.8] prose-p:mb-6 prose-p:text-base sm:prose-p:text-lg
+            prose-a:text-primary prose-a:no-underline prose-a:font-medium hover:prose-a:underline
             prose-strong:text-foreground prose-strong:font-semibold
-            prose-blockquote:border-primary/40 prose-blockquote:text-muted-foreground prose-blockquote:italic prose-blockquote:bg-muted/10 prose-blockquote:rounded-r-xl prose-blockquote:py-3 prose-blockquote:px-5
-            prose-img:rounded-2xl prose-img:shadow-xl prose-img:my-8
-            prose-ul:space-y-2 prose-ol:space-y-2
-            prose-li:text-foreground/80"
+            prose-blockquote:border-primary/30 prose-blockquote:text-muted-foreground prose-blockquote:italic prose-blockquote:bg-muted/5 prose-blockquote:rounded-r-2xl prose-blockquote:py-4 prose-blockquote:px-6
+            prose-img:rounded-3xl prose-img:shadow-2xl prose-img:my-10
+            prose-ul:space-y-3 prose-ol:space-y-3
+            prose-li:text-foreground/75 prose-li:leading-relaxed"
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
 
         {/* Media gallery */}
         {post.media_urls && post.media_urls.length > 0 && (
-          <div className="mt-10 space-y-4">
-            <h3 className="text-lg font-semibold text-foreground">Galeria</h3>
+          <div className="mt-12 space-y-5">
+            <h3 className="text-lg font-bold text-foreground tracking-tight">Galeria</h3>
             <div className={cn(
               "grid gap-3",
-              post.media_urls.length === 1 ? "grid-cols-1" : post.media_urls.length === 2 ? "grid-cols-2" : "grid-cols-2 md:grid-cols-3"
+              post.media_urls.length === 1
+                ? "grid-cols-1"
+                : post.media_urls.length === 2
+                  ? "grid-cols-2"
+                  : "grid-cols-2 md:grid-cols-3"
             )}>
               {post.media_urls.map((url, i) => (
-                <div key={i} className="relative rounded-2xl overflow-hidden aspect-square bg-muted/20 group">
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="relative rounded-2xl overflow-hidden aspect-square bg-muted/10 group cursor-pointer"
+                >
                   <img
                     src={url}
                     alt={`Imagem ${i + 1}`}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     loading="lazy"
                   />
-                </div>
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                </motion.div>
               ))}
             </div>
           </div>
@@ -249,8 +291,8 @@ export default function DropsArticlePage() {
 
         {/* Video */}
         {post.video_url && (
-          <div className="mt-10">
-            <div className="relative rounded-2xl overflow-hidden aspect-video bg-muted/20 shadow-xl">
+          <div className="mt-12">
+            <div className="relative rounded-3xl overflow-hidden aspect-video bg-muted/10 shadow-2xl">
               {post.video_url.includes("youtube") || post.video_url.includes("youtu.be") ? (
                 <iframe
                   src={post.video_url.replace("watch?v=", "embed/").replace("youtu.be/", "youtube.com/embed/")}
@@ -267,13 +309,13 @@ export default function DropsArticlePage() {
 
         {/* External link CTA */}
         {post.external_link && (
-          <div className="mt-10 p-6 rounded-2xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
-            <p className="text-sm text-muted-foreground mb-3">Saiba mais sobre este assunto</p>
+          <div className="mt-12 p-7 rounded-3xl bg-gradient-to-r from-primary/8 to-primary/3 border border-primary/15">
+            <p className="text-sm text-muted-foreground mb-4">Saiba mais sobre este assunto</p>
             <a
               href={post.external_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-all hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98]"
             >
               <ExternalLink className="h-4 w-4" />
               Acessar conteúdo externo
@@ -281,28 +323,59 @@ export default function DropsArticlePage() {
           </div>
         )}
 
+        {/* Reaction bar */}
+        <div className="mt-14 flex items-center justify-center gap-4">
+          <button
+            onClick={() => { setIsLiked(!isLiked); toast.success(isLiked ? "Curtida removida" : "Curtido! ❤️"); }}
+            className={cn(
+              "flex items-center gap-2 px-5 py-2.5 rounded-full border transition-all duration-300",
+              isLiked
+                ? "bg-red-500/10 border-red-500/30 text-red-400"
+                : "bg-muted/10 border-border/20 text-muted-foreground hover:bg-muted/20"
+            )}
+          >
+            <Heart className={cn("h-4 w-4", isLiked && "fill-red-400")} />
+            <span className="text-sm font-medium">{isLiked ? "Curtido" : "Curtir"}</span>
+          </button>
+          <button
+            onClick={() => { setIsBookmarked(!isBookmarked); toast.success(isBookmarked ? "Removido" : "Salvo!"); }}
+            className={cn(
+              "flex items-center gap-2 px-5 py-2.5 rounded-full border transition-all duration-300",
+              isBookmarked
+                ? "bg-primary/10 border-primary/30 text-primary"
+                : "bg-muted/10 border-border/20 text-muted-foreground hover:bg-muted/20"
+            )}
+          >
+            <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-primary")} />
+            <span className="text-sm font-medium">{isBookmarked ? "Salvo" : "Salvar"}</span>
+          </button>
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full border bg-muted/10 border-border/20 text-muted-foreground hover:bg-muted/20 transition-all"
+          >
+            <Share2 className="h-4 w-4" />
+            <span className="text-sm font-medium">Compartilhar</span>
+          </button>
+        </div>
+
         {/* Divider */}
-        <div className="mt-14 mb-10 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+        <div className="mt-16 mb-12 h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
 
         {/* Related articles */}
         {relatedPosts.length > 0 && (
           <div>
-            <h2 className="text-xl font-bold mb-6">Leia também</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <h2 className="text-xl font-bold mb-8 tracking-tight">Leia também</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               {relatedPosts.map((related) => {
                 const relConfig = typeConfig[related.type];
                 return (
-                  <Link
-                    key={related.id}
-                    to={`/drops/${related.id}`}
-                    className="group block"
-                  >
+                  <Link key={related.id} to={`/drops/${related.id}`} className="group block">
                     <div className="relative rounded-2xl overflow-hidden aspect-[4/3] mb-3">
                       {related.cover_image ? (
                         <img
                           src={related.cover_image}
                           alt={related.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
                       ) : (
                         <div className={cn("w-full h-full bg-gradient-to-br", placeholderGradients[related.type])} />
@@ -314,7 +387,7 @@ export default function DropsArticlePage() {
                         </Badge>
                       </div>
                     </div>
-                    <h3 className="text-sm font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+                    <h3 className="text-sm font-semibold line-clamp-2 group-hover:text-primary transition-colors tracking-tight">
                       {related.title}
                     </h3>
                   </Link>
@@ -324,12 +397,12 @@ export default function DropsArticlePage() {
           </div>
         )}
 
-        {/* Back button */}
-        <div className="mt-12 text-center">
+        {/* Back */}
+        <div className="mt-14 text-center">
           <Button
             variant="outline"
             onClick={() => navigate("/minha-conta?tab=drops")}
-            className="rounded-xl"
+            className="rounded-2xl px-6 border-border/20 hover:border-border/40"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar para Drops
