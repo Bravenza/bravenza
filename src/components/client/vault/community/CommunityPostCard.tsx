@@ -4,6 +4,7 @@ import {
   Heart, MessageCircle, Share2, MoreHorizontal, Bookmark,
   Crown, Shield, Sparkles, Send, Flag, EyeOff
 } from "lucide-react";
+import { InlineComments } from "./InlineComments";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -69,7 +70,7 @@ interface CommunityPostCardProps {
   clientCpf: string;
   onLike: (postId: string) => Promise<LikeResponse>;
   onReaction: (postId: string, reactionType: ReactionType) => Promise<ReactionResponse>;
-  onComment: (postId: string) => void;
+  onComment?: (postId: string) => void;
   onShare?: (postId: string) => void;
   onAuthorClick?: (authorId: string) => void;
   isLiking?: boolean;
@@ -99,6 +100,7 @@ export function CommunityPostCard({
   const [showHeartAnimation, setShowHeartAnimation] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
+  const [showComments, setShowComments] = useState(false);
 
   const tierInfo = tierConfig[post.author_tier];
   const TierIcon = tierInfo?.icon || Shield;
@@ -211,12 +213,16 @@ export function CommunityPostCard({
   const getInitials = (name: string) => name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
   const totalReactions = Object.values(localReactionsSummary).reduce((a, b) => a + b, 0);
 
+  const handleCommentClick = () => {
+    setShowComments(prev => !prev);
+  };
+
   return (
     <motion.article
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       layout
-      className="relative"
+      className="relative rounded-2xl bg-card/40 backdrop-blur-sm border border-border/10 p-4 hover:bg-card/60 transition-colors duration-200"
     >
       {/* Pinned */}
       {post.is_pinned && (
@@ -371,10 +377,14 @@ export function CommunityPostCard({
             </button>
 
             <button
-              onClick={(e) => { e.preventDefault(); onComment(post.id); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-muted-foreground hover:text-foreground transition-colors min-h-[36px]"
+              onClick={handleCommentClick}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors min-h-[36px]",
+                showComments ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              )}
             >
-              <MessageCircle className="h-[18px] w-[18px]" />
+              <MessageCircle className={cn("h-[18px] w-[18px]", showComments && "fill-primary/20")} />
+              {post.comments_count > 0 && <span className="text-xs">{post.comments_count}</span>}
             </button>
 
             <button
@@ -395,6 +405,17 @@ export function CommunityPostCard({
           </div>
         </div>
       </div>
+
+      {/* Inline Comments */}
+      <AnimatePresence>
+        {showComments && (
+          <InlineComments
+            postId={post.id}
+            clientCpf={clientCpf}
+            autoFocus
+          />
+        )}
+      </AnimatePresence>
 
       {/* Report Dialog */}
       <ReportPostDialog
