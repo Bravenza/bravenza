@@ -203,7 +203,7 @@ export default function DropsArticlePage() {
                 </Badge>
               )}
             </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground leading-[1.1] tracking-tight mb-4">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground leading-[1.1] tracking-tight mb-6">
               {post.title}
             </h1>
             <div className="flex items-center gap-5 text-sm text-muted-foreground">
@@ -223,14 +223,14 @@ export default function DropsArticlePage() {
       </motion.div>
 
       {/* Article body */}
-      <article className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+      <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         {/* Excerpt */}
         {post.excerpt && (
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-10 font-light italic border-l-2 border-primary/30 pl-6"
+            className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-12 font-light italic border-l-2 border-primary/30 pl-6"
           >
             {post.excerpt}
           </motion.p>
@@ -243,9 +243,9 @@ export default function DropsArticlePage() {
           transition={{ delay: 0.5 }}
           className="prose prose-lg prose-invert max-w-none
             prose-headings:text-foreground prose-headings:font-bold prose-headings:tracking-tight prose-headings:font-display
-            prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-5
-            prose-h3:text-xl sm:prose-h3:text-2xl prose-h3:mt-10 prose-h3:mb-4
-            prose-p:text-foreground/75 prose-p:leading-[1.8] prose-p:mb-6 prose-p:text-base sm:prose-p:text-lg
+            prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-14 prose-h2:mb-6
+            prose-h3:text-xl sm:prose-h3:text-2xl prose-h3:mt-12 prose-h3:mb-5
+            prose-p:text-foreground/75 prose-p:leading-[1.85] prose-p:mb-7 prose-p:text-base sm:prose-p:text-lg
             prose-a:text-primary prose-a:no-underline prose-a:font-medium hover:prose-a:underline
             prose-strong:text-foreground prose-strong:font-semibold
             prose-blockquote:border-primary/30 prose-blockquote:text-muted-foreground prose-blockquote:italic prose-blockquote:bg-muted/5 prose-blockquote:rounded-r-2xl prose-blockquote:py-4 prose-blockquote:px-6
