@@ -89,6 +89,12 @@ const VaultIntelAdminPage = () => {
     content: "",
     visibility: "ALL" as IntelVisibility,
     status: "DRAFT",
+    cover_image: "",
+    video_url: "",
+    external_link: "",
+    excerpt: "",
+    read_time_min: 2,
+    is_featured: false,
   });
 
   const fetchPosts = async () => {
@@ -127,11 +133,17 @@ const VaultIntelAdminPage = () => {
         visibility: form.visibility,
         status: form.status,
         published_at: form.status === "PUBLISHED" ? new Date().toISOString() : null,
+        cover_image: form.cover_image || null,
+        video_url: form.video_url || null,
+        external_link: form.external_link || null,
+        excerpt: form.excerpt || null,
+        read_time_min: form.read_time_min || 2,
+        is_featured: form.is_featured,
       });
 
       if (error) throw error;
 
-      toast.success("Post criado com sucesso");
+      toast.success("Drop criado com sucesso");
       setIsCreateOpen(false);
       setForm({
         type: "RADAR",
@@ -139,11 +151,17 @@ const VaultIntelAdminPage = () => {
         content: "",
         visibility: "ALL",
         status: "DRAFT",
+        cover_image: "",
+        video_url: "",
+        external_link: "",
+        excerpt: "",
+        read_time_min: 2,
+        is_featured: false,
       });
       fetchPosts();
     } catch (error) {
       console.error("Error creating post:", error);
-      toast.error("Erro ao criar post");
+      toast.error("Erro ao criar drop");
     }
   };
 
@@ -159,6 +177,12 @@ const VaultIntelAdminPage = () => {
           content: form.content,
           visibility: form.visibility,
           status: form.status,
+          cover_image: form.cover_image || null,
+          video_url: form.video_url || null,
+          external_link: form.external_link || null,
+          excerpt: form.excerpt || null,
+          read_time_min: form.read_time_min || 2,
+          is_featured: form.is_featured,
           published_at:
             form.status === "PUBLISHED" && !selectedPost.published_at
               ? new Date().toISOString()
@@ -225,6 +249,12 @@ const VaultIntelAdminPage = () => {
       content: post.content,
       visibility: post.visibility || "ALL",
       status: post.status || "DRAFT",
+      cover_image: (post as any).cover_image || "",
+      video_url: (post as any).video_url || "",
+      external_link: (post as any).external_link || "",
+      excerpt: (post as any).excerpt || "",
+      read_time_min: (post as any).read_time_min || 2,
+      is_featured: (post as any).is_featured || false,
     });
     setIsEditOpen(true);
   };
@@ -258,10 +288,10 @@ const VaultIntelAdminPage = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Intel posts</h1>
+       <div>
+          <h1 className="text-2xl font-bold">Drops</h1>
           <p className="text-muted-foreground">
-            Gerencie o conteúdo exclusivo do clube
+            Gerencie os conteúdos exclusivos do Vault Club
           </p>
         </div>
         <div className="flex gap-2">
@@ -426,9 +456,9 @@ const VaultIntelAdminPage = () => {
 
       {/* Create Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Criar post</DialogTitle>
+            <DialogTitle>Criar drop</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -483,13 +513,72 @@ const VaultIntelAdminPage = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Conteúdo</label>
+              <label className="text-sm font-medium">Conteúdo (HTML)</label>
               <Textarea
                 value={form.content}
                 onChange={(e) => setForm({ ...form, content: e.target.value })}
-                placeholder="Conteúdo do post..."
+                placeholder="Conteúdo do drop... Suporta HTML (negrito, links, imagens inline)"
                 rows={8}
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Resumo (exibido nos cards)</label>
+              <Input
+                value={form.excerpt}
+                onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+                placeholder="Breve resumo do conteúdo"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">URL da capa</label>
+                <Input
+                  value={form.cover_image}
+                  onChange={(e) => setForm({ ...form, cover_image: e.target.value })}
+                  placeholder="https://... (imagem de capa)"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">URL do vídeo</label>
+                <Input
+                  value={form.video_url}
+                  onChange={(e) => setForm({ ...form, video_url: e.target.value })}
+                  placeholder="YouTube ou link direto"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Link externo</label>
+                <Input
+                  value={form.external_link}
+                  onChange={(e) => setForm({ ...form, external_link: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tempo de leitura (min)</label>
+                <Input
+                  type="number"
+                  value={form.read_time_min}
+                  onChange={(e) => setForm({ ...form, read_time_min: parseInt(e.target.value) || 2 })}
+                  min={1}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is_featured_create"
+                checked={form.is_featured}
+                onChange={(e) => setForm({ ...form, is_featured: e.target.checked })}
+                className="rounded"
+              />
+              <label htmlFor="is_featured_create" className="text-sm font-medium">Destaque (hero card)</label>
             </div>
 
             <div className="flex gap-2 justify-end">
@@ -520,9 +609,9 @@ const VaultIntelAdminPage = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Editar post</DialogTitle>
+            <DialogTitle>Editar drop</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -558,9 +647,7 @@ const VaultIntelAdminPage = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ALL">Todos os membros</SelectItem>
-                    <SelectItem value="PRIVILEGE_PLUS">
-                      Privilege e Black
-                    </SelectItem>
+                    <SelectItem value="PRIVILEGE_PLUS">Privilege e Black</SelectItem>
                     <SelectItem value="BLACK_ONLY">Apenas Black</SelectItem>
                   </SelectContent>
                 </Select>
@@ -576,12 +663,71 @@ const VaultIntelAdminPage = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Conteúdo</label>
+              <label className="text-sm font-medium">Conteúdo (HTML)</label>
               <Textarea
                 value={form.content}
                 onChange={(e) => setForm({ ...form, content: e.target.value })}
                 rows={8}
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Resumo</label>
+              <Input
+                value={form.excerpt}
+                onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+                placeholder="Breve resumo do conteúdo"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">URL da capa</label>
+                <Input
+                  value={form.cover_image}
+                  onChange={(e) => setForm({ ...form, cover_image: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">URL do vídeo</label>
+                <Input
+                  value={form.video_url}
+                  onChange={(e) => setForm({ ...form, video_url: e.target.value })}
+                  placeholder="YouTube ou link direto"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Link externo</label>
+                <Input
+                  value={form.external_link}
+                  onChange={(e) => setForm({ ...form, external_link: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tempo de leitura (min)</label>
+                <Input
+                  type="number"
+                  value={form.read_time_min}
+                  onChange={(e) => setForm({ ...form, read_time_min: parseInt(e.target.value) || 2 })}
+                  min={1}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is_featured_edit"
+                checked={form.is_featured}
+                onChange={(e) => setForm({ ...form, is_featured: e.target.checked })}
+                className="rounded"
+              />
+              <label htmlFor="is_featured_edit" className="text-sm font-medium">Destaque (hero card)</label>
             </div>
 
             <div className="flex gap-2 justify-end">
