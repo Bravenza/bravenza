@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 // Map order status to email type
 const STATUS_EMAIL_MAP: Record<string, string> = {
   // New status flow
-  BUDGET_SENT: "budget_sent",
+  // BUDGET_SENT is NOT here — email is sent by BudgetActions via send-budget-email
   BUDGET_APPROVED: "budget_approved",
   DEPOSIT_CONFIRMED: "sinal_confirmed",
   PRODUCT_FOUND: "product_found",
