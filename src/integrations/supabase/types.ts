@@ -1942,38 +1942,59 @@ export type Database = {
       vault_intel_posts: {
         Row: {
           content: string
+          cover_image: string | null
           created_at: string | null
           created_by_admin_id: string | null
+          excerpt: string | null
+          external_link: string | null
           id: string
+          is_featured: boolean | null
+          media_urls: string[] | null
           published_at: string | null
+          read_time_min: number | null
           status: string | null
           title: string
           type: Database["public"]["Enums"]["intel_post_type"]
           updated_at: string | null
+          video_url: string | null
           visibility: Database["public"]["Enums"]["intel_visibility"] | null
         }
         Insert: {
           content: string
+          cover_image?: string | null
           created_at?: string | null
           created_by_admin_id?: string | null
+          excerpt?: string | null
+          external_link?: string | null
           id?: string
+          is_featured?: boolean | null
+          media_urls?: string[] | null
           published_at?: string | null
+          read_time_min?: number | null
           status?: string | null
           title: string
           type?: Database["public"]["Enums"]["intel_post_type"]
           updated_at?: string | null
+          video_url?: string | null
           visibility?: Database["public"]["Enums"]["intel_visibility"] | null
         }
         Update: {
           content?: string
+          cover_image?: string | null
           created_at?: string | null
           created_by_admin_id?: string | null
+          excerpt?: string | null
+          external_link?: string | null
           id?: string
+          is_featured?: boolean | null
+          media_urls?: string[] | null
           published_at?: string | null
+          read_time_min?: number | null
           status?: string | null
           title?: string
           type?: Database["public"]["Enums"]["intel_post_type"]
           updated_at?: string | null
+          video_url?: string | null
           visibility?: Database["public"]["Enums"]["intel_visibility"] | null
         }
         Relationships: []

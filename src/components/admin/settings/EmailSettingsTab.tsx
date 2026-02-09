@@ -430,7 +430,7 @@ function EmailPreview({ templateId }: { templateId: string }) {
         <p className="text-xs text-muted-foreground">✓ Curadoria exclusiva</p>
         <p className="text-xs text-muted-foreground">✓ Match Room</p>
         <p className="text-xs text-muted-foreground">✓ 3 buscas ativas</p>
-        <p className="text-xs text-muted-foreground">✓ Vault Intel</p>
+        <p className="text-xs text-muted-foreground">✓ Drops exclusivos</p>
       </div>
       <div className="text-center"><button className="bg-primary text-primary-foreground px-4 py-1.5 rounded text-xs font-bold">Acessar Vault Club</button></div>
     </>),
