@@ -58,7 +58,7 @@ const vaultNavItems = [
   { icon: Layers, label: "Match Rooms", path: "/admin/vault/match-rooms" },
   { icon: Shield, label: "Vault Items", path: "/admin/vault/items" },
   { icon: Ticket, label: "Convites", path: "/admin/vault/convites" },
-  { icon: FileText, label: "Intel", path: "/admin/vault/intel" },
+  { icon: FileText, label: "Drops", path: "/admin/vault/intel" },
   { icon: MessageSquare, label: "Comunidade", path: "/admin/vault/comunidade" },
   { icon: Store, label: "Marketplace", path: "/admin/vault/marketplace" },
   { icon: Shield, label: "Hub PRO", path: "/admin/vault/marketplace/inspecao" },

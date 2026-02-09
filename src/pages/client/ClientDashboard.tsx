@@ -137,7 +137,7 @@ const tierConfig = {
 const vaultMenuItems = [
   { id: "vault", label: "Minha Coleção", icon: Box, description: "Itens verificados" },
   { id: "wishlist", label: "Wishlist", icon: Search, description: "Buscas ativas" },
-  { id: "intel", label: "Intel", icon: Newspaper, description: "Novidades exclusivas" },
+  { id: "intel", label: "Drops", icon: Sparkles, description: "Conteúdos exclusivos" },
   { id: "clube", label: "Meu Status", icon: Award, description: "Tier e benefícios" },
   { id: "comunidade", label: "Comunidade", icon: Users, description: "Social" },
 ];

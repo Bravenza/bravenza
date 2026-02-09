@@ -7,7 +7,6 @@ import {
   Package,
   Box,
   Search,
-  Newspaper,
   Crown,
   Users,
   Sparkles,
@@ -128,7 +127,7 @@ const tierConfig = {
 const vaultMenuItems = [
   { id: "vault", label: "Minha Coleção", icon: Box, description: "Itens verificados" },
   { id: "wishlist", label: "Wishlist", icon: Search, description: "Buscas ativas" },
-  { id: "intel", label: "Intel", icon: Newspaper, description: "Novidades exclusivas" },
+  { id: "drops", label: "Drops", icon: Sparkles, description: "Conteúdos exclusivos" },
   { id: "clube", label: "Meu Status", icon: Award, description: "Tier e benefícios" },
   { id: "comunidade", label: "Comunidade", icon: Users, description: "Social" },
   { id: "marketplace", label: "Marketplace", icon: Store, description: "Comprar e vender" },
@@ -138,10 +137,10 @@ const sectionTitles: Record<string, { title: string; subtitle: string; icon: Rea
   pedidos: { title: "Meus Pedidos", subtitle: "Acompanhe suas importações em tempo real", icon: Package },
   vault: { title: "Minha Coleção", subtitle: "Seus itens verificados com certificado de autenticidade", icon: Box },
   wishlist: { title: "Wishlist", subtitle: "Itens que estamos buscando para você", icon: Search },
-  intel: { title: "Vault Intel", subtitle: "Novidades e conteúdos exclusivos para membros", icon: Newspaper },
+  drops: { title: "Drops", subtitle: "Novidades, guias e conteúdos exclusivos para membros", icon: Sparkles },
   clube: { title: "Meu Status", subtitle: "Seu tier, benefícios e evolução no Vault Club", icon: Award },
   comunidade: { title: "Comunidade", subtitle: "Conecte-se com outros membros", icon: Users },
-  marketplace: { title: "Marketplace", subtitle: "Compre e venda sneakers autenticados", icon: Store },
+  marketplace: { title: "Marketplace", subtitle: "Compre e venda tênis autenticados", icon: Store },
 };
 
 export default function UnifiedDashboard() {
@@ -496,7 +495,7 @@ export default function UnifiedDashboard() {
                   {activeSection === "wishlist" && (
                     <VaultWishlistTab clientCpf={profile.cpf} />
                   )}
-                  {activeSection === "intel" && (
+                  {activeSection === "drops" && (
                     <VaultIntelTab clientCpf={profile.cpf} />
                   )}
                   {activeSection === "clube" && (vaultMember || isSuperAdmin) && (
