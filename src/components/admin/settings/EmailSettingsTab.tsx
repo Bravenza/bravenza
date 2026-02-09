@@ -28,8 +28,8 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
   { id: "budget_approved", name: "Orçamento Aprovado", trigger: "Quando cliente aprova orçamento", description: "Confirmação de aprovação com instruções de pagamento do sinal", icon: <CheckCircle className="h-5 w-5" />, status: "active", subject: "Orçamento aprovado! Próximo passo: Pagamento do sinal - {order_id}", variables: ["client_name", "order_id", "sinal_value", "pix_qr_code", "pix_copy_paste"], category: "orders" },
   { id: "sinal_confirmed", name: "Sinal Confirmado", trigger: "Quando pagamento do sinal é confirmado", description: "Confirmação de pagamento e início da busca do produto", icon: <CreditCard className="h-5 w-5" />, status: "active", subject: "Pagamento confirmado! Iniciando busca - {order_id}", variables: ["client_name", "order_id", "product_name", "sla_vault_due_date"], category: "orders" },
   { id: "product_found", name: "Produto Encontrado", trigger: "Status: PURCHASE_COMPLETED", description: "Notificação de que o produto foi encontrado e comprado", icon: <ShoppingBag className="h-5 w-5" />, status: "active", subject: "Ótima notícia! Seu produto foi encontrado - {order_id}", variables: ["client_name", "order_id", "product_name"], category: "orders" },
-  { id: "package_shipped", name: "Pacote Enviado", trigger: "Status: PACKAGE_EN_ROUTE", description: "Produto enviado para o Brasil com código de rastreio internacional", icon: <Plane className="h-5 w-5" />, status: "active", subject: "Seu pacote está a caminho do Brasil! - {order_id}", variables: ["client_name", "order_id", "international_tracking"], category: "orders" },
-  { id: "arrived_inspection", name: "Chegou & Inspeção OK", trigger: "Status: INSPECTION_APPROVED", description: "Produto chegou ao Brasil e passou na inspeção de qualidade", icon: <Search className="h-5 w-5" />, status: "active", subject: "Produto aprovado na inspeção! - {order_id}", variables: ["client_name", "order_id", "product_name"], category: "orders" },
+  { id: "package_shipped", name: "A Caminho do Hub", trigger: "Status: PACKAGE_EN_ROUTE", description: "Produto enviado para o Hub Bravenza para inspeção", icon: <Plane className="h-5 w-5" />, status: "active", subject: "Seu produto está a caminho do Hub Bravenza! - {order_id}", variables: ["client_name", "order_id"], category: "orders" },
+  { id: "arrived_inspection", name: "Recebido & Autenticação", trigger: "Status: INSPECTION_APPROVED", description: "Produto recebido no Hub e autenticação concluída", icon: <Search className="h-5 w-5" />, status: "active", subject: "Autenticação concluída! - {order_id}", variables: ["client_name", "order_id", "product_name"], category: "orders" },
   { id: "balance_due", name: "Saldo Disponível", trigger: "Status: BALANCE_DUE", description: "Solicitação de pagamento do saldo restante", icon: <AlertCircle className="h-5 w-5" />, status: "active", subject: "Pague o saldo e receba seu produto! - {order_id}", variables: ["client_name", "order_id", "balance_value", "payment_link"], category: "orders" },
   { id: "balance_confirmed", name: "Saldo Confirmado", trigger: "Quando pagamento do saldo é confirmado", description: "Confirmação de pagamento total e preparação para envio", icon: <CreditCard className="h-5 w-5" />, status: "active", subject: "Pagamento completo! Preparando envio - {order_id}", variables: ["client_name", "order_id", "product_name"], category: "orders" },
   { id: "dispatched", name: "Enviado para Entrega", trigger: "Status: DISPATCHED", description: "Produto enviado via transportadora nacional", icon: <Truck className="h-5 w-5" />, status: "active", subject: "Seu pedido está a caminho! - {order_id}", variables: ["client_name", "order_id", "national_tracking", "national_carrier"], category: "orders" },
@@ -56,7 +56,7 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
   { id: "community_post_reported", name: "Post Reportado", trigger: "Quando post é reportado", description: "Notificação para admins sobre conteúdo reportado", icon: <Flag className="h-5 w-5" />, status: "active", subject: "Post reportado na comunidade", variables: ["recipient_name", "post_title", "report_reason", "reporter_name"], category: "community" },
   { id: "community_new_follower", name: "Novo Seguidor", trigger: "Quando alguém segue um membro", description: "Notificação ao membro sobre novo seguidor", icon: <UserCheck className="h-5 w-5" />, status: "active", subject: "Novo seguidor na comunidade!", variables: ["recipient_name", "follower_name"], category: "community" },
   { id: "community_post_comment", name: "Novo Comentário", trigger: "Quando alguém comenta em um post", description: "Notificação ao autor sobre novo comentário", icon: <MessageSquare className="h-5 w-5" />, status: "active", subject: "Novo comentário no seu post!", variables: ["recipient_name", "comment_author", "post_title", "comment_preview"], category: "community" },
-  // === ORDERS (Importação) ===
+  // === ORDERS (Curadoria) ===
   { id: "order_request_received", name: "Solicitação Recebida", trigger: "Quando cliente envia solicitação de pedido", description: "Confirmação de recebimento da solicitação", icon: <FileText className="h-5 w-5" />, status: "active", subject: "Solicitação recebida!", variables: ["recipient_name", "product_brand", "product_model", "shoe_size"], category: "orders" },
   { id: "budget_rejected", name: "Orçamento Recusado", trigger: "Quando cliente rejeita orçamento", description: "Confirmação e convite para nova solicitação", icon: <XCircle className="h-5 w-5" />, status: "active", subject: "Orçamento recusado - {order_id}", variables: ["recipient_name", "order_id"], category: "orders" },
   // === AUTOMATED ===
@@ -301,13 +301,13 @@ function EmailPreview({ templateId }: { templateId: string }) {
     </>),
     product_found: previewCard("BRAVENZA", "Produto Encontrado! 🎯", <>
       <div className="bg-green-900/30 border border-green-700 rounded p-2"><p className="text-green-400 text-xs">✓ Encontramos seu produto!</p></div>
-      <p className="text-muted-foreground text-xs">Agora aguardamos o envio para o Brasil.</p>
+      <p className="text-muted-foreground text-xs">Agora aguardamos o envio para o Hub Bravenza.</p>
     </>),
-    package_shipped: previewCard("BRAVENZA", "Pacote Enviado! ✈️", <>
-      <p className="text-muted-foreground text-xs">Seu pacote está a caminho do Brasil!</p>
-      <div className="bg-muted rounded-lg p-3"><p className="text-xs text-muted-foreground">Rastreio:</p><p className="font-mono font-bold">LX123456789CN</p></div>
+    package_shipped: previewCard("BRAVENZA", "A Caminho do Hub! ✈️", <>
+      <p className="text-muted-foreground text-xs">Seu produto está a caminho do Hub Bravenza!</p>
+      <div className="bg-muted rounded-lg p-3"><p className="text-xs text-muted-foreground">Próxima etapa:</p><p className="font-bold text-xs">Inspeção de autenticidade</p></div>
     </>),
-    arrived_inspection: previewCard("BRAVENZA", "Inspeção Aprovada! ✓", <>
+    arrived_inspection: previewCard("BRAVENZA", "Autenticação Concluída! ✓", <>
       <div className="bg-green-900/30 border border-green-700 rounded p-2"><p className="text-green-400 text-xs">✓ Aprovado na inspeção!</p></div>
       <p className="text-muted-foreground text-xs">Pague o saldo para liberarmos o envio.</p>
     </>),
