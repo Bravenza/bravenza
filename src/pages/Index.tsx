@@ -44,7 +44,7 @@ const Index = () => {
       <Helmet>
         <title>BRAVENZA | Curadoria e Autenticação Premium de Sneakers</title>
         <meta name="description" content="Plataforma premium de curadoria sob demanda e autenticação de sneakers. Encontramos, verificamos e garantimos a autenticidade do tênis que você procura." />
-        <link rel="canonical" href="https://bravenza.lovable.app/" />
+        <link rel="canonical" href="https://bravenza.com.br/" />
       </Helmet>
       
       {/* Structured Data */}

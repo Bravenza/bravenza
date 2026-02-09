@@ -1,17 +1,19 @@
 # BRAVENZA Robots.txt
-# https://bravenza.lovable.app
+# https://bravenza.com.br
 
 User-agent: Googlebot
 Allow: /
 Disallow: /admin/
 Disallow: /minha-conta
 Disallow: /cliente/
+Disallow: /entrar
 
 User-agent: Bingbot
 Allow: /
 Disallow: /admin/
 Disallow: /minha-conta
 Disallow: /cliente/
+Disallow: /entrar
 
 User-agent: Twitterbot
 Allow: /
@@ -24,6 +26,7 @@ Allow: /
 Disallow: /admin/
 Disallow: /minha-conta
 Disallow: /cliente/
+Disallow: /entrar
 
 # Sitemap
-Sitemap: https://bravenza.lovable.app/sitemap.xml
+Sitemap: https://bravenza.com.br/sitemap.xml

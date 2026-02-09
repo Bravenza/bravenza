@@ -12,7 +12,7 @@ interface LocalBusinessProps {
 const LocalBusinessComponent = ({
   name = "BRAVENZA",
   description = "Plataforma premium de curadoria sob demanda e autenticação de sneakers. Encontramos, verificamos e garantimos a autenticidade do tênis que você procura.",
-  url = "https://bravenza.lovable.app",
+  url = "https://bravenza.com.br",
   telephone = "+55 51 98105-5425",
   priceRange = "$$"
 }: LocalBusinessProps) => {

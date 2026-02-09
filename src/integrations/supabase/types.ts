@@ -580,6 +580,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "marketplace_product_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_product_comments_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "marketplace_product_comments_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
@@ -3321,7 +3328,64 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      marketplace_product_comments_public: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string | null
+          is_seller_reply: boolean | null
+          is_visible: boolean | null
+          parent_id: string | null
+          product_id: string | null
+          user_cpf_masked: string | null
+          user_name: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_seller_reply?: boolean | null
+          is_visible?: boolean | null
+          parent_id?: string | null
+          product_id?: string | null
+          user_cpf_masked?: never
+          user_name?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_seller_reply?: boolean | null
+          is_visible?: boolean | null
+          parent_id?: string | null
+          product_id?: string | null
+          user_cpf_masked?: never
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_product_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_product_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_product_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_product_comments_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_product_comments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       add_post_comment: {
