@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Users, Image, MessageSquare, RefreshCw, Loader2
+  Users, MessageSquare, RefreshCw, Loader2, Image, Sparkles
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,6 +49,7 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
   const [hasMore, setHasMore] = useState(true);
   const [feedType, setFeedType] = useState<"for_you" | "following">("for_you");
   const [followingCount, setFollowingCount] = useState(0);
+  const [memberProfile, setMemberProfile] = useState<{ avatar_url?: string | null; display_name?: string } | null>(null);
 
   useEffect(() => {
     checkOptIn();
@@ -58,12 +59,12 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
     if (isOptedIn) {
       fetchPosts();
       setupRealtime();
+      fetchMemberProfile();
     }
   }, [isOptedIn]);
 
   const checkOptIn = async () => {
     const { data } = await supabase.rpc("get_vault_member", { p_cpf: clientCpf });
-    
     if (data && data.length > 0) {
       setIsOptedIn(data[0].community_opt_in || false);
       setFollowingCount((data[0] as any).following_count || 0);
@@ -71,50 +72,38 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
     setIsLoading(false);
   };
 
+  const fetchMemberProfile = async () => {
+    if (!member) return;
+    const { data } = await supabase
+      .from("vault_members")
+      .select("avatar_url, display_name")
+      .eq("id", member.id)
+      .maybeSingle();
+    if (data) setMemberProfile(data);
+  };
+
   const setupRealtime = () => {
     const channel = supabase
       .channel("community_feed")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "vault_community_posts" },
-        () => {
-          // Refresh feed when new post is added
-          fetchPosts(true);
-        }
-      )
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "vault_community_posts" }, () => {
+        fetchPosts(true);
+      })
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   };
 
   const fetchPosts = async (refresh = false, type?: "for_you" | "following") => {
-    if (refresh) {
-      setIsRefreshing(true);
-      setOffset(0);
-    }
-
+    if (refresh) { setIsRefreshing(true); setOffset(0); }
     const currentFeedType = type || feedType;
-
     try {
       const currentOffset = refresh ? 0 : offset;
-      
-      // Use different RPC based on feed type
       const rpcName = currentFeedType === "following" ? "get_following_feed" : "get_vault_community_feed";
       const { data, error } = await (supabase.rpc as any)(rpcName, {
-        p_cpf: clientCpf,
-        p_limit: 20,
-        p_offset: currentOffset,
+        p_cpf: clientCpf, p_limit: 20, p_offset: currentOffset,
       });
-
       if (!error && data) {
         const newPosts = data as unknown as CommunityPost[];
-        if (refresh) {
-          setPosts(newPosts);
-        } else {
-          setPosts(prev => [...prev, ...newPosts]);
-        }
+        if (refresh) { setPosts(newPosts); } else { setPosts(prev => [...prev, ...newPosts]); }
         setHasMore(newPosts.length === 20);
         setOffset(currentOffset + newPosts.length);
       }
@@ -134,34 +123,23 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
     fetchPosts(true, type);
   };
 
-  const handleProfileClick = (memberId: string) => {
-    setSelectedProfileId(memberId);
-  };
+  const handleProfileClick = (memberId: string) => setSelectedProfileId(memberId);
 
   const handleOptInToggle = async () => {
     setIsUpdatingOptIn(true);
-    
     try {
       const { error } = await supabase.rpc("update_vault_community_opt_in", {
-        p_cpf: clientCpf,
-        p_opt_in: !isOptedIn,
+        p_cpf: clientCpf, p_opt_in: !isOptedIn,
       });
-      
       if (error) throw error;
-      
       const newOptIn = !isOptedIn;
       setIsOptedIn(newOptIn);
-      
       toast({
         title: newOptIn ? "Bem-vindo à comunidade! 🎉" : "Você saiu da comunidade",
-        description: newOptIn 
-          ? "Agora você pode interagir com outros membros" 
-          : "Você não verá mais publicações",
+        description: newOptIn ? "Agora você pode interagir com outros membros" : "Você não verá mais publicações",
       });
-
       if (newOptIn) {
         fetchPosts(true);
-        // Send community welcome email
         try {
           const { sendMarketplaceEmail } = await import("@/lib/marketplace-email-notifications");
           const { data: memberData } = await supabase
@@ -170,21 +148,12 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
             .eq("client_cpf", clientCpf)
             .maybeSingle();
           if (memberData?.client_email) {
-            sendMarketplaceEmail({
-              type: "community_welcome",
-              recipient_name: memberData.client_name,
-              recipient_email: memberData.client_email,
-            });
+            sendMarketplaceEmail({ type: "community_welcome", recipient_name: memberData.client_name, recipient_email: memberData.client_email });
           }
-        } catch (_) {}
+        } catch {}
       }
-    } catch (error) {
-      console.error("Error updating opt-in:", error);
-      toast({
-        title: "Erro ao atualizar",
-        description: "Tente novamente",
-        variant: "destructive",
-      });
+    } catch {
+      toast({ title: "Erro ao atualizar", variant: "destructive" });
     } finally {
       setIsUpdatingOptIn(false);
     }
@@ -192,294 +161,162 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
 
   const handleLike = async (postId: string) => {
     try {
-      const { data, error } = await supabase.rpc("toggle_post_like", {
-        p_post_id: postId,
-        p_cpf: clientCpf,
-      });
-      
+      const { data, error } = await supabase.rpc("toggle_post_like", { p_post_id: postId, p_cpf: clientCpf });
       const response = data as { success?: boolean; liked?: boolean; likes_count?: number } | null;
-      
-      if (error) {
-        console.error("Error toggling like:", error);
-        toast({
-          title: "Erro ao curtir",
-          description: "Tente novamente",
-          variant: "destructive",
-        });
-        return { success: false };
-      }
-      
-      // Update local state with server response
+      if (error) return { success: false };
       if (response?.success) {
-        setPosts(prev => prev.map(p => {
-          if (p.id === postId) {
-            return {
-              ...p,
-              has_liked: response.liked ?? p.has_liked,
-              likes_count: response.likes_count ?? p.likes_count,
-            };
-          }
-          return p;
-        }));
+        setPosts(prev => prev.map(p => p.id === postId ? { ...p, has_liked: response.liked ?? p.has_liked, likes_count: response.likes_count ?? p.likes_count } : p));
         return { success: true, liked: response.liked, likes_count: response.likes_count };
       }
-      
       return { success: false };
-    } catch (error) {
-      console.error("Error toggling like:", error);
-      return { success: false };
-    }
+    } catch { return { success: false }; }
   };
 
   const handleReaction = async (postId: string, reactionType: string) => {
     try {
-      const { data, error } = await supabase.rpc("toggle_post_reaction", {
-        p_post_id: postId,
-        p_cpf: clientCpf,
-        p_reaction_type: reactionType,
-      });
-      
+      const { data, error } = await supabase.rpc("toggle_post_reaction", { p_post_id: postId, p_cpf: clientCpf, p_reaction_type: reactionType });
       const response = data as { success?: boolean; added?: boolean; summary?: Record<string, number> } | null;
-      
-      if (error) {
-        console.error("Error toggling reaction:", error);
-        toast({
-          title: "Erro ao reagir",
-          description: "Tente novamente",
-          variant: "destructive",
-        });
-        return { success: false };
-      }
-      
-      // Update local state with server response
+      if (error) return { success: false };
       if (response?.success) {
         setPosts(prev => prev.map(p => {
           if (p.id === postId) {
             const userReactions = p.user_reactions || [];
-            const newUserReactions = response.added 
-              ? [...userReactions, reactionType]
-              : userReactions.filter(r => r !== reactionType);
-            return {
-              ...p,
-              user_reactions: newUserReactions,
-              reactions_summary: response.summary ?? p.reactions_summary,
-            };
+            const newUserReactions = response.added ? [...userReactions, reactionType] : userReactions.filter(r => r !== reactionType);
+            return { ...p, user_reactions: newUserReactions, reactions_summary: response.summary ?? p.reactions_summary };
           }
           return p;
         }));
         return { success: true, added: response.added, summary: response.summary };
       }
-      
       return { success: false };
-    } catch (error) {
-      console.error("Error toggling reaction:", error);
-      return { success: false };
-    }
+    } catch { return { success: false }; }
   };
 
-  const handleLoadMore = () => {
-    if (!isLoading && hasMore) {
-      fetchPosts();
-    }
-  };
+  const handleLoadMore = () => { if (!isLoading && hasMore) fetchPosts(); };
+  const handleRefresh = () => fetchPosts(true);
+  const handlePostCreated = () => fetchPosts(true);
 
-  const handleRefresh = () => {
-    fetchPosts(true);
-  };
-
-  const handlePostCreated = () => {
-    fetchPosts(true);
-  };
-
-  // Onboarding view for users not opted in
+  // Onboarding
   if (!isOptedIn && !isLoading) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-lg mx-auto text-center py-8"
-      >
-        <div className="relative mb-6">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 blur-3xl rounded-full" />
-          <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mx-auto border border-primary/20">
-            <Users className="h-12 w-12 text-primary" />
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md mx-auto text-center py-12">
+        <div className="relative mb-8">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-primary/5 to-primary/20 blur-3xl rounded-full" />
+          <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center mx-auto border border-primary/15">
+            <Users className="h-10 w-10 text-primary/60" />
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold mb-2">Comunidade Vault</h2>
-        <p className="text-muted-foreground mb-6">
-          Conecte-se com colecionadores de elite. Compartilhe sua coleção, 
-          participe de discussões e descubra peças incríveis.
+        <h2 className="text-xl font-bold mb-2 tracking-tight">Comunidade Vault</h2>
+        <p className="text-sm text-muted-foreground mb-8 leading-relaxed max-w-xs mx-auto">
+          Conecte-se com colecionadores de elite. Compartilhe, discuta e descubra.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="flex justify-center gap-6 mb-8 text-center">
           {[
-            { icon: Image, title: "Showcase", desc: "Exiba seus tênis e receba feedback" },
-            { icon: MessageSquare, title: "Discussões", desc: "Participe de conversas sobre o mercado" },
-            { icon: Users, title: "Networking", desc: "Conheça outros colecionadores" },
-          ].map((feature, i) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + i * 0.1 }}
-            >
-              <Card className="card-premium h-full">
-                <CardContent className="p-4 text-center">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                    <feature.icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-sm">{feature.title}</h3>
-                  <p className="text-xs text-muted-foreground mt-1">{feature.desc}</p>
-                </CardContent>
-              </Card>
+            { icon: Image, label: "Showcase" },
+            { icon: MessageSquare, label: "Discussões" },
+            { icon: Users, label: "Networking" },
+          ].map((f, i) => (
+            <motion.div key={f.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.1 }}>
+              <div className="w-12 h-12 rounded-2xl bg-muted/20 flex items-center justify-center mx-auto mb-2">
+                <f.icon className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <span className="text-[11px] text-muted-foreground">{f.label}</span>
             </motion.div>
           ))}
         </div>
 
-        <Button
-          size="lg"
-          onClick={handleOptInToggle}
-          disabled={isUpdatingOptIn}
-          className="btn-gold"
-        >
-          {isUpdatingOptIn ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Entrando...
-            </>
-          ) : (
-            "Entrar na comunidade"
-          )}
+        <Button size="lg" onClick={handleOptInToggle} disabled={isUpdatingOptIn} className="btn-gold rounded-full px-8">
+          {isUpdatingOptIn ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Entrando...</> : "Entrar na comunidade"}
         </Button>
-
-        <p className="text-xs text-muted-foreground mt-4">
-          Você pode sair a qualquer momento nas configurações
-        </p>
+        <p className="text-[10px] text-muted-foreground/50 mt-4">Você pode sair a qualquer momento</p>
       </motion.div>
     );
   }
 
-  // Loading skeleton
+  // Loading
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-        <div className="space-y-4">
-          {[1, 2, 3].map(i => (
-            <Card key={i} className="card-premium">
-              <CardContent className="p-4 space-y-4">
-                <div className="flex items-center gap-3">
-                  <Skeleton className="h-11 w-11 rounded-full" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-20" />
-                  </div>
-                </div>
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-20 w-full" />
-                <div className="flex gap-4">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-8 w-16" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      <div className="max-w-xl mx-auto space-y-6">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-48" />
+          </div>
         </div>
-        <div className="hidden lg:block space-y-4">
-          <Skeleton className="h-48" />
-          <Skeleton className="h-64" />
-        </div>
+        <Skeleton className="h-12 w-full rounded-xl" />
+        {[1, 2, 3].map(i => (
+          <div key={i} className="flex gap-3">
+            <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+            <div className="flex-1 space-y-3">
+              <Skeleton className="h-3 w-32" />
+              <Skeleton className="h-16 w-full rounded-xl" />
+              <Skeleton className="h-3 w-48" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
   // Main community view
   return (
-    <div className="space-y-4">
-      {/* Profile Header */}
-      {member && (
-        <CommunityProfileHeader
-          memberId={member.id}
-          onProfileClick={handleProfileClick}
-        />
-      )}
-
-      {/* Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-secondary/20 border border-border/30">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Switch
-              id="community-opt-in"
-              checked={isOptedIn}
-              onCheckedChange={handleOptInToggle}
-              disabled={isUpdatingOptIn}
-            />
-            <Label htmlFor="community-opt-in" className="text-xs text-muted-foreground">
-              Participando
-            </Label>
-          </div>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="gap-1.5 h-8"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline text-xs">Atualizar</span>
-          </Button>
-        </div>
-
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-8">
+      {/* Main feed column */}
+      <div className="max-w-xl mx-auto w-full lg:max-w-none space-y-0">
+        {/* Profile header */}
         {member && (
-          <CommunityNewPost 
-            memberId={member.id} 
-            onPostCreated={handlePostCreated}
+          <CommunityProfileHeader
+            memberId={member.id}
+            onProfileClick={handleProfileClick}
           />
         )}
-      </div>
 
-      {/* Feed Tabs */}
-      <CommunityFeedTabs
-        activeTab={feedType}
-        onTabChange={handleFeedTypeChange}
-        followingCount={followingCount}
-      />
+        {/* Feed tabs */}
+        <CommunityFeedTabs
+          activeTab={feedType}
+          onTabChange={handleFeedTypeChange}
+          followingCount={followingCount}
+        />
 
-      {/* Main content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+        {/* Inline composer */}
+        <div className="py-4">
+          {member && (
+            <CommunityNewPost 
+              memberId={member.id} 
+              onPostCreated={handlePostCreated}
+              avatarUrl={memberProfile?.avatar_url}
+              displayName={memberProfile?.display_name}
+            />
+          )}
+        </div>
+
+        {/* Refresh indicator */}
+        {isRefreshing && (
+          <div className="flex justify-center py-3">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          </div>
+        )}
+
         {/* Feed */}
-        <div className="space-y-4">
-          {posts.length === 0 ? (
-            <Card className="card-premium border-dashed">
-              <CardContent className="py-12 text-center">
-                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-medium mb-2">
-                  {feedType === "following" 
-                    ? "Nenhuma publicação de quem você segue" 
-                    : "Nenhuma publicação ainda"
-                  }
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {feedType === "following"
-                    ? "Siga outros membros para ver suas publicações aqui"
-                    : "Seja o primeiro a publicar algo incrível!"
-                  }
-                </p>
-                {feedType === "for_you" && member && (
-                  <CommunityNewPost 
-                    memberId={member.id} 
-                    onPostCreated={handlePostCreated}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <AnimatePresence mode="popLayout">
-                {posts.map((post) => (
+        {posts.length === 0 ? (
+          <div className="text-center py-16">
+            <MessageSquare className="h-10 w-10 text-muted-foreground/20 mx-auto mb-4" />
+            <p className="text-sm font-medium text-muted-foreground mb-1">
+              {feedType === "following" ? "Nenhuma publicação de quem você segue" : "Nenhuma publicação ainda"}
+            </p>
+            <p className="text-xs text-muted-foreground/60">
+              {feedType === "following" ? "Siga outros membros para ver suas publicações" : "Seja o primeiro a publicar!"}
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border/15">
+            <AnimatePresence mode="popLayout">
+              {posts.map((post) => (
+                <div key={post.id} className="py-4">
                   <CommunityPostCard
-                    key={post.id}
                     post={post}
                     clientCpf={clientCpf}
                     onLike={handleLike}
@@ -487,37 +324,42 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
                     onComment={setSelectedPostId}
                     onAuthorClick={handleProfileClick}
                   />
-                ))}
-              </AnimatePresence>
-
-              {hasMore && (
-                <div className="text-center py-4">
-                  <Button
-                    variant="outline"
-                    onClick={handleLoadMore}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Carregando...
-                      </>
-                    ) : (
-                      "Carregar mais"
-                    )}
-                  </Button>
                 </div>
-              )}
-            </>
-          )}
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* Load more */}
+        {hasMore && posts.length > 0 && (
+          <div className="text-center py-6">
+            <Button variant="ghost" size="sm" onClick={handleLoadMore} disabled={isLoading} className="text-xs text-muted-foreground">
+              {isLoading ? <><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> Carregando...</> : "Carregar mais"}
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Sidebar */}
+      <aside className="hidden lg:block space-y-8 sticky top-24 self-start">
+        {/* Opt-in control */}
+        <div className="flex items-center gap-2">
+          <Switch id="community-opt-in" checked={isOptedIn} onCheckedChange={handleOptInToggle} disabled={isUpdatingOptIn} />
+          <Label htmlFor="community-opt-in" className="text-[11px] text-muted-foreground">Participando</Label>
         </div>
 
-        {/* Sidebar */}
-        <div className="hidden lg:block space-y-4">
-          <CommunityOnlineUsers clientCpf={clientCpf} onProfileClick={handleProfileClick} />
-          <CommunityTrending onProfileClick={handleProfileClick} />
+        <CommunityOnlineUsers clientCpf={clientCpf} onProfileClick={handleProfileClick} />
+        <CommunityTrending onProfileClick={handleProfileClick} />
+
+        {/* Footer links */}
+        <div className="text-[10px] text-muted-foreground/30 space-x-2">
+          <span>Regras</span>
+          <span>·</span>
+          <span>Privacidade</span>
+          <span>·</span>
+          <span>© Bravenza 2026</span>
         </div>
-      </div>
+      </aside>
 
       {/* Comments drawer */}
       <AnimatePresence>
@@ -536,10 +378,7 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
           memberId={selectedProfileId}
           clientCpf={clientCpf}
           onClose={() => setSelectedProfileId(null)}
-          onFollowChange={() => {
-            checkOptIn();
-            fetchPosts(true);
-          }}
+          onFollowChange={() => { checkOptIn(); fetchPosts(true); }}
         />
       )}
     </div>
