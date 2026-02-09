@@ -142,7 +142,7 @@ export default function VaultProfilePage() {
       const { data: itemsData } = await supabase
         .from("vault_items" as any)
         .select("id, title, brand, model, size, inspection_photos, verified_status")
-        .eq("member_id", clientProfile.vault_member_id || "")
+        .eq("user_id", clientProfile.vault_member_id || "")
         .order("created_at", { ascending: false })
         .limit(12);
       

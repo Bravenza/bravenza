@@ -352,7 +352,7 @@ export function CommunityPostCard({
               {post.comments_count > 0 && (
                 <>
                   <span className="text-muted-foreground/30">·</span>
-                  <button onClick={() => onComment(post.id)} className="hover:underline">
+                  <button onClick={() => { onComment?.(post.id); handleCommentClick(); }} className="hover:underline">
                     {post.comments_count} comentário{post.comments_count !== 1 ? "s" : ""}
                   </button>
                 </>
