@@ -153,7 +153,10 @@ export default function UnifiedDashboard() {
   const [vaultMember, setVaultMember] = useState<VaultMemberData | null>(null);
   const [activeSection, setActiveSection] = useState(() => {
     const tabParam = searchParams.get("tab");
-    return tabParam || "pedidos";
+    if (tabParam) return tabParam;
+    // Fallback to last visited tab stored in localStorage
+    const saved = localStorage.getItem("bvz_dashboard_tab");
+    return saved || "pedidos";
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
@@ -164,6 +167,7 @@ export default function UnifiedDashboard() {
     saveScrollPosition(activeSection);
     setActiveSection(newSection);
     setSearchParams({ tab: newSection }, { replace: true });
+    localStorage.setItem("bvz_dashboard_tab", newSection);
     restoreScrollPosition(newSection);
   }, [activeSection, saveScrollPosition, restoreScrollPosition, setSearchParams]);
 
