@@ -556,7 +556,7 @@ const getEmailHtml = (type: MarketplaceEmailType, data: MarketplaceEmailRequest)
       `,
     },
 
-    // ===== ORDERS (IMPORTAÇÃO) =====
+    // ===== ORDERS (CURADORIA) =====
     order_request_received: {
       subtitle: "Solicitação Recebida! 📋",
       content: `

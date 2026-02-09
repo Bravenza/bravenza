@@ -54,7 +54,7 @@ interface FAQ {
 }
 
 const CATEGORIES = [
-  { value: "importacao", label: "Importação" },
+  { value: "importacao", label: "Curadoria" },
   { value: "pagamento", label: "Pagamento" },
   { value: "garantia", label: "Garantia" },
   { value: "envio", label: "Envio" },
