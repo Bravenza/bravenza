@@ -78,9 +78,9 @@ const getEmailSubject = (type: EmailType, orderId: string, data?: EmailRequest):
     sinal_confirmed: `Pagamento confirmado! Iniciando busca - ${orderId}`,
     sinal_reminder: `Lembrete: Pagamento do sinal pendente - ${orderId}`,
     product_found: `Ótima notícia! Seu tênis foi localizado - ${orderId}`,
-    package_shipped: `Seu pacote está a caminho do Brasil! - ${orderId}`,
-    arrived_brazil: `Seu produto chegou ao Brasil! - ${orderId}`,
-    inspection_approved: `Produto aprovado na inspeção! - ${orderId}`,
+    package_shipped: `Seu produto está a caminho do Hub Bravenza! - ${orderId}`,
+    arrived_brazil: `Seu produto foi recebido no Hub! - ${orderId}`,
+    inspection_approved: `Autenticação concluída! - ${orderId}`,
     balance_due: `Pague o saldo e receba seu produto! - ${orderId}`,
     balance_confirmed: `Pagamento completo! Preparando envio - ${orderId}`,
     dispatched: `Seu pedido está a caminho! - ${orderId}`,
@@ -311,7 +311,7 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         </p>
         
         <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
-          Agora aguardamos o envio para nossa central de inspeção no Brasil. Você será notificado assim que o pacote estiver a caminho!
+          Agora aguardamos o envio para o Hub Bravenza, onde será feita a inspeção técnica de autenticidade e qualidade. Você será notificado a cada etapa!
         </p>
       `,
     },
