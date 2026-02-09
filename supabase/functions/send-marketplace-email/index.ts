@@ -15,46 +15,67 @@ type MarketplaceEmailType =
   | "mk_inspection_result"
   | "mk_payout_released"
   | "mk_dispute_opened"
+  | "mk_dispute_resolved"
   | "mk_watchlist_match"
+  | "mk_offer_received"
+  | "mk_offer_accepted"
+  | "mk_offer_counter"
+  | "mk_order_cancelled"
+  | "mk_shipping_reminder"
+  | "mk_protection_expiring"
+  | "mk_review_request"
   | "community_welcome"
-  | "community_post_reported";
+  | "community_post_reported"
+  | "community_new_follower"
+  | "community_post_comment"
+  | "order_request_received"
+  | "budget_rejected";
 
 interface MarketplaceEmailRequest {
   type: MarketplaceEmailType;
   recipient_name: string;
   recipient_email: string;
-  // Order fields
   order_code?: string;
   product_name?: string;
-  product_image?: string;
   price?: number;
   size?: string;
   condition?: string;
-  // Seller/Buyer fields
   seller_name?: string;
   buyer_name?: string;
-  // Shipping
   tracking_code?: string;
   carrier?: string;
   shipping_mode?: string;
-  // Inspection
   inspection_result?: "approved" | "rejected";
   rejection_reason?: string;
-  // Payout
   payout_amount?: number;
   payout_method?: string;
-  // Dispute
   dispute_reason?: string;
   dispute_opened_by?: string;
-  // Watchlist
+  dispute_resolution?: string;
   watchlist_product_name?: string;
   watchlist_price?: number;
   watchlist_size?: string;
-  // Community
   post_title?: string;
   report_reason?: string;
   reporter_name?: string;
   member_tier?: string;
+  offer_price?: number;
+  counter_price?: number;
+  counter_message?: string;
+  listing_title?: string;
+  cancel_reason?: string;
+  refund_amount?: number;
+  days_pending?: number;
+  protection_expires_at?: string;
+  review_link?: string;
+  follower_name?: string;
+  comment_author?: string;
+  comment_preview?: string;
+  order_id?: string;
+  client_name?: string;
+  product_brand?: string;
+  product_model?: string;
+  shoe_size?: string;
 }
 
 const formatCurrency = (value: number) =>
@@ -69,9 +90,21 @@ const getSubject = (type: MarketplaceEmailType, data: MarketplaceEmailRequest): 
     mk_inspection_result: `Resultado da inspeção - ${data.order_code}`,
     mk_payout_released: `💰 Pagamento liberado! - ${data.order_code}`,
     mk_dispute_opened: `⚠️ Disputa aberta - ${data.order_code}`,
+    mk_dispute_resolved: `✅ Disputa resolvida - ${data.order_code}`,
     mk_watchlist_match: `🔔 Produto da sua lista disponível!`,
+    mk_offer_received: `💰 Nova oferta recebida - "${data.listing_title}"`,
+    mk_offer_accepted: `✅ Sua oferta foi aceita! - "${data.listing_title}"`,
+    mk_offer_counter: `🔄 Contra-proposta recebida - "${data.listing_title}"`,
+    mk_order_cancelled: `❌ Pedido cancelado - ${data.order_code}`,
+    mk_shipping_reminder: `⚠️ Envio pendente! - ${data.order_code}`,
+    mk_protection_expiring: `🛡️ Proteção expirando - ${data.order_code}`,
+    mk_review_request: `⭐ Como foi sua compra? - ${data.order_code}`,
     community_welcome: `👋 Bem-vindo à Comunidade Bravenza!`,
     community_post_reported: `🚩 Post reportado na comunidade`,
+    community_new_follower: `👤 Novo seguidor na comunidade!`,
+    community_post_comment: `💬 Novo comentário no seu post!`,
+    order_request_received: `📋 Solicitação recebida! - ${data.order_id}`,
+    budget_rejected: `Orçamento recusado - ${data.order_id}`,
   };
   return subjects[type];
 };
@@ -82,7 +115,7 @@ const wrapper = (subtitle: string, firstName: string, content: string) => `
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bravenza Marketplace</title>
+  <title>Bravenza</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0a0a0a; margin: 0; padding: 40px 20px;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #1a1a1a; border-radius: 16px; overflow: hidden; border: 1px solid #333;">
@@ -98,7 +131,7 @@ const wrapper = (subtitle: string, firstName: string, content: string) => `
     </div>
     <div style="background-color: #111; padding: 24px; text-align: center; border-top: 1px solid #333;">
       <p style="color: #666; font-size: 12px; margin: 0;">
-        © ${new Date().getFullYear()} Bravenza Marketplace. Todos os direitos reservados.
+        © ${new Date().getFullYear()} Bravenza. Todos os direitos reservados.
       </p>
     </div>
   </div>
@@ -134,6 +167,7 @@ const getEmailHtml = (type: MarketplaceEmailType, data: MarketplaceEmailRequest)
   const appUrl = "https://bravenza.lovable.app";
 
   const templates: Record<MarketplaceEmailType, { subtitle: string; content: string }> = {
+    // ===== MARKETPLACE CORE =====
     mk_purchase_confirmed: {
       subtitle: "Compra Confirmada! 🛒",
       content: `
@@ -261,6 +295,8 @@ const getEmailHtml = (type: MarketplaceEmailType, data: MarketplaceEmailRequest)
         </p>
       `,
     },
+
+    // ===== DISPUTES =====
     mk_dispute_opened: {
       subtitle: "Disputa Aberta ⚠️",
       content: `
@@ -281,6 +317,159 @@ const getEmailHtml = (type: MarketplaceEmailType, data: MarketplaceEmailRequest)
         ${ctaButton("Ver Disputa", `${appUrl}/vault/marketplace`)}
       `,
     },
+    mk_dispute_resolved: {
+      subtitle: "Disputa Resolvida ✅",
+      content: `
+        ${successBanner("A disputa do pedido " + (data.order_code || "") + " foi resolvida.")}
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          A disputa do pedido <strong style="color: #d4af37;">${data.order_code}</strong> foi analisada e resolvida pela equipe Bravenza.
+        </p>
+        ${data.dispute_resolution ? `
+          <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+            <p style="color: #a0a0a0; font-size: 14px; margin: 0 0 8px;">Resolução:</p>
+            <p style="color: #fff; font-size: 15px; margin: 0;">${data.dispute_resolution}</p>
+          </div>
+        ` : ""}
+        ${ctaButton("Ver Detalhes", `${appUrl}/vault/marketplace`)}
+      `,
+    },
+
+    // ===== OFFERS =====
+    mk_offer_received: {
+      subtitle: "Nova Oferta Recebida! 💰",
+      content: `
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          Você recebeu uma nova oferta pelo seu anúncio <strong style="color: #d4af37;">"${data.listing_title || data.product_name || ""}"</strong>!
+        </p>
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+          <p style="color: #a0a0a0; font-size: 14px; margin: 0 0 8px;">Valor da Oferta:</p>
+          <p style="color: #d4af37; font-size: 28px; font-weight: bold; margin: 0;">
+            ${formatCurrency(data.offer_price || 0)}
+          </p>
+          ${data.buyer_name ? `<p style="color: #a0a0a0; font-size: 12px; margin: 8px 0 0;">De: ${data.buyer_name}</p>` : ""}
+        </div>
+        <p style="color: #ff9500; font-size: 14px; text-align: center; margin: 0 0 16px;">
+          ⏰ Responda rapidamente para não perder o comprador!
+        </p>
+        ${ctaButton("Ver Oferta", `${appUrl}/vault/marketplace`)}
+      `,
+    },
+    mk_offer_accepted: {
+      subtitle: "Oferta Aceita! ✅",
+      content: `
+        ${successBanner("Sua oferta foi aceita pelo vendedor!")}
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          Sua oferta de <strong style="color: #d4af37;">${formatCurrency(data.offer_price || 0)}</strong> pelo 
+          <strong style="color: #fff;">"${data.listing_title || data.product_name || ""}"</strong> foi aceita!
+        </p>
+        <p style="color: #a0a0a0; font-size: 14px; margin: 0 0 16px; line-height: 1.6;">
+          Finalize a compra para garantir o produto. O anúncio ficará reservado por tempo limitado.
+        </p>
+        ${ctaButton("Finalizar Compra", `${appUrl}/vault/marketplace`)}
+      `,
+    },
+    mk_offer_counter: {
+      subtitle: "Contra-Proposta Recebida! 🔄",
+      content: `
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          O vendedor fez uma contra-proposta pelo <strong style="color: #fff;">"${data.listing_title || data.product_name || ""}"</strong>.
+        </p>
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+          ${infoCard("Sua Oferta", formatCurrency(data.offer_price || 0))}
+          <div style="border-top: 1px solid #333; padding-top: 12px; margin-top: 12px;">
+            ${infoCard("Contra-Proposta", formatCurrency(data.counter_price || 0))}
+          </div>
+          ${data.counter_message ? `
+            <p style="color: #a0a0a0; font-size: 13px; margin: 12px 0 0; font-style: italic;">
+              "${data.counter_message}"
+            </p>
+          ` : ""}
+        </div>
+        ${ctaButton("Responder Oferta", `${appUrl}/vault/marketplace`)}
+      `,
+    },
+
+    // ===== ORDER LIFECYCLE =====
+    mk_order_cancelled: {
+      subtitle: "Pedido Cancelado ❌",
+      content: `
+        ${warningBanner("Pedido " + (data.order_code || "") + " foi cancelado.")}
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          O pedido <strong style="color: #d4af37;">${data.order_code}</strong> foi cancelado.
+        </p>
+        ${data.cancel_reason ? `
+          <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+            <p style="color: #a0a0a0; font-size: 14px; margin: 0 0 8px;">Motivo:</p>
+            <p style="color: #fff; font-size: 15px; margin: 0;">${data.cancel_reason}</p>
+          </div>
+        ` : ""}
+        ${data.refund_amount ? `
+          <div style="background-color: #252525; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+            <p style="color: #a0a0a0; font-size: 14px; margin: 0 0 8px;">Reembolso:</p>
+            <p style="color: #4ade80; font-size: 24px; font-weight: bold; margin: 0;">
+              ${formatCurrency(data.refund_amount)}
+            </p>
+          </div>
+        ` : ""}
+        <p style="color: #a0a0a0; font-size: 14px; margin: 0; line-height: 1.6;">
+          Se tiver dúvidas, entre em contato conosco.
+        </p>
+      `,
+    },
+    mk_shipping_reminder: {
+      subtitle: "Envio Pendente! ⚠️",
+      content: `
+        ${warningBanner("Você tem um envio pendente há " + (data.days_pending || 3) + " dias!")}
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          O pedido <strong style="color: #d4af37;">${data.order_code}</strong> precisa ser enviado o mais rápido possível.
+        </p>
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+          ${infoCard("Produto", data.product_name || "-")}
+          ${infoCard("Destino", data.shipping_mode === "bravenza" ? "Hub Bravenza (PRO)" : "Comprador (Direto)")}
+          ${infoCard("Dias desde pagamento", `${data.days_pending || 3} dias`)}
+        </div>
+        <p style="color: #ff9500; font-size: 14px; text-align: center; margin: 0 0 16px; line-height: 1.6;">
+          ⚠️ Atrasos recorrentes afetam seu tier e reputação de vendedor.
+        </p>
+        ${ctaButton("Marcar como Enviado", `${appUrl}/vault/marketplace`)}
+      `,
+    },
+    mk_protection_expiring: {
+      subtitle: "Proteção Expirando! 🛡️",
+      content: `
+        ${warningBanner("Sua janela de proteção de compra está expirando!")}
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          O prazo de proteção do pedido <strong style="color: #d4af37;">${data.order_code}</strong> 
+          expira em <strong style="color: #ff9500;">${data.protection_expires_at || "breve"}</strong>.
+        </p>
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px; text-align: center;">
+          <p style="color: #fff; font-size: 16px; margin: 0 0 8px;">⏰ Ação necessária</p>
+          <p style="color: #a0a0a0; font-size: 14px; margin: 0;">
+            Se houver qualquer problema com o produto, abra uma disputa <strong>antes</strong> do prazo expirar.
+            Após a expiração, o pagamento será liberado automaticamente ao vendedor.
+          </p>
+        </div>
+        ${ctaButton("Ver Pedido", `${appUrl}/vault/marketplace`)}
+      `,
+    },
+    mk_review_request: {
+      subtitle: "Avalie sua Compra! ⭐",
+      content: `
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          Seu pedido <strong style="color: #d4af37;">${data.order_code}</strong> foi finalizado com sucesso!
+          Que tal compartilhar sua experiência?
+        </p>
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+          <p style="color: #fff; font-size: 40px; margin: 0 0 8px;">⭐⭐⭐⭐⭐</p>
+          <p style="color: #a0a0a0; font-size: 14px; margin: 0;">
+            Sua avaliação ajuda outros compradores e recompensa bons vendedores!
+          </p>
+        </div>
+        ${ctaButton("Avaliar Agora", data.review_link || `${appUrl}/vault/marketplace`)}
+      `,
+    },
+
+    // ===== WATCHLIST =====
     mk_watchlist_match: {
       subtitle: "Produto da sua Lista Disponível! 🔔",
       content: `
@@ -298,6 +487,8 @@ const getEmailHtml = (type: MarketplaceEmailType, data: MarketplaceEmailRequest)
         ${ctaButton("Ver Anúncio", `${appUrl}/vault/marketplace`)}
       `,
     },
+
+    // ===== COMMUNITY =====
     community_welcome: {
       subtitle: "Bem-vindo à Comunidade! 👋",
       content: `
@@ -333,6 +524,73 @@ const getEmailHtml = (type: MarketplaceEmailType, data: MarketplaceEmailRequest)
         ${ctaButton("Revisar no Painel Admin", `${appUrl}/admin/vault-community`)}
       `,
     },
+    community_new_follower: {
+      subtitle: "Novo Seguidor! 👤",
+      content: `
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          <strong style="color: #d4af37;">${data.follower_name || "Alguém"}</strong> começou a seguir você na comunidade Bravenza!
+        </p>
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+          <p style="color: #fff; font-size: 40px; margin: 0 0 8px;">🤝</p>
+          <p style="color: #a0a0a0; font-size: 14px; margin: 0;">
+            Continue compartilhando sua paixão por sneakers para crescer sua rede!
+          </p>
+        </div>
+        ${ctaButton("Ver Perfil", `${appUrl}/vault/comunidade`)}
+      `,
+    },
+    community_post_comment: {
+      subtitle: "Novo Comentário! 💬",
+      content: `
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          <strong style="color: #d4af37;">${data.comment_author || "Alguém"}</strong> comentou no seu post${data.post_title ? ` "${data.post_title}"` : ""}!
+        </p>
+        ${data.comment_preview ? `
+          <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px; border-left: 3px solid #d4af37;">
+            <p style="color: #fff; font-size: 14px; margin: 0; font-style: italic;">
+              "${data.comment_preview}"
+            </p>
+          </div>
+        ` : ""}
+        ${ctaButton("Ver Comentário", `${appUrl}/vault/comunidade`)}
+      `,
+    },
+
+    // ===== ORDERS (IMPORTAÇÃO) =====
+    order_request_received: {
+      subtitle: "Solicitação Recebida! 📋",
+      content: `
+        ${successBanner("Sua solicitação de pedido foi recebida com sucesso!")}
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          Recebemos sua solicitação e nossa equipe irá analisar os detalhes para preparar seu orçamento personalizado.
+        </p>
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+          ${data.product_brand ? infoCard("Marca", data.product_brand) : ""}
+          ${data.product_model ? infoCard("Modelo", data.product_model) : ""}
+          ${data.shoe_size ? infoCard("Tamanho", data.shoe_size) : ""}
+        </div>
+        <p style="color: #a0a0a0; font-size: 14px; margin: 0 0 16px; line-height: 1.6;">
+          Você receberá um email com o orçamento assim que ele estiver pronto. Prazo estimado: <strong style="color: #d4af37;">24-48 horas</strong>.
+        </p>
+        ${ctaButton("Acompanhar na Minha Conta", `${appUrl}/minha-conta`)}
+      `,
+    },
+    budget_rejected: {
+      subtitle: "Orçamento Recusado",
+      content: `
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          Entendemos que o orçamento do pedido <strong style="color: #d4af37;">${data.order_id}</strong> 
+          não atendeu suas expectativas neste momento.
+        </p>
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px; text-align: center;">
+          <p style="color: #fff; font-size: 16px; margin: 0 0 8px;">Podemos ajudar!</p>
+          <p style="color: #a0a0a0; font-size: 14px; margin: 0;">
+            Se deseja explorar outras opções ou precisa de um modelo diferente, ficaremos felizes em ajudar.
+          </p>
+        </div>
+        ${ctaButton("Fazer Nova Solicitação", `${appUrl}/solicitar`)}
+      `,
+    },
   };
 
   const template = templates[type];
@@ -363,7 +621,7 @@ Deno.serve(async (req) => {
     console.log(`[send-marketplace-email] Sending ${data.type} to ${data.recipient_email}`);
 
     const { data: emailData, error } = await resend.emails.send({
-      from: "Bravenza Marketplace <noreply@bravenza.com.br>",
+      from: "Bravenza <noreply@bravenza.com.br>",
       to: [data.recipient_email],
       subject,
       html,

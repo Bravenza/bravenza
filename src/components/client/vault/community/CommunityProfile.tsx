@@ -187,6 +187,22 @@ export function CommunityProfile({ memberId, clientCpf, onClose, onFollowChange 
             : `Você deixou de seguir ${profile?.display_name}`,
         });
         
+        // Send follow email notification
+        if (result.is_following && memberId) {
+          try {
+            const { sendMarketplaceEmail } = await import("@/lib/marketplace-email-notifications");
+            const { data: targetMember } = await supabase.from("vault_members").select("client_name, client_email").eq("id", memberId).maybeSingle();
+            const { data: followerMember } = await supabase.from("vault_members").select("client_name").eq("client_cpf", clientCpf).maybeSingle();
+            if (targetMember?.client_email) {
+              sendMarketplaceEmail({
+                type: "community_new_follower",
+                recipient_name: targetMember.client_name,
+                recipient_email: targetMember.client_email,
+                follower_name: followerMember?.client_name || "Membro",
+              });
+            }
+          } catch (_) {}
+        }
         onFollowChange?.();
       }
     } catch (error) {
