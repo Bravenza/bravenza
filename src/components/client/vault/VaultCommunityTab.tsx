@@ -13,7 +13,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
   CommunityPostCard,
-  CommunityComments,
   CommunityOnlineUsers,
   CommunityTrending,
   CommunityNewPost,
@@ -43,7 +42,6 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isOptedIn, setIsOptedIn] = useState(false);
   const [isUpdatingOptIn, setIsUpdatingOptIn] = useState(false);
-  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -315,13 +313,12 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
           <div className="divide-y divide-border/15">
             <AnimatePresence mode="popLayout">
               {posts.map((post) => (
-                <div key={post.id} className="py-4">
+                <div key={post.id} className="py-3">
                   <CommunityPostCard
                     post={post}
                     clientCpf={clientCpf}
                     onLike={handleLike}
                     onReaction={handleReaction}
-                    onComment={setSelectedPostId}
                     onAuthorClick={handleProfileClick}
                   />
                 </div>
@@ -360,17 +357,6 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
           <span>© Bravenza 2026</span>
         </div>
       </aside>
-
-      {/* Comments drawer */}
-      <AnimatePresence>
-        {selectedPostId && (
-          <CommunityComments
-            postId={selectedPostId}
-            clientCpf={clientCpf}
-            onClose={() => setSelectedPostId(null)}
-          />
-        )}
-      </AnimatePresence>
 
       {/* Profile modal */}
       {selectedProfileId && (

@@ -140,7 +140,7 @@ export function CommunityNewPost({ memberId, onPostCreated, avatarUrl, displayNa
   const initials = displayName?.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() || "?";
 
   return (
-    <div className="border-b border-border/20 pb-4">
+    <div className="rounded-2xl bg-card/40 backdrop-blur-sm border border-border/10 p-4 hover:bg-card/60 transition-colors duration-200">
       <div className="flex gap-3">
         {/* Avatar */}
         <div className="shrink-0 mt-1">
