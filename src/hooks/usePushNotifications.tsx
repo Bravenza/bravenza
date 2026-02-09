@@ -119,8 +119,8 @@ export function getOrderStatusNotification(status: string, orderId: string): { t
       body: `A compra do pedido ${orderId} foi finalizada.`,
     },
     ARRIVED_BRAZIL: {
-      title: "Chegou no Brasil! 🇧🇷",
-      body: `Seu pedido ${orderId} chegou ao Brasil.`,
+      title: "Recebido no Hub! 📦",
+      body: `Seu pedido ${orderId} foi recebido no Hub Bravenza.`,
     },
     PRODUCT_INSPECTED: {
       title: "Inspeção Concluída 🔍",

@@ -143,7 +143,7 @@ const vaultMenuItems = [
 ];
 
 const sectionTitles: Record<string, { title: string; subtitle: string; icon: any }> = {
-  pedidos: { title: "Meus Pedidos", subtitle: "Acompanhe suas importações em tempo real", icon: Package },
+  pedidos: { title: "Meus Pedidos", subtitle: "Acompanhe seus pedidos em tempo real", icon: Package },
   vault: { title: "Minha Coleção", subtitle: "Seus itens verificados com certificado de autenticidade", icon: Box },
   wishlist: { title: "Wishlist", subtitle: "Itens que estamos buscando para você", icon: Search },
   intel: { title: "Drops", subtitle: "Novidades, guias e conteúdos exclusivos para membros", icon: Sparkles },
