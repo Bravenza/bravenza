@@ -17,7 +17,6 @@ import {
   Camera,
   ChevronRight,
   ExternalLink,
-  Plane,
   Shield,
   MapPin,
   Copy,
@@ -99,14 +98,14 @@ const STATUS_CONFIG: Record<
     icon: Package,
   },
   enviado_internacional: {
-    label: "Em trânsito internacional",
+    label: "Em trânsito até o Hub",
     color: "bg-primary/20 text-primary",
     icon: Truck,
   },
   em_fiscalizacao: {
-    label: "Fiscalização",
+    label: "Em autenticação",
     color: "bg-amber-500/20 text-amber-500",
-    icon: Clock,
+    icon: Shield,
   },
   aguardando_saldo: {
     label: "Aguardando saldo",
@@ -155,17 +154,17 @@ const STATUS_CONFIG: Record<
     icon: CheckCircle2,
   },
   PACKAGE_EN_ROUTE: {
-    label: "Em trânsito internacional",
+    label: "Em trânsito até o Hub",
     color: "bg-primary/20 text-primary",
     icon: Truck,
   },
   ARRIVED: {
-    label: "Chegou no Brasil",
+    label: "Recebido no Hub",
     color: "bg-success/20 text-success",
     icon: CheckCircle2,
   },
   INSPECTION_APPROVED: {
-    label: "Inspeção aprovada",
+    label: "Autenticidade confirmada",
     color: "bg-success/20 text-success",
     icon: CheckCircle2,
   },
@@ -180,12 +179,12 @@ const STATUS_CONFIG: Record<
     icon: Truck,
   },
   CUSTOMS: {
-    label: "Na alfândega",
+    label: "Em autenticação",
     color: "bg-amber-500/20 text-amber-500",
-    icon: Clock,
+    icon: Shield,
   },
   NATIONAL_TRANSIT: {
-    label: "Em trânsito nacional",
+    label: "Em trânsito",
     color: "bg-primary/20 text-primary",
     icon: Truck,
   },
@@ -204,10 +203,10 @@ const STATUS_CONFIG: Record<
 // Tracking progress steps derived from order status
 const TRACKING_STEPS = [
   { key: "confirmed", label: "Confirmado", icon: CheckCircle2, statuses: ["novo", "orcamento_enviado", "orcamento_aprovado", "aguardando_sinal", "sinal_confirmado", "ORDER_CONFIRMED"] },
-  { key: "sourcing", label: "Em separação", icon: Package, statuses: ["em_separacao", "SOURCING", "NEGOTIATING", "PURCHASE_COMPLETED"] },
-  { key: "international", label: "Trânsito internacional", icon: Plane, statuses: ["enviado_internacional", "PACKAGE_EN_ROUTE", "INTERNATIONAL_DISPATCH"] },
-  { key: "customs", label: "Fiscalização", icon: Shield, statuses: ["em_fiscalizacao", "CUSTOMS", "ARRIVED"] },
-  { key: "national", label: "Trânsito nacional", icon: Truck, statuses: ["enviado_cliente", "NATIONAL_TRANSIT", "DISPATCHED"] },
+  { key: "sourcing", label: "Separação", icon: Package, statuses: ["em_separacao", "SOURCING", "NEGOTIATING", "PURCHASE_COMPLETED"] },
+  { key: "transit_hub", label: "Trânsito até o Hub", icon: Truck, statuses: ["enviado_internacional", "PACKAGE_EN_ROUTE", "INTERNATIONAL_DISPATCH", "em_fiscalizacao", "CUSTOMS", "ARRIVED"] },
+  { key: "authentication", label: "Autenticação", icon: Shield, statuses: ["aguardando_saldo", "saldo_confirmado", "INSPECTION_APPROVED", "BALANCE_DUE"] },
+  { key: "transit", label: "Em trânsito", icon: Truck, statuses: ["enviado_cliente", "NATIONAL_TRANSIT", "DISPATCHED"] },
   { key: "delivered", label: "Entregue", icon: MapPin, statuses: ["entregue", "DELIVERED"] },
 ];
 
@@ -274,43 +273,13 @@ function InternalTrackingWidget({ order }: { order: OrderData }) {
         </div>
       </div>
 
-      {/* Tracking Codes (copyable, no external redirect) */}
+      {/* Tracking Code */}
       <div className="space-y-2">
-        {order.international_tracking && (
-          <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">Internacional</p>
-              <p className="font-mono text-sm truncate">{order.international_tracking}</p>
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0 ml-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => handleCopy(order.international_tracking!)}
-              >
-                {copiedCode === order.international_tracking ? (
-                  <Check className="h-3.5 w-3.5 text-success" />
-                ) : (
-                  <Copy className="h-3.5 w-3.5" />
-                )}
-              </Button>
-              <a
-                href={`https://www.17track.net/pt/track?nums=${order.international_tracking}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded-md hover:bg-muted/50 transition-colors"
-              >
-                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-              </a>
-            </div>
-          </div>
-        )}
         {order.national_tracking && (
           <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
             <div className="min-w-0 flex-1">
               <p className="text-xs text-muted-foreground">
-                Nacional{order.national_carrier && ` · ${order.national_carrier}`}
+                Rastreio{order.national_carrier && ` · ${order.national_carrier}`}
               </p>
               <p className="font-mono text-sm truncate">{order.national_tracking}</p>
             </div>
