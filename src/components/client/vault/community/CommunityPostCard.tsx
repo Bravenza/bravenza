@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Heart, MessageCircle, Share2, MoreHorizontal, Bookmark,
+  Heart, MessageCircle, MoreHorizontal, Bookmark,
   Crown, Shield, Sparkles, Send, Flag, EyeOff
 } from "lucide-react";
 import { InlineComments } from "./InlineComments";
@@ -12,7 +12,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -281,14 +280,9 @@ export function CommunityPostCard({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => { setIsSaved(!isSaved); toast({ title: isSaved ? "Removido" : "Salvo! 🔖" }); }}>
-                  <Bookmark className={cn("h-4 w-4 mr-2", isSaved && "fill-current")} />
-                  {isSaved ? "Remover dos salvos" : "Salvar"}
+                <DropdownMenuItem>
+                  <EyeOff className="h-4 w-4 mr-2" /> Não tenho interesse
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={(e) => handleShareClick(e as unknown as React.MouseEvent)}>
-                  <Send className="h-4 w-4 mr-2" /> Enviar
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <EyeOff className="h-4 w-4 mr-2" /> Não tenho interesse
                 </DropdownMenuItem>
@@ -391,7 +385,17 @@ export function CommunityPostCard({
               onClick={handleShareClick}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-muted-foreground hover:text-foreground transition-colors min-h-[36px]"
             >
-              <Share2 className="h-[18px] w-[18px]" />
+              <Send className="h-[18px] w-[18px]" />
+            </button>
+
+            <button
+              onClick={() => { setIsSaved(!isSaved); toast({ title: isSaved ? "Removido dos salvos" : "Salvo! 🔖" }); }}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors min-h-[36px]",
+                isSaved ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Bookmark className={cn("h-[18px] w-[18px]", isSaved && "fill-current")} />
             </button>
 
             <div className="ml-auto">
