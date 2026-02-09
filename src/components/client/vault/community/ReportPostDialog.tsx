@@ -85,6 +85,24 @@ export function ReportPostDialog({
         description: "Nossa equipe irá analisar o conteúdo. Obrigado por ajudar!",
       });
 
+      // Send report email to admins
+      try {
+        const { sendMarketplaceEmail } = await import("@/lib/marketplace-email-notifications");
+        const { data: reporter } = await supabase
+          .from("vault_members")
+          .select("client_name")
+          .eq("client_cpf", clientCpf)
+          .maybeSingle();
+        sendMarketplaceEmail({
+          type: "community_post_reported",
+          recipient_name: "Admin Bravenza",
+          recipient_email: "admin@bravenza.com.br",
+          post_title: postTitle || "Post da comunidade",
+          report_reason: selectedReason,
+          reporter_name: reporter?.client_name || "Membro",
+        });
+      } catch (_) {}
+
       // Reset and close
       setSelectedReason("");
       setDetails("");

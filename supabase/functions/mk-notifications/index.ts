@@ -16,6 +16,20 @@ async function notify(sb: any, title: string, message: string, cpf: string, refI
   } catch (e) { console.error("Notify error:", e); }
 }
 
+// Fire-and-forget email via send-marketplace-email edge function
+function sendEmail(type: string, data: Record<string, any>) {
+  try {
+    const baseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!baseUrl || !serviceKey) return;
+    fetch(`${baseUrl}/functions/v1/send-marketplace-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
+      body: JSON.stringify({ type, ...data }),
+    }).catch((e: any) => console.error("[mk-notifications] email error:", e));
+  } catch (_) {}
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -54,6 +68,20 @@ Deno.serve(async (req) => {
         await notify(sb, "🔔 Novo anúncio na sua watchlist!",
           `Uma oferta de R$ ${offer.price.toFixed(2)} foi publicada para um produto que você acompanha.`,
           w.user_cpf, offer.product_id, "marketplace_watchlist");
+
+        // Send watchlist match email
+        const { data: product } = await sb.from("marketplace_products").select("brand, model").eq("id", offer.product_id).maybeSingle();
+        const { data: member } = await sb.from("vault_members").select("client_name, client_email").eq("client_cpf", w.user_cpf).maybeSingle();
+        if (member?.client_email) {
+          sendEmail("mk_watchlist_match", {
+            recipient_name: member.client_name,
+            recipient_email: member.client_email,
+            watchlist_product_name: product ? `${product.brand} ${product.model}` : "Produto desejado",
+            watchlist_price: offer.price,
+            watchlist_size: offer.size,
+          });
+        }
+
         watchlistAlerts++;
       }
     }
