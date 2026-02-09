@@ -255,19 +255,19 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
       </div>
 
       <Tabs value={innerTab} onValueChange={setInnerTab}>
-        <TabsList className="flex overflow-x-auto scrollbar-hide w-full justify-start gap-0.5">
-          <TabsTrigger value="explorar">Explorar</TabsTrigger>
-          <TabsTrigger value="pedidos" className="gap-1">
-            <ShoppingBag className="h-3.5 w-3.5" />
+        <TabsList className="flex overflow-x-auto scrollbar-hide w-full justify-start gap-0.5 -mx-1 px-1">
+          <TabsTrigger value="explorar" className="min-h-[44px] text-sm">Explorar</TabsTrigger>
+          <TabsTrigger value="pedidos" className="gap-1.5 min-h-[44px] text-sm">
+            <ShoppingBag className="h-3.5 w-3.5 shrink-0" />
             Pedidos
           </TabsTrigger>
-          <TabsTrigger value="feed" className="gap-1">
-            <Activity className="h-3.5 w-3.5" />
+          <TabsTrigger value="feed" className="gap-1.5 min-h-[44px] text-sm">
+            <Activity className="h-3.5 w-3.5 shrink-0" />
             Feed
           </TabsTrigger>
           {isVaultMember && (
-            <TabsTrigger value="minha-loja" className="gap-1">
-              <Store className="h-3.5 w-3.5" />
+            <TabsTrigger value="minha-loja" className="gap-1.5 min-h-[44px] text-sm whitespace-nowrap">
+              <Store className="h-3.5 w-3.5 shrink-0" />
               Minha loja
             </TabsTrigger>
           )}
