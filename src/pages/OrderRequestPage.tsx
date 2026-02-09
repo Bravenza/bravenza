@@ -14,6 +14,7 @@ import {
   ProductStep, 
   ReviewStep 
 } from "@/components/order-request/steps";
+import { sendMarketplaceEmail } from "@/lib/marketplace-email-notifications";
 import { motion, AnimatePresence } from "framer-motion";
 
 const WIZARD_STEPS = [
@@ -349,6 +350,22 @@ export default function OrderRequestPage() {
         });
       } catch (notifError) {
         console.error("Error creating notification:", notifError);
+      }
+
+      // Send confirmation email to client
+      try {
+        await sendMarketplaceEmail({
+          type: "order_request_received",
+          recipient_name: formData.client_name,
+          recipient_email: formData.client_email,
+          order_id: requestData?.id,
+          client_name: formData.client_name,
+          product_brand: finalBrand || undefined,
+          product_model: finalModel || undefined,
+          shoe_size: formData.shoe_size,
+        });
+      } catch (emailError) {
+        console.error("Error sending confirmation email:", emailError);
       }
 
       setIsSuccess(true);
