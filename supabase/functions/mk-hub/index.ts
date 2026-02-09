@@ -420,26 +420,50 @@ Deno.serve(async (req) => {
       const { error } = await sb.from("vault_marketplace_orders").update(u).eq("id", b.order_id);
       if (error) throw error;
 
-      // Send emails for shipped/delivered status changes
-      if (["shipped", "delivered"].includes(b.status)) {
+      // Send emails for shipped/delivered/cancelled status changes
+      if (["shipped", "delivered", "cancelled"].includes(b.status)) {
         const { data: orderData } = await sb.from("vault_marketplace_orders").select(
-          `order_code, buyer_cpf, buyer_name, shipping_mode, tracking_code, listing:vault_marketplace_listings!inner(title, size, condition)`
+          `order_code, buyer_cpf, buyer_name, seller_id, shipping_mode, tracking_code, listing:vault_marketplace_listings!inner(title, size, condition)`
         ).eq("id", b.order_id).single();
         if (orderData) {
-          const buyerEmail = await ge(sb, orderData.buyer_cpf);
-          if (buyerEmail) {
-            if (b.status === "shipped") {
-              em("mk_seller_shipped", {
-                recipient_name: buyerEmail.name, recipient_email: buyerEmail.email,
+          if (b.status === "cancelled") {
+            // Email cancelled to buyer
+            const buyerCancelEmail = await ge(sb, orderData.buyer_cpf);
+            if (buyerCancelEmail) {
+              em("mk_order_cancelled", {
+                recipient_name: buyerCancelEmail.name, recipient_email: buyerCancelEmail.email,
                 order_code: orderData.order_code, product_name: orderData.listing?.title,
-                tracking_code: orderData.tracking_code || b.tracking_code,
-                shipping_mode: orderData.shipping_mode,
+                cancel_reason: b.admin_notes || "Cancelado",
               });
-            } else if (b.status === "delivered") {
-              em("mk_delivery_confirmed", {
-                recipient_name: buyerEmail.name, recipient_email: buyerEmail.email,
-                order_code: orderData.order_code, product_name: orderData.listing?.title,
-              });
+            }
+            // Email cancelled to seller
+            const { data: slCancel } = await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf)").eq("id", orderData.seller_id).single();
+            if (slCancel?.member?.client_cpf) {
+              const sellerCancelEmail = await ge(sb, slCancel.member.client_cpf);
+              if (sellerCancelEmail) {
+                em("mk_order_cancelled", {
+                  recipient_name: sellerCancelEmail.name, recipient_email: sellerCancelEmail.email,
+                  order_code: orderData.order_code, product_name: orderData.listing?.title,
+                  cancel_reason: b.admin_notes || "Cancelado",
+                });
+              }
+            }
+          } else {
+            const buyerEmail = await ge(sb, orderData.buyer_cpf);
+            if (buyerEmail) {
+              if (b.status === "shipped") {
+                em("mk_seller_shipped", {
+                  recipient_name: buyerEmail.name, recipient_email: buyerEmail.email,
+                  order_code: orderData.order_code, product_name: orderData.listing?.title,
+                  tracking_code: orderData.tracking_code || b.tracking_code,
+                  shipping_mode: orderData.shipping_mode,
+                });
+              } else if (b.status === "delivered") {
+                em("mk_delivery_confirmed", {
+                  recipient_name: buyerEmail.name, recipient_email: buyerEmail.email,
+                  order_code: orderData.order_code, product_name: orderData.listing?.title,
+                });
+              }
             }
           }
         }
@@ -491,6 +515,29 @@ Deno.serve(async (req) => {
         status: b.new_status || "dispute_resolved",
       }).eq("id", b.order_id);
       if (error) throw error;
+      // Email: dispute resolved to both parties
+      const { data: drOrder } = await sb.from("vault_marketplace_orders").select(
+        `order_code, buyer_cpf, seller_id`
+      ).eq("id", b.order_id).single();
+      if (drOrder) {
+        const buyerDrEmail = await ge(sb, drOrder.buyer_cpf);
+        if (buyerDrEmail) {
+          em("mk_dispute_resolved", {
+            recipient_name: buyerDrEmail.name, recipient_email: buyerDrEmail.email,
+            order_code: drOrder.order_code, dispute_resolution: b.admin_notes || b.resolution,
+          });
+        }
+        const { data: slDr } = await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf)").eq("id", drOrder.seller_id).single();
+        if (slDr?.member?.client_cpf) {
+          const sellerDrEmail = await ge(sb, slDr.member.client_cpf);
+          if (sellerDrEmail) {
+            em("mk_dispute_resolved", {
+              recipient_name: sellerDrEmail.name, recipient_email: sellerDrEmail.email,
+              order_code: drOrder.order_code, dispute_resolution: b.admin_notes || b.resolution,
+            });
+          }
+        }
+      }
       return j({ success: true });
     }
 
@@ -576,6 +623,15 @@ Deno.serve(async (req) => {
       }).select().single();
       if (error) throw error;
       await nt(sb, "💰 Nova oferta!", `R$ ${b.offer_price.toFixed(2)} por "${li.title}".`, li.seller.member.client_cpf, li.id, "marketplace_offer");
+      // Email: offer received to seller
+      const sellerOfferEmail = await ge(sb, li.seller.member.client_cpf);
+      if (sellerOfferEmail) {
+        em("mk_offer_received", {
+          recipient_name: sellerOfferEmail.name, recipient_email: sellerOfferEmail.email,
+          listing_title: li.title, offer_price: b.offer_price,
+          buyer_name: b.buyer_name || "Comprador",
+        });
+      }
       return j({ success: true, offer: of2 });
     }
 
@@ -605,6 +661,14 @@ Deno.serve(async (req) => {
       if (b.response === "accept") {
         u.status = "accepted";
         await nt(sb, "✅ Oferta aceita!", `Oferta por "${of2.listing?.title}" aceita!`, of2.buyer_cpf, of2.listing_id, "marketplace_offer");
+        // Email: offer accepted
+        const buyerAccEmail = await ge(sb, of2.buyer_cpf);
+        if (buyerAccEmail) {
+          em("mk_offer_accepted", {
+            recipient_name: buyerAccEmail.name, recipient_email: buyerAccEmail.email,
+            listing_title: of2.listing?.title, offer_price: of2.offer_price,
+          });
+        }
       } else if (b.response === "reject") {
         u.status = "rejected";
         await nt(sb, "❌ Recusada", `Oferta por "${of2.listing?.title}" recusada.`, of2.buyer_cpf, of2.listing_id, "marketplace_offer");
@@ -613,6 +677,15 @@ Deno.serve(async (req) => {
         u.counter_price = b.counter_price;
         u.counter_message = b.counter_message || null;
         await nt(sb, "🔄 Contra-proposta!", `R$ ${b.counter_price?.toFixed(2)} por "${of2.listing?.title}".`, of2.buyer_cpf, of2.listing_id, "marketplace_offer");
+        // Email: counter offer
+        const buyerCntEmail = await ge(sb, of2.buyer_cpf);
+        if (buyerCntEmail) {
+          em("mk_offer_counter", {
+            recipient_name: buyerCntEmail.name, recipient_email: buyerCntEmail.email,
+            listing_title: of2.listing?.title, offer_price: of2.offer_price,
+            counter_price: b.counter_price, counter_message: b.counter_message,
+          });
+        }
       }
       const { error } = await sb.from("vault_marketplace_offers").update(u).eq("id", b.offer_id);
       if (error) throw error;

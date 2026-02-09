@@ -109,6 +109,18 @@ Deno.serve(async (req) => {
         await notify(sb, "⚠️ Envio pendente!",
           `Pedido ${order.order_code}: já se passaram 3+ dias desde o pagamento. Envie ${dest} o mais rápido possível.`,
           sl.member.client_cpf, order.id, "marketplace_shipping");
+        // Email: shipping reminder
+        const { data: sellerMember } = await sb.from("vault_members").select("client_name, client_email").eq("client_cpf", sl.member.client_cpf).maybeSingle();
+        if (sellerMember?.client_email) {
+          const daysDiff = Math.floor((Date.now() - new Date(order.paid_at).getTime()) / (1000 * 60 * 60 * 24));
+          sendEmail("mk_shipping_reminder", {
+            recipient_name: sellerMember.client_name,
+            recipient_email: sellerMember.client_email,
+            order_code: order.order_code,
+            shipping_mode: order.shipping_mode,
+            days_pending: daysDiff,
+          });
+        }
         shippingReminders++;
       }
     }
@@ -175,6 +187,16 @@ Deno.serve(async (req) => {
         await notify(sb, "🛡️ Proteção expirando",
           `Pedido ${order.order_code}: sua janela de proteção expira em ${expDate.toLocaleDateString("pt-BR")}. Abra uma disputa se houver problemas.`,
           order.buyer_cpf, order.id, "marketplace_protection");
+        // Email: protection expiring
+        const { data: buyerMember } = await sb.from("vault_members").select("client_name, client_email").eq("client_cpf", order.buyer_cpf).maybeSingle();
+        if (buyerMember?.client_email) {
+          sendEmail("mk_protection_expiring", {
+            recipient_name: buyerMember.client_name,
+            recipient_email: buyerMember.client_email,
+            order_code: order.order_code,
+            protection_expires_at: expDate.toLocaleDateString("pt-BR"),
+          });
+        }
         expiryWarnings++;
       }
     }

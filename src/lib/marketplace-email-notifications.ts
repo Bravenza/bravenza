@@ -8,9 +8,21 @@ type MarketplaceEmailType =
   | "mk_inspection_result"
   | "mk_payout_released"
   | "mk_dispute_opened"
+  | "mk_dispute_resolved"
   | "mk_watchlist_match"
+  | "mk_offer_received"
+  | "mk_offer_accepted"
+  | "mk_offer_counter"
+  | "mk_order_cancelled"
+  | "mk_shipping_reminder"
+  | "mk_protection_expiring"
+  | "mk_review_request"
   | "community_welcome"
-  | "community_post_reported";
+  | "community_post_reported"
+  | "community_new_follower"
+  | "community_post_comment"
+  | "order_request_received"
+  | "budget_rejected";
 
 interface MarketplaceEmailData {
   type: MarketplaceEmailType;
@@ -32,12 +44,31 @@ interface MarketplaceEmailData {
   payout_method?: string;
   dispute_reason?: string;
   dispute_opened_by?: string;
+  dispute_resolution?: string;
   watchlist_product_name?: string;
   watchlist_price?: number;
   watchlist_size?: string;
   post_title?: string;
   report_reason?: string;
   reporter_name?: string;
+  offer_price?: number;
+  counter_price?: number;
+  counter_message?: string;
+  listing_title?: string;
+  cancel_reason?: string;
+  refund_amount?: number;
+  days_pending?: number;
+  protection_expires_at?: string;
+  review_link?: string;
+  follower_name?: string;
+  comment_author?: string;
+  comment_preview?: string;
+  order_id?: string;
+  client_name?: string;
+  client_email_field?: string;
+  product_brand?: string;
+  product_model?: string;
+  shoe_size?: string;
 }
 
 export async function sendMarketplaceEmail(
