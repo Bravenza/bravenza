@@ -818,10 +818,18 @@ main {
 .drops-article-content h2 {
   color: hsl(var(--foreground));
   font-weight: 700;
-  font-size: 1.875rem;
+  font-size: 1.5rem;
   letter-spacing: -0.025em;
-  margin-top: 4rem;
-  margin-bottom: 2rem;
+  margin-top: 3.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .drops-article-content h2 {
+    font-size: 1.875rem;
+    margin-top: 4rem;
+    margin-bottom: 2rem;
+  }
 }
 
 .drops-article-content h3 {
@@ -835,8 +843,17 @@ main {
 
 .drops-article-content p {
   color: hsl(var(--foreground) / 0.75);
-  line-height: 1.9;
-  margin-bottom: 2rem;
+  line-height: 1.8;
+  margin-bottom: 1.75rem;
+  font-size: 1rem;
+}
+
+@media (min-width: 640px) {
+  .drops-article-content p {
+    line-height: 1.9;
+    margin-bottom: 2rem;
+    font-size: 1.125rem;
+  }
 }
 
 .drops-article-content a {
@@ -865,9 +882,18 @@ main {
 }
 
 .drops-article-content img {
-  border-radius: 1.5rem;
+  border-radius: 1rem;
   box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-  margin: 2.5rem 0;
+  margin: 2rem 0;
+  max-width: 100%;
+  height: auto;
+}
+
+@media (min-width: 640px) {
+  .drops-article-content img {
+    border-radius: 1.5rem;
+    margin: 2.5rem 0;
+  }
 }
 
 .drops-article-content ul,
