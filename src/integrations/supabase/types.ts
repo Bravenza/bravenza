@@ -3761,17 +3761,19 @@ export type Database = {
           supplier_name: string
         }[]
       }
-      get_vault_intel_posts: {
-        Args: { p_cpf: string }
-        Returns: {
-          content: string
-          id: string
-          published_at: string
-          title: string
-          type: Database["public"]["Enums"]["intel_post_type"]
-          visibility: Database["public"]["Enums"]["intel_visibility"]
-        }[]
-      }
+      get_vault_intel_posts:
+        | {
+            Args: { p_cpf: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.get_vault_intel_posts(p_cpf => text), public.get_vault_intel_posts(p_cpf => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
+          }
+        | {
+            Args: { p_cpf: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.get_vault_intel_posts(p_cpf => text), public.get_vault_intel_posts(p_cpf => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
+          }
       get_vault_invites: {
         Args: { p_cpf: string }
         Returns: {
