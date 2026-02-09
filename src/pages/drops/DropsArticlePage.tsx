@@ -241,17 +241,7 @@ export default function DropsArticlePage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="prose prose-lg prose-invert max-w-none
-            prose-headings:text-foreground prose-headings:font-bold prose-headings:tracking-tight prose-headings:font-display
-            prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-16 prose-h2:mb-8
-            prose-h3:text-xl sm:prose-h3:text-2xl prose-h3:mt-14 prose-h3:mb-7
-            prose-p:text-foreground/75 prose-p:leading-[1.9] prose-p:mb-8 prose-p:text-base sm:prose-p:text-lg
-            prose-a:text-primary prose-a:no-underline prose-a:font-medium hover:prose-a:underline
-            prose-strong:text-foreground prose-strong:font-semibold
-            prose-blockquote:border-primary/30 prose-blockquote:text-muted-foreground prose-blockquote:italic prose-blockquote:bg-muted/5 prose-blockquote:rounded-r-2xl prose-blockquote:py-4 prose-blockquote:px-6
-            prose-img:rounded-3xl prose-img:shadow-2xl prose-img:my-10
-            prose-ul:space-y-3 prose-ol:space-y-3
-            prose-li:text-foreground/75 prose-li:leading-relaxed"
+          className="drops-article-content"
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
 

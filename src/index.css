@@ -806,3 +806,80 @@ main {
 .animate-whatsapp-pop {
   animation: whatsapp-pop 0.4s ease-out 1s both;
 }
+
+/* Drops Article Content Styling */
+.drops-article-content {
+  max-width: none;
+  color: hsl(var(--foreground) / 0.75);
+  font-size: 1.125rem;
+  line-height: 1.9;
+}
+
+.drops-article-content h2 {
+  color: hsl(var(--foreground));
+  font-weight: 700;
+  font-size: 1.875rem;
+  letter-spacing: -0.025em;
+  margin-top: 4rem;
+  margin-bottom: 2rem;
+}
+
+.drops-article-content h3 {
+  color: hsl(var(--foreground));
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.025em;
+  margin-top: 3.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.drops-article-content p {
+  color: hsl(var(--foreground) / 0.75);
+  line-height: 1.9;
+  margin-bottom: 2rem;
+}
+
+.drops-article-content a {
+  color: hsl(var(--primary));
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.drops-article-content a:hover {
+  text-decoration: underline;
+}
+
+.drops-article-content strong {
+  color: hsl(var(--foreground));
+  font-weight: 600;
+}
+
+.drops-article-content blockquote {
+  border-left: 2px solid hsl(var(--primary) / 0.3);
+  color: hsl(var(--muted-foreground));
+  font-style: italic;
+  background: hsl(var(--muted) / 0.05);
+  border-radius: 0 1rem 1rem 0;
+  padding: 1rem 1.5rem;
+  margin: 2rem 0;
+}
+
+.drops-article-content img {
+  border-radius: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+  margin: 2.5rem 0;
+}
+
+.drops-article-content ul,
+.drops-article-content ol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-left: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.drops-article-content li {
+  color: hsl(var(--foreground) / 0.75);
+  line-height: 1.7;
+}
