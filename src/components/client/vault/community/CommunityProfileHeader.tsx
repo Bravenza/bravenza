@@ -125,15 +125,15 @@ export function CommunityProfileHeader({ memberId, onProfileClick }: CommunityPr
           </Button>
         </div>
         
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-3 sm:gap-5">
           {stats.map((stat) => (
             <button
               key={stat.label}
               onClick={() => onProfileClick(memberId)}
-              className="text-center hover:opacity-70 transition-opacity"
+              className="text-center hover:opacity-70 transition-opacity min-h-[44px] flex flex-col items-center justify-center"
             >
               <span className="block font-bold text-sm">{stat.value}</span>
-              <span className="text-[11px] text-muted-foreground">{stat.label}</span>
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground">{stat.label}</span>
             </button>
           ))}
         </div>

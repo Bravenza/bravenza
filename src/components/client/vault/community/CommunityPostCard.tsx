@@ -366,7 +366,7 @@ export function CommunityPostCard({
               onClick={handleLikeClick}
               disabled={isLiking || isProcessingLike}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors min-h-[36px]",
+                "flex items-center gap-1.5 px-3 py-2 rounded-full text-sm transition-colors min-h-[44px]",
                 localLiked 
                   ? "text-destructive" 
                   : "text-muted-foreground hover:text-destructive"
@@ -380,7 +380,7 @@ export function CommunityPostCard({
             <button
               onClick={handleCommentClick}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors min-h-[36px]",
+                "flex items-center gap-1.5 px-3 py-2 rounded-full text-sm transition-colors min-h-[44px]",
                 showComments ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -390,7 +390,7 @@ export function CommunityPostCard({
 
             <button
               onClick={handleShareClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-muted-foreground hover:text-foreground transition-colors min-h-[36px]"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm text-muted-foreground hover:text-foreground transition-colors min-h-[44px]"
             >
               <Send className="h-[18px] w-[18px]" />
             </button>
@@ -398,7 +398,7 @@ export function CommunityPostCard({
             <button
               onClick={() => { setIsSaved(!isSaved); toast({ title: isSaved ? "Removido dos salvos" : "Salvo! 🔖" }); }}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors min-h-[36px]",
+                "flex items-center gap-1.5 px-3 py-2 rounded-full text-sm transition-colors min-h-[44px]",
                 isSaved ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >

@@ -461,8 +461,8 @@ export default function UnifiedDashboard() {
                 )} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{currentSection.title}</h1>
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                  <h1 className="text-lg sm:text-2xl font-bold tracking-tight truncate">{currentSection.title}</h1>
                   {isVaultSection && effectiveTierInfo && (
                     <Badge variant="outline" className={cn("text-xs shrink-0", effectiveTierInfo.color, effectiveTierInfo.bgColor)}>
                       {effectiveTierInfo.name}
