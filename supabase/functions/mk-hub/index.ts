@@ -30,6 +30,27 @@ async function nt(sb: any, t: string, m: string, c: string, ri?: string, rt?: st
   } catch (_) {}
 }
 
+// Email helper: get member name+email by CPF
+async function ge(sb: any, cpf: string): Promise<{ name: string; email: string } | null> {
+  const { data } = await sb.from("vault_members").select("client_name, client_email").eq("client_cpf", cpf).maybeSingle();
+  if (!data?.client_email) return null;
+  return { name: data.client_name, email: data.client_email };
+}
+
+// Email helper: send marketplace email via edge function
+async function em(type: string, data: Record<string, any>) {
+  try {
+    const baseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!baseUrl || !serviceKey) return;
+    fetch(`${baseUrl}/functions/v1/send-marketplace-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
+      body: JSON.stringify({ type, ...data }),
+    }).catch((e: any) => console.error("[mk-hub] email fire-and-forget error:", e));
+  } catch (e) { console.error("[mk-hub] email error:", e); }
+}
+
 function gc() {
   const c = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let r = "MKT-";
@@ -274,6 +295,25 @@ Deno.serve(async (req) => {
         description: `R$ ${li.price} — comprador: ${b.buyer_name}`,
         listing_id: li._is_offer ? null : li.id, seller_id: li.seller.id,
       }).then(() => {});
+      // Send emails: purchase confirmed to buyer, new sale to seller
+      const buyerInfo = await ge(sb, cpf);
+      if (buyerInfo) {
+        em("mk_purchase_confirmed", {
+          recipient_name: buyerInfo.name, recipient_email: buyerInfo.email,
+          order_code: od.order_code, product_name: titleForNotification,
+          price: li.price, size: li.size || b.size, condition: li.condition,
+          shipping_mode: li.shipping_mode || "direct",
+        });
+      }
+      const sellerInfo = await ge(sb, li.seller.member.client_cpf);
+      if (sellerInfo) {
+        em("mk_new_sale", {
+          recipient_name: sellerInfo.name, recipient_email: sellerInfo.email,
+          order_code: od.order_code, product_name: titleForNotification,
+          price: li.price, size: li.size || b.size, buyer_name: b.buyer_name,
+          shipping_mode: li.shipping_mode || "direct",
+        });
+      }
       return j({ success: true, order: od });
     }
 
@@ -361,6 +401,15 @@ Deno.serve(async (req) => {
             if (sl?.member?.client_cpf) {
               const { data: orderInfo } = await sb.from("vault_marketplace_orders").select("order_code, seller_payout").eq("id", b.order_id).single();
               await nt(sb, "💸 Repasse realizado!", `Pedido ${orderInfo?.order_code} — R$ ${orderInfo?.seller_payout?.toFixed(2)} transferido via PIX.`, sl.member.client_cpf, b.order_id, "marketplace_payout");
+              // Email: payout released to seller
+              const sellerEmail = await ge(sb, sl.member.client_cpf);
+              if (sellerEmail) {
+                em("mk_payout_released", {
+                  recipient_name: sellerEmail.name, recipient_email: sellerEmail.email,
+                  order_code: orderInfo?.order_code, payout_amount: orderInfo?.seller_payout,
+                  payout_method: b.payout_method || "pix",
+                });
+              }
             }
           }
         }
@@ -370,6 +419,32 @@ Deno.serve(async (req) => {
       if (b.admin_notes) u.admin_notes = b.admin_notes;
       const { error } = await sb.from("vault_marketplace_orders").update(u).eq("id", b.order_id);
       if (error) throw error;
+
+      // Send emails for shipped/delivered status changes
+      if (["shipped", "delivered"].includes(b.status)) {
+        const { data: orderData } = await sb.from("vault_marketplace_orders").select(
+          `order_code, buyer_cpf, buyer_name, shipping_mode, tracking_code, listing:vault_marketplace_listings!inner(title, size, condition)`
+        ).eq("id", b.order_id).single();
+        if (orderData) {
+          const buyerEmail = await ge(sb, orderData.buyer_cpf);
+          if (buyerEmail) {
+            if (b.status === "shipped") {
+              em("mk_seller_shipped", {
+                recipient_name: buyerEmail.name, recipient_email: buyerEmail.email,
+                order_code: orderData.order_code, product_name: orderData.listing?.title,
+                tracking_code: orderData.tracking_code || b.tracking_code,
+                shipping_mode: orderData.shipping_mode,
+              });
+            } else if (b.status === "delivered") {
+              em("mk_delivery_confirmed", {
+                recipient_name: buyerEmail.name, recipient_email: buyerEmail.email,
+                order_code: orderData.order_code, product_name: orderData.listing?.title,
+              });
+            }
+          }
+        }
+      }
+
       return j({ success: true });
     }
 
@@ -379,6 +454,33 @@ Deno.serve(async (req) => {
         dispute_status: "open", admin_notes: b.reason || "Disputa aberta",
       }).eq("id", b.order_id).eq("buyer_cpf", cpf);
       if (error) throw error;
+      // Email: dispute opened - notify both parties
+      const { data: disputeOrder } = await sb.from("vault_marketplace_orders").select(
+        `order_code, buyer_cpf, buyer_name, seller_id, listing:vault_marketplace_listings!inner(title)`
+      ).eq("id", b.order_id).single();
+      if (disputeOrder) {
+        // Notify seller
+        const { data: sellerData } = await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf, client_name)").eq("id", disputeOrder.seller_id).single();
+        if (sellerData?.member?.client_cpf) {
+          const sellerEmail = await ge(sb, sellerData.member.client_cpf);
+          if (sellerEmail) {
+            em("mk_dispute_opened", {
+              recipient_name: sellerEmail.name, recipient_email: sellerEmail.email,
+              order_code: disputeOrder.order_code, dispute_reason: b.reason,
+              dispute_opened_by: disputeOrder.buyer_name || "Comprador",
+            });
+          }
+        }
+        // Notify buyer confirmation
+        const buyerEmail = await ge(sb, cpf);
+        if (buyerEmail) {
+          em("mk_dispute_opened", {
+            recipient_name: buyerEmail.name, recipient_email: buyerEmail.email,
+            order_code: disputeOrder.order_code, dispute_reason: b.reason,
+            dispute_opened_by: "Você",
+          });
+        }
+      }
       return j({ success: true });
     }
 
@@ -1051,6 +1153,15 @@ Deno.serve(async (req) => {
           if (sl?.member?.client_cpf) {
             await nt(sb, "❌ Item reprovado na inspeção", `Pedido ${od.order_code}: ${b.rejection_reason || "Não passou na autenticação"}.`, sl.member.client_cpf, b.order_id, "marketplace_inspection");
           }
+        }
+        // Email: inspection result to buyer
+        const buyerEmail = await ge(sb, od.buyer_cpf);
+        if (buyerEmail) {
+          em("mk_inspection_result", {
+            recipient_name: buyerEmail.name, recipient_email: buyerEmail.email,
+            order_code: od.order_code, inspection_result: b.result,
+            rejection_reason: b.rejection_reason || null,
+          });
         }
       }
       return j({ success: true, inspection: insp, laudo_id: laudoId, laudo_qr_url: laudoQrUrl });
