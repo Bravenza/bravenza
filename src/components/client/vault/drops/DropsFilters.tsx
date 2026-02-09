@@ -21,7 +21,7 @@ export function DropsFilters({ value, onChange }: DropsFiltersProps) {
           key={opt.value}
           onClick={() => onChange(opt.value)}
           className={cn(
-            "px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-300",
+            "px-4 py-2.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-300 min-h-[44px]",
             value === opt.value
               ? "bg-foreground text-background shadow-sm"
               : "bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground"

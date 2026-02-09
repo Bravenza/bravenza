@@ -76,8 +76,8 @@ export function DropsHeroCard({ post }: DropsHeroCardProps) {
               {getExcerpt(post, 180)}
             </p>
 
-            {/* CTA */}
-            <div className="inline-flex items-center gap-2 text-sm text-white font-medium opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+            {/* CTA - visible on mobile (touch), hover-reveal on desktop */}
+            <div className="inline-flex items-center gap-2 text-sm text-white font-medium opacity-100 sm:opacity-0 sm:group-hover:opacity-100 translate-y-0 sm:translate-y-2 sm:group-hover:translate-y-0 transition-all duration-300">
               <span>Continuar lendo</span>
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </div>

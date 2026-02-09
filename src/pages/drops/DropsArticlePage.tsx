@@ -166,7 +166,7 @@ export default function DropsArticlePage() {
 
       {/* Hero cover with parallax */}
       <motion.div
-        className="relative h-[50vh] sm:h-[60vh] overflow-hidden"
+        className="relative h-[40vh] sm:h-[50vh] md:h-[60vh] overflow-hidden"
         style={{ y: heroY }}
       >
         <motion.div className="absolute inset-0" style={{ scale: heroScale, opacity: heroOpacity }}>
@@ -287,6 +287,7 @@ export default function DropsArticlePage() {
                 <iframe
                   src={post.video_url.replace("watch?v=", "embed/").replace("youtu.be/", "youtube.com/embed/")}
                   className="w-full h-full"
+                  title={`Vídeo: ${post.title}`}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 />
@@ -314,23 +315,23 @@ export default function DropsArticlePage() {
         )}
 
         {/* Reaction bar */}
-        <div className="mt-14 flex items-center justify-center gap-4">
+        <div className="mt-14 flex items-center justify-center gap-2 sm:gap-4 flex-wrap">
           <button
             onClick={() => { setIsLiked(!isLiked); toast.success(isLiked ? "Curtida removida" : "Curtido! ❤️"); }}
             className={cn(
-              "flex items-center gap-2 px-5 py-2.5 rounded-full border transition-all duration-300",
+              "flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full border transition-all duration-300 min-h-[44px]",
               isLiked
-                ? "bg-red-500/10 border-red-500/30 text-red-400"
+                ? "bg-destructive/10 border-destructive/30 text-destructive"
                 : "bg-muted/10 border-border/20 text-muted-foreground hover:bg-muted/20"
             )}
           >
-            <Heart className={cn("h-4 w-4", isLiked && "fill-red-400")} />
+            <Heart className={cn("h-4 w-4", isLiked && "fill-destructive")} />
             <span className="text-sm font-medium">{isLiked ? "Curtido" : "Curtir"}</span>
           </button>
           <button
             onClick={() => { setIsBookmarked(!isBookmarked); toast.success(isBookmarked ? "Removido" : "Salvo!"); }}
             className={cn(
-              "flex items-center gap-2 px-5 py-2.5 rounded-full border transition-all duration-300",
+              "flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full border transition-all duration-300 min-h-[44px]",
               isBookmarked
                 ? "bg-primary/10 border-primary/30 text-primary"
                 : "bg-muted/10 border-border/20 text-muted-foreground hover:bg-muted/20"
@@ -341,7 +342,7 @@ export default function DropsArticlePage() {
           </button>
           <button
             onClick={handleShare}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full border bg-muted/10 border-border/20 text-muted-foreground hover:bg-muted/20 transition-all"
+            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full border bg-muted/10 border-border/20 text-muted-foreground hover:bg-muted/20 transition-all min-h-[44px]"
           >
             <Share2 className="h-4 w-4" />
             <span className="text-sm font-medium">Compartilhar</span>
@@ -355,7 +356,7 @@ export default function DropsArticlePage() {
         {relatedPosts.length > 0 && (
           <div>
             <h2 className="text-xl font-bold mb-8 tracking-tight">Leia também</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
               {relatedPosts.map((related) => {
                 const relConfig = typeConfig[related.type];
                 return (
