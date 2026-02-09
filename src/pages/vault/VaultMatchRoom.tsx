@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useClientAuth } from "@/hooks/useClientAuth";
+import { useClientSession } from "@/hooks/useClientSession";
 
 interface MatchOption {
   id: string;
@@ -39,7 +39,8 @@ interface MatchRoomData {
 
 export default function VaultMatchRoom() {
   const { matchRoomId } = useParams();
-  const { session } = useClientAuth();
+  const { profile, isLoading: sessionLoading, user } = useClientSession();
+  const cpf = profile?.cpf;
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -53,19 +54,25 @@ export default function VaultMatchRoom() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
-    if (session?.cpf && matchRoomId) {
+    if (!sessionLoading && !user) {
+      navigate("/entrar");
+    }
+  }, [sessionLoading, user, navigate]);
+
+  useEffect(() => {
+    if (cpf && matchRoomId) {
       fetchMatchRoom();
     }
-  }, [session?.cpf, matchRoomId]);
+  }, [cpf, matchRoomId]);
 
   const fetchMatchRoom = async () => {
-    if (!session?.cpf || !matchRoomId) return;
+    if (!cpf || !matchRoomId) return;
     
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .rpc("get_vault_match_room", { 
-          p_cpf: session.cpf, 
+          p_cpf: cpf, 
           p_match_room_id: matchRoomId 
         });
       
@@ -98,7 +105,7 @@ export default function VaultMatchRoom() {
     try {
       const { data, error } = await supabase
         .rpc("approve_vault_match", { 
-          p_cpf: session?.cpf, 
+          p_cpf: cpf, 
           p_match_room_id: matchRoomId 
         });
       
@@ -109,7 +116,7 @@ export default function VaultMatchRoom() {
         description: "Nossa equipe iniciará o processo de compra",
       });
 
-      navigate("/vault/app/wishlist");
+      navigate("/minha-conta?tab=wishlist");
     } catch (error) {
       console.error("Error approving match:", error);
       toast({
@@ -138,7 +145,7 @@ export default function VaultMatchRoom() {
     try {
       const { data, error } = await supabase
         .rpc("decline_vault_match", { 
-          p_cpf: session?.cpf, 
+          p_cpf: cpf, 
           p_match_room_id: matchRoomId,
           p_reason: declineReason,
         });
@@ -150,7 +157,7 @@ export default function VaultMatchRoom() {
         description: "A busca voltará para curadoria",
       });
 
-      navigate("/vault/app/wishlist");
+      navigate("/minha-conta?tab=wishlist");
     } catch (error) {
       console.error("Error declining match:", error);
       toast({
@@ -198,7 +205,7 @@ export default function VaultMatchRoom() {
         <AlertCircle className="h-12 w-12 text-zinc-600 mx-auto mb-4" />
         <h2 className="text-xl font-bold mb-2">Match room não encontrada</h2>
         <Button asChild variant="outline">
-          <Link to="/vault/app/wishlist">
+           <Link to="/minha-conta?tab=wishlist">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Link>
@@ -215,7 +222,7 @@ export default function VaultMatchRoom() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button asChild variant="ghost" size="icon">
-          <Link to="/vault/app/wishlist">
+          <Link to="/minha-conta?tab=wishlist">
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
