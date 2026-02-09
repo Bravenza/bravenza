@@ -77,7 +77,7 @@ const getEmailSubject = (type: EmailType, orderId: string, data?: EmailRequest):
     budget_expiring: `⏰ Último dia! Seu orçamento expira amanhã - ${orderId}`,
     sinal_confirmed: `Pagamento confirmado! Iniciando busca - ${orderId}`,
     sinal_reminder: `Lembrete: Pagamento do sinal pendente - ${orderId}`,
-    product_found: `Ótima notícia! Seu produto foi encontrado - ${orderId}`,
+    product_found: `Ótima notícia! Seu tênis foi localizado - ${orderId}`,
     package_shipped: `Seu pacote está a caminho do Brasil! - ${orderId}`,
     arrived_brazil: `Seu produto chegou ao Brasil! - ${orderId}`,
     inspection_approved: `Produto aprovado na inspeção! - ${orderId}`,
@@ -252,7 +252,7 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         </div>
         
         <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
-          Iniciamos a busca do seu <strong style="color: #fff;">${data.product_name}</strong>.
+          Sua busca está ativa! Nossa equipe de curadoria já está localizando seu <strong style="color: #fff;">${data.product_name}</strong> com parceiros globais.
         </p>
         
         <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
@@ -286,7 +286,7 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         </div>
         
         <div style="text-align: center; margin-bottom: 24px;">
-          <a href="${data.payment_link || 'https://bravenza.com.br/minha-conta'}" 
+          <a href="${data.payment_link || 'https://bravenza.lovable.app/minha-conta'}" 
              style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
                     color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
                     font-weight: bold; font-size: 16px;">
@@ -307,11 +307,11 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         </div>
         
         <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
-          Ótima notícia! O seu <strong style="color: #fff;">${data.product_name}</strong> foi encontrado e a compra foi realizada.
+          Ótima notícia! Localizamos o seu <strong style="color: #fff;">${data.product_name}</strong> e a aquisição foi realizada junto ao parceiro.
         </p>
         
         <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
-          Agora aguardamos o envio do produto para nossa central no Brasil. Você será notificado assim que o pacote estiver a caminho!
+          Agora aguardamos o envio para nossa central de inspeção no Brasil. Você será notificado assim que o pacote estiver a caminho!
         </p>
       `,
     },
@@ -330,7 +330,7 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         </div>
         
         <p style="color: #666; font-size: 13px; text-align: center; margin: 0; line-height: 1.5;">
-          Quando o pacote chegar ao Brasil, faremos uma inspeção de qualidade antes de liberar para pagamento do saldo.
+          Quando o pacote chegar ao Brasil, realizaremos a inspeção técnica de autenticidade e qualidade antes de liberar para pagamento do saldo.
         </p>
       `,
     },
@@ -342,7 +342,7 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         </div>
         
         <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
-          Seu <strong style="color: #fff;">${data.product_name}</strong> foi recebido e está passando por nossa rigorosa inspeção de qualidade e autenticidade.
+          Seu <strong style="color: #fff;">${data.product_name}</strong> foi recebido e está passando pela inspeção técnica de autenticidade, qualidade e conformidade.
         </p>
         
         <p style="color: #666; font-size: 13px; text-align: center; margin: 0; line-height: 1.5;">
@@ -358,11 +358,11 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         </div>
         
         <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
-          Seu <strong style="color: #fff;">${data.product_name}</strong> passou em todos os testes de autenticidade e está pronto para ser enviado. Efetue o pagamento do saldo para liberarmos o envio.
+          Seu <strong style="color: #fff;">${data.product_name}</strong> foi aprovado em todos os critérios de autenticidade e qualidade. Efetue o pagamento do saldo para liberarmos o envio.
         </p>
         
         <div style="text-align: center;">
-          <a href="https://bravenza.com.br/minha-conta" 
+          <a href="https://bravenza.lovable.app/minha-conta" 
              style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
                     color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
                     font-weight: bold; font-size: 16px;">
@@ -430,10 +430,10 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         </div>
         
         <div style="text-align: center;">
-          <a href="https://bravenza.com.br/minha-conta" 
-             style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
-                    color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
-                    font-weight: bold; font-size: 16px;">
+           <a href="https://bravenza.lovable.app/minha-conta" 
+              style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
+                     color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
+                     font-weight: bold; font-size: 16px;">
             Acompanhar Pedido
           </a>
         </div>
@@ -469,7 +469,7 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         </div>
         
         <p style="color: #666; font-size: 13px; text-align: center; margin: 0; line-height: 1.5;">
-          Alguma dúvida? Fale conosco pelo <a href="https://wa.me/5551999999999" style="color: #d4af37; text-decoration: none;">WhatsApp</a>.
+          Alguma dúvida? Fale conosco pelo <a href="https://wa.me/5551981055425" style="color: #d4af37; text-decoration: none;">WhatsApp</a>.
         </p>
       `,
     },
@@ -492,10 +492,10 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         </div>
         
         <div style="text-align: center; margin-bottom: 24px;">
-          <a href="https://bravenza.com.br/minha-conta" 
-             style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
-                    color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
-                    font-weight: bold; font-size: 16px;">
+           <a href="https://bravenza.lovable.app/minha-conta" 
+              style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
+                     color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
+                     font-weight: bold; font-size: 16px;">
             Pagar Agora
           </a>
         </div>
@@ -571,10 +571,10 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         </p>
         
         <div style="text-align: center;">
-          <a href="https://bravenza.com.br/minha-conta" 
-             style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
-                    color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
-                    font-weight: bold; font-size: 16px;">
+           <a href="https://bravenza.lovable.app/minha-conta" 
+              style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
+                     color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
+                     font-weight: bold; font-size: 16px;">
             Ver Minhas Indicações
           </a>
         </div>
@@ -613,7 +613,7 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         </p>
         
         <div style="text-align: center;">
-          <a href="https://bravenza.com.br/solicitar" 
+          <a href="https://bravenza.lovable.app/solicitar" 
              style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
                     color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
                     font-weight: bold; font-size: 16px;">
@@ -643,16 +643,16 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
           <p style="color: #fff; font-size: 16px; margin: 0 0 16px; font-weight: bold;">✨ Seus benefícios:</p>
           <ul style="color: #a0a0a0; font-size: 14px; margin: 0; padding-left: 20px; line-height: 2;">
-            <li><strong style="color: #d4af37;">Curadoria Premium</strong> - Encontramos peças raras para você</li>
-            <li><strong style="color: #d4af37;">SLA Garantido</strong> - Respostas rápidas e acompanhamento</li>
-            <li><strong style="color: #d4af37;">Match Room</strong> - Compare opções antes de comprar</li>
-            <li><strong style="color: #d4af37;">Certificados</strong> - Autenticidade garantida em cada item</li>
-            <li><strong style="color: #d4af37;">Vault Intel</strong> - Conteúdo exclusivo sobre sneakers</li>
+            <li><strong style="color: #d4af37;">Curadoria Premium</strong> — Localizamos tênis raros com parceiros globais</li>
+            <li><strong style="color: #d4af37;">SLA Garantido</strong> — Respostas rápidas e acompanhamento dedicado</li>
+            <li><strong style="color: #d4af37;">Match Room</strong> — Compare opções antes de decidir</li>
+            <li><strong style="color: #d4af37;">Certificados</strong> — Autenticidade técnica em cada item</li>
+            <li><strong style="color: #d4af37;">Vault Intel</strong> — Conteúdo exclusivo sobre o mundo dos tênis</li>
           </ul>
         </div>
         
         <div style="text-align: center; margin-bottom: 24px;">
-          <a href="https://bravenza.com.br/vault" 
+          <a href="https://bravenza.lovable.app/vault" 
              style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f4e5a3 50%, #d4af37 100%); 
                     color: #0a0a0a; text-decoration: none; padding: 16px 48px; border-radius: 8px; 
                     font-weight: bold; font-size: 16px;">
@@ -661,7 +661,7 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         </div>
         
         <p style="color: #666; font-size: 13px; text-align: center; margin: 0; line-height: 1.5;">
-          Adicione sua primeira wishlist e deixe nossa equipe encontrar o par perfeito para você.
+          Adicione sua primeira wishlist e deixe nossa equipe de curadoria localizar o par perfeito para você.
         </p>
       `,
     },

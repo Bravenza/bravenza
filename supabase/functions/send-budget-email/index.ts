@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
         </p>
         
         <p style="color: #666; font-size: 12px; text-align: center; margin: 24px 0 0; line-height: 1.5;">
-          Dúvidas? Fale conosco pelo <a href="https://wa.me/5551999999999" style="color: #d4af37; text-decoration: none;">WhatsApp</a>.
+          Dúvidas? Fale conosco pelo <a href="https://wa.me/5551981055425" style="color: #d4af37; text-decoration: none;">WhatsApp</a>.
         </p>
     </div>
     

@@ -494,16 +494,16 @@ const getEmailHtml = (type: MarketplaceEmailType, data: MarketplaceEmailRequest)
       content: `
         ${successBanner("Você agora faz parte da comunidade Bravenza!")}
         <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
-          A comunidade é o espaço para conectar-se com outros entusiastas de sneakers, 
+          A comunidade é o espaço para conectar-se com outros entusiastas de tênis, 
           compartilhar coleções e descobrir tendências.
         </p>
         <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
           <p style="color: #fff; font-size: 16px; margin: 0 0 16px; font-weight: bold;">✨ O que você pode fazer:</p>
           <ul style="color: #a0a0a0; font-size: 14px; margin: 0; padding-left: 20px; line-height: 2;">
-            <li>Publicar fotos e textos sobre sua coleção</li>
-            <li>Conectar-se com outros membros</li>
-            <li>Participar de discussões e tendências</li>
-            <li>Descobrir drops e lançamentos</li>
+             <li>Publicar fotos e textos sobre sua coleção</li>
+            <li>Conectar-se com outros membros e colecionadores</li>
+            <li>Participar de discussões sobre o universo dos tênis</li>
+            <li>Ficar por dentro de drops e lançamentos</li>
           </ul>
         </div>
         ${ctaButton("Acessar Comunidade", `${appUrl}/vault/comunidade`)}
@@ -533,7 +533,7 @@ const getEmailHtml = (type: MarketplaceEmailType, data: MarketplaceEmailRequest)
         <div style="background-color: #252525; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
           <p style="color: #fff; font-size: 40px; margin: 0 0 8px;">🤝</p>
           <p style="color: #a0a0a0; font-size: 14px; margin: 0;">
-            Continue compartilhando sua paixão por sneakers para crescer sua rede!
+            Continue compartilhando sua paixão por tênis para crescer sua rede!
           </p>
         </div>
         ${ctaButton("Ver Perfil", `${appUrl}/vault/comunidade`)}
