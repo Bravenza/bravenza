@@ -18,6 +18,9 @@ verify_jwt = false
 [functions.send-order-email]
 verify_jwt = false
 
+[functions.send-marketplace-email]
+verify_jwt = false
+
 [functions.send-whatsapp]
 verify_jwt = false
 
