@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
+import { ArticleEditor } from "@/components/admin/ArticleEditor";
 import {
   Table,
   TableBody,
@@ -513,12 +513,12 @@ const VaultIntelAdminPage = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Conteúdo (HTML)</label>
-              <Textarea
+              <label className="text-sm font-medium">Conteúdo</label>
+              <ArticleEditor
                 value={form.content}
-                onChange={(e) => setForm({ ...form, content: e.target.value })}
-                placeholder="Conteúdo do drop... Suporta HTML (negrito, links, imagens inline)"
-                rows={8}
+                onChange={(val) => setForm({ ...form, content: val })}
+                placeholder="Escreva o conteúdo do artigo... Use a toolbar para adicionar títulos, imagens, vídeos, links e formatação."
+                minHeight="300px"
               />
             </div>
 
@@ -663,11 +663,12 @@ const VaultIntelAdminPage = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Conteúdo (HTML)</label>
-              <Textarea
+              <label className="text-sm font-medium">Conteúdo</label>
+              <ArticleEditor
                 value={form.content}
-                onChange={(e) => setForm({ ...form, content: e.target.value })}
-                rows={8}
+                onChange={(val) => setForm({ ...form, content: val })}
+                placeholder="Escreva o conteúdo do artigo..."
+                minHeight="300px"
               />
             </div>
 
