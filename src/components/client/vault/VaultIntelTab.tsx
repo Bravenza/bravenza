@@ -61,11 +61,13 @@ export function VaultIntelTab({ clientCpf }: VaultIntelTabProps) {
   const [storyViewOpen, setStoryViewOpen] = useState(false);
   const [storyIndex, setStoryIndex] = useState(0);
   const [storyProgress, setStoryProgress] = useState(0);
+  const [favoriteBrands, setFavoriteBrands] = useState<string[]>([]);
   const storiesRef = useRef<HTMLDivElement>(null);
   const storyTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     fetchPosts();
+    fetchPreferences();
   }, [clientCpf]);
 
   const fetchPosts = async () => {
@@ -81,6 +83,19 @@ export function VaultIntelTab({ clientCpf }: VaultIntelTabProps) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fetchPreferences = async () => {
+    try {
+      const { data } = await supabase
+        .from("client_preferences")
+        .select("favorite_brands")
+        .eq("client_cpf", clientCpf)
+        .maybeSingle();
+      if (data?.favorite_brands) {
+        setFavoriteBrands(data.favorite_brands.map((b: string) => b.toLowerCase()));
+      }
+    } catch { /* silent */ }
   };
 
   const formatDate = (dateString: string) => {
@@ -126,6 +141,16 @@ export function VaultIntelTab({ clientCpf }: VaultIntelTabProps) {
   const storyPosts = posts.slice(0, 12);
   const featuredPost = filteredPosts.find(p => p.is_featured);
   const editorialPosts = filteredPosts.filter(p => p.id !== featuredPost?.id);
+
+  // Personalized: posts mentioning user's favorite brands
+  const personalizedPosts = favoriteBrands.length > 0
+    ? filteredPosts.filter(p => {
+        const text = `${p.title} ${p.content}`.toLowerCase();
+        return favoriteBrands.some(brand => text.includes(brand));
+      })
+    : [];
+  const personalizedIds = new Set(personalizedPosts.map(p => p.id));
+  const remainingEditorial = editorialPosts.filter(p => !personalizedIds.has(p.id));
 
   if (isLoading) {
     return (
@@ -338,8 +363,51 @@ export function VaultIntelTab({ clientCpf }: VaultIntelTabProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {editorialPosts.map((post, index) => {
+        <>
+          {/* Personalized "Para você" section */}
+          {personalizedPosts.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
+                <Sparkles className="h-4 w-4 text-primary" />
+                Para você
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {personalizedPosts.slice(0, 4).map((post, index) => {
+                  const config = typeConfig[post.type];
+                  return (
+                    <motion.div key={post.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }}>
+                      <Card
+                        className="group overflow-hidden cursor-pointer border-primary/20 hover:border-primary/40 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 ring-1 ring-primary/10"
+                        onClick={() => navigate(`/drops/${post.id}`)}
+                      >
+                        <div className="relative h-36 overflow-hidden">
+                          {post.cover_image ? (
+                            <img src={post.cover_image} alt={post.title}
+                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                          ) : (
+                            <div className={cn("absolute inset-0 bg-gradient-to-br", placeholderGradients[post.type])} />
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                          <div className="absolute bottom-3 left-3 right-3">
+                            <h3 className="text-white text-sm font-bold leading-snug line-clamp-2">{post.title}</h3>
+                          </div>
+                        </div>
+                        <CardContent className="p-3">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-[10px] border-primary/20 text-primary">Recomendado</Badge>
+                            <Badge variant="outline" className="text-[10px] border-border/20">{config.label}</Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {(personalizedPosts.length > 0 ? remainingEditorial : editorialPosts).map((post, index) => {
             const config = typeConfig[post.type];
             return (
               <motion.div key={post.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }}>
@@ -401,6 +469,7 @@ export function VaultIntelTab({ clientCpf }: VaultIntelTabProps) {
             );
           })}
         </div>
+        </>
       )}
     </div>
   );
