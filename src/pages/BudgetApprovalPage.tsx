@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CheckCircle2, XCircle, Loader2, Package, AlertCircle, Clock, ShieldAlert } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Package, AlertCircle, Clock, ShieldAlert, Store, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +39,93 @@ interface OrderData {
   sinal_paid: boolean;
   budget_expires_at: string | null;
   created_at: string;
+}
+
+function MarketplaceSuggestions({ brand, model }: { brand?: string | null; model?: string | null }) {
+  const [products, setProducts] = useState<Array<{
+    id: string;
+    brand: string;
+    model: string;
+    slug: string | null;
+    lowest_price: number | null;
+    total_offers: number;
+    images: string[] | null;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSimilar = async () => {
+      if (!brand) { setLoading(false); return; }
+      try {
+        let query = supabase
+          .from("marketplace_products")
+          .select("id, brand, model, slug, lowest_price, total_offers, images")
+          .eq("is_active", true)
+          .gt("total_offers", 0)
+          .order("total_offers", { ascending: false })
+          .limit(4);
+
+        // Try exact brand match
+        query = query.ilike("brand", `%${brand}%`);
+
+        const { data } = await query;
+        setProducts(data || []);
+      } catch {
+        // silent
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSimilar();
+  }, [brand, model]);
+
+  if (loading || products.length === 0) return null;
+
+  return (
+    <Card className="max-w-lg w-full">
+      <CardContent className="pt-6 pb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Store className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold">Encontre no Marketplace</h3>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          Itens similares disponíveis com pronta entrega:
+        </p>
+        <div className="space-y-3">
+          {products.map((p) => (
+            <Link
+              key={p.id}
+              to={`/marketplace/${p.slug || p.id}`}
+              className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors group"
+            >
+              {p.images?.[0] ? (
+                <img src={p.images[0]} alt={p.model} className="h-12 w-12 rounded-lg object-cover" />
+              ) : (
+                <div className="h-12 w-12 rounded-lg bg-muted/50 flex items-center justify-center">
+                  <Package className="h-5 w-5 text-muted-foreground" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm truncate">{p.brand} {p.model}</p>
+                <p className="text-xs text-muted-foreground">
+                  {p.lowest_price
+                    ? `A partir de R$ ${p.lowest_price.toLocaleString("pt-BR")}`
+                    : `${p.total_offers} ofertas`}
+                </p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+            </Link>
+          ))}
+        </div>
+        <Button variant="outline" className="w-full mt-4" asChild>
+          <Link to="/marketplace">
+            <Store className="h-4 w-4 mr-2" />
+            Ver todo o Marketplace
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function BudgetApprovalPage() {
@@ -268,7 +355,7 @@ export default function BudgetApprovalPage() {
 
   if (status === "rejected") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 gap-6">
         <Card className="max-w-md w-full text-center">
           <CardContent className="pt-8 pb-8">
             <XCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -279,6 +366,12 @@ export default function BudgetApprovalPage() {
             </p>
           </CardContent>
         </Card>
+
+        {/* Marketplace Suggestions */}
+        <MarketplaceSuggestions
+          brand={order?.product_brand}
+          model={order?.product_model}
+        />
       </div>
     );
   }

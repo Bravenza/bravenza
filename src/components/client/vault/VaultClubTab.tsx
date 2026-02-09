@@ -102,6 +102,21 @@ const badgeIcons: Record<string, React.ElementType> = {
   zap: Zap,
 };
 
+const ALL_ACHIEVEMENTS = [
+  { type: "first_purchase", name: "Primeiro Passo", icon: "shield", hint: "Faça sua primeira compra" },
+  { type: "collector_3", name: "Colecionador", icon: "crown", hint: "Tenha 3 itens na coleção" },
+  { type: "collector_10", name: "Curador Expert", icon: "star", hint: "Tenha 10 itens na coleção" },
+  { type: "community_post", name: "Voz da Comunidade", icon: "zap", hint: "Faça seu primeiro post" },
+  { type: "invite_converted", name: "Embaixador", icon: "award", hint: "Converta um convite" },
+  { type: "review_given", name: "Crítico", icon: "star", hint: "Avalie um pedido" },
+  { type: "wishlist_match", name: "Match Perfeito", icon: "zap", hint: "Aceite um match da wishlist" },
+  { type: "tier_privilege", name: "Privilege", icon: "crown", hint: "Alcance o tier Privilege" },
+  { type: "tier_black", name: "Black Member", icon: "star", hint: "Alcance o tier Black" },
+  { type: "marketplace_sale", name: "Vendedor", icon: "award", hint: "Faça uma venda no marketplace" },
+  { type: "streak_30d", name: "Engajado", icon: "zap", hint: "Acesse 30 dias seguidos" },
+  { type: "referral_5", name: "Influenciador", icon: "crown", hint: "Converta 5 indicações" },
+];
+
 export function VaultClubTab({
   clientCpf,
   member,
@@ -480,39 +495,69 @@ export function VaultClubTab({
         </Card>
       </div>
 
-      {/* Badges */}
-      {badges.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Award className="h-4 w-4 text-primary" />
-              Conquistas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {badges.map((badge, index) => {
-                const BadgeIcon = badgeIcons[badge.badge_icon] || Award;
-                return (
-                  <motion.div
-                    key={badge.badge_type}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="p-4 rounded-xl bg-gradient-to-br from-primary/5 to-transparent border border-primary/20 text-center"
+      {/* Achievements Tracker */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Award className="h-4 w-4 text-primary" />
+            Conquistas
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            {badges.length} de {ALL_ACHIEVEMENTS.length} desbloqueadas
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-3">
+            <Progress
+              value={(badges.length / ALL_ACHIEVEMENTS.length) * 100}
+              className="h-2"
+            />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {ALL_ACHIEVEMENTS.map((achievement, index) => {
+              const earned = badges.find(
+                (b) => b.badge_type === achievement.type
+              );
+              const AchIcon =
+                badgeIcons[achievement.icon] || Award;
+              return (
+                <motion.div
+                  key={achievement.type}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.03 }}
+                  className={cn(
+                    "p-4 rounded-xl border text-center transition-all",
+                    earned
+                      ? "bg-gradient-to-br from-primary/10 to-transparent border-primary/30"
+                      : "bg-muted/10 border-border/20 opacity-50 grayscale"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "h-10 w-10 rounded-full flex items-center justify-center mx-auto mb-2",
+                      earned ? "bg-primary/20" : "bg-muted/30"
+                    )}
                   >
-                    <BadgeIcon className="h-6 w-6 text-primary mx-auto mb-2" />
-                    <p className="text-sm font-medium">{badge.badge_name}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {badge.badge_description}
-                    </p>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                    <AchIcon
+                      className={cn(
+                        "h-5 w-5",
+                        earned ? "text-primary" : "text-muted-foreground"
+                      )}
+                    />
+                  </div>
+                  <p className="text-sm font-medium">{achievement.name}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {earned
+                      ? `Conquistado em ${new Date(earned.earned_at).toLocaleDateString("pt-BR")}`
+                      : achievement.hint}
+                  </p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Rules Link */}
       <Card>

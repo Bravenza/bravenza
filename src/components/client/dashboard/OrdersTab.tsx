@@ -17,6 +17,11 @@ import {
   Camera,
   ChevronRight,
   ExternalLink,
+  Plane,
+  Shield,
+  MapPin,
+  Copy,
+  Check,
 } from "lucide-react";
 import { ReviewForm } from "@/components/client/ReviewForm";
 import { InspectionPhotosGallery } from "@/components/client/InspectionPhotosGallery";
@@ -195,6 +200,148 @@ const STATUS_CONFIG: Record<
     icon: CheckCircle2,
   },
 };
+
+// Tracking progress steps derived from order status
+const TRACKING_STEPS = [
+  { key: "confirmed", label: "Confirmado", icon: CheckCircle2, statuses: ["novo", "orcamento_enviado", "orcamento_aprovado", "aguardando_sinal", "sinal_confirmado", "ORDER_CONFIRMED"] },
+  { key: "sourcing", label: "Em separação", icon: Package, statuses: ["em_separacao", "SOURCING", "NEGOTIATING", "PURCHASE_COMPLETED"] },
+  { key: "international", label: "Trânsito internacional", icon: Plane, statuses: ["enviado_internacional", "PACKAGE_EN_ROUTE", "INTERNATIONAL_DISPATCH"] },
+  { key: "customs", label: "Fiscalização", icon: Shield, statuses: ["em_fiscalizacao", "CUSTOMS", "ARRIVED"] },
+  { key: "national", label: "Trânsito nacional", icon: Truck, statuses: ["enviado_cliente", "NATIONAL_TRANSIT", "DISPATCHED"] },
+  { key: "delivered", label: "Entregue", icon: MapPin, statuses: ["entregue", "DELIVERED"] },
+];
+
+function getActiveStepIndex(status: string): number {
+  for (let i = TRACKING_STEPS.length - 1; i >= 0; i--) {
+    if (TRACKING_STEPS[i].statuses.includes(status)) return i;
+  }
+  return 0;
+}
+
+function InternalTrackingWidget({ order }: { order: OrderData }) {
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const activeStep = getActiveStepIndex(order.current_status);
+  const isCancelled = order.current_status === "cancelado";
+
+  const handleCopy = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  return (
+    <div>
+      <h4 className="text-sm font-medium mb-4">Rastreamento</h4>
+
+      {/* Visual Progress Stepper */}
+      <div className="relative px-1 mb-4">
+        {/* Progress Line */}
+        <div className="absolute top-4 left-4 right-4 h-0.5 bg-border/50 rounded-full" />
+        <div
+          className="absolute top-4 left-4 h-0.5 bg-primary rounded-full transition-all duration-500"
+          style={{ width: isCancelled ? "0%" : `${Math.min((activeStep / (TRACKING_STEPS.length - 1)) * 100, 100)}%`, maxWidth: "calc(100% - 2rem)" }}
+        />
+
+        {/* Steps */}
+        <div className="relative flex justify-between">
+          {TRACKING_STEPS.map((step, idx) => {
+            const isCompleted = !isCancelled && idx <= activeStep;
+            const isCurrent = !isCancelled && idx === activeStep;
+            const StepIcon = step.icon;
+            return (
+              <div key={step.key} className="flex flex-col items-center" style={{ width: "16.66%" }}>
+                <div
+                  className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 z-10",
+                    isCurrent
+                      ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
+                      : isCompleted
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  <StepIcon className="h-3.5 w-3.5" />
+                </div>
+                <span className={cn(
+                  "text-[9px] mt-1.5 text-center leading-tight",
+                  isCurrent ? "text-primary font-semibold" : isCompleted ? "text-foreground" : "text-muted-foreground"
+                )}>
+                  {step.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Tracking Codes (copyable, no external redirect) */}
+      <div className="space-y-2">
+        {order.international_tracking && (
+          <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-muted-foreground">Internacional</p>
+              <p className="font-mono text-sm truncate">{order.international_tracking}</p>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0 ml-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => handleCopy(order.international_tracking!)}
+              >
+                {copiedCode === order.international_tracking ? (
+                  <Check className="h-3.5 w-3.5 text-success" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+              </Button>
+              <a
+                href={`https://www.17track.net/pt/track?nums=${order.international_tracking}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-md hover:bg-muted/50 transition-colors"
+              >
+                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+              </a>
+            </div>
+          </div>
+        )}
+        {order.national_tracking && (
+          <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-muted-foreground">
+                Nacional{order.national_carrier && ` · ${order.national_carrier}`}
+              </p>
+              <p className="font-mono text-sm truncate">{order.national_tracking}</p>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0 ml-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => handleCopy(order.national_tracking!)}
+              >
+                {copiedCode === order.national_tracking ? (
+                  <Check className="h-3.5 w-3.5 text-success" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+              </Button>
+              <a
+                href={`https://www.linkcorreios.com.br/?id=${order.national_tracking}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-md hover:bg-muted/50 transition-colors"
+              >
+                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function OrdersTab({ orders, isLoading, sessionToken }: OrdersTabProps) {
   const [reviewOrder, setReviewOrder] = useState<{
@@ -411,52 +558,10 @@ export function OrdersTab({ orders, isLoading, sessionToken }: OrdersTabProps) {
                   </div>
                 )}
 
-                {/* Tracking */}
+                {/* Internal Tracking Widget */}
                 {(selectedOrder.international_tracking ||
                   selectedOrder.national_tracking) && (
-                  <div>
-                    <h4 className="text-sm font-medium mb-3">Rastreamento</h4>
-                    <div className="space-y-2">
-                      {selectedOrder.international_tracking && (
-                        <a
-                          href={`https://www.17track.net/pt/track?nums=${selectedOrder.international_tracking}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
-                        >
-                          <div>
-                            <p className="text-xs text-muted-foreground">
-                              Internacional
-                            </p>
-                            <p className="font-mono text-sm">
-                              {selectedOrder.international_tracking}
-                            </p>
-                          </div>
-                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                        </a>
-                      )}
-                      {selectedOrder.national_tracking && (
-                        <a
-                          href={`https://www.linkcorreios.com.br/?id=${selectedOrder.national_tracking}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
-                        >
-                          <div>
-                            <p className="text-xs text-muted-foreground">
-                              Nacional
-                              {selectedOrder.national_carrier &&
-                                ` (${selectedOrder.national_carrier})`}
-                            </p>
-                            <p className="font-mono text-sm">
-                              {selectedOrder.national_tracking}
-                            </p>
-                          </div>
-                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
+                  <InternalTrackingWidget order={selectedOrder} />
                 )}
 
                 {/* Inspection Photos */}
