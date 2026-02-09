@@ -199,12 +199,22 @@ export function CommunityPostCard({
   const handleShareClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const shareUrl = `${window.location.origin}/vault/community/post/${post.id}`;
-    if (navigator.share) {
-      try { await navigator.share({ title: post.title, url: shareUrl }); } catch {}
-    } else {
-      await navigator.clipboard.writeText(shareUrl);
-      toast({ title: "Link copiado!" });
+    const shareUrl = `${window.location.origin}/minha-conta?tab=comunidade`;
+    const shareData = { title: post.title || "Post da Comunidade Vault", url: shareUrl };
+    
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({ title: "Link copiado! 🔗" });
+      }
+    } catch (err: any) {
+      // User cancelled share dialog — not an error
+      if (err?.name !== "AbortError") {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({ title: "Link copiado! 🔗" });
+      }
     }
     onShare?.(post.id);
   };
@@ -280,9 +290,6 @@ export function CommunityPostCard({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem>
-                  <EyeOff className="h-4 w-4 mr-2" /> Não tenho interesse
-                </DropdownMenuItem>
                 <DropdownMenuItem>
                   <EyeOff className="h-4 w-4 mr-2" /> Não tenho interesse
                 </DropdownMenuItem>
