@@ -69,6 +69,7 @@ const VaultMatchRoomsPage = lazy(() => import("./pages/admin/VaultMatchRoomsPage
 const VaultItemsPage = lazy(() => import("./pages/admin/VaultItemsPage"));
 const VaultInvitesPage = lazy(() => import("./pages/admin/VaultInvitesPage"));
 const VaultIntelAdminPage = lazy(() => import("./pages/admin/VaultIntelAdminPage"));
+const DropsArticlePage = lazy(() => import("./pages/drops/DropsArticlePage"));
 const VaultCommunityAdminPage = lazy(() => import("./pages/admin/VaultCommunityAdminPage"));
 const MarketplaceOrdersPage = lazy(() => import("./pages/admin/MarketplaceOrdersPage"));
 const MarketplaceInspectionPage = lazy(() => import("./pages/admin/MarketplaceInspectionPage"));
@@ -140,6 +141,9 @@ const App = () => (
                 <Route path="/marketplace/:slug" element={
                   <ProtectedProviders><ProductDetailPage /></ProtectedProviders>
                 } />
+                <Route path="/drops/:postId" element={
+                  <ProtectedProviders><DropsArticlePage /></ProtectedProviders>
+                } />
 
                 {/* Vault Club public routes */}
                 <Route path="/vault" element={<VaultLandingPage />} />
@@ -197,7 +201,7 @@ const App = () => (
                   <Route path="vault/match-rooms" element={<VaultMatchRoomsPage />} />
                   <Route path="vault/items" element={<VaultItemsPage />} />
                   <Route path="vault/convites" element={<VaultInvitesPage />} />
-                  <Route path="vault/intel" element={<VaultIntelAdminPage />} />
+                  <Route path="vault/drops" element={<VaultIntelAdminPage />} />
                   <Route path="vault/comunidade" element={<VaultCommunityAdminPage />} />
                   <Route path="vault/marketplace" element={<MarketplaceOrdersPage />} />
                   <Route path="vault/marketplace/inspecao" element={<MarketplaceInspectionPage />} />
