@@ -19,16 +19,26 @@ export function PWAInstallBanner() {
       }
     }
 
+    // Show after 15s and only if user has scrolled (less intrusive)
     const timer = setTimeout(() => {
       const shouldShow = (!isInstalled && !isStandalone) && (
         (isInstallable && canPrompt) || isIOS
       );
-      if (shouldShow) {
+      if (shouldShow && window.scrollY > 200) {
         setShowBanner(true);
-        // Trigger enter animation
         requestAnimationFrame(() => setVisible(true));
+      } else if (shouldShow) {
+        const onScroll = () => {
+          if (window.scrollY > 200) {
+            setShowBanner(true);
+            requestAnimationFrame(() => setVisible(true));
+            window.removeEventListener('scroll', onScroll);
+          }
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
       }
-    }, 5000);
+    }, 15000);
 
     return () => clearTimeout(timer);
   }, [isInstallable, canPrompt, isInstalled, isStandalone, isIOS]);
