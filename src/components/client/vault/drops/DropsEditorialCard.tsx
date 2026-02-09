@@ -50,7 +50,7 @@ export function DropsEditorialCard({ post, index, variant = "default" }: DropsEd
               <span className="text-xs text-muted-foreground/50">·</span>
               <span className="text-xs text-muted-foreground/50">{formatRelativeDate(post.published_at)}</span>
             </div>
-            <h3 className="text-lg sm:text-xl font-bold leading-tight mb-2 group-hover:text-primary transition-colors tracking-tight">
+            <h3 className="text-lg sm:text-xl font-bold leading-tight mb-4 group-hover:text-primary transition-colors tracking-tight">
               {post.title}
             </h3>
             <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-4">
@@ -157,10 +157,10 @@ export function DropsEditorialCard({ post, index, variant = "default" }: DropsEd
 
         {/* Content */}
         <div className="p-4 sm:p-5">
-          <h3 className="text-sm sm:text-base font-bold leading-snug line-clamp-2 group-hover:text-primary transition-colors tracking-tight mb-2">
+          <h3 className="text-sm sm:text-base font-bold leading-snug line-clamp-2 group-hover:text-primary transition-colors tracking-tight mb-3">
             {post.title}
           </h3>
-          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-3">
+          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-4">
             {getExcerpt(post)}
           </p>
           <div className="flex items-center gap-2">
