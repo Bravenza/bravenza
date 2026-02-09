@@ -24,6 +24,8 @@ import {
   FileText,
   MessageSquare,
   Store,
+  Activity,
+  Mail,
 } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "@/components/Logo";
@@ -44,6 +46,9 @@ const navItems = [
   { icon: Star, label: "Avaliações", path: "/admin/avaliacoes" },
   { icon: Gift, label: "Indicações", path: "/admin/indicacoes" },
   { icon: Users, label: "Usuários", path: "/admin/usuarios" },
+  { icon: Mail, label: "Fluxo de Emails", path: "/admin/emails" },
+  { icon: MessageSquare, label: "Fluxo WhatsApp", path: "/admin/whatsapp" },
+  { icon: Activity, label: "Logs", path: "/admin/logs" },
   { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
 ];
 

@@ -72,6 +72,9 @@ const VaultIntelAdminPage = lazy(() => import("./pages/admin/VaultIntelAdminPage
 const VaultCommunityAdminPage = lazy(() => import("./pages/admin/VaultCommunityAdminPage"));
 const MarketplaceOrdersPage = lazy(() => import("./pages/admin/MarketplaceOrdersPage"));
 const MarketplaceInspectionPage = lazy(() => import("./pages/admin/MarketplaceInspectionPage"));
+const ActivityLogsPage = lazy(() => import("./pages/admin/ActivityLogsPage"));
+const EmailFlowPage = lazy(() => import("./pages/admin/EmailFlowPage"));
+const WhatsAppFlowPage = lazy(() => import("./pages/admin/WhatsAppFlowPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -185,6 +188,9 @@ const App = () => (
                   <Route path="indicacoes" element={<ReferralsPage />} />
                   <Route path="usuarios" element={<UsersPage />} />
                   <Route path="configuracoes" element={<SettingsPage />} />
+                  <Route path="logs" element={<ActivityLogsPage />} />
+                  <Route path="emails" element={<EmailFlowPage />} />
+                  <Route path="whatsapp" element={<WhatsAppFlowPage />} />
                   {/* Vault Club Admin */}
                   <Route path="vault/membros" element={<VaultMembersPage />} />
                   <Route path="vault/buscas" element={<VaultSearchesPage />} />
