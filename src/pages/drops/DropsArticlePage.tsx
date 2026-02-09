@@ -243,9 +243,9 @@ export default function DropsArticlePage() {
           transition={{ delay: 0.5 }}
           className="prose prose-lg prose-invert max-w-none
             prose-headings:text-foreground prose-headings:font-bold prose-headings:tracking-tight prose-headings:font-display
-            prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-14 prose-h2:mb-6
-            prose-h3:text-xl sm:prose-h3:text-2xl prose-h3:mt-12 prose-h3:mb-5
-            prose-p:text-foreground/75 prose-p:leading-[1.85] prose-p:mb-7 prose-p:text-base sm:prose-p:text-lg
+            prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-16 prose-h2:mb-8
+            prose-h3:text-xl sm:prose-h3:text-2xl prose-h3:mt-14 prose-h3:mb-7
+            prose-p:text-foreground/75 prose-p:leading-[1.9] prose-p:mb-8 prose-p:text-base sm:prose-p:text-lg
             prose-a:text-primary prose-a:no-underline prose-a:font-medium hover:prose-a:underline
             prose-strong:text-foreground prose-strong:font-semibold
             prose-blockquote:border-primary/30 prose-blockquote:text-muted-foreground prose-blockquote:italic prose-blockquote:bg-muted/5 prose-blockquote:rounded-r-2xl prose-blockquote:py-4 prose-blockquote:px-6
