@@ -161,6 +161,22 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
 
       if (newOptIn) {
         fetchPosts(true);
+        // Send community welcome email
+        try {
+          const { sendMarketplaceEmail } = await import("@/lib/marketplace-email-notifications");
+          const { data: memberData } = await supabase
+            .from("vault_members")
+            .select("client_name, client_email")
+            .eq("client_cpf", clientCpf)
+            .maybeSingle();
+          if (memberData?.client_email) {
+            sendMarketplaceEmail({
+              type: "community_welcome",
+              recipient_name: memberData.client_name,
+              recipient_email: memberData.client_email,
+            });
+          }
+        } catch (_) {}
       }
     } catch (error) {
       console.error("Error updating opt-in:", error);
