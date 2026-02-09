@@ -38,6 +38,7 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
   const navigate = useNavigate();
   
   const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [isCheckingOptIn, setIsCheckingOptIn] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isOptedIn, setIsOptedIn] = useState(false);
@@ -62,11 +63,13 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
   }, [isOptedIn]);
 
   const checkOptIn = async () => {
+    setIsCheckingOptIn(true);
     const { data } = await supabase.rpc("get_vault_member", { p_cpf: clientCpf });
     if (data && data.length > 0) {
       setIsOptedIn(data[0].community_opt_in || false);
       setFollowingCount((data[0] as any).following_count || 0);
     }
+    setIsCheckingOptIn(false);
     setIsLoading(false);
   };
 
@@ -195,7 +198,7 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
   const handlePostCreated = () => fetchPosts(true);
 
   // Onboarding
-  if (!isOptedIn && !isLoading) {
+  if (!isOptedIn && !isCheckingOptIn) {
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md mx-auto text-center py-12">
         <div className="relative mb-8">
@@ -234,7 +237,7 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
   }
 
   // Loading
-  if (isLoading) {
+  if (isLoading || isCheckingOptIn) {
     return (
       <div className="max-w-xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
