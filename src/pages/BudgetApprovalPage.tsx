@@ -14,6 +14,7 @@ import { VaultPolicyCard } from "@/components/admin/VaultPolicyCard";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatDate } from "@/lib/constants";
 import { capitalizeWords } from "@/lib/text-utils";
+import { sendMarketplaceEmail } from "@/lib/marketplace-email-notifications";
 import {
   Dialog,
   DialogContent,
@@ -172,6 +173,20 @@ export default function BudgetApprovalPage() {
         });
       } catch (notifError) {
         console.error("Error creating notification:", notifError);
+      }
+
+      // Send budget_rejected email to admin
+      try {
+        await sendMarketplaceEmail({
+          type: "budget_rejected",
+          recipient_name: "Admin",
+          recipient_email: "admin@bravenza.com.br",
+          order_id: order?.order_id,
+          client_name: order?.client_name || "",
+          cancel_reason: rejectReason || "Motivo não informado",
+        });
+      } catch (emailError) {
+        console.error("Error sending budget rejected email:", emailError);
       }
 
       setStatus("rejected");
