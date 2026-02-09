@@ -332,7 +332,7 @@ const TrackingPage = () => {
               {/* SLA info */}
               {order.sla_vault_due_date && (
                 <InfoCard
-                  title="Prazo VAULT 30"
+                  title="Prazo estimado"
                   icon={<Calendar className="h-5 w-5" />}
                   variant="gold"
                 >
@@ -342,36 +342,26 @@ const TrackingPage = () => {
                     highlight
                   />
                   <p className="text-xs text-muted-foreground mt-2">
-                    Prazo estimado para chegada do produto no Brasil.
+                    Prazo estimado para chegada do produto.
                   </p>
                 </InfoCard>
               )}
 
               {/* Tracking info */}
-              {(order.international_tracking || order.national_tracking) && (
+              {order.national_tracking && (
                 <InfoCard
-                  title="Rastreios"
+                  title="Rastreio"
                   icon={<Truck className="h-5 w-5" />}
                 >
-                  {order.international_tracking && (
+                  <InfoRow
+                    label="Código"
+                    value={order.national_tracking}
+                  />
+                  {order.national_carrier && (
                     <InfoRow
-                      label="Internacional"
-                      value={order.international_tracking}
+                      label="Transportadora"
+                      value={order.national_carrier}
                     />
-                  )}
-                  {order.national_tracking && (
-                    <>
-                      <InfoRow
-                        label="Nacional"
-                        value={order.national_tracking}
-                      />
-                      {order.national_carrier && (
-                        <InfoRow
-                          label="Transportadora"
-                          value={order.national_carrier}
-                        />
-                      )}
-                    </>
                   )}
                 </InfoCard>
               )}

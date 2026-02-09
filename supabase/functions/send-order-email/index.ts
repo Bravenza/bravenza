@@ -316,29 +316,22 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
       `,
     },
     package_shipped: {
-      subtitle: "Pacote Enviado! ✈️",
+      subtitle: "Produto a Caminho do Hub! ✈️",
       content: `
         <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
-          Seu pacote está a caminho do Brasil!
+          Seu produto está a caminho do Hub Bravenza para inspeção de autenticidade!
         </p>
         
-        <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
-          <p style="color: #a0a0a0; font-size: 14px; margin: 0 0 8px;">Código de Rastreio Internacional:</p>
-          <p style="color: #d4af37; font-size: 18px; font-weight: bold; font-family: monospace; margin: 0;">
-            ${data.international_tracking || "A informar"}
-          </p>
-        </div>
-        
         <p style="color: #666; font-size: 13px; text-align: center; margin: 0; line-height: 1.5;">
-          Quando o pacote chegar ao Brasil, realizaremos a inspeção técnica de autenticidade e qualidade antes de liberar para pagamento do saldo.
+          Quando o produto for recebido no Hub, realizaremos a inspeção técnica de autenticidade e qualidade antes de liberar para pagamento do saldo.
         </p>
       `,
     },
     arrived_brazil: {
-      subtitle: "Produto Chegou ao Brasil! 📦",
+      subtitle: "Produto Recebido no Hub! 📦",
       content: `
         <div style="background-color: #0a3d0a; border: 1px solid #0d6d0d; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-          <p style="color: #4ade80; font-size: 14px; margin: 0;">✓ Seu produto chegou à nossa central no Brasil!</p>
+          <p style="color: #4ade80; font-size: 14px; margin: 0;">✓ Seu produto foi recebido no Hub Bravenza!</p>
         </div>
         
         <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">

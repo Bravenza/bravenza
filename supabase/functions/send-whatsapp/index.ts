@@ -123,16 +123,16 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
 // Status labels for WhatsApp messages
 const STATUS_LABELS: Record<string, string> = {
   ORDER_CONFIRMED: "Pedido Confirmado",
-  SOURCING: "Buscando seu Produto",
+  SOURCING: "Localizando seu Produto",
   NEGOTIATING: "Em Negociação",
   PURCHASE_COMPLETED: "Compra Realizada",
-  PACKAGE_EN_ROUTE: "Em Trânsito Internacional",
-  ARRIVED: "Chegou no Brasil",
-  INSPECTION_APPROVED: "Inspeção Aprovada",
+  PACKAGE_EN_ROUTE: "Em Trânsito até o Hub",
+  ARRIVED: "Recebido no Hub Bravenza",
+  INSPECTION_APPROVED: "Autenticidade Confirmada",
   BALANCE_DUE: "Aguardando Pagamento do Saldo",
-  INTERNATIONAL_DISPATCH: "Enviado Internacionalmente",
-  CUSTOMS: "Na Alfândega",
-  NATIONAL_TRANSIT: "Em Trânsito Nacional",
+  INTERNATIONAL_DISPATCH: "Em Preparação para Envio",
+  CUSTOMS: "Em Processamento",
+  NATIONAL_TRANSIT: "Em Trânsito",
   DISPATCHED: "Saiu para Entrega",
   DELIVERED: "Entregue! 🎉",
 };
