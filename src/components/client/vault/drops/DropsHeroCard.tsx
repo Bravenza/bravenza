@@ -68,11 +68,11 @@ export function DropsHeroCard({ post }: DropsHeroCardProps) {
               )}
             </div>
 
-            <h2 className="text-white text-2xl sm:text-3xl lg:text-4xl font-bold leading-[1.15] tracking-tight mb-3 max-w-2xl">
+            <h2 className="text-white text-2xl sm:text-3xl lg:text-4xl font-bold leading-[1.15] tracking-tight mb-5 max-w-2xl">
               {post.title}
             </h2>
 
-            <p className="text-white/50 text-sm sm:text-base leading-relaxed line-clamp-2 max-w-xl mb-5">
+            <p className="text-white/50 text-sm sm:text-base leading-relaxed line-clamp-2 max-w-xl mb-6">
               {getExcerpt(post, 180)}
             </p>
 
