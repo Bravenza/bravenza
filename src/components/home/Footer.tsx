@@ -12,6 +12,7 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
     { label: "Solicitar Orçamento", href: "/solicitar" },
     { label: "Rastrear Pedido", href: "/rastreio" },
     { label: "Autenticidade", href: "/sobre-autenticidade" },
+    { label: "Trocas e devoluções", href: "/trocas" },
     { label: "Minha Conta", href: "/entrar" },
   ];
 
