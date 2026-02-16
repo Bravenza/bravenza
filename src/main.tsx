@@ -3,20 +3,20 @@ import App from "./App.tsx";
 import "./index.css";
 
 // Force clear all old caches and service workers on app boot
-const APP_VERSION = "2.6.0";
+const APP_VERSION = "2.7.0";
 const VERSION_KEY = "bravenza-app-version";
 
 async function clearOldCaches() {
   const storedVersion = localStorage.getItem(VERSION_KEY);
   
+  // Always unregister service workers to prevent stale cache serving
+  if ("serviceWorker" in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((r) => r.unregister()));
+  }
+
   if (storedVersion !== APP_VERSION) {
     console.log(`[BRAVENZA] Upgrading from ${storedVersion} to ${APP_VERSION} — clearing all caches`);
-
-    // Unregister all service workers
-    if ("serviceWorker" in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map((r) => r.unregister()));
-    }
 
     // Delete all caches
     if ("caches" in window) {
@@ -29,7 +29,6 @@ async function clearOldCaches() {
     // Reload to get fresh assets
     if (storedVersion !== null) {
       window.location.reload();
-      // Stop execution — the reload will re-run this script with matching version
       return false;
     }
   }
