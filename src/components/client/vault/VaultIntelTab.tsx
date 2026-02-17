@@ -60,7 +60,10 @@ export function VaultIntelTab({ clientCpf }: VaultIntelTabProps) {
   };
 
   const filteredPosts = filter === "all" ? posts : posts.filter((p) => p.type === filter);
-  const storyPosts = posts.slice(0, 12);
+  const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+  const storyPosts = posts
+    .filter((p) => new Date(p.published_at).getTime() > twentyFourHoursAgo)
+    .slice(0, 12);
   const featuredPost = filteredPosts.find((p) => p.is_featured);
   const editorialPosts = filteredPosts.filter((p) => p.id !== featuredPost?.id);
 
