@@ -89,13 +89,13 @@ const MarketplaceSectionComponent = () => {
             className="text-center"
           >
             <Button asChild size="lg" className="btn-gold group">
-              <Link to="/vault">
+              <Link to="/marketplace">
                 Explorar o marketplace
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
             </Button>
             <p className="text-xs text-muted-foreground mt-4">
-              Disponível para membros do Vault Club
+              Aberto para todos os membros
             </p>
           </motion.div>
         </motion.div>

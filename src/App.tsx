@@ -40,6 +40,8 @@ const VaultRedeemPage = lazy(() => import("./pages/vault/VaultRedeemPage"));
 const VaultMatchRoom = lazy(() => import("./pages/vault/VaultMatchRoom"));
 const VaultProfilePage = lazy(() => import("./pages/vault/VaultProfilePage"));
 const ProductDetailPage = lazy(() => import("./pages/marketplace/ProductDetailPage"));
+const MarketplaceLayout = lazy(() => import("./pages/marketplace/MarketplaceLayout"));
+const MarketplaceHomePage = lazy(() => import("./pages/marketplace/MarketplaceHomePage"));
 
 // Lazy loaded pages - Client portal
 const ClientLogin = lazy(() => import("./pages/client/ClientLogin"));
@@ -137,7 +139,12 @@ const App = () => (
                 <Route path="/regras-marketplace" element={<MarketplaceRulesPage />} />
                 <Route path="/verificacao-autenticidade" element={<VerificationPolicyPage />} />
 
-                {/* Marketplace - needs client session for favorites */}
+                {/* Marketplace - independent layout */}
+                <Route path="/marketplace" element={
+                  <ProtectedProviders><MarketplaceLayout /></ProtectedProviders>
+                }>
+                  <Route index element={<MarketplaceHomePage />} />
+                </Route>
                 <Route path="/marketplace/:slug" element={
                   <ProtectedProviders><ProductDetailPage /></ProtectedProviders>
                 } />
