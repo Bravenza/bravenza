@@ -4,9 +4,9 @@ import { ArrowRight, Crown, Shield, Truck, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const trustItems = [
-  { icon: Shield, label: "Autenticidade verificada" },
-  { icon: Truck, label: "Rastreio total" },
-  { icon: CreditCard, label: "Até 12x" },
+  { icon: Shield, label: "Autenticidade garantida" },
+  { icon: Truck, label: "Rastreio em tempo real" },
+  { icon: CreditCard, label: "Até 12x sem juros" },
 ];
 
 const HeroSectionComponent = () => {
@@ -38,7 +38,7 @@ const HeroSectionComponent = () => {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/20 backdrop-blur-sm mb-8">
               <Crown className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary tracking-wide">
-                Curadoria e autenticação premium
+                Curadoria global e autenticação técnica
               </span>
             </div>
           </div>
@@ -48,10 +48,10 @@ const HeroSectionComponent = () => {
             className="font-display text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 tracking-tighter leading-[1.05] animate-hero-fade-up"
             style={{ animationDelay: "0.1s" }}
           >
-            O tênis que você quer,
+            Peças raras.
             <br />
-            <span className="text-gradient-gold">encontrado</span>
-            <span className="text-muted-foreground font-normal"> e autenticado.</span>
+            <span className="text-gradient-gold">Autenticadas.</span>{" "}
+            <span className="text-muted-foreground font-normal">Entregues.</span>
           </h1>
 
           {/* Subheadline */}
@@ -59,10 +59,10 @@ const HeroSectionComponent = () => {
             className="text-base md:text-lg text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed animate-hero-fade-up"
             style={{ animationDelay: "0.2s" }}
           >
-            A Bravenza encontra o tênis que você quer e valida a autenticidade 
-            com um processo técnico, para você comprar com{" "}
-            <span className="text-foreground font-medium">confiança total</span> e 
-            rastreamento completo.
+            A Bravenza localiza tênis exclusivos ao redor do mundo, verifica a autenticidade 
+            com inspeção técnica em 5 níveis e entrega na sua porta com{" "}
+            <span className="text-foreground font-medium">rastreio completo</span> e 
+            segurança total.
           </p>
 
           {/* CTA Buttons */}

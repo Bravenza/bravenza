@@ -1,37 +1,37 @@
 import { memo } from "react";
 import { motion } from "framer-motion";
-import { Shield, Globe, Zap, BadgeCheck, Headphones, Lock } from "lucide-react";
+import { Shield, Globe, Zap, Layers, Headphones, Lock } from "lucide-react";
 
 const benefits = [
   {
-    icon: BadgeCheck,
-    title: "Garantia de autenticidade",
-    description: "Verificação técnica digital e presencial. Se não for autêntico, você não paga.",
+    icon: Layers,
+    title: "Autenticação em 5 níveis",
+    description: "Inspeção técnica digital e presencial com parecer detalhado. Se não for autêntico, você não paga.",
   },
   {
     icon: Globe,
-    title: "Rede global de parceiros",
-    description: "Vendedores verificados no mundo todo. Nós encontramos para você.",
+    title: "Acesso a peças raras",
+    description: "Localizamos tênis exclusivos junto a parceiros globais que o mercado local não alcança.",
   },
   {
     icon: Shield,
-    title: "Fornecedores verificados",
-    description: "Rede exclusiva de parceiros com histórico comprovado.",
+    title: "Intermediação blindada",
+    description: "A Bravenza intermedia cada etapa. Seu dinheiro só é liberado quando tudo é verificado.",
   },
   {
     icon: Zap,
     title: "Rastreamento 24/7",
-    description: "Cada movimento do seu pedido, em tempo real.",
+    description: "Cada movimento do seu pedido, do parceiro internacional até sua porta, em tempo real.",
   },
   {
     icon: Lock,
-    title: "Pagamento protegido",
-    description: "Parcele em até 12x ou pague via PIX com segurança.",
+    title: "Pagamento flexível e seguro",
+    description: "Parcele em até 12x no cartão ou pague via PIX com segurança total.",
   },
   {
     icon: Headphones,
-    title: "Suporte VIP",
-    description: "Atendimento direto no WhatsApp. Resposta em minutos.",
+    title: "Suporte direto no WhatsApp",
+    description: "Atendimento humanizado e respostas em minutos. Sem robôs, sem espera.",
   },
 ];
 
@@ -69,10 +69,10 @@ const BenefitsSectionComponent = () => {
             Diferenciais
           </span>
           <h2 className="font-display text-3xl md:text-4xl font-bold mb-4 tracking-tight">
-            Por que a <span className="text-gradient-gold">BRAVENZA</span>?
+            Por que escolher a <span className="text-gradient-gold">BRAVENZA</span>?
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Curadoria, autenticação e segurança em cada compra.
+            Segurança técnica, acesso global e transparência em cada etapa da sua compra.
           </p>
         </motion.div>
 
