@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+
 import { useMarketplaceCatalog, type CatalogProduct } from "@/hooks/useMarketplaceCatalog";
 import { CatalogProductCard } from "@/components/client/vault/marketplace/CatalogProductCard";
 import { MarketplaceFilters, type MarketplaceFilterValues } from "@/components/client/vault/marketplace/MarketplaceFilters";
@@ -16,15 +16,6 @@ import { RecentlyViewedSection } from "@/components/marketplace/home/RecentlyVie
 import { BestSellersSection } from "@/components/marketplace/home/BestSellersSection";
 import { BrandSpotlightSection } from "@/components/marketplace/home/BrandSpotlightSection";
 import { RecentlyAddedSection } from "@/components/marketplace/home/RecentlyAddedSection";
-
-const categories = [
-  { id: "sneakers", label: "Sneakers", icon: "👟", color: "from-amber-500/20 to-orange-500/20" },
-  { id: "running", label: "Running", icon: "🏃", color: "from-blue-500/20 to-cyan-500/20" },
-  { id: "basketball", label: "Basketball", icon: "🏀", color: "from-red-500/20 to-orange-500/20" },
-  { id: "lifestyle", label: "Lifestyle", icon: "🌆", color: "from-purple-500/20 to-pink-500/20" },
-  { id: "skateboard", label: "Skate", icon: "🛹", color: "from-emerald-500/20 to-teal-500/20" },
-  { id: "collab", label: "Collabs", icon: "🤝", color: "from-yellow-500/20 to-amber-500/20" },
-];
 
 export default function MarketplaceHomePage() {
   const [searchParams] = useSearchParams();
@@ -56,11 +47,6 @@ export default function MarketplaceHomePage() {
     setFilters(f => ({ ...f, brand, search: undefined }));
     setShowFullCatalog(true);
     fetchProducts({ brand });
-  };
-
-  const handleCategoryClick = (cat: string) => {
-    setShowFullCatalog(true);
-    fetchProducts({ category: cat });
   };
 
   const scrollBrands = (dir: "left" | "right") => {
@@ -172,39 +158,10 @@ export default function MarketplaceHomePage() {
         </div>
       </section>
 
-      {/* ===== CATEGORIES ===== */}
-      <section className="py-8 border-b border-border/30">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
-            {categories.map((cat, i) => (
-              <motion.button
-                key={cat.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.05 }}
-                onClick={() => handleCategoryClick(cat.id)}
-                className="flex flex-col items-center gap-2 min-w-[80px] group"
-              >
-                <div className={cn(
-                  "w-16 h-16 rounded-2xl flex items-center justify-center text-2xl bg-gradient-to-br border border-border/30 group-hover:border-primary/30 group-hover:shadow-md transition-all duration-300",
-                  cat.color
-                )}>
-                  {cat.icon}
-                </div>
-                <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                  {cat.label}
-                </span>
-              </motion.button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ===== BRANDS BAR (text logos) ===== */}
+      {/* ===== BRANDS BAR ===== */}
       <section className="py-6 border-b border-border/30">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center gap-2 mb-4">
-            <h3 className="text-sm font-semibold text-foreground">Marcas populares</h3>
+          <div className="flex items-center gap-2 mb-2">
             <div className="flex-1" />
             <button onClick={() => scrollBrands("left")} className="p-1 rounded-full hover:bg-muted/50 transition-colors text-muted-foreground">
               <ChevronLeft className="h-4 w-4" />
@@ -289,14 +246,14 @@ export default function MarketplaceHomePage() {
         </div>
       </section>
 
-      {/* ===== RECENTLY VIEWED ===== */}
-      <RecentlyViewedSection />
-
       {/* ===== BEST SELLERS ===== */}
       <BestSellersSection products={products} />
 
       {/* ===== SECURITY & AUTHENTICITY ===== */}
       <SecuritySection />
+
+      {/* ===== RECENTLY VIEWED ===== */}
+      <RecentlyViewedSection />
 
       {/* ===== BRAND SPOTLIGHTS ===== */}
       <BrandSpotlightSection products={products} insertAfterIndex={0}>
