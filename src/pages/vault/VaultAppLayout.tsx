@@ -219,7 +219,7 @@ export default function VaultAppLayout() {
       </div>
 
       {/* Main Content */}
-      <main className="relative flex-1 max-w-7xl mx-auto w-full px-4 py-6 pb-24 md:pb-6">
+      <main className="relative flex-1 max-w-7xl mx-auto w-full px-4 py-10 pb-28 md:py-12 md:pb-12">
         <Outlet context={{ member, refreshMember: fetchMember }} />
       </main>
 

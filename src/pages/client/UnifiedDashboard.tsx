@@ -443,7 +443,7 @@ export default function UnifiedDashboard() {
 
       {/* Main Content */}
       <main className="flex-1">
-        <div className="max-w-5xl mx-auto px-4 lg:px-6 py-6 lg:py-8">
+        <div className="max-w-5xl mx-auto px-4 lg:px-6 py-10 pb-28 lg:py-12 lg:pb-12">
           {/* Section Header */}
           <motion.div
             key={`header-${activeSection}`}
