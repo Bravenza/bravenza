@@ -1,7 +1,9 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ProductGalleryProps {
   images: string[];
@@ -13,42 +15,105 @@ interface ProductGalleryProps {
 
 export function ProductGallery({ images, selectedImage, onSelectImage, productName, isHighRisk }: ProductGalleryProps) {
   const touchStartX = useRef<number | null>(null);
+  const [direction, setDirection] = useState(0);
+
+  const goTo = (index: number) => {
+    setDirection(index > selectedImage ? 1 : -1);
+    onSelectImage(index);
+  };
+
+  const goPrev = () => goTo((selectedImage - 1 + images.length) % images.length);
+  const goNext = () => goTo((selectedImage + 1) % images.length);
 
   return (
-    <div className="space-y-3 order-first lg:order-last">
+    <div className="space-y-4">
+      {/* Main image - full width hero */}
       <div
-        className="relative aspect-square rounded-2xl overflow-hidden bg-muted/20 border border-border/30 touch-pan-y"
+        className="relative aspect-[4/3] md:aspect-[16/10] rounded-2xl overflow-hidden bg-muted/5 border border-border/20 touch-pan-y group"
         onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
         onTouchEnd={(e) => {
           if (touchStartX.current === null || images.length <= 1) return;
           const diff = touchStartX.current - e.changedTouches[0].clientX;
           if (Math.abs(diff) > 50) {
-            onSelectImage(diff > 0 ? (selectedImage + 1) % images.length : (selectedImage - 1 + images.length) % images.length);
+            diff > 0 ? goNext() : goPrev();
           }
           touchStartX.current = null;
         }}
       >
-        <img
-          src={images[selectedImage]}
-          alt={productName}
-          className="w-full h-full object-contain p-4"
-          loading="eager"
-        />
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.img
+            key={selectedImage}
+            custom={direction}
+            initial={{ opacity: 0, x: direction * 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -direction * 40 }}
+            transition={{ duration: 0.25 }}
+            src={images[selectedImage]}
+            alt={productName}
+            className="w-full h-full object-contain p-6 md:p-10"
+            loading="eager"
+          />
+        </AnimatePresence>
+
         {isHighRisk && (
-          <Badge className="absolute top-3 left-3 bg-primary/90 text-primary-foreground text-[10px] gap-1">
+          <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground text-[10px] gap-1 font-bold uppercase tracking-wider">
             <ShieldCheck className="h-3 w-3" /> Autenticação recomendada
           </Badge>
         )}
+
+        {/* Nav arrows */}
+        {images.length > 1 && (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/60 backdrop-blur-md border border-border/30 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => { e.stopPropagation(); goPrev(); }}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/60 backdrop-blur-md border border-border/30 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => { e.stopPropagation(); goNext(); }}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          </>
+        )}
+
+        {/* Dots indicator */}
+        {images.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i)}
+                className={cn(
+                  "h-1.5 rounded-full transition-all duration-300",
+                  selectedImage === i
+                    ? "w-6 bg-primary"
+                    : "w-1.5 bg-foreground/20 hover:bg-foreground/40"
+                )}
+              />
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Thumbnails */}
       {images.length > 1 && (
-        <div className="grid grid-cols-4 gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {images.map((img, i) => (
             <button
               key={i}
-              onClick={() => onSelectImage(i)}
+              onClick={() => goTo(i)}
               className={cn(
-                "aspect-square rounded-lg overflow-hidden border-2 transition-all bg-muted/10",
-                selectedImage === i ? "border-primary ring-1 ring-primary/30" : "border-transparent opacity-60 hover:opacity-100"
+                "flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all bg-muted/5",
+                selectedImage === i
+                  ? "border-primary ring-1 ring-primary/30"
+                  : "border-transparent opacity-50 hover:opacity-100"
               )}
             >
               <img src={img} alt="" className="w-full h-full object-contain p-1" loading="lazy" />
