@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { saveRecentlyViewed } from "@/components/marketplace/home/RecentlyViewedSection";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, ShieldCheck, Share2,
@@ -118,7 +119,9 @@ export default function ProductDetailPage() {
   };
 
   useEffect(() => {
-    if (slug) fetchProduct(slug);
+    if (slug) fetchProduct(slug).then((data) => {
+      if (data?.product) saveRecentlyViewed(data.product);
+    });
   }, [slug, fetchProduct]);
 
   useEffect(() => {

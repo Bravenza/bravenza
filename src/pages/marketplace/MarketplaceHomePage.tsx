@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate, useOutletContext } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, ShieldCheck, ArrowRight, ChevronLeft, ChevronRight, TrendingUp, Sparkles, Package } from "lucide-react";
+import { Search, ShieldCheck, ArrowRight, ChevronLeft, ChevronRight, TrendingUp, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -10,27 +10,20 @@ import { cn } from "@/lib/utils";
 import { useMarketplaceCatalog, type CatalogProduct } from "@/hooks/useMarketplaceCatalog";
 import { CatalogProductCard } from "@/components/client/vault/marketplace/CatalogProductCard";
 import { MarketplaceFilters, type MarketplaceFilterValues } from "@/components/client/vault/marketplace/MarketplaceFilters";
-
-const popularBrands = [
-  { name: "Nike", logo: "🏃" },
-  { name: "Jordan", logo: "🏀" },
-  { name: "adidas", logo: "👟" },
-  { name: "New Balance", logo: "🇺🇸" },
-  { name: "Yeezy", logo: "🎵" },
-  { name: "Asics", logo: "🇯🇵" },
-  { name: "Puma", logo: "🐆" },
-  { name: "Converse", logo: "⭐" },
-  { name: "Vans", logo: "🛹" },
-  { name: "Reebok", logo: "💪" },
-];
+import { BrandLogo, popularBrands } from "@/components/marketplace/home/BrandLogos";
+import { SecuritySection } from "@/components/marketplace/home/SecuritySection";
+import { RecentlyViewedSection } from "@/components/marketplace/home/RecentlyViewedSection";
+import { BestSellersSection } from "@/components/marketplace/home/BestSellersSection";
+import { BrandSpotlightSection } from "@/components/marketplace/home/BrandSpotlightSection";
+import { RecentlyAddedSection } from "@/components/marketplace/home/RecentlyAddedSection";
 
 const categories = [
-  { id: "sneakers", label: "Sneakers", emoji: "👟", color: "from-amber-500/20 to-orange-500/20" },
-  { id: "running", label: "Running", emoji: "🏃", color: "from-blue-500/20 to-cyan-500/20" },
-  { id: "basketball", label: "Basketball", emoji: "🏀", color: "from-red-500/20 to-orange-500/20" },
-  { id: "lifestyle", label: "Lifestyle", emoji: "🌆", color: "from-purple-500/20 to-pink-500/20" },
-  { id: "skateboard", label: "Skate", emoji: "🛹", color: "from-emerald-500/20 to-teal-500/20" },
-  { id: "collab", label: "Collabs", emoji: "🤝", color: "from-yellow-500/20 to-amber-500/20" },
+  { id: "sneakers", label: "Sneakers", icon: "👟", color: "from-amber-500/20 to-orange-500/20" },
+  { id: "running", label: "Running", icon: "🏃", color: "from-blue-500/20 to-cyan-500/20" },
+  { id: "basketball", label: "Basketball", icon: "🏀", color: "from-red-500/20 to-orange-500/20" },
+  { id: "lifestyle", label: "Lifestyle", icon: "🌆", color: "from-purple-500/20 to-pink-500/20" },
+  { id: "skateboard", label: "Skate", icon: "🛹", color: "from-emerald-500/20 to-teal-500/20" },
+  { id: "collab", label: "Collabs", icon: "🤝", color: "from-yellow-500/20 to-amber-500/20" },
 ];
 
 export default function MarketplaceHomePage() {
@@ -74,11 +67,10 @@ export default function MarketplaceHomePage() {
     brandsScrollRef.current?.scrollBy({ left: dir === "left" ? -200 : 200, behavior: "smooth" });
   };
 
-  // If we have a search query, skip the hero and show results directly
+  // Full catalog / search results view
   if (showFullCatalog || initialSearch) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-6 pb-28 md:pb-12">
-        {/* Back to home */}
         {!initialSearch && (
           <button
             onClick={() => setShowFullCatalog(false)}
@@ -89,11 +81,7 @@ export default function MarketplaceHomePage() {
           </button>
         )}
 
-        <MarketplaceFilters
-          filters={filters}
-          onFiltersChange={setFilters}
-          onSearch={handleSearch}
-        />
+        <MarketplaceFilters filters={filters} onFiltersChange={setFilters} onSearch={handleSearch} />
 
         {!isLoading && (
           <p className="text-xs text-muted-foreground mt-4 mb-2">
@@ -143,11 +131,7 @@ export default function MarketplaceHomePage() {
         <div className="absolute inset-0 bg-grid-pattern opacity-30" />
         <div className="max-w-7xl mx-auto px-4 py-12 md:py-20 relative z-10">
           <div className="max-w-2xl mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
               <Badge variant="outline" className="mb-5 text-xs px-3 py-1 border-primary/30 text-primary">
                 <ShieldCheck className="h-3 w-3 mr-1" />
                 100% verificado
@@ -161,7 +145,6 @@ export default function MarketplaceHomePage() {
               </p>
             </motion.div>
 
-            {/* Hero Search */}
             <motion.form
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -206,7 +189,7 @@ export default function MarketplaceHomePage() {
                   "w-16 h-16 rounded-2xl flex items-center justify-center text-2xl bg-gradient-to-br border border-border/30 group-hover:border-primary/30 group-hover:shadow-md transition-all duration-300",
                   cat.color
                 )}>
-                  {cat.emoji}
+                  {cat.icon}
                 </div>
                 <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
                   {cat.label}
@@ -217,7 +200,7 @@ export default function MarketplaceHomePage() {
         </div>
       </section>
 
-      {/* ===== BRANDS BAR ===== */}
+      {/* ===== BRANDS BAR (text logos) ===== */}
       <section className="py-6 border-b border-border/30">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-2 mb-4">
@@ -233,23 +216,20 @@ export default function MarketplaceHomePage() {
           <div ref={brandsScrollRef} className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
             {popularBrands.map((brand) => (
               <button
-                key={brand.name}
-                onClick={() => handleBrandClick(brand.name)}
-                className="flex flex-col items-center gap-2 min-w-[72px] group"
+                key={brand}
+                onClick={() => handleBrandClick(brand)}
+                className="flex flex-col items-center justify-center gap-0 min-w-[90px] group"
               >
-                <div className="w-14 h-14 rounded-full bg-card border border-border/30 flex items-center justify-center text-xl group-hover:border-primary/30 group-hover:shadow-sm transition-all">
-                  {brand.logo}
+                <div className="w-[90px] h-14 rounded-xl bg-card border border-border/30 flex items-center justify-center group-hover:border-primary/30 group-hover:shadow-sm transition-all">
+                  <BrandLogo name={brand} size="md" />
                 </div>
-                <span className="text-[11px] font-medium text-muted-foreground group-hover:text-foreground transition-colors whitespace-nowrap">
-                  {brand.name}
-                </span>
               </button>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ===== TRENDING / RECENT PRODUCTS ===== */}
+      {/* ===== TRENDING / EM ALTA ===== */}
       <section className="py-10">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between mb-6">
@@ -309,34 +289,20 @@ export default function MarketplaceHomePage() {
         </div>
       </section>
 
-      {/* ===== TRUST SECTION ===== */}
-      <section className="py-10 border-t border-border/30">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { icon: ShieldCheck, title: "100% Verificado", desc: "Cada peça passa por inspeção técnica antes da entrega" },
-              { icon: Sparkles, title: "Comunidade Exclusiva", desc: "Compre entre membros verificados do Vault Club" },
-              { icon: TrendingUp, title: "Preços Transparentes", desc: "Histórico de preços e recomendação de valor justo" },
-            ].map((item, i) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * i }}
-                className="flex items-start gap-4 p-5 rounded-xl bg-card/50 border border-border/20"
-              >
-                <div className="p-2.5 rounded-xl bg-primary/8">
-                  <item.icon className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm mb-1">{item.title}</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ===== RECENTLY VIEWED ===== */}
+      <RecentlyViewedSection />
+
+      {/* ===== BEST SELLERS ===== */}
+      <BestSellersSection products={products} />
+
+      {/* ===== BRAND SPOTLIGHTS ===== */}
+      <BrandSpotlightSection products={products} />
+
+      {/* ===== RECENTLY ADDED ===== */}
+      <RecentlyAddedSection products={products} />
+
+      {/* ===== SECURITY & AUTHENTICITY ===== */}
+      <SecuritySection />
     </div>
   );
 }
