@@ -67,6 +67,33 @@ export const DropsCountdownSection = memo(function DropsCountdownSection() {
 
   const countdown = useCountdown(getNextFriday());
 
+  const mockDrops: Drop[] = [
+    {
+      id: "mock-1",
+      title: "Nike Dunk Low 'Panda' retorna em edição limitada",
+      excerpt: "O clássico preto e branco ganha nova versão com materiais premium e numeração reduzida para o Brasil.",
+      cover_image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&h=340&fit=crop",
+      published_at: new Date().toISOString(),
+      type: "release",
+    },
+    {
+      id: "mock-2",
+      title: "Jordan 1 Retro High OG 'Chicago' reimaginado",
+      excerpt: "A silhueta mais icônica da história volta com couro italiano e detalhes que homenageiam o legado de MJ.",
+      cover_image: "https://images.unsplash.com/photo-1556906781-9a412961c28c?w=600&h=340&fit=crop",
+      published_at: new Date().toISOString(),
+      type: "release",
+    },
+    {
+      id: "mock-3",
+      title: "Guia: como identificar um sneaker falso em 30 segundos",
+      excerpt: "Nossa equipe de autenticação revela os 5 pontos que separam o original da réplica.",
+      cover_image: "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=600&h=340&fit=crop",
+      published_at: new Date().toISOString(),
+      type: "news",
+    },
+  ];
+
   useEffect(() => {
     const fetchDrops = async () => {
       const { data } = await supabase
@@ -75,13 +102,13 @@ export const DropsCountdownSection = memo(function DropsCountdownSection() {
         .eq("status", "published")
         .order("published_at", { ascending: false })
         .limit(3);
-      setDrops(data || []);
+      setDrops(data && data.length > 0 ? data : mockDrops);
       setLoading(false);
     };
     fetchDrops();
   }, []);
 
-  if (loading || drops.length === 0) return null;
+  if (loading) return null;
 
   return (
     <section className="py-16 md:py-20 border-t border-border/30 relative overflow-hidden">
