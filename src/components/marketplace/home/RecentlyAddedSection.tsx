@@ -21,7 +21,7 @@ export const RecentlyAddedSection = memo(function RecentlyAddedSection({ product
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center gap-3 mb-8">
           <Plus className="h-6 w-6 text-primary" />
-          <h2 className="text-xl md:text-2xl font-black text-foreground tracking-tight">Acabaram de chegar</h2>
+          <h2 className="text-2xl md:text-3xl font-black text-foreground tracking-tight font-display">Acabaram de chegar</h2>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">

@@ -59,7 +59,7 @@ export const BrandSpotlightSection = memo(function BrandSpotlightSection({ produ
           <span key={spotlight.brand}>
             <section className="py-10 border-t border-border/30">
               <div className="max-w-7xl mx-auto px-4">
-                <div className={`relative rounded-2xl p-6 mb-6 bg-gradient-to-r ${spotlight.gradient} border border-border/10 overflow-hidden`}>
+                <div className={`relative rounded-2xl p-8 mb-8 bg-gradient-to-r ${spotlight.gradient} border border-border/10 overflow-hidden`}>
                   <div className="relative z-10">
                     <motion.div
                       initial={{ opacity: 0, y: 12 }}
@@ -68,10 +68,10 @@ export const BrandSpotlightSection = memo(function BrandSpotlightSection({ produ
                       className="flex items-center justify-between"
                     >
                       <div>
-                        <div className="text-2xl md:text-3xl mb-1">
-                          <BrandLogo name={spotlight.brand} size="md" />
+                        <div className="text-3xl md:text-4xl mb-2">
+                          <BrandLogo name={spotlight.brand} size="lg" />
                         </div>
-                        <p className="text-xs text-muted-foreground">{spotlight.tagline}</p>
+                        <p className="text-sm text-muted-foreground">{spotlight.tagline}</p>
                       </div>
                       <Button
                         variant="ghost"
