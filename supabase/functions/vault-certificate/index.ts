@@ -16,7 +16,20 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { vault_item_id } = await req.json();
+    let vault_item_id: string | null = null;
+
+    // Support both GET with query param and POST with JSON body
+    const url = new URL(req.url);
+    vault_item_id = url.searchParams.get("vault_item_id");
+
+    if (!vault_item_id && req.method === "POST") {
+      try {
+        const body = await req.json();
+        vault_item_id = body.vault_item_id;
+      } catch {
+        // ignore parse errors
+      }
+    }
 
     if (!vault_item_id) {
       return new Response(
