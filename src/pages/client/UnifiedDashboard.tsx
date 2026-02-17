@@ -226,7 +226,7 @@ export default function UnifiedDashboard() {
 
   if (sessionLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center theme-light">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -240,7 +240,7 @@ export default function UnifiedDashboard() {
   const isVaultSection = activeSection !== "pedidos";
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col theme-light">
       {/* Header */}
       <header className="border-b border-border/30 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />

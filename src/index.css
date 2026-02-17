@@ -128,6 +128,101 @@
     --sidebar-border: 0 0% 16%;
     --sidebar-ring: 45 100% 50%;
   }
+
+  /* Light theme for internal/logged-in areas */
+  .theme-light {
+    --background: 220 20% 97%;
+    --foreground: 224 20% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 20% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 20% 14%;
+
+    --primary: 42 90% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 224 20% 14%;
+
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 42 80% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 224 20% 14%;
+
+    --border: 220 13% 87%;
+    --input: 220 13% 87%;
+    --ring: 42 90% 42%;
+
+    /* Sidebar stays dark for contrast */
+    --sidebar-background: 224 20% 14%;
+    --sidebar-foreground: 220 14% 92%;
+    --sidebar-primary: 42 90% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 224 20% 20%;
+    --sidebar-accent-foreground: 220 14% 92%;
+    --sidebar-border: 224 20% 20%;
+    --sidebar-ring: 42 90% 42%;
+
+    /* Adjusted shadows for light mode */
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.04);
+    --shadow-md: 0 4px 12px -2px hsl(0 0% 0% / 0.08);
+    --shadow-lg: 0 8px 24px -4px hsl(0 0% 0% / 0.1);
+    --shadow-gold: 0 4px 20px hsl(42, 90%, 42%, 0.1);
+    --shadow-gold-hover: 0 8px 32px hsl(42, 90%, 42%, 0.15);
+    --shadow-elevated: 0 20px 40px -12px hsl(0 0% 0% / 0.12);
+
+    --glow-gold: 0 0 40px hsl(42, 90%, 42%, 0.1);
+    --glow-gold-intense: 0 0 60px hsl(42, 90%, 42%, 0.15);
+    --glow-line: 0 0 8px hsl(42, 90%, 42%, 0.3);
+
+    --gradient-gold: linear-gradient(135deg, hsl(42, 90%, 42%) 0%, hsl(38, 85%, 38%) 50%, hsl(42, 90%, 48%) 100%);
+    --gradient-gold-subtle: linear-gradient(135deg, hsl(42, 90%, 42%, 0.06) 0%, hsl(38, 85%, 38%, 0.02) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(0, 0%, 100%) 0%, hsl(220, 20%, 97%) 100%);
+    --gradient-radial: radial-gradient(ellipse at center, hsl(42, 90%, 42%, 0.06) 0%, transparent 70%);
+    --border-gradient-gold: linear-gradient(135deg, hsl(42, 90%, 42%, 0.3) 0%, hsl(42, 90%, 42%, 0.08) 50%, hsl(42, 90%, 42%, 0.2) 100%);
+  }
+
+  /* Light theme text-gradient-gold needs darker gold for visibility */
+  .theme-light .text-gradient-gold {
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Light theme grid pattern */
+  .theme-light .bg-grid-pattern {
+    background-image:
+      linear-gradient(hsl(220, 13%, 87%, 0.5) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(220, 13%, 87%, 0.5) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* Light theme scrollbar */
+  .theme-light ::-webkit-scrollbar-thumb {
+    background: hsl(220 13% 80%);
+  }
+
+  .theme-light ::-webkit-scrollbar-thumb:hover {
+    background: hsl(220 9% 60%);
+  }
+
+  .theme-light ::selection {
+    background: hsl(42, 90%, 42%, 0.2);
+    color: hsl(224, 20%, 14%);
+  }
 }
 
 @layer base {

@@ -260,7 +260,7 @@ export default function VaultProfilePage() {
 
   if (isSessionLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center theme-light">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -268,7 +268,7 @@ export default function VaultProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4 theme-light">
         <Card className="max-w-md w-full text-center">
           <CardContent className="pt-6">
             <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -290,7 +290,7 @@ export default function VaultProfilePage() {
   const TierIcon = tierData.icon;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background theme-light">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
         <div className="container max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
