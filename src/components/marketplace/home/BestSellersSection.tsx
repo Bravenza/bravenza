@@ -16,27 +16,27 @@ const rankColors = [
 
 export const BestSellersSection = memo(function BestSellersSection({ products }: Props) {
   const navigate = useNavigate();
-  const topProducts = products.slice(0, 5);
+  const topProducts = products.slice(0, 10);
 
   if (topProducts.length === 0) return null;
 
   return (
     <section className="py-10 border-t border-border/30">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center gap-2 mb-6">
-          <Trophy className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-bold text-foreground">Mais vendidos da semana</h2>
+        <div className="flex items-center gap-3 mb-8">
+          <Trophy className="h-6 w-6 text-primary" />
+          <h2 className="text-xl md:text-2xl font-black text-foreground tracking-tight">Mais vendidos da semana</h2>
         </div>
 
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {topProducts.map((product, i) => (
             <motion.button
               key={product.id}
               initial={{ opacity: 0, x: -16 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.06 }}
-              onClick={() => navigate(`/marketplace/produto/${product.slug}`)}
+              transition={{ delay: i * 0.04 }}
+              onClick={() => navigate(`/marketplace/${product.slug}`)}
               className="w-full flex items-center gap-4 p-3 rounded-2xl bg-card/50 border border-border/20 hover:border-primary/20 hover:bg-card/80 transition-all group text-left"
             >
               {/* Rank badge */}
@@ -75,16 +75,6 @@ export const BestSellersSection = memo(function BestSellersSection({ products }:
                   <p className="text-[11px] text-muted-foreground truncate">{product.colorway}</p>
                 )}
               </div>
-
-              {/* Price */}
-              {product.lowest_price && (
-                <div className="text-right shrink-0">
-                  <p className="text-[10px] text-muted-foreground">a partir de</p>
-                  <p className="text-sm font-black text-foreground">
-                    R$ {product.lowest_price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </p>
-                </div>
-              )}
             </motion.button>
           ))}
         </div>
