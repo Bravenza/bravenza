@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Clock, ArrowUpRight } from "lucide-react";
+import { Clock, ArrowUpRight, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { DropsPost, typeConfig, placeholderGradients, formatRelativeDate, getExcerpt } from "./types";
@@ -170,6 +170,11 @@ export function DropsEditorialCard({ post, index, variant = "default" }: DropsEd
             {post.read_time_min && (
               <span className="text-[10px] text-muted-foreground/40 flex items-center gap-0.5">
                 <Clock className="h-3 w-3" /> {post.read_time_min} min
+              </span>
+            )}
+            {(post.likes_count ?? 0) > 0 && (
+              <span className="text-[10px] text-destructive/60 flex items-center gap-0.5">
+                <Heart className="h-3 w-3 fill-destructive/60" /> {post.likes_count}
               </span>
             )}
             {post.visibility !== "ALL" && (

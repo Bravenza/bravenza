@@ -14,6 +14,7 @@ export interface DropsPost {
   is_featured: boolean | null;
   visibility: "ALL" | "PRIVILEGE_PLUS" | "BLACK_ONLY";
   published_at: string;
+  likes_count?: number;
 }
 
 export const typeConfig = {
