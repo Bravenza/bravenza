@@ -131,7 +131,7 @@ const vaultMenuItems = [
   { id: "drops", label: "Drops", icon: Sparkles, description: "Conteúdos exclusivos" },
   { id: "clube", label: "Meu Status", icon: Award, description: "Tier e benefícios" },
   { id: "comunidade", label: "Comunidade", icon: Users, description: "Social" },
-  { id: "marketplace", label: "Marketplace", icon: Store, description: "Comprar e vender" },
+  { id: "marketplace", label: "Marketplace", icon: Store, description: "Comprar e vender", href: "/marketplace" },
 ];
 
 const sectionTitles: Record<string, { title: string; subtitle: string; icon: React.ElementType }> = {
@@ -296,7 +296,7 @@ export default function UnifiedDashboard() {
                     {vaultMenuItems.map((item) => (
                       <DropdownMenuItem
                         key={item.id}
-                        onClick={() => handleSectionChange(item.id)}
+                        onClick={() => (item as any).href ? navigate((item as any).href) : handleSectionChange(item.id)}
                         className={cn(
                           "flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors",
                           activeSection === item.id && "bg-primary/10"
@@ -398,7 +398,7 @@ export default function UnifiedDashboard() {
                   {vaultMenuItems.map((item) => (
                     <button
                       key={item.id}
-                      onClick={() => { handleSectionChange(item.id); setMobileMenuOpen(false); }}
+                      onClick={() => { (item as any).href ? navigate((item as any).href) : handleSectionChange(item.id); setMobileMenuOpen(false); }}
                       className={cn(
                         "w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200",
                         activeSection === item.id
@@ -542,15 +542,7 @@ export default function UnifiedDashboard() {
                       }}
                     />
                   )}
-                  {activeSection === "marketplace" && (
-                    <MarketplaceTab
-                      clientCpf={profile.cpf}
-                      isVaultMember={!!vaultMember || isSuperAdmin}
-                      buyerName={profile.full_name || undefined}
-                      buyerEmail={user?.email || undefined}
-                      initialSearch={searchParams.get("search") || undefined}
-                    />
-                  )}
+                  {/* Marketplace moved to /marketplace */}
                 </>
               )}
             </motion.div>

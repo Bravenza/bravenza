@@ -237,8 +237,8 @@ export default function ProductDetailPage() {
       <div className="min-h-screen bg-background flex items-center justify-center theme-light">
         <div className="text-center space-y-4">
           <p className="text-muted-foreground">Produto não encontrado</p>
-          <Button variant="outline" onClick={() => navigate("/minha-conta")}>
-            <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
+          <Button variant="outline" onClick={() => navigate("/marketplace")}>
+            <ArrowLeft className="h-4 w-4 mr-2" /> Marketplace
           </Button>
         </div>
       </div>
@@ -253,8 +253,8 @@ export default function ProductDetailPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/30">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/minha-conta?tab=marketplace")} className="gap-1.5">
-            <ArrowLeft className="h-4 w-4" /> Voltar
+          <Button variant="ghost" size="sm" onClick={() => navigate("/marketplace")} className="gap-1.5">
+            <ArrowLeft className="h-4 w-4" /> Marketplace
           </Button>
           <Logo size="sm" />
           <div className="flex items-center gap-1">
@@ -289,8 +289,8 @@ export default function ProductDetailPage() {
       <main className="max-w-6xl mx-auto px-4 py-6 pb-24">
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-4">
-          <button onClick={() => navigate("/minha-conta?tab=marketplace")} className="hover:text-foreground transition-colors">
-            Market+
+          <button onClick={() => navigate("/marketplace")} className="hover:text-foreground transition-colors">
+            Marketplace
           </button>
           <ChevronRight className="h-3 w-3" />
           <span className="text-foreground font-medium truncate">{formattedName}</span>
@@ -405,14 +405,14 @@ export default function ProductDetailPage() {
                   icon={<Tag className="h-3.5 w-3.5" />}
                   label="Marca"
                   value={product.brand}
-                  onClick={() => navigate(`/minha-conta?tab=marketplace&search=${encodeURIComponent(product.brand)}`)}
+                  onClick={() => navigate(`/marketplace?q=${encodeURIComponent(product.brand)}`)}
                 />
                 <SpecRow
                   icon={<ShoppingBag className="h-3.5 w-3.5" />}
                   label="Modelo"
                   value={product.model}
                   even
-                  onClick={() => navigate(`/minha-conta?tab=marketplace&search=${encodeURIComponent(product.model)}`)}
+                  onClick={() => navigate(`/marketplace?q=${encodeURIComponent(product.model)}`)}
                 />
                 <SpecRow icon={<DollarSign className="h-3.5 w-3.5" />} label="Preço de lançamento" value={
                   product.retail_price
