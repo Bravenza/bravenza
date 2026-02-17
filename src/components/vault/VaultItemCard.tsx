@@ -118,7 +118,8 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
     }
   };
 
-  const handleShare = async () => {
+  const handleShare = async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     const shareData = {
       title: `${item.brand} ${item.model}`,
       text: `Confira meu ${item.brand} ${item.model} autenticado na BRAVENZA — ${item.vault_id}`,
@@ -360,7 +361,7 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
                 variant="default"
                 size="sm"
                 className="rounded-xl h-11 text-xs font-semibold"
-                onClick={handleOpenCertificate}
+                onClick={(e) => { e.stopPropagation(); handleOpenCertificate(); }}
               >
                 <Download className="h-4 w-4 mr-1.5" />
                 PDF
@@ -369,7 +370,7 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
                 variant="outline"
                 size="sm"
                 className="rounded-xl h-11 text-xs border-border/50"
-                onClick={() => setShowQRDialog(true)}
+                onClick={(e) => { e.stopPropagation(); setShowQRDialog(true); }}
               >
                 <QrCode className="h-4 w-4 mr-1.5" />
                 QR Code
@@ -378,7 +379,7 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
                 variant="outline"
                 size="sm"
                 className="rounded-xl h-11 text-xs border-border/50"
-                onClick={handleShare}
+                onClick={(e) => handleShare(e)}
               >
                 <Share2 className="h-4 w-4 mr-1.5" />
                 Enviar
