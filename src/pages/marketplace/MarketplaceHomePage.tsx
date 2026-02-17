@@ -295,14 +295,13 @@ export default function MarketplaceHomePage() {
       {/* ===== BEST SELLERS ===== */}
       <BestSellersSection products={products} />
 
-      {/* ===== BRAND SPOTLIGHTS ===== */}
-      <BrandSpotlightSection products={products} />
-
-      {/* ===== RECENTLY ADDED ===== */}
-      <RecentlyAddedSection products={products} />
-
       {/* ===== SECURITY & AUTHENTICITY ===== */}
       <SecuritySection />
+
+      {/* ===== BRAND SPOTLIGHTS ===== */}
+      <BrandSpotlightSection products={products} insertAfterIndex={0}>
+        <RecentlyAddedSection products={products} />
+      </BrandSpotlightSection>
     </div>
   );
 }
