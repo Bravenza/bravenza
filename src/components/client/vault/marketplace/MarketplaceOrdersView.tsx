@@ -259,7 +259,7 @@ export function MarketplaceOrdersView({
               <CardContent className="py-12 text-center">
                 <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-30" />
                 <p className="font-medium">Nenhuma compra realizada</p>
-                <p className="text-sm text-muted-foreground mt-1">Explore o marketplace para encontrar tênis incríveis</p>
+                <p className="text-sm text-muted-foreground mt-1">Explore o marketplace para encontrar sneakers incríveis</p>
               </CardContent>
             </Card>
           ) : (

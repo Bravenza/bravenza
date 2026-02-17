@@ -256,7 +256,7 @@ Deno.serve(async (req) => {
             const normalizedMode = offer.shipping_mode === "seller_ships" ? "direct" : offer.shipping_mode === "hub" ? "bravenza" : offer.shipping_mode || "direct";
             li = {
               id: offer.id,
-              title: `${offer.description || "Tênis"}`,
+              title: `${offer.description || "Sneaker"}`,
               price: offer.price,
               shipping_mode: normalizedMode,
               shipping_cost_estimate: offer.shipping_cost_estimate || 0,
@@ -288,7 +288,7 @@ Deno.serve(async (req) => {
       if (li._is_offer) {
         await sb.from("marketplace_offers").update({ status: "reserved" }).eq("id", b.listing_id);
       }
-      const titleForNotification = li.title || "Tênis";
+      const titleForNotification = li.title || "Sneaker";
       await nt(sb, "🛒 Nova venda!", `${b.buyer_name} comprou "${titleForNotification}".`, li.seller.member.client_cpf, od.id, "marketplace_order");
       await sb.from("marketplace_activity_feed").insert({
         event_type: "sale", title: `Venda: ${titleForNotification}`,
@@ -888,8 +888,8 @@ Deno.serve(async (req) => {
               body: JSON.stringify({
                 model: "google/gemini-2.5-flash-lite",
                 messages: [
-                  { role: "system", content: "Você é um especialista em tênis e sneakers. Escreva descrições em português brasileiro para catálogos de marketplace de sneakers. O texto deve ser envolvente, informativo e conter detalhes sobre a história do modelo, materiais, tecnologia e relevância cultural. Máximo 3 frases. Não use aspas no início/fim." },
-                  { role: "user", content: `Escreva uma descrição de catálogo para o tênis ${b.brand} ${b.model}${colorInfo}. SKU: ${b.sku || "N/A"}.` }
+                  { role: "system", content: "Você é um especialista em sneakers. Escreva descrições em português brasileiro para catálogos de marketplace de sneakers. O texto deve ser envolvente, informativo e conter detalhes sobre a história do modelo, materiais, tecnologia e relevância cultural. Máximo 3 frases. Não use aspas no início/fim." },
+                  { role: "user", content: `Escreva uma descrição de catálogo para o sneaker ${b.brand} ${b.model}${colorInfo}. SKU: ${b.sku || "N/A"}.` }
                 ],
                 max_tokens: 200,
                 temperature: 0.7,

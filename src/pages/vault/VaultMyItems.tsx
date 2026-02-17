@@ -67,7 +67,7 @@ export default function VaultMyItems() {
         </div>
         <h2 className="text-xl font-bold mb-2">Seu vault está vazio</h2>
         <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-          Quando você concluir compras pelo Vault Club, seus tênis aparecerão aqui com Vault ID e certificado.
+          Quando você concluir compras pelo Vault Club, seus sneakers aparecerão aqui com Vault ID e certificado.
         </p>
         <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
           <Link to="/vault/app/wishlist">

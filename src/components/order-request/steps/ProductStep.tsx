@@ -50,7 +50,7 @@ export const ProductStep = ({
           <Package className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold">Informações do Tênis</h2>
+          <h2 className="text-xl font-semibold">Informações do Sneaker</h2>
           <p className="text-sm text-muted-foreground">Detalhes do produto que você deseja</p>
         </div>
       </div>

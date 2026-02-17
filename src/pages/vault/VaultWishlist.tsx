@@ -255,7 +255,7 @@ export default function VaultWishlist() {
             
             <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
               <div className="space-y-2">
-                <Label>Nome do tênis *</Label>
+                <Label>Nome do sneaker *</Label>
                 <Input
                   value={newItem.title}
                   onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}

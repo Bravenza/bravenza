@@ -59,7 +59,7 @@ const HeroSectionComponent = () => {
             className="text-base md:text-lg text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed animate-hero-fade-up"
             style={{ animationDelay: "0.2s" }}
           >
-            A Bravenza localiza tênis exclusivos ao redor do mundo, verifica a autenticidade 
+            A Bravenza localiza sneakers exclusivos ao redor do mundo, verifica a autenticidade 
             com inspeção técnica em 5 níveis e entrega na sua porta com{" "}
             <span className="text-foreground font-medium">rastreio completo</span> e 
             segurança total.

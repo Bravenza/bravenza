@@ -143,7 +143,7 @@ Seu pedido *{order_id}* foi entregue com sucesso!
 
 📦 Produto: {product_name}
 
-Esperamos que você ame seu novo tênis! 👟
+Esperamos que você ame seu novo sneaker! 👟
 
 Em alguns dias, enviaremos um link para você avaliar sua experiência.
 

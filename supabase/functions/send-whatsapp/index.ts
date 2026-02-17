@@ -33,7 +33,7 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `Seu orçamento para *${data.product_name}* está pronto!\n\n` +
     `💰 Valor: R$ ${data.product_price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
     `Acesse o link abaixo para aprovar:\n${data.budget_url}\n\n` +
-    `_Bravenza - Sua loja de tênis premium_`,
+    `_Bravenza - Sua loja de sneakers premium_`,
 
   budget_expiring: (data) =>
     `⏰ *Último Dia, ${data.client_name}!*\n\n` +
@@ -41,7 +41,7 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `💰 Valor: R$ ${data.product_price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
     `Não perca essa oportunidade!\n` +
     `Aprove agora: ${data.budget_url}\n\n` +
-    `_Bravenza - Sua loja de tênis premium_`,
+    `_Bravenza - Sua loja de sneakers premium_`,
 
   sinal_confirmed: (data) =>
     `✅ *Pagamento Confirmado!*\n\n` +
@@ -49,7 +49,7 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `📦 Produto: ${data.product_name}\n` +
     `💰 Sinal: R$ ${data.sinal_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
     `Já estamos trabalhando na sua encomenda!\n\n` +
-    `_Bravenza - Sua loja de tênis premium_`,
+    `_Bravenza - Sua loja de sneakers premium_`,
 
   sinal_reminder: (data) =>
     `⏰ *Lembrete: Pagamento do Sinal*\n\n` +
@@ -59,7 +59,7 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `💰 Sinal: R$ ${data.sinal_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
     `Pague agora para iniciarmos a busca!\n` +
     `Acesse: https://bravenza.com.br/minha-conta\n\n` +
-    `_Bravenza - Sua loja de tênis premium_`,
+    `_Bravenza - Sua loja de sneakers premium_`,
 
   balance_confirmed: (data) =>
     `✅ *Pagamento Final Confirmado!*\n\n` +
@@ -67,7 +67,7 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `📦 Produto: ${data.product_name}\n` +
     `💰 Saldo: R$ ${data.balance_value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
     `Seu produto será enviado em breve!\n\n` +
-    `_Bravenza - Sua loja de tênis premium_`,
+    `_Bravenza - Sua loja de sneakers premium_`,
 
   status_update: (data) =>
     `📦 *Atualização do Pedido ${data.order_id}*\n\n` +
@@ -75,7 +75,7 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `Novo status: *${data.status_label}*\n` +
     `${data.notes ? `📝 ${data.notes}\n` : ''}` +
     `${data.tracking ? `🚚 Rastreio: ${data.tracking}\n` : ''}\n` +
-    `_Bravenza - Sua loja de tênis premium_`,
+    `_Bravenza - Sua loja de sneakers premium_`,
 
   review_request: (data) =>
     `⭐ *Avalie sua Experiência!*\n\n` +
@@ -85,7 +85,7 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `Sua opinião é muito importante para nós! Avalie em apenas 1 minuto:\n` +
     `${data.review_url}\n\n` +
     `Obrigado por escolher a Bravenza! ❤️\n\n` +
-    `_Bravenza - Sua loja de tênis premium_`,
+    `_Bravenza - Sua loja de sneakers premium_`,
 
   referral_confirmed: (data) =>
     `🎉 *Parabéns, ${data.referrer_name}!*\n\n` +
@@ -95,7 +95,7 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `📱 Seu código: *${data.referral_code}*\n` +
     `Continue indicando e acumule mais descontos!\n\n` +
     `Acesse sua conta para ver suas indicações:\nhttps://bravenza.com.br/minha-conta\n\n` +
-    `_Bravenza - Sua loja de tênis premium_`,
+    `_Bravenza - Sua loja de sneakers premium_`,
 
   cashback_expiring: (data) =>
     `⏰ *Atenção, ${data.referrer_name}!*\n\n` +
@@ -104,7 +104,7 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `💰 Use antes que perca!\n` +
     `O desconto pode ser aplicado no seu próximo pedido (limite de 25% do valor total).\n\n` +
     `🛒 Faça um novo pedido: https://bravenza.com.br/solicitar\n\n` +
-    `_Bravenza - Sua loja de tênis premium_`,
+    `_Bravenza - Sua loja de sneakers premium_`,
 
   vault_welcome: (data) =>
     `🏆 *Bem-vindo ao Vault Club, ${data.member_name || data.referrer_name}!*\n\n` +

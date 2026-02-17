@@ -11,7 +11,7 @@ export function TrustBadges() {
       <TrustCard
         icon={<Repeat className="h-5 w-5 text-primary" />}
         title="Compre e venda"
-        description="A Bravenza é uma plataforma de curadoria e intermediação de tênis exclusivos, proporcionando negociações seguras com total comodidade."
+        description="A Bravenza é uma plataforma de curadoria e intermediação de sneakers exclusivos, proporcionando negociações seguras com total comodidade."
       />
       <TrustCard
         icon={<ThumbsUp className="h-5 w-5 text-primary" />}

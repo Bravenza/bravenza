@@ -11,7 +11,7 @@ const benefits = [
   {
     icon: Globe,
     title: "Acesso a peças raras",
-    description: "Localizamos tênis exclusivos junto a parceiros globais que o mercado local não alcança.",
+    description: "Localizamos sneakers exclusivos junto a parceiros globais que o mercado local não alcança.",
   },
   {
     icon: Shield,

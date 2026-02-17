@@ -193,7 +193,7 @@ export default function VaultWaitlistPage() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="interests">Quais tênis você procura?</Label>
+                    <Label htmlFor="interests">Quais sneakers você procura?</Label>
                     <Textarea
                       id="interests"
                       value={formData.interests}

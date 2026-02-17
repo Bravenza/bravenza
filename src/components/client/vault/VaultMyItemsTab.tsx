@@ -65,7 +65,7 @@ export function VaultMyItemsTab({ clientCpf }: VaultMyItemsTabProps) {
         </div>
         <h3 className="text-lg font-semibold mb-2">Seu vault está vazio</h3>
         <p className="text-muted-foreground text-sm mb-4 max-w-md mx-auto">
-          Quando você concluir compras pelo Vault Club, seus tênis aparecerão aqui com Vault ID e certificado.
+          Quando você concluir compras pelo Vault Club, seus sneakers aparecerão aqui com Vault ID e certificado.
         </p>
       </div>
     );

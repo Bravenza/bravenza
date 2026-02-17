@@ -1,4 +1,4 @@
-// Dados de marcas e modelos de tênis para seletores
+// Dados de marcas e modelos de sneakers para seletores
 
 export interface BrandOption {
   value: string;

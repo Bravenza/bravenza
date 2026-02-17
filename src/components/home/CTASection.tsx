@@ -32,7 +32,7 @@ const CTASectionComponent = () => {
              <span className="text-gradient-gold">um pedido de distância</span>
            </h2>
            <p className="text-muted-foreground mb-8 max-w-xl mx-auto text-sm md:text-base">
-             Descreva o tênis que você procura e receba um orçamento personalizado.
+             Descreva o sneaker que você procura e receba um orçamento personalizado.
              Sem compromisso, com autenticidade garantida.
             </p>
 
