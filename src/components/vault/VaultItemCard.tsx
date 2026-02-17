@@ -98,9 +98,24 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
   const verificationUrl =
     item.qr_private_url || `${window.location.origin}/autenticidade/${item.vault_id}`;
 
-  const handleOpenCertificate = () => {
-    const certUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/vault-certificate`;
-    window.open(`${certUrl}?vault_item_id=${item.id}`, "_blank");
+  const handleOpenCertificate = async () => {
+    try {
+      toast.loading("Gerando certificado...", { id: "cert" });
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const apiKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const res = await fetch(
+        `${supabaseUrl}/functions/v1/vault-certificate?vault_item_id=${item.id}`,
+        { headers: { apikey: apiKey } }
+      );
+      if (!res.ok) throw new Error("Erro ao gerar certificado");
+      const html = await res.text();
+      const blob = new Blob([html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+      toast.success("Certificado gerado!", { id: "cert" });
+    } catch {
+      toast.error("Erro ao gerar certificado. Tente novamente.", { id: "cert" });
+    }
   };
 
   const handleShare = async () => {
