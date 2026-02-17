@@ -223,6 +223,29 @@
     background: hsl(42, 90%, 42%, 0.2);
     color: hsl(224, 20%, 14%);
   }
+  /* Force dark theme utility - for Header/Footer that must always stay dark */
+  .theme-dark {
+    --background: 0 0% 12%;
+    --foreground: 45 29% 97%;
+    --card: 0 0% 14%;
+    --card-foreground: 45 29% 97%;
+    --popover: 0 0% 14%;
+    --popover-foreground: 45 29% 97%;
+    --primary: 45 100% 50%;
+    --primary-foreground: 0 0% 12%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 45 29% 97%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 45 10% 60%;
+    --accent: 45 70% 45%;
+    --accent-foreground: 0 0% 12%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 45 29% 97%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 45 100% 50%;
+    color: hsl(45 29% 97%);
+  }
 }
 
 @layer base {

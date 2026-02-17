@@ -233,7 +233,7 @@ export default function ClientAuthPage() {
       </div>
 
       {/* Header */}
-      <header className="relative border-b border-border/30 bg-background/80 backdrop-blur-xl">
+      <header className="relative border-b border-border/30 bg-background/80 backdrop-blur-xl theme-dark">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         <div className="container mx-auto px-4 h-16 flex items-center justify-center">
           <Logo size="md" />

@@ -40,7 +40,7 @@ const HeaderComponent = () => {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 bg-background/80 backdrop-blur-xl">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 bg-background/80 backdrop-blur-xl theme-dark">
         {/* Subtle gradient line at top */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         
@@ -101,7 +101,7 @@ const HeaderComponent = () => {
       {/* Mobile Menu — CSS animated */}
       {menuMounted && (
         <div
-          className={`fixed inset-0 top-16 z-[55] md:hidden overflow-y-auto bg-background/95 backdrop-blur-xl transition-all duration-200 ${
+          className={`fixed inset-0 top-16 z-[55] md:hidden overflow-y-auto bg-background/95 backdrop-blur-xl transition-all duration-200 theme-dark ${
             isMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
           }`}
         >
