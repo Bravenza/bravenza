@@ -82,8 +82,8 @@ export function VaultIntelTab({ clientCpf }: VaultIntelTabProps) {
   const storyPosts = posts
     .filter((p) => new Date(p.published_at).getTime() > twentyFourHoursAgo)
     .slice(0, 12);
-  const featuredPost = filteredPosts.find((p) => p.is_featured);
-  const editorialPosts = filteredPosts.filter((p) => p.id !== featuredPost?.id);
+  const featuredPost = filter === "all" ? filteredPosts.find((p) => p.is_featured) : undefined;
+  const editorialPosts = featuredPost ? filteredPosts.filter((p) => p.id !== featuredPost.id) : filteredPosts;
 
   // Personalized
   const personalizedPosts =
