@@ -1,12 +1,12 @@
 import { memo } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, DollarSign, ShieldCheck, Zap } from "lucide-react";
+import { ArrowRight, DollarSign, ShieldCheck, Zap, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 const benefits = [
-  { icon: ShieldCheck, text: "Autenticação inclusa" },
-  { icon: DollarSign, text: "Receba em até 3 dias" },
+  { icon: ShieldCheck, text: "Verificação técnica disponível" },
+  { icon: Clock, text: "Receba em até 8 dias úteis" },
   { icon: Zap, text: "Anuncie em minutos" },
 ];
 
@@ -52,7 +52,7 @@ export const SellCTASection = memo(function SellCTASection() {
 
               <p className="text-muted-foreground text-base md:text-lg mb-8 max-w-xl mx-auto leading-relaxed">
                 Venda seus sneakers para uma comunidade que valoriza autenticidade.
-                Cada peça passa pela nossa curadoria profissional.
+                Comissões a partir de 8% e repasse em até 8 dias úteis após confirmação de recebimento.
               </p>
 
               {/* Benefits */}
