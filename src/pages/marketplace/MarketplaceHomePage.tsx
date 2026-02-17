@@ -133,16 +133,16 @@ export default function MarketplaceHomePage() {
                 className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm"
               >
                 <ShieldCheck className="h-4 w-4 text-primary" />
-                <span className="text-xs font-bold text-primary uppercase tracking-wider">Autenticidade garantida</span>
+                <span className="text-xs font-bold text-primary uppercase tracking-wider">Acesso exclusivo</span>
               </motion.div>
 
-              <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6 leading-[0.95]">
-                O marketplace dos{" "}
-                <span className="text-gradient-gold">sneakers autênticos</span>
+              <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6 leading-[0.90]">
+                Só entra quem{" "}
+                <span className="text-gradient-gold">merece usar</span>
               </h1>
 
               <p className="text-muted-foreground text-base md:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
-                Curadoria exclusiva entre colecionadores. Cada peça verificada, cada transação protegida pela <strong className="text-foreground">Bravenza</strong>.
+                O único marketplace onde <strong className="text-foreground">cada sneaker é autenticado</strong> antes de chegar nas suas mãos. Zero risco. Zero falsificação. Apenas o real.
               </p>
             </motion.div>
 
@@ -162,7 +162,7 @@ export default function MarketplaceHomePage() {
                 <Input
                   name="heroSearch"
                   placeholder="Nike Dunk, Jordan 1, Yeezy..."
-                  className="pl-12 h-14 rounded-full bg-card/80 backdrop-blur-sm border-border/40 text-base shadow-lg shadow-primary/5 focus:shadow-xl focus:shadow-primary/10 focus:ring-primary/20 focus:border-primary/30"
+                  className="pl-12 h-14 rounded-full bg-card/90 backdrop-blur-sm border-border/40 text-base shadow-lg shadow-primary/5 focus:shadow-xl focus:shadow-primary/10 focus:ring-primary/20 focus:border-primary/30"
                 />
               </div>
               <Button type="submit" size="lg" className="btn-gold rounded-full h-14 px-8 text-base font-bold shadow-lg shadow-primary/20">
