@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Bookmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -23,10 +23,12 @@ export function VaultIntelTab({ clientCpf }: VaultIntelTabProps) {
   const [storyOpen, setStoryOpen] = useState(false);
   const [storyIndex, setStoryIndex] = useState(0);
   const [favoriteBrands, setFavoriteBrands] = useState<string[]>([]);
+  const [savedPostIds, setSavedPostIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchPosts();
     fetchPreferences();
+    fetchSavedPosts();
   }, [clientCpf]);
 
   const fetchPosts = async () => {
@@ -54,12 +56,28 @@ export function VaultIntelTab({ clientCpf }: VaultIntelTabProps) {
     } catch { /* silent */ }
   };
 
+  const fetchSavedPosts = async () => {
+    try {
+      const { data } = await supabase
+        .from("vault_intel_bookmarks")
+        .select("post_id")
+        .eq("client_cpf", clientCpf);
+      if (data) {
+        setSavedPostIds(new Set(data.map((b: any) => b.post_id)));
+      }
+    } catch { /* silent */ }
+  };
+
   const openStory = (index: number) => {
     setStoryIndex(index);
     setStoryOpen(true);
   };
 
-  const filteredPosts = filter === "all" ? posts : posts.filter((p) => p.type === filter);
+  const filteredPosts = filter === "all" 
+    ? posts 
+    : filter === "saved" 
+      ? posts.filter((p) => savedPostIds.has(p.id))
+      : posts.filter((p) => p.type === filter);
   const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
   const storyPosts = posts
     .filter((p) => new Date(p.published_at).getTime() > twentyFourHoursAgo)
@@ -124,11 +142,23 @@ export function VaultIntelTab({ clientCpf }: VaultIntelTabProps) {
       {editorialPosts.length === 0 && !featuredPost ? (
         <Card className="border-dashed border-border/20 bg-card/50">
           <CardContent className="py-24 text-center">
-            <Sparkles className="h-16 w-16 text-muted-foreground mx-auto mb-5 opacity-15" />
-            <p className="text-foreground font-semibold mb-1">Nenhum drop disponível</p>
-            <p className="text-sm text-muted-foreground">
-              {filter !== "all" ? "Tente outro filtro" : "Em breve teremos novidades exclusivas"}
-            </p>
+            {filter === "saved" ? (
+              <>
+                <Bookmark className="h-16 w-16 text-muted-foreground mx-auto mb-5 opacity-15" />
+                <p className="text-foreground font-semibold mb-1">Nenhum drop salvo</p>
+                <p className="text-sm text-muted-foreground">
+                  Salve artigos que te interessam para ler depois
+                </p>
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-16 w-16 text-muted-foreground mx-auto mb-5 opacity-15" />
+                <p className="text-foreground font-semibold mb-1">Nenhum drop disponível</p>
+                <p className="text-sm text-muted-foreground">
+                  {filter !== "all" ? "Tente outro filtro" : "Em breve teremos novidades exclusivas"}
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (
