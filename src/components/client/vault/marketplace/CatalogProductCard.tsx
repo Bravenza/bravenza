@@ -76,7 +76,7 @@ export function CatalogProductCard({ product }: CatalogProductCardProps) {
             <div className="flex items-baseline gap-1.5">
               <span className="text-[10px] text-muted-foreground">a partir de</span>
               <span className="text-lg font-black text-foreground tracking-tight">
-                R$ {product.lowest_price.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
+                R$ {product.lowest_price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
           ) : (

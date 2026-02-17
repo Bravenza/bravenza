@@ -127,11 +127,11 @@ export function MarketplaceListingCard({
         {/* Price row */}
         <div className="flex items-baseline gap-2 pt-1">
           <p className="text-lg font-black text-foreground tracking-tight">
-            R$ {listing.price.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            R$ {listing.price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
           {hasDiscount && (
             <p className="text-xs text-muted-foreground line-through">
-              R$ {listing.original_purchase_price!.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              R$ {listing.original_purchase_price!.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           )}
         </div>
