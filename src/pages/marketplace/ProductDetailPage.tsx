@@ -204,7 +204,7 @@ export default function ProductDetailPage() {
   // Loading skeleton
   if (isLoading && !product) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background theme-light">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <Skeleton className="h-8 w-40 mb-8" />
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
@@ -225,7 +225,7 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background theme-light flex items-center justify-center">
         <div className="text-center space-y-4">
           <p className="text-muted-foreground">Produto não encontrado</p>
           <Button variant="outline" onClick={() => navigate("/marketplace")}>
@@ -240,7 +240,7 @@ export default function ProductDetailPage() {
   const formattedName = formatProductName(product.brand, product.model);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background theme-light">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24">
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-6">
