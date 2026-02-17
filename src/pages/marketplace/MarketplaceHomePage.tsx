@@ -133,16 +133,21 @@ export default function MarketplaceHomePage() {
                 className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm"
               >
                 <ShieldCheck className="h-4 w-4 text-primary" />
-                <span className="text-xs font-bold text-primary uppercase tracking-wider">Acesso exclusivo</span>
+                <span className="text-xs font-bold text-primary uppercase tracking-wider">Curadoria blindada</span>
               </motion.div>
 
-              <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6 leading-[0.90]">
-                Só entra quem{" "}
-                <span className="text-gradient-gold">merece usar</span>
+              <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-black tracking-tight mb-4 leading-[0.88]">
+                Aqui, <span className="text-gradient-gold">falsificação</span>
+                <br className="hidden md:block" />
+                {" "}não sobrevive
               </h1>
 
-              <p className="text-muted-foreground text-base md:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
-                O único marketplace onde <strong className="text-foreground">cada sneaker é autenticado</strong> antes de chegar nas suas mãos. Zero risco. Zero falsificação. Apenas o real.
+              <p className="text-muted-foreground text-base md:text-lg mb-4 max-w-xl mx-auto leading-relaxed">
+                O marketplace onde <strong className="text-foreground">cada par é inspecionado, certificado e garantido</strong> pela Bravenza antes de chegar até você.
+              </p>
+
+              <p className="text-xs text-muted-foreground/70 mb-10 max-w-md mx-auto tracking-wide uppercase">
+                Nenhuma fraude registrada · Autenticação em 5 níveis · Reembolso garantido
               </p>
             </motion.div>
 
@@ -267,11 +272,11 @@ export default function MarketplaceHomePage() {
       {/* ===== SECURITY & AUTHENTICITY ===== */}
       <SecuritySection />
 
-      {/* ===== SELL CTA ===== */}
-      <SellCTASection />
-
       {/* ===== RECENTLY VIEWED ===== */}
       <RecentlyViewedSection />
+
+      {/* ===== SELL CTA ===== */}
+      <SellCTASection />
 
       {/* ===== BRAND SPOTLIGHTS ===== */}
       <BrandSpotlightSection products={products} insertAfterIndex={0}>
