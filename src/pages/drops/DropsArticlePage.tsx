@@ -27,6 +27,7 @@ interface DropsPost {
   is_featured: boolean | null;
   visibility: "ALL" | "PRIVILEGE_PLUS" | "BLACK_ONLY";
   published_at: string;
+  likes_count: number;
 }
 
 const typeConfig = {
@@ -52,6 +53,9 @@ export default function DropsArticlePage() {
   const [relatedPosts, setRelatedPosts] = useState<DropsPost[]>([]);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [isTogglingLike, setIsTogglingLike] = useState(false);
+  const [isTogglingBookmark, setIsTogglingBookmark] = useState(false);
 
   // Reading progress
   const { scrollYProgress } = useScroll();
@@ -66,6 +70,13 @@ export default function DropsArticlePage() {
     if (postId && profile?.cpf) fetchPost();
   }, [postId, profile?.cpf]);
 
+  // Load like/bookmark state when post is loaded
+  useEffect(() => {
+    if (post && profile?.cpf) {
+      checkUserInteractions();
+    }
+  }, [post?.id, profile?.cpf]);
+
   const fetchPost = async () => {
     if (!profile?.cpf || !postId) return;
     setIsLoading(true);
@@ -76,6 +87,7 @@ export default function DropsArticlePage() {
         const found = allPosts.find((p) => p.id === postId);
         if (found) {
           setPost(found);
+          setLikesCount(found.likes_count || 0);
           setRelatedPosts(allPosts.filter((p) => p.id !== postId).slice(0, 3));
         }
       }
@@ -86,16 +98,120 @@ export default function DropsArticlePage() {
     }
   };
 
+  const checkUserInteractions = async () => {
+    if (!profile?.cpf || !post?.id) return;
+    try {
+      const [likeRes, bookmarkRes] = await Promise.all([
+        supabase
+          .from("vault_intel_likes")
+          .select("id")
+          .eq("post_id", post.id)
+          .eq("client_cpf", profile.cpf)
+          .maybeSingle(),
+        supabase
+          .from("vault_intel_bookmarks")
+          .select("id")
+          .eq("post_id", post.id)
+          .eq("client_cpf", profile.cpf)
+          .maybeSingle(),
+      ]);
+      setIsLiked(!!likeRes.data);
+      setIsBookmarked(!!bookmarkRes.data);
+    } catch { /* silent */ }
+  };
+
+  const toggleLike = async () => {
+    if (!profile?.cpf || !post?.id || isTogglingLike) return;
+    setIsTogglingLike(true);
+    const wasLiked = isLiked;
+
+    // Optimistic update
+    setIsLiked(!wasLiked);
+    setLikesCount((prev) => wasLiked ? Math.max(prev - 1, 0) : prev + 1);
+
+    try {
+      if (wasLiked) {
+        await supabase
+          .from("vault_intel_likes")
+          .delete()
+          .eq("post_id", post.id)
+          .eq("client_cpf", profile.cpf);
+        toast.success("Curtida removida");
+      } else {
+        await supabase
+          .from("vault_intel_likes")
+          .insert({ post_id: post.id, client_cpf: profile.cpf });
+        toast.success("Curtido! ❤️");
+      }
+    } catch {
+      // Revert on error
+      setIsLiked(wasLiked);
+      setLikesCount((prev) => wasLiked ? prev + 1 : Math.max(prev - 1, 0));
+      toast.error("Erro ao curtir");
+    } finally {
+      setIsTogglingLike(false);
+    }
+  };
+
+  const toggleBookmark = async () => {
+    if (!profile?.cpf || !post?.id || isTogglingBookmark) return;
+    setIsTogglingBookmark(true);
+    const wasSaved = isBookmarked;
+
+    setIsBookmarked(!wasSaved);
+
+    try {
+      if (wasSaved) {
+        await supabase
+          .from("vault_intel_bookmarks")
+          .delete()
+          .eq("post_id", post.id)
+          .eq("client_cpf", profile.cpf);
+        toast.success("Removido dos salvos");
+      } else {
+        await supabase
+          .from("vault_intel_bookmarks")
+          .insert({ post_id: post.id, client_cpf: profile.cpf });
+        toast.success("Salvo! Veja em Drops > Salvos");
+      }
+    } catch {
+      setIsBookmarked(wasSaved);
+      toast.error("Erro ao salvar");
+    } finally {
+      setIsTogglingBookmark(false);
+    }
+  };
+
   const formatFullDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
 
   const handleShare = useCallback(async () => {
-    if (navigator.share && post) {
+    if (!post) return;
+    const shareUrl = window.location.href;
+    
+    if (typeof navigator.share === "function") {
       try {
-        await navigator.share({ title: post.title, url: window.location.href });
-      } catch {}
-    } else {
-      await navigator.clipboard.writeText(window.location.href);
+        await navigator.share({ title: post.title, text: post.excerpt || post.title, url: shareUrl });
+        return;
+      } catch (e: any) {
+        // User cancelled or not supported, fall through to clipboard
+        if (e?.name === "AbortError") return;
+      }
+    }
+    
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Link copiado para a área de transferência!");
+    } catch {
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = shareUrl;
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
       toast.success("Link copiado!");
     }
   }, [post]);
@@ -153,7 +269,8 @@ export default function DropsArticlePage() {
               variant="ghost"
               size="icon"
               className={cn("h-9 w-9 transition-colors", isBookmarked && "text-primary")}
-              onClick={() => { setIsBookmarked(!isBookmarked); toast.success(isBookmarked ? "Removido dos salvos" : "Salvo!"); }}
+              onClick={toggleBookmark}
+              disabled={isTogglingBookmark}
             >
               <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-primary")} />
             </Button>
@@ -215,6 +332,12 @@ export default function DropsArticlePage() {
                 <span className="flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5" />
                   {post.read_time_min} min de leitura
+                </span>
+              )}
+              {likesCount > 0 && (
+                <span className="flex items-center gap-1.5">
+                  <Heart className="h-3.5 w-3.5 fill-destructive text-destructive" />
+                  {likesCount}
                 </span>
               )}
             </div>
@@ -317,7 +440,8 @@ export default function DropsArticlePage() {
         {/* Reaction bar */}
         <div className="mt-14 flex items-center justify-center gap-2 sm:gap-4 flex-wrap">
           <button
-            onClick={() => { setIsLiked(!isLiked); toast.success(isLiked ? "Curtida removida" : "Curtido! ❤️"); }}
+            onClick={toggleLike}
+            disabled={isTogglingLike}
             className={cn(
               "flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full border transition-all duration-300 min-h-[44px]",
               isLiked
@@ -326,10 +450,14 @@ export default function DropsArticlePage() {
             )}
           >
             <Heart className={cn("h-4 w-4", isLiked && "fill-destructive")} />
-            <span className="text-sm font-medium">{isLiked ? "Curtido" : "Curtir"}</span>
+            <span className="text-sm font-medium">
+              {isLiked ? "Curtido" : "Curtir"}
+              {likesCount > 0 && ` (${likesCount})`}
+            </span>
           </button>
           <button
-            onClick={() => { setIsBookmarked(!isBookmarked); toast.success(isBookmarked ? "Removido" : "Salvo!"); }}
+            onClick={toggleBookmark}
+            disabled={isTogglingBookmark}
             className={cn(
               "flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full border transition-all duration-300 min-h-[44px]",
               isBookmarked

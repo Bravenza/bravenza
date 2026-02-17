@@ -1946,6 +1946,64 @@ export type Database = {
           },
         ]
       }
+      vault_intel_bookmarks: {
+        Row: {
+          client_cpf: string
+          created_at: string
+          id: string
+          post_id: string
+        }
+        Insert: {
+          client_cpf: string
+          created_at?: string
+          id?: string
+          post_id: string
+        }
+        Update: {
+          client_cpf?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_intel_bookmarks_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "vault_intel_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_intel_likes: {
+        Row: {
+          client_cpf: string
+          created_at: string
+          id: string
+          post_id: string
+        }
+        Insert: {
+          client_cpf: string
+          created_at?: string
+          id?: string
+          post_id: string
+        }
+        Update: {
+          client_cpf?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_intel_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "vault_intel_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vault_intel_posts: {
         Row: {
           content: string
@@ -1956,6 +2014,7 @@ export type Database = {
           external_link: string | null
           id: string
           is_featured: boolean | null
+          likes_count: number
           media_urls: string[] | null
           published_at: string | null
           read_time_min: number | null
@@ -1975,6 +2034,7 @@ export type Database = {
           external_link?: string | null
           id?: string
           is_featured?: boolean | null
+          likes_count?: number
           media_urls?: string[] | null
           published_at?: string | null
           read_time_min?: number | null
@@ -1994,6 +2054,7 @@ export type Database = {
           external_link?: string | null
           id?: string
           is_featured?: boolean | null
+          likes_count?: number
           media_urls?: string[] | null
           published_at?: string | null
           read_time_min?: number | null
@@ -3834,6 +3895,7 @@ export type Database = {
           external_link: string
           id: string
           is_featured: boolean
+          likes_count: number
           media_urls: string[]
           published_at: string
           read_time_min: number
