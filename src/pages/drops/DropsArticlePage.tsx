@@ -102,7 +102,7 @@ export default function DropsArticlePage() {
 
   if (sessionLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background theme-light">
         <div className="h-[55vh] bg-muted/10 animate-pulse" />
         <div className="max-w-3xl mx-auto px-4 -mt-16 relative z-10 space-y-4">
           <div className="h-10 w-72 bg-muted/15 rounded-lg animate-pulse" />
@@ -115,7 +115,7 @@ export default function DropsArticlePage() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 theme-light">
         <p className="text-muted-foreground">Artigo não encontrado</p>
         <Button variant="outline" onClick={() => navigate("/minha-conta?tab=drops")}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Voltar para Drops
@@ -128,7 +128,7 @@ export default function DropsArticlePage() {
   const TypeIcon = config.icon;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background theme-light">
       {/* Reading progress bar */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-[3px] bg-primary z-[60] origin-left"

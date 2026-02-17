@@ -83,7 +83,7 @@ const AdminLayout = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex">
+      <div className="min-h-screen bg-background flex theme-light">
         <div className="w-64 border-r border-border/30 p-4 bg-card/50">
           <Skeleton className="h-8 w-32 mb-8" />
           <div className="space-y-2">
@@ -105,7 +105,7 @@ const AdminLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex relative">
+    <div className="min-h-screen bg-background flex relative theme-light">
       {/* Background Effects */}
       <div className="fixed inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
       <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
