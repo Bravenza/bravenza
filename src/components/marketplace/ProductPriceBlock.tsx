@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { generateInstallmentOptions, formatPriceBR } from "@/lib/budget-calculator";
+import { ChevronDown, ChevronUp, CreditCard, QrCode } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ProductPriceBlockProps {
   displayPrice: number | null;
@@ -10,47 +12,64 @@ export function ProductPriceBlock({ displayPrice, showPrefix }: ProductPriceBloc
   const [showInstallments, setShowInstallments] = useState(false);
 
   if (!displayPrice) {
-    return <p className="text-3xl font-bold text-foreground">Sem ofertas</p>;
+    return <p className="text-3xl font-black text-foreground tracking-tight">Sem ofertas</p>;
   }
 
   const installments12 = generateInstallmentOptions(displayPrice).find(o => o.installments === 12);
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       {showPrefix && (
-        <span className="text-xs text-muted-foreground">A partir de</span>
+        <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">A partir de</span>
       )}
-      <p className="text-3xl font-bold text-foreground">
+      <p className="text-4xl md:text-5xl font-black text-foreground tracking-tight">
         R$ {displayPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
       </p>
-      {installments12 && (
-        <p className="text-sm text-muted-foreground">
-          ou <span className="font-medium text-foreground">12x de {formatPriceBR(installments12.installmentValue)}</span>
-        </p>
-      )}
+      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+        {installments12 && (
+          <span className="inline-flex items-center gap-1">
+            <CreditCard className="h-3.5 w-3.5" />
+            12x de <span className="font-semibold text-foreground">{formatPriceBR(installments12.installmentValue)}</span>
+          </span>
+        )}
+        <span className="inline-flex items-center gap-1">
+          <QrCode className="h-3.5 w-3.5" />
+          PIX à vista
+        </span>
+      </div>
       <button
         onClick={() => setShowInstallments(!showInstallments)}
-        className="text-xs text-primary hover:underline mt-0.5"
+        className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium mt-1"
       >
         {showInstallments ? "Ocultar parcelas" : "Ver todas as parcelas"}
+        {showInstallments ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
       </button>
-      {showInstallments && (
-        <div className="mt-2 p-3 bg-muted/20 rounded-xl border border-border/30 space-y-1">
-          {generateInstallmentOptions(displayPrice).map((opt) => (
-            <div key={opt.installments} className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">
-                {opt.installments}x de <span className="font-medium text-foreground">{formatPriceBR(opt.installmentValue)}</span>
-              </span>
-              <span className="text-muted-foreground/60">
-                {opt.installments === 1 ? "sem juros" : `total ${formatPriceBR(opt.totalWithInterest)}`}
-              </span>
+      <AnimatePresence>
+        {showInstallments && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-2 p-4 bg-muted/10 rounded-xl border border-border/20 space-y-1.5">
+              {generateInstallmentOptions(displayPrice).map((opt) => (
+                <div key={opt.installments} className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    {opt.installments}x de <span className="font-semibold text-foreground">{formatPriceBR(opt.installmentValue)}</span>
+                  </span>
+                  <span className="text-muted-foreground/50">
+                    {opt.installments === 1 ? "sem juros" : `total ${formatPriceBR(opt.totalWithInterest)}`}
+                  </span>
+                </div>
+              ))}
+              <div className="text-[10px] text-muted-foreground/50 pt-2 border-t border-border/20 mt-2">
+                PIX à vista: {formatPriceBR(displayPrice)} · Cartão 1x sem juros
+              </div>
             </div>
-          ))}
-          <p className="text-[10px] text-muted-foreground/50 pt-1 border-t border-border/20 mt-1">
-            PIX à vista: {formatPriceBR(displayPrice)} · Cartão 1x sem juros
-          </p>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
