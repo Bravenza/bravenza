@@ -27,9 +27,11 @@ function SectionSkeleton({ height = "400px" }: { height?: string }) {
 }
 
 // Lazy-load below-fold sections — they won't be in the initial bundle
+const SocialProofBar = lazy(() => import("@/components/home/SocialProofBar").then(m => ({ default: m.SocialProofBar })));
 const FeaturedModelsSection = lazy(() => import("@/components/home/FeaturedModelsSection"));
 const HowItWorksSection = lazy(() => import("@/components/home/HowItWorksSection").then(m => ({ default: m.HowItWorksSection })));
 const BenefitsSection = lazy(() => import("@/components/home/BenefitsSection").then(m => ({ default: m.BenefitsSection })));
+const MarketplaceSection = lazy(() => import("@/components/home/MarketplaceSection").then(m => ({ default: m.MarketplaceSection })));
 const VaultClubSection = lazy(() => import("@/components/home/VaultClubSection").then(m => ({ default: m.VaultClubSection })));
 const ReferralSection = lazy(() => import("@/components/home/ReferralSection").then(m => ({ default: m.ReferralSection })));
 const FeaturedReviews = lazy(() => import("@/components/home/FeaturedReviews").then(m => ({ default: m.FeaturedReviews })));
@@ -62,13 +64,21 @@ const Index = () => {
           <HeroSection />
           <BrandsCarousel />
           
-          {/* Below-the-fold — lazy rendered + lazy imported */}
+          {/* Social Proof Bar */}
+          <LazySection minHeight="150px">
+            <Suspense fallback={<SectionSkeleton height="150px" />}>
+              <SocialProofBar />
+            </Suspense>
+          </LazySection>
+          
+          {/* Featured Models */}
           <LazySection minHeight="400px">
             <Suspense fallback={<SectionSkeleton height="400px" />}>
               <FeaturedModelsSection />
             </Suspense>
           </LazySection>
           
+          {/* How It Works */}
           <LazySection minHeight="500px">
             <Suspense fallback={<SectionSkeleton height="500px" />}>
               <div id="como-funciona">
@@ -77,12 +87,23 @@ const Index = () => {
             </Suspense>
           </LazySection>
           
+          {/* Benefits */}
           <LazySection minHeight="400px">
             <Suspense fallback={<SectionSkeleton height="400px" />}>
               <BenefitsSection />
             </Suspense>
           </LazySection>
 
+          {/* Marketplace */}
+          <LazySection minHeight="500px">
+            <Suspense fallback={<SectionSkeleton height="500px" />}>
+              <div id="marketplace">
+                <MarketplaceSection />
+              </div>
+            </Suspense>
+          </LazySection>
+
+          {/* Vault Club */}
           <LazySection minHeight="500px">
             <Suspense fallback={<SectionSkeleton height="500px" />}>
               <div id="vault-club">
@@ -91,6 +112,7 @@ const Index = () => {
             </Suspense>
           </LazySection>
           
+          {/* Referral */}
           <LazySection minHeight="400px">
             <Suspense fallback={<SectionSkeleton height="400px" />}>
               <div id="indicacao">
@@ -99,24 +121,28 @@ const Index = () => {
             </Suspense>
           </LazySection>
           
+          {/* Reviews */}
           <LazySection minHeight="300px">
             <Suspense fallback={<SectionSkeleton height="300px" />}>
               <FeaturedReviews />
             </Suspense>
           </LazySection>
           
+          {/* Testimonials */}
           <LazySection minHeight="300px">
             <Suspense fallback={<SectionSkeleton height="300px" />}>
               <TestimonialsSection />
             </Suspense>
           </LazySection>
           
+          {/* FAQ */}
           <LazySection minHeight="400px">
             <Suspense fallback={<SectionSkeleton height="400px" />}>
               <FAQSection />
             </Suspense>
           </LazySection>
           
+          {/* Final CTA */}
           <LazySection minHeight="300px">
             <Suspense fallback={<SectionSkeleton height="300px" />}>
               <CTASection />

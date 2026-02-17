@@ -64,14 +64,14 @@ const VaultClubSectionComponent = () => {
               </span>
             </div>
 
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-5 tracking-tight">
-              Curadoria sob demanda.{" "}
-              <span className="text-gradient-gold">Autenticidade garantida.</span>
-            </h2>
+           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-5 tracking-tight">
+             O clube dos que não aceitam{" "}
+             <span className="text-gradient-gold">qualquer tênis.</span>
+           </h2>
 
-            <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
-              O Bravenza Vault Club é um ecossistema fechado para colecionadores.
-              Não existe catálogo. Existe a sua busca e a nossa dedicação.
+           <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
+             O Vault Club é um ecossistema fechado para colecionadores e entusiastas.
+             Curadoria personalizada, certificação digital e acesso a drops exclusivos.
             </p>
           </div>
 

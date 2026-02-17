@@ -65,13 +65,13 @@ const HowItWorksSectionComponent = () => {
           className="text-center mb-16"
         >
           <span className="text-primary text-sm font-medium tracking-wider uppercase mb-3 block">
-            Processo
-          </span>
-          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4 tracking-tight">
-            Simples assim: <span className="text-gradient-gold">5 Passos</span>
-          </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            Do pedido à entrega, você acompanha tudo. Transparência total.
+           Processo
+         </span>
+         <h2 className="font-display text-3xl md:text-4xl font-bold mb-4 tracking-tight">
+           Da busca à entrega em <span className="text-gradient-gold">5 passos</span>
+         </h2>
+         <p className="text-muted-foreground max-w-xl mx-auto">
+           Você pede, nós localizamos, autenticamos e entregamos. Transparência total em cada etapa.
           </p>
         </motion.div>
 

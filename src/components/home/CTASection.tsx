@@ -27,13 +27,13 @@ const CTASectionComponent = () => {
           </div>
 
           <div className="relative z-10">
-            <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold mb-5 tracking-tight">
-              O tênis perfeito está{" "}
-              <span className="text-gradient-gold">te esperando</span>
-            </h2>
-            <p className="text-muted-foreground mb-8 max-w-xl mx-auto text-sm md:text-base">
-              Chega de procurar e não encontrar. Sua próxima aquisição começa aqui, 
-              com segurança, transparência e garantia de originalidade.
+           <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold mb-5 tracking-tight">
+             Seu próximo grail está a{" "}
+             <span className="text-gradient-gold">um pedido de distância</span>
+           </h2>
+           <p className="text-muted-foreground mb-8 max-w-xl mx-auto text-sm md:text-base">
+             Descreva o tênis que você procura e receba um orçamento personalizado.
+             Sem compromisso, com autenticidade garantida.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
