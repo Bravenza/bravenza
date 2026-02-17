@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -17,65 +17,70 @@ export function CatalogProductCard({ product }: CatalogProductCardProps) {
 
   return (
     <motion.div
-      className="group cursor-pointer"
+      className="group cursor-pointer rounded-2xl overflow-hidden bg-card border border-border/30 hover:border-primary/30 transition-all duration-300 hover:shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.15)]"
       onClick={() => navigate(`/marketplace/${product.slug}`)}
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.2 }}
+      whileHover={{ y: -6 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
       {/* Image */}
-      <div className="relative aspect-square rounded-xl overflow-hidden bg-muted/10 border border-border/20">
+      <div className="relative aspect-[4/3] bg-muted/5 overflow-hidden">
         {mainImage ? (
           <img
             src={mainImage}
             alt={name}
-            className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-700 ease-out"
             loading="lazy"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <span className="text-3xl opacity-20">👟</span>
+            <span className="text-4xl opacity-10">👟</span>
           </div>
         )}
 
-        {/* Offers count badge */}
-        {product.total_offers > 0 && (
-          <div className="absolute bottom-2 right-2">
-            <Badge variant="secondary" className="text-[10px] bg-background/80 backdrop-blur-sm border-border/30">
-              {product.total_offers} oferta{product.total_offers !== 1 ? "s" : ""}
-            </Badge>
-          </div>
-        )}
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent opacity-60" />
 
+        {/* Top badges */}
         {product.is_high_risk && (
-          <div className="absolute top-2 left-2">
-            <Badge className="text-[9px] bg-primary/90 text-primary-foreground border-0 gap-0.5">
-              <ShieldCheck className="h-2.5 w-2.5" /> PRO recomendado
+          <div className="absolute top-3 left-3">
+            <Badge className="text-[9px] px-2 py-0.5 bg-primary text-primary-foreground border-0 gap-1 font-bold uppercase tracking-wider">
+              <ShieldCheck className="h-3 w-3" /> PRO
             </Badge>
+          </div>
+        )}
+
+        {/* Offers count */}
+        {product.total_offers > 0 && (
+          <div className="absolute top-3 right-3">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-background/80 backdrop-blur-md text-[10px] font-semibold text-foreground border border-border/30">
+              <TrendingUp className="h-2.5 w-2.5 text-primary" />
+              {product.total_offers}
+            </span>
           </div>
         )}
       </div>
 
       {/* Info */}
-      <div className="pt-3 px-0.5 space-y-1">
-        <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
+      <div className="p-4 space-y-2">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-[0.15em] font-semibold">
           {product.brand}
         </p>
-        <p className="text-sm font-semibold leading-tight line-clamp-2 text-foreground">
+        <p className="text-sm font-bold leading-snug line-clamp-2 text-foreground group-hover:text-primary transition-colors duration-300">
           {name}
         </p>
         {product.colorway && (
-          <p className="text-[11px] text-muted-foreground">{product.colorway}</p>
+          <p className="text-[11px] text-muted-foreground/70">{product.colorway}</p>
         )}
-        <div className="flex flex-col gap-0.5 pt-0.5">
+        <div className="pt-2 border-t border-border/20">
           {product.lowest_price ? (
-            <>
-              <span className="text-[10px] text-muted-foreground">A partir de</span>
-              <span className="text-base font-bold text-foreground">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-[10px] text-muted-foreground">a partir de</span>
+              <span className="text-lg font-black text-foreground tracking-tight">
                 R$ {product.lowest_price.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
               </span>
-            </>
+            </div>
           ) : (
-            <span className="text-xs text-muted-foreground">Sem ofertas</span>
+            <span className="text-xs text-muted-foreground/60 italic">Sem ofertas</span>
           )}
         </div>
       </div>

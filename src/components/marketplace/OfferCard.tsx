@@ -1,4 +1,4 @@
-import { Star, Verified, ChevronRight } from "lucide-react";
+import { Star, Verified, ChevronRight, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -27,71 +27,94 @@ export function OfferCard({ offer, isBest, productImages, onBuy, onClick }: Offe
     <div
       onClick={onClick}
       className={cn(
-        "rounded-xl border overflow-hidden transition-all hover:shadow-md cursor-pointer",
-        isBest ? "border-primary/40 ring-1 ring-primary/20" : "border-border/40"
+        "group rounded-2xl border overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.12)] cursor-pointer bg-card",
+        isBest ? "border-primary/50 ring-2 ring-primary/15" : "border-border/30 hover:border-primary/30"
       )}
     >
       {/* Offer photo */}
-      <div className="relative aspect-[4/3] bg-muted/10">
-        <img src={offerImage} alt="" className="w-full h-full object-contain p-2" loading="lazy" />
+      <div className="relative aspect-[4/3] bg-muted/5 overflow-hidden">
+        <img
+          src={offerImage}
+          alt=""
+          className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
+          loading="lazy"
+        />
         {isBest && (
-          <Badge className="absolute top-2 left-2 text-[10px] px-1.5 py-0 bg-primary text-primary-foreground">
-            Melhor preço
-          </Badge>
+          <div className="absolute top-3 left-3">
+            <Badge className="text-[9px] px-2 py-0.5 bg-primary text-primary-foreground border-0 font-bold uppercase tracking-wider">
+              Melhor preço
+            </Badge>
+          </div>
         )}
-        <Badge variant="outline" className={cn("absolute top-2 right-2 text-[10px] px-1.5 py-0 gap-0.5", conditionColors[offer.condition])}>
-          {conditionLabels[offer.condition] || offer.condition}
-        </Badge>
+        <div className="absolute top-3 right-3">
+          <Badge
+            variant="outline"
+            className={cn(
+              "text-[9px] px-2 py-0.5 backdrop-blur-md font-semibold border",
+              conditionColors[offer.condition]
+            )}
+          >
+            {conditionLabels[offer.condition] || offer.condition}
+          </Badge>
+        </div>
       </div>
 
-      <div className="p-3 space-y-2">
-        {/* Seller */}
+      <div className="p-4 space-y-3">
+        {/* Seller row */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-foreground">{sellerName}</span>
+          <div className="h-6 w-6 rounded-full bg-muted/50 flex items-center justify-center text-[10px] font-bold text-muted-foreground uppercase">
+            {sellerName[0]}
+          </div>
+          <span className="text-xs font-semibold text-foreground">{sellerName}</span>
           {offer.seller?.total_sales_count && offer.seller.total_sales_count > 0 ? (
             <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
-              <Verified className="h-2.5 w-2.5 text-primary" />
-              {offer.seller.total_sales_count} vendas
+              <Verified className="h-3 w-3 text-primary" />
+              {offer.seller.total_sales_count}
             </span>
           ) : null}
           {offer.seller?.average_rating && offer.seller.average_rating > 0 ? (
             <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground ml-auto">
-              <Star className="h-2.5 w-2.5 text-primary fill-primary" />
+              <Star className="h-3 w-3 text-primary fill-primary" />
               {offer.seller.average_rating.toFixed(1)}
             </span>
           ) : null}
         </div>
 
         {/* Badges */}
-        <div className="flex flex-wrap gap-1">
-          <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 gap-0.5", pro.color)}>
-            <ProIcon className="h-2.5 w-2.5" />
+        <div className="flex flex-wrap gap-1.5">
+          <Badge variant="outline" className={cn("text-[9px] px-2 py-0.5 gap-0.5 font-medium", pro.color)}>
+            <ProIcon className="h-3 w-3" />
             {pro.text}
           </Badge>
           {offer.has_receipt && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+            <Badge variant="outline" className="text-[9px] px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border-emerald-500/20 gap-0.5">
+              <Receipt className="h-3 w-3" />
               NF
             </Badge>
           )}
         </div>
 
         {/* Price + CTA */}
-        <div className="flex items-center justify-between pt-1">
+        <div className="flex items-end justify-between pt-2 border-t border-border/20">
           <div>
-            <p className="text-lg font-bold text-foreground">
+            <p className="text-xl font-black text-foreground tracking-tight">
               R$ {offer.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </p>
             {(() => {
               const inst12 = generateInstallmentOptions(offer.price).find(o => o.installments === 12);
               return inst12 ? (
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-[10px] text-muted-foreground mt-0.5">
                   12x de {formatPriceBR(inst12.installmentValue)}
                 </p>
               ) : null;
             })()}
           </div>
-          <Button size="sm" className="btn-gold text-xs h-8 gap-1" onClick={(e) => { e.stopPropagation(); onBuy(); }}>
-            Comprar <ChevronRight className="h-3 w-3" />
+          <Button
+            size="sm"
+            className="btn-gold text-xs h-9 gap-1 rounded-xl font-bold"
+            onClick={(e) => { e.stopPropagation(); onBuy(); }}
+          >
+            Comprar <ChevronRight className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>

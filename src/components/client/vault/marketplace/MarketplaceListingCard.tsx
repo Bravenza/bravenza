@@ -1,5 +1,4 @@
 import { Heart, ShieldCheck, Star, Verified } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { MarketplaceListing } from "@/hooks/useMarketplace";
@@ -38,41 +37,39 @@ export function MarketplaceListingCard({
 
   return (
     <motion.div
-      className="group cursor-pointer"
+      className="group cursor-pointer rounded-2xl overflow-hidden bg-card border border-border/30 hover:border-primary/30 transition-all duration-300 hover:shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.15)]"
       onClick={() => onSelect(listing)}
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.2 }}
+      whileHover={{ y: -6 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
-      {/* Image Container - Clean, no borders */}
-      <div className="relative aspect-square rounded-xl overflow-hidden bg-[hsl(0,0%,18%)]">
+      {/* Image Container */}
+      <div className="relative aspect-square overflow-hidden bg-muted/5">
         {mainPhoto ? (
           <img
             src={mainPhoto}
             alt={listing.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
             loading="lazy"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <div className="w-16 h-16 rounded-full bg-muted/30 flex items-center justify-center">
-              <span className="text-2xl opacity-30">👟</span>
-            </div>
+            <span className="text-4xl opacity-10">👟</span>
           </div>
         )}
 
-        {/* Gradient overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
-        {/* Top-left: Certification badges */}
-        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5">
+        {/* Top-left badges */}
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5">
           {listing.is_vault_certified && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/90 text-primary-foreground text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary text-primary-foreground text-[9px] font-bold uppercase tracking-[0.1em] backdrop-blur-sm">
               <ShieldCheck className="h-3 w-3" />
               Certificado
             </span>
           )}
           {hasDiscount && (
-            <span className="inline-flex items-center px-2 py-1 rounded-md bg-emerald-500/90 text-white text-[10px] font-bold backdrop-blur-sm">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-emerald-500 text-white text-[10px] font-black backdrop-blur-sm">
               -{discountPercent}%
             </span>
           )}
@@ -82,7 +79,7 @@ export function MarketplaceListingCard({
         <Button
           variant="ghost"
           size="icon"
-          className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/40 backdrop-blur-md hover:bg-black/60 border-0"
+          className="absolute top-3 right-3 h-9 w-9 rounded-full bg-black/30 backdrop-blur-md hover:bg-black/50 border border-white/10"
           onClick={(e) => {
             e.stopPropagation();
             onToggleFavorite(listing.id);
@@ -98,44 +95,38 @@ export function MarketplaceListingCard({
           />
         </Button>
 
-        {/* Bottom: Condition pill */}
-        <div className="absolute bottom-2.5 left-2.5">
+        {/* Bottom overlays */}
+        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
           <span className={cn(
-            "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border backdrop-blur-sm",
+            "inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-semibold border backdrop-blur-md",
             conditionColors[listing.condition] || conditionColors.usado_bom
           )}>
             {conditionLabels[listing.condition] || listing.condition}
           </span>
-        </div>
-
-        {/* Bottom-right: Size */}
-        {listing.size && (
-          <div className="absolute bottom-2.5 right-2.5">
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-black/50 backdrop-blur-sm text-white text-[10px] font-medium border border-white/10">
+          {listing.size && (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md text-white text-[11px] font-bold border border-white/10">
               {listing.size}
             </span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Info - Minimal, clean typography */}
-      <div className="pt-3 px-0.5 space-y-1.5">
-        {/* Brand + Model */}
+      {/* Info */}
+      <div className="p-4 space-y-2">
         {listing.brand && (
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-[0.15em] font-semibold">
             {listing.brand}
             {listing.model ? ` · ${listing.model}` : ""}
           </p>
         )}
 
-        {/* Title */}
-        <p className="text-sm font-semibold leading-tight line-clamp-2 text-foreground">
+        <p className="text-sm font-bold leading-snug line-clamp-2 text-foreground group-hover:text-primary transition-colors duration-300">
           {listing.title}
         </p>
 
         {/* Price row */}
-        <div className="flex items-baseline gap-2">
-          <p className="text-base font-bold text-foreground">
+        <div className="flex items-baseline gap-2 pt-1">
+          <p className="text-lg font-black text-foreground tracking-tight">
             R$ {listing.price.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
           </p>
           {hasDiscount && (
@@ -147,19 +138,22 @@ export function MarketplaceListingCard({
 
         {/* Seller trust row */}
         {listing.seller?.member && (
-          <div className="flex items-center gap-1.5 pt-0.5">
+          <div className="flex items-center gap-2 pt-2 border-t border-border/20">
+            <div className="h-5 w-5 rounded-full bg-muted/50 flex items-center justify-center text-[9px] font-bold text-muted-foreground uppercase">
+              {listing.seller.member.client_name[0]}
+            </div>
+            <span className="text-[11px] font-medium text-muted-foreground">
+              {listing.seller.member.client_name.split(" ")[0]}
+            </span>
             {listing.seller.average_rating && listing.seller.average_rating > 0 ? (
-              <span className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground">
+              <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground ml-auto">
                 <Star className="h-3 w-3 text-primary fill-primary" />
                 {listing.seller.average_rating.toFixed(1)}
               </span>
             ) : null}
-            <span className="text-[11px] text-muted-foreground">
-              {listing.seller.member.client_name.split(" ")[0]}
-            </span>
             {listing.seller.total_sales_count > 0 && (
               <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                <Verified className="h-2.5 w-2.5 text-primary" />
+                <Verified className="h-3 w-3 text-primary" />
                 {listing.seller.total_sales_count}
               </span>
             )}
