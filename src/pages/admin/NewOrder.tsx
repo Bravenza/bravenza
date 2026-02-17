@@ -588,7 +588,7 @@ const NewOrder = () => {
           {/* Product info */}
           <Card className="card-premium lg:col-span-2">
             <CardHeader>
-              <CardTitle>Dados do Tênis</CardTitle>
+              <CardTitle>Dados do Sneaker</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-3 gap-4">

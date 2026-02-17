@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => ({
       manifest: {
         name: "BRAVENZA - Curadoria & Autenticação Premium",
         short_name: "BRAVENZA",
-        description: "Plataforma premium de curadoria e autenticação de tênis. Segurança e autenticidade garantidas.",
+        description: "Plataforma premium de curadoria e autenticação de sneakers. Segurança e autenticidade garantidas.",
         id: "/",
         theme_color: "#1f1f1f",
         background_color: "#1f1f1f",

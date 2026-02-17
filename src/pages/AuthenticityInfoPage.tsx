@@ -22,7 +22,7 @@ const VERIFICATION_STEPS = [
     step: 2,
     icon: Camera,
     title: "Inspeção visual detalhada",
-    description: "Nossa equipe realiza uma análise minuciosa de cada tênis: costuras, acabamentos, materiais, etiquetas e todos os detalhes que diferenciam um produto original."
+    description: "Nossa equipe realiza uma análise minuciosa de cada sneaker: costuras, acabamentos, materiais, etiquetas e todos os detalhes que diferenciam um produto original."
   },
   {
     step: 3,
@@ -59,7 +59,7 @@ const AUTHENTICITY_POINTS = [
   {
     icon: Users,
     title: "Equipe especializada",
-    description: "Profissionais com anos de experiência no mercado de tênis premium e itens de colecionador."
+    description: "Profissionais com anos de experiência no mercado de sneakers premium e itens de colecionador."
   },
   {
     icon: Shield,
@@ -106,7 +106,7 @@ function AuthenticityInfoPageComponent() {
         <title>Garantia de autenticidade | BRAVENZA</title>
         <meta 
           name="description" 
-          content="Entenda como a Bravenza garante a autenticidade de cada tênis. Processo de verificação rigoroso com certificação digital e garantia de devolução." 
+          content="Entenda como a Bravenza garante a autenticidade de cada sneaker. Processo de verificação rigoroso com certificação digital e garantia de devolução." 
         />
         <meta property="og:title" content="Garantia de autenticidade | BRAVENZA" />
         <meta property="og:description" content="Processo de verificação rigoroso com certificação digital." />
@@ -146,7 +146,7 @@ function AuthenticityInfoPageComponent() {
               variants={fadeInUp}
               className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto"
             >
-              Cada tênis que passa pela Bravenza é submetido a um rigoroso processo de verificação técnica. 
+              Cada sneaker que passa pela Bravenza é submetido a um rigoroso processo de verificação técnica. 
               Nosso compromisso é reduzir riscos e garantir transparência em cada transação.
             </motion.p>
 
@@ -257,7 +257,7 @@ function AuthenticityInfoPageComponent() {
               viewport={{ once: true }}
             >
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                O que verificamos em cada tênis
+                O que verificamos em cada sneaker
               </h2>
               <p className="text-muted-foreground mb-8">
                 Nossa inspeção é minuciosa e abrange todos os aspectos que diferenciam 
@@ -348,7 +348,7 @@ function AuthenticityInfoPageComponent() {
               Por que confiar na Bravenza
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Não somos apenas intermediários. Somos especialistas apaixonados por tênis 
+              Não somos apenas intermediários. Somos especialistas apaixonados por sneakers 
               que levam a autenticidade a sério.
             </p>
           </motion.div>
@@ -529,10 +529,10 @@ function AuthenticityInfoPageComponent() {
             className="text-center max-w-2xl mx-auto"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Pronto para encontrar seu próximo tênis?
+              Pronto para encontrar seu próximo sneaker?
             </h2>
             <p className="text-muted-foreground mb-8">
-              Solicite um orçamento e deixe nossa equipe encontrar o tênis dos seus sonhos 
+              Solicite um orçamento e deixe nossa equipe encontrar o sneaker dos seus sonhos 
               com verificação técnica e proteção em cada etapa.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">

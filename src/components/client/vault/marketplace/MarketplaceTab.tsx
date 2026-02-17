@@ -236,7 +236,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
             Marketplace
           </h2>
           <p className="text-sm text-muted-foreground">
-            Compre e venda tênis entre colecionadores
+            Compre e venda sneakers entre colecionadores
           </p>
         </div>
         {isSellerApproved && (
@@ -424,7 +424,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
                           <Store className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-30" />
                           <h3 className="font-medium mb-1">Nenhum anúncio criado</h3>
                           <p className="text-sm text-muted-foreground mb-4">
-                            Comece a vender seus tênis no marketplace
+                            Comece a vender seus sneakers no marketplace
                           </p>
                           {isSellerApproved && (
                             <CreateListingDialog onSubmit={handleCreateOffer} searchProducts={searchProducts} createProduct={createProduct} vaultItems={vaultItems} />

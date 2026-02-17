@@ -213,7 +213,7 @@ export default function OrderRequestPage() {
       }
       case 3: {
         if (!formData.shoe_size) {
-          toast.error("Selecione o tamanho do tênis");
+          toast.error("Selecione o tamanho do sneaker");
           return false;
         }
         // Validate brand - either selected brand or custom brand when "other"
@@ -221,7 +221,7 @@ export default function OrderRequestPage() {
           ? formData.product_brand && formData.product_brand !== "other"
           : selectedBrand;
         if (!hasBrand) {
-          toast.error("Selecione a marca do tênis");
+          toast.error("Selecione a marca do sneaker");
           return false;
         }
         // Validate model - either selected model or custom model when "other"
@@ -229,11 +229,11 @@ export default function OrderRequestPage() {
           ? formData.custom_model
           : formData.product_model;
         if (!hasModel) {
-          toast.error("Selecione ou informe o modelo do tênis");
+          toast.error("Selecione ou informe o modelo do sneaker");
           return false;
         }
         if (!formData.product_color) {
-          toast.error("Informe a cor do tênis");
+          toast.error("Informe a cor do sneaker");
           return false;
         }
         return true;
@@ -344,7 +344,7 @@ export default function OrderRequestPage() {
             target: "admin",
             type: "new_order_request",
             title: "Nova Solicitação de Pedido",
-            message: `${formData.client_name} solicitou um orçamento para ${finalBrand || "tênis"} ${finalModel || ""} tamanho ${formData.shoe_size}`,
+            message: `${formData.client_name} solicitou um orçamento para ${finalBrand || "sneaker"} ${finalModel || ""} tamanho ${formData.shoe_size}`,
             reference_type: "order_request",
           },
         });

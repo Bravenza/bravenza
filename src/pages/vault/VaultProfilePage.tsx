@@ -522,9 +522,9 @@ export default function VaultProfilePage() {
             {vaultItems.length === 0 ? (
               <div className="text-center py-8">
                 <ShoppingBag className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">Nenhum tênis na coleção ainda</p>
+                <p className="text-sm text-muted-foreground">Nenhum sneaker na coleção ainda</p>
                 <p className="text-xs text-muted-foreground/60 mt-1">
-                  Seus tênis verificados aparecerão aqui
+                  Seus sneakers verificados aparecerão aqui
                 </p>
               </div>
             ) : (

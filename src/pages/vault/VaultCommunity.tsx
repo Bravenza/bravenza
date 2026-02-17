@@ -204,7 +204,7 @@ export default function VaultCommunity() {
               <ul className="text-sm text-left space-y-3">
                 <li className="flex items-start gap-2">
                   <Image className="h-4 w-4 text-primary mt-0.5" />
-                  <span className="text-foreground/90">Showcase: exiba seus tênis do Vault</span>
+                  <span className="text-foreground/90">Showcase: exiba seus sneakers do Vault</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <MessageSquare className="h-4 w-4 text-primary mt-0.5" />

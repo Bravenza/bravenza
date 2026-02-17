@@ -57,7 +57,7 @@ const howItWorks = [
   {
     step: 1,
     title: "Descreva o que procura",
-    description: "Adicione o tênis dos seus sonhos à sua wishlist com todos os detalhes",
+    description: "Adicione o sneaker dos seus sonhos à sua wishlist com todos os detalhes",
     icon: Search,
   },
   {
@@ -75,7 +75,7 @@ const howItWorks = [
   {
     step: 4,
     title: "Receba com certificado",
-    description: "Seu tênis chega com Vault ID único, certificado e verificação por QR code",
+    description: "Seu sneaker chega com Vault ID único, certificado e verificação por QR code",
     icon: Shield,
   },
 ];

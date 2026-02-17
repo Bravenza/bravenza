@@ -77,7 +77,7 @@ const getEmailSubject = (type: EmailType, orderId: string, data?: EmailRequest):
     budget_expiring: `⏰ Último dia! Seu orçamento expira amanhã - ${orderId}`,
     sinal_confirmed: `Pagamento confirmado! Iniciando busca - ${orderId}`,
     sinal_reminder: `Lembrete: Pagamento do sinal pendente - ${orderId}`,
-    product_found: `Ótima notícia! Seu tênis foi localizado - ${orderId}`,
+    product_found: `Ótima notícia! Seu sneaker foi localizado - ${orderId}`,
     package_shipped: `Seu produto está a caminho do Hub Bravenza! - ${orderId}`,
     arrived_brazil: `Seu produto foi recebido no Hub! - ${orderId}`,
     inspection_approved: `Autenticação concluída! - ${orderId}`,
@@ -636,11 +636,11 @@ const getEmailHtml = (type: EmailType, data: EmailRequest): string => {
         <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
           <p style="color: #fff; font-size: 16px; margin: 0 0 16px; font-weight: bold;">✨ Seus benefícios:</p>
           <ul style="color: #a0a0a0; font-size: 14px; margin: 0; padding-left: 20px; line-height: 2;">
-            <li><strong style="color: #d4af37;">Curadoria Premium</strong> — Localizamos tênis raros com parceiros globais</li>
+            <li><strong style="color: #d4af37;">Curadoria Premium</strong> — Localizamos sneakers raros com parceiros globais</li>
             <li><strong style="color: #d4af37;">SLA Garantido</strong> — Respostas rápidas e acompanhamento dedicado</li>
             <li><strong style="color: #d4af37;">Match Room</strong> — Compare opções antes de decidir</li>
             <li><strong style="color: #d4af37;">Certificados</strong> — Autenticidade técnica em cada item</li>
-            <li><strong style="color: #d4af37;">Vault Intel</strong> — Conteúdo exclusivo sobre o mundo dos tênis</li>
+            <li><strong style="color: #d4af37;">Vault Intel</strong> — Conteúdo exclusivo sobre o mundo dos sneakers</li>
           </ul>
         </div>
         

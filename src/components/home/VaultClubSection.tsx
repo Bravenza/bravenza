@@ -8,7 +8,7 @@ const features = [
   {
     icon: Search,
     title: "Curadoria personalizada",
-    description: "Você descreve o tênis dos seus sonhos e nossa equipe vasculha o mercado global",
+    description: "Você descreve o sneaker dos seus sonhos e nossa equipe vasculha o mercado global",
     delay: 0.1,
   },
   {
@@ -66,7 +66,7 @@ const VaultClubSectionComponent = () => {
 
            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-5 tracking-tight">
              O clube dos que não aceitam{" "}
-             <span className="text-gradient-gold">qualquer tênis.</span>
+             <span className="text-gradient-gold">qualquer sneaker.</span>
            </h2>
 
            <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">

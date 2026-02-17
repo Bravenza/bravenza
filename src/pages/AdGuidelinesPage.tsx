@@ -113,7 +113,7 @@ const AdGuidelinesPage = () => {
               <PolicyBulletList items={["Fotos reais do item (nada de foto de catálogo).", "Boa luz, fundo limpo, sem filtros pesados.", "Proibido: imagens com logos de outras plataformas, prints de terceiros, colagens confusas, marca d'água de revenda concorrente."]} />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground mb-2">5.2. Mínimo recomendado (tênis)</h3>
+              <h3 className="font-semibold text-foreground mb-2">5.2. Mínimo recomendado (sneakers)</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {["Lateral externa (par)", "Lateral interna (par)", "Frente (biqueira)", "Traseira (heel)", "Solado (sola)", "Etiqueta interna (inside label)", "Palmilha e costura", "Caixa (tampa e laterais)", "Acessórios (laces/tags/card)", "Close de defeitos/avarias"].map((photo) => (
                   <div key={photo} className="flex items-center gap-2 p-2.5 rounded-xl border border-border bg-card/50 text-sm text-muted-foreground">

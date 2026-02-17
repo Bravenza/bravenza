@@ -140,7 +140,7 @@ const sectionTitles: Record<string, { title: string; subtitle: string; icon: Rea
   drops: { title: "Drops", subtitle: "Novidades, guias e conteúdos exclusivos para membros", icon: Sparkles },
   clube: { title: "Meu Status", subtitle: "Seu tier, benefícios e evolução no Vault Club", icon: Award },
   comunidade: { title: "Comunidade", subtitle: "Conecte-se com outros membros", icon: Users },
-  marketplace: { title: "Marketplace", subtitle: "Compre e venda tênis autenticados", icon: Store },
+  marketplace: { title: "Marketplace", subtitle: "Compre e venda sneakers autenticados", icon: Store },
 };
 
 export default function UnifiedDashboard() {

@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { ShieldCheck, Globe, Users, Package } from "lucide-react";
 
 const metrics = [
-  { icon: ShieldCheck, value: "500+", label: "Tênis autenticados" },
+  { icon: ShieldCheck, value: "500+", label: "Sneakers autenticados" },
   { icon: Globe, value: "15+", label: "Países parceiros" },
   { icon: Users, value: "100%", label: "Clientes satisfeitos" },
   { icon: Package, value: "0", label: "Reprovados entregues" },

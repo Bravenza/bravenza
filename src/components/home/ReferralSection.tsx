@@ -72,7 +72,7 @@ const ReferralSectionComponent = () => {
             </div>
             <h3 className="font-semibold text-lg mb-2">2. Mande pros amigos</h3>
             <p className="text-muted-foreground text-sm">
-              Compartilhe com quem também quer tênis originais
+              Compartilhe com quem também quer sneakers originais
             </p>
           </motion.div>
 
