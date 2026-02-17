@@ -18,13 +18,13 @@ export function CatalogProductCard({ product, hidePrice }: CatalogProductCardPro
 
   return (
     <motion.div
-      className="group cursor-pointer rounded-2xl overflow-hidden bg-card border border-border/30 hover:border-primary/30 transition-all duration-300 hover:shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.15)]"
+      className="group cursor-pointer rounded-2xl overflow-hidden bg-card border border-border/30 hover:border-primary/30 transition-all duration-300 hover:shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.15)] flex flex-col h-full"
       onClick={() => navigate(`/marketplace/${product.slug}`)}
       whileHover={{ y: -6 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
       {/* Image */}
-      <div className="relative aspect-[4/3] bg-muted/5 overflow-hidden">
+      <div className="relative aspect-[4/3] bg-muted/5 overflow-hidden shrink-0">
         {mainImage ? (
           <img
             src={mainImage}
@@ -62,18 +62,18 @@ export function CatalogProductCard({ product, hidePrice }: CatalogProductCardPro
       </div>
 
       {/* Info */}
-      <div className="p-4 space-y-2">
+      <div className="p-4 flex flex-col flex-1">
         <p className="text-[10px] text-muted-foreground uppercase tracking-[0.15em] font-semibold">
           {product.brand}
         </p>
-        <p className="text-sm font-bold leading-snug line-clamp-2 text-foreground group-hover:text-primary transition-colors duration-300">
+        <p className="text-sm font-bold leading-snug line-clamp-2 text-foreground group-hover:text-primary transition-colors duration-300 mt-1">
           {name}
         </p>
-        {product.colorway && (
-          <p className="text-[11px] text-muted-foreground/70">{product.colorway}</p>
-        )}
+        <p className="text-[11px] text-muted-foreground/70 mt-1 line-clamp-1 min-h-[16px]">
+          {product.colorway || "\u00A0"}
+        </p>
         {!hidePrice && (
-          <div className="pt-2 border-t border-border/20">
+          <div className="pt-2 mt-auto border-t border-border/20">
             {product.lowest_price ? (
               <div className="flex items-baseline gap-1.5">
                 <span className="text-[10px] text-muted-foreground">a partir de</span>
