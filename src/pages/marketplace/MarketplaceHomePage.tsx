@@ -113,44 +113,56 @@ export default function MarketplaceHomePage() {
   return (
     <div className="pb-28 md:pb-12">
       {/* ===== HERO SECTION ===== */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-card to-background">
-        <div className="absolute inset-0 bg-grid-pattern opacity-30" />
-        <div className="max-w-7xl mx-auto px-4 py-12 md:py-20 relative z-10">
-          <div className="max-w-2xl mx-auto text-center">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-              <Badge variant="outline" className="mb-5 text-xs px-3 py-1 border-primary/30 text-primary">
-                <ShieldCheck className="h-3 w-3 mr-1" />
-                100% verificado
-              </Badge>
-              <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4 font-display">
-                Compre sneakers com{" "}
-                <span className="text-gradient-gold">confiança total</span>
+      <section className="relative overflow-hidden">
+        {/* Layered background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-card to-background" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.12),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,hsl(var(--primary)/0.06),transparent_50%)]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 rounded-full blur-[120px]" />
+
+        <div className="max-w-7xl mx-auto px-4 py-16 md:py-28 relative z-10">
+          <div className="max-w-3xl mx-auto text-center">
+            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+                className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm"
+              >
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                <span className="text-xs font-bold text-primary uppercase tracking-wider">Autenticidade garantida</span>
+              </motion.div>
+
+              <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6 leading-[0.95]">
+                O marketplace dos{" "}
+                <span className="text-gradient-gold">sneakers autênticos</span>
               </h1>
-              <p className="text-muted-foreground text-base md:text-lg mb-8 max-w-lg mx-auto">
-                Marketplace exclusivo entre colecionadores. Cada peça inspecionada, cada transação protegida.
+
+              <p className="text-muted-foreground text-base md:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
+                Curadoria exclusiva entre colecionadores. Cada peça verificada, cada transação protegida pela <strong className="text-foreground">Bravenza</strong>.
               </p>
             </motion.div>
 
             <motion.form
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
               onSubmit={(e) => {
                 e.preventDefault();
                 const val = (e.currentTarget.elements.namedItem("heroSearch") as HTMLInputElement).value.trim();
                 if (val) navigate(`/marketplace?q=${encodeURIComponent(val)}`);
               }}
-              className="flex gap-2 max-w-md mx-auto"
+              className="flex gap-2 max-w-lg mx-auto"
             >
               <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   name="heroSearch"
                   placeholder="Nike Dunk, Jordan 1, Yeezy..."
-                  className="pl-11 h-12 rounded-full bg-card border-border/40 text-base shadow-sm focus:shadow-md focus:ring-primary/20 focus:border-primary/30"
+                  className="pl-12 h-14 rounded-full bg-card/80 backdrop-blur-sm border-border/40 text-base shadow-lg shadow-primary/5 focus:shadow-xl focus:shadow-primary/10 focus:ring-primary/20 focus:border-primary/30"
                 />
               </div>
-              <Button type="submit" size="lg" className="btn-gold rounded-full h-12 px-6">
+              <Button type="submit" size="lg" className="btn-gold rounded-full h-14 px-8 text-base font-bold shadow-lg shadow-primary/20">
                 Buscar
               </Button>
             </motion.form>
@@ -192,7 +204,7 @@ export default function MarketplaceHomePage() {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <TrendingUp className="h-6 w-6 text-primary" />
-              <h2 className="text-xl md:text-2xl font-black text-foreground tracking-tight">Em alta</h2>
+              <h2 className="text-2xl md:text-3xl font-black text-foreground tracking-tight font-display">Em alta</h2>
             </div>
             <Button
               variant="ghost"

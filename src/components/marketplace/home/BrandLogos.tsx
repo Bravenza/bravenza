@@ -19,9 +19,9 @@ export const popularBrands = [
   "Asics", "Puma", "Converse", "Vans", "Reebok",
 ];
 
-export function BrandLogo({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
+export function BrandLogo({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
   const style = brandStyles[name] || "font-bold uppercase tracking-wide";
-  const sizeClass = size === "sm" ? "text-[11px]" : "text-xs md:text-sm";
+  const sizeClass = size === "sm" ? "text-[11px]" : size === "lg" ? "text-lg md:text-2xl" : "text-xs md:text-sm";
 
   return (
     <span className={`${style} ${sizeClass} select-none`}>
