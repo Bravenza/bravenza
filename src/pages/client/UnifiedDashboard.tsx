@@ -246,7 +246,7 @@ export default function UnifiedDashboard() {
       <Header />
 
       {/* Internal Sub-Navigation */}
-      <div className="sticky top-16 z-40 border-b border-border/30 bg-background/80 backdrop-blur-xl">
+      <div className="sticky top-16 z-40 border-b border-border/30 bg-background/80 backdrop-blur-xl theme-dark">
         <div className="max-w-7xl mx-auto px-4 lg:px-6">
           <div className="flex items-center justify-between h-14">
             {/* Desktop Nav */}

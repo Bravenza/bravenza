@@ -104,7 +104,7 @@ export default function VaultAppLayout() {
       <div className="fixed bottom-0 left-0 w-[400px] h-[400px] bg-primary/3 rounded-full blur-3xl pointer-events-none" />
       
       {/* Internal Sub-Navigation */}
-      <div className="sticky top-16 z-40 border-b border-border/30 bg-background/80 backdrop-blur-xl">
+      <div className="sticky top-16 z-40 border-b border-border/30 bg-background/80 backdrop-blur-xl theme-dark">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-12">
             {/* Desktop Nav */}
