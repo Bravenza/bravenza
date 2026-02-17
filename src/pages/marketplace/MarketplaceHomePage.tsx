@@ -16,6 +16,9 @@ import { RecentlyViewedSection } from "@/components/marketplace/home/RecentlyVie
 import { BestSellersSection } from "@/components/marketplace/home/BestSellersSection";
 import { BrandSpotlightSection } from "@/components/marketplace/home/BrandSpotlightSection";
 import { RecentlyAddedSection } from "@/components/marketplace/home/RecentlyAddedSection";
+import { SellCTASection } from "@/components/marketplace/home/SellCTASection";
+import { MarketplaceFAQSection } from "@/components/marketplace/home/MarketplaceFAQSection";
+import { DropsCountdownSection } from "@/components/marketplace/home/DropsCountdownSection";
 
 export default function MarketplaceHomePage() {
   const [searchParams] = useSearchParams();
@@ -264,6 +267,9 @@ export default function MarketplaceHomePage() {
       {/* ===== SECURITY & AUTHENTICITY ===== */}
       <SecuritySection />
 
+      {/* ===== SELL CTA ===== */}
+      <SellCTASection />
+
       {/* ===== RECENTLY VIEWED ===== */}
       <RecentlyViewedSection />
 
@@ -271,6 +277,12 @@ export default function MarketplaceHomePage() {
       <BrandSpotlightSection products={products} insertAfterIndex={0}>
         <RecentlyAddedSection products={products} />
       </BrandSpotlightSection>
+
+      {/* ===== DROPS COUNTDOWN ===== */}
+      <DropsCountdownSection />
+
+      {/* ===== FAQ ===== */}
+      <MarketplaceFAQSection />
     </div>
   );
 }
