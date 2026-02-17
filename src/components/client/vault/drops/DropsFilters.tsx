@@ -1,3 +1,4 @@
+import { Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const filterOptions = [
@@ -6,6 +7,7 @@ const filterOptions = [
   { value: "GUIDE", label: "Guias" },
   { value: "ALERT", label: "Alertas" },
   { value: "EVENT", label: "Eventos" },
+  { value: "saved", label: "Salvos", icon: Bookmark },
 ];
 
 interface DropsFiltersProps {
@@ -21,12 +23,13 @@ export function DropsFilters({ value, onChange }: DropsFiltersProps) {
           key={opt.value}
           onClick={() => onChange(opt.value)}
           className={cn(
-            "px-4 py-2.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-300 min-h-[44px]",
+            "px-4 py-2.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-300 min-h-[44px] flex items-center gap-1.5",
             value === opt.value
               ? "bg-foreground text-background shadow-sm"
               : "bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
           )}
         >
+          {opt.icon && <opt.icon className="h-3 w-3" />}
           {opt.label}
         </button>
       ))}
