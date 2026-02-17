@@ -14,31 +14,53 @@ export function CertificateQRCode({ code, verificationUrl }: CertificateQRCodePr
   
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(verificationUrl)}&bgcolor=1a1a1a&color=FFD700&format=png`;
 
-  const handleCopyLink = async () => {
+  const copyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(verificationUrl);
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand("copy");
+        return true;
+      } catch {
+        return false;
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    }
+  };
+
+  const handleCopyLink = async () => {
+    const copied = await copyToClipboard(verificationUrl);
+    if (copied) {
       setCopied(true);
       toast.success("Link copiado!");
       setTimeout(() => setCopied(false), 2000);
-    } catch {
+    } else {
       toast.error("Erro ao copiar");
     }
   };
 
   const handleShare = async () => {
-    if (navigator.share) {
-      try {
+    try {
+      if (navigator.share && navigator.canShare?.({ url: verificationUrl })) {
         await navigator.share({
           title: "Certificado de autenticidade Bravenza",
           text: `Verifique a autenticidade do produto com o código ${code}`,
           url: verificationUrl,
         });
-      } catch (err) {
-        // User cancelled share
+        return;
       }
-    } else {
-      handleCopyLink();
+    } catch {
+      // cancelled or failed
     }
+    handleCopyLink();
   };
 
   return (
