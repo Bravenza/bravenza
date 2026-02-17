@@ -118,22 +118,47 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
     }
   };
 
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand("copy");
+        return true;
+      } catch {
+        return false;
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    }
+  };
+
   const handleShare = async (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    const shareData = {
-      title: `${item.brand} ${item.model}`,
-      text: `Confira meu ${item.brand} ${item.model} autenticado na BRAVENZA — ${item.vault_id}`,
-      url: verificationUrl,
-    };
     try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(verificationUrl);
-        toast.success("Link copiado!");
+      if (navigator.share && navigator.canShare?.({ url: verificationUrl })) {
+        await navigator.share({
+          title: `${item.brand} ${item.model}`,
+          text: `Confira meu ${item.brand} ${item.model} autenticado na BRAVENZA — ${item.vault_id}`,
+          url: verificationUrl,
+        });
+        return;
       }
     } catch {
-      /* cancelled */
+      // share cancelled or failed
+    }
+    const copied = await copyToClipboard(verificationUrl);
+    if (copied) {
+      toast.success("Link copiado para a área de transferência!");
+    } else {
+      toast.error("Não foi possível compartilhar. Copie manualmente: " + verificationUrl);
     }
   };
 
