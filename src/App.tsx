@@ -42,6 +42,9 @@ const VaultProfilePage = lazy(() => import("./pages/vault/VaultProfilePage"));
 const ProductDetailPage = lazy(() => import("./pages/marketplace/ProductDetailPage"));
 const MarketplaceLayout = lazy(() => import("./pages/marketplace/MarketplaceLayout"));
 const MarketplaceHomePage = lazy(() => import("./pages/marketplace/MarketplaceHomePage"));
+const MarketplaceOrdersPage2 = lazy(() => import("./pages/marketplace/MarketplaceOrdersPage2"));
+const MarketplaceFeedPage = lazy(() => import("./pages/marketplace/MarketplaceFeedPage"));
+const MarketplaceMyStorePage = lazy(() => import("./pages/marketplace/MarketplaceMyStorePage"));
 
 // Lazy loaded pages - Client portal
 const ClientLogin = lazy(() => import("./pages/client/ClientLogin"));
@@ -144,6 +147,9 @@ const App = () => (
                   <ProtectedProviders><MarketplaceLayout /></ProtectedProviders>
                 }>
                   <Route index element={<MarketplaceHomePage />} />
+                  <Route path="pedidos" element={<MarketplaceOrdersPage2 />} />
+                  <Route path="feed" element={<MarketplaceFeedPage />} />
+                  <Route path="loja" element={<MarketplaceMyStorePage />} />
                 </Route>
                 <Route path="/marketplace/:slug" element={
                   <ProtectedProviders><ProductDetailPage /></ProtectedProviders>
