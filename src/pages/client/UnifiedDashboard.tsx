@@ -242,13 +242,15 @@ export default function UnifiedDashboard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col theme-light">
-      {/* Global Header */}
-      <Header />
-
-      {/* Internal Sub-Navigation */}
-      <div className="sticky top-16 z-40 border-b border-border/30 bg-background/80 backdrop-blur-xl theme-dark">
+      {/* Navigation Bar */}
+      <div className="sticky top-0 z-50 border-b border-border/30 bg-background/80 backdrop-blur-xl theme-dark">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         <div className="max-w-7xl mx-auto px-4 lg:px-6">
-          <div className="flex items-center justify-between h-14">
+          <div className="flex items-center justify-between h-16">
+            <Link to="/" className="transition-all duration-300 hover:opacity-80">
+              <Logo size="md" />
+            </Link>
+
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-2">
               <button

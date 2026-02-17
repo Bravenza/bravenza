@@ -108,9 +108,6 @@ const AdminLayout = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative theme-light">
-      {/* Global Header */}
-      <Header />
-
       {/* Background Effects */}
       <div className="fixed inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
       <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
@@ -127,10 +124,10 @@ const AdminLayout = () => {
         />
       )}
 
-      <div className="flex flex-1 pt-16">
+      <div className="flex flex-1">
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-card/80 backdrop-blur-xl border-r border-border/30 transform transition-transform duration-300 lg:translate-x-0 lg:pt-16 ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-card/80 backdrop-blur-xl border-r border-border/30 transform transition-transform duration-300 lg:translate-x-0 theme-dark ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
