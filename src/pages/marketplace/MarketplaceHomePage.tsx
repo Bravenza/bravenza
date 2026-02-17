@@ -139,11 +139,11 @@ export default function MarketplaceHomePage() {
               <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-black tracking-tight mb-4 leading-[0.88]">
                 Aqui, <span className="text-gradient-gold">falsificação</span>
                 <br className="hidden md:block" />
-                {" "}não sobrevive
+                {" "}não sobrevive.
               </h1>
 
               <p className="text-muted-foreground text-base md:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
-                O marketplace onde <strong className="text-foreground">cada par é inspecionado, certificado e garantido</strong> pela Bravenza antes de chegar até você. De colecionador para colecionador.
+                O marketplace onde <strong className="text-foreground">cada par é inspecionado, certificado e garantido</strong> pela Bravenza antes de chegar até você. <strong className="text-foreground">De colecionador para colecionador.</strong>
               </p>
             </motion.div>
 
