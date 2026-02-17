@@ -42,11 +42,11 @@ const TestimonialsSectionComponent = () => {
       }} transition={{
         duration: 0.6
       }} className="text-center mb-16">
-          <h2 className="text-3xl font-bold mb-4 md:text-3xl">
+          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4 tracking-tight">
             Quem comprou,{" "}
-            <span className="text-gradient-gold text-3xl">aprovou</span>
+            <span className="text-gradient-gold">aprovou</span>
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-base">
+          <p className="text-muted-foreground text-base max-w-2xl mx-auto">
             Histórias reais de clientes que confiaram e voltaram. Leia antes de decidir.
           </p>
         </motion.div>
