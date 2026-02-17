@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { QrCode, Share2, Copy, Check } from "lucide-react";
+import { QrCode, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -47,21 +47,6 @@ export function CertificateQRCode({ code, verificationUrl }: CertificateQRCodePr
     }
   };
 
-  const handleShare = async () => {
-    try {
-      if (navigator.share && navigator.canShare?.({ url: verificationUrl })) {
-        await navigator.share({
-          title: "Certificado de autenticidade Bravenza",
-          text: `Verifique a autenticidade do produto com o código ${code}`,
-          url: verificationUrl,
-        });
-        return;
-      }
-    } catch {
-      // cancelled or failed
-    }
-    handleCopyLink();
-  };
 
   return (
     <motion.div
@@ -117,11 +102,10 @@ export function CertificateQRCode({ code, verificationUrl }: CertificateQRCodePr
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button
+          <Button
               variant="outline"
               size="sm"
-              className="flex-1 border-primary/30 hover:bg-primary/10"
+              className="w-full border-primary/30 hover:bg-primary/10"
               onClick={handleCopyLink}
             >
               {copied ? (
@@ -136,17 +120,6 @@ export function CertificateQRCode({ code, verificationUrl }: CertificateQRCodePr
                 </>
               )}
             </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 border-primary/30 hover:bg-primary/10"
-              onClick={handleShare}
-            >
-              <Share2 className="h-4 w-4 mr-2" />
-              Compartilhar
-            </Button>
-          </div>
         </div>
       </div>
     </motion.div>
