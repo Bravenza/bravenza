@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 const trustItems = [
   { icon: Shield, label: "Autenticidade garantida" },
   { icon: Truck, label: "Rastreio em tempo real" },
-  { icon: CreditCard, label: "Até 12x sem juros" },
+  { icon: CreditCard, label: "Até 12x no cartão" },
 ];
 
 const HeroSectionComponent = () => {

@@ -19,6 +19,12 @@ const testimonials = [{
   rating: 5,
   text: "O Yeezy que eu queria não tinha em lugar nenhum. A Bravenza conseguiu com um parceiro verificado e em poucas semanas estava na minha casa. Preço justo, sneaker perfeito.",
   product: "Yeezy Boost 350 V2"
+}, {
+  name: "Camila R.",
+  location: "Curitiba, PR",
+  rating: 5,
+  text: "Presenteei meu marido com um New Balance 550 que ele procurava há meses. O certificado de autenticidade deu aquele toque especial. Ele ficou sem palavras. Com certeza volto a comprar.",
+  product: "New Balance 550"
 }];
 const TestimonialsSectionComponent = () => {
   return <section className="py-14 md:py-20 relative">
