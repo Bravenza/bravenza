@@ -90,13 +90,13 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
             value={filters.search || ""}
             onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
             onKeyDown={(e) => e.key === "Enter" && onSearch()}
-            className="pl-9 bg-[hsl(0,0%,16%)] border-border/50 h-10"
+            className="pl-9 bg-secondary/50 border-border/50 h-10"
           />
         </div>
 
         <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
           <SheetTrigger asChild>
-            <Button variant="outline" className="gap-2 relative h-10 bg-[hsl(0,0%,16%)] border-border/50">
+            <Button variant="outline" className="gap-2 relative h-10 bg-secondary/50 border-border/50">
               <SlidersHorizontal className="h-4 w-4" />
               <span className="hidden sm:inline">Filtros</span>
               {activeFilterCount > 0 && (
@@ -127,7 +127,7 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
                         "px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200",
                         filters.brand === brand
                           ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-[hsl(0,0%,18%)] text-muted-foreground border-border/50 hover:border-primary/40"
+                          : "bg-muted text-muted-foreground border-border/50 hover:border-primary/40"
                       )}
                     >
                       {brand}
@@ -153,7 +153,7 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
                         "flex items-center gap-2 p-3 rounded-lg text-sm border transition-all duration-200",
                         filters.condition === opt.value
                           ? "bg-primary/10 border-primary/40 text-foreground"
-                          : "bg-[hsl(0,0%,16%)] border-border/30 text-muted-foreground hover:border-primary/20"
+                          : "bg-muted border-border/30 text-muted-foreground hover:border-primary/20"
                       )}
                     >
                       <span className={cn("w-3 h-3 rounded-full flex-shrink-0", opt.color)} />
@@ -180,7 +180,7 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
                         "h-10 rounded-lg text-sm font-medium border transition-all duration-200",
                         filters.size === s
                           ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-[hsl(0,0%,16%)] text-muted-foreground border-border/30 hover:border-primary/30"
+                          : "bg-muted text-muted-foreground border-border/30 hover:border-primary/30"
                       )}
                     >
                       {s}
@@ -227,7 +227,7 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
                         "p-3 rounded-lg text-sm border transition-all duration-200 font-medium",
                         filters.modality === opt.value
                           ? "bg-primary/10 border-primary/40 text-foreground"
-                          : "bg-[hsl(0,0%,16%)] border-border/30 text-muted-foreground hover:border-primary/20"
+                          : "bg-muted border-border/30 text-muted-foreground hover:border-primary/20"
                       )}
                     >
                       {opt.label}
@@ -246,7 +246,7 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
                     "w-full p-3 rounded-lg text-sm border transition-all duration-200 flex items-center justify-between",
                     filters.trustedOnly
                       ? "bg-primary/10 border-primary/40 text-foreground"
-                      : "bg-[hsl(0,0%,16%)] border-border/30 text-muted-foreground hover:border-primary/20"
+                      : "bg-muted border-border/30 text-muted-foreground hover:border-primary/20"
                   )}
                 >
                   <span className="font-medium">Apenas vendedores confiáveis</span>
@@ -262,7 +262,7 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
               <div>
                 <label className="text-sm font-medium mb-2 block text-foreground">Ordenar por</label>
                 <Select value={filters.sort} onValueChange={(v) => onFiltersChange({ ...filters, sort: v })}>
-                  <SelectTrigger className="bg-[hsl(0,0%,16%)] border-border/50">
+                  <SelectTrigger className="bg-muted border-border/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -276,7 +276,7 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 pt-2 sticky bottom-0 bg-card pb-2">
+              <div className="flex gap-2 pt-2 sticky bottom-0 bg-background pb-2">
                 <Button variant="outline" className="flex-1" onClick={clearFilters}>
                   <X className="h-4 w-4 mr-1" />
                   Limpar
@@ -291,7 +291,7 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
 
         {/* Sort - Desktop inline */}
         <Select value={filters.sort} onValueChange={(v) => { onFiltersChange({ ...filters, sort: v }); onSearch(); }}>
-          <SelectTrigger className="w-[140px] hidden sm:flex bg-[hsl(0,0%,16%)] border-border/50 h-10">
+          <SelectTrigger className="w-[140px] hidden sm:flex bg-secondary/50 border-border/50 h-10">
             <SelectValue placeholder="Ordenar" />
           </SelectTrigger>
           <SelectContent>
@@ -310,7 +310,7 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
             "h-10 w-10 flex-shrink-0 border-border/50",
             filters.favoritesOnly
               ? "bg-red-500/20 border-red-500/40 text-red-400 hover:bg-red-500/30"
-              : "bg-[hsl(0,0%,16%)] hover:border-primary/40"
+              : "bg-secondary/50 hover:border-primary/40"
           )}
           onClick={() => {
             onFiltersChange({ ...filters, favoritesOnly: !filters.favoritesOnly });
