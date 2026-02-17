@@ -11,23 +11,27 @@ import {
 const faqs = [
   {
     q: "Como funciona a compra no marketplace?",
-    a: "Escolha o sneaker desejado, selecione o tamanho e finalize a compra com pagamento protegido. O vendedor envia o item para o Hub Bravenza, onde nossa equipe realiza a inspeção de autenticidade. Após aprovação, enviamos para você.",
+    a: "Escolha o sneaker desejado, selecione o tamanho e finalize a compra com pagamento protegido. Dependendo da modalidade, o vendedor envia direto para você ou para o Hub Bravenza, onde nossa equipe realiza a inspeção de autenticidade antes do envio. O pagamento só é liberado ao vendedor após a confirmação de recebimento.",
   },
   {
     q: "O marketplace é seguro?",
-    a: "100%. O pagamento fica retido até a autenticação ser concluída e você receber o produto. Se o item não passar na inspeção, você recebe reembolso total automaticamente.",
+    a: "100%. O pagamento fica retido até você receber e aprovar o produto. Se o item não passar na inspeção obrigatória (acima de R$ 2.000) ou opcional, você recebe reembolso total automaticamente. Zero fraudes registradas desde o início da operação.",
   },
   {
     q: "Como vender meus sneakers?",
-    a: "Crie seu perfil de vendedor, cadastre seus itens com fotos e preço, e aguarde compradores interessados. Após a venda, envie o sneaker ao Hub Bravenza para autenticação e receba o pagamento em até 3 dias úteis.",
+    a: "Crie seu perfil de vendedor (com verificação de identidade), cadastre seus itens com fotos e preço, e aguarde compradores. Após a venda, envie o sneaker conforme a modalidade escolhida. O repasse do valor é feito em até 8 dias úteis após a confirmação de recebimento pelo comprador.",
   },
   {
     q: "Qual a taxa de comissão?",
-    a: "A taxa varia de 8% a 14% dependendo do seu nível de vendedor (Bronze, Prata, Ouro ou Elite). Quanto mais vendas bem sucedidas, menor a comissão.",
+    a: "A taxa varia de 8% a 14% dependendo do seu nível de vendedor (Bronze, Prata, Ouro ou Elite). Quanto mais vendas bem sucedidas, menor a comissão e mais rápido o repasse.",
+  },
+  {
+    q: "A verificação de autenticidade é obrigatória?",
+    a: "Sim, para itens acima de R$ 2.000. Abaixo desse valor, a verificação é opcional e pode ser contratada por R$ 49,90. Em ambos os casos, a verificação técnica é opinativa e segue um processo rigoroso de 6 etapas, incluindo inspeção visual, verificação de códigos e certificação digital.",
   },
   {
     q: "E se o produto não for autêntico?",
-    a: "Se nossa equipe identificar qualquer irregularidade durante a inspeção, a venda é cancelada, o comprador recebe reembolso integral e o vendedor é notificado. A Bravenza garante zero fraudes.",
+    a: "Se nossa equipe identificar qualquer irregularidade durante a inspeção, a venda é cancelada e o comprador recebe reembolso integral. O vendedor é notificado e pode estar sujeito a penalidades conforme as regras do marketplace.",
   },
 ];
 

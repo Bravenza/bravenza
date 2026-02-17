@@ -6,7 +6,7 @@ const features = [
   {
     icon: ShieldCheck,
     title: "Verificação técnica",
-    desc: "Cada sneaker é inspecionado com critérios rigorosos antes de chegar a você.",
+    desc: "Inspeção em 6 etapas antes de chegar a você. Obrigatória acima de R$ 2.000.",
     gradient: "from-emerald-500/20 to-teal-500/20",
     iconColor: "text-emerald-400",
     iconBg: "bg-emerald-500/15",
@@ -22,7 +22,7 @@ const features = [
   {
     icon: Lock,
     title: "Pagamento protegido",
-    desc: "Seu dinheiro fica seguro até a entrega e aprovação do produto.",
+    desc: "Seu dinheiro fica retido até a confirmação de recebimento e aprovação.",
     gradient: "from-amber-500/20 to-yellow-500/20",
     iconColor: "text-amber-400",
     iconBg: "bg-amber-500/15",
@@ -30,7 +30,7 @@ const features = [
   {
     icon: BadgeCheck,
     title: "Garantia Bravenza",
-    desc: "Satisfação garantida ou reembolso total. Compra sem risco.",
+    desc: "Item reprovado na inspeção? Reembolso integral automático.",
     gradient: "from-purple-500/20 to-pink-500/20",
     iconColor: "text-purple-400",
     iconBg: "bg-purple-500/15",
@@ -112,7 +112,7 @@ export const SecuritySection = memo(function SecuritySection() {
           className="mt-10 flex items-center justify-center gap-3 text-xs text-muted-foreground"
         >
           <ShieldCheck className="h-4 w-4 text-primary" />
-          <span>Mais de <strong className="text-foreground">2.000 itens</strong> verificados e aprovados</span>
+          <span>Verificação em <strong className="text-foreground">6 etapas</strong> rigorosas</span>
           <span className="text-border">•</span>
           <span><strong className="text-foreground">0 fraudes</strong> registradas</span>
         </motion.div>
