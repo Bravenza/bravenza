@@ -39,9 +39,9 @@ export const RecentlyViewedSection = memo(function RecentlyViewedSection() {
   return (
     <section className="py-10 border-t border-border/30">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center gap-2 mb-6">
-          <Clock className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-bold text-foreground">Vistos recentemente</h2>
+        <div className="flex items-center gap-3 mb-8">
+          <Clock className="h-6 w-6 text-primary" />
+          <h2 className="text-xl md:text-2xl font-black text-foreground tracking-tight">Vistos recentemente</h2>
         </div>
 
         <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
@@ -53,7 +53,7 @@ export const RecentlyViewedSection = memo(function RecentlyViewedSection() {
               transition={{ delay: i * 0.04 }}
               className="min-w-[160px] max-w-[180px] flex-shrink-0"
             >
-              <CatalogProductCard product={product} />
+              <CatalogProductCard product={product} hidePrice />
             </motion.div>
           ))}
         </div>

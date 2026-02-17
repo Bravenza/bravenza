@@ -189,10 +189,10 @@ export default function MarketplaceHomePage() {
       {/* ===== TRENDING / EM ALTA ===== */}
       <section className="py-10">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-bold text-foreground">Em alta</h2>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <TrendingUp className="h-6 w-6 text-primary" />
+              <h2 className="text-xl md:text-2xl font-black text-foreground tracking-tight">Em alta</h2>
             </div>
             <Button
               variant="ghost"
@@ -224,7 +224,7 @@ export default function MarketplaceHomePage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04, duration: 0.3 }}
                 >
-                  <CatalogProductCard product={product} />
+                  <CatalogProductCard product={product} hidePrice />
                 </motion.div>
               ))}
             </div>

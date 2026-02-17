@@ -8,9 +8,10 @@ import type { CatalogProduct } from "@/hooks/useMarketplaceCatalog";
 
 interface CatalogProductCardProps {
   product: CatalogProduct;
+  hidePrice?: boolean;
 }
 
-export function CatalogProductCard({ product }: CatalogProductCardProps) {
+export function CatalogProductCard({ product, hidePrice }: CatalogProductCardProps) {
   const navigate = useNavigate();
   const mainImage = product.images?.[0];
   const name = formatProductName(product.brand, product.model);
@@ -71,18 +72,20 @@ export function CatalogProductCard({ product }: CatalogProductCardProps) {
         {product.colorway && (
           <p className="text-[11px] text-muted-foreground/70">{product.colorway}</p>
         )}
-        <div className="pt-2 border-t border-border/20">
-          {product.lowest_price ? (
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-[10px] text-muted-foreground">a partir de</span>
-              <span className="text-lg font-black text-foreground tracking-tight">
-                R$ {product.lowest_price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-            </div>
-          ) : (
-            <span className="text-xs text-muted-foreground/60 italic">Sem ofertas</span>
-          )}
-        </div>
+        {!hidePrice && (
+          <div className="pt-2 border-t border-border/20">
+            {product.lowest_price ? (
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-[10px] text-muted-foreground">a partir de</span>
+                <span className="text-lg font-black text-foreground tracking-tight">
+                  R$ {product.lowest_price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            ) : (
+              <span className="text-xs text-muted-foreground/60 italic">Sem ofertas</span>
+            )}
+          </div>
+        )}
       </div>
     </motion.div>
   );
