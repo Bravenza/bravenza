@@ -1,5 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { Search, ShoppingBag, Store, Activity, User, Menu, X, ArrowLeft } from "lucide-react";
+import { Footer } from "@/components/home/Footer";
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -195,6 +196,8 @@ export default function MarketplaceLayout() {
       <main className="flex-1">
         <Outlet context={{ cpf: profile?.cpf, profile }} />
       </main>
+
+      <Footer />
 
       {/* Mobile Bottom Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border/30 safe-bottom z-40">
