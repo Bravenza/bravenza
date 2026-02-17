@@ -142,12 +142,8 @@ export default function MarketplaceHomePage() {
                 {" "}não sobrevive
               </h1>
 
-              <p className="text-muted-foreground text-base md:text-lg mb-4 max-w-xl mx-auto leading-relaxed">
-                O marketplace onde <strong className="text-foreground">cada par é inspecionado, certificado e garantido</strong> pela Bravenza antes de chegar até você.
-              </p>
-
-              <p className="text-xs text-muted-foreground/70 mb-10 max-w-md mx-auto tracking-wide uppercase">
-                Nenhuma fraude registrada · Autenticação em 5 níveis · Reembolso garantido
+              <p className="text-muted-foreground text-base md:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
+                O marketplace onde <strong className="text-foreground">cada par é inspecionado, certificado e garantido</strong> pela Bravenza antes de chegar até você. De colecionador para colecionador.
               </p>
             </motion.div>
 
