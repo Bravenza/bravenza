@@ -85,10 +85,10 @@ function FAQSectionComponent() {
       }} viewport={{
         once: true
       }} className="text-center mb-10 md:mb-12">
-          <h2 className="md:text-3xl font-bold mb-3 text-3xl">
-            Perguntas <span className="text-primary text-3xl">frequentes</span>
+          <h2 className="font-display text-3xl md:text-4xl font-bold mb-3 tracking-tight">
+            Perguntas <span className="text-gradient-gold">frequentes</span>
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base">
+          <p className="text-muted-foreground text-base max-w-2xl mx-auto">
             Encontre respostas para as dúvidas mais comuns sobre nossos serviços
           </p>
         </motion.div>

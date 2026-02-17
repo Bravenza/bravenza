@@ -57,10 +57,10 @@ function FeaturedReviewsComponent() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-5xl font-bold mb-4">
+          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4 tracking-tight">
             Avaliações <span className="text-gradient-gold">Reais</span>
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-base max-w-2xl mx-auto">
             O que nossos clientes escreveram depois de receber seus sneakers
           </p>
         </motion.div>

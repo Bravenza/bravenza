@@ -71,7 +71,7 @@ const BenefitsSectionComponent = () => {
           <h2 className="font-display text-3xl md:text-4xl font-bold mb-4 tracking-tight">
             Por que escolher a <span className="text-gradient-gold">BRAVENZA</span>?
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
+          <p className="text-muted-foreground text-base max-w-2xl mx-auto">
             Segurança técnica, acesso global e transparência em cada etapa da sua compra.
           </p>
         </motion.div>

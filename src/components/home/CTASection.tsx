@@ -27,11 +27,11 @@ const CTASectionComponent = () => {
           </div>
 
           <div className="relative z-10">
-           <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold mb-5 tracking-tight">
+           <h2 className="font-display text-3xl md:text-4xl font-bold mb-5 tracking-tight">
              Seu próximo grail está a{" "}
              <span className="text-gradient-gold">um pedido de distância</span>
            </h2>
-           <p className="text-muted-foreground mb-8 max-w-xl mx-auto text-sm md:text-base">
+           <p className="text-muted-foreground text-base max-w-xl mx-auto mb-8">
              Descreva o sneaker que você procura e receba um orçamento personalizado.
              Sem compromisso, com autenticidade garantida.
             </p>

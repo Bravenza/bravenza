@@ -45,12 +45,12 @@ const MarketplaceSectionComponent = () => {
               </span>
             </div>
 
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-5 tracking-tight">
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-5 tracking-tight">
               Compre e venda com{" "}
               <span className="text-gradient-gold">segurança total.</span>
             </h2>
 
-            <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-base max-w-2xl mx-auto">
               O marketplace da Bravenza conecta colecionadores e entusiastas em um
               ambiente onde cada peça é inspecionada e cada transação é protegida.
             </p>

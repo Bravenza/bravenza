@@ -64,12 +64,12 @@ const VaultClubSectionComponent = () => {
               </span>
             </div>
 
-           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-5 tracking-tight">
+           <h2 className="font-display text-3xl md:text-4xl font-bold mb-5 tracking-tight">
              O clube dos que não aceitam{" "}
              <span className="text-gradient-gold">qualquer sneaker.</span>
            </h2>
 
-           <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
+           <p className="text-muted-foreground text-base max-w-2xl mx-auto">
              O Vault Club é um ecossistema fechado para colecionadores e entusiastas.
              Curadoria personalizada, certificação digital e acesso a drops exclusivos.
             </p>
