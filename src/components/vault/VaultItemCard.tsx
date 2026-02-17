@@ -11,6 +11,12 @@ import {
   Share2,
   ChevronLeft,
   ChevronRight,
+  Fingerprint,
+  Calendar,
+  Ruler,
+  Palette,
+  Tag,
+  Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,22 +53,28 @@ interface VaultItemCardProps {
 
 const statusConfig = {
   VERIFIED: {
-    label: "Verificado",
+    label: "Autenticidade Verificada",
+    shortLabel: "Verificado",
     icon: CheckCircle2,
     color: "text-success",
     bg: "bg-success/10 border-success/20",
+    dotColor: "bg-success",
   },
   PENDING: {
-    label: "Pendente",
+    label: "Verificação Pendente",
+    shortLabel: "Pendente",
     icon: Clock,
     color: "text-primary",
     bg: "bg-primary/10 border-primary/20",
+    dotColor: "bg-primary",
   },
   REVOKED: {
-    label: "Revogado",
+    label: "Certificado Revogado",
+    shortLabel: "Revogado",
     icon: AlertCircle,
     color: "text-destructive",
     bg: "bg-destructive/10 border-destructive/20",
+    dotColor: "bg-destructive",
   },
 };
 
@@ -79,7 +91,7 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("pt-BR", {
       day: "2-digit",
-      month: "short",
+      month: "long",
       year: "numeric",
     });
 
@@ -112,13 +124,11 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
   const photos = item.inspection_photos || [];
   const hasPhotos = photos.length > 0;
 
-  const nextPhoto = (e: React.MouseEvent) => {
+  const goToPhoto = (dir: "next" | "prev") => (e: React.MouseEvent) => {
     e.stopPropagation();
-    setPhotoIndex((prev) => (prev + 1) % photos.length);
-  };
-  const prevPhoto = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setPhotoIndex((prev) => (prev - 1 + photos.length) % photos.length);
+    setPhotoIndex((prev) =>
+      dir === "next" ? (prev + 1) % photos.length : (prev - 1 + photos.length) % photos.length
+    );
   };
 
   return (
@@ -131,7 +141,6 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
         <DialogTrigger asChild>
           <button className="w-full text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-2xl">
             <div className="relative rounded-2xl overflow-hidden bg-card border border-border/40 hover:border-primary/30 transition-all duration-300 hover:shadow-md">
-              {/* Image */}
               <div className="relative aspect-square bg-secondary/30 overflow-hidden">
                 {hasPhotos ? (
                   <img
@@ -145,11 +154,7 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
                     <Image className="h-8 w-8 text-muted-foreground/20" />
                   </div>
                 )}
-
-                {/* Gradient overlay bottom */}
                 <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/50 to-transparent" />
-
-                {/* Status badge */}
                 {item.verified_status === "VERIFIED" && (
                   <div className="absolute top-2.5 left-2.5">
                     <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-success/90 backdrop-blur-sm">
@@ -166,16 +171,12 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
                     </div>
                   </div>
                 )}
-
-                {/* Size pill on image */}
                 <div className="absolute bottom-2.5 right-2.5">
                   <span className="px-2 py-1 rounded-md bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold">
                     {item.size}
                   </span>
                 </div>
               </div>
-
-              {/* Info */}
               <div className="p-3 space-y-0.5">
                 <p className="text-xs font-bold text-foreground line-clamp-1 uppercase tracking-wide">
                   {item.brand}
@@ -188,122 +189,191 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
           </button>
         </DialogTrigger>
 
-        {/* ─── Detail Dialog ─── */}
-        <DialogContent className="bg-card border-border max-w-lg p-0 overflow-hidden">
-          {/* Header strip */}
-          <div className="px-6 pt-6 pb-4 border-b border-border/50">
-            <DialogHeader>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                  <Shield className="h-5 w-5 text-primary" />
+        {/* ─── Premium Detail Dialog ─── */}
+        <DialogContent className="bg-card border-border/50 max-w-md p-0 overflow-hidden rounded-2xl gap-0 max-h-[90vh] overflow-y-auto">
+          {/* Hero Photo Area */}
+          {hasPhotos && (
+            <div className="relative aspect-[4/3] bg-secondary/20 overflow-hidden">
+              <img
+                src={photos[photoIndex]}
+                alt={`Foto ${photoIndex + 1}`}
+                className="w-full h-full object-cover"
+              />
+              {/* Top gradient for close button visibility */}
+              <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/40 to-transparent" />
+              {/* Bottom gradient */}
+              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card to-transparent" />
+
+              {/* Photo navigation */}
+              {photos.length > 1 && (
+                <>
+                  <button
+                    onClick={goToPhoto("prev")}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-white/25 transition-colors"
+                  >
+                    <ChevronLeft className="h-4 w-4 text-white" />
+                  </button>
+                  <button
+                    onClick={goToPhoto("next")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-white/25 transition-colors"
+                  >
+                    <ChevronRight className="h-4 w-4 text-white" />
+                  </button>
+                  {/* Dots */}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+                    {photos.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPhotoIndex(i);
+                        }}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          i === photoIndex
+                            ? "bg-primary w-5"
+                            : "bg-white/50 w-1.5 hover:bg-white/70"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Thumbnails strip */}
+              {photos.length > 1 && (
+                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex gap-1.5">
+                  {photos.slice(0, 5).map((photo, i) => (
+                    <button
+                      key={i}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPhotoIndex(i);
+                      }}
+                      className={`w-10 h-10 rounded-lg overflow-hidden border-2 transition-all ${
+                        i === photoIndex
+                          ? "border-primary shadow-md scale-105"
+                          : "border-white/30 opacity-70 hover:opacity-100"
+                      }`}
+                    >
+                      <img src={photo} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
                 </div>
-                <div className="min-w-0">
-                  <DialogTitle className="text-base font-bold">{item.vault_id}</DialogTitle>
-                  <p className="text-xs text-muted-foreground mt-0.5">Certificado de Autenticidade</p>
+              )}
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="px-5 pb-6 -mt-2 relative">
+            {/* Vault ID Header */}
+            <DialogHeader className="mb-5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                    <Fingerprint className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <DialogTitle className="text-sm font-bold tracking-wide">
+                      {item.vault_id}
+                    </DialogTitle>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <div className={`w-1.5 h-1.5 rounded-full ${status.dotColor}`} />
+                      <span className={`text-xs font-medium ${status.color}`}>
+                        {status.label}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <Badge
-                  variant="outline"
-                  className={`ml-auto shrink-0 border ${status.bg} ${status.color} text-[10px] font-semibold`}
-                >
-                  <StatusIcon className="h-3 w-3 mr-1" />
-                  {status.label}
-                </Badge>
               </div>
             </DialogHeader>
-          </div>
 
-          <div className="px-6 pb-6 pt-4 space-y-5">
-            {/* Photo carousel */}
-            {hasPhotos && (
-              <div className="relative aspect-square bg-secondary/20 rounded-xl overflow-hidden group/photos">
-                <img
-                  src={photos[photoIndex]}
-                  alt={`Foto ${photoIndex + 1}`}
-                  className="w-full h-full object-contain"
-                />
-                {photos.length > 1 && (
-                  <>
-                    <button
-                      onClick={prevPhoto}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-card/80 backdrop-blur-sm border border-border/50 flex items-center justify-center opacity-0 group-hover/photos:opacity-100 transition-opacity"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={nextPhoto}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-card/80 backdrop-blur-sm border border-border/50 flex items-center justify-center opacity-0 group-hover/photos:opacity-100 transition-opacity"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                      {photos.map((_, i) => (
-                        <button
-                          key={i}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setPhotoIndex(i);
-                          }}
-                          className={`w-1.5 h-1.5 rounded-full transition-all ${
-                            i === photoIndex
-                              ? "bg-primary w-4"
-                              : "bg-muted-foreground/40 hover:bg-muted-foreground/60"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Details grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <DetailCell label="Produto" value={item.title} />
-              <DetailCell label="Marca" value={item.brand} />
-              <DetailCell label="Tamanho" value={item.size} />
-              <DetailCell label="Cor" value={item.colorway || "—"} />
-              <DetailCell label="Valor" value={formatCurrency(item.purchase_value)} highlight />
-              <DetailCell label="Adquirido em" value={formatDate(item.purchase_date)} />
+            {/* Product Name */}
+            <div className="mb-5">
+              <h3 className="text-lg font-bold leading-tight">{item.title}</h3>
+              {item.colorway && (
+                <p className="text-sm text-muted-foreground mt-0.5">{item.colorway}</p>
+              )}
             </div>
 
-            {/* QR Code */}
+            {/* Specs Grid */}
+            <div className="grid grid-cols-2 gap-px bg-border/30 rounded-xl overflow-hidden mb-5">
+              <SpecCell icon={Tag} label="Marca" value={item.brand} />
+              <SpecCell icon={Package} label="Modelo" value={item.model || "—"} />
+              <SpecCell icon={Ruler} label="Tamanho" value={item.size} />
+              <SpecCell icon={Palette} label="Cor" value={item.colorway || "—"} />
+              <SpecCell
+                icon={Shield}
+                label="Valor"
+                value={formatCurrency(item.purchase_value)}
+                highlight
+              />
+              <SpecCell icon={Calendar} label="Aquisição" value={formatDate(item.purchase_date)} />
+            </div>
+
+            {/* QR Code Section - compact */}
             {item.verified_status === "VERIFIED" && (
-              <CertificateQRCode code={item.vault_id} verificationUrl={verificationUrl} />
+              <div className="rounded-xl border border-border/50 bg-secondary/30 p-4 mb-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <QrCode className="h-4 w-4 text-primary" />
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Certificado Digital
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="shrink-0 bg-white p-2 rounded-lg">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(verificationUrl)}&format=png`}
+                      alt="QR Code"
+                      className="w-16 h-16"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Escaneie para verificar a autenticidade
+                    </p>
+                    <p className="text-[10px] font-mono text-muted-foreground/70 break-all line-clamp-2">
+                      {verificationUrl}
+                    </p>
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Actions */}
-            <div className="flex gap-2 pt-1">
+            <div className="grid grid-cols-3 gap-2">
               <Button
                 variant="default"
                 size="sm"
-                className="flex-1 rounded-xl h-10"
+                className="rounded-xl h-11 text-xs font-semibold"
                 onClick={handleOpenCertificate}
               >
-                <Download className="h-4 w-4 mr-2" />
-                Certificado PDF
+                <Download className="h-4 w-4 mr-1.5" />
+                PDF
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-xl h-10 border-border/50"
+                className="rounded-xl h-11 text-xs border-border/50"
                 onClick={() => setShowQRDialog(true)}
               >
-                <QrCode className="h-4 w-4" />
+                <QrCode className="h-4 w-4 mr-1.5" />
+                QR Code
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-xl h-10 border-border/50"
+                className="rounded-xl h-11 text-xs border-border/50"
                 onClick={handleShare}
               >
-                <Share2 className="h-4 w-4" />
+                <Share2 className="h-4 w-4 mr-1.5" />
+                Enviar
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* QR Dialog */}
+      {/* Full QR Dialog */}
       <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
         <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
@@ -319,19 +389,32 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
   );
 }
 
-function DetailCell({
+function SpecCell({
+  icon: Icon,
   label,
   value,
   highlight,
 }: {
+  icon: React.ElementType;
   label: string;
   value: string;
   highlight?: boolean;
 }) {
   return (
-    <div className="space-y-1">
-      <p className="text-[11px] text-muted-foreground uppercase tracking-wider">{label}</p>
-      <p className={`text-sm font-medium ${highlight ? "text-primary" : ""}`}>{value}</p>
+    <div className="bg-card p-3.5 space-y-1.5">
+      <div className="flex items-center gap-1.5">
+        <Icon className="h-3 w-3 text-muted-foreground/60" />
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+          {label}
+        </p>
+      </div>
+      <p
+        className={`text-sm font-semibold leading-tight ${
+          highlight ? "text-primary" : "text-foreground"
+        }`}
+      >
+        {value}
+      </p>
     </div>
   );
 }
