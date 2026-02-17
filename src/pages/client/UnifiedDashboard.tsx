@@ -42,6 +42,7 @@ import { useClientSession } from "@/hooks/useClientSession";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
+import { Header } from "@/components/home/Header";
 import { Footer } from "@/components/home/Footer";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 import { ClientNotificationBell } from "@/components/client/ClientNotificationBell";
@@ -241,21 +242,19 @@ export default function UnifiedDashboard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col theme-light">
-      {/* Header */}
-      <header className="border-b border-border/30 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-        <div className="max-w-7xl mx-auto px-4 lg:px-6">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <Logo size="sm" />
-            </Link>
+      {/* Global Header */}
+      <Header />
 
+      {/* Internal Sub-Navigation */}
+      <div className="sticky top-16 z-40 border-b border-border/30 bg-background/80 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6">
+          <div className="flex items-center justify-between h-14">
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-2">
               <button
                 onClick={() => handleSectionChange("pedidos")}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300",
+                  "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300",
                   activeSection === "pedidos"
                     ? "bg-foreground text-background shadow-lg"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -280,7 +279,7 @@ export default function UnifiedDashboard() {
                   <DropdownMenuTrigger asChild>
                     <button
                       className={cn(
-                        "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300",
+                        "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300",
                         isVaultSection
                           ? "bg-foreground text-background shadow-lg"
                           : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -320,7 +319,7 @@ export default function UnifiedDashboard() {
               {!hasVaultAccess && (
                 <Link
                   to="/vault"
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 transition-colors"
                 >
                   <Crown className="h-4 w-4" />
                   Conhecer Vault Club
@@ -329,7 +328,7 @@ export default function UnifiedDashboard() {
             </nav>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 ml-auto">
               {profile?.cpf && <ClientNotificationBell clientCpf={profile.cpf} />}
               <Button
                 variant="ghost"
@@ -359,7 +358,7 @@ export default function UnifiedDashboard() {
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Mobile Menu */}
       <AnimatePresence>

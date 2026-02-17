@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useClientSession } from "@/hooks/useClientSession";
 import { Logo } from "@/components/Logo";
+import { Header } from "@/components/home/Header";
+import { Footer } from "@/components/home/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 
@@ -232,16 +234,11 @@ export default function ClientAuthPage() {
         <div className="absolute bottom-1/4 left-0 w-[300px] h-[300px] bg-primary/3 rounded-full blur-3xl" />
       </div>
 
-      {/* Header */}
-      <header className="relative border-b border-border/30 bg-background/80 backdrop-blur-xl theme-dark">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-        <div className="container mx-auto px-4 h-16 flex items-center justify-center">
-          <Logo size="md" />
-        </div>
-      </header>
+      {/* Global Header */}
+      <Header />
 
       {/* Main Content */}
-      <main className="relative z-10 flex-1 flex items-center justify-center p-4">
+      <main className="relative z-10 flex-1 flex items-center justify-center p-4 pt-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -530,6 +527,7 @@ export default function ClientAuthPage() {
           </p>
         </motion.div>
       </main>
+      <Footer />
     </div>
   );
 }

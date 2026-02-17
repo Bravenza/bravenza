@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { Box, Search, Newspaper, Users, Crown, LogOut, Menu } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import { Header } from "@/components/home/Header";
+import { Footer } from "@/components/home/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -92,23 +94,19 @@ export default function VaultAppLayout() {
   const tierInfo = tierLabels[member?.tier || "member"];
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative">
+    <div className="min-h-screen bg-background text-foreground relative flex flex-col theme-light">
+      {/* Global Header */}
+      <Header />
+
       {/* Background Effects */}
       <div className="fixed inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
       <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-[400px] h-[400px] bg-primary/3 rounded-full blur-3xl pointer-events-none" />
       
-      {/* Desktop Header */}
-      <header className="sticky top-0 z-50 border-b border-border/30 bg-background/80 backdrop-blur-xl">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+      {/* Internal Sub-Navigation */}
+      <div className="sticky top-16 z-40 border-b border-border/30 bg-background/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link to="/vault/app" className="flex items-center gap-2">
-              <Logo size="md" />
-              <span className="text-muted-foreground font-medium hidden sm:inline">Vault</span>
-            </Link>
-
+          <div className="flex items-center justify-between h-12">
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-1">
               {navItems.map((item) => {
@@ -134,8 +132,7 @@ export default function VaultAppLayout() {
             </nav>
 
             {/* Right side */}
-            <div className="flex items-center gap-3">
-              {/* Tier badge */}
+            <div className="flex items-center gap-3 ml-auto">
               {member && (
                 <Badge 
                   variant="outline" 
@@ -146,7 +143,6 @@ export default function VaultAppLayout() {
                 </Badge>
               )}
 
-              {/* Notifications */}
               <VaultNotificationBell
                 notifications={notifications}
                 unreadCount={unreadCount}
@@ -154,7 +150,6 @@ export default function VaultAppLayout() {
                 onMarkAllAsRead={markAllAsRead}
               />
 
-              {/* Logout */}
               <Button 
                 variant="ghost" 
                 size="sm"
@@ -165,7 +160,6 @@ export default function VaultAppLayout() {
                 Sair
               </Button>
 
-              {/* Mobile menu */}
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon" className="md:hidden">
@@ -174,7 +168,6 @@ export default function VaultAppLayout() {
                 </SheetTrigger>
                 <SheetContent side="right" className="bg-card border-border w-72">
                   <div className="flex flex-col h-full">
-                    {/* User info */}
                     <div className="pb-4 mb-4 border-b border-border">
                       <p className="font-medium">{session.client_name}</p>
                       <Badge variant="outline" className={`mt-2 ${tierInfo.color} border-border/50`}>
@@ -182,7 +175,6 @@ export default function VaultAppLayout() {
                       </Badge>
                     </div>
 
-                    {/* Nav items */}
                     <nav className="flex-1 space-y-1">
                       {navItems.map((item) => {
                         const isActive = item.exact 
@@ -207,7 +199,6 @@ export default function VaultAppLayout() {
                       })}
                     </nav>
 
-                    {/* Logout */}
                     <Button 
                       variant="ghost" 
                       onClick={handleLogout}
@@ -222,15 +213,15 @@ export default function VaultAppLayout() {
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
-      <main className="relative max-w-7xl mx-auto px-4 py-6 pb-24 md:pb-6">
+      <main className="relative flex-1 max-w-7xl mx-auto w-full px-4 py-6 pb-24 md:pb-6">
         <Outlet context={{ member, refreshMember: fetchMember }} />
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border/30 safe-bottom">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border/30 safe-bottom z-40">
         <div className="flex justify-around">
           {navItems.slice(0, 5).map((item) => {
             const isActive = item.exact 
@@ -252,6 +243,8 @@ export default function VaultAppLayout() {
           })}
         </div>
       </nav>
+
+      <Footer />
     </div>
   );
 }

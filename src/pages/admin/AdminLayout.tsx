@@ -34,6 +34,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NotificationBell } from "@/components/admin/NotificationBell";
 import { Separator } from "@/components/ui/separator";
+import { Header } from "@/components/home/Header";
+import { Footer } from "@/components/home/Footer";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
@@ -83,7 +85,7 @@ const AdminLayout = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex theme-light">
+      <div className="min-h-screen bg-background flex flex-col theme-light">
         <div className="w-64 border-r border-border/30 p-4 bg-card/50">
           <Skeleton className="h-8 w-32 mb-8" />
           <div className="space-y-2">
@@ -105,7 +107,10 @@ const AdminLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex relative theme-light">
+    <div className="min-h-screen bg-background flex flex-col relative theme-light">
+      {/* Global Header */}
+      <Header />
+
       {/* Background Effects */}
       <div className="fixed inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
       <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
@@ -122,9 +127,10 @@ const AdminLayout = () => {
         />
       )}
 
+      <div className="flex flex-1 pt-16">
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-card/80 backdrop-blur-xl border-r border-border/30 transform transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-card/80 backdrop-blur-xl border-r border-border/30 transform transition-transform duration-300 lg:translate-x-0 lg:pt-16 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -252,6 +258,8 @@ const AdminLayout = () => {
           <Outlet />
         </main>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };
