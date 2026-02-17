@@ -95,18 +95,21 @@ export default function VaultAppLayout() {
 
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col theme-light">
-      {/* Global Header */}
-      <Header />
-
       {/* Background Effects */}
       <div className="fixed inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
       <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-[400px] h-[400px] bg-primary/3 rounded-full blur-3xl pointer-events-none" />
       
-      {/* Internal Sub-Navigation */}
-      <div className="sticky top-16 z-40 border-b border-border/30 bg-background/80 backdrop-blur-xl theme-dark">
+      {/* Navigation Bar */}
+      <div className="sticky top-0 z-50 border-b border-border/30 bg-background/80 backdrop-blur-xl theme-dark">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between h-12">
+          <div className="flex items-center justify-between h-16">
+            <Link to="/vault/app" className="flex items-center gap-2 transition-all duration-300 hover:opacity-80">
+              <Logo size="md" />
+              <span className="text-muted-foreground font-medium hidden sm:inline">Vault</span>
+            </Link>
+
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-1">
               {navItems.map((item) => {

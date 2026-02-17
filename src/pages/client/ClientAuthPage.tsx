@@ -234,11 +234,16 @@ export default function ClientAuthPage() {
         <div className="absolute bottom-1/4 left-0 w-[300px] h-[300px] bg-primary/3 rounded-full blur-3xl" />
       </div>
 
-      {/* Global Header */}
-      <Header />
+      {/* Header */}
+      <header className="relative border-b border-border/30 bg-background/80 backdrop-blur-xl theme-dark">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+        <div className="container mx-auto px-4 h-16 flex items-center justify-center">
+          <Logo size="md" />
+        </div>
+      </header>
 
       {/* Main Content */}
-      <main className="relative z-10 flex-1 flex items-center justify-center p-4 pt-20">
+      <main className="relative z-10 flex-1 flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
