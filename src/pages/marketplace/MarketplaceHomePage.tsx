@@ -19,6 +19,7 @@ import { RecentlyAddedSection } from "@/components/marketplace/home/RecentlyAdde
 import { SellCTASection } from "@/components/marketplace/home/SellCTASection";
 import { MarketplaceFAQSection } from "@/components/marketplace/home/MarketplaceFAQSection";
 import { DropsCountdownSection } from "@/components/marketplace/home/DropsCountdownSection";
+import { UpcomingReleasesSection } from "@/components/marketplace/home/UpcomingReleasesSection";
 
 export default function MarketplaceHomePage() {
   const [searchParams] = useSearchParams();
@@ -82,7 +83,7 @@ export default function MarketplaceHomePage() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4">
             {Array.from({ length: 10 }).map((_, i) => (
               <div key={i} className="space-y-3">
-                <Skeleton className="aspect-square rounded-xl" />
+                <Skeleton className="aspect-[4/3] rounded-xl" />
                 <Skeleton className="h-3 w-16" />
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-5 w-20" />
@@ -224,7 +225,7 @@ export default function MarketplaceHomePage() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="space-y-3">
-                  <Skeleton className="aspect-square rounded-xl" />
+                  <Skeleton className="aspect-[4/3] rounded-xl" />
                   <Skeleton className="h-3 w-16" />
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-5 w-20" />
@@ -281,6 +282,9 @@ export default function MarketplaceHomePage() {
 
       {/* ===== DROPS COUNTDOWN ===== */}
       <DropsCountdownSection />
+
+      {/* ===== UPCOMING RELEASES (AI) ===== */}
+      <UpcomingReleasesSection />
 
       {/* ===== FAQ ===== */}
       <MarketplaceFAQSection />

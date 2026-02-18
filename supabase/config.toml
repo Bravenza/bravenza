@@ -71,3 +71,6 @@ verify_jwt = false
 
 [functions.mk-notifications]
 verify_jwt = false
+
+[functions.mk-releases]
+verify_jwt = false
