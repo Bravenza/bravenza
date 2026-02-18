@@ -105,8 +105,7 @@ Deno.serve(async (req) => {
         // Filter by trusted sellers (ouro or elite tier)
         q = q.in("seller.member.tier", ["ouro", "elite"]);
       }
-      // Apply boost priority: boosted listings always appear first
-      // Then apply user-selected sort
+      // Apply user-selected sort
       if (so === "price_asc") q = q.order("price", { ascending: true });
       else if (so === "price_desc") q = q.order("price", { ascending: false });
       else if (so === "popular") q = q.order("views_count", { ascending: false });
@@ -114,13 +113,27 @@ Deno.serve(async (req) => {
       q = q.range(of, of + lm - 1);
       const { data, count, error } = await q;
       if (error) throw error;
-      const ids = (data || []).map((l: any) => l.id);
+      // Re-sort in-memory: boosted → Elite → Pro → Free, then keep original sort within
+      const planOrder: Record<string, number> = { elite: 3, pro: 2, free: 1 };
+      const sorted = (data || []).sort((a: any, b: any) => {
+        // Boosted first (check if boost is active)
+        const now = new Date();
+        const aBoosted = a.seller?.plan_id !== "free" && a.pro_recommendation === "boosted" ? 1 : 0;
+        const bBoosted = b.seller?.plan_id !== "free" && b.pro_recommendation === "boosted" ? 1 : 0;
+        if (bBoosted !== aBoosted) return bBoosted - aBoosted;
+        // Then by seller plan priority
+        const aPlan = planOrder[a.seller?.plan_id || "free"] || 0;
+        const bPlan = planOrder[b.seller?.plan_id || "free"] || 0;
+        if (bPlan !== aPlan) return bPlan - aPlan;
+        return 0; // keep original DB sort for same tier
+      });
+      const ids = sorted.map((l: any) => l.id);
       let fs = new Set<string>();
       if (ids.length > 0) {
         const { data: fv } = await sb.from("vault_marketplace_favorites").select("listing_id").eq("user_cpf", cpf).in("listing_id", ids);
         fs = new Set((fv || []).map((f: any) => f.listing_id));
       }
-      return j({ listings: (data || []).map((l: any) => ({ ...l, is_favorited: fs.has(l.id) })), total: count });
+      return j({ listings: sorted.map((l: any) => ({ ...l, is_favorited: fs.has(l.id) })), total: count });
     }
 
     if (mt === "GET" && a === "listing-detail") {

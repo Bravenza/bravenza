@@ -62,6 +62,7 @@ Deno.serve(async (req) => {
         .update({
           plan_id: "free",
           support_priority: 0,
+          verified_badge: false,
           updated_at: now,
         })
         .eq("id", sub.seller_id);
