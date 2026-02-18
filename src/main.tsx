@@ -6,41 +6,31 @@ import "./index.css";
 const APP_VERSION = "3.2.0";
 const VERSION_KEY = "bravenza-app-version";
 
-async function clearAllCaches() {
-  // 1. Unregister ALL service workers
+function clearAllCaches() {
+  // Run in background — don't block rendering
   if ("serviceWorker" in navigator) {
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    await Promise.all(registrations.map((r) => r.unregister()));
+    navigator.serviceWorker.getRegistrations().then((regs) =>
+      regs.forEach((r) => r.unregister())
+    );
   }
-
-  // 2. Delete ALL Cache Storage entries
   if ("caches" in window) {
-    const cacheNames = await caches.keys();
-    await Promise.all(cacheNames.map((name) => caches.delete(name)));
+    caches.keys().then((names) =>
+      names.forEach((name) => caches.delete(name))
+    );
   }
 }
 
-async function boot() {
-  const storedVersion = localStorage.getItem(VERSION_KEY);
+// Check version synchronously, clear caches in background
+const storedVersion = localStorage.getItem(VERSION_KEY);
+clearAllCaches();
 
-  // Always nuke service workers — they cause stale previews
-  await clearAllCaches();
-
-  if (storedVersion !== APP_VERSION) {
-    console.log(`[BRAVENZA] Upgrading ${storedVersion} → ${APP_VERSION}`);
-    localStorage.setItem(VERSION_KEY, APP_VERSION);
-
-    // Only hard-reload on actual upgrades (not first visit)
-    if (storedVersion !== null) {
-      window.location.reload();
-      return false;
-    }
+if (storedVersion !== APP_VERSION) {
+  console.log(`[BRAVENZA] Upgrading ${storedVersion} → ${APP_VERSION}`);
+  localStorage.setItem(VERSION_KEY, APP_VERSION);
+  if (storedVersion !== null) {
+    window.location.reload();
   }
-  return true;
 }
 
-boot().then((proceed) => {
-  if (proceed) {
-    createRoot(document.getElementById("root")!).render(<App />);
-  }
-});
+// Render immediately — no async blocking
+createRoot(document.getElementById("root")!).render(<App />);
