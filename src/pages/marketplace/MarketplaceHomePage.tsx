@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useSearchParams, useNavigate, useOutletContext } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import { Search, ShieldCheck, ArrowRight, ChevronLeft, ChevronRight, TrendingUp, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -112,7 +113,11 @@ export default function MarketplaceHomePage() {
 
   return (
     <div className="pb-28 md:pb-12">
-      {/* ===== HERO SECTION ===== */}
+      <Helmet>
+        <title>Marketplace | BRAVENZA — Sneakers Autenticados</title>
+        <meta name="description" content="Compre e venda sneakers autenticados no Marketplace BRAVENZA. Cada par é inspecionado e certificado. De colecionador para colecionador." />
+        <link rel="canonical" href="https://bravenza.com.br/marketplace" />
+      </Helmet>
       <section className="relative overflow-hidden">
         {/* Layered background */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-card to-background" />

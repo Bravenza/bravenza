@@ -13,6 +13,7 @@ import { usePWAOptimizations } from "@/hooks/usePWAOptimizations";
 import { SkipToContent } from "@/components/a11y/SkipToContent";
 import { ProtectedProviders } from "@/components/providers/ProtectedProviders";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Eagerly loaded pages (critical path)
 import Index from "./pages/Index";
@@ -115,6 +116,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
 }
 
 const App = () => (
+  <ErrorBoundary>
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -237,6 +239,7 @@ const App = () => (
       </TooltipProvider>
     </QueryClientProvider>
   </HelmetProvider>
+  </ErrorBoundary>
 );
 
 export default App;

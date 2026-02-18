@@ -1048,7 +1048,7 @@ Deno.serve(async (req) => {
     if (mt === "GET" && a === "product-comments") {
       const pid = url.searchParams.get("product_id");
       if (!pid) throw new Error("product_id obrigatório");
-      const { data, error } = await sb.from("marketplace_product_comments").select("*")
+      const { data, error } = await sb.from("marketplace_product_comments_public").select("*")
         .eq("product_id", pid).eq("is_visible", true).order("created_at", { ascending: true });
       if (error) throw error;
       return j({ comments: data || [] });
@@ -1660,7 +1660,7 @@ Deno.serve(async (req) => {
     if (mt === "GET" && a === "product-comments") {
       const pid = url.searchParams.get("product_id");
       if (!pid) return j({ error: "product_id obrigatório" }, 400);
-      const { data: cmts } = await sb.from("marketplace_product_comments")
+      const { data: cmts } = await sb.from("marketplace_product_comments_public")
         .select("*")
         .eq("product_id", pid)
         .eq("is_visible", true)

@@ -1,12 +1,16 @@
 import { Package } from "lucide-react";
 import { motion } from "framer-motion";
+import { Helmet } from "react-helmet-async";
 import { TrackingForm } from "@/components/tracking/TrackingForm";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
 
 const TrackingPortalPage = () => {
   return (
     <PublicLayout>
-      {/* Background decorations */}
+      <Helmet>
+        <title>Rastreio de Pedidos | BRAVENZA</title>
+        <meta name="description" content="Rastreie seu pedido BRAVENZA em tempo real. Insira seu número de pedido e CPF para acompanhar o status da sua importação." />
+      </Helmet>
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-primary/3 rounded-full blur-3xl" />

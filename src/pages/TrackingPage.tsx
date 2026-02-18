@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import {
   ArrowLeft,
   Package,
@@ -177,7 +178,10 @@ const TrackingPage = () => {
 
   return (
     <div className="min-h-screen bg-background relative">
-      {/* Header */}
+      <Helmet>
+        <title>Rastreio {order.order_id} | BRAVENZA</title>
+        <meta name="description" content={`Acompanhe o status do pedido ${order.order_id} em tempo real na BRAVENZA.`} />
+      </Helmet>
       <header className="border-b border-border/30 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">

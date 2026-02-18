@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import { Shield, Crown, Sparkles, Users, Search, CheckCircle2, Lock, ArrowRight, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,10 @@ const howItWorks = [
 export default function VaultLandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground relative">
+      <Helmet>
+        <title>Vault Club | BRAVENZA — Curadoria Exclusiva de Sneakers</title>
+        <meta name="description" content="Faça parte do Vault Club BRAVENZA. Curadoria sob demanda, wishlist personalizada, Match Room e benefícios exclusivos para colecionadores." />
+      </Helmet>
       {/* Background Effects */}
       <div className="fixed inset-0 bg-grid-pattern opacity-30 pointer-events-none" />
       <div className="fixed inset-0 bg-radial-glow pointer-events-none" />
