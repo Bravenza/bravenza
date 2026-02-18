@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   LogOut,
   Settings,
@@ -48,14 +48,13 @@ import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 import { ClientNotificationBell } from "@/components/client/ClientNotificationBell";
 import { ClientPreferences } from "@/components/client/ClientPreferences";
 import { OrdersTab } from "@/components/client/dashboard";
-import {
-  VaultMyItemsTab,
-  VaultWishlistTab,
-  VaultIntelTab,
-  VaultClubTab,
-  VaultCommunityTab,
-} from "@/components/client/vault";
-import { MarketplaceTab } from "@/components/client/vault/marketplace";
+
+// Lazy-load vault tabs — only loaded when user navigates to them
+const VaultMyItemsTab = lazy(() => import("@/components/client/vault/VaultMyItemsTab").then(m => ({ default: m.VaultMyItemsTab })));
+const VaultWishlistTab = lazy(() => import("@/components/client/vault/VaultWishlistTab").then(m => ({ default: m.VaultWishlistTab })));
+const VaultIntelTab = lazy(() => import("@/components/client/vault/VaultIntelTab").then(m => ({ default: m.VaultIntelTab })));
+const VaultClubTab = lazy(() => import("@/components/client/vault/VaultClubTab").then(m => ({ default: m.VaultClubTab })));
+const VaultCommunityTab = lazy(() => import("@/components/client/vault/VaultCommunityTab").then(m => ({ default: m.VaultCommunityTab })));
 import { Loader2 } from "lucide-react";
 import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 import { OrdersTabSkeleton, SectionHeaderSkeleton } from "@/components/skeletons/DashboardSkeleton";
@@ -493,7 +492,7 @@ export default function UnifiedDashboard() {
               )}
 
               {hasVaultAccess && profile?.cpf && (
-                <>
+                <Suspense fallback={<OrdersTabSkeleton />}>
                   {activeSection === "vault" && (
                     <VaultMyItemsTab clientCpf={profile.cpf} />
                   )}
@@ -542,8 +541,7 @@ export default function UnifiedDashboard() {
                       }}
                     />
                   )}
-                  {/* Marketplace moved to /marketplace */}
-                </>
+                </Suspense>
               )}
             </motion.div>
           </AnimatePresence>

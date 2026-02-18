@@ -1,6 +1,6 @@
+import { memo, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShieldCheck, TrendingUp } from "lucide-react";
-import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatProductName } from "@/lib/text-utils";
@@ -11,17 +11,20 @@ interface CatalogProductCardProps {
   hidePrice?: boolean;
 }
 
-export function CatalogProductCard({ product, hidePrice }: CatalogProductCardProps) {
+function CatalogProductCardComponent({ product, hidePrice }: CatalogProductCardProps) {
   const navigate = useNavigate();
   const mainImage = product.images?.[0];
   const name = formatProductName(product.brand, product.model);
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  const handleClick = useCallback(() => {
+    navigate(`/marketplace/${product.slug}`);
+  }, [navigate, product.slug]);
 
   return (
-    <motion.div
-      className="group cursor-pointer rounded-2xl overflow-hidden bg-card border border-border/30 hover:border-primary/30 transition-all duration-300 hover:shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.15)] flex flex-col h-full"
-      onClick={() => navigate(`/marketplace/${product.slug}`)}
-      whileHover={{ y: -6 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+    <div
+      className="group cursor-pointer rounded-2xl overflow-hidden bg-card border border-border/30 hover:border-primary/30 transition-all duration-300 hover:shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.15)] hover:-translate-y-1.5 flex flex-col h-full will-change-transform"
+      onClick={handleClick}
     >
       {/* Image */}
       <div className="relative aspect-[4/3] bg-white overflow-hidden shrink-0">
@@ -31,6 +34,8 @@ export function CatalogProductCard({ product, hidePrice }: CatalogProductCardPro
             alt={name}
             className="w-full h-full object-contain p-5 group-hover:scale-110 transition-transform duration-700 ease-out"
             loading="lazy"
+            decoding="async"
+            onLoad={() => setImgLoaded(true)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted/10">
@@ -87,6 +92,8 @@ export function CatalogProductCard({ product, hidePrice }: CatalogProductCardPro
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }
+
+export const CatalogProductCard = memo(CatalogProductCardComponent);

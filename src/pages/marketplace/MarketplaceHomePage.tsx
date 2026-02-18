@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useSearchParams, useNavigate, useOutletContext } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, ShieldCheck, ArrowRight, ChevronLeft, ChevronRight, TrendingUp, Package } from "lucide-react";
@@ -11,15 +11,18 @@ import { useMarketplaceCatalog, type CatalogProduct } from "@/hooks/useMarketpla
 import { CatalogProductCard } from "@/components/client/vault/marketplace/CatalogProductCard";
 import { MarketplaceFilters, type MarketplaceFilterValues } from "@/components/client/vault/marketplace/MarketplaceFilters";
 import { BrandLogo, popularBrands } from "@/components/marketplace/home/BrandLogos";
-import { SecuritySection } from "@/components/marketplace/home/SecuritySection";
-import { RecentlyViewedSection } from "@/components/marketplace/home/RecentlyViewedSection";
-import { BestSellersSection } from "@/components/marketplace/home/BestSellersSection";
-import { BrandSpotlightSection } from "@/components/marketplace/home/BrandSpotlightSection";
-import { RecentlyAddedSection } from "@/components/marketplace/home/RecentlyAddedSection";
-import { SellCTASection } from "@/components/marketplace/home/SellCTASection";
-import { MarketplaceFAQSection } from "@/components/marketplace/home/MarketplaceFAQSection";
-import { DropsCountdownSection } from "@/components/marketplace/home/DropsCountdownSection";
-import { UpcomingReleasesSection } from "@/components/marketplace/home/UpcomingReleasesSection";
+import { LazySection } from "@/components/home/LazySection";
+
+// Lazy load below-fold sections
+const SecuritySection = lazy(() => import("@/components/marketplace/home/SecuritySection").then(m => ({ default: m.SecuritySection })));
+const RecentlyViewedSection = lazy(() => import("@/components/marketplace/home/RecentlyViewedSection").then(m => ({ default: m.RecentlyViewedSection })));
+const BestSellersSection = lazy(() => import("@/components/marketplace/home/BestSellersSection").then(m => ({ default: m.BestSellersSection })));
+const BrandSpotlightSection = lazy(() => import("@/components/marketplace/home/BrandSpotlightSection").then(m => ({ default: m.BrandSpotlightSection })));
+const RecentlyAddedSection = lazy(() => import("@/components/marketplace/home/RecentlyAddedSection").then(m => ({ default: m.RecentlyAddedSection })));
+const SellCTASection = lazy(() => import("@/components/marketplace/home/SellCTASection").then(m => ({ default: m.SellCTASection })));
+const MarketplaceFAQSection = lazy(() => import("@/components/marketplace/home/MarketplaceFAQSection").then(m => ({ default: m.MarketplaceFAQSection })));
+const DropsCountdownSection = lazy(() => import("@/components/marketplace/home/DropsCountdownSection").then(m => ({ default: m.DropsCountdownSection })));
+const UpcomingReleasesSection = lazy(() => import("@/components/marketplace/home/UpcomingReleasesSection").then(m => ({ default: m.UpcomingReleasesSection })));
 
 export default function MarketplaceHomePage() {
   const [searchParams] = useSearchParams();
@@ -98,15 +101,8 @@ export default function MarketplaceHomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-2">
-            {products.map((product, i) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03, duration: 0.25 }}
-              >
-                <CatalogProductCard product={product} />
-              </motion.div>
+            {products.map((product) => (
+              <CatalogProductCard key={product.id} product={product} />
             ))}
           </div>
         )}
@@ -234,15 +230,8 @@ export default function MarketplaceHomePage() {
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {products.slice(0, 10).map((product, i) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.04, duration: 0.3 }}
-                >
-                  <CatalogProductCard product={product} hidePrice />
-                </motion.div>
+              {products.slice(0, 10).map((product) => (
+                <CatalogProductCard key={product.id} product={product} hidePrice />
               ))}
             </div>
           )}
@@ -264,30 +253,62 @@ export default function MarketplaceHomePage() {
       </section>
 
       {/* ===== UPCOMING RELEASES ===== */}
-      <UpcomingReleasesSection />
+      <LazySection minHeight="300px">
+        <Suspense fallback={<div className="h-[300px]" />}>
+          <UpcomingReleasesSection />
+        </Suspense>
+      </LazySection>
 
       {/* ===== BEST SELLERS ===== */}
-      <BestSellersSection products={products} />
+      <LazySection minHeight="400px">
+        <Suspense fallback={<div className="h-[400px]" />}>
+          <BestSellersSection products={products} />
+        </Suspense>
+      </LazySection>
 
       {/* ===== SECURITY & AUTHENTICITY ===== */}
-      <SecuritySection />
+      <LazySection minHeight="300px">
+        <Suspense fallback={<div className="h-[300px]" />}>
+          <SecuritySection />
+        </Suspense>
+      </LazySection>
 
       {/* ===== RECENTLY VIEWED ===== */}
-      <RecentlyViewedSection />
+      <LazySection minHeight="200px">
+        <Suspense fallback={<div className="h-[200px]" />}>
+          <RecentlyViewedSection />
+        </Suspense>
+      </LazySection>
 
       {/* ===== SELL CTA ===== */}
-      <SellCTASection />
+      <LazySection minHeight="300px">
+        <Suspense fallback={<div className="h-[300px]" />}>
+          <SellCTASection />
+        </Suspense>
+      </LazySection>
 
       {/* ===== BRAND SPOTLIGHTS ===== */}
-      <BrandSpotlightSection products={products} insertAfterIndex={0}>
-        <RecentlyAddedSection products={products} />
-      </BrandSpotlightSection>
+      <LazySection minHeight="400px">
+        <Suspense fallback={<div className="h-[400px]" />}>
+          <BrandSpotlightSection products={products} insertAfterIndex={0}>
+            <RecentlyAddedSection products={products} />
+          </BrandSpotlightSection>
+        </Suspense>
+      </LazySection>
 
       {/* ===== DROPS COUNTDOWN ===== */}
-      <DropsCountdownSection />
+      <LazySection minHeight="200px">
+        <Suspense fallback={<div className="h-[200px]" />}>
+          <DropsCountdownSection />
+        </Suspense>
+      </LazySection>
 
       {/* ===== FAQ ===== */}
-      <MarketplaceFAQSection />
+      <LazySection minHeight="400px">
+        <Suspense fallback={<div className="h-[400px]" />}>
+          <MarketplaceFAQSection />
+        </Suspense>
+      </LazySection>
     </div>
   );
 }
