@@ -38,7 +38,7 @@ export default function MarketplaceLayout() {
   return (
     <div className="min-h-screen bg-background flex flex-col theme-light">
       {/* ===== MARKETPLACE HEADER ===== */}
-      <header className="sticky top-0 z-50 theme-dark">
+      <header className="sticky top-0 z-50 theme-dark" style={{ top: "var(--safe-area-top, 0px)" }}>
         {/* Top gold line */}
         <div className="h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
 
@@ -203,7 +203,7 @@ export default function MarketplaceLayout() {
       </div>
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border/30 safe-bottom z-40">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border/30 safe-bottom z-50">
         <div className="flex justify-around">
           {navItems.map((item) => {
             const isActive = item.exact
@@ -215,12 +215,12 @@ export default function MarketplaceLayout() {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "flex flex-col items-center gap-1 py-3 px-3 min-h-[56px] text-xs transition",
-                  isActive ? "text-primary" : "text-muted-foreground"
+                  "flex flex-col items-center justify-center gap-0.5 py-2.5 px-2 min-h-[52px] min-w-[52px] text-[10px] font-medium transition-colors active:scale-95",
+                  isActive ? "text-primary" : "text-muted-foreground active:text-foreground"
                 )}
               >
-                <Icon className="h-5 w-5" />
-                <span className="truncate max-w-[60px]">{item.mobileLabel}</span>
+                <Icon className={cn("h-5 w-5 mb-0.5", isActive && "drop-shadow-[0_0_6px_hsl(var(--primary)/0.4)]")} />
+                <span>{item.mobileLabel}</span>
               </Link>
             );
           })}

@@ -62,10 +62,10 @@ export function PWAInstallBanner() {
 
   return (
     <div
-      className={`fixed bottom-20 left-4 right-4 z-50 md:left-auto md:right-6 md:max-w-sm transition-all duration-300 ease-out ${
+      className={`fixed bottom-24 left-4 right-4 z-[55] md:bottom-6 md:left-auto md:right-6 md:max-w-sm transition-all duration-300 ease-out ${
         visible ? "translate-y-0 opacity-100" : "translate-y-24 opacity-0"
       }`}
-      style={{ paddingBottom: "var(--safe-area-bottom)" }}
+      style={{ paddingBottom: "var(--safe-area-bottom, 0px)" }}
     >
       <div className="bg-card border border-border shadow-2xl rounded-xl p-4">
         <button
