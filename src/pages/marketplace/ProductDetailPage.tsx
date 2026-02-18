@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { saveRecentlyViewed } from "@/components/marketplace/home/RecentlyViewedSection";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -27,11 +27,16 @@ import { SpecRow } from "@/components/marketplace/SpecRow";
 import { OfferCard } from "@/components/marketplace/OfferCard";
 import { ProductGallery } from "@/components/marketplace/ProductGallery";
 import { ProductPriceBlock } from "@/components/marketplace/ProductPriceBlock";
+import { AuthenticityBadge } from "@/components/marketplace/AuthenticityBadge";
+import { SizePriceGrid } from "@/components/marketplace/SizePriceGrid";
+import { RetailComparison } from "@/components/marketplace/RetailComparison";
+import { StickyBuyBar } from "@/components/marketplace/StickyBuyBar";
 import { conditionLabels, conditionColors, normalizeShippingMode } from "@/lib/marketplace-constants";
 import { generateInstallmentOptions, formatPriceBR } from "@/lib/budget-calculator";
 import { formatProductName } from "@/lib/text-utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const proLabels: Record<string, { text: string; color: string; icon: typeof ShieldCheck }> = {
   pro_mandatory: { text: "PRO obrigatório", color: "bg-primary/20 text-primary border-primary/30", icon: ShieldCheck },
@@ -47,6 +52,8 @@ export default function ProductDetailPage() {
   const catalog = useMarketplaceCatalog(cpf || "visitor");
   const { product, offers, allOffers, sizes, isLoading, fetchProduct, fetchOffersBySize, watchlistStatus, checkWatchlist, toggleWatchlist, reviews, reviewsLoading, reviewsAverage, reviewsTotal, fetchReviews, submitReview, comments, commentsLoading, fetchComments, submitComment, analytics, analyticsLoading, fetchAnalytics } = catalog;
   const { createOrder } = useMarketplace(cpf || null);
+  const isMobile = useIsMobile();
+  const heroRef = useRef<HTMLDivElement>(null);
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -56,6 +63,18 @@ export default function ProductDetailPage() {
   const [checkoutListing, setCheckoutListing] = useState<MarketplaceListing | null>(null);
   const [detailOffer, setDetailOffer] = useState<ProductOffer | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+
+  // Intersection observer for sticky buy bar
+  useEffect(() => {
+    if (!isMobile || !heroRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(!entry.isIntersecting),
+      { threshold: 0.1 }
+    );
+    observer.observe(heroRef.current);
+    return () => observer.disconnect();
+  }, [isMobile]);
 
   const offerToListing = (offer: ProductOffer): MarketplaceListing => {
     const normalizedShippingMode = offer.shipping_mode === "seller_ships" ? "direct" 
@@ -258,7 +277,7 @@ export default function ProductDetailPage() {
         </div>
 
         {/* ===== HERO: Gallery + Purchase Panel ===== */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
+        <div ref={heroRef} className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
           {/* Gallery — 3/5 width */}
           <div className="lg:col-span-3">
             <ProductGallery
@@ -287,6 +306,9 @@ export default function ProductDetailPage() {
                 {product.colorway && (
                   <p className="text-sm text-muted-foreground mt-1">{product.colorway}</p>
                 )}
+                <div className="mt-3">
+                  <AuthenticityBadge />
+                </div>
               </div>
 
               {/* Price */}
@@ -297,10 +319,16 @@ export default function ProductDetailPage() {
                 const hasSize = !!selectedSize;
                 const showPrefix = !hasSize || multipleOffers;
                 return (
-                  <ProductPriceBlock
-                    displayPrice={displayPrice}
-                    showPrefix={showPrefix}
-                  />
+                  <>
+                    <ProductPriceBlock
+                      displayPrice={displayPrice}
+                      showPrefix={showPrefix}
+                    />
+                    <RetailComparison
+                      currentPrice={displayPrice}
+                      retailPrice={product.retail_price}
+                    />
+                  </>
                 );
               })()}
 
@@ -336,30 +364,14 @@ export default function ProductDetailPage() {
                 <Badge variant="secondary" className="text-xs w-fit">Somente Usados</Badge>
               )}
 
-              {/* Size Selector */}
-              {filteredSizes.length > 0 && (
-                <div>
-                  <label className="text-sm font-bold text-foreground mb-3 flex items-center gap-1.5">
-                    Selecione o tamanho
-                  </label>
-                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-                    {filteredSizes.map((size) => (
-                      <button
-                        key={size}
-                        onClick={() => setSelectedSize(size)}
-                        className={cn(
-                          "px-2 py-3 rounded-xl border text-sm font-semibold transition-all text-center",
-                          selectedSize === size
-                            ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/30"
-                            : "border-border/30 text-foreground hover:border-primary/30 hover:bg-muted/10"
-                        )}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Size + Price Grid */}
+              <SizePriceGrid
+                allOffers={allOffers}
+                sizes={sizes}
+                selectedSize={selectedSize}
+                onSelectSize={setSelectedSize}
+                conditionFilter={conditionFilter}
+              />
               {filteredSizes.length === 0 && sizes.length > 0 && (
                 <p className="text-xs text-muted-foreground">Nenhum tamanho disponível para este filtro.</p>
               )}
@@ -580,6 +592,16 @@ export default function ProductDetailPage() {
         onOpenChange={setCheckoutOpen}
         onConfirm={handleCheckoutConfirm}
         buyerDefaults={{ name: profile?.full_name }}
+      />
+
+      {/* Sticky Buy Bar — Mobile only */}
+      <StickyBuyBar
+        price={sortedOffers.length > 0 ? sortedOffers[0].price : product.lowest_price}
+        size={selectedSize}
+        visible={showStickyBar && sortedOffers.length > 0}
+        onBuy={() => {
+          if (sortedOffers.length > 0) handleBuyOffer(sortedOffers[0]);
+        }}
       />
     </div>
   );
