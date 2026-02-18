@@ -97,7 +97,14 @@ export default function AuthenticityPage() {
         body: { code: verificationCode }
       });
 
-      if (fnError) throw fnError;
+      if (fnError) {
+        // Handle rate limiting
+        if (fnError.message?.includes("429") || fnError.status === 429) {
+          setError("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
+          return;
+        }
+        throw fnError;
+      }
 
       if (!data.success || !data.is_valid) {
         setError(data.error || "Código não encontrado");
@@ -132,10 +139,14 @@ export default function AuthenticityPage() {
     });
   };
 
+  // Client name is now pre-masked by the server for privacy
+  // This fallback ensures backward compatibility
   const maskName = (name: string) => {
+    // If already masked (contains dots like "João S."), return as-is
+    if (name.includes(".")) return name;
     const parts = name.split(" ");
     if (parts.length === 1) return parts[0][0] + "***";
-    return parts[0] + " " + parts.slice(1).map(p => p[0] + "***").join(" ");
+    return parts[0] + " " + parts.slice(1).map(p => p[0] + ".").join(" ");
   };
 
   const getVerificationUrl = () => {

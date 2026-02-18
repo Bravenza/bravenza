@@ -3674,6 +3674,30 @@ export type Database = {
           },
         ]
       }
+      verification_attempts: {
+        Row: {
+          code_attempted: string
+          created_at: string
+          id: string
+          ip_address: string
+          is_valid: boolean
+        }
+        Insert: {
+          code_attempted: string
+          created_at?: string
+          id?: string
+          ip_address: string
+          is_valid?: boolean
+        }
+        Update: {
+          code_attempted?: string
+          created_at?: string
+          id?: string
+          ip_address?: string
+          is_valid?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       marketplace_product_comments_public: {
