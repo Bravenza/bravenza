@@ -20,9 +20,9 @@ export default defineConfig(({ mode }) => ({
       registerType: "prompt",
       includeAssets: ["favicon.png", "robots.txt", "placeholder.svg"],
       manifest: {
-        name: "BRAVENZA - Curadoria & Autenticação Premium",
+        name: "BRAVENZA - Curadoria & Marketplace Premium",
         short_name: "BRAVENZA",
-        description: "Plataforma premium de curadoria e autenticação de sneakers. Segurança e autenticidade garantidas.",
+        description: "Marketplace premium de sneakers autenticados. Compre, venda e colecione com segurança total.",
         id: "/",
         theme_color: "#1f1f1f",
         background_color: "#1f1f1f",
@@ -60,6 +60,18 @@ export default defineConfig(({ mode }) => ({
         prefer_related_applications: false,
         shortcuts: [
           {
+            name: "Marketplace",
+            short_name: "Marketplace",
+            url: "/marketplace",
+            icons: [{ src: "/pwa-192x192.png", sizes: "192x192" }]
+          },
+          {
+            name: "Minha Conta",
+            short_name: "Conta",
+            url: "/minha-conta",
+            icons: [{ src: "/pwa-192x192.png", sizes: "192x192" }]
+          },
+          {
             name: "Rastrear Pedido",
             short_name: "Rastreio",
             url: "/rastreio",
@@ -70,18 +82,13 @@ export default defineConfig(({ mode }) => ({
             short_name: "Solicitar",
             url: "/solicitar",
             icons: [{ src: "/pwa-192x192.png", sizes: "192x192" }]
-          },
-          {
-            name: "Minha Conta",
-            short_name: "Conta",
-            url: "/minha-conta",
-            icons: [{ src: "/pwa-192x192.png", sizes: "192x192" }]
           }
         ]
       },
       workbox: {
         skipWaiting: true,
         clientsClaim: true,
+        navigateFallbackDenylist: [/^\/~oauth/],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         runtimeCaching: [
           {
@@ -91,7 +98,7 @@ export default defineConfig(({ mode }) => ({
               cacheName: "google-fonts-cache",
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+                maxAgeSeconds: 60 * 60 * 24 * 365
               },
               cacheableResponse: {
                 statuses: [0, 200]
@@ -105,7 +112,7 @@ export default defineConfig(({ mode }) => ({
               cacheName: "gstatic-fonts-cache",
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+                maxAgeSeconds: 60 * 60 * 24 * 365
               },
               cacheableResponse: {
                 statuses: [0, 200]
@@ -113,13 +120,43 @@ export default defineConfig(({ mode }) => ({
             }
           },
           {
-            urlPattern: /^https:\/\/snfqxejtmauyspyhqvop\.supabase\.co\/.*/i,
+            urlPattern: /^https:\/\/snfqxejtmauyspyhqvop\.supabase\.co\/functions\/.*/i,
             handler: "NetworkFirst",
             options: {
-              cacheName: "supabase-api-cache",
+              cacheName: "supabase-functions-cache",
+              expiration: {
+                maxEntries: 30,
+                maxAgeSeconds: 60 * 2
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              },
+              networkTimeoutSeconds: 8
+            }
+          },
+          {
+            urlPattern: /^https:\/\/snfqxejtmauyspyhqvop\.supabase\.co\/rest\/.*/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "supabase-rest-cache",
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 5 // 5 minutes
+                maxAgeSeconds: 60 * 5
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              },
+              networkTimeoutSeconds: 10
+            }
+          },
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "image-cache",
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30
               },
               cacheableResponse: {
                 statuses: [0, 200]
