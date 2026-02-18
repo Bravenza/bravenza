@@ -109,13 +109,23 @@ export function OfferCard({ offer, isBest, productImages, onBuy, onClick }: Offe
               ) : null;
             })()}
           </div>
-          <Button
-            size="sm"
-            className="btn-gold text-xs h-9 gap-1 rounded-xl font-bold"
-            onClick={(e) => { e.stopPropagation(); onBuy(); }}
-          >
-            Comprar <ChevronRight className="h-3.5 w-3.5" />
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs h-9 rounded-xl font-semibold border-border/40"
+              onClick={(e) => { e.stopPropagation(); onClick(); }}
+            >
+              Ver Oferta
+            </Button>
+            <Button
+              size="sm"
+              className="btn-gold text-xs h-9 gap-1 rounded-xl font-bold"
+              onClick={(e) => { e.stopPropagation(); onBuy(); }}
+            >
+              Comprar <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

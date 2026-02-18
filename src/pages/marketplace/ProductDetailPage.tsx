@@ -485,7 +485,7 @@ export default function ProductDetailPage() {
         </div>
 
         {/* ===== SELLER OFFERS SECTION ===== */}
-        <div className="mt-14 bg-white rounded-2xl border border-border/20 p-6">
+        <div className="mt-14">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-black text-foreground tracking-tight">
               Ofertas {selectedSize ? `— Tam. ${selectedSize}` : ""}
