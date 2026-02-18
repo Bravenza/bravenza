@@ -263,7 +263,7 @@ export default function ProductDetailPage() {
   const formattedName = formatProductName(product.brand, product.model);
 
   return (
-    <div className="min-h-screen bg-background theme-light">
+    <div className="min-h-screen bg-[#f5f5f7] theme-light">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24">
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-6">
@@ -436,12 +436,12 @@ export default function ProductDetailPage() {
 
         {/* ===== PRODUCT SPECS ===== */}
         <div className="mt-14 grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div>
+          <div className="bg-white rounded-2xl border border-border/20 p-6">
             <h3 className="text-base font-bold text-foreground mb-4 flex items-center gap-2 tracking-tight">
                 <Info className="h-4 w-4 text-primary" />
                 Ficha Técnica
             </h3>
-            <div className="rounded-2xl border border-border/20 overflow-hidden">
+            <div className="rounded-xl border border-border/20 overflow-hidden">
               <SpecRow icon={<Hash className="h-3.5 w-3.5" />} label="SKU" value={product.sku || "—"} />
               <SpecRow icon={<Calendar className="h-3.5 w-3.5" />} label="Lançamento" value={
                 product.release_date
@@ -472,22 +472,20 @@ export default function ProductDetailPage() {
 
           {/* Description */}
           {product.description && (
-            <div>
+            <div className="bg-white rounded-2xl border border-border/20 p-6">
               <h3 className="text-base font-bold text-foreground mb-4 flex items-center gap-2 tracking-tight">
                 <Info className="h-4 w-4 text-primary" />
                 Descrição
               </h3>
-              <div className="p-5 bg-muted/5 rounded-2xl border border-border/20">
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                  {product.description}
-                </p>
-              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                {product.description}
+              </p>
             </div>
           )}
         </div>
 
         {/* ===== SELLER OFFERS SECTION ===== */}
-        <div className="mt-14">
+        <div className="mt-14 bg-white rounded-2xl border border-border/20 p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-black text-foreground tracking-tight">
               Ofertas {selectedSize ? `— Tam. ${selectedSize}` : ""}
@@ -547,7 +545,7 @@ export default function ProductDetailPage() {
         </div>
 
         {/* ===== PRICE INSIGHTS ===== */}
-        <div className="mt-14">
+        <div className="mt-14 bg-white rounded-2xl border border-border/20 p-6">
           <ProductAnalyticsChart
             analytics={analytics}
             isLoading={analyticsLoading}
@@ -556,7 +554,7 @@ export default function ProductDetailPage() {
         </div>
 
         {/* ===== REVIEWS ===== */}
-        <div className="mt-14">
+        <div className="mt-14 bg-white rounded-2xl border border-border/20 p-6">
           <ProductReviews
             productId={product.id}
             reviews={reviews}
@@ -573,7 +571,7 @@ export default function ProductDetailPage() {
         </div>
 
         {/* ===== PROTECTED PURCHASE ===== */}
-        <div className="mt-14">
+        <div className="mt-14 bg-white rounded-2xl border border-border/20 p-6">
           <ProtectedPurchaseSection />
         </div>
       </main>
