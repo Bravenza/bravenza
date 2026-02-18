@@ -186,7 +186,6 @@ export default defineConfig(({ mode }) => ({
           "vendor-ui": ["@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu", "@radix-ui/react-tabs", "@radix-ui/react-toast", "@radix-ui/react-popover", "@radix-ui/react-select"],
           "vendor-motion": ["framer-motion"],
           "vendor-query": ["@tanstack/react-query"],
-          "vendor-charts": ["recharts"],
           "vendor-supabase": ["@supabase/supabase-js"],
         },
       },
