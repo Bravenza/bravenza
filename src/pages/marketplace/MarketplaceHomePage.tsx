@@ -263,6 +263,9 @@ export default function MarketplaceHomePage() {
         </div>
       </section>
 
+      {/* ===== UPCOMING RELEASES ===== */}
+      <UpcomingReleasesSection />
+
       {/* ===== BEST SELLERS ===== */}
       <BestSellersSection products={products} />
 
@@ -282,9 +285,6 @@ export default function MarketplaceHomePage() {
 
       {/* ===== DROPS COUNTDOWN ===== */}
       <DropsCountdownSection />
-
-      {/* ===== UPCOMING RELEASES (AI) ===== */}
-      <UpcomingReleasesSection />
 
       {/* ===== FAQ ===== */}
       <MarketplaceFAQSection />
