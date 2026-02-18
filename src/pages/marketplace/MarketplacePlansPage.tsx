@@ -3,13 +3,24 @@ import { useOutletContext, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Check, X, Crown, Zap, Shield, Rocket, Star, ArrowRight,
-  Package, Percent, Gauge, Headphones, Sparkles
+  Package, Percent, Gauge, Headphones, Sparkles, Loader2, AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useSellerPlan, type MarketplacePlan } from "@/hooks/marketplace/useSellerPlan";
+import { useMarketplace } from "@/hooks/useMarketplace";
+import { toast } from "sonner";
 
 const planIcons: Record<string, any> = {
   free: Shield,
@@ -60,9 +71,56 @@ export default function MarketplacePlansPage() {
   const context = useOutletContext<{ cpf?: string; profile?: any }>();
   const navigate = useNavigate();
   const cpf = context?.cpf;
-  const { plans, status } = useSellerPlan(null); // fetch plans only
+  const isLoggedIn = !!cpf && cpf !== "visitor";
+
+  const { seller } = useMarketplace(cpf || null);
+  const {
+    plans, status, subscription, isSubscribing,
+    subscribe, cancelSubscription, fetchSubscription,
+  } = useSellerPlan(seller?.id || null);
+
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
 
   const currentPlanId = status?.plan?.id || "free";
+  const hasActiveSubscription = subscription?.status === "active" && subscription?.plan_id !== "free";
+
+  const handleSubscribe = async (planId: string) => {
+    if (!isLoggedIn) {
+      navigate("/entrar");
+      return;
+    }
+    if (!seller) {
+      toast.error("Complete o cadastro de vendedor primeiro.");
+      navigate("/marketplace/loja");
+      return;
+    }
+    setSelectedPlan(planId);
+    setCheckoutOpen(true);
+  };
+
+  const handleConfirmSubscribe = async () => {
+    if (!selectedPlan || !email) return;
+    try {
+      await subscribe(selectedPlan, email);
+      toast.success("Redirecionando para o checkout do Mercado Pago...");
+      setCheckoutOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao iniciar assinatura");
+    }
+  };
+
+  const handleCancel = async () => {
+    const ok = await cancelSubscription();
+    if (ok) {
+      toast.success("Assinatura será cancelada ao final do período.");
+      setCancelConfirmOpen(false);
+    } else {
+      toast.error("Erro ao cancelar assinatura");
+    }
+  };
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 pb-28 md:pb-12">
@@ -78,6 +136,30 @@ export default function MarketplacePlansPage() {
           Comece grátis e evolua conforme seu volume. Reduza comissões e desbloqueie ferramentas avançadas.
         </p>
       </div>
+
+      {/* Active subscription banner */}
+      {hasActiveSubscription && (
+        <div className="mb-8 p-4 rounded-2xl border border-primary/20 bg-primary/5 flex items-center justify-between">
+          <div>
+            <p className="font-bold text-sm">
+              Assinatura ativa: {subscription?.marketplace_plans?.name || subscription?.plan_id}
+            </p>
+            {subscription?.current_period_end && (
+              <p className="text-xs text-muted-foreground">
+                Próxima cobrança: {new Date(subscription.current_period_end).toLocaleDateString("pt-BR")}
+              </p>
+            )}
+            {subscription?.cancel_at_period_end && (
+              <p className="text-xs text-warning">⚠️ Será cancelada ao final do período</p>
+            )}
+          </div>
+          {!subscription?.cancel_at_period_end && (
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setCancelConfirmOpen(true)}>
+              Cancelar assinatura
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Plan Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
@@ -153,9 +235,19 @@ export default function MarketplacePlansPage() {
                       Plano atual
                     </Button>
                   ) : plan.price_monthly > 0 ? (
-                    <Button className={cn("w-full gap-2", plan.id === "elite" ? "btn-gold" : "bg-primary text-primary-foreground hover:bg-primary/90")}>
-                      Assinar {plan.name}
-                      <ArrowRight className="h-4 w-4" />
+                    <Button
+                      className={cn("w-full gap-2", plan.id === "elite" ? "btn-gold" : "bg-primary text-primary-foreground hover:bg-primary/90")}
+                      onClick={() => handleSubscribe(plan.id)}
+                      disabled={isSubscribing}
+                    >
+                      {isSubscribing ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          Assinar {plan.name}
+                          <ArrowRight className="h-4 w-4" />
+                        </>
+                      )}
                     </Button>
                   ) : (
                     <Button variant="outline" className="w-full" disabled>
@@ -226,6 +318,69 @@ export default function MarketplacePlansPage() {
           <a href="/regras-marketplace" className="text-primary underline">regras do marketplace</a>.
         </p>
       </div>
+
+      {/* Checkout Dialog */}
+      <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Assinar plano</DialogTitle>
+            <DialogDescription>
+              Você será redirecionado para o Mercado Pago para completar o pagamento recorrente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div>
+              <Label htmlFor="payer-email">Email para pagamento</Label>
+              <Input
+                id="payer-email"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <Button
+              className="w-full btn-gold gap-2"
+              onClick={handleConfirmSubscribe}
+              disabled={isSubscribing || !email}
+            >
+              {isSubscribing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Rocket className="h-4 w-4" />
+                  Ir para pagamento
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Confirmation */}
+      <Dialog open={cancelConfirmOpen} onOpenChange={setCancelConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              <DialogTitle>Cancelar assinatura?</DialogTitle>
+            </div>
+            <DialogDescription>
+              Sua assinatura continuará ativa até o final do período atual. 
+              Após isso, você voltará ao plano Free e seus anúncios excedentes serão pausados.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="pt-4 space-y-3">
+            <Button variant="destructive" className="w-full" onClick={handleCancel}>
+              Confirmar cancelamento
+            </Button>
+            <Button variant="outline" className="w-full" onClick={() => setCancelConfirmOpen(false)}>
+              Manter assinatura
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

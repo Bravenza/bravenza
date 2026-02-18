@@ -79,6 +79,7 @@ const DropsArticlePage = lazy(() => import("./pages/drops/DropsArticlePage"));
 const VaultCommunityAdminPage = lazy(() => import("./pages/admin/VaultCommunityAdminPage"));
 const MarketplaceOrdersPage = lazy(() => import("./pages/admin/MarketplaceOrdersPage"));
 const MarketplaceInspectionPage = lazy(() => import("./pages/admin/MarketplaceInspectionPage"));
+const MarketplacePlansAdminPage = lazy(() => import("./pages/admin/MarketplacePlansAdminPage"));
 const ActivityLogsPage = lazy(() => import("./pages/admin/ActivityLogsPage"));
 const EmailFlowPage = lazy(() => import("./pages/admin/EmailFlowPage"));
 const WhatsAppFlowPage = lazy(() => import("./pages/admin/WhatsAppFlowPage"));
@@ -220,6 +221,7 @@ const App = () => (
                   <Route path="vault/comunidade" element={<VaultCommunityAdminPage />} />
                   <Route path="vault/marketplace" element={<MarketplaceOrdersPage />} />
                   <Route path="vault/marketplace/inspecao" element={<MarketplaceInspectionPage />} />
+                  <Route path="vault/marketplace/planos" element={<MarketplacePlansAdminPage />} />
                 </Route>
 
                 {/* 404 */}
