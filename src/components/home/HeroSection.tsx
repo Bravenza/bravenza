@@ -60,7 +60,7 @@ const HeroSectionComponent = () => {
             style={{ animationDelay: "0.2s" }}
           >
             A Bravenza localiza sneakers exclusivos ao redor do mundo, verifica a autenticidade 
-            com inspeção técnica em 5 níveis e entrega na sua porta com{" "}
+            com inspeção técnica em 6 etapas e entrega na sua porta com{" "}
             <span className="text-foreground font-medium">rastreio completo</span> e 
             segurança total.
           </p>

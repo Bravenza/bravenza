@@ -5,7 +5,7 @@ import { Shield, Globe, Zap, Layers, Headphones, Lock } from "lucide-react";
 const benefits = [
   {
     icon: Layers,
-    title: "Autenticação em 5 níveis",
+    title: "Autenticação em 6 etapas",
     description: "Inspeção técnica digital e presencial com parecer detalhado. Se não for autêntico, você não paga.",
   },
   {
