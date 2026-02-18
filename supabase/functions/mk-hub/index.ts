@@ -113,20 +113,25 @@ Deno.serve(async (req) => {
       q = q.range(of, of + lm - 1);
       const { data, count, error } = await q;
       if (error) throw error;
-      // Re-sort in-memory: boosted → Elite → Pro → Free, then keep original sort within
+      // Only apply plan/boost priority when sort is "recent" (default) — user-explicit sorts are respected as-is
       const planOrder: Record<string, number> = { elite: 3, pro: 2, free: 1 };
-      const sorted = (data || []).sort((a: any, b: any) => {
-        // Boosted first (check if boost is active)
-        const now = new Date();
-        const aBoosted = a.seller?.plan_id !== "free" && a.pro_recommendation === "boosted" ? 1 : 0;
-        const bBoosted = b.seller?.plan_id !== "free" && b.pro_recommendation === "boosted" ? 1 : 0;
-        if (bBoosted !== aBoosted) return bBoosted - aBoosted;
-        // Then by seller plan priority
-        const aPlan = planOrder[a.seller?.plan_id || "free"] || 0;
-        const bPlan = planOrder[b.seller?.plan_id || "free"] || 0;
-        if (bPlan !== aPlan) return bPlan - aPlan;
-        return 0; // keep original DB sort for same tier
-      });
+      let sorted: any[];
+      if (so === "best_seller") {
+        // Sort by seller total sales count descending
+        sorted = (data || []).sort((a: any, b: any) => (b.seller?.total_sales_count || 0) - (a.seller?.total_sales_count || 0));
+      } else if (so === "recent" || !so) {
+        sorted = (data || []).sort((a: any, b: any) => {
+          const aBoosted = a.seller?.plan_id !== "free" && a.pro_recommendation === "boosted" ? 1 : 0;
+          const bBoosted = b.seller?.plan_id !== "free" && b.pro_recommendation === "boosted" ? 1 : 0;
+          if (bBoosted !== aBoosted) return bBoosted - aBoosted;
+          const aPlan = planOrder[a.seller?.plan_id || "free"] || 0;
+          const bPlan = planOrder[b.seller?.plan_id || "free"] || 0;
+          if (bPlan !== aPlan) return bPlan - aPlan;
+          return 0;
+        });
+      } else {
+        sorted = data || [];
+      }
       const ids = sorted.map((l: any) => l.id);
       let fs = new Set<string>();
       if (ids.length > 0) {
