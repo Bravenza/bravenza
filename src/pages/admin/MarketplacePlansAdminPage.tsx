@@ -306,6 +306,9 @@ export default function MarketplacePlansAdminPage() {
 
       {/* Subscription stats */}
       <SubscriptionStats />
+
+      {/* Fee Tiers */}
+      <FeeTiersManager />
     </div>
   );
 }
@@ -355,6 +358,104 @@ function SubscriptionStats() {
             </div>
           ))}
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function FeeTiersManager() {
+  const [tiers, setTiers] = useState<any[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchTiers();
+  }, []);
+
+  const fetchTiers = async () => {
+    const { data } = await supabase
+      .from("marketplace_fee_tiers")
+      .select("*")
+      .order("plan_id")
+      .order("min_sales", { ascending: true });
+    if (data) setTiers(data);
+  };
+
+  const handleTierChange = (id: string, field: string, value: number) => {
+    setTiers(prev => prev.map(t => t.id === id ? { ...t, [field]: value } : t));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    for (const tier of tiers) {
+      await supabase.from("marketplace_fee_tiers").update({
+        min_sales: tier.min_sales,
+        fee_discount: tier.fee_discount,
+      }).eq("id", tier.id);
+    }
+    toast.success("Faixas de desconto atualizadas!");
+    setSaving(false);
+  };
+
+  const proTiers = tiers.filter(t => t.plan_id === "pro");
+  const eliteTiers = tiers.filter(t => t.plan_id === "elite");
+
+  if (tiers.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Percent className="h-5 w-5 text-primary" />
+          Desconto progressivo por vendas
+        </CardTitle>
+        <CardDescription>
+          Nos planos pagos, a comissão diminui automaticamente conforme o volume de vendas. 
+          O plano Free mantém taxa fixa.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[{ label: "Pro", tiers: proTiers }, { label: "Elite", tiers: eliteTiers }].map(({ label, tiers: planTiers }) => (
+            <div key={label}>
+              <h4 className="font-bold text-sm mb-3 flex items-center gap-1">
+                {label === "Pro" ? <Zap className="h-4 w-4 text-primary" /> : <Crown className="h-4 w-4 text-primary" />}
+                {label}
+              </h4>
+              <div className="space-y-2">
+                {planTiers.map((tier) => (
+                  <div key={tier.id} className="grid grid-cols-2 gap-2 items-center">
+                    <div>
+                      <Label className="text-xs">A partir de X vendas</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={tier.min_sales}
+                        onChange={(e) => handleTierChange(tier.id, "min_sales", Number(e.target.value))}
+                        className="mt-0.5"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Desconto (%)</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={10}
+                        step={0.5}
+                        value={tier.fee_discount}
+                        onChange={(e) => handleTierChange(tier.id, "fee_discount", Number(e.target.value))}
+                        className="mt-0.5"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <Button className="mt-4 gap-2" onClick={handleSave} disabled={saving}>
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          Salvar faixas
+        </Button>
       </CardContent>
     </Card>
   );

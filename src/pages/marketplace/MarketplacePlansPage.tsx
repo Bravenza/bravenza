@@ -18,7 +18,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { useSellerPlan, type MarketplacePlan } from "@/hooks/marketplace/useSellerPlan";
+import { useSellerPlan, type MarketplacePlan, type FeeTier } from "@/hooks/marketplace/useSellerPlan";
 import { useMarketplace } from "@/hooks/useMarketplace";
 import { toast } from "sonner";
 
@@ -52,9 +52,14 @@ const highlightFeatures = [
   { key: "search", label: "Prioridade na busca", icon: Zap },
 ];
 
-function getFeatureValue(plan: MarketplacePlan, key: string): string | boolean {
+function getFeatureValue(plan: MarketplacePlan, key: string, feeTiers: FeeTier[]): string | boolean {
   switch (key) {
-    case "fee": return `${plan.fee_percent}%`;
+    case "fee": {
+      const tiers = feeTiers.filter(t => t.plan_id === plan.id);
+      const maxDiscount = tiers.length > 0 ? Math.max(...tiers.map(t => t.fee_discount)) : 0;
+      if (plan.id === "free" || maxDiscount === 0) return `${plan.fee_percent}%`;
+      return `${plan.fee_percent}% → ${plan.fee_percent - maxDiscount}%`;
+    }
     case "active": return plan.max_active_listings === null ? "Ilimitado" : String(plan.max_active_listings);
     case "new": return plan.max_new_listings_month === null ? "Ilimitado" : `${plan.max_new_listings_month}/mês`;
     case "boost": return `${plan.boost_slots} slot${plan.boost_slots > 1 ? "s" : ""}`;
@@ -75,7 +80,7 @@ export default function MarketplacePlansPage() {
 
   const { seller } = useMarketplace(cpf || null);
   const {
-    plans, status, subscription, isSubscribing,
+    plans, feeTiers, status, subscription, isSubscribing,
     subscribe, cancelSubscription, fetchSubscription,
   } = useSellerPlan(seller?.id || null);
 
@@ -215,7 +220,11 @@ export default function MarketplacePlansPage() {
                       <div className="text-3xl font-black">Grátis</div>
                     )}
                     <p className="text-xs text-muted-foreground mt-1">
-                      Comissão de {plan.fee_percent}% por venda
+                      {plan.id === "free" ? (
+                        `Comissão fixa de ${plan.fee_percent}%`
+                      ) : (
+                        <>Comissão de {plan.fee_percent}%, reduz com vendas</>
+                      )}
                     </p>
                   </div>
 
@@ -284,7 +293,7 @@ export default function MarketplacePlansPage() {
                     {feat.label}
                   </td>
                   {plans.map((plan) => {
-                    const val = getFeatureValue(plan, feat.key);
+                    const val = getFeatureValue(plan, feat.key, feeTiers);
                     return (
                       <td key={plan.id} className="text-center py-3 px-4">
                         {typeof val === "boolean" ? (
@@ -310,6 +319,53 @@ export default function MarketplacePlansPage() {
           </table>
         </div>
       </div>
+
+      {/* Progressive Fee Table */}
+      {feeTiers.length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-xl font-bold text-center mb-2">Comissão progressiva por vendas</h2>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Nos planos pagos, sua comissão diminui automaticamente conforme você vende mais.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/30">
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Vendas realizadas</th>
+                  {plans.map((plan) => (
+                    <th key={plan.id} className="text-center py-3 px-4 font-bold">{plan.name}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[0, 10, 25, 50, 100].map((threshold) => (
+                  <tr key={threshold} className="border-b border-border/10">
+                    <td className="py-3 px-4 font-medium">
+                      {threshold === 0 ? "0–9" : threshold === 10 ? "10–24" : threshold === 25 ? "25–49" : threshold === 50 ? "50–99" : "100+"}
+                    </td>
+                    {plans.map((plan) => {
+                      const tier = feeTiers.find(t => t.plan_id === plan.id && t.min_sales === threshold);
+                      const discount = tier?.fee_discount || 0;
+                      const effectiveFee = plan.fee_percent - discount;
+                      const isReduced = discount > 0;
+                      return (
+                        <td key={plan.id} className="text-center py-3 px-4">
+                          <span className={cn("font-medium", isReduced ? "text-primary" : "")}>
+                            {effectiveFee}%
+                          </span>
+                          {isReduced && (
+                            <span className="text-[10px] text-muted-foreground ml-1">(-{discount}%)</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* FAQ */}
       <div className="mt-12 text-center">
