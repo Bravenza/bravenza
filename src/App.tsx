@@ -17,7 +17,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Eagerly loaded pages (critical path)
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Lazy loaded pages - Public
 const TrackingPortalPage = lazy(() => import("./pages/TrackingPortalPage"));
