@@ -84,7 +84,7 @@ export function SellerPlanBanner({ status }: SellerPlanBannerProps) {
                 : "48-72h"
             : "48-72h"}
         </span>
-        {status.plan?.boost_slots && (
+        {status.plan?.boost_slots && status.plan.boost_slots > 0 && planId !== "free" && (
           <>
             <span className="text-border">|</span>
             <span>🚀 Boosts: {status.plan.boost_slots}</span>

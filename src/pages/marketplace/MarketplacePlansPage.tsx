@@ -44,7 +44,7 @@ const highlightFeatures = [
   { key: "fee", label: "Comissão por venda", icon: Percent },
   { key: "active", label: "Anúncios ativos", icon: Package },
   { key: "new", label: "Novos anúncios/mês", icon: Sparkles },
-  { key: "boost", label: "Boost / destaques", icon: Rocket },
+  { key: "boost", label: "Boost / destaques", icon: Rocket, paidOnly: true },
   { key: "sla", label: "Suporte SLA", icon: Headphones },
   { key: "storefront", label: "Vitrine / coleções", icon: Star },
   { key: "badge", label: "Selo Loja Verificada", icon: Shield },
@@ -62,7 +62,7 @@ function getFeatureValue(plan: MarketplacePlan, key: string, feeTiers: FeeTier[]
     }
     case "active": return plan.max_active_listings === null ? "Ilimitado" : String(plan.max_active_listings);
     case "new": return plan.max_new_listings_month === null ? "Ilimitado" : `${plan.max_new_listings_month}/mês`;
-    case "boost": return `${plan.boost_slots} slot${plan.boost_slots > 1 ? "s" : ""}`;
+    case "boost": return plan.id === "free" ? false : `${plan.boost_slots} slot${plan.boost_slots > 1 ? "s" : ""}`;
     case "sla": return plan.support_sla_hours <= 24 ? "Até 24h" : plan.support_sla_hours <= 48 ? "24-48h" : "48-72h";
     case "storefront": return plan.has_storefront;
     case "badge": return plan.has_verified_badge;
