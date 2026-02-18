@@ -12,7 +12,7 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
     { label: "Solicitar Orçamento", href: "/solicitar" },
     { label: "Rastrear Pedido", href: "/rastreio" },
     { label: "Autenticidade", href: "/sobre-autenticidade" },
-    { label: "Trocas e devoluções", href: "/trocas" },
+    { label: "Trocas e devoluções", href: "/trocas-devolucoes" },
     { label: "Minha Conta", href: "/entrar" },
   ];
 
@@ -161,7 +161,7 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
             <Link to="/termos" className="text-muted-foreground hover:text-foreground transition-colors">
               Termos de uso
             </Link>
-            <Link to="/trocas" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/trocas-devolucoes" className="text-muted-foreground hover:text-foreground transition-colors">
               Trocas e devoluções
             </Link>
           </div>
