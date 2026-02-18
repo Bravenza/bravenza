@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 const FUNCTION_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
 const ACTION_TO_FUNCTION: Record<string, string> = {
@@ -17,7 +19,7 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
 };
 
 export async function marketplaceRequest(
-  cpf: string,
+  _cpf: string,
   action: string,
   method: string = "GET",
   body?: any,
@@ -27,13 +29,23 @@ export async function marketplaceRequest(
   const params = new URLSearchParams({ action, ...extraParams });
   const url = `${FUNCTION_BASE}/${fnName}?${params}`;
 
+  // Get current session JWT token for authenticated requests
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+  };
+
+  // Send JWT token for authentication (replaces x-client-cpf header trust)
+  if (accessToken) {
+    headers["Authorization"] = `Bearer ${accessToken}`;
+  }
+
   const res = await fetch(url, {
     method,
-    headers: {
-      "Content-Type": "application/json",
-      "x-client-cpf": cpf,
-      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-    },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
 
@@ -43,4 +55,21 @@ export async function marketplaceRequest(
   }
 
   return res.json();
+}
+
+/**
+ * Build authenticated headers for mk-hub requests.
+ * Use this helper in components that call mk-hub directly (outside marketplaceRequest).
+ */
+export async function getMarketplaceHeaders(): Promise<Record<string, string>> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+  };
+  if (accessToken) {
+    headers["Authorization"] = `Bearer ${accessToken}`;
+  }
+  return headers;
 }

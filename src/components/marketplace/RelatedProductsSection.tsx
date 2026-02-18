@@ -17,11 +17,10 @@ export const RelatedProductsSection = memo(function RelatedProductsSection({ cur
   const fetchRelated = useCallback(async () => {
     try {
       const BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub`;
-      const KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+      const headers = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "catalog-products", brand, category });
-      const res = await fetch(`${BASE}?${params}`, {
-        headers: { "Content-Type": "application/json", apikey: KEY, "x-client-cpf": cpf },
-      });
+      const res = await fetch(`${BASE}?${params}`, { headers });
       const data = await res.json();
       const filtered = (data.products || []).filter((p: CatalogProduct) => p.id !== currentProductId).slice(0, 10);
       setProducts(filtered);

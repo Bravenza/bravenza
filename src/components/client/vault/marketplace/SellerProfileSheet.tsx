@@ -88,13 +88,9 @@ export function SellerProfileSheet({
     setIsLoading(true);
     try {
       const params = new URLSearchParams({ action: "seller-public-profile", seller_id: sellerId });
-      const res = await fetch(`${FUNCTION_URL}?${params}`, {
-        headers: {
-          "Content-Type": "application/json",
-          "x-client-cpf": clientCpf,
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-      });
+      const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+      const headers = await getMarketplaceHeaders();
+      const res = await fetch(`${FUNCTION_URL}?${params}`, { headers });
       const data = await res.json();
       setProfile(data);
     } catch (err) {

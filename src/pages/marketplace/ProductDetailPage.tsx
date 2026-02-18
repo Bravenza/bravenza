@@ -207,14 +207,10 @@ export default function ProductDetailPage() {
     }
     const checkPurchase = async () => {
       try {
+        const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+        const headers = await getMarketplaceHeaders();
         const params = new URLSearchParams({ action: "check-purchase", product_id: product.id });
-        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub?${params}`, {
-          headers: {
-            "Content-Type": "application/json",
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            "x-client-cpf": cpf,
-          },
-        });
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub?${params}`, { headers });
         const data = await res.json();
         setCanReview(!!data.has_purchased);
       } catch {

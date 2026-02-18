@@ -42,14 +42,12 @@ export function DisputeDialog({ orderId, clientCpf, protectionEndsAt, onSuccess 
     if (!reasonType || !details.trim()) return;
     setLoading(true);
     try {
+      const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+      const headers = await getMarketplaceHeaders();
       const reasonLabel = disputeReasons.find((r) => r.value === reasonType)?.label || reasonType;
       const res = await fetch(`${FUNCTION_URL}?action=open-dispute`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-client-cpf": clientCpf,
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
+        headers,
         body: JSON.stringify({
           order_id: orderId,
           reason: `${reasonLabel}: ${details}`,

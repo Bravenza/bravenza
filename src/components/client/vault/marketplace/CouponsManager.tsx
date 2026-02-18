@@ -39,10 +39,9 @@ export function CouponsManager({ clientCpf }: CouponsManagerProps) {
     code: "", discount_type: "percent", discount_value: "", min_purchase: "", max_uses: "", valid_until: "",
   });
 
-  const headers = {
-    "Content-Type": "application/json",
-    "x-client-cpf": clientCpf,
-    apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+  const getHeaders = async () => {
+    const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+    return getMarketplaceHeaders();
   };
 
   useEffect(() => { fetchCoupons(); }, []);
@@ -50,7 +49,8 @@ export function CouponsManager({ clientCpf }: CouponsManagerProps) {
   const fetchCoupons = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${FUNCTION_URL}?action=my-coupons`, { headers });
+      const h = await getHeaders();
+      const res = await fetch(`${FUNCTION_URL}?action=my-coupons`, { headers: h });
       const data = await res.json();
       setCoupons(data.coupons || []);
     } catch (err) {
@@ -66,8 +66,9 @@ export function CouponsManager({ clientCpf }: CouponsManagerProps) {
       return;
     }
     try {
+      const h = await getHeaders();
       const res = await fetch(`${FUNCTION_URL}?action=create-coupon`, {
-        method: "POST", headers,
+        method: "POST", headers: h,
         body: JSON.stringify({
           code: form.code, discount_type: form.discount_type,
           discount_value: parseFloat(form.discount_value),
@@ -91,8 +92,9 @@ export function CouponsManager({ clientCpf }: CouponsManagerProps) {
 
   const toggleCoupon = async (coupon: Coupon) => {
     try {
+      const h = await getHeaders();
       await fetch(`${FUNCTION_URL}?action=update-coupon`, {
-        method: "PUT", headers,
+        method: "PUT", headers: h,
         body: JSON.stringify({ coupon_id: coupon.id, is_active: !coupon.is_active }),
       });
       fetchCoupons();
@@ -103,7 +105,8 @@ export function CouponsManager({ clientCpf }: CouponsManagerProps) {
 
   const deleteCoupon = async (id: string) => {
     try {
-      await fetch(`${FUNCTION_URL}?action=delete-coupon&id=${id}`, { method: "DELETE", headers });
+      const h = await getHeaders();
+      await fetch(`${FUNCTION_URL}?action=delete-coupon&id=${id}`, { method: "DELETE", headers: h });
       fetchCoupons();
     } catch (err) {
       console.error(err);

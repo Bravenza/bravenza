@@ -3,12 +3,60 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const ch = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-client-cpf",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-client-cpf, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
 function j(d: unknown, s = 200) {
   return new Response(JSON.stringify(d), { status: s, headers: { ...ch, "Content-Type": "application/json" } });
+}
+
+// Actions that do NOT require authentication (public browsing)
+const PUBLIC_ACTIONS = new Set([
+  "listings", "listing-detail", "seller-public-profile",
+  "catalog-products", "catalog-product", "catalog-offers", "catalog-search",
+  "activity-feed", "product-comments", "product-reviews", "product-analytics",
+  "laudo-lookup", "seller-tier-info", "freight-quote", "check-auto-payout",
+]);
+
+// Resolve authenticated CPF from JWT token via client_profiles
+async function resolveAuthCpf(
+  req: Request,
+  sb: any
+): Promise<{ cpf: string | null; error: string | null }> {
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return { cpf: null, error: "Token de autenticação ausente" };
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+
+  // Use anon client to validate the JWT (not service role)
+  const anonClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: `Bearer ${token}` } } }
+  );
+
+  const { data, error } = await anonClient.auth.getUser(token);
+  if (error || !data?.user) {
+    return { cpf: null, error: "Token inválido ou expirado" };
+  }
+
+  const userId = data.user.id;
+
+  // Lookup CPF from client_profiles
+  const { data: profile, error: profileError } = await sb
+    .from("client_profiles")
+    .select("cpf")
+    .eq("user_id", userId)
+    .single();
+
+  if (profileError || !profile?.cpf) {
+    return { cpf: null, error: "Perfil de cliente não encontrado. Faça login novamente." };
+  }
+
+  return { cpf: profile.cpf, error: null };
 }
 
 async function gm(sb: any, c: string) {
@@ -62,14 +110,35 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: ch });
 
   const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  const cpf = req.headers.get("x-client-cpf");
-  if (!cpf) return j({ error: "CPF obrigatório" }, 401);
 
   const url = new URL(req.url);
   const a = url.searchParams.get("action");
   const mt = req.method;
 
   console.log("mk-hub", a, mt);
+
+  // Determine if this action requires authentication
+  const isPublicAction = PUBLIC_ACTIONS.has(a || "");
+
+  let cpf: string | null = null;
+
+  if (isPublicAction) {
+    // For public actions, try to resolve CPF from JWT if present (for favorites, etc.)
+    const authHeader = req.headers.get("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      const authResult = await resolveAuthCpf(req, sb);
+      cpf = authResult.cpf; // May be null, that's OK for public actions
+    }
+    // Fallback: use "visitor" for unauthenticated browsing
+    if (!cpf) cpf = "visitor";
+  } else {
+    // Private actions REQUIRE JWT authentication
+    const authResult = await resolveAuthCpf(req, sb);
+    if (authResult.error || !authResult.cpf) {
+      return j({ error: authResult.error || "Autenticação obrigatória" }, 401);
+    }
+    cpf = authResult.cpf;
+  }
 
   try {
     // ==================== LISTINGS (mklist) ====================
