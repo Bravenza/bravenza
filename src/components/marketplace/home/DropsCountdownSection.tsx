@@ -1,6 +1,6 @@
 import { memo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Flame, Clock, ArrowRight } from "lucide-react";
+import { Flame, Clock, ArrowRight, Zap, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,12 +39,18 @@ function getTimeLeft(target: Date) {
 function CountdownUnit({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex flex-col items-center">
-      <div className="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-card border border-border/40 flex items-center justify-center shadow-sm">
-        <span className="text-xl md:text-2xl font-black text-foreground font-display tabular-nums">
+      <motion.div
+        key={value}
+        initial={{ scale: 1.1, opacity: 0.7 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.2 }}
+        className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-background/80 backdrop-blur-sm border border-destructive/30 flex items-center justify-center shadow-[0_0_20px_-4px_hsl(var(--destructive)/0.3)]"
+      >
+        <span className="text-2xl md:text-3xl font-black text-foreground font-display tabular-nums">
           {String(value).padStart(2, "0")}
         </span>
-      </div>
-      <span className="text-[10px] text-muted-foreground mt-1.5 uppercase tracking-wider font-medium">{label}</span>
+      </motion.div>
+      <span className="text-[10px] text-destructive/80 mt-2 uppercase tracking-widest font-bold">{label}</span>
     </div>
   );
 }
@@ -54,7 +60,6 @@ export const DropsCountdownSection = memo(function DropsCountdownSection() {
   const [drops, setDrops] = useState<Drop[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Next Friday at 12:00 BRT as countdown target
   const getNextFriday = () => {
     const now = new Date();
     const day = now.getDay();
@@ -111,8 +116,28 @@ export const DropsCountdownSection = memo(function DropsCountdownSection() {
   if (loading) return null;
 
   return (
-    <section className="py-16 md:py-20 border-t border-border/30 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-primary/3 to-transparent" />
+    <section className="py-16 md:py-24 relative overflow-hidden">
+      {/* === URGENT BACKGROUND === */}
+      {/* Dark overlay base */}
+      <div className="absolute inset-0 bg-gradient-to-br from-background via-destructive/[0.04] to-background" />
+      
+      {/* Animated pulse rings */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px]">
+        <div className="absolute inset-0 rounded-full border border-destructive/10 animate-ping" style={{ animationDuration: "3s" }} />
+        <div className="absolute inset-8 rounded-full border border-destructive/8 animate-ping" style={{ animationDuration: "3.5s", animationDelay: "0.5s" }} />
+        <div className="absolute inset-16 rounded-full border border-destructive/5 animate-ping" style={{ animationDuration: "4s", animationDelay: "1s" }} />
+      </div>
+
+      {/* Radial glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-destructive/5 rounded-full blur-[120px]" />
+      
+      {/* Side accent lines */}
+      <div className="absolute top-[20%] left-0 w-24 h-px bg-gradient-to-r from-destructive/40 to-transparent" />
+      <div className="absolute bottom-[30%] right-0 w-32 h-px bg-gradient-to-l from-destructive/30 to-transparent" />
+
+      {/* Top & bottom borders */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-destructive/30 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-destructive/20 to-transparent" />
 
       <div className="max-w-7xl mx-auto px-4 relative z-10">
         {/* Header with countdown */}
@@ -121,31 +146,43 @@ export const DropsCountdownSection = memo(function DropsCountdownSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-10"
+          className="text-center mb-12"
         >
-          <div className="inline-flex items-center gap-2 mb-5 px-4 py-2 rounded-full bg-destructive/10 border border-destructive/20">
+          {/* Urgency badge */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            whileInView={{ scale: 1, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ type: "spring", stiffness: 200 }}
+            className="inline-flex items-center gap-2 mb-6 px-5 py-2.5 rounded-full bg-destructive/15 border border-destructive/30 backdrop-blur-sm"
+          >
             <Flame className="h-4 w-4 text-destructive animate-pulse" />
-            <span className="text-xs font-bold text-destructive uppercase tracking-wider">Drops & novidades</span>
-          </div>
+            <span className="text-xs font-black text-destructive uppercase tracking-[0.2em]">Drop exclusivo</span>
+            <Zap className="h-3.5 w-3.5 text-destructive" />
+          </motion.div>
 
-          <h2 className="text-2xl md:text-4xl font-black tracking-tight mb-3 font-display">
+          <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-2 font-display">
             Próximo drop em
           </h2>
+          <p className="text-sm text-muted-foreground mb-8">
+            Sexta-feira, 12h. Não perca.
+          </p>
 
           {/* Countdown */}
-          <div className="flex items-center justify-center gap-3 md:gap-4 mb-6">
+          <div className="flex items-center justify-center gap-3 md:gap-5 mb-8">
             <CountdownUnit value={countdown.days} label="Dias" />
-            <span className="text-xl font-bold text-muted-foreground/30 mt-[-14px]">:</span>
+            <span className="text-2xl font-black text-destructive/40 mt-[-20px]">:</span>
             <CountdownUnit value={countdown.hours} label="Horas" />
-            <span className="text-xl font-bold text-muted-foreground/30 mt-[-14px]">:</span>
+            <span className="text-2xl font-black text-destructive/40 mt-[-20px]">:</span>
             <CountdownUnit value={countdown.minutes} label="Min" />
-            <span className="text-xl font-bold text-muted-foreground/30 mt-[-14px]">:</span>
+            <span className="text-2xl font-black text-destructive/40 mt-[-20px]">:</span>
             <CountdownUnit value={countdown.seconds} label="Seg" />
           </div>
 
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Fique por dentro dos últimos lançamentos e conteúdos exclusivos da comunidade
-          </p>
+          <div className="inline-flex items-center gap-2 text-xs text-muted-foreground/80">
+            <Lock className="h-3 w-3" />
+            <span>Acesso antecipado exclusivo para membros Vault</span>
+          </div>
         </motion.div>
 
         {/* Drop cards */}
@@ -160,21 +197,29 @@ export const DropsCountdownSection = memo(function DropsCountdownSection() {
               className="group cursor-pointer"
               onClick={() => navigate(`/drops/${drop.id}`)}
             >
-              <div className="rounded-2xl border border-border/30 bg-card/80 backdrop-blur-sm overflow-hidden group-hover:border-primary/20 group-hover:shadow-lg group-hover:shadow-primary/5 transition-all duration-300">
+              <div className="rounded-2xl border border-destructive/15 bg-card/90 backdrop-blur-sm overflow-hidden group-hover:border-destructive/40 group-hover:shadow-[0_8px_40px_-8px_hsl(var(--destructive)/0.2)] transition-all duration-300">
                 {drop.cover_image && (
-                  <div className="aspect-[16/9] overflow-hidden">
+                  <div className="aspect-[16/9] overflow-hidden relative">
                     <img
                       src={drop.cover_image}
                       alt={drop.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
+                    {/* Dark overlay for urgency */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent opacity-80" />
+                    
+                    {/* Live indicator */}
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 rounded-md bg-destructive/90 backdrop-blur-sm">
+                      <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                      <span className="text-[9px] font-black text-white uppercase tracking-wider">Em breve</span>
+                    </div>
                   </div>
                 )}
                 <div className="p-4">
-                  <Badge variant="outline" className="text-[10px] mb-2 border-primary/20 text-primary">
+                  <Badge variant="outline" className="text-[10px] mb-2 border-destructive/20 text-destructive font-bold">
                     {drop.type === "news" ? "Novidade" : drop.type === "release" ? "Lançamento" : "Intel"}
                   </Badge>
-                  <h3 className="text-sm font-bold text-foreground line-clamp-2 mb-1 group-hover:text-primary transition-colors">
+                  <h3 className="text-sm font-bold text-foreground line-clamp-2 mb-1 group-hover:text-destructive transition-colors">
                     {drop.title}
                   </h3>
                   {drop.excerpt && (
@@ -186,11 +231,11 @@ export const DropsCountdownSection = memo(function DropsCountdownSection() {
           ))}
         </div>
 
-        <div className="text-center mt-8">
+        <div className="text-center mt-10">
           <Button
             variant="outline"
             size="sm"
-            className="rounded-full gap-2"
+            className="rounded-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive/50"
             onClick={() => navigate("/vault/intel")}
           >
             <Clock className="h-3.5 w-3.5" />
