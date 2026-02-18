@@ -1,6 +1,12 @@
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+export interface FeeTier {
+  plan_id: string;
+  min_sales: number;
+  fee_discount: number;
+}
+
 export interface MarketplacePlan {
   id: string;
   name: string;
@@ -41,22 +47,25 @@ export interface SubscriptionInfo {
 
 export function useSellerPlan(sellerId: string | null) {
   const [plans, setPlans] = useState<MarketplacePlan[]>([]);
+  const [feeTiers, setFeeTiers] = useState<FeeTier[]>([]);
   const [status, setStatus] = useState<SellerPlanStatus | null>(null);
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
 
   const fetchPlans = useCallback(async () => {
-    const { data } = await supabase
-      .from("marketplace_plans")
-      .select("*")
-      .eq("is_active", true)
-      .order("price_monthly", { ascending: true });
-    if (data) {
-      setPlans(data.map((p: any) => ({
+    const [plansRes, tiersRes] = await Promise.all([
+      supabase.from("marketplace_plans").select("*").eq("is_active", true).order("price_monthly", { ascending: true }),
+      supabase.from("marketplace_fee_tiers").select("plan_id, min_sales, fee_discount").order("min_sales", { ascending: true }),
+    ]);
+    if (plansRes.data) {
+      setPlans(plansRes.data.map((p: any) => ({
         ...p,
         features: Array.isArray(p.features) ? p.features : JSON.parse(p.features || "[]"),
       })));
+    }
+    if (tiersRes.data) {
+      setFeeTiers(tiersRes.data as FeeTier[]);
     }
   }, []);
 
@@ -152,6 +161,7 @@ export function useSellerPlan(sellerId: string | null) {
 
   return {
     plans,
+    feeTiers,
     status,
     subscription,
     isLoading,

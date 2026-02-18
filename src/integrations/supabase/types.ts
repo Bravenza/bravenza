@@ -372,6 +372,38 @@ export type Database = {
           },
         ]
       }
+      marketplace_fee_tiers: {
+        Row: {
+          created_at: string
+          fee_discount: number
+          id: string
+          min_sales: number
+          plan_id: string
+        }
+        Insert: {
+          created_at?: string
+          fee_discount?: number
+          id?: string
+          min_sales?: number
+          plan_id: string
+        }
+        Update: {
+          created_at?: string
+          fee_discount?: number
+          id?: string
+          min_sales?: number
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_fee_tiers_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_inspections: {
         Row: {
           checklist: Json | null
@@ -3695,6 +3727,10 @@ export type Database = {
       calculate_protection_end: {
         Args: { delivery_date: string }
         Returns: string
+      }
+      calculate_seller_fee: {
+        Args: { p_plan_id: string; p_total_sales: number }
+        Returns: number
       }
       calculate_vault_tier: {
         Args: { p_total_purchases: number; p_total_spent: number }
