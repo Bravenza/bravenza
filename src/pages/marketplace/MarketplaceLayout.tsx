@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, ShoppingBag, Store, Activity, User, Menu, X, ArrowLeft } from "lucide-react";
+import { Search, ShoppingBag, Store, Activity, User, Menu, X, ArrowLeft, Crown } from "lucide-react";
 import { Footer } from "@/components/home/Footer";
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,6 +15,7 @@ const navItems = [
   { path: "/marketplace/pedidos", label: "Pedidos", icon: ShoppingBag },
   { path: "/marketplace/feed", label: "Feed", icon: Activity },
   { path: "/marketplace/loja", label: "Minha Loja", icon: Store },
+  { path: "/marketplace/planos", label: "Planos", icon: Crown },
 ];
 
 export default function MarketplaceLayout() {

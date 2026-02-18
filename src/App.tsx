@@ -45,6 +45,7 @@ const MarketplaceHomePage = lazy(() => import("./pages/marketplace/MarketplaceHo
 const MarketplaceOrdersPage2 = lazy(() => import("./pages/marketplace/MarketplaceOrdersPage2"));
 const MarketplaceFeedPage = lazy(() => import("./pages/marketplace/MarketplaceFeedPage"));
 const MarketplaceMyStorePage = lazy(() => import("./pages/marketplace/MarketplaceMyStorePage"));
+const MarketplacePlansPage = lazy(() => import("./pages/marketplace/MarketplacePlansPage"));
 
 // Lazy loaded pages - Client portal
 const ClientLogin = lazy(() => import("./pages/client/ClientLogin"));
@@ -150,6 +151,7 @@ const App = () => (
                   <Route path="pedidos" element={<MarketplaceOrdersPage2 />} />
                   <Route path="feed" element={<MarketplaceFeedPage />} />
                   <Route path="loja" element={<MarketplaceMyStorePage />} />
+                  <Route path="planos" element={<MarketplacePlansPage />} />
                 </Route>
                 <Route path="/marketplace/:slug" element={
                   <ProtectedProviders><ProductDetailPage /></ProtectedProviders>

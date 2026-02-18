@@ -439,6 +439,8 @@ export type Database = {
       }
       marketplace_offers: {
         Row: {
+          activated_at: string | null
+          boost_level: string | null
           condition: string
           created_at: string
           defects: string | null
@@ -464,6 +466,8 @@ export type Database = {
           views_count: number
         }
         Insert: {
+          activated_at?: string | null
+          boost_level?: string | null
           condition?: string
           created_at?: string
           defects?: string | null
@@ -489,6 +493,8 @@ export type Database = {
           views_count?: number
         }
         Update: {
+          activated_at?: string | null
+          boost_level?: string | null
           condition?: string
           created_at?: string
           defects?: string | null
@@ -536,6 +542,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      marketplace_plans: {
+        Row: {
+          boost_slots: number
+          created_at: string
+          features: Json | null
+          fee_percent: number
+          has_batch_tools: boolean
+          has_priority_search: boolean
+          has_storefront: boolean
+          has_verified_badge: boolean
+          id: string
+          is_active: boolean
+          max_active_listings: number | null
+          max_new_listings_month: number | null
+          name: string
+          price_monthly: number
+          support_sla_hours: number
+          updated_at: string
+        }
+        Insert: {
+          boost_slots?: number
+          created_at?: string
+          features?: Json | null
+          fee_percent?: number
+          has_batch_tools?: boolean
+          has_priority_search?: boolean
+          has_storefront?: boolean
+          has_verified_badge?: boolean
+          id: string
+          is_active?: boolean
+          max_active_listings?: number | null
+          max_new_listings_month?: number | null
+          name: string
+          price_monthly?: number
+          support_sla_hours?: number
+          updated_at?: string
+        }
+        Update: {
+          boost_slots?: number
+          created_at?: string
+          features?: Json | null
+          fee_percent?: number
+          has_batch_tools?: boolean
+          has_priority_search?: boolean
+          has_storefront?: boolean
+          has_verified_badge?: boolean
+          id?: string
+          is_active?: boolean
+          max_active_listings?: number | null
+          max_new_listings_month?: number | null
+          name?: string
+          price_monthly?: number
+          support_sla_hours?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       marketplace_product_comments: {
         Row: {
@@ -723,6 +786,72 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      marketplace_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string
+          grace_period_end: string | null
+          id: string
+          last_payment_at: string | null
+          last_payment_status: string | null
+          payment_provider: string | null
+          plan_id: string
+          provider_subscription_id: string | null
+          seller_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string
+          grace_period_end?: string | null
+          id?: string
+          last_payment_at?: string | null
+          last_payment_status?: string | null
+          payment_provider?: string | null
+          plan_id?: string
+          provider_subscription_id?: string | null
+          seller_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string
+          grace_period_end?: string | null
+          id?: string
+          last_payment_at?: string | null
+          last_payment_status?: string | null
+          payment_provider?: string | null
+          plan_id?: string
+          provider_subscription_id?: string | null
+          seller_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_subscriptions_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: true
+            referencedRelation: "vault_seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       marketplace_watchlist: {
         Row: {
@@ -2484,6 +2613,8 @@ export type Database = {
       vault_marketplace_orders: {
         Row: {
           admin_notes: string | null
+          authentication_fee: number | null
+          authentication_requested: boolean
           buyer_address: string | null
           buyer_cpf: string
           buyer_email: string | null
@@ -2527,6 +2658,7 @@ export type Database = {
           protection_ends_at: string | null
           refund_amount: number | null
           refund_at: string | null
+          requires_authentication: boolean
           sale_price: number
           seller_id: string
           seller_payout: number
@@ -2539,6 +2671,8 @@ export type Database = {
         }
         Insert: {
           admin_notes?: string | null
+          authentication_fee?: number | null
+          authentication_requested?: boolean
           buyer_address?: string | null
           buyer_cpf: string
           buyer_email?: string | null
@@ -2582,6 +2716,7 @@ export type Database = {
           protection_ends_at?: string | null
           refund_amount?: number | null
           refund_at?: string | null
+          requires_authentication?: boolean
           sale_price: number
           seller_id: string
           seller_payout: number
@@ -2594,6 +2729,8 @@ export type Database = {
         }
         Update: {
           admin_notes?: string | null
+          authentication_fee?: number | null
+          authentication_requested?: boolean
           buyer_address?: string | null
           buyer_cpf?: string
           buyer_email?: string | null
@@ -2637,6 +2774,7 @@ export type Database = {
           protection_ends_at?: string | null
           refund_amount?: number | null
           refund_at?: string | null
+          requires_authentication?: boolean
           sale_price?: number
           seller_id?: string
           seller_payout?: number
@@ -3099,6 +3237,7 @@ export type Database = {
           bank_name: string | null
           bio: string | null
           cancellation_rate: number | null
+          cnpj: string | null
           cpf_cnpj: string | null
           created_at: string
           current_fee_percent: number
@@ -3109,11 +3248,14 @@ export type Database = {
           id_front_url: string | null
           id_selfie_url: string | null
           is_active: boolean
+          is_business: boolean
           kyc_rejection_reason: string | null
           kyc_reviewed_at: string | null
           kyc_reviewed_by: string | null
           kyc_status: string
           member_id: string
+          monthly_new_listings_count: number
+          monthly_new_listings_reset_at: string
           on_time_shipping_rate: number | null
           onboarding_completed_at: string | null
           payout_speed_days: number | null
@@ -3121,15 +3263,18 @@ export type Database = {
           pix_beneficiary: string | null
           pix_key: string | null
           pix_key_type: string | null
+          plan_id: string | null
           pro_approval_rate: number | null
           ratings_count: number
           seller_cep: string | null
+          support_priority: number
           terms_accepted_at: string | null
           tier: string
           tier_updated_at: string | null
           total_sales_count: number
           total_sales_value: number
           updated_at: string
+          verified_badge: boolean
         }
         Insert: {
           account_type?: string | null
@@ -3137,6 +3282,7 @@ export type Database = {
           bank_name?: string | null
           bio?: string | null
           cancellation_rate?: number | null
+          cnpj?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           current_fee_percent?: number
@@ -3147,11 +3293,14 @@ export type Database = {
           id_front_url?: string | null
           id_selfie_url?: string | null
           is_active?: boolean
+          is_business?: boolean
           kyc_rejection_reason?: string | null
           kyc_reviewed_at?: string | null
           kyc_reviewed_by?: string | null
           kyc_status?: string
           member_id: string
+          monthly_new_listings_count?: number
+          monthly_new_listings_reset_at?: string
           on_time_shipping_rate?: number | null
           onboarding_completed_at?: string | null
           payout_speed_days?: number | null
@@ -3159,15 +3308,18 @@ export type Database = {
           pix_beneficiary?: string | null
           pix_key?: string | null
           pix_key_type?: string | null
+          plan_id?: string | null
           pro_approval_rate?: number | null
           ratings_count?: number
           seller_cep?: string | null
+          support_priority?: number
           terms_accepted_at?: string | null
           tier?: string
           tier_updated_at?: string | null
           total_sales_count?: number
           total_sales_value?: number
           updated_at?: string
+          verified_badge?: boolean
         }
         Update: {
           account_type?: string | null
@@ -3175,6 +3327,7 @@ export type Database = {
           bank_name?: string | null
           bio?: string | null
           cancellation_rate?: number | null
+          cnpj?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           current_fee_percent?: number
@@ -3185,11 +3338,14 @@ export type Database = {
           id_front_url?: string | null
           id_selfie_url?: string | null
           is_active?: boolean
+          is_business?: boolean
           kyc_rejection_reason?: string | null
           kyc_reviewed_at?: string | null
           kyc_reviewed_by?: string | null
           kyc_status?: string
           member_id?: string
+          monthly_new_listings_count?: number
+          monthly_new_listings_reset_at?: string
           on_time_shipping_rate?: number | null
           onboarding_completed_at?: string | null
           payout_speed_days?: number | null
@@ -3197,15 +3353,18 @@ export type Database = {
           pix_beneficiary?: string | null
           pix_key?: string | null
           pix_key_type?: string | null
+          plan_id?: string | null
           pro_approval_rate?: number | null
           ratings_count?: number
           seller_cep?: string | null
+          support_priority?: number
           terms_accepted_at?: string | null
           tier?: string
           tier_updated_at?: string | null
           total_sales_count?: number
           total_sales_value?: number
           updated_at?: string
+          verified_badge?: boolean
         }
         Relationships: [
           {
@@ -3213,6 +3372,13 @@ export type Database = {
             columns: ["member_id"]
             isOneToOne: true
             referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_seller_profiles_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -3484,6 +3650,18 @@ export type Database = {
         Args: { p_total_purchases: number; p_total_spent: number }
         Returns: Database["public"]["Enums"]["vault_tier"]
       }
+      check_seller_listing_limits: {
+        Args: { p_seller_id: string }
+        Returns: {
+          active_count: number
+          block_reason: string
+          can_publish: boolean
+          max_active: number
+          max_monthly_new: number
+          monthly_new_count: number
+          plan_id: string
+        }[]
+      }
       check_vault_tier_eligibility: {
         Args: { p_member_id: string }
         Returns: {
@@ -3525,6 +3703,10 @@ export type Database = {
       decline_vault_match: {
         Args: { p_cpf: string; p_match_room_id: string; p_reason?: string }
         Returns: boolean
+      }
+      downgrade_seller_to_free: {
+        Args: { p_seller_id: string }
+        Returns: undefined
       }
       ensure_vault_membership: {
         Args: { p_cpf: string }
