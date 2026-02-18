@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Store, Package, Megaphone, BarChart3, Tag, TrendingDown, HelpCircle,
-  Plus, ShoppingBag, Rocket, Layout, Lock
+  Plus, ShoppingBag, Rocket, Layout, Lock, Layers
 } from "lucide-react";
 import { CollectionsManager } from "@/components/marketplace/CollectionsManager";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import { CouponsManager } from "@/components/client/vault/marketplace/CouponsMan
 import { PriceDropSuggestions } from "@/components/client/vault/marketplace/PriceDropSuggestions";
 import { MarketplaceHowItWorks } from "@/components/client/vault/marketplace/MarketplaceHowItWorks";
 import { SellerPlanBanner } from "@/components/marketplace/SellerPlanBanner";
+import { BatchEditListings } from "@/components/marketplace/BatchEditListings";
 import { PlanLimitModal } from "@/components/marketplace/PlanLimitModal";
 import { useSellerPlan } from "@/hooks/marketplace/useSellerPlan";
 import { supabase } from "@/integrations/supabase/client";
@@ -143,10 +144,12 @@ export default function MarketplaceMyStorePage() {
   const hasBatchAccess = planId === "pro" || planId === "elite";
   const hasStorefront = planId === "elite";
 
+  const hasPaidPlan = planId === "pro" || planId === "elite";
+
   const sellerSubItems = [
     { id: "anuncios", label: "Meus anúncios", icon: Megaphone },
     ...(isSellerApproved ? [
-      { id: "boosts", label: "Boosts", icon: Rocket },
+      ...(hasPaidPlan ? [{ id: "boosts", label: "Boosts", icon: Rocket }] : []),
       ...(hasStorefront ? [{ id: "colecoes", label: "Coleções", icon: Layout }] : []),
       { id: "analytics", label: "Analytics", icon: BarChart3 },
       { id: "cupons", label: "Cupons", icon: Tag },
@@ -279,37 +282,51 @@ export default function MarketplaceMyStorePage() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {myListings.map((listing) => (
-                    <div key={listing.id} className="relative space-y-2">
-                      <MarketplaceListingCard
-                        listing={listing}
-                        onSelect={(l) => { setSelectedListing(l); setDetailOpen(true); }}
-                        onToggleFavorite={() => toggleFavorite(listing.id)}
+                <div className="space-y-4">
+                  {/* Batch edit tool (Pro/Elite only) */}
+                  {hasBatchAccess && myListings.length > 1 && (
+                    <div className="flex justify-end">
+                      <BatchEditListings
+                        listings={myListings}
+                        onUpdate={updateListing}
+                        onDelete={deleteListing}
+                        onRefresh={fetchMyListings}
                       />
-                      <Badge
-                        className={`absolute top-12 right-2 text-[10px] z-10 ${
-                          listing.status === "active" ? "bg-success/20 text-success"
-                          : listing.status === "sold" ? "bg-primary/20 text-primary"
-                          : listing.status === "reserved" ? "bg-warning/20 text-warning"
-                          : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {listing.status === "active" ? "Ativo" : listing.status === "sold" ? "Vendido" : listing.status === "reserved" ? "Reservado" : listing.status === "paused" ? "Pausado" : listing.status}
-                      </Badge>
-                      <div className="flex gap-1">
-                        <EditListingDialog listing={listing} onUpdate={updateListing} onDelete={deleteListing} onRefresh={fetchMyListings} />
-                        <OffersListDialog
-                          listingId={listing.id}
-                          listingTitle={listing.title}
-                          listingPrice={listing.price}
-                          offers={listingOffers[listing.id] || []}
-                          onRespond={handleRespondOffer}
-                          onRefresh={() => fetchListingOffers(listing.id).then((o) => setListingOffers((p) => ({ ...p, [listing.id]: o })))}
-                        />
-                      </div>
                     </div>
-                  ))}
+                  )}
+
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {myListings.map((listing) => (
+                      <div key={listing.id} className="relative space-y-2">
+                        <MarketplaceListingCard
+                          listing={listing}
+                          onSelect={(l) => { setSelectedListing(l); setDetailOpen(true); }}
+                          onToggleFavorite={() => toggleFavorite(listing.id)}
+                        />
+                        <Badge
+                          className={`absolute top-12 right-2 text-[10px] z-10 ${
+                            listing.status === "active" ? "bg-success/20 text-success"
+                            : listing.status === "sold" ? "bg-primary/20 text-primary"
+                            : listing.status === "reserved" ? "bg-warning/20 text-warning"
+                            : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {listing.status === "active" ? "Ativo" : listing.status === "sold" ? "Vendido" : listing.status === "reserved" ? "Reservado" : listing.status === "paused" ? "Pausado" : listing.status}
+                        </Badge>
+                        <div className="flex gap-1">
+                          <EditListingDialog listing={listing} onUpdate={updateListing} onDelete={deleteListing} onRefresh={fetchMyListings} />
+                          <OffersListDialog
+                            listingId={listing.id}
+                            listingTitle={listing.title}
+                            listingPrice={listing.price}
+                            offers={listingOffers[listing.id] || []}
+                            onRespond={handleRespondOffer}
+                            onRefresh={() => fetchListingOffers(listing.id).then((o) => setListingOffers((p) => ({ ...p, [listing.id]: o })))}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </>
@@ -320,8 +337,8 @@ export default function MarketplaceMyStorePage() {
             <SellerAnalyticsDashboard clientCpf={cpf} />
           )}
 
-          {/* Boosts */}
-          {sellerSubTab === "boosts" && isSellerApproved && (
+          {/* Boosts (paid plans only) */}
+          {sellerSubTab === "boosts" && isSellerApproved && hasPaidPlan && (
             <Card className="border-border/20">
               <CardContent className="p-6 text-center space-y-4">
                 <Rocket className="h-12 w-12 mx-auto text-primary/30" />

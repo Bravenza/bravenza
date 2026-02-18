@@ -12,6 +12,7 @@ import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { usePWAOptimizations } from "@/hooks/usePWAOptimizations";
 import { SkipToContent } from "@/components/a11y/SkipToContent";
 import { ProtectedProviders } from "@/components/providers/ProtectedProviders";
+import { ScrollToTop } from "@/components/ScrollToTop";
 
 // Eagerly loaded pages (critical path)
 import Index from "./pages/Index";
@@ -123,6 +124,7 @@ const App = () => (
           <OfflineIndicator />
           <BrowserRouter>
             <SkipToContent />
+            <ScrollToTop />
             <AppShell>
             <Suspense fallback={<PageLoader />}>
               <Routes>
