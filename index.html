@@ -77,7 +77,16 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Static shell rendered instantly for faster FCP/LCP — React replaces on mount -->
+      <div id="static-shell" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#1a1a1a;color:#fff;font-family:system-ui,-apple-system,sans-serif;text-align:center;padding:1rem;">
+        <div style="max-width:48rem;margin:0 auto;">
+          <p style="font-size:.875rem;color:#c8a96e;margin-bottom:1.5rem;letter-spacing:.05em;">Curadoria global e autenticação técnica</p>
+          <h1 style="font-size:clamp(2rem,5vw,3.5rem);font-weight:700;line-height:1.1;margin:0 0 1rem;">Peças raras.<br/><span style="color:#c8a96e;">Autenticadas.</span> <span style="color:#999;font-weight:400;">Entregues.</span></h1>
+          <p style="color:#999;font-size:1rem;max-width:36rem;margin:0 auto;">A Bravenza localiza sneakers exclusivos ao redor do mundo, verifica a autenticidade e entrega na sua porta.</p>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
