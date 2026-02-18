@@ -38,20 +38,19 @@ export const RecentlyViewedSection = memo(function RecentlyViewedSection() {
 
   return (
     <section className="py-10 border-t border-border/30">
-      <div className="max-w-7xl mx-auto px-4">
+      <div>
         <div className="flex items-center gap-2 mb-6">
           <Clock className="h-4 w-4 text-primary" />
           <h3 className="text-base font-bold text-foreground tracking-tight">Vistos recentemente</h3>
         </div>
 
-        <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {items.map((product, i) => (
             <motion.div
               key={product.id}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04 }}
-              className="min-w-[260px] max-w-[300px] flex-shrink-0"
             >
               <CatalogProductCard product={product} hidePrice />
             </motion.div>
