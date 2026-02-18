@@ -1,7 +1,8 @@
-import { ReactNode, memo } from "react";
+import { ReactNode, memo, lazy, Suspense } from "react";
 import { Header } from "@/components/home/Header";
-import { Footer } from "@/components/home/Footer";
-import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
+
+const Footer = lazy(() => import("@/components/home/Footer").then(m => ({ default: m.Footer })));
+const FloatingWhatsApp = lazy(() => import("@/components/FloatingWhatsApp").then(m => ({ default: m.FloatingWhatsApp })));
 
 interface PublicLayoutProps {
   children: ReactNode;
@@ -22,8 +23,12 @@ const PublicLayoutComponent = ({
         {children}
       </main>
 
-      <Footer />
-      <FloatingWhatsApp />
+      <Suspense fallback={null}>
+        <Footer />
+      </Suspense>
+      <Suspense fallback={null}>
+        <FloatingWhatsApp />
+      </Suspense>
     </div>
   );
 };

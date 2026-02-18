@@ -1,8 +1,6 @@
 import { Header } from "@/components/home/Header";
 import { HeroSection } from "@/components/home/HeroSection";
 import { BrandsCarousel } from "@/components/home/BrandsCarousel";
-import { Footer } from "@/components/home/Footer";
-import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 import { LocalBusinessSchema, ServiceSchema } from "@/components/seo/StructuredData";
 import { Helmet } from "react-helmet-async";
 import { LazySection } from "@/components/home/LazySection";
@@ -38,6 +36,8 @@ const FeaturedReviews = lazy(() => import("@/components/home/FeaturedReviews").t
 const TestimonialsSection = lazy(() => import("@/components/home/TestimonialsSection").then(m => ({ default: m.TestimonialsSection })));
 const FAQSection = lazy(() => import("@/components/home/FAQSection").then(m => ({ default: m.FAQSection })));
 const CTASection = lazy(() => import("@/components/home/CTASection").then(m => ({ default: m.CTASection })));
+const Footer = lazy(() => import("@/components/home/Footer").then(m => ({ default: m.Footer })));
+const FloatingWhatsApp = lazy(() => import("@/components/FloatingWhatsApp").then(m => ({ default: m.FloatingWhatsApp })));
 
 const Index = () => {
   return (
@@ -150,8 +150,12 @@ const Index = () => {
           </LazySection>
         </main>
 
-        <Footer />
-        <FloatingWhatsApp />
+        <Suspense fallback={null}>
+          <Footer />
+        </Suspense>
+        <Suspense fallback={null}>
+          <FloatingWhatsApp />
+        </Suspense>
       </div>
     </>
   );
