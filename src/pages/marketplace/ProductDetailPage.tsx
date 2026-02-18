@@ -21,6 +21,7 @@ import { ProductWatchlistButton } from "@/components/marketplace/ProductWatchlis
 import { ProductReviews } from "@/components/marketplace/ProductReviews";
 import { ProductAnalyticsChart } from "@/components/marketplace/ProductAnalyticsChart";
 import { TrustBadges } from "@/components/marketplace/TrustBadges";
+import { ProtectedPurchaseSection } from "@/components/marketplace/ProtectedPurchaseSection";
 import { RelatedProductsSection } from "@/components/marketplace/RelatedProductsSection";
 import { RecentlyViewedSection } from "@/components/marketplace/home/RecentlyViewedSection";
 import { SpecRow } from "@/components/marketplace/SpecRow";
@@ -428,9 +429,12 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* ===== TRUST BADGES ===== */}
-        <div className="mt-12">
-          <TrustBadges />
+        {/* ===== TRUST BADGES + PROTECTED PURCHASE ===== */}
+        <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <ProtectedPurchaseSection />
+          <div className="flex flex-col justify-between">
+            <TrustBadges />
+          </div>
         </div>
 
         {/* ===== PRODUCT SPECS ===== */}
