@@ -440,6 +440,7 @@ export type Database = {
       marketplace_offers: {
         Row: {
           activated_at: string | null
+          boost_active_until: string | null
           boost_level: string | null
           condition: string
           created_at: string
@@ -467,6 +468,7 @@ export type Database = {
         }
         Insert: {
           activated_at?: string | null
+          boost_active_until?: string | null
           boost_level?: string | null
           condition?: string
           created_at?: string
@@ -494,6 +496,7 @@ export type Database = {
         }
         Update: {
           activated_at?: string | null
+          boost_active_until?: string | null
           boost_level?: string | null
           condition?: string
           created_at?: string
@@ -1508,6 +1511,53 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["order_id"]
+          },
+        ]
+      }
+      seller_collections: {
+        Row: {
+          cover_image: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          listing_ids: string[] | null
+          name: string
+          seller_id: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          cover_image?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          listing_ids?: string[] | null
+          name: string
+          seller_id: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          cover_image?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          listing_ids?: string[] | null
+          name?: string
+          seller_id?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_collections_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "vault_seller_profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -3671,6 +3721,10 @@ export type Database = {
           eligible_for_privilege: boolean
           privilege_criteria_met: number
         }[]
+      }
+      check_verified_badge_eligibility: {
+        Args: { p_seller_id: string }
+        Returns: boolean
       }
       create_vault_invite: {
         Args: { p_cpf: string }
