@@ -17,7 +17,8 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: "prompt",
+      registerType: "autoUpdate",
+      selfDestroying: true,
       includeAssets: ["favicon.png", "robots.txt", "placeholder.svg"],
       manifest: {
         name: "BRAVENZA - Curadoria & Marketplace Premium",
