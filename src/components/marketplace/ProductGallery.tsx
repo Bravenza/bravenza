@@ -1,6 +1,6 @@
 import React, { useRef, useState, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
-import { ShieldCheck, ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
+import { ShieldCheck, ChevronLeft, ChevronRight, ZoomIn, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,8 +19,8 @@ export function ProductGallery({ images, selectedImage, onSelectImage, productNa
   const [direction, setDirection] = useState(0);
   const isMobile = useIsMobile();
 
-  // Zoom state (desktop only)
-  const [isZooming, setIsZooming] = useState(false);
+  // Zoom state (desktop only — toggle mode)
+  const [zoomEnabled, setZoomEnabled] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -33,20 +33,18 @@ export function ProductGallery({ images, selectedImage, onSelectImage, productNa
   const goNext = () => goTo((selectedImage + 1) % images.length);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (isMobile || !containerRef.current) return;
+    if (isMobile || !zoomEnabled || !containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     setZoomPos({ x, y });
-  }, [isMobile]);
+  }, [isMobile, zoomEnabled]);
 
-  const handleMouseEnter = useCallback(() => {
-    if (!isMobile) setIsZooming(true);
+  const toggleZoom = useCallback(() => {
+    if (isMobile) return;
+    setZoomEnabled(prev => !prev);
+    setZoomPos({ x: 50, y: 50 });
   }, [isMobile]);
-
-  const handleMouseLeave = useCallback(() => {
-    setIsZooming(false);
-  }, []);
 
   return (
     <div className="space-y-4">
@@ -55,7 +53,8 @@ export function ProductGallery({ images, selectedImage, onSelectImage, productNa
         ref={containerRef}
         className={cn(
           "relative aspect-[4/3] rounded-2xl overflow-hidden bg-white border border-border/20 touch-pan-y group",
-          !isMobile && "cursor-zoom-in"
+          !isMobile && zoomEnabled && "cursor-crosshair",
+          !isMobile && !zoomEnabled && "cursor-default"
         )}
         onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
         onTouchEnd={(e) => {
@@ -67,12 +66,10 @@ export function ProductGallery({ images, selectedImage, onSelectImage, productNa
           touchStartX.current = null;
         }}
         onMouseMove={handleMouseMove}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
       >
         <div
           className="w-full h-full transition-transform duration-200 ease-out"
-          style={isZooming
+          style={zoomEnabled
             ? { transform: `scale(2.2)`, transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` }
             : { transform: `scale(1)`, transformOrigin: `50% 50%` }
           }
@@ -94,12 +91,21 @@ export function ProductGallery({ images, selectedImage, onSelectImage, productNa
           </AnimatePresence>
         </div>
 
-        {/* Zoom hint (desktop) */}
-        {!isMobile && !isZooming && (
-          <div className="absolute bottom-4 right-4 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-background/60 backdrop-blur-md border border-border/30 text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            <ZoomIn className="h-3 w-3" />
-            Passe o mouse para zoom
-          </div>
+        {/* Zoom toggle button (desktop) */}
+        {!isMobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => { e.stopPropagation(); toggleZoom(); }}
+            className={cn(
+              "absolute top-4 right-4 h-9 w-9 rounded-full backdrop-blur-md border transition-all z-10",
+              zoomEnabled
+                ? "bg-primary text-primary-foreground border-primary shadow-lg"
+                : "bg-background/60 border-border/30 text-muted-foreground opacity-0 group-hover:opacity-100"
+            )}
+          >
+            {zoomEnabled ? <X className="h-4 w-4" /> : <ZoomIn className="h-4 w-4" />}
+          </Button>
         )}
 
         {isHighRisk && (
