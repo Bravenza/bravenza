@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   LogOut,
@@ -241,7 +242,10 @@ export default function UnifiedDashboard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col theme-light">
-      {/* Navigation Bar */}
+      <Helmet>
+        <title>Minha Conta | BRAVENZA</title>
+        <meta name="description" content="Gerencie seus pedidos, acompanhe sua coleção Vault e acesse o marketplace BRAVENZA." />
+      </Helmet>
       <div className="sticky top-0 z-50 border-b border-border/30 bg-background/80 backdrop-blur-xl theme-dark">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         <div className="max-w-7xl mx-auto px-4 lg:px-6">

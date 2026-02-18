@@ -3088,6 +3088,7 @@ export type Database = {
           flags_review_mode_until: string | null
           followers_count: number | null
           following_count: number | null
+          hide_online_status: boolean
           id: string
           instagram_url: string | null
           invited_by: string | null
@@ -3141,6 +3142,7 @@ export type Database = {
           flags_review_mode_until?: string | null
           followers_count?: number | null
           following_count?: number | null
+          hide_online_status?: boolean
           id?: string
           instagram_url?: string | null
           invited_by?: string | null
@@ -3194,6 +3196,7 @@ export type Database = {
           flags_review_mode_until?: string | null
           followers_count?: number | null
           following_count?: number | null
+          hide_online_status?: boolean
           id?: string
           instagram_url?: string | null
           invited_by?: string | null
