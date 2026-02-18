@@ -24,16 +24,16 @@ export function CatalogProductCard({ product, hidePrice }: CatalogProductCardPro
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
       {/* Image */}
-      <div className="relative aspect-[4/3] bg-muted/5 overflow-hidden shrink-0">
+      <div className="relative aspect-square bg-white overflow-hidden shrink-0">
         {mainImage ? (
           <img
             src={mainImage}
             alt={name}
-            className="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-700 ease-out"
+            className="w-full h-full object-contain p-5 group-hover:scale-110 transition-transform duration-700 ease-out"
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center bg-muted/10">
             <span className="text-4xl opacity-10">👟</span>
           </div>
         )}
