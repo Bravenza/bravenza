@@ -42,15 +42,14 @@ export const RelatedProductsSection = memo(function RelatedProductsSection({ cur
         <Sparkles className="h-4 w-4 text-primary" />
         <h3 className="text-base font-bold text-foreground tracking-tight">Relacionados</h3>
       </div>
-      <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {products.map((product, i) => (
           <motion.div
             key={product.id}
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: i * 0.04 }}
-            className="min-w-[260px] max-w-[300px] flex-shrink-0"
           >
             <CatalogProductCard product={product} hidePrice />
           </motion.div>
