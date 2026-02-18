@@ -117,7 +117,7 @@ export function ProductReviews({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold flex items-center gap-1.5">
+        <h3 className="text-base font-bold text-foreground flex items-center gap-2 tracking-tight">
           <Star className="h-4 w-4 text-primary fill-primary" />
           Avaliações ({total})
         </h3>

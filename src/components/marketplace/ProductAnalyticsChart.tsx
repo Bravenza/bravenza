@@ -74,7 +74,7 @@ export function ProductAnalyticsChart({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold flex items-center gap-1.5">
+      <h3 className="text-base font-bold text-foreground flex items-center gap-2 tracking-tight">
         <BarChart3 className="h-4 w-4 text-primary" />
         Histórico de preços
       </h3>

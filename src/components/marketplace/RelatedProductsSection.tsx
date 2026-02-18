@@ -38,9 +38,9 @@ export const RelatedProductsSection = memo(function RelatedProductsSection({ cur
 
   return (
     <section className="mt-14">
-      <div className="flex items-center gap-3 mb-6">
-        <Sparkles className="h-5 w-5 text-primary" />
-        <h2 className="text-xl font-black text-foreground tracking-tight">Relacionados</h2>
+      <div className="flex items-center gap-2 mb-6">
+        <Sparkles className="h-4 w-4 text-primary" />
+        <h3 className="text-base font-bold text-foreground tracking-tight">Relacionados</h3>
       </div>
       <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
         {products.map((product, i) => (

@@ -39,9 +39,9 @@ export const RecentlyViewedSection = memo(function RecentlyViewedSection() {
   return (
     <section className="py-10 border-t border-border/30">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center gap-3 mb-8">
-          <Clock className="h-6 w-6 text-primary" />
-          <h2 className="text-2xl md:text-3xl font-black text-foreground tracking-tight font-display">Vistos recentemente</h2>
+        <div className="flex items-center gap-2 mb-6">
+          <Clock className="h-4 w-4 text-primary" />
+          <h3 className="text-base font-bold text-foreground tracking-tight">Vistos recentemente</h3>
         </div>
 
         <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">

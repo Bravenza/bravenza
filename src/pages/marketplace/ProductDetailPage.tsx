@@ -466,9 +466,9 @@ export default function ProductDetailPage() {
         {/* ===== PRODUCT SPECS ===== */}
         <div className="mt-14 grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div>
-            <h3 className="text-lg font-black text-foreground mb-4 flex items-center gap-2 tracking-tight">
-              <Info className="h-5 w-5 text-primary" />
-              Ficha Técnica
+            <h3 className="text-base font-bold text-foreground mb-4 flex items-center gap-2 tracking-tight">
+                <Info className="h-4 w-4 text-primary" />
+                Ficha Técnica
             </h3>
             <div className="rounded-2xl border border-border/20 overflow-hidden">
               <SpecRow icon={<Hash className="h-3.5 w-3.5" />} label="SKU" value={product.sku || "—"} />
@@ -502,8 +502,8 @@ export default function ProductDetailPage() {
           {/* Description */}
           {product.description && (
             <div>
-              <h3 className="text-lg font-black text-foreground mb-4 flex items-center gap-2 tracking-tight">
-                <Info className="h-5 w-5 text-primary" />
+              <h3 className="text-base font-bold text-foreground mb-4 flex items-center gap-2 tracking-tight">
+                <Info className="h-4 w-4 text-primary" />
                 Descrição
               </h3>
               <div className="p-5 bg-muted/5 rounded-2xl border border-border/20">
