@@ -70,25 +70,29 @@ export function ProductGallery({ images, selectedImage, onSelectImage, productNa
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.img
-            key={selectedImage}
-            custom={direction}
-            initial={{ opacity: 0, x: direction * 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -direction * 40 }}
-            transition={{ duration: 0.25 }}
-            src={images[selectedImage]}
-            alt={productName}
-            className={cn(
-              "w-full h-full object-contain p-6 md:p-10 transition-transform duration-200",
-              isZooming && "scale-[2.2]"
-            )}
-            style={isZooming ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : undefined}
-            loading="eager"
-            draggable={false}
-          />
-        </AnimatePresence>
+        <div
+          className="w-full h-full transition-transform duration-200 ease-out"
+          style={isZooming
+            ? { transform: `scale(2.2)`, transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` }
+            : { transform: `scale(1)`, transformOrigin: `50% 50%` }
+          }
+        >
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.img
+              key={selectedImage}
+              custom={direction}
+              initial={{ opacity: 0, x: direction * 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -direction * 40 }}
+              transition={{ duration: 0.25 }}
+              src={images[selectedImage]}
+              alt={productName}
+              className="w-full h-full object-contain p-6 md:p-10"
+              loading="eager"
+              draggable={false}
+            />
+          </AnimatePresence>
+        </div>
 
         {/* Zoom hint (desktop) */}
         {!isMobile && !isZooming && (
