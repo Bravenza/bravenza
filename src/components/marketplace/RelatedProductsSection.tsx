@@ -50,7 +50,7 @@ export const RelatedProductsSection = memo(function RelatedProductsSection({ cur
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ delay: i * 0.04 }}
-            className="min-w-[200px] max-w-[220px] flex-shrink-0"
+            className="min-w-[260px] max-w-[300px] flex-shrink-0"
           >
             <CatalogProductCard product={product} hidePrice />
           </motion.div>
