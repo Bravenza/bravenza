@@ -28,10 +28,23 @@ export interface SellerPlanStatus {
   blockReason: string | null;
 }
 
+export interface SubscriptionInfo {
+  id: string;
+  plan_id: string;
+  status: string;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  grace_period_end: string | null;
+  last_payment_status: string | null;
+  marketplace_plans?: MarketplacePlan;
+}
+
 export function useSellerPlan(sellerId: string | null) {
   const [plans, setPlans] = useState<MarketplacePlan[]>([]);
   const [status, setStatus] = useState<SellerPlanStatus | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubscribing, setIsSubscribing] = useState(false);
 
   const fetchPlans = useCallback(async () => {
     const { data } = await supabase
@@ -74,6 +87,58 @@ export function useSellerPlan(sellerId: string | null) {
     }
   }, [sellerId, plans]);
 
+  const fetchSubscription = useCallback(async () => {
+    if (!sellerId) return null;
+    try {
+      const { data, error } = await supabase.functions.invoke("mk-subscription", {
+        body: { action: "status", seller_id: sellerId },
+      });
+      if (data?.subscription) {
+        setSubscription(data.subscription);
+        return data.subscription;
+      }
+    } catch (err) {
+      console.error("fetchSubscription error:", err);
+    }
+    return null;
+  }, [sellerId]);
+
+  const subscribe = useCallback(async (planId: string, payerEmail: string) => {
+    if (!sellerId) return null;
+    setIsSubscribing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("mk-subscription", {
+        body: { action: "create", seller_id: sellerId, plan_id: planId, payer_email: payerEmail },
+      });
+      if (error) throw error;
+      if (data?.checkout_url) {
+        window.open(data.checkout_url, "_blank");
+        return data.checkout_url;
+      }
+      throw new Error(data?.error || "Erro ao criar assinatura");
+    } catch (err: any) {
+      console.error("subscribe error:", err);
+      throw err;
+    } finally {
+      setIsSubscribing(false);
+    }
+  }, [sellerId]);
+
+  const cancelSubscription = useCallback(async () => {
+    if (!sellerId) return false;
+    try {
+      const { data, error } = await supabase.functions.invoke("mk-subscription", {
+        body: { action: "cancel", seller_id: sellerId },
+      });
+      if (error) throw error;
+      await fetchSubscription();
+      return true;
+    } catch (err) {
+      console.error("cancelSubscription error:", err);
+      return false;
+    }
+  }, [sellerId, fetchSubscription]);
+
   useEffect(() => {
     fetchPlans();
   }, [fetchPlans]);
@@ -81,8 +146,20 @@ export function useSellerPlan(sellerId: string | null) {
   useEffect(() => {
     if (sellerId && plans.length > 0) {
       checkLimits();
+      fetchSubscription();
     }
-  }, [sellerId, plans, checkLimits]);
+  }, [sellerId, plans, checkLimits, fetchSubscription]);
 
-  return { plans, status, isLoading, fetchPlans, checkLimits };
+  return {
+    plans,
+    status,
+    subscription,
+    isLoading,
+    isSubscribing,
+    fetchPlans,
+    checkLimits,
+    fetchSubscription,
+    subscribe,
+    cancelSubscription,
+  };
 }

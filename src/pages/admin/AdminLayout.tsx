@@ -64,6 +64,7 @@ const vaultNavItems = [
   { icon: MessageSquare, label: "Comunidade", path: "/admin/vault/comunidade" },
   { icon: Store, label: "Marketplace", path: "/admin/vault/marketplace" },
   { icon: Shield, label: "Hub PRO", path: "/admin/vault/marketplace/inspecao" },
+  { icon: Crown, label: "Planos", path: "/admin/vault/marketplace/planos" },
 ];
 
 const AdminLayout = () => {
