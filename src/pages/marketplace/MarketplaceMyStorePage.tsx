@@ -5,6 +5,7 @@ import {
   Store, Package, Megaphone, BarChart3, Tag, TrendingDown, HelpCircle,
   Plus, ShoppingBag, Rocket, Layout, Lock
 } from "lucide-react";
+import { CollectionsManager } from "@/components/marketplace/CollectionsManager";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -339,22 +340,8 @@ export default function MarketplaceMyStorePage() {
           )}
 
           {/* Coleções (Elite only) */}
-          {sellerSubTab === "colecoes" && isSellerApproved && hasStorefront && (
-            <Card className="border-border/20">
-              <CardContent className="p-6 text-center space-y-4">
-                <Layout className="h-12 w-12 mx-auto text-primary/30" />
-                <div>
-                  <h3 className="font-bold text-lg">Vitrine & Coleções</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Organize seus anúncios em coleções temáticas (ex: "Dunks", "Jordan Retro", "Raros").
-                    As coleções aparecem no seu perfil público.
-                  </p>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Em breve: gerenciamento visual de coleções. Seus anúncios já recebem prioridade na busca.
-                </p>
-              </CardContent>
-            </Card>
+          {sellerSubTab === "colecoes" && isSellerApproved && hasStorefront && cpf && (
+            <CollectionsManager clientCpf={cpf} myListings={myListings} />
           )}
 
           {/* Cupons - gated by plan */}

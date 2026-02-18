@@ -129,11 +129,13 @@ Deno.serve(async (req) => {
 
         // If activated, update seller plan_id (trigger auto-calculates current_fee_percent)
         if (dbStatus === "active" && sub) {
+          const isElite = sub.plan_id === "elite";
           await supabase
             .from("vault_seller_profiles")
             .update({
               plan_id: sub.plan_id,
-              support_priority: sub.plan_id === "elite" ? 3 : sub.plan_id === "pro" ? 2 : 0,
+              support_priority: isElite ? 3 : sub.plan_id === "pro" ? 2 : 0,
+              verified_badge: isElite,
               updated_at: new Date().toISOString(),
             })
             .eq("id", sub.seller_id);
@@ -232,6 +234,7 @@ async function downgradeSellerToFree(supabase: any, sellerId: string) {
     .update({
       plan_id: "free",
       support_priority: 0,
+      verified_badge: false,
       updated_at: new Date().toISOString(),
     })
     .eq("id", sellerId);
