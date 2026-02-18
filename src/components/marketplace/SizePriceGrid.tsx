@@ -53,7 +53,7 @@ export function SizePriceGrid({ allOffers, sizes, selectedSize, onSelectSize, co
               </span>
               {price !== undefined && (
                 <span className={cn("text-[10px] mt-0.5", isSelected ? "text-primary/80" : "text-muted-foreground")}>
-                  R$ {price.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  R$ {price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               )}
             </button>
