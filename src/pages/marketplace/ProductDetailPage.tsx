@@ -21,6 +21,8 @@ import { ProductWatchlistButton } from "@/components/marketplace/ProductWatchlis
 import { ProductReviews } from "@/components/marketplace/ProductReviews";
 import { ProductAnalyticsChart } from "@/components/marketplace/ProductAnalyticsChart";
 import { TrustBadges } from "@/components/marketplace/TrustBadges";
+import { RelatedProductsSection } from "@/components/marketplace/RelatedProductsSection";
+import { RecentlyViewedSection } from "@/components/marketplace/home/RecentlyViewedSection";
 import { SpecRow } from "@/components/marketplace/SpecRow";
 import { OfferCard } from "@/components/marketplace/OfferCard";
 import { ProductGallery } from "@/components/marketplace/ProductGallery";
@@ -537,6 +539,19 @@ export default function ProductDetailPage() {
             onRefresh={() => fetchReviews(product.id)}
             currentUserName={profile?.full_name}
           />
+        </div>
+
+        {/* ===== RELATED PRODUCTS ===== */}
+        <RelatedProductsSection
+          currentProductId={product.id}
+          brand={product.brand}
+          category={product.category}
+          cpf={cpf || "visitor"}
+        />
+
+        {/* ===== RECENTLY VIEWED ===== */}
+        <div className="mt-14">
+          <RecentlyViewedSection />
         </div>
       </main>
 
