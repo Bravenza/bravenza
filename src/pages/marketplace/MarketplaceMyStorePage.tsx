@@ -20,6 +20,9 @@ import { SellerAnalyticsDashboard } from "@/components/client/vault/marketplace/
 import { CouponsManager } from "@/components/client/vault/marketplace/CouponsManager";
 import { PriceDropSuggestions } from "@/components/client/vault/marketplace/PriceDropSuggestions";
 import { MarketplaceHowItWorks } from "@/components/client/vault/marketplace/MarketplaceHowItWorks";
+import { SellerPlanBanner } from "@/components/marketplace/SellerPlanBanner";
+import { PlanLimitModal } from "@/components/marketplace/PlanLimitModal";
+import { useSellerPlan } from "@/hooks/marketplace/useSellerPlan";
 import { supabase } from "@/integrations/supabase/client";
 
 interface VaultItem {
@@ -53,6 +56,10 @@ export default function MarketplaceMyStorePage() {
   const [listingOffers, setListingOffers] = useState<Record<string, any[]>>({});
   const [selectedListing, setSelectedListing] = useState<MarketplaceListing | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [limitModalOpen, setLimitModalOpen] = useState(false);
+
+  // Plan enforcement
+  const { status: planStatus, checkLimits } = useSellerPlan(seller?.id || null);
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -90,8 +97,16 @@ export default function MarketplaceMyStorePage() {
   };
 
   const handleCreateOffer = async (data: any) => {
+    // Check limits before creating
+    if (planStatus && !planStatus.canPublish) {
+      setLimitModalOpen(true);
+      return null;
+    }
     const result = await createOffer(data);
-    if (result) fetchMyListings();
+    if (result) {
+      fetchMyListings();
+      checkLimits();
+    }
     return result;
   };
 
@@ -237,6 +252,11 @@ export default function MarketplaceMyStorePage() {
             </div>
           )}
 
+          {/* Plan Banner */}
+          {planStatus && sellerSubTab === "anuncios" && (
+            <SellerPlanBanner status={planStatus} />
+          )}
+
           {/* Anúncios */}
           {sellerSubTab === "anuncios" && (
             <>
@@ -337,6 +357,14 @@ export default function MarketplaceMyStorePage() {
           }
           return success;
         }}
+      />
+
+      {/* Plan Limit Modal */}
+      <PlanLimitModal
+        open={limitModalOpen}
+        onOpenChange={setLimitModalOpen}
+        reason={planStatus?.blockReason || null}
+        currentPlan={planStatus?.plan?.id}
       />
     </div>
   );
