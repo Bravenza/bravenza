@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 const features = [
   {
     icon: BadgeCheck,
-    title: "Só peças verificadas",
-    description: "Toda oferta passa pela inspeção técnica da Bravenza antes de ser listada.",
+    title: "Verificação técnica disponível",
+    description: "Ofertas acima de R$ 2.000 passam por inspeção obrigatória. Abaixo, o serviço é opcional.",
   },
   {
     icon: TrendingUp,
