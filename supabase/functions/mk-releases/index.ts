@@ -25,11 +25,11 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a sneaker industry expert. Return upcoming sneaker releases as JSON via tool call. Today is ${today}. Include releases from Nike, Jordan, Adidas, New Balance, Puma, and Asics. Focus on the next 30-60 days. Use Brazilian Real (BRL) for retail prices (convert from USD if needed, multiply by ~5.2). Only include confirmed or highly likely releases. Return 8-12 releases sorted by date.`,
+            content: `You are a sneaker industry expert. Return upcoming sneaker releases as JSON via tool call. Today is ${today}. Include releases from Nike, Jordan, Adidas, New Balance, Puma, and Asics. Focus on the next 30-60 days. Only include confirmed or highly likely releases. Return 8-12 releases sorted by date. For each release, provide a real product image URL from the brand's official CDN or a well-known sneaker media site. Use high-quality transparent PNG product shots when possible. Common image sources: images.stockx.com, images.goat.com, or official brand CDNs. If you cannot find a real image URL, use null.`,
           },
           {
             role: "user",
-            content: `List the most anticipated upcoming sneaker releases for the next 60 days starting from ${today}. Include brand, model name, colorway, release date (YYYY-MM-DD), estimated retail price in BRL, and hype level (low/medium/high/grail).`,
+            content: `List the most anticipated upcoming sneaker releases for the next 60 days starting from ${today}. Include brand, model name, colorway, release date (YYYY-MM-DD), a product image URL, and hype level (low/medium/high/grail).`,
           },
         ],
         tools: [
@@ -50,8 +50,7 @@ serve(async (req) => {
                         model: { type: "string" },
                         colorway: { type: "string" },
                         release_date: { type: "string", description: "YYYY-MM-DD format" },
-                        retail_price_brl: { type: "number", description: "Price in BRL, null if unknown" },
-                        image_url: { type: "string", description: "null - we don't have images" },
+                        image_url: { type: "string", description: "Direct URL to product image, or null" },
                         hype_level: { type: "string", enum: ["low", "medium", "high", "grail"] },
                       },
                       required: ["brand", "model", "colorway", "release_date", "hype_level"],
