@@ -3,10 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 
 const feeTable = [
-  { range: "0-2 vendas", fee: "14%" },
-  { range: "3-5 vendas", fee: "12%" },
-  { range: "6-10 vendas", fee: "10%" },
-  { range: "11+ vendas", fee: "9%" },
+  { plan: "Free", base: "14%", note: "Taxa fixa" },
+  { plan: "Pro", base: "12%", note: "Reduz até 8% com vendas" },
+  { plan: "Elite", base: "10%", note: "Reduz até 6% com vendas" },
 ];
 
 const steps = [
@@ -26,21 +25,24 @@ export function MarketplaceHowItWorks() {
             <Percent className="h-5 w-5 text-primary" />
             Taxa de serviço progressiva
           </CardTitle>
-          <CardDescription>Quanto mais você vende, menor a taxa</CardDescription>
+          <CardDescription>A taxa depende do seu plano e volume de vendas</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {feeTable.map((row) => (
-              <div key={row.range} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
-                <span className="text-sm">{row.range}</span>
-                <Badge variant="outline" className="text-primary border-primary/30">{row.fee}</Badge>
+              <div key={row.plan} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
+                <div>
+                  <span className="text-sm font-medium">{row.plan}</span>
+                  <span className="text-xs text-muted-foreground ml-2">{row.note}</span>
+                </div>
+                <Badge variant="outline" className="text-primary border-primary/30">{row.base}</Badge>
               </div>
             ))}
           </div>
           <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
             <p className="text-xs text-muted-foreground">
               <TrendingDown className="h-3 w-3 inline mr-1 text-primary" />
-              A taxa diminui automaticamente conforme seu número de vendas aumenta.
+              Nos planos Pro e Elite, a comissão diminui automaticamente conforme seu volume de vendas aumenta.
             </p>
           </div>
         </CardContent>
