@@ -429,12 +429,9 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* ===== TRUST BADGES + PROTECTED PURCHASE ===== */}
-        <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <ProtectedPurchaseSection />
-          <div className="flex flex-col justify-between">
-            <TrustBadges />
-          </div>
+        {/* ===== TRUST BADGES ===== */}
+        <div className="mt-12">
+          <TrustBadges />
         </div>
 
         {/* ===== PRODUCT SPECS ===== */}
@@ -573,6 +570,11 @@ export default function ProductDetailPage() {
             onRefresh={() => fetchReviews(product.id)}
             currentUserName={profile?.full_name}
           />
+        </div>
+
+        {/* ===== PROTECTED PURCHASE ===== */}
+        <div className="mt-14">
+          <ProtectedPurchaseSection />
         </div>
       </main>
 

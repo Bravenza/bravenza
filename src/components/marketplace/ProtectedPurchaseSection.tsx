@@ -5,35 +5,35 @@ const steps = [
   {
     icon: ShieldCheck,
     title: "Compra segura",
-    description: "Pagamento protegido — seu dinheiro só é liberado após confirmação.",
+    description: "Pagamento protegido — só é liberado após confirmação.",
     accent: "text-primary",
     bg: "bg-primary/10",
   },
   {
     icon: Package,
     title: "Envio ao Hub",
-    description: "O vendedor envia o produto para nosso centro de inspeção.",
+    description: "O vendedor envia para nosso centro de inspeção.",
     accent: "text-blue-400",
     bg: "bg-blue-500/10",
   },
   {
     icon: Search,
     title: "Inspeção técnica",
-    description: "Verificamos autenticidade, condição e conformidade com o anúncio.",
+    description: "Verificamos autenticidade, condição e conformidade.",
     accent: "text-amber-400",
     bg: "bg-amber-500/10",
   },
   {
     icon: CheckCircle2,
     title: "Aprovado e enviado",
-    description: "Produto aprovado é enviado para você com selo de autenticidade.",
+    description: "Produto aprovado é enviado com selo de autenticidade.",
     accent: "text-emerald-400",
     bg: "bg-emerald-500/10",
   },
   {
     icon: RefreshCw,
-    title: "Garantia de 7 dias úteis",
-    description: "Não ficou satisfeito? Devolva e receba seu dinheiro de volta.",
+    title: "Garantia 7 dias",
+    description: "Não ficou satisfeito? Devolva e receba seu dinheiro.",
     accent: "text-violet-400",
     bg: "bg-violet-500/10",
   },
@@ -42,51 +42,52 @@ const steps = [
 export function ProtectedPurchaseSection() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <ShieldCheck className="h-4 w-4 text-primary" />
-        <h3 className="text-base font-bold text-foreground tracking-tight">
-          Compra Protegida Bravenza
-        </h3>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-4 w-4 text-primary" />
+          <h3 className="text-base font-bold text-foreground tracking-tight">
+            Compra Protegida Bravenza
+          </h3>
+        </div>
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <Clock className="h-2.5 w-2.5" />
+          Garantia de 7 dias úteis
+        </span>
       </div>
 
-      <div className="relative">
-        {/* Timeline connector line */}
-        <div className="absolute left-5 top-6 bottom-6 w-px bg-gradient-to-b from-primary/40 via-border/40 to-violet-500/40 hidden sm:block" />
+      {/* Horizontal step cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        {steps.map((step, index) => (
+          <div
+            key={index}
+            className="relative flex flex-col items-center text-center p-4 rounded-2xl border border-border/20 bg-card/50 backdrop-blur-sm group hover:border-border/40 transition-all"
+          >
+            {/* Step number */}
+            <span className="absolute top-2 left-2.5 text-[9px] font-bold text-muted-foreground/40">
+              {index + 1}
+            </span>
 
-        <div className="grid gap-4">
-          {steps.map((step, index) => (
+            {/* Connector arrow (hidden on first and on mobile for cleanliness) */}
+            {index > 0 && (
+              <div className="absolute -left-2 top-1/2 -translate-y-1/2 text-muted-foreground/20 hidden lg:block">
+                →
+              </div>
+            )}
+
             <div
-              key={index}
-              className="flex items-start gap-4 group"
+              className={cn(
+                "flex items-center justify-center w-10 h-10 rounded-xl mb-3 transition-transform group-hover:scale-110",
+                step.bg
+              )}
             >
-              {/* Icon circle */}
-              <div
-                className={cn(
-                  "relative z-10 flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-transform group-hover:scale-110",
-                  step.bg
-                )}
-              >
-                <step.icon className={cn("h-5 w-5", step.accent)} />
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 pb-1">
-                <div className="flex items-center gap-2">
-                  <h4 className="text-sm font-bold text-foreground">{step.title}</h4>
-                  {index === steps.length - 1 && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      <Clock className="h-2.5 w-2.5" />
-                      7 dias úteis
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
-                  {step.description}
-                </p>
-              </div>
+              <step.icon className={cn("h-5 w-5", step.accent)} />
             </div>
-          ))}
-        </div>
+            <h4 className="text-xs font-bold text-foreground leading-tight">{step.title}</h4>
+            <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
+              {step.description}
+            </p>
+          </div>
+        ))}
       </div>
 
       {/* Bottom trust reinforcement */}
