@@ -28,6 +28,7 @@ import { OfferCard } from "@/components/marketplace/OfferCard";
 import { ProductGallery } from "@/components/marketplace/ProductGallery";
 import { ProductPriceBlock } from "@/components/marketplace/ProductPriceBlock";
 import { AuthenticityBadge } from "@/components/marketplace/AuthenticityBadge";
+import { PriceSparkline } from "@/components/marketplace/PriceSparkline";
 import { SizePriceGrid } from "@/components/marketplace/SizePriceGrid";
 import { RetailComparison } from "@/components/marketplace/RetailComparison";
 import { StickyBuyBar } from "@/components/marketplace/StickyBuyBar";
@@ -324,9 +325,13 @@ export default function ProductDetailPage() {
                       displayPrice={displayPrice}
                       showPrefix={showPrefix}
                     />
-                    <RetailComparison
+                     <RetailComparison
                       currentPrice={displayPrice}
                       retailPrice={product.retail_price}
+                    />
+                    <PriceSparkline
+                      analytics={analytics}
+                      isLoading={analyticsLoading}
                     />
                   </>
                 );

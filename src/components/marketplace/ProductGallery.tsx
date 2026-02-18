@@ -1,9 +1,10 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
-import { ShieldCheck, ChevronLeft, ChevronRight } from "lucide-react";
+import { ShieldCheck, ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProductGalleryProps {
   images: string[];
@@ -16,6 +17,12 @@ interface ProductGalleryProps {
 export function ProductGallery({ images, selectedImage, onSelectImage, productName, isHighRisk }: ProductGalleryProps) {
   const touchStartX = useRef<number | null>(null);
   const [direction, setDirection] = useState(0);
+  const isMobile = useIsMobile();
+
+  // Zoom state (desktop only)
+  const [isZooming, setIsZooming] = useState(false);
+  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const goTo = (index: number) => {
     setDirection(index > selectedImage ? 1 : -1);
@@ -25,11 +32,31 @@ export function ProductGallery({ images, selectedImage, onSelectImage, productNa
   const goPrev = () => goTo((selectedImage - 1 + images.length) % images.length);
   const goNext = () => goTo((selectedImage + 1) % images.length);
 
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (isMobile || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomPos({ x, y });
+  }, [isMobile]);
+
+  const handleMouseEnter = useCallback(() => {
+    if (!isMobile) setIsZooming(true);
+  }, [isMobile]);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsZooming(false);
+  }, []);
+
   return (
     <div className="space-y-4">
       {/* Main image - full width hero */}
       <div
-        className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-white border border-border/20 touch-pan-y group"
+        ref={containerRef}
+        className={cn(
+          "relative aspect-[4/3] rounded-2xl overflow-hidden bg-white border border-border/20 touch-pan-y group",
+          !isMobile && "cursor-zoom-in"
+        )}
         onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
         onTouchEnd={(e) => {
           if (touchStartX.current === null || images.length <= 1) return;
@@ -39,6 +66,9 @@ export function ProductGallery({ images, selectedImage, onSelectImage, productNa
           }
           touchStartX.current = null;
         }}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <AnimatePresence mode="wait" custom={direction}>
           <motion.img
@@ -50,10 +80,23 @@ export function ProductGallery({ images, selectedImage, onSelectImage, productNa
             transition={{ duration: 0.25 }}
             src={images[selectedImage]}
             alt={productName}
-            className="w-full h-full object-contain p-6 md:p-10"
+            className={cn(
+              "w-full h-full object-contain p-6 md:p-10 transition-transform duration-200",
+              isZooming && "scale-[2.2]"
+            )}
+            style={isZooming ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : undefined}
             loading="eager"
+            draggable={false}
           />
         </AnimatePresence>
+
+        {/* Zoom hint (desktop) */}
+        {!isMobile && !isZooming && (
+          <div className="absolute bottom-4 right-4 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-background/60 backdrop-blur-md border border-border/30 text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            <ZoomIn className="h-3 w-3" />
+            Passe o mouse para zoom
+          </div>
+        )}
 
         {isHighRisk && (
           <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground text-[10px] gap-1 font-bold uppercase tracking-wider">
@@ -83,9 +126,12 @@ export function ProductGallery({ images, selectedImage, onSelectImage, productNa
           </>
         )}
 
-        {/* Dots indicator */}
+        {/* Dots indicator (always visible on mobile) */}
         {images.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+          <div className={cn(
+            "absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5",
+            !isMobile && "opacity-0 group-hover:opacity-100 transition-opacity"
+          )}>
             {images.map((_, i) => (
               <button
                 key={i}
