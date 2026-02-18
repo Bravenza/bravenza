@@ -515,6 +515,19 @@ export default function ProductDetailPage() {
           )}
         </div>
 
+        {/* ===== RELATED PRODUCTS ===== */}
+        <RelatedProductsSection
+          currentProductId={product.id}
+          brand={product.brand}
+          category={product.category}
+          cpf={cpf || "visitor"}
+        />
+
+        {/* ===== RECENTLY VIEWED ===== */}
+        <div className="mt-14">
+          <RecentlyViewedSection />
+        </div>
+
         {/* ===== PRICE INSIGHTS ===== */}
         <div className="mt-14">
           <ProductAnalyticsChart
@@ -539,19 +552,6 @@ export default function ProductDetailPage() {
             onRefresh={() => fetchReviews(product.id)}
             currentUserName={profile?.full_name}
           />
-        </div>
-
-        {/* ===== RELATED PRODUCTS ===== */}
-        <RelatedProductsSection
-          currentProductId={product.id}
-          brand={product.brand}
-          category={product.category}
-          cpf={cpf || "visitor"}
-        />
-
-        {/* ===== RECENTLY VIEWED ===== */}
-        <div className="mt-14">
-          <RecentlyViewedSection />
         </div>
       </main>
 
