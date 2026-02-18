@@ -416,53 +416,6 @@ export default function ProductDetailPage() {
           <TrustBadges />
         </div>
 
-        {/* ===== SELLER OFFERS SECTION ===== */}
-        <div className="mt-14">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-black text-foreground tracking-tight">
-              Ofertas {selectedSize ? `— Tam. ${selectedSize}` : ""}
-            </h2>
-            <span className="text-xs text-muted-foreground bg-muted/30 px-3 py-1.5 rounded-full font-medium">
-              {sortedOffers.length} oferta{sortedOffers.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-
-          {loadingOffers ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map(i => <Skeleton key={i} className="h-64 rounded-2xl" />)}
-            </div>
-          ) : sortedOffers.length === 0 ? (
-            <div className="p-12 bg-muted/5 rounded-2xl text-center border border-border/20">
-              <p className="text-sm text-muted-foreground">
-                {product.total_offers === 0
-                  ? "Nenhuma oferta disponível. Seja o primeiro a vender!"
-                  : `Nenhuma oferta para o tamanho ${selectedSize}.`}
-              </p>
-            </div>
-          ) : (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={selectedSize}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
-              >
-                {sortedOffers.map((offer, index) => (
-                  <OfferCard
-                    key={offer.id}
-                    offer={offer}
-                    isBest={index === 0}
-                    productImages={images}
-                    onBuy={() => handleBuyOffer(offer)}
-                    onClick={() => handleViewOffer(offer)}
-                  />
-                ))}
-              </motion.div>
-            </AnimatePresence>
-          )}
-        </div>
-
         {/* ===== PRODUCT SPECS ===== */}
         <div className="mt-14 grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div>
@@ -512,6 +465,53 @@ export default function ProductDetailPage() {
                 </p>
               </div>
             </div>
+          )}
+        </div>
+
+        {/* ===== SELLER OFFERS SECTION ===== */}
+        <div className="mt-14">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-black text-foreground tracking-tight">
+              Ofertas {selectedSize ? `— Tam. ${selectedSize}` : ""}
+            </h2>
+            <span className="text-xs text-muted-foreground bg-muted/30 px-3 py-1.5 rounded-full font-medium">
+              {sortedOffers.length} oferta{sortedOffers.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          {loadingOffers ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-64 rounded-2xl" />)}
+            </div>
+          ) : sortedOffers.length === 0 ? (
+            <div className="p-12 bg-muted/5 rounded-2xl text-center border border-border/20">
+              <p className="text-sm text-muted-foreground">
+                {product.total_offers === 0
+                  ? "Nenhuma oferta disponível. Seja o primeiro a vender!"
+                  : `Nenhuma oferta para o tamanho ${selectedSize}.`}
+              </p>
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={selectedSize}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+              >
+                {sortedOffers.map((offer, index) => (
+                  <OfferCard
+                    key={offer.id}
+                    offer={offer}
+                    isBest={index === 0}
+                    productImages={images}
+                    onBuy={() => handleBuyOffer(offer)}
+                    onClick={() => handleViewOffer(offer)}
+                  />
+                ))}
+              </motion.div>
+            </AnimatePresence>
           )}
         </div>
 
