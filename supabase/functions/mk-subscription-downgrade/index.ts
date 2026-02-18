@@ -56,12 +56,11 @@ Deno.serve(async (req) => {
         })
         .eq("id", sub.id);
 
-      // Downgrade seller to free
+      // Downgrade seller to free (trigger auto-calculates current_fee_percent)
       await supabase
         .from("vault_seller_profiles")
         .update({
           plan_id: "free",
-          current_fee_percent: 14,
           support_priority: 0,
           updated_at: now,
         })

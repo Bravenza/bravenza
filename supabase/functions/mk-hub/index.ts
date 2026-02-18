@@ -395,15 +395,8 @@ Deno.serve(async (req) => {
               total_offers: prices.length,
             }).eq("id", listing.product_id);
           }
-          // Update seller sales count
-          if (od.seller_id) {
-            const { data: completedSales } = await sb.from("vault_marketplace_orders").select("id")
-              .eq("seller_id", od.seller_id).eq("status", "payout_released");
-            await sb.from("vault_seller_profiles").update({
-              total_sales_count: (completedSales?.length || 0) + 1,
-              total_sales_value: 0, // Will be calculated by tier check
-            }).eq("id", od.seller_id);
-          }
+          // Note: seller stats (total_sales_count, total_sales_value, current_fee_percent) 
+          // are now auto-updated by DB trigger trg_update_seller_on_sale + trg_recalculate_seller_fee
           // Notify seller about payout
           if (od.seller_id) {
             const { data: sl } = await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf)").eq("id", od.seller_id).single();
