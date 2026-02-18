@@ -212,7 +212,7 @@ Deno.serve(async (req) => {
     for (const violation of violations) {
       await supabase.from('notifications').insert({
         target: 'admin',
-        type: 'system',
+        type: 'system_alert',
         title: `SLA Violado: ${violation.sla_type}`,
         message: `Busca de ${violation.member_name} (${violation.tier}) está ${violation.hours_overdue}h atrasada`,
         reference_type: 'vault_search',
