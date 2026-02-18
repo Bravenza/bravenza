@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
+import { getRecaptchaToken } from "@/lib/recaptcha";
 
 export default function VaultWaitlistPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,6 +40,21 @@ export default function VaultWaitlistPage() {
     setIsSubmitting(true);
     
     try {
+      // Verify reCAPTCHA
+      const captchaToken = await getRecaptchaToken("vault_waitlist");
+      const { data: captchaResult, error: captchaError } = await supabase.functions.invoke("verify-captcha", {
+        body: { token: captchaToken, action: "vault_waitlist" },
+      });
+      if (captchaError || !captchaResult?.success) {
+        toast({
+          title: "Verificação de segurança falhou",
+          description: "Tente novamente em alguns instantes",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const { error } = await supabase
         .from("vault_waitlist")
         .insert({
