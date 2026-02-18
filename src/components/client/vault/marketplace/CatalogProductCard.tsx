@@ -24,7 +24,7 @@ export function CatalogProductCard({ product, hidePrice }: CatalogProductCardPro
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
       {/* Image */}
-      <div className="relative aspect-square bg-white overflow-hidden shrink-0">
+      <div className="relative aspect-[4/3] bg-white overflow-hidden shrink-0">
         {mainImage ? (
           <img
             src={mainImage}

@@ -29,7 +29,7 @@ export function ProductGallery({ images, selectedImage, onSelectImage, productNa
     <div className="space-y-4">
       {/* Main image - full width hero */}
       <div
-        className="relative aspect-square rounded-2xl overflow-hidden bg-white border border-border/20 touch-pan-y group"
+        className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-white border border-border/20 touch-pan-y group"
         onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
         onTouchEnd={(e) => {
           if (touchStartX.current === null || images.length <= 1) return;
