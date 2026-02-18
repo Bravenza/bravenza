@@ -52,7 +52,7 @@ export const RelatedProductsSection = memo(function RelatedProductsSection({ cur
             transition={{ delay: i * 0.04 }}
             className="min-w-[200px] max-w-[220px] flex-shrink-0"
           >
-            <CatalogProductCard product={product} />
+            <CatalogProductCard product={product} hidePrice />
           </motion.div>
         ))}
       </div>
