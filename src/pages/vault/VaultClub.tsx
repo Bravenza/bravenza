@@ -304,7 +304,7 @@ export default function VaultClub() {
       <Card className="bg-card border-border">
         <CardContent className="p-6">
           <Link
-            to="/vault/rules"
+            to="/regras-marketplace"
             className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg hover:bg-secondary/80 transition"
           >
             <div className="flex items-center gap-3">
