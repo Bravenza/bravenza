@@ -116,7 +116,8 @@ export default function MarketplaceInspectionPage() {
     setIsLoading(true);
     try {
       const params = new URLSearchParams({ action: "hub-orders" });
-      const res = await fetch(`${FUNCTION_URL}?${params}`, { headers });
+      const h = await getHeaders();
+      const res = await fetch(`${FUNCTION_URL}?${params}`, { headers: h });
       const data = await res.json();
       setOrders(data.orders || []);
     } catch (err) {
@@ -131,9 +132,10 @@ export default function MarketplaceInspectionPage() {
   const updateHubStatus = async (orderId: string, status: string, extra?: Record<string, any>) => {
     setActionLoading(true);
     try {
+      const h = await getHeaders();
       const res = await fetch(`${FUNCTION_URL}?action=hub-update-status`, {
         method: "PUT",
-        headers,
+        headers: h,
         body: JSON.stringify({ order_id: orderId, status, ...extra }),
       });
       if (!res.ok) throw new Error("Erro ao atualizar");
@@ -151,9 +153,10 @@ export default function MarketplaceInspectionPage() {
     if (!selectedOrder) return;
     setActionLoading(true);
     try {
+      const h = await getHeaders();
       const res = await fetch(`${FUNCTION_URL}?action=hub-inspect`, {
         method: "POST",
-        headers,
+        headers: h,
         body: JSON.stringify({
           order_id: selectedOrder.id,
           result,
