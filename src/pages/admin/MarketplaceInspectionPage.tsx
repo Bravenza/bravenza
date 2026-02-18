@@ -20,11 +20,10 @@ import { useToast } from "@/hooks/use-toast";
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub`;
 const API_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-const headers = {
-  "Content-Type": "application/json",
-  "x-client-cpf": "admin",
-  apikey: API_KEY,
-};
+async function getHeaders() {
+  const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+  return getMarketplaceHeaders();
+}
 
 interface HubOrder {
   id: string;

@@ -36,13 +36,9 @@ export function SellerAnalyticsDashboard({ clientCpf }: SellerAnalyticsDashboard
   const fetchAnalytics = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${FUNCTION_URL}?action=seller-analytics`, {
-        headers: {
-          "Content-Type": "application/json",
-          "x-client-cpf": clientCpf,
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-      });
+      const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+      const headers = await getMarketplaceHeaders();
+      const res = await fetch(`${FUNCTION_URL}?action=seller-analytics`, { headers });
       const data = await res.json();
       setAnalytics(data.analytics);
     } catch (err) {

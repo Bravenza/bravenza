@@ -48,14 +48,10 @@ export function MarketplaceChatDialog({
 
   const fetchMessages = async () => {
     try {
+      const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+      const headers = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "chat-messages", order_id: orderId });
-      const res = await fetch(`${FUNCTION_URL}?${params}`, {
-        headers: {
-          "Content-Type": "application/json",
-          "x-client-cpf": clientCpf,
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-      });
+      const res = await fetch(`${FUNCTION_URL}?${params}`, { headers });
       const data = await res.json();
       setMessages(data.messages || []);
     } catch (err) {
@@ -105,13 +101,11 @@ export function MarketplaceChatDialog({
     if (!newMsg.trim() || sending) return;
     setSending(true);
     try {
+      const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+      const headers = await getMarketplaceHeaders();
       const res = await fetch(`${FUNCTION_URL}?action=send-message`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-client-cpf": clientCpf,
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
+        headers,
         body: JSON.stringify({
           order_id: orderId,
           sender_name: clientName,

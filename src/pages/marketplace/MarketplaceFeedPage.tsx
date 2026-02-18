@@ -62,13 +62,16 @@ export default function MarketplaceFeedPage() {
   const fetchFeed = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${FUNCTION_URL}?action=activity-feed&limit=50`, {
-        headers: {
-          "Content-Type": "application/json",
-          "x-client-cpf": cpf,
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-      });
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      };
+      if (accessToken) {
+        headers["Authorization"] = `Bearer ${accessToken}`;
+      }
+      const res = await fetch(`${FUNCTION_URL}?action=activity-feed&limit=50`, { headers });
       const data = await res.json();
       setEvents(data.events || []);
     } catch (err) {

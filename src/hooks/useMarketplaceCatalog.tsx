@@ -1,8 +1,8 @@
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { getMarketplaceHeaders } from "@/hooks/marketplace/api";
 
 const BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub`;
-const KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 export interface CatalogProduct {
   id: string;
@@ -55,14 +55,6 @@ export interface ProductOffer {
   };
 }
 
-function headers(cpf: string) {
-  return {
-    "Content-Type": "application/json",
-    apikey: KEY,
-    "x-client-cpf": cpf,
-  };
-}
-
 export function useMarketplaceCatalog(clientCpf: string) {
   const { toast } = useToast();
   const [products, setProducts] = useState<CatalogProduct[]>([]);
@@ -81,12 +73,13 @@ export function useMarketplaceCatalog(clientCpf: string) {
   }) => {
     setIsLoading(true);
     try {
+      const h = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "catalog-products" });
       if (filters?.search) params.set("search", filters.search);
       if (filters?.brand) params.set("brand", filters.brand);
       if (filters?.category) params.set("category", filters.category);
       if (filters?.page) params.set("page", String(filters.page));
-      const res = await fetch(`${BASE}?${params}`, { headers: headers(clientCpf) });
+      const res = await fetch(`${BASE}?${params}`, { headers: h });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setProducts(data.products || []);
@@ -101,8 +94,9 @@ export function useMarketplaceCatalog(clientCpf: string) {
   const fetchProduct = useCallback(async (slug: string) => {
     setIsLoading(true);
     try {
+      const h = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "catalog-product", slug });
-      const res = await fetch(`${BASE}?${params}`, { headers: headers(clientCpf) });
+      const res = await fetch(`${BASE}?${params}`, { headers: h });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setProduct(data.product || null);
@@ -120,8 +114,9 @@ export function useMarketplaceCatalog(clientCpf: string) {
 
   const fetchOffersBySize = useCallback(async (productId: string, size: string) => {
     try {
+      const h = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "catalog-offers", product_id: productId, size });
-      const res = await fetch(`${BASE}?${params}`, { headers: headers(clientCpf) });
+      const res = await fetch(`${BASE}?${params}`, { headers: h });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setOffers(data.offers || []);
@@ -142,9 +137,10 @@ export function useMarketplaceCatalog(clientCpf: string) {
     description?: string;
   }) => {
     try {
+      const h = await getMarketplaceHeaders();
       const res = await fetch(`${BASE}?action=catalog-create-product`, {
         method: "POST",
-        headers: headers(clientCpf),
+        headers: h,
         body: JSON.stringify(productData),
       });
       const data = await res.json();
@@ -171,9 +167,10 @@ export function useMarketplaceCatalog(clientCpf: string) {
     vault_item_id?: string;
   }) => {
     try {
+      const h = await getMarketplaceHeaders();
       const res = await fetch(`${BASE}?action=catalog-create-offer`, {
         method: "POST",
-        headers: headers(clientCpf),
+        headers: h,
         body: JSON.stringify(offerData),
       });
       const data = await res.json();
@@ -188,8 +185,9 @@ export function useMarketplaceCatalog(clientCpf: string) {
 
   const searchProducts = useCallback(async (query: string) => {
     try {
+      const h = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "catalog-search", q: query });
-      const res = await fetch(`${BASE}?${params}`, { headers: headers(clientCpf) });
+      const res = await fetch(`${BASE}?${params}`, { headers: h });
       const data = await res.json();
       return data.products || [];
     } catch {
@@ -202,8 +200,9 @@ export function useMarketplaceCatalog(clientCpf: string) {
 
   const checkWatchlist = useCallback(async (productId: string, size: string) => {
     try {
+      const h = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "watchlist-check", product_id: productId, size });
-      const res = await fetch(`${BASE}?${params}`, { headers: headers(clientCpf) });
+      const res = await fetch(`${BASE}?${params}`, { headers: h });
       const data = await res.json();
       setWatchlistStatus({ active: !!data.active, max_price: data.max_price || null });
     } catch {
@@ -213,9 +212,10 @@ export function useMarketplaceCatalog(clientCpf: string) {
 
   const toggleWatchlist = useCallback(async (productId: string, size: string, maxPrice?: number | null) => {
     try {
+      const h = await getMarketplaceHeaders();
       const res = await fetch(`${BASE}?action=watchlist-toggle`, {
         method: "POST",
-        headers: headers(clientCpf),
+        headers: h,
         body: JSON.stringify({ product_id: productId, size, max_price: maxPrice }),
       });
       const data = await res.json();
@@ -233,8 +233,9 @@ export function useMarketplaceCatalog(clientCpf: string) {
   const fetchComments = useCallback(async (productId: string) => {
     setCommentsLoading(true);
     try {
+      const h = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "product-comments", product_id: productId });
-      const res = await fetch(`${BASE}?${params}`, { headers: headers(clientCpf) });
+      const res = await fetch(`${BASE}?${params}`, { headers: h });
       const data = await res.json();
       setComments(data.comments || []);
     } catch {
@@ -246,9 +247,10 @@ export function useMarketplaceCatalog(clientCpf: string) {
 
   const submitComment = useCallback(async (productId: string, content: string, parentId?: string) => {
     try {
+      const h = await getMarketplaceHeaders();
       const res = await fetch(`${BASE}?action=product-comment`, {
         method: "POST",
-        headers: headers(clientCpf),
+        headers: h,
         body: JSON.stringify({ product_id: productId, content, parent_id: parentId }),
       });
       const data = await res.json();
@@ -269,8 +271,9 @@ export function useMarketplaceCatalog(clientCpf: string) {
   const fetchReviews = useCallback(async (productId: string) => {
     setReviewsLoading(true);
     try {
+      const h = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "product-reviews", product_id: productId });
-      const res = await fetch(`${BASE}?${params}`, { headers: headers(clientCpf) });
+      const res = await fetch(`${BASE}?${params}`, { headers: h });
       const data = await res.json();
       setReviews(data.reviews || []);
       setReviewsAverage(data.average || 0);
@@ -284,9 +287,10 @@ export function useMarketplaceCatalog(clientCpf: string) {
 
   const submitReview = useCallback(async (productId: string, rating: number, comment?: string, details?: { product_quality?: number; authenticity_score?: number; shipping_speed?: number }) => {
     try {
+      const h = await getMarketplaceHeaders();
       const res = await fetch(`${BASE}?action=product-review`, {
         method: "POST",
-        headers: headers(clientCpf),
+        headers: h,
         body: JSON.stringify({ product_id: productId, rating, comment, ...details }),
       });
       const data = await res.json();
@@ -305,8 +309,9 @@ export function useMarketplaceCatalog(clientCpf: string) {
   const fetchAnalytics = useCallback(async (productId: string) => {
     setAnalyticsLoading(true);
     try {
+      const h = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "product-analytics", product_id: productId });
-      const res = await fetch(`${BASE}?${params}`, { headers: headers(clientCpf) });
+      const res = await fetch(`${BASE}?${params}`, { headers: h });
       const data = await res.json();
       setAnalytics(data.analytics || null);
     } catch {

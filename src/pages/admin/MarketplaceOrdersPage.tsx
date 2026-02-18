@@ -108,9 +108,9 @@ export default function MarketplaceOrdersPage() {
     setIsLoading(true);
     try {
       const params = new URLSearchParams({ action: "admin-orders", status: statusFilter });
-      const res = await fetch(`${FUNCTION_URL}?${params}`, {
-        headers: { "Content-Type": "application/json", "x-client-cpf": "admin", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
-      });
+      const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+      const h = await getMarketplaceHeaders();
+      const res = await fetch(`${FUNCTION_URL}?${params}`, { headers: h });
       const data = await res.json();
       setOrders(data.orders || []);
     } catch (err) {
@@ -125,9 +125,11 @@ export default function MarketplaceOrdersPage() {
   const updateStatus = async (orderId: string, status: string, extra?: Record<string, any>) => {
     setActionLoading(true);
     try {
+      const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+      const h = await getMarketplaceHeaders();
       const res = await fetch(`${FUNCTION_URL}?action=update-order-status`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "x-client-cpf": "admin", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        headers: h,
         body: JSON.stringify({ order_id: orderId, status, admin_notes: adminNotes, ...extra }),
       });
       if (!res.ok) throw new Error("Erro ao atualizar");
@@ -145,9 +147,11 @@ export default function MarketplaceOrdersPage() {
     if (!selectedOrder) return;
     setActionLoading(true);
     try {
+      const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+      const h = await getMarketplaceHeaders();
       const res = await fetch(`${FUNCTION_URL}?action=resolve-dispute`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "x-client-cpf": "admin", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        headers: h,
         body: JSON.stringify({
           order_id: selectedOrder.id,
           resolution,
@@ -169,10 +173,10 @@ export default function MarketplaceOrdersPage() {
 
   const fetchChat = async (orderId: string) => {
     try {
+      const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+      const h = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "chat-messages", order_id: orderId });
-      const res = await fetch(`${FUNCTION_URL}?${params}`, {
-        headers: { "Content-Type": "application/json", "x-client-cpf": "admin", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
-      });
+      const res = await fetch(`${FUNCTION_URL}?${params}`, { headers: h });
       const data = await res.json();
       setChatMessages(data.messages || []);
     } catch (err) {
@@ -183,9 +187,11 @@ export default function MarketplaceOrdersPage() {
   const sendAdminMsg = async () => {
     if (!selectedOrder || !chatMsg.trim()) return;
     try {
+      const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+      const h = await getMarketplaceHeaders();
       await fetch(`${FUNCTION_URL}?action=send-message`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-client-cpf": "admin", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        headers: h,
         body: JSON.stringify({ order_id: selectedOrder.id, sender_name: "Admin Bravenza", message: chatMsg.trim(), is_admin: true }),
       });
       setChatMsg("");

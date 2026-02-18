@@ -56,13 +56,9 @@ export function ActivityFeed({ clientCpf }: ActivityFeedProps) {
   const fetchFeed = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${FUNCTION_URL}?action=activity-feed&limit=30`, {
-        headers: {
-          "Content-Type": "application/json",
-          "x-client-cpf": clientCpf,
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-      });
+      const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+      const headers = await getMarketplaceHeaders();
+      const res = await fetch(`${FUNCTION_URL}?action=activity-feed&limit=30`, { headers });
       const data = await res.json();
       setEvents(data.events || []);
     } catch (err) {

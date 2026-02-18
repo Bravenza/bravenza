@@ -161,13 +161,11 @@ export function MarketplaceCheckoutDialog({
     setSelectedFreight(null);
     try {
       const params = new URLSearchParams({ action: "freight-quote" });
+      const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+      const mkHeaders = await getMarketplaceHeaders();
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub?${params}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-client-cpf": "quote",
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
+        headers: mkHeaders,
         body: JSON.stringify({
           listing_id: listing.id,
           buyer_cep: form.address_cep.replace(/\D/g, ""),
