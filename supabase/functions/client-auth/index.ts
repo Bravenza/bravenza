@@ -34,6 +34,22 @@ function cleanCPF(cpf: string): string {
   return cpf.replace(/\D/g, '');
 }
 
+// Validate CPF format (exactly 11 digits)
+function validateCPF(cpf: string): boolean {
+  const cleaned = cpf.replace(/\D/g, '');
+  return cleaned.length === 11 && /^\d{11}$/.test(cleaned);
+}
+
+// Validate 6-digit code
+function validateCode(code: string): boolean {
+  return /^\d{6}$/.test(code);
+}
+
+// Validate session token format (64 alphanumeric chars)
+function validateSessionToken(token: string): boolean {
+  return /^[A-Za-z0-9]{64}$/.test(token);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -50,6 +66,10 @@ Deno.serve(async (req) => {
     if (action === "request_code") {
       if (!cpf) {
         throw new Error("CPF é obrigatório");
+      }
+
+      if (!validateCPF(cpf)) {
+        throw new Error("CPF inválido - deve conter 11 dígitos");
       }
 
       const cleanedCPF = cleanCPF(cpf);
@@ -146,6 +166,14 @@ Deno.serve(async (req) => {
         throw new Error("CPF e código são obrigatórios");
       }
 
+      if (!validateCPF(cpf)) {
+        throw new Error("CPF inválido - deve conter 11 dígitos");
+      }
+
+      if (!validateCode(code)) {
+        throw new Error("Código inválido - deve conter 6 dígitos");
+      }
+
       const cleanedCPF = cleanCPF(cpf);
 
       // Find valid token
@@ -207,6 +235,10 @@ Deno.serve(async (req) => {
     if (action === "validate_session") {
       if (!session_token) {
         throw new Error("Token de sessão é obrigatório");
+      }
+
+      if (!validateSessionToken(session_token)) {
+        throw new Error("Token de sessão inválido");
       }
 
       const { data: sessions, error: sessionError } = await supabase
