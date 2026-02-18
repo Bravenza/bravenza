@@ -16,6 +16,7 @@ import {
 } from "@/components/order-request/steps";
 import { sendMarketplaceEmail } from "@/lib/marketplace-email-notifications";
 import { motion, AnimatePresence } from "framer-motion";
+import { getRecaptchaToken } from "@/lib/recaptcha";
 
 const WIZARD_STEPS = [
   { id: 1, label: "Dados Pessoais", icon: <User className="h-5 w-5" /> },
@@ -269,6 +270,17 @@ export default function OrderRequestPage() {
     setIsSubmitting(true);
 
     try {
+      // Verify reCAPTCHA
+      const captchaToken = await getRecaptchaToken("order_request");
+      const { data: captchaResult, error: captchaError } = await supabase.functions.invoke("verify-captcha", {
+        body: { token: captchaToken, action: "order_request" },
+      });
+      if (captchaError || !captchaResult?.success) {
+        toast.error("Verificação de segurança falhou. Tente novamente.");
+        setIsSubmitting(false);
+        return;
+      }
+
       let imageUrl = null;
 
       // Upload image if provided

@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
+import { getRecaptchaToken } from "@/lib/recaptcha";
 import { Logo } from "@/components/Logo";
 import { HolographicSeal } from "@/components/authenticity/HolographicSeal";
 import { CertificateQRCode } from "@/components/authenticity/CertificateQRCode";
@@ -93,6 +94,16 @@ export default function AuthenticityPage() {
     setShowConfetti(false);
 
     try {
+      // Verify reCAPTCHA before calling the authenticity endpoint
+      const captchaToken = await getRecaptchaToken("verify_authenticity");
+      const { data: captchaResult, error: captchaError } = await supabase.functions.invoke("verify-captcha", {
+        body: { token: captchaToken, action: "verify_authenticity" },
+      });
+      if (captchaError || !captchaResult?.success) {
+        setError("Verificação de segurança falhou. Tente novamente.");
+        return;
+      }
+
       const { data, error: fnError } = await supabase.functions.invoke("verify-authenticity", {
         body: { code: verificationCode }
       });
