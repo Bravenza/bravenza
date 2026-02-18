@@ -11,11 +11,11 @@ import { useClientSession } from "@/hooks/useClientSession";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { path: "/marketplace", label: "Explorar", exact: true },
-  { path: "/marketplace/pedidos", label: "Pedidos", icon: ShoppingBag },
-  { path: "/marketplace/feed", label: "Feed", icon: Activity },
-  { path: "/marketplace/loja", label: "Minha Loja", icon: Store },
-  { path: "/marketplace/planos", label: "Planos", icon: Crown },
+  { path: "/marketplace", label: "Explorar", mobileLabel: "Explorar", exact: true },
+  { path: "/marketplace/pedidos", label: "Pedidos", mobileLabel: "Pedidos", icon: ShoppingBag },
+  { path: "/marketplace/feed", label: "Feed", mobileLabel: "Feed", icon: Activity },
+  { path: "/marketplace/loja", label: "Minha Loja", mobileLabel: "Loja", icon: Store },
+  { path: "/marketplace/planos", label: "Planos", mobileLabel: "Planos", icon: Crown },
 ];
 
 export default function MarketplaceLayout() {
@@ -198,7 +198,9 @@ export default function MarketplaceLayout() {
         <Outlet context={{ cpf: profile?.cpf, profile }} />
       </main>
 
-      <Footer />
+      <div className="pb-20 md:pb-0">
+        <Footer />
+      </div>
 
       {/* Mobile Bottom Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border/30 safe-bottom z-40">
@@ -218,7 +220,7 @@ export default function MarketplaceLayout() {
                 )}
               >
                 <Icon className="h-5 w-5" />
-                <span className="truncate max-w-[60px]">{item.label}</span>
+                <span className="truncate max-w-[60px]">{item.mobileLabel}</span>
               </Link>
             );
           })}
