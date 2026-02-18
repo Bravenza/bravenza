@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useMarketplaceCatalog, type CatalogProduct } from "@/hooks/useMarketplaceCatalog";
+import { useMarketplaceSeller } from "@/hooks/marketplace";
 import { CatalogProductCard } from "@/components/client/vault/marketplace/CatalogProductCard";
 import { MarketplaceFilters, type MarketplaceFilterValues } from "@/components/client/vault/marketplace/MarketplaceFilters";
 import { BrandLogo, popularBrands } from "@/components/marketplace/home/BrandLogos";
@@ -32,6 +33,8 @@ export default function MarketplaceHomePage() {
   const cpf = context?.cpf || "visitor";
 
   const { products, totalProducts, isLoading, fetchProducts } = useMarketplaceCatalog(cpf);
+  const { checkOnboardingStatus } = useMarketplaceSeller(cpf !== "visitor" ? cpf : null);
+  const [isSeller, setIsSeller] = useState(false);
   const brandsScrollRef = useRef<HTMLDivElement>(null);
 
   const initialSearch = searchParams.get("q") || "";
@@ -41,6 +44,14 @@ export default function MarketplaceHomePage() {
   useEffect(() => {
     fetchProducts({ search: initialSearch || undefined });
   }, [initialSearch]);
+
+  useEffect(() => {
+    if (cpf && cpf !== "visitor") {
+      checkOnboardingStatus().then((res) => {
+        if (res?.onboarded) setIsSeller(true);
+      });
+    }
+  }, [cpf, checkOnboardingStatus]);
 
   const handleSearch = () => {
     setShowFullCatalog(true);
@@ -285,12 +296,14 @@ export default function MarketplaceHomePage() {
         </Suspense>
       </LazySection>
 
-      {/* ===== SELL CTA ===== */}
-      <LazySection minHeight="300px">
-        <Suspense fallback={<div className="h-[300px]" />}>
-          <SellCTASection />
-        </Suspense>
-      </LazySection>
+      {/* ===== SELL CTA (hidden for sellers) ===== */}
+      {!isSeller && (
+        <LazySection minHeight="300px">
+          <Suspense fallback={<div className="h-[300px]" />}>
+            <SellCTASection />
+          </Suspense>
+        </LazySection>
+      )}
 
       {/* ===== BRAND SPOTLIGHTS ===== */}
       <LazySection minHeight="400px">
