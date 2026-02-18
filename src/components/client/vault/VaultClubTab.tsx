@@ -563,7 +563,7 @@ export function VaultClubTab({
       <Card>
         <CardContent className="py-4">
           <a
-            href="/vault/rules"
+            href="/regras-marketplace"
             className="flex items-center justify-between p-3 bg-muted/30 border border-border/30 rounded-xl hover:bg-muted/50 transition-colors"
           >
             <div className="flex items-center gap-3">
