@@ -121,15 +121,18 @@ export const UpcomingReleasesSection = memo(function UpcomingReleasesSection() {
               >
                 {/* Product image */}
                 <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-white border border-border/20 overflow-hidden shrink-0 flex items-center justify-center">
-                  {release.image_url ? (
+                  {release.image_url && release.image_url !== "null" ? (
                     <img
                       src={release.image_url}
                       alt={`${release.brand} ${release.model}`}
                       className="w-full h-full object-contain p-2"
                       loading="lazy"
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                        (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-3xl opacity-15">👟</span>';
+                        const el = e.target as HTMLImageElement;
+                        el.style.display = "none";
+                        el.parentElement!.innerHTML = `<span class="text-3xl opacity-15">👟</span>`;
                       }}
                     />
                   ) : (

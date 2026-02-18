@@ -99,7 +99,11 @@ serve(async (req) => {
     }
 
     const parsed = JSON.parse(toolCall.function.arguments);
-    return new Response(JSON.stringify({ releases: parsed.releases || [] }), {
+    const releases = (parsed.releases || []).map((r: Record<string, unknown>) => ({
+      ...r,
+      image_url: r.image_url && r.image_url !== "null" && r.image_url !== "" ? r.image_url : null,
+    }));
+    return new Response(JSON.stringify({ releases }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
