@@ -1,4 +1,4 @@
-import { Heart, ShieldCheck, Star, Verified } from "lucide-react";
+import { Heart, ShieldCheck, Star, Verified, Rocket, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { MarketplaceListing } from "@/hooks/useMarketplace";
@@ -66,6 +66,12 @@ export function MarketplaceListingCard({
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary text-primary-foreground text-[9px] font-bold uppercase tracking-[0.1em] backdrop-blur-sm">
               <ShieldCheck className="h-3 w-3" />
               Certificado
+            </span>
+          )}
+          {(listing as any).pro_recommendation === "boosted" && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500 text-white text-[9px] font-bold uppercase tracking-[0.1em] backdrop-blur-sm animate-pulse">
+              <Rocket className="h-3 w-3" />
+              Destaque
             </span>
           )}
           {hasDiscount && (
@@ -145,6 +151,12 @@ export function MarketplaceListingCard({
             <span className="text-[11px] font-medium text-muted-foreground">
               {listing.seller.member.client_name.split(" ")[0]}
             </span>
+            {(listing.seller as any).verified_badge && (
+              <span className="inline-flex items-center gap-0.5 text-[9px] text-primary font-semibold">
+                <BadgeCheck className="h-3 w-3 text-primary fill-primary/20" />
+                Verificada
+              </span>
+            )}
             {listing.seller.average_rating && listing.seller.average_rating > 0 ? (
               <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground ml-auto">
                 <Star className="h-3 w-3 text-primary fill-primary" />

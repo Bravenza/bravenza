@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     if (mt === "GET" && a === "listings") {
       const pg = parseInt(url.searchParams.get("page") || "1"), lm = 20, of = (pg - 1) * lm;
       let q = sb.from("vault_marketplace_listings").select(
-        `*, seller:vault_seller_profiles!inner(id, seller_cep, member:vault_members!inner(client_name, tier), average_rating, total_sales_count, current_fee_percent)`,
+        `*, seller:vault_seller_profiles!inner(id, seller_cep, plan_id, verified_badge, member:vault_members!inner(client_name, tier), average_rating, total_sales_count, current_fee_percent)`,
         { count: "exact" }
       ).eq("status", "active");
       const sr = url.searchParams.get("search"), br = url.searchParams.get("brand"),
@@ -105,6 +105,8 @@ Deno.serve(async (req) => {
         // Filter by trusted sellers (ouro or elite tier)
         q = q.in("seller.member.tier", ["ouro", "elite"]);
       }
+      // Apply boost priority: boosted listings always appear first
+      // Then apply user-selected sort
       if (so === "price_asc") q = q.order("price", { ascending: true });
       else if (so === "price_desc") q = q.order("price", { ascending: false });
       else if (so === "popular") q = q.order("views_count", { ascending: false });
@@ -218,12 +220,14 @@ Deno.serve(async (req) => {
       const sid = url.searchParams.get("seller_id");
       if (!sid) throw new Error("seller_id obrigatório");
       const { data: sl } = await sb.from("vault_seller_profiles").select(
-        `id, bio, total_sales_count, total_sales_value, average_rating, ratings_count, current_fee_percent, member:vault_members!inner(client_name, tier, created_at)`
+        `id, bio, total_sales_count, total_sales_value, average_rating, ratings_count, current_fee_percent, plan_id, verified_badge, member:vault_members!inner(client_name, tier, created_at)`
       ).eq("id", sid).single();
       if (!sl) throw new Error("Vendedor não encontrado");
       const { data: ls } = await sb.from("vault_marketplace_listings").select("*").eq("seller_id", sid).eq("status", "active").order("published_at", { ascending: false });
       const { data: rv } = await sb.from("vault_marketplace_orders").select("buyer_name, buyer_rating, buyer_review, created_at").eq("seller_id", sid).not("buyer_rating", "is", null).order("created_at", { ascending: false }).limit(10);
-      return j({ ...sl, listings: ls || [], recent_reviews: rv || [] });
+      // Get collections for Elite sellers
+      const { data: collections } = await sb.from("seller_collections").select("*").eq("seller_id", sid).eq("is_active", true).order("sort_order", { ascending: true });
+      return j({ ...sl, listings: ls || [], recent_reviews: rv || [], collections: collections || [] });
     }
 
     // ==================== ORDERS (mkord) ====================
@@ -273,11 +277,16 @@ Deno.serve(async (req) => {
       const sp = li.price - fa;
       const oc = gc();
       const shippingCost = b.shipping_cost || li.shipping_cost_estimate || 0;
+      // Authentication enforcement: mandatory for items > R$2000
+      const reqAuth = li.price >= 2000 || b.requires_authentication === true;
+      const authFee = reqAuth && li.price < 2000 ? (b.authentication_fee || 49.90) : 0;
       const { data: od, error } = await sb.from("vault_marketplace_orders").insert({
         order_code: oc, listing_id: li._is_offer ? null : li.id, buyer_cpf: cpf, buyer_name: b.buyer_name,
         seller_id: li.seller.id, sale_price: li.price, fee_percent: fp, fee_amount: fa,
-        seller_payout: sp, shipping_mode: li.shipping_mode || "direct",
+        seller_payout: sp, shipping_mode: reqAuth ? "bravenza" : (li.shipping_mode || "direct"),
         shipping_cost: shippingCost, status: "pending_payment",
+        requires_authentication: reqAuth, authentication_requested: b.requires_authentication || false,
+        authentication_fee: authFee,
       }).select().single();
       if (error) throw error;
       // Reserve the listing/offer
@@ -833,17 +842,30 @@ Deno.serve(async (req) => {
         return isNaN(na) || isNaN(nb) ? a.localeCompare(b) : na - nb;
       });
       // Get all active offers with seller info
+      // Offers sorted: boosted first, then by price
       const { data: offers } = await sb.from("marketplace_offers").select(
-        `*, seller:vault_seller_profiles!inner(id, seller_cep, average_rating, total_sales_count, current_fee_percent, member:vault_members!inner(client_name, tier))`
+        `*, seller:vault_seller_profiles!inner(id, seller_cep, average_rating, total_sales_count, current_fee_percent, plan_id, verified_badge, member:vault_members!inner(client_name, tier))`
       ).eq("product_id", prod.id).eq("status", "active").order("price", { ascending: true });
-      return j({ product: prod, sizes, offers: offers || [] });
+      // Sort: boosted offers first
+      const sorted = (offers || []).sort((a: any, b: any) => {
+        const aBoost = a.boost_level && a.boost_active_until && new Date(a.boost_active_until) > new Date() ? 1 : 0;
+        const bBoost = b.boost_level && b.boost_active_until && new Date(b.boost_active_until) > new Date() ? 1 : 0;
+        if (bBoost !== aBoost) return bBoost - aBoost;
+        // Then Elite sellers first
+        const planOrder: Record<string, number> = { elite: 3, pro: 2, free: 1 };
+        const aPlan = planOrder[a.seller?.plan_id || "free"] || 0;
+        const bPlan = planOrder[b.seller?.plan_id || "free"] || 0;
+        if (bPlan !== aPlan) return bPlan - aPlan;
+        return a.price - b.price;
+      });
+      return j({ product: prod, sizes, offers: sorted });
     }
 
     if (mt === "GET" && a === "catalog-offers") {
       const pid = url.searchParams.get("product_id"), sz = url.searchParams.get("size");
       if (!pid) throw new Error("product_id obrigatório");
       let q = sb.from("marketplace_offers").select(
-        `*, seller:vault_seller_profiles!inner(id, seller_cep, average_rating, total_sales_count, current_fee_percent, member:vault_members!inner(client_name, tier))`
+        `*, seller:vault_seller_profiles!inner(id, seller_cep, average_rating, total_sales_count, current_fee_percent, plan_id, verified_badge, member:vault_members!inner(client_name, tier))`
       ).eq("product_id", pid).eq("status", "active");
       if (sz) q = q.eq("size", sz);
       q = q.order("price", { ascending: true });
@@ -1725,6 +1747,117 @@ Deno.serve(async (req) => {
 
       if (error) return j({ error: error.message }, 400);
       return j({ review: data });
+    }
+
+    // ==================== BOOST SYSTEM ====================
+
+    if (mt === "POST" && a === "boost-activate") {
+      const b = await req.json();
+      const { offer_id } = b;
+      if (!offer_id) throw new Error("offer_id obrigatório");
+      const mb = await gm(sb, cpf);
+      if (!mb) throw new Error("Membro não encontrado");
+      const sl = await gs(sb, mb.id);
+      if (!sl) throw new Error("Vendedor não encontrado");
+      // Check plan boost slots
+      const { data: plan } = await sb.from("marketplace_plans").select("boost_slots").eq("id", sl.plan_id || "free").single();
+      const maxBoosts = plan?.boost_slots || 1;
+      // Count current active boosts
+      const { data: activeBoosts } = await sb.from("marketplace_offers").select("id")
+        .eq("seller_id", sl.id).not("boost_level", "is", null)
+        .gt("boost_active_until", new Date().toISOString());
+      if ((activeBoosts?.length || 0) >= maxBoosts) {
+        throw new Error(`Limite de ${maxBoosts} boost(s) do seu plano atingido.`);
+      }
+      // Activate boost for 7 days
+      const boostUntil = new Date();
+      boostUntil.setDate(boostUntil.getDate() + 7);
+      const boostLevel = sl.plan_id === "elite" ? "premium" : sl.plan_id === "pro" ? "standard" : "basic";
+      const { error } = await sb.from("marketplace_offers").update({
+        boost_level: boostLevel,
+        boost_active_until: boostUntil.toISOString(),
+      }).eq("id", offer_id).eq("seller_id", sl.id);
+      if (error) throw error;
+      // Also boost the linked listing
+      const { data: offer } = await sb.from("marketplace_offers").select("listing_id").eq("id", offer_id).single();
+      if (offer?.listing_id) {
+        await sb.from("vault_marketplace_listings").update({ pro_recommendation: "boosted" }).eq("id", offer.listing_id);
+      }
+      return j({ success: true, boost_level: boostLevel, boost_until: boostUntil.toISOString() });
+    }
+
+    if (mt === "POST" && a === "boost-deactivate") {
+      const b = await req.json();
+      const mb = await gm(sb, cpf);
+      if (!mb) throw new Error("Membro não encontrado");
+      const sl = await gs(sb, mb.id);
+      if (!sl) throw new Error("Vendedor não encontrado");
+      await sb.from("marketplace_offers").update({ boost_level: null, boost_active_until: null })
+        .eq("id", b.offer_id).eq("seller_id", sl.id);
+      return j({ success: true });
+    }
+
+    if (mt === "GET" && a === "my-boosts") {
+      const mb = await gm(sb, cpf);
+      if (!mb) return j({ boosts: [], max_slots: 1 });
+      const sl = await gs(sb, mb.id);
+      if (!sl) return j({ boosts: [], max_slots: 1 });
+      const { data: plan } = await sb.from("marketplace_plans").select("boost_slots").eq("id", sl.plan_id || "free").single();
+      const { data: boosts } = await sb.from("marketplace_offers").select("id, boost_level, boost_active_until, product_id, size, price")
+        .eq("seller_id", sl.id).not("boost_level", "is", null)
+        .gt("boost_active_until", new Date().toISOString());
+      return j({ boosts: boosts || [], max_slots: plan?.boost_slots || 1, used: (boosts?.length || 0) });
+    }
+
+    // ==================== COLLECTIONS (Elite storefront) ====================
+
+    if (mt === "GET" && a === "my-collections") {
+      const mb = await gm(sb, cpf);
+      if (!mb) return j({ collections: [] });
+      const sl = await gs(sb, mb.id);
+      if (!sl) return j({ collections: [] });
+      const { data } = await sb.from("seller_collections").select("*").eq("seller_id", sl.id).order("sort_order", { ascending: true });
+      return j({ collections: data || [] });
+    }
+
+    if (mt === "POST" && a === "create-collection") {
+      const b = await req.json();
+      const mb = await gm(sb, cpf);
+      if (!mb) throw new Error("Membro não encontrado");
+      const sl = await gs(sb, mb.id);
+      if (!sl) throw new Error("Vendedor não encontrado");
+      if (sl.plan_id !== "elite") throw new Error("Coleções disponíveis apenas no plano Elite.");
+      const { data, error } = await sb.from("seller_collections").insert({
+        seller_id: sl.id, name: b.name, description: b.description || null,
+        cover_image: b.cover_image || null, listing_ids: b.listing_ids || [],
+      }).select().single();
+      if (error) throw error;
+      return j({ collection: data });
+    }
+
+    if (mt === "PUT" && a === "update-collection") {
+      const b = await req.json();
+      const mb = await gm(sb, cpf);
+      if (!mb) throw new Error("Membro não encontrado");
+      const sl = await gs(sb, mb.id);
+      if (!sl) throw new Error("Vendedor não encontrado");
+      const { error } = await sb.from("seller_collections").update({
+        name: b.name, description: b.description, cover_image: b.cover_image,
+        listing_ids: b.listing_ids, is_active: b.is_active, updated_at: new Date().toISOString(),
+      }).eq("id", b.id).eq("seller_id", sl.id);
+      if (error) throw error;
+      return j({ success: true });
+    }
+
+    if (mt === "DELETE" && a === "delete-collection") {
+      const id = url.searchParams.get("id");
+      if (!id) throw new Error("ID obrigatório");
+      const mb = await gm(sb, cpf);
+      if (!mb) throw new Error("Membro não encontrado");
+      const sl = await gs(sb, mb.id);
+      if (!sl) throw new Error("Vendedor não encontrado");
+      await sb.from("seller_collections").delete().eq("id", id).eq("seller_id", sl.id);
+      return j({ success: true });
     }
 
     return j({ error: "Ação não encontrada" }, 404);

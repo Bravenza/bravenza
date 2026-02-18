@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Store, Package, Megaphone, BarChart3, Tag, TrendingDown, HelpCircle,
-  Plus, ShoppingBag
+  Plus, ShoppingBag, Rocket, Layout, Lock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -138,9 +138,15 @@ export default function MarketplaceMyStorePage() {
   const isSellerApproved = sellerOnboarded === true && sellerKycStatus === "approved";
   const isSellerPending = sellerOnboarded === true && sellerKycStatus === "pending_review";
 
+  const planId = planStatus?.plan?.id || "free";
+  const hasBatchAccess = planId === "pro" || planId === "elite";
+  const hasStorefront = planId === "elite";
+
   const sellerSubItems = [
     { id: "anuncios", label: "Meus anúncios", icon: Megaphone },
     ...(isSellerApproved ? [
+      { id: "boosts", label: "Boosts", icon: Rocket },
+      ...(hasStorefront ? [{ id: "colecoes", label: "Coleções", icon: Layout }] : []),
       { id: "analytics", label: "Analytics", icon: BarChart3 },
       { id: "cupons", label: "Cupons", icon: Tag },
       { id: "sugestoes", label: "Sugestões", icon: TrendingDown },
@@ -313,17 +319,81 @@ export default function MarketplaceMyStorePage() {
             <SellerAnalyticsDashboard clientCpf={cpf} />
           )}
 
-          {/* Cupons */}
-          {sellerSubTab === "cupons" && isSellerApproved && cpf && (
-            <CouponsManager clientCpf={cpf} />
+          {/* Boosts */}
+          {sellerSubTab === "boosts" && isSellerApproved && (
+            <Card className="border-border/20">
+              <CardContent className="p-6 text-center space-y-4">
+                <Rocket className="h-12 w-12 mx-auto text-primary/30" />
+                <div>
+                  <h3 className="font-bold text-lg">Destaques / Boosts</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Destaque seus anúncios para aparecer no topo das buscas.
+                    Seu plano permite <strong>{planStatus?.plan?.boost_slots || 1}</strong> boost(s) ativos.
+                  </p>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Para ativar um boost, vá em "Meus anúncios", clique no anúncio e selecione "Destacar".
+                </p>
+              </CardContent>
+            </Card>
           )}
 
-          {/* Sugestões */}
+          {/* Coleções (Elite only) */}
+          {sellerSubTab === "colecoes" && isSellerApproved && hasStorefront && (
+            <Card className="border-border/20">
+              <CardContent className="p-6 text-center space-y-4">
+                <Layout className="h-12 w-12 mx-auto text-primary/30" />
+                <div>
+                  <h3 className="font-bold text-lg">Vitrine & Coleções</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Organize seus anúncios em coleções temáticas (ex: "Dunks", "Jordan Retro", "Raros").
+                    As coleções aparecem no seu perfil público.
+                  </p>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Em breve: gerenciamento visual de coleções. Seus anúncios já recebem prioridade na busca.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Cupons - gated by plan */}
+          {sellerSubTab === "cupons" && isSellerApproved && cpf && (
+            hasBatchAccess ? (
+              <CouponsManager clientCpf={cpf} />
+            ) : (
+              <Card className="border-border/20">
+                <CardContent className="p-6 text-center space-y-3">
+                  <Lock className="h-10 w-10 mx-auto text-muted-foreground/30" />
+                  <h3 className="font-bold">Ferramenta Pro</h3>
+                  <p className="text-sm text-muted-foreground">Cupons estão disponíveis nos planos Pro e Elite.</p>
+                  <Button variant="outline" onClick={() => navigate("/marketplace/planos")} className="gap-2">
+                    <Rocket className="h-4 w-4" /> Ver planos
+                  </Button>
+                </CardContent>
+              </Card>
+            )
+          )}
+
+          {/* Sugestões - gated by plan */}
           {sellerSubTab === "sugestoes" && isSellerApproved && (
-            <PriceDropSuggestions
-              fetchSuggestions={fetchPriceDropSuggestions}
-              onApplyDrop={handleApplyPriceDrop}
-            />
+            hasBatchAccess ? (
+              <PriceDropSuggestions
+                fetchSuggestions={fetchPriceDropSuggestions}
+                onApplyDrop={handleApplyPriceDrop}
+              />
+            ) : (
+              <Card className="border-border/20">
+                <CardContent className="p-6 text-center space-y-3">
+                  <Lock className="h-10 w-10 mx-auto text-muted-foreground/30" />
+                  <h3 className="font-bold">Ferramenta Pro</h3>
+                  <p className="text-sm text-muted-foreground">Sugestões de preço estão disponíveis nos planos Pro e Elite.</p>
+                  <Button variant="outline" onClick={() => navigate("/marketplace/planos")} className="gap-2">
+                    <Rocket className="h-4 w-4" /> Ver planos
+                  </Button>
+                </CardContent>
+              </Card>
+            )
           )}
 
           {/* Como funciona */}

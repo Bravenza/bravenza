@@ -72,8 +72,28 @@ export function SellerPlanBanner({ status }: SellerPlanBannerProps) {
         </div>
       )}
 
+      {/* SLA info */}
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <span>⏱️ Suporte SLA:</span>
+        <span className="font-medium">
+          {status.plan?.support_sla_hours
+            ? status.plan.support_sla_hours <= 24
+              ? "Até 24h"
+              : status.plan.support_sla_hours <= 48
+                ? "24-48h"
+                : "48-72h"
+            : "48-72h"}
+        </span>
+        {status.plan?.boost_slots && (
+          <>
+            <span className="text-border">|</span>
+            <span>🚀 Boosts: {status.plan.boost_slots}</span>
+          </>
+        )}
+      </div>
+
       {isElite && (
-        <p className="text-xs text-primary/70">✨ Anúncios e criações ilimitados</p>
+        <p className="text-xs text-primary/70">✨ Anúncios e criações ilimitados • Vitrine e coleções • Selo Verificada</p>
       )}
     </div>
   );
