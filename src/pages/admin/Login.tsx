@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
-import bravenzaLogo from "@/assets/bravenza-logo.png";
+import { Logo } from "@/components/Logo";
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -191,7 +191,7 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
               transition={{ delay: 0.1, duration: 0.4 }}
               className="flex justify-center mb-5"
             >
-              <img src={bravenzaLogo} alt="BRAVENZA" className="h-10 w-auto" />
+              <Logo size="lg" />
             </motion.div>
             <div className="flex items-center justify-center gap-2 mb-2">
               <div className="h-px w-8 bg-gradient-to-r from-transparent to-primary/40" />
