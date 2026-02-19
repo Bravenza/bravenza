@@ -232,7 +232,7 @@ const AdminLayout = () => {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 relative">
         {/* Header with notifications */}
-        <header className="sticky top-0 z-40 border-b border-border/30 bg-background/80 backdrop-blur-xl">
+        <header className="sticky top-0 z-40 border-b border-border/30 bg-background/80 backdrop-blur-xl theme-dark">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
           <div className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
