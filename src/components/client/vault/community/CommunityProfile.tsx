@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CommunityConnectionsList } from "./CommunityConnectionsList";
@@ -238,7 +237,7 @@ export function CommunityProfile({ memberId, clientCpf, onClose, onFollowChange 
   return (
     <>
       <Dialog open={!!memberId} onOpenChange={() => onClose()}>
-        <DialogContent className="max-w-md p-0 gap-0 bg-transparent border-0 overflow-visible max-h-[92vh] shadow-none [&>button]:hidden">
+        <DialogContent className="max-w-lg w-[95vw] p-0 gap-0 bg-transparent border-0 overflow-visible max-h-[90vh] shadow-none [&>button]:hidden">
           <DialogTitle className="sr-only">Perfil do membro</DialogTitle>
           
           {isLoading ? (
@@ -267,7 +266,7 @@ export function CommunityProfile({ memberId, clientCpf, onClose, onFollowChange 
               />
               
               {/* Main Card */}
-              <div className="relative bg-card/95 backdrop-blur-2xl rounded-2xl border border-border/50 overflow-hidden shadow-2xl">
+              <div className="relative bg-card/95 backdrop-blur-2xl rounded-2xl border border-border/50 overflow-hidden shadow-2xl max-h-[85vh] flex flex-col">
                 
                 {/* Close Button - Fixed Position */}
                 <motion.button
@@ -409,7 +408,7 @@ export function CommunityProfile({ memberId, clientCpf, onClose, onFollowChange 
                   </div>
                 </div>
 
-                <ScrollArea className="max-h-[calc(92vh-144px)]">
+                <div className="flex-1 overflow-y-auto overscroll-contain">
                   {/* Profile Content */}
                   <div className="px-6 pt-4 pb-6 space-y-5">
                     {/* Name & Tier */}
@@ -624,7 +623,7 @@ export function CommunityProfile({ memberId, clientCpf, onClose, onFollowChange 
                       </motion.div>
                     )}
                   </div>
-                </ScrollArea>
+                </div>
               </div>
             </motion.div>
           ) : (
