@@ -173,8 +173,7 @@ const AdminLayout = () => {
                     <item.icon className={`h-5 w-5 transition-transform group-hover:scale-110 ${isActive ? "text-primary" : ""}`} />
                     <span className="font-medium text-sm">{item.label}</span>
                     {isActive && (
-                      <motion.div
-                        layoutId="activeIndicator"
+                      <div
                         className="absolute left-0 w-1 h-6 bg-primary rounded-r-full"
                       />
                     )}
