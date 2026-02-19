@@ -297,7 +297,10 @@ export default function VaultProfilePage() {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => navigate(-1)}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate("/minha-conta", { replace: true });
+            }}
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
