@@ -11,8 +11,6 @@ import {
   Crown,
   Users,
   Sparkles,
-  Menu,
-  X,
   ChevronDown,
   ShoppingBag,
   Award,
@@ -43,7 +41,7 @@ import { useClientSession } from "@/hooks/useClientSession";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
-import { Header } from "@/components/home/Header";
+
 const Footer = lazy(() => import("@/components/home/Footer").then(m => ({ default: m.Footer })));
 const FloatingWhatsApp = lazy(() => import("@/components/FloatingWhatsApp").then(m => ({ default: m.FloatingWhatsApp })));
 import { ClientNotificationBell } from "@/components/client/ClientNotificationBell";
@@ -160,7 +158,6 @@ export default function UnifiedDashboard() {
     const saved = localStorage.getItem("bvz_dashboard_tab");
     return saved || "pedidos";
   });
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
   const isMobile = useIsMobile();
   const { saveScrollPosition, restoreScrollPosition } = useScrollRestoration();
@@ -339,7 +336,7 @@ export default function UnifiedDashboard() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-xl"
+                className="h-9 w-9 rounded-xl hidden md:flex"
                 onClick={() => setShowPreferences(true)}
               >
                 <Settings className="h-4 w-4" />
@@ -353,97 +350,10 @@ export default function UnifiedDashboard() {
               >
                 <LogOut className="h-4 w-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-xl md:hidden"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-b border-border/30 bg-card/95 backdrop-blur-xl overflow-hidden z-40"
-          >
-            <div className="p-4 space-y-1">
-              <button
-                onClick={() => { handleSectionChange("pedidos"); setMobileMenuOpen(false); }}
-                className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200",
-                  activeSection === "pedidos"
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-                )}
-              >
-                <ShoppingBag className="h-5 w-5" />
-                <span className="font-medium flex-1">Meus Pedidos</span>
-                {orders.length > 0 && (
-                  <span className="text-xs opacity-70">({orders.length})</span>
-                )}
-              </button>
-
-              {hasVaultAccess && (
-                <>
-                  <div className="pt-3 pb-2 px-4">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      Vault Club
-                    </p>
-                  </div>
-                  {vaultMenuItems.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => { (item as any).href ? navigate((item as any).href) : handleSectionChange(item.id); setMobileMenuOpen(false); }}
-                      className={cn(
-                        "w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200",
-                        activeSection === item.id
-                          ? "bg-foreground text-background"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-                      )}
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <div className="flex-1">
-                        <span className="font-medium">{item.label}</span>
-                        <p className="text-xs opacity-70 mt-0.5">{item.description}</p>
-                      </div>
-                    </button>
-                  ))}
-                </>
-              )}
-
-              {!hasVaultAccess && (
-                <Link
-                  to="/vault"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-primary bg-primary/10"
-                >
-                  <Crown className="h-5 w-5" />
-                  <span className="font-medium">Conhecer Vault Club</span>
-                </Link>
-              )}
-
-              <div className="pt-3 border-t border-border/30 mt-2">
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left text-muted-foreground hover:text-foreground hover:bg-muted/30"
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span className="font-medium">Sair</span>
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Main Content */}
       <main className="flex-1">
@@ -579,6 +489,16 @@ export default function UnifiedDashboard() {
                   embedded
                 />
               )}
+              <div className="mt-6 pt-4 border-t border-border/30">
+                <Button
+                  variant="ghost"
+                  onClick={() => { setShowPreferences(false); handleLogout(); }}
+                  className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sair da conta
+                </Button>
+              </div>
             </div>
             <div className="h-[env(safe-area-inset-bottom,0px)]" />
           </SheetContent>
