@@ -49,6 +49,7 @@ const FloatingWhatsApp = lazy(() => import("@/components/FloatingWhatsApp").then
 import { ClientNotificationBell } from "@/components/client/ClientNotificationBell";
 import { ClientPreferences } from "@/components/client/ClientPreferences";
 import { OrdersTab } from "@/components/client/dashboard";
+import { BottomTabBar } from "@/components/client/BottomTabBar";
 
 // Lazy-load vault tabs — only loaded when user navigates to them
 const VaultMyItemsTab = lazy(() => import("@/components/client/vault/VaultMyItemsTab").then(m => ({ default: m.VaultMyItemsTab })));
@@ -606,11 +607,21 @@ export default function UnifiedDashboard() {
         </Dialog>
       )}
 
+      {/* Bottom Tab Bar - Mobile only */}
+      <BottomTabBar
+        activeSection={activeSection}
+        onSectionChange={handleSectionChange}
+        onSettingsOpen={() => setShowPreferences(true)}
+        hasVaultAccess={hasVaultAccess}
+      />
+
       <Suspense fallback={null}>
         <Footer />
       </Suspense>
       <Suspense fallback={null}>
-        <FloatingWhatsApp />
+        <div className="hidden md:block">
+          <FloatingWhatsApp />
+        </div>
       </Suspense>
     </div>
   );
