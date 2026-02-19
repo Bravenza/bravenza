@@ -3783,6 +3783,7 @@ export type Database = {
         Args: { p_cpf: string; p_match_room_id: string }
         Returns: boolean
       }
+      assert_caller_owns_cpf: { Args: { p_cpf: string }; Returns: undefined }
       auto_enroll_vault_member: {
         Args: { p_cpf: string; p_email?: string; p_name: string }
         Returns: string
