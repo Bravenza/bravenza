@@ -119,6 +119,7 @@ export default function ClientAuthPage() {
       return;
     }
     toast({ title: "Bem-vindo de volta!", description: "Login realizado com sucesso." });
+    localStorage.removeItem("bvz_dashboard_tab");
     navigate("/minha-conta");
   };
 
