@@ -231,7 +231,7 @@ export function CommunityPostCard({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       layout
-      className="relative rounded-2xl bg-card/40 backdrop-blur-sm border border-border/10 p-4 hover:bg-card/60 transition-colors duration-200"
+      className="relative rounded-2xl bg-card/80 backdrop-blur-md border border-border/40 shadow-sm shadow-black/5 p-4 hover:bg-card/95 hover:border-border/60 transition-all duration-200"
     >
       {/* Pinned */}
       {post.is_pinned && (
