@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useClientSession } from "@/hooks/useClientSession";
 import { supabase } from "@/integrations/supabase/client";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
-import bravenzaLogo from "@/assets/bravenza-logo.png";
+import { Logo } from "@/components/Logo";
 
 // Validation schemas
 const loginSchema = z.object({
@@ -180,7 +180,7 @@ export default function ClientAuthPage() {
 
         <div className="relative z-10">
           <Link to="/">
-            <img src={bravenzaLogo} alt="BRAVENZA" className="h-8 w-auto" />
+            <Logo size="md" />
           </Link>
         </div>
 
@@ -230,7 +230,7 @@ export default function ClientAuthPage() {
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
           <div className="container mx-auto px-4 h-14 flex items-center justify-between">
             <Link to="/">
-              <img src={bravenzaLogo} alt="BRAVENZA" className="h-6 w-auto" />
+              <Logo size="sm" />
             </Link>
             <Link to="/">
               <Button variant="ghost" size="sm" className="text-xs tracking-widest uppercase text-muted-foreground">
