@@ -313,7 +313,7 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-border/15">
+          <div className="space-y-3">
             <AnimatePresence mode="popLayout">
               {posts.map((post) => (
                 <div key={post.id} className="py-3">
