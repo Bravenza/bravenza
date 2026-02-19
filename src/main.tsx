@@ -3,7 +3,7 @@ import App from "./App.tsx";
 import "./index.css";
 
 // Force clear all old caches and service workers on app boot
-const APP_VERSION = "3.2.0";
+const APP_VERSION = "3.3.0";
 const VERSION_KEY = "bravenza-app-version";
 
 function clearAllCaches() {
