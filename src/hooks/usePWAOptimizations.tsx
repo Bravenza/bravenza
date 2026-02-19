@@ -23,35 +23,7 @@ export function usePWAOptimizations() {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [location.pathname]);
 
-  useEffect(() => {
-    // Prevent pull-to-refresh on touch devices when not at top
-    let startY = 0;
-
-    const handleTouchStart = (e: TouchEvent) => {
-      startY = e.touches[0].clientY;
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      const y = e.touches[0].clientY;
-      const isAtTop = window.scrollY === 0;
-      const isPullingDown = y > startY;
-
-      if (isAtTop && isPullingDown && e.cancelable) {
-        const target = e.target as HTMLElement;
-        if (target.closest('.scroll-area, [data-radix-scroll-area-viewport]')) {
-          return;
-        }
-      }
-    };
-
-    document.addEventListener('touchstart', handleTouchStart, { passive: true });
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-    };
-  }, []);
+  // Pull-to-refresh is now handled by PullToRefresh component
 
   useEffect(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||

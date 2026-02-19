@@ -14,6 +14,7 @@ import { SkipToContent } from "@/components/a11y/SkipToContent";
 import { ProtectedProviders } from "@/components/providers/ProtectedProviders";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PullToRefresh } from "@/components/PullToRefresh";
 
 // Eagerly loaded pages (critical path)
 import Index from "./pages/Index";
@@ -128,6 +129,7 @@ const App = () => (
             <SkipToContent />
             <ScrollToTop />
             <AppShell>
+            <PullToRefresh>
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 {/* Public routes - NO client auth providers, minimal overhead */}
@@ -232,6 +234,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
+            </PullToRefresh>
             </AppShell>
             <PWAInstallBanner />
           </BrowserRouter>
