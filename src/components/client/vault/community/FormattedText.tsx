@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface FormattedTextProps {
   content: string;
@@ -15,7 +16,7 @@ export function FormattedText({ content, className }: FormattedTextProps) {
     return (
       <div 
         className={cn("formatted-html-content", className)}
-        dangerouslySetInnerHTML={{ __html: content }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
       />
     );
   }

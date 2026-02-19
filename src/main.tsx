@@ -20,13 +20,13 @@ function clearAllCaches() {
   }
 }
 
-// Check version synchronously, clear caches in background
+// Check version — only clear caches on version change
 const storedVersion = localStorage.getItem(VERSION_KEY);
-clearAllCaches();
 
 if (storedVersion !== APP_VERSION) {
   console.log(`[BRAVENZA] Upgrading ${storedVersion} → ${APP_VERSION}`);
   localStorage.setItem(VERSION_KEY, APP_VERSION);
+  clearAllCaches();
   if (storedVersion !== null) {
     window.location.reload();
   }

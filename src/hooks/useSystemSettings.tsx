@@ -12,7 +12,7 @@ interface SystemSettings {
 const DEFAULT_SETTINGS: SystemSettings = {
   whatsapp_number: "5551981055425",
   whatsapp_message: "Olá! Gostaria de saber mais sobre a BRAVENZA.",
-  public_base_url: "https://bravenza.lovable.app",
+  public_base_url: "https://bravenza.com.br",
   payment_fee_pix: 0.0099,
   payment_fee_credit_card: 0.0499,
 };

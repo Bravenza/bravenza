@@ -61,6 +61,7 @@ export const AddressStep = ({
               }}
               placeholder="00000-000"
               className="h-12"
+              maxLength={9}
               inputMode="numeric"
               autoFocus
             />
@@ -77,6 +78,7 @@ export const AddressStep = ({
             onChange={(e) => updateField("address_street", e.target.value)}
             placeholder="Nome da rua"
             className="h-12"
+            maxLength={200}
           />
         </div>
         <div className="space-y-2">
@@ -87,6 +89,7 @@ export const AddressStep = ({
             onChange={(e) => updateField("address_number", e.target.value)}
             placeholder="123"
             className="h-12"
+            maxLength={10}
           />
         </div>
         <div className="space-y-2">
@@ -97,6 +100,7 @@ export const AddressStep = ({
             onChange={(e) => updateField("address_complement", e.target.value)}
             placeholder="Apto, bloco..."
             className="h-12"
+            maxLength={100}
           />
         </div>
         <div className="space-y-2">
@@ -107,6 +111,7 @@ export const AddressStep = ({
             onChange={(e) => updateField("address_neighborhood", e.target.value)}
             placeholder="Bairro"
             className="h-12"
+            maxLength={100}
           />
         </div>
         <div className="space-y-2">
@@ -117,6 +122,7 @@ export const AddressStep = ({
             onChange={(e) => updateField("address_city", e.target.value)}
             placeholder="Cidade"
             className="h-12"
+            maxLength={100}
           />
         </div>
         <div className="space-y-2">

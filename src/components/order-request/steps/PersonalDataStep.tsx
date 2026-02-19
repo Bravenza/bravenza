@@ -41,6 +41,7 @@ export const PersonalDataStep = ({
             onChange={(e) => updateField("client_name", e.target.value)}
             placeholder="Seu nome completo"
             className="h-12"
+            maxLength={100}
             autoFocus
             autoComplete="name"
           />
@@ -53,6 +54,7 @@ export const PersonalDataStep = ({
             onChange={(e) => updateField("client_cpf", formatCpf(e.target.value))}
             placeholder="000.000.000-00"
             className="h-12"
+            maxLength={14}
             inputMode="numeric"
           />
         </div>
@@ -64,6 +66,7 @@ export const PersonalDataStep = ({
             onChange={(e) => updateField("client_phone", formatPhone(e.target.value))}
             placeholder="(00) 00000-0000"
             className="h-12"
+            maxLength={15}
             inputMode="tel"
             autoComplete="tel"
           />
@@ -77,6 +80,7 @@ export const PersonalDataStep = ({
             onChange={(e) => updateField("client_email", e.target.value)}
             placeholder="seu@email.com"
             className="h-12"
+            maxLength={255}
             inputMode="email"
             autoComplete="email"
           />

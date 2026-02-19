@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { useClientAuth } from "@/hooks/useClientAuth";
 
 interface IntelPost {
@@ -160,7 +161,7 @@ export default function VaultIntel() {
                     <h3 className="font-semibold text-lg mb-2">{post.title}</h3>
                     <div 
                       className="text-sm text-muted-foreground prose prose-invert prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: post.content }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
                     />
                   </CardContent>
                 </Card>
