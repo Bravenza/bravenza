@@ -44,8 +44,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import { Header } from "@/components/home/Header";
-import { Footer } from "@/components/home/Footer";
-import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
+const Footer = lazy(() => import("@/components/home/Footer").then(m => ({ default: m.Footer })));
+const FloatingWhatsApp = lazy(() => import("@/components/FloatingWhatsApp").then(m => ({ default: m.FloatingWhatsApp })));
 import { ClientNotificationBell } from "@/components/client/ClientNotificationBell";
 import { ClientPreferences } from "@/components/client/ClientPreferences";
 import { OrdersTab } from "@/components/client/dashboard";
@@ -606,8 +606,12 @@ export default function UnifiedDashboard() {
         </Dialog>
       )}
 
-      <Footer />
-      <FloatingWhatsApp />
+      <Suspense fallback={null}>
+        <Footer />
+      </Suspense>
+      <Suspense fallback={null}>
+        <FloatingWhatsApp />
+      </Suspense>
     </div>
   );
 }

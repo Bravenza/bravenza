@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useClientSession } from "@/hooks/useClientSession";
 import { cn } from "@/lib/utils";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { Logo } from "@/components/Logo";
 import { toast } from "sonner";
 
@@ -365,7 +366,7 @@ export default function DropsArticlePage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
           className="drops-article-content"
-          dangerouslySetInnerHTML={{ __html: post.content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
         />
 
         {/* Media gallery */}
