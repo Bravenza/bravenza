@@ -29,14 +29,22 @@ function CatalogProductCardComponent({ product, hidePrice }: CatalogProductCardP
       {/* Image */}
       <div className="relative aspect-[4/3] bg-white overflow-hidden shrink-0">
         {mainImage ? (
-          <img
-            src={mainImage}
-            alt={name}
-            className="w-full h-full object-contain p-5 group-hover:scale-110 transition-transform duration-700 ease-out"
-            loading="lazy"
-            decoding="async"
-            onLoad={() => setImgLoaded(true)}
-          />
+          <>
+            {!imgLoaded && (
+              <div className="absolute inset-0 bg-muted/30 animate-pulse" />
+            )}
+            <img
+              src={mainImage}
+              alt={name}
+              className={cn(
+                "w-full h-full object-contain p-5 group-hover:scale-110 transition-all duration-700 ease-out",
+                imgLoaded ? "opacity-100" : "opacity-0"
+              )}
+              loading="lazy"
+              decoding="async"
+              onLoad={() => setImgLoaded(true)}
+            />
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted/10">
             <span className="text-4xl opacity-10">👟</span>

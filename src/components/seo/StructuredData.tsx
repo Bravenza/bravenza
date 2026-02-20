@@ -170,3 +170,86 @@ const ServiceSchemaComponent = ({
 };
 
 export const ServiceSchema = memo(ServiceSchemaComponent);
+
+// ===== Product Schema (JSON-LD) =====
+interface ProductSchemaProps {
+  name: string;
+  brand: string;
+  description?: string;
+  image?: string;
+  sku?: string;
+  price?: number;
+  currency?: string;
+  condition?: "novo" | "usado" | string;
+  url: string;
+  ratingValue?: number;
+  reviewCount?: number;
+  offersCount?: number;
+}
+
+const conditionMap: Record<string, string> = {
+  novo: "https://schema.org/NewCondition",
+  usado: "https://schema.org/UsedCondition",
+};
+
+const ProductSchemaComponent = ({
+  name,
+  brand,
+  description,
+  image,
+  sku,
+  price,
+  currency = "BRL",
+  condition,
+  url,
+  ratingValue,
+  reviewCount,
+  offersCount,
+}: ProductSchemaProps) => {
+  const structuredData: Record<string, any> = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name,
+    brand: { "@type": "Brand", name: brand },
+    url,
+  };
+
+  if (description) structuredData.description = description;
+  if (image) structuredData.image = image;
+  if (sku) structuredData.sku = sku;
+
+  if (price) {
+    structuredData.offers = {
+      "@type": offersCount && offersCount > 1 ? "AggregateOffer" : "Offer",
+      priceCurrency: currency,
+      availability: "https://schema.org/InStock",
+      seller: { "@type": "Organization", name: "BRAVENZA" },
+      ...(offersCount && offersCount > 1
+        ? { lowPrice: price, offerCount: offersCount }
+        : { price }),
+    };
+    if (condition && conditionMap[condition]) {
+      structuredData.offers.itemCondition = conditionMap[condition];
+    }
+  }
+
+  if (ratingValue && reviewCount) {
+    structuredData.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: ratingValue.toFixed(1),
+      reviewCount,
+      bestRating: "5",
+      worstRating: "1",
+    };
+  }
+
+  return (
+    <Helmet>
+      <script type="application/ld+json">
+        {JSON.stringify(structuredData)}
+      </script>
+    </Helmet>
+  );
+};
+
+export const ProductSchema = memo(ProductSchemaComponent);

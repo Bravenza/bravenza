@@ -6,7 +6,7 @@ import { Search, ShieldCheck, ArrowRight, ChevronLeft, ChevronRight, TrendingUp,
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CatalogGridSkeleton } from "@/components/skeletons/MarketplaceSkeleton";
 
 import { useMarketplaceCatalog, type CatalogProduct } from "@/hooks/useMarketplaceCatalog";
 import { useMarketplaceSeller } from "@/hooks/marketplace";
@@ -96,16 +96,7 @@ export default function MarketplaceHomePage() {
         )}
 
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="space-y-3">
-                <Skeleton className="aspect-[4/3] rounded-xl" />
-                <Skeleton className="h-3 w-16" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-5 w-20" />
-              </div>
-            ))}
-          </div>
+          <CatalogGridSkeleton count={10} />
         ) : products.length === 0 ? (
           <div className="py-20 text-center">
             <Package className="h-16 w-16 mx-auto text-muted-foreground/20 mb-4" />
@@ -235,16 +226,7 @@ export default function MarketplaceHomePage() {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="space-y-3">
-                  <Skeleton className="aspect-[4/3] rounded-xl" />
-                  <Skeleton className="h-3 w-16" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-5 w-20" />
-                </div>
-              ))}
-            </div>
+            <CatalogGridSkeleton count={5} />
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {products.slice(0, 10).map((product) => (
