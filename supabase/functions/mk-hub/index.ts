@@ -17,7 +17,7 @@ const PUBLIC_ACTIONS = new Set([
   "catalog-products", "catalog-product", "catalog-offers", "catalog-search",
   "activity-feed", "product-comments", "product-reviews", "product-analytics",
   "laudo-lookup", "seller-tier-info", "freight-quote", "check-auto-payout",
-  "seller-leaderboard",
+  "seller-leaderboard", "price-history", "recommendations",
 ]);
 
 // Resolve authenticated CPF from JWT token via client_profiles
@@ -2116,6 +2116,143 @@ Deno.serve(async (req) => {
 
       const { data: allBadges } = await sb.from("marketplace_seller_badges").select("*").eq("seller_id", sl.id).order("earned_at", { ascending: false });
       return j({ badges: allBadges || [], new_badges: newBadges });
+    }
+
+    // ==================== PHASE 14: INTELLIGENCE & UX PREMIUM ====================
+
+    // Price History for a product
+    if (mt === "GET" && a === "price-history") {
+      const productId = url.searchParams.get("product_id");
+      if (!productId) throw new Error("product_id obrigatório");
+      const days = parseInt(url.searchParams.get("days") || "90");
+      const since = new Date();
+      since.setDate(since.getDate() - days);
+      const { data, error } = await sb.from("marketplace_price_history")
+        .select("*")
+        .eq("product_id", productId)
+        .gte("recorded_date", since.toISOString().split("T")[0])
+        .order("recorded_date", { ascending: true });
+      if (error) throw error;
+      // Also get current live stats
+      const { data: liveOffers } = await sb.from("marketplace_offers")
+        .select("price")
+        .eq("product_id", productId)
+        .eq("status", "active");
+      const prices = (liveOffers || []).map((o: any) => o.price);
+      const liveStats = prices.length > 0 ? {
+        min: Math.min(...prices),
+        max: Math.max(...prices),
+        avg: Math.round(prices.reduce((a: number, b: number) => a + b, 0) / prices.length),
+        count: prices.length,
+      } : null;
+      return j({ history: data || [], live: liveStats });
+    }
+
+    // Smart Recommendations based on purchase/view history
+    if (mt === "GET" && a === "recommendations") {
+      const productId = url.searchParams.get("product_id");
+      const limit = parseInt(url.searchParams.get("limit") || "8");
+      if (!productId) throw new Error("product_id obrigatório");
+      // Get the source product
+      const { data: source } = await sb.from("marketplace_products")
+        .select("brand, category").eq("id", productId).single();
+      if (!source) throw new Error("Produto não encontrado");
+      // Find similar products by same brand or category, excluding self
+      const { data: similar } = await sb.from("marketplace_products")
+        .select("id, brand, model, colorway, images, lowest_price, total_offers, slug")
+        .or(`brand.eq.${source.brand},category.eq.${source.category}`)
+        .neq("id", productId)
+        .eq("is_active", true)
+        .gt("total_offers", 0)
+        .order("total_offers", { ascending: false })
+        .limit(limit);
+      // Also check "bought together" - buyers of this product also bought
+      const { data: buyerOrders } = await sb.from("vault_marketplace_orders")
+        .select("buyer_cpf")
+        .eq("product_id", productId)
+        .limit(50);
+      const buyerCpfs = [...new Set((buyerOrders || []).map((o: any) => o.buyer_cpf))];
+      let alsoBooked: any[] = [];
+      if (buyerCpfs.length > 0) {
+        const { data: otherOrders } = await sb.from("vault_marketplace_orders")
+          .select("product_id, product:marketplace_products(id, brand, model, colorway, images, lowest_price, total_offers, slug)")
+          .in("buyer_cpf", buyerCpfs.slice(0, 10))
+          .neq("product_id", productId)
+          .limit(20);
+        // Deduplicate and count frequency
+        const freq: Record<string, { product: any; count: number }> = {};
+        for (const o of (otherOrders || [])) {
+          if (o.product) {
+            const pid = (o.product as any).id;
+            if (!freq[pid]) freq[pid] = { product: o.product, count: 0 };
+            freq[pid].count++;
+          }
+        }
+        alsoBooked = Object.values(freq).sort((a, b) => b.count - a.count).slice(0, 4).map(f => f.product);
+      }
+      return j({ similar: similar || [], also_bought: alsoBooked });
+    }
+
+    // Saved Searches CRUD
+    if (mt === "GET" && a === "saved-searches") {
+      const { data } = await sb.from("marketplace_saved_searches")
+        .select("*").eq("user_cpf", cpf)
+        .order("created_at", { ascending: false });
+      return j({ searches: data || [] });
+    }
+
+    if (mt === "POST" && a === "save-search") {
+      const b = await req.json();
+      const { data, error } = await sb.from("marketplace_saved_searches").insert({
+        user_cpf: cpf, name: b.name || "Busca salva",
+        filters: b.filters || {}, notify_new_listings: b.notify !== false,
+      }).select().single();
+      if (error) throw error;
+      return j({ search: data });
+    }
+
+    if (mt === "DELETE" && a === "delete-saved-search") {
+      const id = url.searchParams.get("id");
+      if (!id) throw new Error("ID obrigatório");
+      await sb.from("marketplace_saved_searches").delete().eq("id", id).eq("user_cpf", cpf);
+      return j({ success: true });
+    }
+
+    // Update seller storefront
+    if (mt === "PUT" && a === "update-storefront") {
+      const b = await req.json();
+      const mb = await gm(sb, cpf);
+      if (!mb) throw new Error("Membro não encontrado");
+      const sl = await gs(sb, mb.id);
+      if (!sl) throw new Error("Vendedor não encontrado");
+      const { error } = await sb.from("vault_seller_profiles").update({
+        bio: b.bio, storefront_banner: b.banner,
+        storefront_tagline: b.tagline, storefront_theme: b.theme,
+      }).eq("id", sl.id);
+      if (error) throw error;
+      return j({ success: true });
+    }
+
+    // Snapshot price history (called by cron/admin)
+    if (mt === "POST" && a === "snapshot-prices") {
+      const { data: products } = await sb.from("marketplace_products")
+        .select("id").eq("is_active", true).gt("total_offers", 0);
+      let count = 0;
+      for (const p of (products || [])) {
+        const { data: offers } = await sb.from("marketplace_offers")
+          .select("price").eq("product_id", p.id).eq("status", "active");
+        if (!offers || offers.length === 0) continue;
+        const prices = offers.map((o: any) => o.price);
+        const min = Math.min(...prices);
+        const max = Math.max(...prices);
+        const avg = Math.round(prices.reduce((a: number, b: number) => a + b, 0) / prices.length);
+        await sb.from("marketplace_price_history").upsert({
+          product_id: p.id, recorded_date: new Date().toISOString().split("T")[0],
+          min_price: min, avg_price: avg, max_price: max, offers_count: offers.length,
+        }, { onConflict: "product_id,recorded_date" });
+        count++;
+      }
+      return j({ success: true, products_snapshotted: count });
     }
 
     return j({ error: "Ação não encontrada" }, 404);

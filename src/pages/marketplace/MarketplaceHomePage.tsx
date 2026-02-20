@@ -14,6 +14,7 @@ import { CatalogProductCard } from "@/components/client/vault/marketplace/Catalo
 import { MarketplaceFilters, type MarketplaceFilterValues } from "@/components/client/vault/marketplace/MarketplaceFilters";
 import { BrandLogo, popularBrands } from "@/components/marketplace/home/BrandLogos";
 import { LazySection } from "@/components/home/LazySection";
+import { SavedSearchesWidget } from "@/components/marketplace/SavedSearchesWidget";
 
 // Lazy load below-fold sections
 const SecuritySection = lazy(() => import("@/components/marketplace/home/SecuritySection").then(m => ({ default: m.SecuritySection })));
@@ -88,7 +89,17 @@ export default function MarketplaceHomePage() {
           </button>
         )}
 
-        <MarketplaceFilters filters={filters} onFiltersChange={setFilters} onSearch={handleSearch} />
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+          <MarketplaceFilters filters={filters} onFiltersChange={setFilters} onSearch={handleSearch} />
+          <SavedSearchesWidget
+            cpf={cpf}
+            currentFilters={filters}
+            onApplySearch={(savedFilters) => {
+              setFilters(savedFilters as any);
+              fetchProducts(savedFilters);
+            }}
+          />
+        </div>
 
         {!isLoading && (
           <p className="text-xs text-muted-foreground mt-4 mb-2">

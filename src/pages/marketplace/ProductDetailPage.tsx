@@ -36,6 +36,8 @@ import { PriceSparkline } from "@/components/marketplace/PriceSparkline";
 import { SizePriceGrid } from "@/components/marketplace/SizePriceGrid";
 import { PriceComparator } from "@/components/marketplace/PriceComparator";
 import { RetailComparison } from "@/components/marketplace/RetailComparison";
+import { PriceHistoryChart } from "@/components/marketplace/PriceHistoryChart";
+import { SmartRecommendations } from "@/components/marketplace/SmartRecommendations";
 import { StickyBuyBar } from "@/components/marketplace/StickyBuyBar";
 import { conditionLabels, conditionColors, normalizeShippingMode } from "@/lib/marketplace-constants";
 import { generateInstallmentOptions, formatPriceBR } from "@/lib/budget-calculator";
@@ -579,6 +581,16 @@ export default function ProductDetailPage() {
               </motion.div>
             </AnimatePresence>
           )}
+        </div>
+
+        {/* ===== PRICE HISTORY ===== */}
+        <div className="mt-14">
+          <PriceHistoryChart productId={product.id} cpf={cpf || "visitor"} />
+        </div>
+
+        {/* ===== SMART RECOMMENDATIONS ===== */}
+        <div className="mt-14">
+          <SmartRecommendations productId={product.id} cpf={cpf || "visitor"} />
         </div>
 
         {/* ===== RELATED PRODUCTS ===== */}
