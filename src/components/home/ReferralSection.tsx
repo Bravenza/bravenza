@@ -119,7 +119,7 @@ const ReferralSectionComponent = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild size="lg" className="gap-2 btn-gold">
-              <Link to="/cliente/login">
+              <Link to="/entrar">
                 Começar a indicar
                 <ArrowRight className="h-4 w-4" />
               </Link>

@@ -196,8 +196,9 @@ export function VaultClubTab({
   };
 
   const copyInviteCode = (code: string) => {
+    const baseUrl = window.location.origin;
     navigator.clipboard.writeText(
-      `https://bravenza.lovable.app/vault/redeem?code=${code}`
+      `${baseUrl}/vault/redeem?code=${code}`
     );
     toast({
       title: "Link copiado!",
