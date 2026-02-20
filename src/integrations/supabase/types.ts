@@ -4172,6 +4172,82 @@ export type Database = {
           state_code: string
         }[]
       }
+      get_admin_finance_chart: {
+        Args: {
+          p_end: string
+          p_fee_card?: number
+          p_fee_pix?: number
+          p_start: string
+        }
+        Returns: {
+          costs: number
+          month: string
+          profit: number
+          revenue: number
+        }[]
+      }
+      get_admin_finance_cost_breakdown: {
+        Args: {
+          p_end: string
+          p_fee_card?: number
+          p_fee_pix?: number
+          p_start: string
+        }
+        Returns: {
+          category: string
+          total: number
+        }[]
+      }
+      get_admin_finance_kpis: {
+        Args: {
+          p_end: string
+          p_fee_card?: number
+          p_fee_pix?: number
+          p_start: string
+        }
+        Returns: {
+          average_ticket: number
+          gross_profit: number
+          paid_orders: number
+          profit_margin: number
+          total_costs: number
+          total_orders: number
+          total_payment_fees: number
+          total_revenue: number
+        }[]
+      }
+      get_admin_finance_orders: {
+        Args: {
+          p_end: string
+          p_fee_card?: number
+          p_fee_pix?: number
+          p_start: string
+          p_status?: string
+        }
+        Returns: {
+          client_name: string
+          created_at: string
+          current_status: string
+          margin: number
+          order_id: string
+          other_costs: number
+          payment_fees: number
+          product_cost: number
+          product_name: string
+          profit: number
+          revenue: number
+          shipping_cost: number
+        }[]
+      }
+      get_admin_report_pdf_data: {
+        Args: {
+          p_last_month_end: string
+          p_last_month_start: string
+          p_month_end: string
+          p_month_start: string
+        }
+        Returns: Json
+      }
       get_client_available_cashback: {
         Args: { p_cpf: string }
         Returns: {
