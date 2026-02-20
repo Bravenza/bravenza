@@ -157,9 +157,11 @@ export default function ProductDetailPage() {
     if (product && selectedSize) {
       setLoadingOffers(true);
       fetchOffersBySize(product.id, selectedSize).finally(() => setLoadingOffers(false));
-      checkWatchlist(product.id, selectedSize);
+      if (cpf && cpf !== "visitor") {
+        checkWatchlist(product.id, selectedSize);
+      }
     }
-  }, [product, selectedSize, fetchOffersBySize, checkWatchlist]);
+  }, [product, selectedSize, fetchOffersBySize, checkWatchlist, cpf]);
 
   useEffect(() => {
     if (product) {
