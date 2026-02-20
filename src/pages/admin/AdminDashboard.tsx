@@ -19,6 +19,7 @@ import { ORDER_STATUS_LABELS, formatDate } from "@/lib/constants";
 import { DashboardMetrics } from "@/components/admin/DashboardMetrics";
 import { AdvancedFinanceDashboard } from "@/components/admin/AdvancedFinanceDashboard";
 import { ClientHeatmap } from "@/components/admin/ClientHeatmap";
+import { AutomationHealthDashboard } from "@/components/admin/AutomationHealthDashboard";
 
 interface Order {
   order_id: string;
@@ -133,6 +134,7 @@ const AdminDashboard = () => {
           <TabsTrigger value="metrics">Métricas Detalhadas</TabsTrigger>
           <TabsTrigger value="finance">Financeiro Avançado</TabsTrigger>
           <TabsTrigger value="heatmap">Mapa de Clientes</TabsTrigger>
+          <TabsTrigger value="automation">Automações</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -313,6 +315,10 @@ const AdminDashboard = () => {
 
         <TabsContent value="heatmap">
           <ClientHeatmap />
+        </TabsContent>
+
+        <TabsContent value="automation">
+          <AutomationHealthDashboard />
         </TabsContent>
       </Tabs>
     </div>

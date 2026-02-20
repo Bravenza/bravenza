@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.mk-auto-payout]
 verify_jwt = false
+
+[functions.mk-cron-tasks]
+verify_jwt = false

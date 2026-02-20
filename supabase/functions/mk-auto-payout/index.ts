@@ -21,6 +21,14 @@ Deno.serve(async (req) => {
   );
 
   try {
+    // Log execution start
+    const { data: logEntry } = await sb
+      .from("cron_execution_logs")
+      .insert({ job_name: "mk-auto-payout", status: "running" })
+      .select("id")
+      .single();
+    const logId = logEntry?.id;
+
     const now = new Date().toISOString();
 
     // Find orders that are "delivered" and past protection period, with no open disputes
@@ -99,6 +107,15 @@ Deno.serve(async (req) => {
     }
 
     console.log(`[mk-auto-payout] Processed ${processed} orders`);
+
+    if (logId) {
+      await sb.from("cron_execution_logs").update({
+        status: "success",
+        finished_at: new Date().toISOString(),
+        duration_ms: Date.now() - new Date(logEntry!.started_at).getTime(),
+        result: { processed, total_eligible: eligible.length },
+      }).eq("id", logId);
+    }
 
     return new Response(
       JSON.stringify({ processed, total_eligible: eligible.length }),
