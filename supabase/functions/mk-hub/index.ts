@@ -784,10 +784,15 @@ Deno.serve(async (req) => {
       const { data: of2, error } = await sb.from("vault_marketplace_offers").insert({
         listing_id: b.listing_id, buyer_cpf: cpf, buyer_name: b.buyer_name || "Comprador",
         offer_price: b.offer_price, message: b.message || null,
+        bundle_id: b.bundle_id || null, bundle_discount_percent: b.bundle_discount_percent || 0,
       }).select().single();
       if (error) throw error;
+      // Log negotiation event
+      await sb.from("marketplace_negotiation_events").insert({
+        offer_id: of2.id, event_type: "offer_made", actor_cpf: cpf,
+        actor_name: b.buyer_name || "Comprador", price: b.offer_price, message: b.message || null,
+      });
       await nt(sb, "💰 Nova oferta!", `R$ ${b.offer_price.toFixed(2)} por "${li.title}".`, li.seller.member.client_cpf, li.id, "marketplace_offer");
-      // Email: offer received to seller
       const sellerOfferEmail = await ge(sb, li.seller.member.client_cpf);
       if (sellerOfferEmail) {
         em("mk_offer_received", {
@@ -818,14 +823,17 @@ Deno.serve(async (req) => {
     if (mt === "PUT" && a === "respond-offer") {
       const b = await req.json();
       const { data: of2 } = await sb.from("vault_marketplace_offers").select(
-        `id, listing_id, buyer_cpf, offer_price, listing:vault_marketplace_listings!inner(title)`
+        `id, listing_id, buyer_cpf, buyer_name, offer_price, listing:vault_marketplace_listings!inner(title)`
       ).eq("id", b.offer_id).single();
       if (!of2) throw new Error("Oferta não encontrada");
       const u: Record<string, any> = { responded_at: new Date().toISOString() };
       if (b.response === "accept") {
         u.status = "accepted";
+        await sb.from("marketplace_negotiation_events").insert({
+          offer_id: of2.id, event_type: "accepted", actor_cpf: cpf,
+          price: of2.offer_price,
+        });
         await nt(sb, "✅ Oferta aceita!", `Oferta por "${of2.listing?.title}" aceita!`, of2.buyer_cpf, of2.listing_id, "marketplace_offer");
-        // Email: offer accepted
         const buyerAccEmail = await ge(sb, of2.buyer_cpf);
         if (buyerAccEmail) {
           em("mk_offer_accepted", {
@@ -835,13 +843,22 @@ Deno.serve(async (req) => {
         }
       } else if (b.response === "reject") {
         u.status = "rejected";
+        await sb.from("marketplace_negotiation_events").insert({
+          offer_id: of2.id, event_type: "rejected", actor_cpf: cpf,
+          message: b.reason || null,
+        });
         await nt(sb, "❌ Recusada", `Oferta por "${of2.listing?.title}" recusada.`, of2.buyer_cpf, of2.listing_id, "marketplace_offer");
       } else if (b.response === "counter") {
         u.status = "counter";
         u.counter_price = b.counter_price;
         u.counter_message = b.counter_message || null;
+        // Reset expiration for counter-offer (48h from now)
+        u.expires_at = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+        await sb.from("marketplace_negotiation_events").insert({
+          offer_id: of2.id, event_type: "counter_sent", actor_cpf: cpf,
+          price: b.counter_price, message: b.counter_message || null,
+        });
         await nt(sb, "🔄 Contra-proposta!", `R$ ${b.counter_price?.toFixed(2)} por "${of2.listing?.title}".`, of2.buyer_cpf, of2.listing_id, "marketplace_offer");
-        // Email: counter offer
         const buyerCntEmail = await ge(sb, of2.buyer_cpf);
         if (buyerCntEmail) {
           em("mk_offer_counter", {
@@ -854,6 +871,102 @@ Deno.serve(async (req) => {
       const { error } = await sb.from("vault_marketplace_offers").update(u).eq("id", b.offer_id);
       if (error) throw error;
       return j({ success: true });
+    }
+
+    // ==================== ACCEPT COUNTER-OFFER (buyer) ====================
+    if (mt === "PUT" && a === "accept-counter") {
+      const b = await req.json();
+      const { data: of2 } = await sb.from("vault_marketplace_offers").select(
+        `id, listing_id, buyer_cpf, counter_price, listing:vault_marketplace_listings!inner(title, seller:vault_seller_profiles!inner(member:vault_members!inner(client_cpf)))`
+      ).eq("id", b.offer_id).eq("buyer_cpf", cpf).eq("status", "counter").single();
+      if (!of2) throw new Error("Contra-proposta não encontrada ou já respondida");
+      // Update offer: accepted at counter price
+      await sb.from("vault_marketplace_offers").update({
+        status: "accepted", offer_price: of2.counter_price, responded_at: new Date().toISOString(),
+      }).eq("id", of2.id);
+      // Log event
+      await sb.from("marketplace_negotiation_events").insert({
+        offer_id: of2.id, event_type: "counter_accepted", actor_cpf: cpf,
+        price: of2.counter_price,
+      });
+      // Notify seller
+      const sellerCpf = of2.listing?.seller?.member?.client_cpf;
+      if (sellerCpf) {
+        await nt(sb, "✅ Contra-proposta aceita!", `Comprador aceitou R$ ${of2.counter_price?.toFixed(2)} por "${of2.listing?.title}".`, sellerCpf, of2.listing_id, "marketplace_offer");
+      }
+      return j({ success: true });
+    }
+
+    // ==================== REJECT COUNTER-OFFER (buyer) ====================
+    if (mt === "PUT" && a === "reject-counter") {
+      const b = await req.json();
+      const { data: of2 } = await sb.from("vault_marketplace_offers").select(
+        `id, listing_id, buyer_cpf, listing:vault_marketplace_listings!inner(title, seller:vault_seller_profiles!inner(member:vault_members!inner(client_cpf)))`
+      ).eq("id", b.offer_id).eq("buyer_cpf", cpf).eq("status", "counter").single();
+      if (!of2) throw new Error("Contra-proposta não encontrada");
+      await sb.from("vault_marketplace_offers").update({ status: "rejected", responded_at: new Date().toISOString() }).eq("id", of2.id);
+      await sb.from("marketplace_negotiation_events").insert({
+        offer_id: of2.id, event_type: "rejected", actor_cpf: cpf, message: "Comprador recusou contra-proposta",
+      });
+      const sellerCpf = of2.listing?.seller?.member?.client_cpf;
+      if (sellerCpf) {
+        await nt(sb, "❌ Contra-proposta recusada", `Comprador recusou a contra-proposta por "${of2.listing?.title}".`, sellerCpf, of2.listing_id, "marketplace_offer");
+      }
+      return j({ success: true });
+    }
+
+    // ==================== BUNDLE OFFER ====================
+    if (mt === "POST" && a === "bundle-offer") {
+      const b = await req.json();
+      const { listing_ids, prices, message: bundleMsg, buyer_name, discount_percent } = b;
+      if (!listing_ids || listing_ids.length < 2) throw new Error("Bundle requer pelo menos 2 anúncios");
+      // All listings must be from the same seller
+      const { data: listings } = await sb.from("vault_marketplace_listings").select(
+        `id, title, price, seller_id, seller:vault_seller_profiles!inner(member:vault_members!inner(client_cpf))`
+      ).in("id", listing_ids).eq("status", "active");
+      if (!listings || listings.length !== listing_ids.length) throw new Error("Alguns anúncios não foram encontrados");
+      const sellerIds = [...new Set(listings.map((l: any) => l.seller_id))];
+      if (sellerIds.length > 1) throw new Error("Bundle só permite anúncios do mesmo vendedor");
+      if (listings[0].seller?.member?.client_cpf === cpf) throw new Error("Não pode ofertar próprios anúncios");
+      const bundleId = crypto.randomUUID();
+      const offers: any[] = [];
+      for (let i = 0; i < listings.length; i++) {
+        const li = listings[i];
+        const offerPrice = prices?.[i] || li.price * (1 - (discount_percent || 0) / 100);
+        const { data: of2 } = await sb.from("vault_marketplace_offers").insert({
+          listing_id: li.id, buyer_cpf: cpf, buyer_name: buyer_name || "Comprador",
+          offer_price: Math.round(offerPrice * 100) / 100, message: bundleMsg || null,
+          bundle_id: bundleId, bundle_discount_percent: discount_percent || 0,
+        }).select().single();
+        if (of2) {
+          offers.push(of2);
+          await sb.from("marketplace_negotiation_events").insert({
+            offer_id: of2.id, event_type: "offer_made", actor_cpf: cpf,
+            actor_name: buyer_name || "Comprador", price: offerPrice,
+            message: `Bundle (${listings.length} itens) — ${bundleMsg || ""}`,
+          });
+        }
+      }
+      const totalOriginal = listings.reduce((s: number, l: any) => s + l.price, 0);
+      const totalOffer = offers.reduce((s: number, o: any) => s + o.offer_price, 0);
+      await nt(sb, "📦 Bundle offer!", `${offers.length} itens por R$ ${totalOffer.toFixed(2)} (de R$ ${totalOriginal.toFixed(2)}).`, listings[0].seller.member.client_cpf, bundleId, "marketplace_bundle");
+      return j({ success: true, bundle_id: bundleId, offers });
+    }
+
+    // ==================== NEGOTIATION TIMELINE ====================
+    if (mt === "GET" && a === "negotiation-timeline") {
+      const offerId = url.searchParams.get("offer_id");
+      if (!offerId) throw new Error("offer_id obrigatório");
+      const { data: events, error } = await sb.from("marketplace_negotiation_events")
+        .select("*").eq("offer_id", offerId).order("created_at", { ascending: true });
+      if (error) throw error;
+      return j({ events: events || [] });
+    }
+
+    // ==================== AUTO-EXPIRE OFFERS ====================
+    if (mt === "POST" && a === "expire-offers") {
+      const count = await sb.rpc("auto_expire_marketplace_offers");
+      return j({ success: true, expired_count: count?.data || 0 });
     }
 
     // ==================== FREIGHT QUOTE ====================

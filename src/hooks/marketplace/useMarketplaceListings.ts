@@ -189,10 +189,56 @@ export function useMarketplaceListings(cpf: string | null) {
     }
   }, [cpf]);
 
+  const acceptCounter = useCallback(
+    async (offerId: string) => {
+      if (!cpf) return false;
+      try {
+        await marketplaceRequest(cpf, "accept-counter", "PUT", { offer_id: offerId });
+        toast({ title: "Contra-proposta aceita!", description: "Agora você pode finalizar a compra." });
+        return true;
+      } catch (err: any) {
+        toast({ title: "Erro", description: err.message, variant: "destructive" });
+        return false;
+      }
+    },
+    [cpf, toast]
+  );
+
+  const rejectCounter = useCallback(
+    async (offerId: string) => {
+      if (!cpf) return false;
+      try {
+        await marketplaceRequest(cpf, "reject-counter", "PUT", { offer_id: offerId });
+        toast({ title: "Contra-proposta recusada" });
+        return true;
+      } catch (err: any) {
+        toast({ title: "Erro", description: err.message, variant: "destructive" });
+        return false;
+      }
+    },
+    [cpf, toast]
+  );
+
+  const makeBundleOffer = useCallback(
+    async (body: { listing_ids: string[]; prices: number[]; message?: string; buyer_name: string; discount_percent: number }) => {
+      if (!cpf) return false;
+      try {
+        await marketplaceRequest(cpf, "bundle-offer", "POST", body);
+        toast({ title: "Bundle enviado!", description: `Oferta para ${body.listing_ids.length} itens enviada.` });
+        return true;
+      } catch (err: any) {
+        toast({ title: "Erro ao enviar bundle", description: err.message, variant: "destructive" });
+        return false;
+      }
+    },
+    [cpf, toast]
+  );
+
   return {
     listings, myListings, seller, total, isLoading, currentListing,
     fetchListings, fetchMyListings, fetchListingDetail,
     createListing, updateListing, deleteListing, toggleFavorite,
     makeOffer, fetchListingOffers, respondOffer, fetchPriceDropSuggestions,
+    acceptCounter, rejectCounter, makeBundleOffer,
   };
 }
