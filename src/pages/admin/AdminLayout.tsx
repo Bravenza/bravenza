@@ -33,9 +33,11 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NotificationBell } from "@/components/admin/NotificationBell";
+import { GlobalSearch } from "@/components/admin/GlobalSearch";
+import { ReportPDFGenerator } from "@/components/admin/ReportPDFGenerator";
 import { Separator } from "@/components/ui/separator";
-import { Header } from "@/components/home/Header";
 import { Footer } from "@/components/home/Footer";
+import { useRealtimeAdmin } from "@/hooks/useRealtimeAdmin";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
@@ -73,6 +75,7 @@ const AdminLayout = () => {
   const location = useLocation();
   const { user, isAdmin, isLoading, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  useRealtimeAdmin();
 
   useEffect(() => {
     if (!isLoading && (!user || !isAdmin)) {
@@ -246,6 +249,8 @@ const AdminLayout = () => {
               <Logo size="sm" className="lg:hidden" />
             </div>
             <div className="flex items-center gap-3">
+              <GlobalSearch />
+              <ReportPDFGenerator />
               <NotificationBell />
             </div>
           </div>
