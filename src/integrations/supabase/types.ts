@@ -4172,6 +4172,7 @@ export type Database = {
           state_code: string
         }[]
       }
+      get_admin_dashboard_overview: { Args: never; Returns: Json }
       get_admin_finance_chart: {
         Args: {
           p_end: string
@@ -4237,6 +4238,23 @@ export type Database = {
           profit: number
           revenue: number
           shipping_cost: number
+        }[]
+      }
+      get_admin_order_requests: {
+        Args: { p_limit?: number; p_offset?: number; p_search?: string }
+        Returns: Json
+      }
+      get_admin_orders_csv: {
+        Args: { p_date_from?: string; p_search?: string; p_status?: string }
+        Returns: {
+          client_cpf: string
+          client_name: string
+          created_at: string
+          current_status: string
+          order_id: string
+          product_name: string
+          product_price: number
+          sla_vault_due_date: string
         }[]
       }
       get_admin_report_pdf_data: {

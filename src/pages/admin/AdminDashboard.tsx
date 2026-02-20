@@ -20,15 +20,6 @@ import { DashboardMetrics } from "@/components/admin/DashboardMetrics";
 import { AdvancedFinanceDashboard } from "@/components/admin/AdvancedFinanceDashboard";
 import { ClientHeatmap } from "@/components/admin/ClientHeatmap";
 
-interface DashboardStats {
-  total: number;
-  pending: number;
-  delivered: number;
-  nearDeadline: number;
-  pendingRequests: number;
-  overdueOrders: Order[];
-}
-
 interface Order {
   order_id: string;
   current_status: string;
@@ -38,54 +29,28 @@ interface Order {
   sla_vault_due_date?: string | null;
 }
 
+interface DashboardData {
+  total: number;
+  pending: number;
+  delivered: number;
+  near_deadline: number;
+  pending_requests: number;
+  overdue_orders: Order[];
+  recent_orders: Order[];
+}
+
 const AdminDashboard = () => {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch orders (only needed columns)
-        const [ordersRes, requestsRes] = await Promise.all([
-          supabase
-            .from("orders")
-            .select("order_id, current_status, client_name, product_name, created_at, sla_vault_due_date")
-            .order("created_at", { ascending: false }),
-          supabase
-            .from("order_requests")
-            .select("id", { count: "exact", head: true })
-            .eq("status", "pending"),
-        ]);
+        const { data: rpcData, error } = await supabase.rpc("get_admin_dashboard_overview" as any);
+        if (error) throw error;
 
-        if (ordersRes.error) throw ordersRes.error;
-
-        const orders = ordersRes.data || [];
-        const now = new Date();
-        const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-
-        // Find overdue orders (past SLA date)
-        const overdueOrders = orders.filter((o) => {
-          if (!o.sla_vault_due_date || o.current_status === "DELIVERED") return false;
-          return new Date(o.sla_vault_due_date) < now;
-        });
-
-        const statsData: DashboardStats = {
-          total: orders.length,
-          pending: orders.filter((o) => o.current_status !== "DELIVERED").length,
-          delivered: orders.filter((o) => o.current_status === "DELIVERED").length,
-          nearDeadline: orders.filter((o) => {
-            if (!o.sla_vault_due_date || o.current_status === "DELIVERED") return false;
-            const dueDate = new Date(o.sla_vault_due_date);
-            return dueDate <= threeDaysFromNow && dueDate >= now;
-          }).length,
-          pendingRequests: requestsRes.count || 0,
-          overdueOrders: overdueOrders.slice(0, 5),
-        };
-
-        setStats(statsData);
-        setRecentOrders(orders.slice(0, 5));
+        setData(rpcData as DashboardData);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -113,33 +78,37 @@ const AdminDashboard = () => {
   const statCards = [
     {
       title: "Total de Pedidos",
-      value: stats?.total || 0,
+      value: data?.total || 0,
       icon: Package,
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
     {
       title: "Em Andamento",
-      value: stats?.pending || 0,
+      value: data?.pending || 0,
       icon: Clock,
       color: "text-warning",
       bgColor: "bg-warning/10",
     },
     {
       title: "Entregues",
-      value: stats?.delivered || 0,
+      value: data?.delivered || 0,
       icon: CheckCircle2,
       color: "text-success",
       bgColor: "bg-success/10",
     },
     {
       title: "Prazos Próximos",
-      value: stats?.nearDeadline || 0,
+      value: data?.near_deadline || 0,
       icon: AlertTriangle,
       color: "text-destructive",
       bgColor: "bg-destructive/10",
     },
   ];
+
+  const recentOrders = data?.recent_orders || [];
+  const overdueOrders = data?.overdue_orders || [];
+  const pendingRequests = data?.pending_requests || 0;
 
   return (
     <div className="space-y-6">
@@ -274,13 +243,13 @@ const AdminDashboard = () => {
                   </Link>
                 </CardHeader>
                 <CardContent>
-                  {(stats?.pendingRequests || 0) > 0 ? (
+                  {pendingRequests > 0 ? (
                     <div className="flex items-center gap-4 p-4 rounded-lg bg-warning/10 border border-warning/20">
                       <div className="p-3 rounded-full bg-warning/20">
                         <ClipboardList className="h-6 w-6 text-warning" />
                       </div>
                       <div>
-                        <p className="text-2xl font-bold">{stats?.pendingRequests}</p>
+                        <p className="text-2xl font-bold">{pendingRequests}</p>
                         <p className="text-sm text-muted-foreground">
                           solicitações aguardando análise
                         </p>
@@ -303,9 +272,9 @@ const AdminDashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {(stats?.overdueOrders?.length || 0) > 0 ? (
+                  {overdueOrders.length > 0 ? (
                     <div className="space-y-3">
-                      {stats!.overdueOrders.map((order) => (
+                      {overdueOrders.map((order) => (
                         <Link
                           key={order.order_id}
                           to={`/admin/pedidos/${order.order_id}`}

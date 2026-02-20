@@ -59,19 +59,21 @@ export default function OrderRequestsPage() {
   const [selectedRequest, setSelectedRequest] = useState<OrderRequest | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [adminNotes, setAdminNotes] = useState("");
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 25;
 
-  // Fetch requests (excluding converted ones)
-  const { data: requests, isLoading } = useQuery({
-    queryKey: ["order-requests"],
+  // Fetch requests via RPC with server-side pagination
+  const { data: rpcData, isLoading } = useQuery({
+    queryKey: ["order-requests", searchTerm, page],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("order_requests")
-        .select("*")
-        .neq("status", "converted")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.rpc("get_admin_order_requests" as any, {
+        p_search: searchTerm,
+        p_offset: page * PAGE_SIZE,
+        p_limit: PAGE_SIZE,
+      });
       
       if (error) throw error;
-      return data as OrderRequest[];
+      return data as { total: number; pending_count: number; requests: OrderRequest[] };
     },
   });
 
@@ -210,19 +212,10 @@ export default function OrderRequestsPage() {
     },
   });
 
-  // Filter requests
-  const filteredRequests = requests?.filter(req => {
-    const search = searchTerm.toLowerCase();
-    return (
-      req.client_name.toLowerCase().includes(search) ||
-      req.client_cpf.includes(search) ||
-      req.client_email.toLowerCase().includes(search) ||
-      req.product_brand?.toLowerCase().includes(search) ||
-      req.product_model?.toLowerCase().includes(search)
-    );
-  });
-
-  const pendingCount = requests?.filter(r => r.status === "pending").length || 0;
+  const filteredRequests = rpcData?.requests || [];
+  const pendingCount = rpcData?.pending_count || 0;
+  const totalCount = rpcData?.total || 0;
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const openDetail = (request: OrderRequest) => {
     setSelectedRequest(request);
@@ -337,6 +330,23 @@ export default function OrderRequestsPage() {
               </CardContent>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Mostrando {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} de {totalCount}
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPage(p => p - 1)} disabled={page === 0}>
+              Anterior
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1}>
+              Próxima
+            </Button>
+          </div>
         </div>
       )}
 
