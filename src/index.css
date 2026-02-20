@@ -8,6 +8,14 @@
 
 /* Font loaded via index.html with preconnect for better performance */
 
+/* Opt-in to color-scheme for native form elements */
+:root {
+  color-scheme: dark;
+}
+.theme-light {
+  color-scheme: light;
+}
+
 @layer base {
   :root {
     /* BRAVENZA Dark Premium Theme */
@@ -286,6 +294,9 @@
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    -webkit-tap-highlight-color: transparent;
+    scrollbar-gutter: stable;
   }
 
   /* Typography hierarchy - Tech Modern */
