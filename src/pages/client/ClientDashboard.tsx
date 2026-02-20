@@ -23,7 +23,7 @@ import {
   Clock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useClientAuth } from "@/hooks/useClientAuth";
+import { useClientSession } from "@/hooks/useClientSession";
 import { Footer } from "@/components/home/Footer";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 import { Logo } from "@/components/Logo";
@@ -153,7 +153,9 @@ const sectionTitles: Record<string, { title: string; subtitle: string; icon: any
 
 export default function ClientDashboard() {
   const navigate = useNavigate();
-  const { session, isLoading: authLoading, logout } = useClientAuth();
+  const { profile, isLoading: authLoading, signOut } = useClientSession();
+  const session = profile ? { cpf: profile.cpf, client_name: profile.full_name, session_token: "supabase-auth" } : null;
+  const logout = signOut;
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showPreferences, setShowPreferences] = useState(false);

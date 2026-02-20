@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useClientAuth } from "@/hooks/useClientAuth";
+import { useClientSession } from "@/hooks/useClientSession";
 
 interface VaultMember {
   id: string;
@@ -60,7 +60,8 @@ const tierConfig = {
 };
 
 export default function VaultClub() {
-  const { session } = useClientAuth();
+  const { profile } = useClientSession();
+  const session = profile ? { cpf: profile.cpf, client_name: profile.full_name } : null;
   const context = useOutletContext<{ member: VaultMember | null; refreshMember: () => void }>();
   const { toast } = useToast();
   

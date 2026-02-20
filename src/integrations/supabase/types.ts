@@ -3409,14 +3409,18 @@ export type Database = {
           cancellation_rate: number | null
           cnpj: string | null
           cpf_cnpj: string | null
+          cpf_cnpj_encrypted: string | null
           created_at: string
           current_fee_percent: number
           dispute_rate: number | null
           full_name: string | null
           id: string
           id_back_url: string | null
+          id_back_url_encrypted: string | null
           id_front_url: string | null
+          id_front_url_encrypted: string | null
           id_selfie_url: string | null
+          id_selfie_url_encrypted: string | null
           is_active: boolean
           is_business: boolean
           kyc_rejection_reason: string | null
@@ -3432,6 +3436,7 @@ export type Database = {
           phone: string | null
           pix_beneficiary: string | null
           pix_key: string | null
+          pix_key_encrypted: string | null
           pix_key_type: string | null
           plan_id: string | null
           pro_approval_rate: number | null
@@ -3454,14 +3459,18 @@ export type Database = {
           cancellation_rate?: number | null
           cnpj?: string | null
           cpf_cnpj?: string | null
+          cpf_cnpj_encrypted?: string | null
           created_at?: string
           current_fee_percent?: number
           dispute_rate?: number | null
           full_name?: string | null
           id?: string
           id_back_url?: string | null
+          id_back_url_encrypted?: string | null
           id_front_url?: string | null
+          id_front_url_encrypted?: string | null
           id_selfie_url?: string | null
+          id_selfie_url_encrypted?: string | null
           is_active?: boolean
           is_business?: boolean
           kyc_rejection_reason?: string | null
@@ -3477,6 +3486,7 @@ export type Database = {
           phone?: string | null
           pix_beneficiary?: string | null
           pix_key?: string | null
+          pix_key_encrypted?: string | null
           pix_key_type?: string | null
           plan_id?: string | null
           pro_approval_rate?: number | null
@@ -3499,14 +3509,18 @@ export type Database = {
           cancellation_rate?: number | null
           cnpj?: string | null
           cpf_cnpj?: string | null
+          cpf_cnpj_encrypted?: string | null
           created_at?: string
           current_fee_percent?: number
           dispute_rate?: number | null
           full_name?: string | null
           id?: string
           id_back_url?: string | null
+          id_back_url_encrypted?: string | null
           id_front_url?: string | null
+          id_front_url_encrypted?: string | null
           id_selfie_url?: string | null
+          id_selfie_url_encrypted?: string | null
           is_active?: boolean
           is_business?: boolean
           kyc_rejection_reason?: string | null
@@ -3522,6 +3536,7 @@ export type Database = {
           phone?: string | null
           pix_beneficiary?: string | null
           pix_key?: string | null
+          pix_key_encrypted?: string | null
           pix_key_type?: string | null
           plan_id?: string | null
           pro_approval_rate?: number | null
@@ -4123,10 +4138,12 @@ export type Database = {
         Args: { p_cpf: string; p_match_room_id: string; p_reason?: string }
         Returns: boolean
       }
+      decrypt_pii: { Args: { ciphertext: string }; Returns: string }
       downgrade_seller_to_free: {
         Args: { p_seller_id: string }
         Returns: undefined
       }
+      encrypt_pii: { Args: { plaintext: string }; Returns: string }
       ensure_vault_membership: {
         Args: { p_cpf: string }
         Returns: {
@@ -4638,6 +4655,7 @@ export type Database = {
       is_admin:
         | { Args: never; Returns: boolean }
         | { Args: { _user_id: string }; Returns: boolean }
+      mask_cpf: { Args: { cpf_value: string }; Returns: string }
       reject_budget: {
         Args: { p_reason?: string; p_token: string }
         Returns: boolean

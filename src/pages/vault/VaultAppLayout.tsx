@@ -7,7 +7,7 @@ import { Footer } from "@/components/home/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useClientAuth } from "@/hooks/useClientAuth";
+import { useClientSession } from "@/hooks/useClientSession";
 import { useVaultNotifications } from "@/hooks/useVaultNotifications";
 import { VaultNotificationBell } from "@/components/vault/VaultNotificationBell";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,7 +37,9 @@ const navItems = [
 ];
 
 export default function VaultAppLayout() {
-  const { session, isLoading, logout } = useClientAuth();
+  const { profile, isLoading, signOut } = useClientSession();
+  const session = profile ? { cpf: profile.cpf, client_name: profile.full_name } : null;
+  const logout = signOut;
   const navigate = useNavigate();
   const location = useLocation();
   const [member, setMember] = useState<VaultMember | null>(null);

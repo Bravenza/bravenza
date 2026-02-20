@@ -18,7 +18,7 @@ const AdGuidelinesPage = lazy(() => import("@/pages/AdGuidelinesPage"));
 const MarketplaceRulesPage = lazy(() => import("@/pages/MarketplaceRulesPage"));
 const VerificationPolicyPage = lazy(() => import("@/pages/VerificationPolicyPage"));
 
-const ClientLogin = lazy(() => import("@/pages/client/ClientLogin"));
+// Legacy ClientLogin removed — auth migrated to Supabase Auth (ClientAuthPage)
 const ClientAuthPage = lazy(() => import("@/pages/client/ClientAuthPage"));
 const UnifiedDashboard = lazy(() => import("@/pages/client/UnifiedDashboard"));
 

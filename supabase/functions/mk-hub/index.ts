@@ -108,8 +108,18 @@ function generateOrderCode() {
   return code;
 }
 
+// Backward-compat aliases (refactored names → legacy call-sites)
+const j = jsonResponse;
+const ch = corsHeaders;
+const gm = getMember;
+const gs = getSellerProfile;
+const gc = generateOrderCode;
+const nt = notify;
+const ge = getMemberEmail;
+const em = sendMarketplaceEmail;
+
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: ch });
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useClientAuth } from "@/hooks/useClientAuth";
+import { useClientSession } from "@/hooks/useClientSession";
 import { VaultItemCard } from "@/components/vault/VaultItemCard";
 
 interface VaultItem {
@@ -23,7 +23,8 @@ interface VaultItem {
 }
 
 export default function VaultMyItems() {
-  const { session } = useClientAuth();
+  const { profile } = useClientSession();
+  const session = profile ? { cpf: profile.cpf, client_name: profile.full_name } : null;
   const [items, setItems] = useState<VaultItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
