@@ -25,7 +25,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading fallback component
 const PageLoader = () => (
-  <div className="min-h-screen bg-background flex items-center justify-center">
+  <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-label="Carregando página">
     <div className="space-y-4 w-full max-w-md px-4">
       <Skeleton className="h-8 w-32 mx-auto" />
       <Skeleton className="h-4 w-48 mx-auto" />

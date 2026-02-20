@@ -173,6 +173,7 @@ const AdminLayout = () => {
                   <Link
                     to={item.path}
                     onClick={() => setSidebarOpen(false)}
+                    aria-current={isActive ? "page" : undefined}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
                       isActive
                         ? "bg-primary/10 text-primary shadow-[0_0_20px_rgba(212,175,55,0.1)]"
@@ -209,6 +210,7 @@ const AdminLayout = () => {
                   <Link
                     to={item.path}
                     onClick={() => setSidebarOpen(false)}
+                    aria-current={isActive ? "page" : undefined}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
                       isActive
                         ? "bg-primary/10 text-primary shadow-[0_0_20px_rgba(212,175,55,0.1)]"
@@ -262,7 +264,7 @@ const AdminLayout = () => {
         </header>
 
         {/* Content */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto relative">
+        <main id="main-content" className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto relative">
           <Outlet />
         </main>
       </div>

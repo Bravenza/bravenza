@@ -39,6 +39,8 @@ export function OfflineIndicator() {
 
   return (
     <div
+      role="status"
+      aria-live="polite"
       className={`fixed top-0 left-0 right-0 z-[100] py-2 px-4 text-center text-sm font-medium flex items-center justify-center gap-2 transition-transform duration-300 ease-out ${
         visible ? 'translate-y-0' : '-translate-y-full'
       } ${
