@@ -220,7 +220,7 @@ export function ClientPreferences({ clientCpf, clientName, embedded = false }: C
 
       {/* Notification Preferences */}
       <div className="space-y-4 pt-4 border-t border-border/50">
-        <Label className="text-sm font-medium">Notificações</Label>
+        <Label className="text-sm font-medium">Canais de notificação</Label>
         
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
@@ -270,6 +270,37 @@ export function ClientPreferences({ clientCpf, clientName, embedded = false }: C
           />
         </div>
       </div>
+
+      {/* Granular Notification Categories */}
+      {(preferences.notification_email || preferences.notification_push || preferences.notification_whatsapp) && (
+        <div className="space-y-3 pt-3 border-t border-border/30">
+          <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Categorias de notificação
+          </Label>
+          <p className="text-[11px] text-muted-foreground">
+            Escolha quais tipos de atualização deseja receber nos canais ativos acima
+          </p>
+
+          {[
+            { id: "notif_drops", label: "Novos Drops & Lançamentos", desc: "Alertas sobre novos conteúdos e lançamentos" },
+            { id: "notif_matches", label: "Matches & Curadoria", desc: "Atualizações sobre buscas e Match Room" },
+            { id: "notif_community", label: "Comunidade", desc: "Curtidas, comentários e novos seguidores" },
+            { id: "notif_marketplace", label: "Marketplace", desc: "Ofertas, vendas e atualizações de pedidos" },
+            { id: "notif_promotions", label: "Promoções & Ofertas", desc: "Cupons, cashback e oportunidades exclusivas" },
+          ].map((cat) => (
+            <div key={cat.id} className="flex items-center justify-between py-1">
+              <div className="space-y-0.5">
+                <Label htmlFor={cat.id} className="text-sm">{cat.label}</Label>
+                <p className="text-[11px] text-muted-foreground">{cat.desc}</p>
+              </div>
+              <Switch
+                id={cat.id}
+                defaultChecked={true}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       <Button 
         className="w-full btn-gold" 
