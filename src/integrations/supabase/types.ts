@@ -539,6 +539,47 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_negotiation_events: {
+        Row: {
+          actor_cpf: string
+          actor_name: string | null
+          created_at: string
+          event_type: string
+          id: string
+          message: string | null
+          offer_id: string
+          price: number | null
+        }
+        Insert: {
+          actor_cpf: string
+          actor_name?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          message?: string | null
+          offer_id: string
+          price?: number | null
+        }
+        Update: {
+          actor_cpf?: string
+          actor_name?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          message?: string | null
+          offer_id?: string
+          price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_negotiation_events_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "vault_marketplace_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_offers: {
         Row: {
           activated_at: string | null
@@ -3068,6 +3109,8 @@ export type Database = {
       }
       vault_marketplace_offers: {
         Row: {
+          bundle_discount_percent: number | null
+          bundle_id: string | null
           buyer_cpf: string
           buyer_name: string
           counter_message: string | null
@@ -3082,6 +3125,8 @@ export type Database = {
           status: string
         }
         Insert: {
+          bundle_discount_percent?: number | null
+          bundle_id?: string | null
           buyer_cpf: string
           buyer_name: string
           counter_message?: string | null
@@ -3096,6 +3141,8 @@ export type Database = {
           status?: string
         }
         Update: {
+          bundle_discount_percent?: number | null
+          bundle_id?: string | null
           buyer_cpf?: string
           buyer_name?: string
           counter_message?: string | null
@@ -4504,6 +4551,7 @@ export type Database = {
         Args: { p_cpf: string; p_email?: string; p_name: string }
         Returns: string
       }
+      auto_expire_marketplace_offers: { Args: never; Returns: number }
       calculate_protection_end: {
         Args: { delivery_date: string }
         Returns: string

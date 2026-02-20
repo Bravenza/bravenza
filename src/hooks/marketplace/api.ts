@@ -11,6 +11,8 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
   "rate-seller": "mk-hub", "admin-orders": "mk-hub", "open-dispute": "mk-hub",
   "chat-messages": "mk-hub", "send-message": "mk-hub",
   "make-offer": "mk-hub", "listing-offers": "mk-hub", "my-offers": "mk-hub", "respond-offer": "mk-hub",
+  "accept-counter": "mk-hub", "reject-counter": "mk-hub",
+  "bundle-offer": "mk-hub", "negotiation-timeline": "mk-hub", "expire-offers": "mk-hub",
   "seller-onboarding": "mk-hub", "seller-onboarding-status": "mk-hub",
   "price-drop-suggestions": "mk-hub",
   "seller-analytics": "mk-hub", "my-coupons": "mk-hub", "create-coupon": "mk-hub",
