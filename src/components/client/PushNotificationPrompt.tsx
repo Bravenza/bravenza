@@ -94,7 +94,7 @@ export function PushNotificationPrompt({
           </Button>
         </div>
         <CardDescription>
-          Ative as notificações para receber alertas instantâneos sobre o status dos seus pedidos
+          Ative as notificações para receber alertas instantâneos sobre pedidos, drops exclusivos e alertas de preço
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -105,11 +105,19 @@ export function PushNotificationPrompt({
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Check className="h-4 w-4 text-green-500" />
-            <span>Lembretes de pagamento</span>
+            <span>🔥 Novos drops e lançamentos</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Check className="h-4 w-4 text-green-500" />
-            <span>Atualizações de entrega</span>
+            <span>💰 Alertas de queda de preço</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Check className="h-4 w-4 text-green-500" />
+            <span>💬 Mensagens do chat</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Check className="h-4 w-4 text-green-500" />
+            <span>📦 Atualizações de entrega</span>
           </div>
           <Button
             className="w-full btn-gold mt-4"
