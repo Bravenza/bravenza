@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Crown, Shield, Zap, Save, Loader2, Percent, Package, Sparkles,
-  Rocket, Headphones, Star, Gauge, Search, RefreshCw
+  Rocket, Headphones, Star, Gauge, Search, RefreshCw, UserCog, ArrowUpRight
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -309,6 +310,9 @@ export default function MarketplacePlansAdminPage() {
 
       {/* Fee Tiers */}
       <FeeTiersManager />
+
+      {/* Seller Management */}
+      <SellerSubscriptionManager />
     </div>
   );
 }
@@ -456,6 +460,134 @@ function FeeTiersManager() {
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Salvar faixas
         </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SellerSubscriptionManager() {
+  const [sellers, setSellers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchSellers();
+  }, []);
+
+  const fetchSellers = async () => {
+    setIsLoading(true);
+    const { data } = await supabase
+      .from("vault_seller_profiles")
+      .select("id, plan_id, total_sales_count, total_sales_value, current_fee_percent, kyc_status, verified_badge, member_id")
+      .order("total_sales_value", { ascending: false })
+      .limit(50);
+
+    if (data) {
+      // Fetch member names
+      const memberIds = data.map(s => s.member_id).filter(Boolean);
+      const { data: members } = await supabase
+        .from("vault_members")
+        .select("id, client_name, client_email, tier")
+        .in("id", memberIds);
+
+      const memberMap = new Map((members || []).map(m => [m.id, m]));
+      setSellers(data.map(s => ({ ...s, member: memberMap.get(s.member_id) })));
+    }
+    setIsLoading(false);
+  };
+
+  const handlePlanChange = async (sellerId: string, newPlan: string) => {
+    setUpdatingId(sellerId);
+    const { error } = await supabase
+      .from("vault_seller_profiles")
+      .update({ plan_id: newPlan })
+      .eq("id", sellerId);
+
+    if (error) {
+      toast.error("Erro ao atualizar plano");
+    } else {
+      toast.success("Plano atualizado!");
+      fetchSellers();
+    }
+    setUpdatingId(null);
+  };
+
+  const filtered = sellers.filter(s => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (s.member?.client_name || "").toLowerCase().includes(q) ||
+      (s.member?.client_email || "").toLowerCase().includes(q);
+  });
+
+  const planBadge = (plan: string) => {
+    const colors: Record<string, string> = {
+      free: "bg-muted text-muted-foreground",
+      pro: "bg-primary/20 text-primary",
+      elite: "bg-primary/30 text-primary font-bold",
+    };
+    return colors[plan] || colors.free;
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <UserCog className="h-5 w-5 text-primary" />
+          Gerenciar Vendedores
+        </CardTitle>
+        <CardDescription>Visualize e altere planos individualmente</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-4">
+          <Input
+            placeholder="Buscar por nome ou email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+        ) : filtered.length === 0 ? (
+          <p className="text-center py-8 text-muted-foreground text-sm">Nenhum vendedor encontrado</p>
+        ) : (
+          <div className="space-y-2">
+            {filtered.map((s) => (
+              <div key={s.id} className="flex items-center justify-between gap-4 p-3 rounded-lg border bg-card/50 hover:bg-muted/30 transition-colors">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-sm truncate">{s.member?.client_name || "Vendedor"}</p>
+                  <p className="text-xs text-muted-foreground">{s.member?.client_email || ""}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge className={`${planBadge(s.plan_id || "free")} text-[10px]`}>
+                      {s.plan_id || "free"}
+                    </Badge>
+                    <span className="text-[10px] text-muted-foreground">
+                      {s.total_sales_count} vendas · R$ {(s.total_sales_value || 0).toLocaleString("pt-BR")} · {s.current_fee_percent}%
+                    </span>
+                    {s.verified_badge && <Shield className="h-3 w-3 text-primary" />}
+                    {s.kyc_status === "approved" && <Badge variant="outline" className="text-[10px]">KYC ✓</Badge>}
+                  </div>
+                </div>
+                <Select
+                  value={s.plan_id || "free"}
+                  onValueChange={(v) => handlePlanChange(s.id, v)}
+                  disabled={updatingId === s.id}
+                >
+                  <SelectTrigger className="w-28 h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="free">Free</SelectItem>
+                    <SelectItem value="pro">Pro</SelectItem>
+                    <SelectItem value="elite">Elite</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

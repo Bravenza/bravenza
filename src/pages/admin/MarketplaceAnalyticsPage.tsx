@@ -3,10 +3,11 @@ import { motion } from "framer-motion";
 import {
   BarChart3, DollarSign, TrendingUp, Users, Package, AlertTriangle,
   ShoppingBag, ArrowUpRight, ArrowDownRight, Store, ShieldCheck,
-  Crown, Percent, Activity, Eye
+  Crown, Percent, Activity, Eye, Download, Trophy
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -31,6 +32,7 @@ interface MarketplaceMetrics {
   topProducts: { name: string; brand: string; sales: number; revenue: number }[];
   monthlyGMV: { month: string; gmv: number; revenue: number; orders: number }[];
   ordersByStatus: { status: string; count: number }[];
+  topSellers: { name: string; plan: string; sales: number; revenue: number; rating: number; fee: number }[];
 }
 
 const formatCurrency = (v: number) =>
@@ -126,6 +128,20 @@ export default function MarketplaceAnalyticsPage() {
         .sort((a, b) => b.count - a.count)
         .slice(0, 6);
 
+      // Top sellers ranking
+      const topSellers = sellers
+        .filter(s => s.total_sales_count > 0)
+        .sort((a, b) => (b.total_sales_value || 0) - (a.total_sales_value || 0))
+        .slice(0, 10)
+        .map(s => ({
+          name: `Seller #${(s.id as string).slice(0, 6)}`,
+          plan: s.plan_id || "free",
+          sales: s.total_sales_count || 0,
+          revenue: s.total_sales_value || 0,
+          rating: 0,
+          fee: s.current_fee_percent || 14,
+        }));
+
       setMetrics({
         gmv,
         totalOrders: orders.length,
@@ -141,6 +157,7 @@ export default function MarketplaceAnalyticsPage() {
         topProducts,
         monthlyGMV,
         ordersByStatus,
+        topSellers,
       });
     } catch (err) {
       console.error("Error fetching marketplace metrics:", err);
@@ -149,7 +166,7 @@ export default function MarketplaceAnalyticsPage() {
         gmv: 0, totalOrders: 0, totalSellers: 0, activeSellers: 0,
         activeListings: 0, takeRate: 12, platformRevenue: 0, openDisputes: 0,
         avgOrderValue: 0, conversionRate: 0, sellersByTier: [],
-        topProducts: [], monthlyGMV: [], ordersByStatus: [],
+        topProducts: [], monthlyGMV: [], ordersByStatus: [], topSellers: [],
       });
     } finally {
       setIsLoading(false);
@@ -168,12 +185,17 @@ export default function MarketplaceAnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <BarChart3 className="h-6 w-6 text-primary" />
-          Marketplace Analytics
-        </h1>
-        <p className="text-muted-foreground">Visão geral da performance do marketplace</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <BarChart3 className="h-6 w-6 text-primary" />
+            Marketplace Analytics
+          </h1>
+          <p className="text-muted-foreground">Visão geral da performance do marketplace</p>
+        </div>
+        <Button variant="outline" size="sm" className="gap-2" onClick={() => exportCSV(metrics)}>
+          <Download className="h-4 w-4" /> Exportar CSV
+        </Button>
       </div>
 
       {/* Primary KPIs */}
@@ -229,9 +251,10 @@ export default function MarketplaceAnalyticsPage() {
 
       {/* Charts */}
       <Tabs defaultValue="gmv" className="w-full">
-        <TabsList className="w-full grid grid-cols-4 h-9">
+        <TabsList className="w-full grid grid-cols-5 h-9">
           <TabsTrigger value="gmv" className="text-xs">GMV</TabsTrigger>
           <TabsTrigger value="sellers" className="text-xs">Sellers</TabsTrigger>
+          <TabsTrigger value="ranking" className="text-xs">Ranking</TabsTrigger>
           <TabsTrigger value="products" className="text-xs">Top Produtos</TabsTrigger>
           <TabsTrigger value="orders" className="text-xs">Status</TabsTrigger>
         </TabsList>
@@ -385,7 +408,86 @@ export default function MarketplaceAnalyticsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        {/* Top Sellers Ranking */}
+        <TabsContent value="ranking">
+          <Card className="card-premium">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Trophy className="h-4 w-4 text-primary" />
+                Top Vendedores por Receita
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {metrics.topSellers.length > 0 ? (
+                <div className="space-y-3">
+                  {metrics.topSellers.map((s, i) => (
+                    <motion.div
+                      key={s.name}
+                      initial={{ opacity: 0, x: -16 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.08 }}
+                      className="flex items-center gap-3"
+                    >
+                      <span className={`text-sm font-black w-6 text-center ${i === 0 ? "text-primary" : i === 1 ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
+                        {i < 3 ? ["🥇", "🥈", "🥉"][i] : `#${i + 1}`}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium truncate">{s.name}</p>
+                          <Badge variant="outline" className="text-[10px] capitalize">{s.plan}</Badge>
+                        </div>
+                        <div className="h-1.5 bg-muted/50 rounded-full overflow-hidden mt-1">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.min((s.revenue / (metrics.topSellers[0]?.revenue || 1)) * 100, 100)}%` }}
+                            transition={{ duration: 0.8, delay: i * 0.1 }}
+                            className="h-full rounded-full bg-primary"
+                          />
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0 space-y-0.5">
+                        <p className="text-xs font-bold">{formatCurrency(s.revenue)}</p>
+                        <p className="text-[10px] text-muted-foreground">{s.sales} vendas · {s.fee}% taxa</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground text-sm">Nenhum vendedor com vendas ainda</div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
+}
+
+function exportCSV(metrics: MarketplaceMetrics) {
+  const lines = [
+    "Métrica,Valor",
+    `GMV Total,${metrics.gmv}`,
+    `Receita Plataforma,${metrics.platformRevenue}`,
+    `Take Rate,${metrics.takeRate}%`,
+    `Total Pedidos,${metrics.totalOrders}`,
+    `Ticket Médio,${metrics.avgOrderValue.toFixed(2)}`,
+    `Conversão,${metrics.conversionRate}%`,
+    `Vendedores Total,${metrics.totalSellers}`,
+    `Vendedores Ativos,${metrics.activeSellers}`,
+    `Anúncios Ativos,${metrics.activeListings}`,
+    `Disputas Abertas,${metrics.openDisputes}`,
+    "",
+    "Mês,GMV,Receita,Pedidos",
+    ...metrics.monthlyGMV.map(m => `${m.month},${m.gmv},${m.revenue},${m.orders}`),
+    "",
+    "Top Vendedores,Plano,Vendas,Receita,Taxa",
+    ...metrics.topSellers.map(s => `${s.name},${s.plan},${s.sales},${s.revenue},${s.fee}%`),
+  ];
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `marketplace-analytics-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
