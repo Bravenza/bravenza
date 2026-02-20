@@ -1,10 +1,11 @@
 import { memo, useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Flame, Clock, ArrowRight, Zap, Lock } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Flame, Clock, ArrowRight, Zap, Lock, Bell, BellRing, Crown, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface Drop {
   id: string;
@@ -59,6 +60,7 @@ export const DropsCountdownSection = memo(function DropsCountdownSection() {
   const navigate = useNavigate();
   const [drops, setDrops] = useState<Drop[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notifyEnabled, setNotifyEnabled] = useState(false);
 
   const getNextFriday = () => {
     const now = new Date();
@@ -113,12 +115,18 @@ export const DropsCountdownSection = memo(function DropsCountdownSection() {
     fetchDrops();
   }, []);
 
+  const handleNotify = () => {
+    setNotifyEnabled(true);
+    toast.success("🔔 Notificação ativada!", {
+      description: "Você será avisado assim que o próximo drop for lançado.",
+    });
+  };
+
   if (loading) return null;
 
   return (
     <section className="py-16 md:py-24 relative overflow-hidden">
       {/* === URGENT BACKGROUND === */}
-      {/* Dark overlay base */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-destructive/[0.04] to-background" />
       
       {/* Animated pulse rings */}
@@ -179,6 +187,28 @@ export const DropsCountdownSection = memo(function DropsCountdownSection() {
             <CountdownUnit value={countdown.seconds} label="Seg" />
           </div>
 
+          {/* Notify + Early Access */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
+            <Button
+              variant={notifyEnabled ? "outline" : "default"}
+              size="sm"
+              className={`rounded-full gap-2 ${notifyEnabled ? "border-emerald-500/30 text-emerald-500" : "bg-destructive hover:bg-destructive/90"}`}
+              onClick={handleNotify}
+              disabled={notifyEnabled}
+            >
+              {notifyEnabled ? <BellRing className="h-3.5 w-3.5" /> : <Bell className="h-3.5 w-3.5" />}
+              {notifyEnabled ? "Notificação ativada" : "Avise-me do próximo drop"}
+            </Button>
+            
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500/10 to-amber-500/10 border border-yellow-500/20">
+              <Crown className="h-3.5 w-3.5 text-yellow-500" />
+              <span className="text-xs font-semibold text-yellow-600 dark:text-yellow-400">
+                Membros Vault: acesso 2h antes
+              </span>
+              <Sparkles className="h-3 w-3 text-yellow-500" />
+            </div>
+          </div>
+
           <div className="inline-flex items-center gap-2 text-xs text-muted-foreground/80">
             <Lock className="h-3 w-3" />
             <span>Acesso antecipado exclusivo para membros Vault</span>
@@ -205,13 +235,19 @@ export const DropsCountdownSection = memo(function DropsCountdownSection() {
                       alt={drop.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    {/* Dark overlay for urgency */}
                     <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent opacity-80" />
                     
                     {/* Live indicator */}
                     <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 rounded-md bg-destructive/90 backdrop-blur-sm">
                       <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                       <span className="text-[9px] font-black text-white uppercase tracking-wider">Em breve</span>
+                    </div>
+
+                    {/* Early access badge for vault */}
+                    <div className="absolute top-3 right-3">
+                      <Badge className="bg-yellow-500/90 text-yellow-950 border-0 text-[9px] font-bold gap-1">
+                        <Crown className="h-2.5 w-2.5" /> Acesso antecipado
+                      </Badge>
                     </div>
                   </div>
                 )}
