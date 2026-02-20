@@ -2255,6 +2255,39 @@ Deno.serve(async (req) => {
       return j({ success: true, products_snapshotted: count });
     }
 
+    // ==================== DROP REMINDERS ====================
+
+    if (mt === "GET" && a === "drop-reminders") {
+      if (!cpf) return j({ error: "Auth required" }, 401);
+      const { data } = await sb.from("marketplace_drop_reminders")
+        .select("release_key, release_brand, release_model, release_date")
+        .eq("user_cpf", cpf);
+      return j({ reminders: data || [] });
+    }
+
+    if (mt === "POST" && a === "toggle-drop-reminder") {
+      if (!cpf) return j({ error: "Auth required" }, 401);
+      const { release_key, release_brand, release_model, release_date } = body;
+      if (!release_key) return j({ error: "release_key obrigatório" }, 400);
+
+      const { data: existing } = await sb.from("marketplace_drop_reminders")
+        .select("id").eq("user_cpf", cpf).eq("release_key", release_key).maybeSingle();
+
+      if (existing) {
+        await sb.from("marketplace_drop_reminders").delete().eq("id", existing.id);
+        return j({ active: false });
+      } else {
+        await sb.from("marketplace_drop_reminders").insert({
+          user_cpf: cpf,
+          release_key,
+          release_brand: release_brand || "",
+          release_model: release_model || "",
+          release_date: release_date || new Date().toISOString().split("T")[0],
+        });
+        return j({ active: true });
+      }
+    }
+
     return j({ error: "Ação não encontrada" }, 404);
   } catch (e: any) {
     console.error("vault-marketplace error:", e);

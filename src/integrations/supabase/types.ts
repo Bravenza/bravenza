@@ -372,6 +372,39 @@ export type Database = {
           },
         ]
       }
+      marketplace_drop_reminders: {
+        Row: {
+          created_at: string
+          id: string
+          notified_at: string | null
+          release_brand: string
+          release_date: string
+          release_key: string
+          release_model: string
+          user_cpf: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          release_brand: string
+          release_date: string
+          release_key: string
+          release_model: string
+          user_cpf: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          release_brand?: string
+          release_date?: string
+          release_key?: string
+          release_model?: string
+          user_cpf?: string
+        }
+        Relationships: []
+      }
       marketplace_fee_tiers: {
         Row: {
           created_at: string
