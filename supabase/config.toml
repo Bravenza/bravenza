@@ -83,3 +83,9 @@ verify_jwt = false
 
 [functions.verify-captcha]
 verify_jwt = false
+
+[functions.mk-checkout]
+verify_jwt = false
+
+[functions.mk-auto-payout]
+verify_jwt = false
