@@ -19,6 +19,7 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
   "price-history": "mk-hub", "recommendations": "mk-hub",
   "saved-searches": "mk-hub", "save-search": "mk-hub", "delete-saved-search": "mk-hub",
   "update-storefront": "mk-hub", "snapshot-prices": "mk-hub",
+  "drop-reminders": "mk-hub", "toggle-drop-reminder": "mk-hub",
 };
 
 export async function marketplaceRequest(
