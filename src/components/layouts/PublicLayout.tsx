@@ -19,7 +19,7 @@ const PublicLayoutComponent = ({
     <div className="min-h-screen bg-background flex flex-col">
       {showHeader && <Header />}
       
-      <main className={`flex-1 ${showHeader ? "pt-16" : ""} ${className}`}>
+      <main id="main-content" className={`flex-1 ${showHeader ? "pt-16" : ""} ${className}`}>
         {children}
       </main>
 

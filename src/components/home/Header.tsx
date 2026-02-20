@@ -56,6 +56,7 @@ const HeaderComponent = () => {
                 key={link.href}
                 to={link.href}
                 onClick={() => handleNavClick(link.href)}
+                aria-current={location.pathname === link.href ? "page" : undefined}
                 className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 group ${
                   location.pathname === link.href 
                     ? "text-primary" 
