@@ -467,6 +467,13 @@ export type Database = {
             referencedRelation: "marketplace_offers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "marketplace_inspections_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_offers_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       marketplace_offers: {
@@ -555,6 +562,13 @@ export type Database = {
           views_count?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "marketplace_offers_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings_public"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "marketplace_offers_listing_id_fkey"
             columns: ["listing_id"]
@@ -745,6 +759,13 @@ export type Database = {
             columns: ["offer_id"]
             isOneToOne: false
             referencedRelation: "marketplace_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_product_reviews_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_offers_public"
             referencedColumns: ["id"]
           },
           {
@@ -2513,6 +2534,13 @@ export type Database = {
             foreignKeyName: "vault_marketplace_favorites_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
+            referencedRelation: "marketplace_listings_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_marketplace_favorites_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
             referencedRelation: "vault_marketplace_listings"
             referencedColumns: ["id"]
           },
@@ -2663,6 +2691,13 @@ export type Database = {
             foreignKeyName: "vault_marketplace_messages_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
+            referencedRelation: "marketplace_listings_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_marketplace_messages_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
             referencedRelation: "vault_marketplace_listings"
             referencedColumns: ["id"]
           },
@@ -2719,6 +2754,13 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "vault_marketplace_offers_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings_public"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vault_marketplace_offers_listing_id_fkey"
             columns: ["listing_id"]
@@ -2909,6 +2951,13 @@ export type Database = {
             columns: ["inspection_id"]
             isOneToOne: false
             referencedRelation: "marketplace_inspections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_marketplace_orders_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings_public"
             referencedColumns: ["id"]
           },
           {
@@ -3700,6 +3749,222 @@ export type Database = {
       }
     }
     Views: {
+      marketplace_listings_public: {
+        Row: {
+          brand: string | null
+          colorway: string | null
+          condition: string | null
+          created_at: string | null
+          description: string | null
+          favorites_count: number | null
+          id: string | null
+          is_vault_certified: boolean | null
+          model: string | null
+          photos: string[] | null
+          price: number | null
+          pro_recommendation: string | null
+          product_id: string | null
+          published_at: string | null
+          seller_id: string | null
+          shipping_cost_estimate: number | null
+          shipping_mode: string | null
+          size: string | null
+          sold_at: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+          vault_item_id: string | null
+          views_count: number | null
+        }
+        Insert: {
+          brand?: string | null
+          colorway?: string | null
+          condition?: string | null
+          created_at?: string | null
+          description?: string | null
+          favorites_count?: number | null
+          id?: string | null
+          is_vault_certified?: boolean | null
+          model?: string | null
+          photos?: string[] | null
+          price?: number | null
+          pro_recommendation?: string | null
+          product_id?: string | null
+          published_at?: string | null
+          seller_id?: string | null
+          shipping_cost_estimate?: number | null
+          shipping_mode?: string | null
+          size?: string | null
+          sold_at?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          vault_item_id?: string | null
+          views_count?: number | null
+        }
+        Update: {
+          brand?: string | null
+          colorway?: string | null
+          condition?: string | null
+          created_at?: string | null
+          description?: string | null
+          favorites_count?: number | null
+          id?: string | null
+          is_vault_certified?: boolean | null
+          model?: string | null
+          photos?: string[] | null
+          price?: number | null
+          pro_recommendation?: string | null
+          product_id?: string | null
+          published_at?: string | null
+          seller_id?: string | null
+          shipping_cost_estimate?: number | null
+          shipping_mode?: string | null
+          size?: string | null
+          sold_at?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          vault_item_id?: string | null
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_marketplace_listings_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_marketplace_listings_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "vault_seller_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_marketplace_listings_vault_item_id_fkey"
+            columns: ["vault_item_id"]
+            isOneToOne: false
+            referencedRelation: "vault_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_offers_public: {
+        Row: {
+          activated_at: string | null
+          boost_active_until: string | null
+          boost_level: string | null
+          condition: string | null
+          created_at: string | null
+          defects: string | null
+          description: string | null
+          has_receipt: boolean | null
+          id: string | null
+          listing_id: string | null
+          photos: string[] | null
+          price: number | null
+          pro_recommendation: string | null
+          product_id: string | null
+          proof_photos: string[] | null
+          published_at: string | null
+          seller_id: string | null
+          shipping_cost_estimate: number | null
+          shipping_mode: string | null
+          size: string | null
+          size_system: string | null
+          sold_at: string | null
+          status: string | null
+          updated_at: string | null
+          views_count: number | null
+        }
+        Insert: {
+          activated_at?: string | null
+          boost_active_until?: string | null
+          boost_level?: string | null
+          condition?: string | null
+          created_at?: string | null
+          defects?: string | null
+          description?: string | null
+          has_receipt?: boolean | null
+          id?: string | null
+          listing_id?: string | null
+          photos?: string[] | null
+          price?: number | null
+          pro_recommendation?: string | null
+          product_id?: string | null
+          proof_photos?: string[] | null
+          published_at?: string | null
+          seller_id?: string | null
+          shipping_cost_estimate?: number | null
+          shipping_mode?: string | null
+          size?: string | null
+          size_system?: string | null
+          sold_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Update: {
+          activated_at?: string | null
+          boost_active_until?: string | null
+          boost_level?: string | null
+          condition?: string | null
+          created_at?: string | null
+          defects?: string | null
+          description?: string | null
+          has_receipt?: boolean | null
+          id?: string | null
+          listing_id?: string | null
+          photos?: string[] | null
+          price?: number | null
+          pro_recommendation?: string | null
+          product_id?: string | null
+          proof_photos?: string[] | null
+          published_at?: string | null
+          seller_id?: string | null
+          shipping_cost_estimate?: number | null
+          shipping_mode?: string | null
+          size?: string | null
+          size_system?: string | null
+          sold_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_offers_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_offers_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "vault_marketplace_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_offers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_offers_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "vault_seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_product_comments_public: {
         Row: {
           content: string | null
