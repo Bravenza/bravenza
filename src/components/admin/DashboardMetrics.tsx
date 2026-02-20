@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend, FunnelChart, Funnel, LabelList } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   DollarSign, 
   TrendingUp, 
@@ -14,25 +13,7 @@ import {
   AlertTriangle,
   Target,
   Timer,
-  Users
 } from "lucide-react";
-import { startOfMonth, endOfMonth, subMonths, format, differenceInDays, differenceInHours } from "date-fns";
-import { ptBR } from "date-fns/locale";
-
-interface OrderData {
-  order_id: string;
-  current_status: string;
-  product_price: number | null;
-  sinal_value: number | null;
-  sinal_paid: boolean | null;
-  sinal_paid_at: string | null;
-  balance_value: number | null;
-  balance_paid: boolean | null;
-  budget_status: string | null;
-  budget_sent_at: string | null;
-  budget_approved_at: string | null;
-  created_at: string;
-}
 
 interface MetricsData {
   totalRevenue: number;
@@ -45,11 +26,9 @@ interface MetricsData {
   approvedBudgets: number;
   rejectedBudgets: number;
   pendingBudgets: number;
-  // New conversion metrics
-  avgTimeToApproval: number; // hours
-  avgTimeToClose: number; // days
+  avgTimeToApproval: number;
+  avgTimeToClose: number;
   funnelData: { name: string; value: number; fill: string }[];
-  weeklyConversion: { week: string; rate: number; approved: number; total: number }[];
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -65,180 +44,70 @@ const FUNNEL_COLORS = ["hsl(var(--primary))", "#3b82f6", "#22c55e", "#10b981"];
 export function DashboardMetrics() {
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [period, setPeriod] = useState<"week" | "month" | "year">("month");
 
   useEffect(() => {
     fetchMetrics();
-  }, [period]);
+  }, []);
 
   const fetchMetrics = async () => {
     try {
-      const { data: orders, error } = await supabase
-        .from("orders")
-        .select("order_id, current_status, product_price, sinal_value, sinal_paid, sinal_paid_at, balance_value, balance_paid, budget_status, budget_sent_at, budget_approved_at, created_at")
-        .order("created_at", { ascending: false });
+      // Fetch all data from RPCs in parallel
+      const [kpiRes, monthRes, statusRes] = await Promise.all([
+        supabase.rpc("get_admin_dashboard_metrics" as any),
+        supabase.rpc("get_admin_orders_by_month" as any),
+        supabase.rpc("get_admin_orders_by_status" as any),
+      ]);
 
-      if (error) throw error;
+      if (kpiRes.error) throw kpiRes.error;
+      if (monthRes.error) throw monthRes.error;
+      if (statusRes.error) throw statusRes.error;
 
-      if (orders) {
-        const metricsData = calculateMetrics(orders as OrderData[]);
-        setMetrics(metricsData);
-      }
+      const kpi = kpiRes.data?.[0] || kpiRes.data;
+      if (!kpi) return;
+
+      const totalBudgets = Number(kpi.approved_budgets) + Number(kpi.rejected_budgets);
+      const conversionRate = totalBudgets > 0 ? (Number(kpi.approved_budgets) / totalBudgets) * 100 : 0;
+
+      const ordersByMonth = ((monthRes.data || []) as any[]).map((m: any) => ({
+        name: m.month_key,
+        pedidos: Number(m.pedidos),
+        faturamento: Number(m.faturamento),
+      }));
+
+      const ordersByStatus = ((statusRes.data || []) as any[])
+        .map((s: any) => ({
+          name: s.status_group,
+          value: Number(s.count),
+          color: STATUS_COLORS[s.status_group] || "#6b7280",
+        }));
+
+      const funnelData = [
+        { name: "Orçamentos Enviados", value: Number(kpi.total_budgets_sent), fill: FUNNEL_COLORS[0] },
+        { name: "Orçamentos Aprovados", value: Number(kpi.approved_budgets), fill: FUNNEL_COLORS[1] },
+        { name: "Sinal Pago", value: Number(kpi.sinal_paid_count), fill: FUNNEL_COLORS[2] },
+        { name: "Entregues", value: Number(kpi.delivered_count), fill: FUNNEL_COLORS[3] },
+      ];
+
+      setMetrics({
+        totalRevenue: Number(kpi.total_revenue),
+        pendingRevenue: Number(kpi.pending_revenue),
+        sinalReceived: Number(kpi.sinal_received),
+        balanceReceived: Number(kpi.balance_received),
+        approvedBudgets: Number(kpi.approved_budgets),
+        rejectedBudgets: Number(kpi.rejected_budgets),
+        pendingBudgets: Number(kpi.pending_budgets),
+        avgTimeToApproval: Number(kpi.avg_time_to_approval_hours),
+        avgTimeToClose: Number(kpi.avg_time_to_close_days),
+        conversionRate,
+        ordersByMonth,
+        ordersByStatus,
+        funnelData,
+      });
     } catch (error) {
-      // Silent fail - metrics are non-critical
+      console.error("Error fetching dashboard metrics:", error);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const calculateMetrics = (orders: OrderData[]): MetricsData => {
-    let totalRevenue = 0;
-    let pendingRevenue = 0;
-    let sinalReceived = 0;
-    let balanceReceived = 0;
-    let approvedBudgets = 0;
-    let rejectedBudgets = 0;
-    let pendingBudgets = 0;
-    let totalTimeToApproval = 0;
-    let approvalCount = 0;
-    let totalTimeToClose = 0;
-    let closeCount = 0;
-
-    const statusGroups: Record<string, number> = {
-      "Em Processamento": 0,
-      "Aguardando Pagamento": 0,
-      "Em Trânsito": 0,
-      "Entregue": 0,
-      "Outros": 0,
-    };
-
-    const monthlyData: Record<string, { pedidos: number; faturamento: number }> = {};
-    const weeklyConversionData: Record<string, { approved: number; total: number }> = {};
-
-    // Initialize last 6 months
-    for (let i = 5; i >= 0; i--) {
-      const month = subMonths(new Date(), i);
-      const key = format(month, "MMM/yy", { locale: ptBR });
-      monthlyData[key] = { pedidos: 0, faturamento: 0 };
-    }
-
-    // Initialize last 8 weeks
-    for (let i = 7; i >= 0; i--) {
-      const weekStart = subMonths(new Date(), 0);
-      weekStart.setDate(weekStart.getDate() - i * 7);
-      const key = format(weekStart, "dd/MM", { locale: ptBR });
-      weeklyConversionData[key] = { approved: 0, total: 0 };
-    }
-
-    orders.forEach((order) => {
-      // Revenue calculations
-      if (order.sinal_paid && order.sinal_value) {
-        sinalReceived += order.sinal_value;
-        totalRevenue += order.sinal_value;
-      }
-      if (order.balance_paid && order.balance_value) {
-        balanceReceived += order.balance_value;
-        totalRevenue += order.balance_value;
-      }
-      if (!order.sinal_paid && order.sinal_value) {
-        pendingRevenue += order.sinal_value;
-      }
-      if (!order.balance_paid && order.balance_value) {
-        pendingRevenue += order.balance_value;
-      }
-
-      // Budget status and time calculations
-      if (order.budget_status === "APPROVED") {
-        approvedBudgets++;
-        if (order.budget_sent_at && order.budget_approved_at) {
-          const hours = differenceInHours(new Date(order.budget_approved_at), new Date(order.budget_sent_at));
-          if (hours > 0 && hours < 720) { // Exclude outliers (> 30 days)
-            totalTimeToApproval += hours;
-            approvalCount++;
-          }
-        }
-      } else if (order.budget_status === "REJECTED") {
-        rejectedBudgets++;
-      } else if (order.budget_status === "SENT" || order.budget_status === "PENDING") {
-        pendingBudgets++;
-      }
-
-      // Time to close (from creation to sinal paid)
-      if (order.sinal_paid && order.sinal_paid_at) {
-        const days = differenceInDays(new Date(order.sinal_paid_at), new Date(order.created_at));
-        if (days >= 0 && days < 90) { // Exclude outliers
-          totalTimeToClose += days;
-          closeCount++;
-        }
-      }
-
-      // Status grouping
-      const status = order.current_status;
-      if (["ORDER_CONFIRMED", "SOURCING", "NEGOTIATING", "PURCHASE_COMPLETED", "REQUEST_RECEIVED", "BUDGET_SENT", "DEPOSIT_CONFIRMED", "SEARCH_SELECTION", "PRODUCT_FOUND"].includes(status)) {
-        statusGroups["Em Processamento"]++;
-      } else if (["BALANCE_DUE", "BALANCE_PENDING"].includes(status)) {
-        statusGroups["Aguardando Pagamento"]++;
-      } else if (["PACKAGE_EN_ROUTE", "INTERNATIONAL_TRANSIT", "CUSTOMS", "NATIONAL_TRANSIT", "DISPATCHED", "PREPARING_INTERNATIONAL", "ARRIVED_BRAZIL", "PRODUCT_INSPECTED", "SHIPPED_TO_CLIENT"].includes(status)) {
-        statusGroups["Em Trânsito"]++;
-      } else if (status === "DELIVERED") {
-        statusGroups["Entregue"]++;
-      } else {
-        statusGroups["Outros"]++;
-      }
-
-      // Monthly data
-      const orderMonth = format(new Date(order.created_at), "MMM/yy", { locale: ptBR });
-      if (monthlyData[orderMonth]) {
-        monthlyData[orderMonth].pedidos++;
-        if (order.product_price) {
-          monthlyData[orderMonth].faturamento += order.product_price;
-        }
-      }
-    });
-
-    const totalBudgets = approvedBudgets + rejectedBudgets;
-    const conversionRate = totalBudgets > 0 ? (approvedBudgets / totalBudgets) * 100 : 0;
-    const avgTimeToApproval = approvalCount > 0 ? totalTimeToApproval / approvalCount : 0;
-    const avgTimeToClose = closeCount > 0 ? totalTimeToClose / closeCount : 0;
-
-    // Funnel data
-    const funnelData = [
-      { name: "Orçamentos Enviados", value: approvedBudgets + rejectedBudgets + pendingBudgets, fill: FUNNEL_COLORS[0] },
-      { name: "Orçamentos Aprovados", value: approvedBudgets, fill: FUNNEL_COLORS[1] },
-      { name: "Sinal Pago", value: orders.filter(o => o.sinal_paid).length, fill: FUNNEL_COLORS[2] },
-      { name: "Entregues", value: orders.filter(o => o.current_status === "DELIVERED").length, fill: FUNNEL_COLORS[3] },
-    ];
-
-    return {
-      totalRevenue,
-      pendingRevenue,
-      sinalReceived,
-      balanceReceived,
-      ordersByMonth: Object.entries(monthlyData).map(([name, data]) => ({
-        name,
-        ...data,
-      })),
-      ordersByStatus: Object.entries(statusGroups)
-        .filter(([_, value]) => value > 0)
-        .map(([name, value]) => ({
-          name,
-          value,
-          color: STATUS_COLORS[name] || "#6b7280",
-        })),
-      conversionRate,
-      approvedBudgets,
-      rejectedBudgets,
-      pendingBudgets,
-      avgTimeToApproval,
-      avgTimeToClose,
-      funnelData,
-      weeklyConversion: Object.entries(weeklyConversionData).map(([week, data]) => ({
-        week,
-        rate: data.total > 0 ? (data.approved / data.total) * 100 : 0,
-        approved: data.approved,
-        total: data.total,
-      })),
-    };
   };
 
   const formatCurrency = (value: number) => {
@@ -333,11 +202,7 @@ export function DashboardMetrics() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Orders by Month */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
           <Card className="card-premium">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -349,31 +214,17 @@ export function DashboardMetrics() {
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={metrics.ordersByMonth}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-                  />
-                  <YAxis 
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-                  />
+                  <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
+                  <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                    }}
+                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
                     formatter={(value: number, name: string) => [
                       name === "faturamento" ? formatCurrency(value) : value,
                       name === "pedidos" ? "Pedidos" : "Faturamento"
                     ]}
                   />
                   <Legend />
-                  <Bar 
-                    dataKey="pedidos" 
-                    fill="hsl(var(--primary))" 
-                    radius={[4, 4, 0, 0]}
-                    name="Pedidos"
-                  />
+                  <Bar dataKey="pedidos" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Pedidos" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -381,11 +232,7 @@ export function DashboardMetrics() {
         </motion.div>
 
         {/* Orders by Status */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
           <Card className="card-premium">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -412,11 +259,7 @@ export function DashboardMetrics() {
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                    }}
+                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -426,11 +269,7 @@ export function DashboardMetrics() {
       </div>
 
       {/* Revenue Breakdown */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
         <Card className="card-premium">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -443,30 +282,22 @@ export function DashboardMetrics() {
               <div className="text-center p-4 rounded-lg bg-success/10 border border-success/20">
                 <CheckCircle2 className="h-8 w-8 mx-auto text-success mb-2" />
                 <p className="text-sm text-muted-foreground">Sinal Recebido</p>
-                <p className="text-2xl font-bold text-success">
-                  {formatCurrency(metrics.sinalReceived)}
-                </p>
+                <p className="text-2xl font-bold text-success">{formatCurrency(metrics.sinalReceived)}</p>
               </div>
               <div className="text-center p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
                 <CheckCircle2 className="h-8 w-8 mx-auto text-blue-500 mb-2" />
                 <p className="text-sm text-muted-foreground">Saldo Recebido</p>
-                <p className="text-2xl font-bold text-blue-500">
-                  {formatCurrency(metrics.balanceReceived)}
-                </p>
+                <p className="text-2xl font-bold text-blue-500">{formatCurrency(metrics.balanceReceived)}</p>
               </div>
               <div className="text-center p-4 rounded-lg bg-warning/10 border border-warning/20">
                 <Clock className="h-8 w-8 mx-auto text-warning mb-2" />
                 <p className="text-sm text-muted-foreground">Pendente</p>
-                <p className="text-2xl font-bold text-warning">
-                  {formatCurrency(metrics.pendingRevenue)}
-                </p>
+                <p className="text-2xl font-bold text-warning">{formatCurrency(metrics.pendingRevenue)}</p>
               </div>
               <div className="text-center p-4 rounded-lg bg-muted/30 border border-border">
                 <AlertTriangle className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                 <p className="text-sm text-muted-foreground">Orçamentos Abertos</p>
-                <p className="text-2xl font-bold">
-                  {metrics.pendingBudgets}
-                </p>
+                <p className="text-2xl font-bold">{metrics.pendingBudgets}</p>
               </div>
             </div>
           </CardContent>
@@ -474,11 +305,7 @@ export function DashboardMetrics() {
       </motion.div>
 
       {/* Sales Funnel */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
         <Card className="card-premium">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -490,7 +317,7 @@ export function DashboardMetrics() {
             <div className="grid grid-cols-4 gap-4">
               {metrics.funnelData.map((item, index) => {
                 const prevValue = index > 0 ? metrics.funnelData[index - 1].value : item.value;
-                const conversionRate = prevValue > 0 ? ((item.value / prevValue) * 100).toFixed(0) : "100";
+                const funnelConversionRate = prevValue > 0 ? ((item.value / prevValue) * 100).toFixed(0) : "100";
                 return (
                   <div key={item.name} className="text-center">
                     <div 
@@ -508,7 +335,7 @@ export function DashboardMetrics() {
                     <p className="text-sm font-medium">{item.name}</p>
                     {index > 0 && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        {conversionRate}% do anterior
+                        {funnelConversionRate}% do anterior
                       </p>
                     )}
                   </div>
