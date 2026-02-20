@@ -4164,6 +4164,14 @@ export type Database = {
       generate_referral_code: { Args: never; Returns: string }
       generate_vault_invite_code: { Args: never; Returns: string }
       generate_vault_item_id: { Args: never; Returns: string }
+      get_admin_client_heatmap: {
+        Args: never
+        Returns: {
+          client_count: number
+          revenue: number
+          state_code: string
+        }[]
+      }
       get_client_available_cashback: {
         Args: { p_cpf: string }
         Returns: {

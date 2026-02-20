@@ -4,13 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line, Legend, AreaChart, Area,
+  Legend, AreaChart, Area,
 } from "recharts";
 import {
   DollarSign, TrendingUp, TrendingDown, Target, ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
-import { format, subMonths, startOfMonth, endOfMonth, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { motion } from "framer-motion";
 import { formatCurrency } from "@/lib/constants";
 
@@ -30,56 +28,19 @@ export function AdvancedFinanceDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const now = new Date();
-        const sixMonthsAgo = startOfMonth(subMonths(now, 5));
+        const { data, error } = await supabase.rpc("get_admin_finance_monthly" as any);
+        if (error) throw error;
 
-        const [ordersRes, costsRes] = await Promise.all([
-          supabase
-            .from("orders")
-            .select("order_id, product_price, product_cost, shipping_cost, other_costs, sinal_paid, balance_paid, created_at")
-            .gte("created_at", sixMonthsAgo.toISOString()),
-          supabase
-            .from("order_costs")
-            .select("order_id, amount")
-            .gte("created_at", sixMonthsAgo.toISOString()),
-        ]);
+        const mapped: MonthlyData[] = ((data || []) as any[]).map((row: any) => ({
+          month: row.month_key,
+          revenue: Number(row.revenue),
+          costs: Number(row.costs),
+          profit: Number(row.profit),
+          margin: Number(row.margin),
+          orders: Number(row.orders_count),
+        }));
 
-        const orders = ordersRes.data || [];
-        const extraCosts = costsRes.data || [];
-
-        // Build extra costs map
-        const extraCostMap: Record<string, number> = {};
-        extraCosts.forEach((c) => {
-          extraCostMap[c.order_id] = (extraCostMap[c.order_id] || 0) + c.amount;
-        });
-
-        // Group by month
-        const monthly: Record<string, MonthlyData> = {};
-        for (let i = 5; i >= 0; i--) {
-          const m = subMonths(now, i);
-          const key = format(m, "yyyy-MM");
-          const label = format(m, "MMM/yy", { locale: ptBR });
-          monthly[key] = { month: label, revenue: 0, costs: 0, profit: 0, margin: 0, orders: 0 };
-        }
-
-        orders.forEach((o) => {
-          const key = format(parseISO(o.created_at), "yyyy-MM");
-          if (!monthly[key]) return;
-
-          monthly[key].orders++;
-          const rev = (o.sinal_paid || o.balance_paid) ? (o.product_price || 0) : 0;
-          const cost = (o.product_cost || 0) + (o.shipping_cost || 0) + (o.other_costs || 0) + (extraCostMap[o.order_id] || 0);
-          monthly[key].revenue += rev;
-          monthly[key].costs += cost;
-        });
-
-        // Calculate profit & margin
-        Object.values(monthly).forEach((m) => {
-          m.profit = m.revenue - m.costs;
-          m.margin = m.revenue > 0 ? (m.profit / m.revenue) * 100 : 0;
-        });
-
-        setMonthlyData(Object.values(monthly));
+        setMonthlyData(mapped);
       } catch (error) {
         console.error("Error fetching finance data:", error);
       } finally {
@@ -97,9 +58,8 @@ export function AdvancedFinanceDashboard() {
     const previous = monthlyData[monthlyData.length - 2];
     const revenueChange = previous.revenue > 0 ? ((current.revenue - previous.revenue) / previous.revenue) * 100 : 0;
     const profitChange = previous.profit !== 0 ? ((current.profit - previous.profit) / Math.abs(previous.profit)) * 100 : 0;
-    const ordersChange = previous.orders > 0 ? ((current.orders - previous.orders) / previous.orders) * 100 : 0;
 
-    return { current, previous, revenueChange, profitChange, ordersChange };
+    return { current, previous, revenueChange, profitChange };
   }, [monthlyData]);
 
   // Projection (simple linear)
@@ -235,7 +195,7 @@ export function AdvancedFinanceDashboard() {
         </CardContent>
       </Card>
 
-      {/* Per-order profitability table */}
+      {/* Per-order profitability */}
       <Card className="card-premium">
         <CardHeader>
           <CardTitle>Margem por Pedido — Mês Atual</CardTitle>

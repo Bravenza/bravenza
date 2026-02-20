@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Users } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -22,21 +22,6 @@ const BRAZIL_STATES: Record<string, string> = {
   SE: "Sergipe", TO: "Tocantins",
 };
 
-function extractState(address: string | null): string | null {
-  if (!address) return null;
-  // Try to find a 2-letter state code
-  const parts = address.split(/[,\-\s]+/).map((p) => p.trim().toUpperCase());
-  for (const part of parts.reverse()) {
-    if (BRAZIL_STATES[part]) return part;
-  }
-  // Try to find state name
-  const upperAddress = address.toUpperCase();
-  for (const [code, name] of Object.entries(BRAZIL_STATES)) {
-    if (upperAddress.includes(name.toUpperCase())) return code;
-  }
-  return null;
-}
-
 function getHeatColor(ratio: number): string {
   if (ratio >= 0.8) return "bg-primary text-primary-foreground";
   if (ratio >= 0.5) return "bg-primary/70 text-primary-foreground";
@@ -53,45 +38,14 @@ export function ClientHeatmap() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch orders with address and price
-        const { data: orders } = await supabase
-          .from("orders")
-          .select("client_address, client_cpf, product_price, sinal_paid, balance_paid")
-          .not("client_address", "is", null);
+        const { data, error } = await supabase.rpc("get_admin_client_heatmap" as any);
+        if (error) throw error;
 
-        if (!orders) { setIsLoading(false); return; }
-
-        // Also fetch order_requests for more geographic data
-        const { data: requests } = await supabase
-          .from("order_requests")
-          .select("address_state, client_cpf");
-
-        const stateMap: Record<string, { clients: Set<string>; revenue: number }> = {};
-
-        // Process orders
-        orders.forEach((o) => {
-          const state = extractState(o.client_address);
-          if (!state) return;
-          if (!stateMap[state]) stateMap[state] = { clients: new Set(), revenue: 0 };
-          stateMap[state].clients.add(o.client_cpf);
-          if (o.sinal_paid || o.balance_paid) stateMap[state].revenue += o.product_price || 0;
-        });
-
-        // Process order requests
-        (requests || []).forEach((r) => {
-          const state = r.address_state?.toUpperCase()?.trim();
-          if (!state || !BRAZIL_STATES[state]) return;
-          if (!stateMap[state]) stateMap[state] = { clients: new Set(), revenue: 0 };
-          stateMap[state].clients.add(r.client_cpf);
-        });
-
-        const result: StateData[] = Object.entries(stateMap)
-          .map(([state, data]) => ({
-            state,
-            count: data.clients.size,
-            revenue: data.revenue,
-          }))
-          .sort((a, b) => b.count - a.count);
+        const result: StateData[] = ((data || []) as any[]).map((row: any) => ({
+          state: row.state_code,
+          count: Number(row.client_count),
+          revenue: Number(row.revenue),
+        }));
 
         const total = result.reduce((sum, s) => sum + s.count, 0);
         setTotalClients(total);
@@ -117,7 +71,7 @@ export function ClientHeatmap() {
 
   const maxCount = stateData.length > 0 ? stateData[0].count : 1;
 
-  const formatCurrency = (value: number) =>
+  const formatCurrencyLocal = (value: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
   return (
@@ -195,7 +149,7 @@ export function ClientHeatmap() {
                       transition={{ delay: i * 0.05, duration: 0.5 }}
                     />
                     <span className="absolute inset-0 flex items-center px-3 text-xs font-medium">
-                      {s.count} clientes · {formatCurrency(s.revenue)}
+                      {s.count} clientes · {formatCurrencyLocal(s.revenue)}
                     </span>
                   </div>
                 </motion.div>
@@ -207,13 +161,7 @@ export function ClientHeatmap() {
               <span>Intensidade:</span>
               <div className="flex gap-1">
                 {[10, 20, 40, 70, 100].map((pct) => (
-                  <div
-                    key={pct}
-                    className={cn(
-                      "w-6 h-4 rounded",
-                      getHeatColor(pct / 100)
-                    )}
-                  />
+                  <div key={pct} className={cn("w-6 h-4 rounded", getHeatColor(pct / 100))} />
                 ))}
               </div>
               <span>Menor → Maior</span>
