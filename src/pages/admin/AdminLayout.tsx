@@ -50,6 +50,7 @@ const navItems = [
   { icon: Users, label: "Usuários", path: "/admin/usuarios" },
   { icon: Mail, label: "Fluxo de Emails", path: "/admin/emails" },
   { icon: MessageSquare, label: "Fluxo WhatsApp", path: "/admin/whatsapp" },
+  { icon: FileText, label: "FAQ", path: "/admin/faq" },
   { icon: Activity, label: "Logs", path: "/admin/logs" },
   { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
 ];

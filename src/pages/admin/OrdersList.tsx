@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Search,
-  Filter,
   Plus,
   Eye,
   MoreVertical,
-  ChevronDown,
+  Download,
+  Calendar,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -32,14 +32,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 import {
   ORDER_STATUS_LABELS,
   VAULT_STATUSES,
   formatDate,
   formatCPF,
+  formatCurrency,
 } from "@/lib/constants";
+import { format } from "date-fns";
 
 interface Order {
   order_id: string;
@@ -47,30 +49,78 @@ interface Order {
   client_name: string;
   client_cpf: string;
   product_name: string;
+  product_price: number | null;
   sla_vault_due_date: string | null;
   created_at: string;
 }
 
+const PAGE_SIZE = 25;
+
 const OrdersList = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>("all");
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
+  // Fetch orders with server-side pagination
   useEffect(() => {
     const fetchOrders = async () => {
+      setIsLoading(true);
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from("orders")
-          .select("*")
+          .select("order_id, current_status, client_name, client_cpf, product_name, product_price, sla_vault_due_date, created_at", { count: "exact" })
           .order("created_at", { ascending: false });
+
+        // Status filter
+        if (statusFilter !== "all") {
+          query = query.eq("current_status", statusFilter as any);
+        }
+
+        // Date filter
+        if (dateFilter !== "all") {
+          const now = new Date();
+          let startDate: Date;
+          switch (dateFilter) {
+            case "today":
+              startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+              break;
+            case "week":
+              startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+              break;
+            case "month":
+              startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+              break;
+            case "quarter":
+              startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+              break;
+            default:
+              startDate = new Date(0);
+          }
+          query = query.gte("created_at", startDate.toISOString());
+        }
+
+        // Search filter (server-side for order_id and client_name)
+        if (search) {
+          query = query.or(`order_id.ilike.%${search}%,client_name.ilike.%${search}%,product_name.ilike.%${search}%`);
+        }
+
+        // Pagination
+        const from = page * PAGE_SIZE;
+        const to = from + PAGE_SIZE - 1;
+        query = query.range(from, to);
+
+        const { data, error, count } = await query;
 
         if (error) throw error;
 
         setOrders(data || []);
-        setFilteredOrders(data || []);
+        setTotalCount(count || 0);
       } catch (error) {
         console.error("Error fetching orders:", error);
       } finally {
@@ -79,40 +129,68 @@ const OrdersList = () => {
     };
 
     fetchOrders();
-  }, []);
+  }, [page, statusFilter, dateFilter, search]);
 
+  // Reset page when filters change
   useEffect(() => {
-    let result = [...orders];
+    setPage(0);
+  }, [statusFilter, dateFilter, search]);
 
-    // Search filter
-    if (search) {
-      const searchLower = search.toLowerCase();
-      result = result.filter(
-        (order) =>
-          order.order_id.toLowerCase().includes(searchLower) ||
-          order.client_name.toLowerCase().includes(searchLower) ||
-          order.client_cpf.includes(search.replace(/\D/g, "")) ||
-          order.product_name.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Status filter
-    if (statusFilter !== "all") {
-      result = result.filter((order) => order.current_status === statusFilter);
-    }
-
-    setFilteredOrders(result);
-  }, [search, statusFilter, orders]);
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const getStatusColor = (status: string) => {
     if (status === "DELIVERED") return "bg-success/20 text-success";
     if (["ORDER_CONFIRMED", "SOURCING", "NEGOTIATING"].includes(status))
       return "bg-primary/20 text-primary";
-    if (status === "BALANCE_DUE") return "bg-warning/20 text-warning";
+    if (status === "BALANCE_DUE" || status === "BALANCE_PENDING") return "bg-warning/20 text-warning";
     return "bg-secondary text-muted-foreground";
   };
 
-  if (isLoading) {
+  // CSV Export
+  const handleExportCSV = async () => {
+    try {
+      // Fetch ALL matching orders (without pagination) for export
+      let query = supabase
+        .from("orders")
+        .select("order_id, current_status, client_name, client_cpf, product_name, product_price, sla_vault_due_date, created_at")
+        .order("created_at", { ascending: false });
+
+      if (statusFilter !== "all") query = query.eq("current_status", statusFilter as any);
+      if (search) query = query.or(`order_id.ilike.%${search}%,client_name.ilike.%${search}%,product_name.ilike.%${search}%`);
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const headers = ["Pedido", "Cliente", "CPF", "Produto", "Preço", "Status", "Prazo SLA", "Criado em"];
+      const rows = (data || []).map(o => [
+        o.order_id,
+        o.client_name,
+        formatCPF(o.client_cpf),
+        o.product_name,
+        o.product_price ? formatCurrency(o.product_price) : "-",
+        ORDER_STATUS_LABELS[o.current_status] || o.current_status,
+        o.sla_vault_due_date ? formatDate(o.sla_vault_due_date) : "-",
+        formatDate(o.created_at),
+      ]);
+
+      const csvContent = [
+        headers.join(","),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(",")),
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `pedidos_${format(new Date(), "yyyy-MM-dd")}.csv`;
+      link.click();
+
+      toast({ title: "Exportado!", description: `${(data || []).length} pedidos exportados.` });
+    } catch (error) {
+      toast({ title: "Erro ao exportar", variant: "destructive" });
+    }
+  };
+
+  if (isLoading && page === 0) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
@@ -128,15 +206,21 @@ const OrdersList = () => {
         <div>
           <h1 className="text-2xl font-bold">Pedidos</h1>
           <p className="text-muted-foreground">
-            Gerencie todos os pedidos do sistema
+            {totalCount} pedidos no total
           </p>
         </div>
-        <Link to="/admin/pedidos/novo">
-          <Button className="btn-gold">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Pedido
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportCSV}>
+            <Download className="mr-2 h-4 w-4" />
+            CSV
           </Button>
-        </Link>
+          <Link to="/admin/pedidos/novo">
+            <Button className="btn-gold">
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Pedido
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}
@@ -144,7 +228,7 @@ const OrdersList = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por ID, cliente, CPF ou produto..."
+            placeholder="Buscar por ID, cliente ou produto..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10 bg-secondary/50"
@@ -161,6 +245,19 @@ const OrdersList = () => {
                 {ORDER_STATUS_LABELS[status]}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+        <Select value={dateFilter} onValueChange={setDateFilter}>
+          <SelectTrigger className="w-full md:w-44 bg-secondary/50">
+            <Calendar className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Período" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todo período</SelectItem>
+            <SelectItem value="today">Hoje</SelectItem>
+            <SelectItem value="week">Últimos 7 dias</SelectItem>
+            <SelectItem value="month">Este mês</SelectItem>
+            <SelectItem value="quarter">Últimos 90 dias</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -180,17 +277,14 @@ const OrdersList = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredOrders.length === 0 ? (
+            {orders.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={7}
-                  className="text-center py-12 text-muted-foreground"
-                >
+                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                   Nenhum pedido encontrado
                 </TableCell>
               </TableRow>
             ) : (
-              filteredOrders.map((order) => (
+              orders.map((order) => (
                 <TableRow
                   key={order.order_id}
                   className="border-border cursor-pointer hover:bg-secondary/30"
@@ -209,19 +303,12 @@ const OrdersList = () => {
                     {order.product_name}
                   </TableCell>
                   <TableCell>
-                    <span
-                      className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                        order.current_status
-                      )}`}
-                    >
-                      {ORDER_STATUS_LABELS[order.current_status] ||
-                        order.current_status}
+                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.current_status)}`}>
+                      {ORDER_STATUS_LABELS[order.current_status] || order.current_status}
                     </span>
                   </TableCell>
                   <TableCell>
-                    {order.sla_vault_due_date
-                      ? formatDate(order.sla_vault_due_date)
-                      : "-"}
+                    {order.sla_vault_due_date ? formatDate(order.sla_vault_due_date) : "-"}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {formatDate(order.created_at)}
@@ -234,12 +321,7 @@ const OrdersList = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/admin/pedidos/${order.order_id}`);
-                          }}
-                        >
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/admin/pedidos/${order.order_id}`); }}>
                           <Eye className="mr-2 h-4 w-4" />
                           Ver detalhes
                         </DropdownMenuItem>
@@ -255,12 +337,12 @@ const OrdersList = () => {
 
       {/* Mobile Cards */}
       <div className="md:hidden space-y-3">
-        {filteredOrders.length === 0 ? (
+        {orders.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground card-premium rounded-lg">
             Nenhum pedido encontrado
           </div>
         ) : (
-          filteredOrders.map((order) => (
+          orders.map((order) => (
             <div
               key={order.order_id}
               className="card-premium p-4 cursor-pointer active:scale-[0.98] transition-transform"
@@ -268,11 +350,7 @@ const OrdersList = () => {
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="font-mono text-sm font-medium">{order.order_id}</span>
-                <span
-                  className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                    order.current_status
-                  )}`}
-                >
+                <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.current_status)}`}>
                   {ORDER_STATUS_LABELS[order.current_status] || order.current_status}
                 </span>
               </div>
@@ -286,10 +364,20 @@ const OrdersList = () => {
         )}
       </div>
 
-      {/* Results count */}
-      <p className="text-sm text-muted-foreground">
-        {filteredOrders.length} de {orders.length} pedidos
-      </p>
+      {/* Pagination */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Mostrando {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} de {totalCount}
+        </p>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setPage(p => p - 1)} disabled={page === 0}>
+            Anterior
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1}>
+            Próxima
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

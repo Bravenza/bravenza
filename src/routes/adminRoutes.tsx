@@ -54,6 +54,7 @@ export const adminRoutes = (
       <Route path="usuarios" element={<UsersPage />} />
       <Route path="configuracoes" element={<SettingsPage />} />
       <Route path="logs" element={<ActivityLogsPage />} />
+      <Route path="faq" element={<FAQManagerPage />} />
       <Route path="emails" element={<EmailFlowPage />} />
       <Route path="whatsapp" element={<WhatsAppFlowPage />} />
       {/* Vault Club Admin */}

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -89,23 +88,29 @@ export default function ActivityLogsPage() {
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
 
-      // Fetch user emails for logs
-      const logsWithUsers = await Promise.all(
-        (data || []).map(async (log) => {
-          if (log.user_id) {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("email")
-              .eq("user_id", log.user_id)
-              .single();
-            return { ...log, user_email: profile?.email };
-          }
-          return log;
-        })
-      );
+      const logsData = data || [];
+
+      // Batch fetch user emails - collect unique user_ids
+      const userIds = [...new Set(logsData.filter(l => l.user_id).map(l => l.user_id!))];
+      let emailMap: Record<string, string> = {};
+
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, email")
+          .in("user_id", userIds);
+
+        if (profiles) {
+          emailMap = Object.fromEntries(profiles.map(p => [p.user_id, p.email || ""]));
+        }
+      }
+
+      const logsWithUsers = logsData.map(log => ({
+        ...log,
+        user_email: log.user_id ? emailMap[log.user_id] : undefined,
+      }));
 
       if (page === 0) {
         setLogs(logsWithUsers);
@@ -113,7 +118,7 @@ export default function ActivityLogsPage() {
         setLogs((prev) => [...prev, ...logsWithUsers]);
       }
 
-      setHasMore((data || []).length === pageSize);
+      setHasMore(logsData.length === pageSize);
     } catch (error) {
       console.error("Error fetching logs:", error);
     } finally {

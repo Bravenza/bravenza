@@ -5,8 +5,9 @@ import {
   Clock,
   CheckCircle2,
   AlertTriangle,
-  TrendingUp,
   ArrowRight,
+  ClipboardList,
+  CalendarClock,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,55 +23,67 @@ interface DashboardStats {
   pending: number;
   delivered: number;
   nearDeadline: number;
+  pendingRequests: number;
+  overdueOrders: Order[];
 }
 
-interface RecentOrder {
+interface Order {
   order_id: string;
   current_status: string;
   client_name: string;
   product_name: string;
   created_at: string;
+  sla_vault_due_date?: string | null;
 }
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch all orders for stats
-        const { data: orders, error } = await supabase
-          .from("orders")
-          .select("*")
-          .order("created_at", { ascending: false });
+        // Fetch orders (only needed columns)
+        const [ordersRes, requestsRes] = await Promise.all([
+          supabase
+            .from("orders")
+            .select("order_id, current_status, client_name, product_name, created_at, sla_vault_due_date")
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("order_requests")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "pending"),
+        ]);
 
-        if (error) throw error;
+        if (ordersRes.error) throw ordersRes.error;
 
-        if (orders) {
-          const now = new Date();
-          const threeDaysFromNow = new Date(
-            now.getTime() + 3 * 24 * 60 * 60 * 1000
-          );
+        const orders = ordersRes.data || [];
+        const now = new Date();
+        const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
 
-          const statsData: DashboardStats = {
-            total: orders.length,
-            pending: orders.filter((o) => o.current_status !== "DELIVERED")
-              .length,
-            delivered: orders.filter((o) => o.current_status === "DELIVERED")
-              .length,
-            nearDeadline: orders.filter((o) => {
-              if (!o.sla_vault_due_date) return false;
-              const dueDate = new Date(o.sla_vault_due_date);
-              return dueDate <= threeDaysFromNow && dueDate >= now;
-            }).length,
-          };
+        // Find overdue orders (past SLA date)
+        const overdueOrders = orders.filter((o) => {
+          if (!o.sla_vault_due_date || o.current_status === "DELIVERED") return false;
+          return new Date(o.sla_vault_due_date) < now;
+        });
 
-          setStats(statsData);
-          setRecentOrders(orders.slice(0, 5) as RecentOrder[]);
-        }
+        const statsData: DashboardStats = {
+          total: orders.length,
+          pending: orders.filter((o) => o.current_status !== "DELIVERED").length,
+          delivered: orders.filter((o) => o.current_status === "DELIVERED").length,
+          nearDeadline: orders.filter((o) => {
+            if (!o.sla_vault_due_date || o.current_status === "DELIVERED") return false;
+            const dueDate = new Date(o.sla_vault_due_date);
+            return dueDate <= threeDaysFromNow && dueDate >= now;
+          }).length,
+          pendingRequests: requestsRes.count || 0,
+          overdueOrders: overdueOrders.slice(0, 5),
+        };
+
+        setStats(statsData);
+        setRecentOrders(orders.slice(0, 5));
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -176,7 +189,7 @@ const AdminDashboard = () => {
             ))}
           </div>
 
-          {/* Recent orders */}
+          {/* Two-column grid: Recent Orders + Pending Requests / Overdue */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Recent orders */}
             <motion.div
@@ -210,7 +223,7 @@ const AdminDashboard = () => {
                           to={`/admin/pedidos/${order.order_id}`}
                           className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 transition-colors"
                         >
-                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3">
                             <div className="w-2 h-2 rounded-full bg-primary" />
                             <div>
                               <p className="font-medium text-sm">{order.order_id}</p>
@@ -221,8 +234,7 @@ const AdminDashboard = () => {
                           </div>
                           <div className="text-right">
                             <p className="text-xs font-medium">
-                              {ORDER_STATUS_LABELS[order.current_status] ||
-                                order.current_status}
+                              {ORDER_STATUS_LABELS[order.current_status] || order.current_status}
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {formatDate(order.created_at)}
@@ -231,6 +243,86 @@ const AdminDashboard = () => {
                         </Link>
                       ))}
                     </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Right column: Pending Requests + Overdue */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="space-y-6"
+            >
+              {/* Pending Requests Card */}
+              <Card className="card-premium">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <ClipboardList className="h-5 w-5 text-primary" />
+                    Solicitações Pendentes
+                  </CardTitle>
+                  <Link to="/admin/solicitacoes">
+                    <Button variant="ghost" size="sm">
+                      Ver todas
+                      <ArrowRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </Link>
+                </CardHeader>
+                <CardContent>
+                  {(stats?.pendingRequests || 0) > 0 ? (
+                    <div className="flex items-center gap-4 p-4 rounded-lg bg-warning/10 border border-warning/20">
+                      <div className="p-3 rounded-full bg-warning/20">
+                        <ClipboardList className="h-6 w-6 text-warning" />
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold">{stats?.pendingRequests}</p>
+                        <p className="text-sm text-muted-foreground">
+                          solicitações aguardando análise
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-center py-6">
+                      Nenhuma solicitação pendente 🎉
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Overdue Orders Card */}
+              <Card className="card-premium">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarClock className="h-5 w-5 text-destructive" />
+                    Prazos Vencidos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(stats?.overdueOrders?.length || 0) > 0 ? (
+                    <div className="space-y-3">
+                      {stats!.overdueOrders.map((order) => (
+                        <Link
+                          key={order.order_id}
+                          to={`/admin/pedidos/${order.order_id}`}
+                          className="flex items-center justify-between p-3 rounded-lg bg-destructive/5 border border-destructive/10 hover:bg-destructive/10 transition-colors"
+                        >
+                          <div>
+                            <p className="font-medium text-sm">{order.order_id}</p>
+                            <p className="text-xs text-muted-foreground">{order.client_name}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs font-medium text-destructive">
+                              Venceu {order.sla_vault_due_date ? formatDate(order.sla_vault_due_date) : ""}
+                            </p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-center py-6">
+                      Nenhum prazo vencido ✅
+                    </p>
                   )}
                 </CardContent>
               </Card>
