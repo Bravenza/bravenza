@@ -17,6 +17,7 @@ const PUBLIC_ACTIONS = new Set([
   "catalog-products", "catalog-product", "catalog-offers", "catalog-search",
   "activity-feed", "product-comments", "product-reviews", "product-analytics",
   "laudo-lookup", "seller-tier-info", "freight-quote", "check-auto-payout",
+  "seller-leaderboard",
 ]);
 
 // Resolve authenticated CPF from JWT token via client_profiles
@@ -2012,6 +2013,109 @@ Deno.serve(async (req) => {
       if (!sl) throw new Error("Vendedor não encontrado");
       await sb.from("seller_collections").delete().eq("id", id).eq("seller_id", sl.id);
       return j({ success: true });
+    }
+
+    // ==================== SOCIAL & GAMIFICATION ====================
+
+    if (mt === "POST" && a === "toggle-follow") {
+      const { seller_id } = await req.json();
+      if (!seller_id) throw new Error("seller_id obrigatório");
+      const { data: ex } = await sb.from("marketplace_seller_follows").select("id").eq("follower_cpf", cpf).eq("seller_id", seller_id).maybeSingle();
+      if (ex) {
+        await sb.from("marketplace_seller_follows").delete().eq("id", ex.id);
+        return j({ following: false });
+      }
+      await sb.from("marketplace_seller_follows").insert({ follower_cpf: cpf, seller_id });
+      // Notify seller
+      const { data: sl } = await sb.from("vault_seller_profiles").select("member_id").eq("id", seller_id).maybeSingle();
+      if (sl?.member_id) {
+        const { data: mem } = await sb.from("vault_members").select("client_cpf").eq("id", sl.member_id).maybeSingle();
+        if (mem) await nt(sb, "👤 Novo seguidor!", "Alguém começou a seguir sua loja!", mem.client_cpf, seller_id, "marketplace_follow");
+      }
+      return j({ following: true });
+    }
+
+    if (mt === "GET" && a === "is-following") {
+      const sid = url.searchParams.get("seller_id");
+      if (!sid) return j({ following: false });
+      const { data } = await sb.from("marketplace_seller_follows").select("id").eq("follower_cpf", cpf).eq("seller_id", sid).maybeSingle();
+      return j({ following: !!data });
+    }
+
+    if (mt === "GET" && a === "my-follows") {
+      const { data } = await sb.from("marketplace_seller_follows").select("seller_id, created_at").eq("follower_cpf", cpf);
+      return j({ follows: data || [] });
+    }
+
+    if (mt === "GET" && a === "loyalty-balance") {
+      const { data } = await sb.rpc("get_loyalty_balance", { p_cpf: cpf });
+      const { data: history } = await sb.from("marketplace_loyalty_points").select("*").eq("user_cpf", cpf).order("created_at", { ascending: false }).limit(20);
+      return j({ balance: data || 0, history: history || [] });
+    }
+
+    if (mt === "GET" && a === "seller-leaderboard") {
+      const period = url.searchParams.get("period") || "all";
+      let q = sb.from("vault_seller_profiles").select(
+        `id, total_sales_count, total_sales_value, average_rating, ratings_count, plan_id, verified_badge, followers_count, member:vault_members!inner(client_name, tier)`
+      ).gt("total_sales_count", 0).order("total_sales_value", { ascending: false }).limit(20);
+      const { data } = await q;
+      // Get badges for each seller
+      const sellers = [];
+      for (const s of (data || [])) {
+        const { data: badges } = await sb.from("marketplace_seller_badges").select("badge_name, badge_icon, badge_type").eq("seller_id", s.id);
+        sellers.push({ ...s, badges: badges || [] });
+      }
+      return j({ leaderboard: sellers });
+    }
+
+    if (mt === "POST" && a === "check-badges") {
+      // Auto-award badges for the current seller
+      const mb = await gm(sb, cpf);
+      if (!mb) return j({ badges: [] });
+      const sl = await gs(sb, mb.id);
+      if (!sl) return j({ badges: [] });
+
+      const { data: existing } = await sb.from("marketplace_seller_badges").select("badge_type").eq("seller_id", sl.id);
+      const hasBadge = (type: string) => (existing || []).some((b: any) => b.badge_type === type);
+      const newBadges: any[] = [];
+
+      // First Sale
+      if (sl.total_sales_count >= 1 && !hasBadge("first_sale")) {
+        newBadges.push({ seller_id: sl.id, badge_type: "first_sale", badge_name: "Primeira Venda", badge_icon: "🎉" });
+      }
+      // 10 Sales
+      if (sl.total_sales_count >= 10 && !hasBadge("ten_sales")) {
+        newBadges.push({ seller_id: sl.id, badge_type: "ten_sales", badge_name: "10 Vendas", badge_icon: "🔥" });
+      }
+      // 50 Sales
+      if (sl.total_sales_count >= 50 && !hasBadge("fifty_sales")) {
+        newBadges.push({ seller_id: sl.id, badge_type: "fifty_sales", badge_name: "50 Vendas", badge_icon: "💎" });
+      }
+      // Zero Disputes
+      if (sl.total_sales_count >= 5 && (sl.dispute_rate || 0) === 0 && !hasBadge("zero_disputes")) {
+        newBadges.push({ seller_id: sl.id, badge_type: "zero_disputes", badge_name: "Zero Disputas", badge_icon: "🛡️" });
+      }
+      // Top Rated
+      if ((sl.average_rating || 0) >= 4.8 && (sl.ratings_count || 0) >= 5 && !hasBadge("top_rated")) {
+        newBadges.push({ seller_id: sl.id, badge_type: "top_rated", badge_name: "Top Avaliado", badge_icon: "⭐" });
+      }
+      // Verified Seller
+      if (sl.verified_badge && !hasBadge("verified")) {
+        newBadges.push({ seller_id: sl.id, badge_type: "verified", badge_name: "Verificado", badge_icon: "✅" });
+      }
+
+      if (newBadges.length > 0) {
+        await sb.from("marketplace_seller_badges").insert(newBadges);
+        const { data: mem } = await sb.from("vault_members").select("client_cpf").eq("id", mb.id).maybeSingle();
+        if (mem) {
+          for (const badge of newBadges) {
+            await nt(sb, `🏅 Nova conquista: ${badge.badge_name}!`, `Você desbloqueou o badge "${badge.badge_name}" ${badge.badge_icon}`, mem.client_cpf, sl.id, "marketplace_badge");
+          }
+        }
+      }
+
+      const { data: allBadges } = await sb.from("marketplace_seller_badges").select("*").eq("seller_id", sl.id).order("earned_at", { ascending: false });
+      return j({ badges: allBadges || [], new_badges: newBadges });
     }
 
     return j({ error: "Ação não encontrada" }, 404);
