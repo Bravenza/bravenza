@@ -1749,6 +1749,13 @@ export type Database = {
             foreignKeyName: "vault_badges_member_id_fkey"
             columns: ["member_id"]
             isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "vault_badges_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
             referencedRelation: "vault_members"
             referencedColumns: ["id"]
           },
@@ -1780,6 +1787,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vault_community_comments"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_community_comment_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
           },
           {
             foreignKeyName: "vault_community_comment_likes_user_id_fkey"
@@ -1819,6 +1833,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vault_community_comments"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_community_comment_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
           },
           {
             foreignKeyName: "vault_community_comment_reactions_user_id_fkey"
@@ -1882,6 +1903,13 @@ export type Database = {
             foreignKeyName: "vault_community_comments_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "vault_community_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "vault_members"
             referencedColumns: ["id"]
           },
@@ -1911,8 +1939,22 @@ export type Database = {
             foreignKeyName: "vault_community_follows_follower_id_fkey"
             columns: ["follower_id"]
             isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "vault_community_follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
             referencedRelation: "vault_members"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_community_follows_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
           },
           {
             foreignKeyName: "vault_community_follows_following_id_fkey"
@@ -1949,6 +1991,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vault_community_posts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_community_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
           },
           {
             foreignKeyName: "vault_community_likes_user_id_fkey"
@@ -2022,6 +2071,13 @@ export type Database = {
             foreignKeyName: "vault_community_posts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "vault_community_posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "vault_members"
             referencedColumns: ["id"]
           },
@@ -2047,6 +2103,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "vault_community_presence_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
+          },
           {
             foreignKeyName: "vault_community_presence_user_id_fkey"
             columns: ["user_id"]
@@ -2085,6 +2148,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vault_community_posts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_community_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
           },
           {
             foreignKeyName: "vault_community_reactions_user_id_fkey"
@@ -2139,6 +2209,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vault_community_posts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_community_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
           },
           {
             foreignKeyName: "vault_community_reports_reporter_id_fkey"
@@ -2408,8 +2485,22 @@ export type Database = {
             foreignKeyName: "vault_invites_inviter_id_fkey"
             columns: ["inviter_id"]
             isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "vault_invites_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
             referencedRelation: "vault_members"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_invites_used_by_member_id_fkey"
+            columns: ["used_by_member_id"]
+            isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
           },
           {
             foreignKeyName: "vault_invites_used_by_member_id_fkey"
@@ -2505,6 +2596,64 @@ export type Database = {
             foreignKeyName: "vault_items_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "vault_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vault_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_login_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          last_login_at: string
+          login_date: string
+          longest_streak: number
+          member_id: string
+          total_logins: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_login_at?: string
+          login_date?: string
+          longest_streak?: number
+          member_id: string
+          total_logins?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_login_at?: string
+          login_date?: string
+          longest_streak?: number
+          member_id?: string
+          total_logins?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_login_streaks_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "vault_login_streaks_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
             referencedRelation: "vault_members"
             referencedColumns: ["id"]
           },
@@ -3078,6 +3227,13 @@ export type Database = {
             foreignKeyName: "vault_match_rooms_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "vault_match_rooms_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "vault_members"
             referencedColumns: ["id"]
           },
@@ -3107,8 +3263,22 @@ export type Database = {
             foreignKeyName: "vault_member_follows_follower_id_fkey"
             columns: ["follower_id"]
             isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "vault_member_follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
             referencedRelation: "vault_members"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_member_follows_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
           },
           {
             foreignKeyName: "vault_member_follows_following_id_fkey"
@@ -3287,6 +3457,13 @@ export type Database = {
             foreignKeyName: "vault_members_invited_by_fkey"
             columns: ["invited_by"]
             isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "vault_members_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
             referencedRelation: "vault_members"
             referencedColumns: ["id"]
           },
@@ -3383,6 +3560,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vault_match_rooms"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_searches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
           },
           {
             foreignKeyName: "vault_searches_user_id_fkey"
@@ -3552,6 +3736,13 @@ export type Database = {
           verified_badge?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "vault_seller_profiles_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
+          },
           {
             foreignKeyName: "vault_seller_profiles_member_id_fkey"
             columns: ["member_id"]
@@ -3729,6 +3920,13 @@ export type Database = {
           urgency_level?: Database["public"]["Enums"]["urgency_level"] | null
         }
         Relationships: [
+          {
+            foreignKeyName: "vault_wishlists_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "vault_member_rankings"
+            referencedColumns: ["member_id"]
+          },
           {
             foreignKeyName: "vault_wishlists_member_id_fkey"
             columns: ["member_id"]
@@ -4037,6 +4235,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vault_member_rankings: {
+        Row: {
+          avatar_url: string | null
+          badges_count: number | null
+          client_name: string | null
+          current_streak: number | null
+          display_name: string | null
+          longest_streak: number | null
+          member_id: string | null
+          posts_count: number | null
+          stats_converted_invites: number | null
+          stats_purchases_count_12m: number | null
+          tier: Database["public"]["Enums"]["vault_tier"] | null
+          total_logins: number | null
+          total_purchases: number | null
+          total_score: number | null
+        }
+        Relationships: []
       }
     }
     Functions: {
@@ -4758,6 +4975,7 @@ export type Database = {
         | { Args: never; Returns: boolean }
         | { Args: { _user_id: string }; Returns: boolean }
       mask_cpf: { Args: { cpf_value: string }; Returns: string }
+      record_vault_login: { Args: { p_cpf: string }; Returns: Json }
       reject_budget: {
         Args: { p_reason?: string; p_token: string }
         Returns: boolean

@@ -22,6 +22,8 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { StreakWidget } from "./StreakWidget";
+import { MemberRanking } from "./MemberRanking";
 
 interface VaultMember {
   id: string;
@@ -229,6 +231,9 @@ export function VaultClubTab({
 
   return (
     <div className="space-y-6">
+      {/* Daily Streak */}
+      <StreakWidget clientCpf={clientCpf} />
+
       {/* Main Grid */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Evolution Progress */}
@@ -574,6 +579,9 @@ export function VaultClubTab({
           </div>
         </CardContent>
       </Card>
+
+      {/* Member Ranking */}
+      <MemberRanking currentMemberId={member?.id} />
 
       {/* Rules Link */}
       <Card>
