@@ -39,7 +39,14 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const body: TierCheckRequest = req.method === 'POST' ? await req.json() : {};
+    let body: TierCheckRequest = {};
+    if (req.method === 'POST') {
+      try {
+        body = await req.json();
+      } catch {
+        // Empty body from cron — check all members
+      }
+    }
     const { member_id, check_all } = body;
 
     let query = supabase
