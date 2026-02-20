@@ -50,7 +50,7 @@ const HeaderComponent = () => {
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1" aria-label="Navegação principal">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -92,7 +92,9 @@ const HeaderComponent = () => {
           <button
             className="md:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors relative z-[60] active:scale-95"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Menu"
+            aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-menu"
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -102,13 +104,17 @@ const HeaderComponent = () => {
       {/* Mobile Menu — CSS animated */}
       {menuMounted && (
         <div
+          id="mobile-menu"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu de navegação"
           className={`fixed inset-0 top-16 z-[55] md:hidden overflow-y-auto bg-background/95 backdrop-blur-xl transition-all duration-200 theme-dark ${
             isMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
           }`}
         >
           <div className="absolute inset-0 bg-grid-pattern opacity-30" />
           
-          <nav className="container mx-auto px-4 py-6 flex flex-col gap-2 relative">
+          <nav className="container mx-auto px-4 py-6 flex flex-col gap-2 relative" aria-label="Menu mobile">
             {navLinks.map((link, index) => (
               <Link
                 key={link.href}

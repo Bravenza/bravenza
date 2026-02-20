@@ -22,7 +22,7 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
   ];
 
   return (
-    <footer ref={ref} className="relative border-t border-border/30 bg-card/30 overflow-hidden theme-dark">
+    <footer ref={ref} role="contentinfo" aria-label="Rodapé" className="relative border-t border-border/30 bg-card/30 overflow-hidden theme-dark">
       {/* Background elements */}
       <div className="absolute inset-0 bg-grid-pattern opacity-20" />
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />

@@ -10,20 +10,28 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  errorKey: string;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, errorKey: "" };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error("[ErrorBoundary]", error, info.componentStack);
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    // Reset error boundary when children change (e.g. route navigation)
+    if (this.state.hasError && prevProps.children !== this.props.children) {
+      this.setState({ hasError: false, error: null });
+    }
   }
 
   handleReload = () => {
@@ -34,12 +42,16 @@ export class ErrorBoundary extends Component<Props, State> {
     window.location.href = "/";
   };
 
+  handleRetry = () => {
+    this.setState({ hasError: false, error: null });
+  };
+
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
 
       return (
-        <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="min-h-screen bg-background flex items-center justify-center px-4" role="alert">
           <div className="max-w-md w-full text-center space-y-6">
             <div className="mx-auto w-16 h-16 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center">
               <AlertTriangle className="h-8 w-8 text-destructive" />
@@ -47,13 +59,16 @@ export class ErrorBoundary extends Component<Props, State> {
             <div>
               <h1 className="text-xl font-bold mb-2">Algo deu errado</h1>
               <p className="text-sm text-muted-foreground">
-                Ocorreu um erro inesperado. Tente recarregar a página.
+                Ocorreu um erro inesperado. Tente novamente ou recarregue a página.
               </p>
             </div>
             <div className="flex gap-3 justify-center">
               <Button variant="outline" onClick={this.handleGoHome} className="gap-2">
                 <Home className="h-4 w-4" />
                 Início
+              </Button>
+              <Button variant="outline" onClick={this.handleRetry} className="gap-2">
+                Tentar novamente
               </Button>
               <Button onClick={this.handleReload} className="gap-2">
                 <RefreshCw className="h-4 w-4" />
