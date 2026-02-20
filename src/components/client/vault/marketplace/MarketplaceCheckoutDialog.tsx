@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ShoppingCart, ShieldCheck, Truck, CreditCard, Loader2, MapPin, Package, ChevronRight, ArrowLeft, Clock, AlertCircle } from "lucide-react";
+import { ShoppingCart, ShieldCheck, Truck, CreditCard, Loader2, MapPin, Package, ChevronRight, ArrowLeft, Clock, AlertCircle, Copy, CheckCircle2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -60,7 +60,7 @@ interface MarketplaceCheckoutDialogProps {
   };
 }
 
-type Step = "modality" | "address" | "freight" | "payment";
+type Step = "modality" | "address" | "freight" | "payment" | "processing";
 
 export function MarketplaceCheckoutDialog({
   listing,
@@ -76,6 +76,16 @@ export function MarketplaceCheckoutDialog({
   const [freightOptions, setFreightOptions] = useState<FreightOption[]>([]);
   const [selectedFreight, setSelectedFreight] = useState<FreightOption | null>(null);
   const [freightError, setFreightError] = useState<string | null>(null);
+  const [paymentResult, setPaymentResult] = useState<{
+    status: string;
+    payment_id?: string;
+    pix_qr_code?: string;
+    pix_copy_paste?: string;
+    split?: { seller_payout: number; platform_fee: number; fee_percent: number };
+    installments?: number;
+    error?: string;
+  } | null>(null);
+  const [pixCopied, setPixCopied] = useState(false);
   const [chosenMode, setChosenMode] = useState<"direct" | "bravenza">("direct");
   const [form, setForm] = useState({
     buyer_name: buyerDefaults?.name || "",
@@ -220,7 +230,9 @@ export function MarketplaceCheckoutDialog({
   const handleSubmit = async () => {
     if (!form.buyer_name || !isAddressValid || !selectedFreight) return;
     setIsSubmitting(true);
+    setPaymentResult(null);
     try {
+      // Step 1: Create the order via mk-hub
       const result = await onConfirm({
         listing_id: listing.id,
         buyer_name: form.buyer_name,
@@ -231,9 +243,49 @@ export function MarketplaceCheckoutDialog({
         shipping_cost: shippingCost,
         shipping_service: selectedFreight.name,
       });
-      if (result) onOpenChange(false);
+      if (!result?.order?.id) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Step 2: Process payment via mk-checkout
+      setStep("processing");
+      const checkoutBody: Record<string, any> = {
+        order_id: result.order.id,
+        payment_method: form.payment_method,
+        payer_email: form.buyer_email,
+      };
+
+      const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+      const headers = await getMarketplaceHeaders();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-checkout`,
+        { method: "POST", headers, body: JSON.stringify(checkoutBody) }
+      );
+      const payData = await res.json();
+
+      if (!res.ok || payData.error) {
+        setPaymentResult({ status: "error", error: payData.error || "Erro ao processar pagamento" });
+      } else {
+        setPaymentResult(payData);
+
+        // If card was approved, close after brief delay
+        if (form.payment_method === "card" && payData.status === "approved") {
+          setTimeout(() => onOpenChange(false), 2500);
+        }
+      }
+    } catch (err: any) {
+      setPaymentResult({ status: "error", error: err.message || "Erro inesperado" });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleCopyPix = () => {
+    if (paymentResult?.pix_copy_paste) {
+      navigator.clipboard.writeText(paymentResult.pix_copy_paste);
+      setPixCopied(true);
+      setTimeout(() => setPixCopied(false), 3000);
     }
   };
 
@@ -664,6 +716,101 @@ export function MarketplaceCheckoutDialog({
                 {isSubmitting ? "Processando..." : `Comprar — R$ ${totalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
               </Button>
             </div>
+          </div>
+        )}
+        {/* ========== STEP 4: PROCESSING / RESULT ========== */}
+        {step === "processing" && (
+          <div className="space-y-4 mt-1">
+            {!paymentResult ? (
+              <div className="flex flex-col items-center gap-4 py-10">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Processando pagamento...</p>
+              </div>
+            ) : paymentResult.status === "error" ? (
+              <div className="flex flex-col items-center gap-4 py-8 text-center">
+                <AlertCircle className="h-10 w-10 text-destructive" />
+                <div>
+                  <p className="font-medium text-destructive">Erro no pagamento</p>
+                  <p className="text-sm text-muted-foreground mt-1">{paymentResult.error}</p>
+                </div>
+                <Button variant="outline" onClick={() => { setStep("payment"); setPaymentResult(null); }}>
+                  Tentar novamente
+                </Button>
+              </div>
+            ) : paymentResult.status === "approved" ? (
+              <div className="flex flex-col items-center gap-4 py-8 text-center">
+                <CheckCircle2 className="h-12 w-12 text-success" />
+                <div>
+                  <p className="font-bold text-lg text-success">Pagamento aprovado!</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {paymentResult.installments && paymentResult.installments > 1
+                      ? `${paymentResult.installments}x no cartão`
+                      : "Pagamento confirmado"}
+                  </p>
+                </div>
+                <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg text-xs text-muted-foreground w-full">
+                  <p>🔒 Compra protegida por 7 dias úteis após a entrega.</p>
+                  <p className="mt-1">📦 O vendedor será notificado para enviar o produto.</p>
+                </div>
+              </div>
+            ) : paymentResult.pix_copy_paste ? (
+              /* PIX pending */
+              <div className="space-y-4">
+                <div className="flex flex-col items-center gap-3 text-center">
+                  <Clock className="h-8 w-8 text-primary" />
+                  <div>
+                    <p className="font-bold">PIX gerado com sucesso!</p>
+                    <p className="text-xs text-muted-foreground mt-1">Escaneie o QR Code ou copie o código abaixo</p>
+                  </div>
+                </div>
+
+                {paymentResult.pix_qr_code && (
+                  <div className="flex justify-center">
+                    <img
+                      src={`data:image/png;base64,${paymentResult.pix_qr_code}`}
+                      alt="QR Code PIX"
+                      className="w-48 h-48 rounded-lg border"
+                    />
+                  </div>
+                )}
+
+                <div className="relative">
+                  <div className="p-3 bg-muted/50 rounded-lg font-mono text-xs break-all pr-12 max-h-20 overflow-y-auto">
+                    {paymentResult.pix_copy_paste}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="absolute right-1 top-1 h-8 w-8 p-0"
+                    onClick={handleCopyPix}
+                  >
+                    {pixCopied ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+
+                {pixCopied && (
+                  <p className="text-xs text-success text-center">✅ Código copiado!</p>
+                )}
+
+                <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg text-xs text-muted-foreground space-y-1">
+                  <p>💡 Após o pagamento, o pedido será confirmado automaticamente.</p>
+                  <p>🔒 Compra protegida por 7 dias úteis após a entrega.</p>
+                </div>
+
+                <Button variant="outline" className="w-full" onClick={() => onOpenChange(false)}>
+                  Fechar — Vou pagar pelo app do banco
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-4 py-8 text-center">
+                <Clock className="h-10 w-10 text-warning" />
+                <div>
+                  <p className="font-medium">Pagamento em análise</p>
+                  <p className="text-sm text-muted-foreground mt-1">Você será notificado quando for confirmado.</p>
+                </div>
+                <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+              </div>
+            )}
           </div>
         )}
       </DialogContent>
