@@ -31,6 +31,7 @@ const ActivityLogsPage = lazy(() => import("@/pages/admin/ActivityLogsPage"));
 const EmailFlowPage = lazy(() => import("@/pages/admin/EmailFlowPage"));
 const WhatsAppFlowPage = lazy(() => import("@/pages/admin/WhatsAppFlowPage"));
 const FAQManagerPage = lazy(() => import("@/pages/admin/FAQManagerPage"));
+const MarketplaceAnalyticsPage = lazy(() => import("@/pages/admin/MarketplaceAnalyticsPage"));
 
 export const adminRoutes = (
   <>
@@ -68,6 +69,7 @@ export const adminRoutes = (
       <Route path="vault/marketplace" element={<MarketplaceOrdersPage />} />
       <Route path="vault/marketplace/inspecao" element={<MarketplaceInspectionPage />} />
       <Route path="vault/marketplace/planos" element={<MarketplacePlansAdminPage />} />
+      <Route path="vault/marketplace/analytics" element={<MarketplaceAnalyticsPage />} />
     </Route>
   </>
 );

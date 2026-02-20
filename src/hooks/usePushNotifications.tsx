@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PushNotificationState {
   isSupported: boolean;
@@ -15,7 +16,6 @@ export function usePushNotifications() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Check if push notifications are supported
     const isSupported = "Notification" in window && "serviceWorker" in navigator && "PushManager" in window;
     
     setState((prev) => ({
@@ -24,7 +24,6 @@ export function usePushNotifications() {
       permission: isSupported ? Notification.permission : "default",
     }));
 
-    // Check if already subscribed
     if (isSupported && Notification.permission === "granted") {
       checkSubscription();
     }
@@ -53,11 +52,11 @@ export function usePushNotifications() {
       setState((prev) => ({ ...prev, permission }));
 
       if (permission === "granted") {
-        // Show a test notification
         await showLocalNotification(
           "Notificações Ativadas! 🔔",
-          "Você receberá atualizações sobre seus pedidos."
+          "Você receberá atualizações sobre seus pedidos, drops e alertas de preço."
         );
+        setState((prev) => ({ ...prev, isSubscribed: true }));
         return true;
       }
 
@@ -70,7 +69,7 @@ export function usePushNotifications() {
     }
   }, [state.isSupported]);
 
-  const showLocalNotification = async (title: string, body: string, options?: NotificationOptions) => {
+  const showLocalNotification = async (title: string, body: string, options?: any) => {
     if (!state.isSupported || Notification.permission !== "granted") {
       return;
     }
@@ -81,8 +80,10 @@ export function usePushNotifications() {
         body,
         icon: "/pwa-192x192.png",
         badge: "/pwa-192x192.png",
-        tag: "bravenza-notification",
+        tag: options?.tag || "bravenza-notification",
         renotify: true,
+        vibrate: [200, 100, 200],
+        actions: options?.actions || [],
         ...options,
       } as NotificationOptions);
     } catch (error) {
@@ -95,11 +96,93 @@ export function usePushNotifications() {
     }
   };
 
+  // Specialized notification senders
+  const notifyDrop = useCallback(async (dropTitle: string, dropId: string) => {
+    await showLocalNotification(
+      "🔥 Novo Drop Disponível!",
+      dropTitle,
+      {
+        tag: `drop-${dropId}`,
+        data: { url: `/drops/${dropId}` },
+        actions: [
+          { action: "view", title: "Ver agora" },
+          { action: "dismiss", title: "Depois" },
+        ],
+      } as any
+    );
+  }, [state.isSupported]);
+
+  const notifyPriceAlert = useCallback(async (productName: string, newPrice: number, productSlug: string) => {
+    await showLocalNotification(
+      "💰 Alerta de Preço!",
+      `${productName} caiu para R$ ${newPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+      {
+        tag: `price-${productSlug}`,
+        data: { url: `/marketplace/produto/${productSlug}` },
+        actions: [
+          { action: "view", title: "Ver oferta" },
+        ],
+      } as any
+    );
+  }, [state.isSupported]);
+
+  const notifyChatMessage = useCallback(async (senderName: string, message: string, orderId: string) => {
+    await showLocalNotification(
+      `💬 Nova mensagem de ${senderName}`,
+      message.length > 80 ? message.slice(0, 80) + "..." : message,
+      {
+        tag: `chat-${orderId}`,
+        data: { url: `/dashboard?tab=marketplace` },
+      } as any
+    );
+  }, [state.isSupported]);
+
+  const notifyOrderUpdate = useCallback(async (status: string, orderId: string) => {
+    const notif = getOrderStatusNotification(status, orderId);
+    await showLocalNotification(notif.title, notif.body, {
+      tag: `order-${orderId}`,
+      data: { url: `/dashboard` },
+    } as any);
+  }, [state.isSupported]);
+
+  // Subscribe to realtime notifications
+  const subscribeToRealtimeNotifications = useCallback((clientCpf: string) => {
+    const channel = supabase
+      .channel("push-notifications")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `target_client_cpf=eq.${clientCpf}`,
+        },
+        (payload) => {
+          const notif = payload.new as any;
+          if (notif && Notification.permission === "granted") {
+            showLocalNotification(notif.title, notif.message, {
+              tag: `notif-${notif.id}`,
+            } as any);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [state.isSupported]);
+
   return {
     ...state,
     isLoading,
     requestPermission,
     showLocalNotification,
+    notifyDrop,
+    notifyPriceAlert,
+    notifyChatMessage,
+    notifyOrderUpdate,
+    subscribeToRealtimeNotifications,
   };
 }
 
@@ -133,6 +216,27 @@ export function getOrderStatusNotification(status: string, orderId: string): { t
     DELIVERED: {
       title: "Pedido Entregue! 🎉",
       body: `Seu pedido ${orderId} foi entregue. Aproveite!`,
+    },
+    // Marketplace-specific
+    paid: {
+      title: "Pagamento Confirmado 💳",
+      body: `Pagamento do pedido ${orderId} foi confirmado.`,
+    },
+    shipped: {
+      title: "Produto Enviado! 📦",
+      body: `O vendedor enviou o pedido ${orderId}.`,
+    },
+    delivered: {
+      title: "Entrega Confirmada! ✅",
+      body: `Pedido ${orderId} foi entregue. Você tem 7 dias úteis de proteção.`,
+    },
+    disputed: {
+      title: "Disputa Aberta ⚠️",
+      body: `Uma disputa foi aberta no pedido ${orderId}. Acompanhe.`,
+    },
+    payout_released: {
+      title: "Pagamento Liberado! 💰",
+      body: `O repasse do pedido ${orderId} foi liberado.`,
     },
   };
 
