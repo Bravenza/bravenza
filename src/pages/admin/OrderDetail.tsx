@@ -91,25 +91,27 @@ const OrderDetail = () => {
 
   const fetchOrder = async () => {
     try {
-      const { data: orderData, error: orderError } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("order_id", orderId)
-        .single();
+      // Parallel fetch for order and history
+      const [orderRes, historyRes] = await Promise.all([
+        supabase
+          .from("orders")
+          .select("*")
+          .eq("order_id", orderId)
+          .single(),
+        supabase
+          .from("order_history")
+          .select("*")
+          .eq("order_id", orderId)
+          .order("created_at", { ascending: true }),
+      ]);
 
-      if (orderError) throw orderError;
+      if (orderRes.error) throw orderRes.error;
 
-      setOrder(orderData as Order);
-      setEditData(orderData as Order);
+      setOrder(orderRes.data as Order);
+      setEditData(orderRes.data as Order);
 
-      const { data: historyData, error: historyError } = await supabase
-        .from("order_history")
-        .select("*")
-        .eq("order_id", orderId)
-        .order("created_at", { ascending: true });
-
-      if (!historyError) {
-        setHistory(historyData || []);
+      if (!historyRes.error) {
+        setHistory(historyRes.data || []);
       }
     } catch (error) {
       console.error("Error fetching order:", error);

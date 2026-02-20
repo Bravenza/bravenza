@@ -146,23 +146,29 @@ const OrdersList = () => {
     return "bg-secondary text-muted-foreground";
   };
 
-  // CSV Export
+  // CSV Export via RPC (no row limit)
   const handleExportCSV = async () => {
     try {
-      // Fetch ALL matching orders (without pagination) for export
-      let query = supabase
-        .from("orders")
-        .select("order_id, current_status, client_name, client_cpf, product_name, product_price, sla_vault_due_date, created_at")
-        .order("created_at", { ascending: false });
+      const dateFrom = dateFilter !== "all" ? (() => {
+        const now = new Date();
+        switch (dateFilter) {
+          case "today": return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+          case "week": return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+          case "month": return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+          case "quarter": return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString();
+          default: return null;
+        }
+      })() : null;
 
-      if (statusFilter !== "all") query = query.eq("current_status", statusFilter as any);
-      if (search) query = query.or(`order_id.ilike.%${search}%,client_name.ilike.%${search}%,product_name.ilike.%${search}%`);
-
-      const { data, error } = await query;
+      const { data, error } = await supabase.rpc("get_admin_orders_csv" as any, {
+        p_status: statusFilter,
+        p_search: search,
+        p_date_from: dateFrom,
+      });
       if (error) throw error;
 
       const headers = ["Pedido", "Cliente", "CPF", "Produto", "Preço", "Status", "Prazo SLA", "Criado em"];
-      const rows = (data || []).map(o => [
+      const rows = ((data || []) as any[]).map((o: any) => [
         o.order_id,
         o.client_name,
         formatCPF(o.client_cpf),
@@ -175,7 +181,7 @@ const OrdersList = () => {
 
       const csvContent = [
         headers.join(","),
-        ...rows.map(row => row.map(cell => `"${cell}"`).join(",")),
+        ...rows.map((row: string[]) => row.map(cell => `"${cell}"`).join(",")),
       ].join("\n");
 
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
