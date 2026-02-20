@@ -273,25 +273,29 @@ export function ClientPreferences({ clientCpf, clientName, embedded = false }: C
 
       {/* Granular Notification Categories */}
       {(preferences.notification_email || preferences.notification_push || preferences.notification_whatsapp) && (
-        <div className="space-y-3 pt-3 border-t border-border/30">
+        <div className="space-y-1 pt-3 border-t border-border/30">
           <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             Categorias de notificação
           </Label>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground mb-3">
             Escolha quais tipos de atualização deseja receber nos canais ativos acima
           </p>
 
           {[
-            { id: "notif_drops", label: "Novos Drops & Lançamentos", desc: "Alertas sobre novos conteúdos e lançamentos" },
-            { id: "notif_matches", label: "Matches & Curadoria", desc: "Atualizações sobre buscas e Match Room" },
-            { id: "notif_community", label: "Comunidade", desc: "Curtidas, comentários e novos seguidores" },
-            { id: "notif_marketplace", label: "Marketplace", desc: "Ofertas, vendas e atualizações de pedidos" },
-            { id: "notif_promotions", label: "Promoções & Ofertas", desc: "Cupons, cashback e oportunidades exclusivas" },
+            { id: "notif_drops", label: "Novos Drops & Lançamentos", desc: "Alertas sobre novos conteúdos e lançamentos", icon: "🔥" },
+            { id: "notif_price_alerts", label: "Alertas de Preço", desc: "Quando um item da watchlist atinge seu preço alvo", icon: "📉" },
+            { id: "notif_matches", label: "Matches & Curadoria", desc: "Atualizações sobre buscas e Match Room", icon: "🎯" },
+            { id: "notif_community", label: "Comunidade", desc: "Curtidas, comentários e novos seguidores", icon: "💬" },
+            { id: "notif_marketplace", label: "Marketplace", desc: "Ofertas, vendas e atualizações de pedidos", icon: "🛒" },
+            { id: "notif_promotions", label: "Promoções & Ofertas", desc: "Cupons, cashback e oportunidades exclusivas", icon: "🎁" },
           ].map((cat) => (
-            <div key={cat.id} className="flex items-center justify-between py-1">
-              <div className="space-y-0.5">
-                <Label htmlFor={cat.id} className="text-sm">{cat.label}</Label>
-                <p className="text-[11px] text-muted-foreground">{cat.desc}</p>
+            <div key={cat.id} className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-muted/30 transition-colors">
+              <div className="flex items-center gap-3">
+                <span className="text-lg" role="img" aria-label={cat.label}>{cat.icon}</span>
+                <div className="space-y-0.5">
+                  <Label htmlFor={cat.id} className="text-sm cursor-pointer">{cat.label}</Label>
+                  <p className="text-[11px] text-muted-foreground">{cat.desc}</p>
+                </div>
               </div>
               <Switch
                 id={cat.id}
