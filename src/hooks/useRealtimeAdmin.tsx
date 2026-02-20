@@ -33,7 +33,7 @@ export function useRealtimeAdmin() {
       // Order status changes
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "orders", filter: "current_status=neq.current_status" },
+        { event: "UPDATE", schema: "public", table: "orders" },
         () => {
           queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
           queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
