@@ -314,7 +314,7 @@ export function DashboardMetrics() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {metrics.funnelData.map((item, index) => {
                 const prevValue = index > 0 ? metrics.funnelData[index - 1].value : item.value;
                 const funnelConversionRate = prevValue > 0 ? ((item.value / prevValue) * 100).toFixed(0) : "100";

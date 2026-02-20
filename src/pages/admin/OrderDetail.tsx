@@ -568,7 +568,7 @@ const OrderDetail = () => {
         <TabsContent value="orcamento">
           <BudgetTab
             order={order}
-            onUpdate={() => window.location.reload()}
+            onUpdate={fetchOrder}
           />
         </TabsContent>
 

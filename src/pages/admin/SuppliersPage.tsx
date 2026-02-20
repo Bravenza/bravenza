@@ -260,7 +260,8 @@ export default function SuppliersPage() {
         </Button>
       </div>
 
-      <Card className="card-premium">
+      {/* Desktop Table */}
+      <Card className="card-premium hidden md:block">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -381,6 +382,66 @@ export default function SuppliersPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Mobile Cards */}
+      <div className="md:hidden space-y-3">
+        {suppliers.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground card-premium rounded-lg">
+            Nenhum fornecedor cadastrado
+          </div>
+        ) : (
+          suppliers.map((supplier) => (
+            <Card key={supplier.id} className="card-premium">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-primary" />
+                    <div>
+                      <p className="font-medium">{supplier.name}</p>
+                      <Badge variant="outline" className="mt-1">{supplier.country}</Badge>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Switch
+                      checked={supplier.is_active}
+                      onCheckedChange={() => handleToggleActive(supplier.id, supplier.is_active)}
+                    />
+                  </div>
+                </div>
+                {supplier.contact_name && (
+                  <p className="text-sm text-muted-foreground mb-1">{supplier.contact_name}</p>
+                )}
+                {supplier.specialties && supplier.specialties.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {supplier.specialties.slice(0, 4).map((spec, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">{spec}</Badge>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <div className="flex items-center gap-3">
+                    {supplier.average_shipping_days && <span>{supplier.average_shipping_days} dias</span>}
+                    {supplier.rating && (
+                      <span className="flex items-center gap-1">
+                        <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                        {supplier.rating.toFixed(1)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(supplier)}>
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleteId(supplier.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
 
       {/* Dialog for adding/editing supplier */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

@@ -339,8 +339,8 @@ export default function ReviewsPage() {
         </CardContent>
       </Card>
 
-      {/* Reviews Table */}
-      <Card className="card-premium">
+      {/* Desktop Reviews Table */}
+      <Card className="card-premium hidden md:block">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -420,50 +420,21 @@ export default function ReviewsPage() {
                     <TableCell>
                       <div className="flex justify-end gap-1">
                         {!review.is_approved ? (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleApprove(review.id, true)}
-                            title="Aprovar"
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => handleApprove(review.id, true)} title="Aprovar">
                             <Check className="h-4 w-4 text-green-500" />
                           </Button>
                         ) : (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleApprove(review.id, false)}
-                            title="Reprovar"
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => handleApprove(review.id, false)} title="Reprovar">
                             <X className="h-4 w-4 text-yellow-500" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleToggleFeatured(review.id, review.is_featured)}
-                          title={review.is_featured ? "Remover destaque" : "Destacar"}
-                        >
-                          <Award
-                            className={`h-4 w-4 ${
-                              review.is_featured ? "fill-primary text-primary" : ""
-                            }`}
-                          />
+                        <Button variant="ghost" size="icon" onClick={() => handleToggleFeatured(review.id, review.is_featured)} title={review.is_featured ? "Remover destaque" : "Destacar"}>
+                          <Award className={`h-4 w-4 ${review.is_featured ? "fill-primary text-primary" : ""}`} />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenReplyDialog(review)}
-                          title="Responder"
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => handleOpenReplyDialog(review)} title="Responder">
                           <Reply className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeleteId(review.id)}
-                          title="Excluir"
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => setDeleteId(review.id)} title="Excluir">
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
@@ -475,6 +446,69 @@ export default function ReviewsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Mobile Review Cards */}
+      <div className="md:hidden space-y-3">
+        {filteredReviews.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground card-premium rounded-lg">
+            <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            Nenhuma avaliação encontrada
+          </div>
+        ) : (
+          filteredReviews.map((review) => (
+            <Card key={review.id} className="card-premium">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <p className="font-medium">{review.client_name}</p>
+                    <code className="text-xs bg-secondary px-2 py-0.5 rounded">{review.order_id}</code>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <Badge
+                      variant={review.is_approved ? "default" : "secondary"}
+                      className={review.is_approved ? "bg-green-500/20 text-green-400" : ""}
+                    >
+                      {review.is_approved ? "Aprovada" : "Pendente"}
+                    </Badge>
+                    {review.is_featured && (
+                      <Badge className="bg-primary/20 text-primary">
+                        <Award className="h-3 w-3 mr-1" />
+                        Destaque
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                <div className="mb-2">{renderStars(review.rating)}</div>
+                {review.comment && (
+                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{review.comment}</p>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {format(new Date(review.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                  </span>
+                  <div className="flex gap-1">
+                    {!review.is_approved ? (
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleApprove(review.id, true)}>
+                        <Check className="h-4 w-4 text-green-500" />
+                      </Button>
+                    ) : (
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleApprove(review.id, false)}>
+                        <X className="h-4 w-4 text-yellow-500" />
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenReplyDialog(review)}>
+                      <Reply className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleteId(review.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
 
       {/* Reply Dialog */}
       <Dialog open={replyDialogOpen} onOpenChange={setReplyDialogOpen}>
