@@ -496,22 +496,27 @@ export function VaultClubTab({
         </Card>
       </div>
 
-      {/* Achievements Tracker */}
+      {/* Achievements Tracker — Premium */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Award className="h-4 w-4 text-primary" />
             Conquistas
           </CardTitle>
-          <p className="text-xs text-muted-foreground">
-            {badges.length} de {ALL_ACHIEVEMENTS.length} desbloqueadas
-          </p>
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-xs text-muted-foreground">
+              {badges.length} de {ALL_ACHIEVEMENTS.length} desbloqueadas
+            </p>
+            <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
+              {Math.round((badges.length / ALL_ACHIEVEMENTS.length) * 100)}%
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="mb-3">
+          <div className="mb-4">
             <Progress
               value={(badges.length / ALL_ACHIEVEMENTS.length) * 100}
-              className="h-2"
+              className="h-2.5"
             />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -524,33 +529,43 @@ export function VaultClubTab({
               return (
                 <motion.div
                   key={achievement.type}
-                  initial={{ opacity: 0, scale: 0.9 }}
+                  initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.03 }}
+                  transition={{ delay: index * 0.04, type: "spring", stiffness: 200, damping: 15 }}
+                  whileHover={earned ? { scale: 1.05, y: -2 } : undefined}
                   className={cn(
-                    "p-4 rounded-xl border text-center transition-all",
+                    "relative p-4 rounded-xl border text-center transition-all cursor-default group",
                     earned
-                      ? "bg-gradient-to-br from-primary/10 to-transparent border-primary/30"
-                      : "bg-muted/10 border-border/20 opacity-50 grayscale"
+                      ? "bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border-primary/40 shadow-[0_0_15px_-3px_hsl(var(--primary)/0.15)]"
+                      : "bg-muted/10 border-border/20 opacity-40 grayscale"
                   )}
                 >
+                  {/* Golden glow ring for earned */}
+                  {earned && (
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  )}
                   <div
                     className={cn(
-                      "h-10 w-10 rounded-full flex items-center justify-center mx-auto mb-2",
-                      earned ? "bg-primary/20" : "bg-muted/30"
+                      "relative h-12 w-12 rounded-full flex items-center justify-center mx-auto mb-2.5 transition-all",
+                      earned
+                        ? "bg-gradient-to-br from-primary/30 to-primary/10 shadow-[0_0_12px_-2px_hsl(var(--primary)/0.3)]"
+                        : "bg-muted/30"
                     )}
                   >
                     <AchIcon
                       className={cn(
-                        "h-5 w-5",
-                        earned ? "text-primary" : "text-muted-foreground"
+                        "h-5 w-5 transition-transform",
+                        earned ? "text-primary group-hover:scale-110" : "text-muted-foreground"
                       )}
                     />
+                    {earned && (
+                      <CheckCircle2 className="absolute -bottom-0.5 -right-0.5 h-4 w-4 text-primary bg-card rounded-full" />
+                    )}
                   </div>
-                  <p className="text-sm font-medium">{achievement.name}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">
+                  <p className={cn("text-sm font-semibold", earned ? "text-foreground" : "text-muted-foreground")}>{achievement.name}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed">
                     {earned
-                      ? `Conquistado em ${new Date(earned.earned_at).toLocaleDateString("pt-BR")}`
+                      ? new Date(earned.earned_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
                       : achievement.hint}
                   </p>
                 </motion.div>
