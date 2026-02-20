@@ -17,6 +17,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ORDER_STATUS_LABELS, formatDate } from "@/lib/constants";
 import { DashboardMetrics } from "@/components/admin/DashboardMetrics";
+import { AdvancedFinanceDashboard } from "@/components/admin/AdvancedFinanceDashboard";
+import { ClientHeatmap } from "@/components/admin/ClientHeatmap";
 
 interface DashboardStats {
   total: number;
@@ -160,6 +162,8 @@ const AdminDashboard = () => {
         <TabsList>
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="metrics">Métricas Detalhadas</TabsTrigger>
+          <TabsTrigger value="finance">Financeiro Avançado</TabsTrigger>
+          <TabsTrigger value="heatmap">Mapa de Clientes</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -332,6 +336,14 @@ const AdminDashboard = () => {
 
         <TabsContent value="metrics">
           <DashboardMetrics />
+        </TabsContent>
+
+        <TabsContent value="finance">
+          <AdvancedFinanceDashboard />
+        </TabsContent>
+
+        <TabsContent value="heatmap">
+          <ClientHeatmap />
         </TabsContent>
       </Tabs>
     </div>
