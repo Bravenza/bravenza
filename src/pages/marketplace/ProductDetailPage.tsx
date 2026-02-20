@@ -31,6 +31,7 @@ import { ProductPriceBlock } from "@/components/marketplace/ProductPriceBlock";
 import { AuthenticityBadge } from "@/components/marketplace/AuthenticityBadge";
 import { PriceSparkline } from "@/components/marketplace/PriceSparkline";
 import { SizePriceGrid } from "@/components/marketplace/SizePriceGrid";
+import { PriceComparator } from "@/components/marketplace/PriceComparator";
 import { RetailComparison } from "@/components/marketplace/RetailComparison";
 import { StickyBuyBar } from "@/components/marketplace/StickyBuyBar";
 import { conditionLabels, conditionColors, normalizeShippingMode } from "@/lib/marketplace-constants";
@@ -480,6 +481,19 @@ export default function ProductDetailPage() {
           )}
         </div>
 
+        {/* ===== PRICE COMPARATOR ===== */}
+        {sizes.length >= 2 && (
+          <div className="mt-14">
+            <PriceComparator
+              allOffers={allOffers}
+              sizes={sizes}
+              retailPrice={product.retail_price}
+              selectedSize={selectedSize}
+              onSelectSize={setSelectedSize}
+            />
+          </div>
+        )}
+
         {/* ===== SELLER OFFERS SECTION ===== */}
         <div className="mt-14">
           <div className="flex items-center justify-between mb-6">
@@ -589,6 +603,7 @@ export default function ProductDetailPage() {
         }}
         onRefreshComments={() => product && fetchComments(product.id)}
         currentUserName={profile?.full_name}
+        buyerCpf={cpf}
       />
 
       <MarketplaceCheckoutDialog

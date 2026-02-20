@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Heart, ShieldCheck, Eye, Star, Truck, Package, ShoppingCart, User, ChevronLeft, ChevronRight, Shield, Clock, Verified } from "lucide-react";
+import { Heart, ShieldCheck, Eye, Star, Truck, Package, ShoppingCart, User, ChevronLeft, ChevronRight, Shield, Clock, Verified, MessageCircle } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -12,6 +12,7 @@ import type { MarketplaceListing } from "@/hooks/useMarketplace";
 import { OfferDialog } from "./OfferDialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProductComments, type ProductComment } from "@/components/marketplace/ProductComments";
+import { MarketplaceChatDialog } from "./MarketplaceChatDialog";
 
 const conditionLabels: Record<string, string> = {
   novo: "Novo",
@@ -42,6 +43,7 @@ interface ListingDetailSheetProps {
   onSubmitComment?: (content: string, parentId?: string) => Promise<boolean>;
   onRefreshComments?: () => void;
   currentUserName?: string;
+  buyerCpf?: string;
 }
 
 export function ListingDetailSheet({
@@ -58,6 +60,7 @@ export function ListingDetailSheet({
   onSubmitComment,
   onRefreshComments,
   currentUserName,
+  buyerCpf,
 }: ListingDetailSheetProps) {
   const [activePhoto, setActivePhoto] = useState(0);
 
@@ -355,19 +358,35 @@ export function ListingDetailSheet({
 
           {/* Action buttons */}
           {!isOwnListing && (
-            <div className="flex gap-2 pt-2 sticky bottom-0 bg-card pb-safe">
-              <Button
-                className="flex-1 btn-gold gap-2 h-12 text-sm font-bold"
-                onClick={() => onBuy?.(listing)}
-              >
-                <ShoppingCart className="h-4 w-4" />
-                Comprar — R$ {totalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
-              </Button>
-              {onMakeOffer && (
-                <OfferDialog
+            <div className="space-y-2 pt-2 sticky bottom-0 bg-card pb-safe">
+              <div className="flex gap-2">
+                <Button
+                  className="flex-1 btn-gold gap-2 h-12 text-sm font-bold"
+                  onClick={() => onBuy?.(listing)}
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  Comprar — R$ {totalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
+                </Button>
+                {onMakeOffer && (
+                  <OfferDialog
+                    listingId={listing.id}
+                    listingPrice={listing.price}
+                    onSubmit={onMakeOffer}
+                  />
+                )}
+              </div>
+              {buyerCpf && currentUserName && (
+                <MarketplaceChatDialog
                   listingId={listing.id}
-                  listingPrice={listing.price}
-                  onSubmit={onMakeOffer}
+                  listingTitle={listing.title}
+                  clientCpf={buyerCpf}
+                  clientName={currentUserName}
+                  trigger={
+                    <Button variant="outline" className="w-full gap-2 text-xs h-9">
+                      <MessageCircle className="h-3.5 w-3.5" />
+                      Perguntar ao vendedor
+                    </Button>
+                  }
                 />
               )}
             </div>
