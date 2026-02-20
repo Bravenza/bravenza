@@ -1,14 +1,14 @@
 // Marketplace Hub - All marketplace actions
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const ch = {
+const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-client-cpf, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
-function j(d: unknown, s = 200) {
-  return new Response(JSON.stringify(d), { status: s, headers: { ...ch, "Content-Type": "application/json" } });
+function jsonResponse(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 }
 
 // Actions that do NOT require authentication (public browsing)
@@ -31,7 +31,6 @@ async function resolveAuthCpf(
 
   const token = authHeader.replace("Bearer ", "");
 
-  // Use anon client to validate the JWT (not service role)
   const anonClient = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_ANON_KEY")!,
@@ -45,7 +44,6 @@ async function resolveAuthCpf(
 
   const userId = data.user.id;
 
-  // Lookup CPF from client_profiles
   const { data: profile, error: profileError } = await sb
     .from("client_profiles")
     .select("cpf")
@@ -59,34 +57,37 @@ async function resolveAuthCpf(
   return { cpf: profile.cpf, error: null };
 }
 
-async function gm(sb: any, c: string) {
-  const { data } = await sb.from("vault_members").select("id").eq("client_cpf", c).single();
+/** Get vault member by CPF */
+async function getMember(sb: any, cpf: string) {
+  const { data } = await sb.from("vault_members").select("id").eq("client_cpf", cpf).single();
   return data;
 }
 
-async function gs(sb: any, m: string) {
-  const { data } = await sb.from("vault_seller_profiles").select("*").eq("member_id", m).maybeSingle();
+/** Get seller profile by member ID */
+async function getSellerProfile(sb: any, memberId: string) {
+  const { data } = await sb.from("vault_seller_profiles").select("*").eq("member_id", memberId).maybeSingle();
   return data;
 }
 
-async function nt(sb: any, t: string, m: string, c: string, ri?: string, rt?: string) {
+/** Create notification for a client */
+async function notify(sb: any, title: string, message: string, clientCpf: string, refId?: string, refType?: string) {
   try {
     await sb.from("notifications").insert({
-      title: t, message: m, target: "client", target_client_cpf: c,
-      type: "info", reference_id: ri || null, reference_type: rt || "marketplace",
+      title, message, target: "client", target_client_cpf: clientCpf,
+      type: "info", reference_id: refId || null, reference_type: refType || "marketplace",
     });
   } catch (_) {}
 }
 
-// Email helper: get member name+email by CPF
-async function ge(sb: any, cpf: string): Promise<{ name: string; email: string } | null> {
+/** Get member name + email by CPF */
+async function getMemberEmail(sb: any, cpf: string): Promise<{ name: string; email: string } | null> {
   const { data } = await sb.from("vault_members").select("client_name, client_email").eq("client_cpf", cpf).maybeSingle();
   if (!data?.client_email) return null;
   return { name: data.client_name, email: data.client_email };
 }
 
-// Email helper: send marketplace email via edge function
-async function em(type: string, data: Record<string, any>) {
+/** Send marketplace email via edge function (fire-and-forget) */
+async function sendMarketplaceEmail(type: string, data: Record<string, any>) {
   try {
     const baseUrl = Deno.env.get("SUPABASE_URL");
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -99,11 +100,12 @@ async function em(type: string, data: Record<string, any>) {
   } catch (e) { console.error("[mk-hub] email error:", e); }
 }
 
-function gc() {
-  const c = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let r = "MKT-";
-  for (let i = 0; i < 6; i++) r += c.charAt(Math.floor(Math.random() * c.length));
-  return r;
+/** Generate marketplace order code */
+function generateOrderCode() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "MKT-";
+  for (let i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+  return code;
 }
 
 Deno.serve(async (req) => {
