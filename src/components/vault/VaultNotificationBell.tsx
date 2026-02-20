@@ -52,11 +52,11 @@ export function VaultNotificationBell({
 
     switch (notification.reference_type) {
       case "search":
-        return `/vault/app/wishlist`;
+        return `/minha-conta?tab=wishlist`;
       case "match_room":
         return `/vault/app/match/${notification.reference_id}`;
       case "vault_item":
-        return `/vault/app`;
+        return `/minha-conta?tab=vault`;
       default:
         return null;
     }

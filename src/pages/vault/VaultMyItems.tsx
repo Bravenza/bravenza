@@ -71,7 +71,7 @@ export default function VaultMyItems() {
           Quando você concluir compras pelo Vault Club, seus sneakers aparecerão aqui com Vault ID e certificado.
         </p>
         <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
-          <Link to="/vault/app/wishlist">
+          <Link to="/minha-conta?tab=wishlist">
             Criar wishlist
           </Link>
         </Button>

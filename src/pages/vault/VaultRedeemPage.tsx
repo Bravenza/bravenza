@@ -175,7 +175,7 @@ export default function VaultRedeemPage() {
             Sua conta foi criada com sucesso. Faça login para começar a usar o clube.
           </p>
           <Button asChild className="btn-gold">
-            <Link to="/cliente/login">
+            <Link to="/entrar">
               Fazer login
             </Link>
           </Button>
