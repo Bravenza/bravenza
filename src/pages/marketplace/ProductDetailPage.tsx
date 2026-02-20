@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
+import { Helmet } from "react-helmet-async";
 import { saveRecentlyViewed } from "@/components/marketplace/home/RecentlyViewedSection";
 import { useParams, useNavigate } from "react-router-dom";
+import { ProductSchema, BreadcrumbSchema } from "@/components/seo/StructuredData";
 import {
   ArrowLeft, ShieldCheck, Share2,
   ChevronRight, Package, Tag, Calendar,
@@ -259,8 +261,44 @@ export default function ProductDetailPage() {
   const images = product.images?.length > 0 ? product.images : ["/placeholder.svg"];
   const formattedName = formatProductName(product.brand, product.model);
 
+  const canonicalUrl = `https://bravenza.com.br/marketplace/${product.slug}`;
+
   return (
     <div className="min-h-screen bg-[#f5f5f7] theme-light">
+      {/* SEO */}
+      <Helmet>
+        <title>{`${formattedName} | BRAVENZA Marketplace`}</title>
+        <meta name="description" content={`Compre ${formattedName}${product.colorway ? ` (${product.colorway})` : ""} autenticado no Marketplace BRAVENZA. ${product.lowest_price ? `A partir de R$ ${product.lowest_price.toLocaleString("pt-BR")}.` : ""} Inspeção e certificado inclusos.`} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:title" content={`${formattedName} — BRAVENZA`} />
+        <meta property="og:description" content={`Sneaker autenticado no marketplace BRAVENZA.${product.lowest_price ? ` A partir de R$ ${product.lowest_price.toLocaleString("pt-BR")}.` : ""}`} />
+        <meta property="og:type" content="product" />
+        <meta property="og:url" content={canonicalUrl} />
+        {images[0] && images[0] !== "/placeholder.svg" && <meta property="og:image" content={images[0]} />}
+        <meta property="product:price:amount" content={String(product.lowest_price || "")} />
+        <meta property="product:price:currency" content="BRL" />
+      </Helmet>
+
+      <ProductSchema
+        name={formattedName}
+        brand={product.brand}
+        description={product.description || `${formattedName} — sneaker autenticado no marketplace BRAVENZA.`}
+        image={images[0] !== "/placeholder.svg" ? images[0] : undefined}
+        sku={product.sku || undefined}
+        price={product.lowest_price || undefined}
+        condition={allOffers.length > 0 ? allOffers[0].condition : undefined}
+        url={canonicalUrl}
+        ratingValue={reviewsAverage || undefined}
+        reviewCount={reviewsTotal || undefined}
+        offersCount={product.total_offers || undefined}
+      />
+
+      <BreadcrumbSchema items={[
+        { name: "Marketplace", url: "https://bravenza.com.br/marketplace" },
+        { name: product.brand, url: `https://bravenza.com.br/marketplace?q=${encodeURIComponent(product.brand)}` },
+        { name: product.model, url: canonicalUrl },
+      ]} />
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24">
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-6">
