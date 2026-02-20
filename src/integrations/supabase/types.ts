@@ -476,6 +476,36 @@ export type Database = {
           },
         ]
       }
+      marketplace_loyalty_points: {
+        Row: {
+          action: string
+          created_at: string
+          description: string | null
+          id: string
+          points: number
+          reference_id: string | null
+          user_cpf: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          points?: number
+          reference_id?: string | null
+          user_cpf: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          points?: number
+          reference_id?: string | null
+          user_cpf?: string
+        }
+        Relationships: []
+      }
       marketplace_offers: {
         Row: {
           activated_at: string | null
@@ -719,6 +749,7 @@ export type Database = {
           product_id: string
           product_quality: number | null
           rating: number
+          review_photos: string[] | null
           reviewer_cpf: string
           reviewer_name: string | null
           shipping_speed: number | null
@@ -734,6 +765,7 @@ export type Database = {
           product_id: string
           product_quality?: number | null
           rating: number
+          review_photos?: string[] | null
           reviewer_cpf: string
           reviewer_name?: string | null
           shipping_speed?: number | null
@@ -749,6 +781,7 @@ export type Database = {
           product_id?: string
           product_quality?: number | null
           rating?: number
+          review_photos?: string[] | null
           reviewer_cpf?: string
           reviewer_name?: string | null
           shipping_speed?: number | null
@@ -871,6 +904,35 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "marketplace_seller_badges_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "vault_seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_seller_follows: {
+        Row: {
+          created_at: string
+          follower_cpf: string
+          id: string
+          seller_id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_cpf: string
+          id?: string
+          seller_id: string
+        }
+        Update: {
+          created_at?: string
+          follower_cpf?: string
+          id?: string
+          seller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_seller_follows_seller_id_fkey"
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "vault_seller_profiles"
@@ -3632,6 +3694,7 @@ export type Database = {
           created_at: string
           current_fee_percent: number
           dispute_rate: number | null
+          followers_count: number
           full_name: string | null
           id: string
           id_back_url: string | null
@@ -3682,6 +3745,7 @@ export type Database = {
           created_at?: string
           current_fee_percent?: number
           dispute_rate?: number | null
+          followers_count?: number
           full_name?: string | null
           id?: string
           id_back_url?: string | null
@@ -3732,6 +3796,7 @@ export type Database = {
           created_at?: string
           current_fee_percent?: number
           dispute_rate?: number | null
+          followers_count?: number
           full_name?: string | null
           id?: string
           id_back_url?: string | null
@@ -4692,6 +4757,7 @@ export type Database = {
           user_reactions: string[]
         }[]
       }
+      get_loyalty_balance: { Args: { p_cpf: string }; Returns: number }
       get_marketplace_fee_percent: {
         Args: { sales_count: number }
         Returns: number
