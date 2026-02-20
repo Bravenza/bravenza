@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeHtml } from "@/lib/sanitize";
-import { useClientAuth } from "@/hooks/useClientAuth";
+import { useClientSession } from "@/hooks/useClientSession";
 
 interface IntelPost {
   id: string;
@@ -25,7 +25,8 @@ const typeConfig = {
 };
 
 export default function VaultIntel() {
-  const { session } = useClientAuth();
+  const { profile } = useClientSession();
+  const session = profile ? { cpf: profile.cpf, client_name: profile.full_name } : null;
   const [posts, setPosts] = useState<IntelPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");

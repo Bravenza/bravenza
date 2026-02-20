@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useClientAuth } from "@/hooks/useClientAuth";
+import { useClientSession } from "@/hooks/useClientSession";
 
 interface CommunityPost {
   id: string;
@@ -47,7 +47,8 @@ const tierColors = {
 };
 
 export default function VaultCommunity() {
-  const { session } = useClientAuth();
+  const { profile } = useClientSession();
+  const session = profile ? { cpf: profile.cpf, client_name: profile.full_name } : null;
   const context = useOutletContext<{ member: VaultMember | null; refreshMember: () => void }>();
   const { toast } = useToast();
   

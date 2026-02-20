@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useClientAuth } from "@/hooks/useClientAuth";
+import { useClientSession } from "@/hooks/useClientSession";
 
 interface WishlistItem {
   id: string;
@@ -67,7 +67,8 @@ const searchStatusConfig: Record<string, { label: string; color: string; bgColor
 };
 
 export default function VaultWishlist() {
-  const { session } = useClientAuth();
+  const { profile } = useClientSession();
+  const session = profile ? { cpf: profile.cpf, client_name: profile.full_name } : null;
   const context = useOutletContext<{ member: VaultMember | null }>();
   const { toast } = useToast();
   
