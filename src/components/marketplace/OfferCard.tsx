@@ -1,4 +1,5 @@
 import { Star, Verified, ChevronRight, Receipt } from "lucide-react";
+import { SellerReputationBadges } from "@/components/marketplace/SellerReputationBadges";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -66,12 +67,6 @@ export function OfferCard({ offer, isBest, productImages, onBuy, onClick }: Offe
             {sellerName[0]}
           </div>
           <span className="text-xs font-semibold text-foreground">{sellerName}</span>
-          {offer.seller?.total_sales_count && offer.seller.total_sales_count > 0 ? (
-            <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
-              <Verified className="h-3 w-3 text-primary" />
-              {offer.seller.total_sales_count}
-            </span>
-          ) : null}
           {offer.seller?.average_rating && offer.seller.average_rating > 0 ? (
             <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground ml-auto">
               <Star className="h-3 w-3 text-primary fill-primary" />
@@ -79,6 +74,14 @@ export function OfferCard({ offer, isBest, productImages, onBuy, onClick }: Offe
             </span>
           ) : null}
         </div>
+        {/* Seller reputation */}
+        {offer.seller && (
+          <SellerReputationBadges
+            totalSales={offer.seller.total_sales_count || 0}
+            averageRating={offer.seller.average_rating}
+            size="sm"
+          />
+        )}
 
         {/* Badges */}
         <div className="flex flex-wrap gap-1.5">

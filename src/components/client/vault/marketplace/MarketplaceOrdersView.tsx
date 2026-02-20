@@ -16,6 +16,7 @@ import type { MarketplaceOrder } from "@/hooks/useMarketplace";
 import { MarketplaceChatDialog } from "./MarketplaceChatDialog";
 import { DisputeDialog } from "./DisputeDialog";
 import { ContestationBanner } from "@/components/marketplace/ContestationBanner";
+import { SharePurchaseButton } from "@/components/marketplace/SharePurchaseButton";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   pending_payment: { label: "Aguardando pagamento", color: "bg-warning/20 text-warning", icon: Clock },
@@ -226,6 +227,15 @@ export function MarketplaceOrdersView({
                       <Star className="h-3 w-3 fill-primary text-primary" />
                       {order.buyer_rating}/5
                     </div>
+                  )}
+
+                  {/* Share purchase (completed orders) */}
+                  {!isSale && ["delivered", "completed", "payout_released"].includes(order.status) && (
+                    <SharePurchaseButton
+                      productName={order.listing?.title || "sneaker"}
+                      orderCode={order.order_code}
+                      className="text-xs"
+                    />
                   )}
 
                   {/* Dispute status */}

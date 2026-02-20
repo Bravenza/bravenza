@@ -8,6 +8,7 @@ import {
   ChevronRight, Package, Tag, Calendar,
   Palette, Hash, DollarSign, Info, ShoppingBag
 } from "lucide-react";
+import { SocialProofViewers } from "@/components/marketplace/SocialProofViewers";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -343,8 +344,9 @@ export default function ProductDetailPage() {
                 {product.colorway && (
                   <p className="text-sm text-muted-foreground mt-1">{product.colorway}</p>
                 )}
-                <div className="mt-3">
+                <div className="mt-3 flex items-center gap-2 flex-wrap">
                   <AuthenticityBadge />
+                  <SocialProofViewers productId={product.id} baseViewers={product.total_offers} />
                 </div>
               </div>
 
