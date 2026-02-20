@@ -371,19 +371,21 @@ const OrdersList = () => {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Mostrando {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} de {totalCount}
-        </p>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setPage(p => p - 1)} disabled={page === 0}>
-            Anterior
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1}>
-            Próxima
-          </Button>
+      {totalCount > 0 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Mostrando {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} de {totalCount}
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPage(p => p - 1)} disabled={page === 0}>
+              Anterior
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1}>
+              Próxima
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

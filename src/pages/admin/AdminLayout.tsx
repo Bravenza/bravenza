@@ -36,7 +36,7 @@ import { NotificationBell } from "@/components/admin/NotificationBell";
 import { GlobalSearch } from "@/components/admin/GlobalSearch";
 import { ReportPDFGenerator } from "@/components/admin/ReportPDFGenerator";
 import { Separator } from "@/components/ui/separator";
-import { Footer } from "@/components/home/Footer";
+
 import { useRealtimeAdmin } from "@/hooks/useRealtimeAdmin";
 
 const navItems = [
@@ -90,17 +90,22 @@ const AdminLayout = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col theme-light">
-        <div className="w-64 border-r border-border/30 p-4 bg-card/50">
+      <div className="min-h-screen bg-background flex theme-light">
+        <div className="hidden lg:block w-64 border-r border-border/30 p-4 bg-card/50">
           <Skeleton className="h-8 w-32 mb-8" />
           <div className="space-y-2">
-            {[1, 2, 3].map((i) => (
+            {[1, 2, 3, 4, 5].map((i) => (
               <Skeleton key={i} className="h-10 w-full" />
             ))}
           </div>
         </div>
-        <div className="flex-1 p-8">
-          <Skeleton className="h-8 w-48 mb-6" />
+        <div className="flex-1 p-4 md:p-8">
+          <Skeleton className="h-10 w-48 mb-6" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-28" />
+            ))}
+          </div>
           <Skeleton className="h-64 w-full" />
         </div>
       </div>
@@ -262,7 +267,6 @@ const AdminLayout = () => {
         </main>
       </div>
       </div>
-      <Footer />
     </div>
   );
 };

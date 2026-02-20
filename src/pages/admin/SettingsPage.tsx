@@ -142,7 +142,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="geral" className="space-y-6">
-        <TabsList className="bg-muted/50 p-1 h-auto flex-wrap">
+        <TabsList className="bg-muted/50 p-1 h-auto flex-wrap overflow-x-auto">
           <TabsTrigger value="geral" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             Geral
@@ -279,13 +279,13 @@ function ReferralSettingsCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center justify-between p-4 border rounded-lg bg-card">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-lg bg-card">
           <div className="flex items-center gap-4">
-            <div className="p-2 bg-muted rounded-lg">
+            <div className="p-2 bg-muted rounded-lg shrink-0">
               <Percent className="h-6 w-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-semibold">Cashback por Indicação</h3>
                 <Badge variant="default">
                   <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -297,7 +297,7 @@ function ReferralSettingsCard() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : isEditing ? (
@@ -348,13 +348,13 @@ function ApiIntegrationCard({ config }: { config: ApiConfig }) {
   const hasAllSecrets = missingSecrets.length === 0 && isConfiguredInBackend;
 
   return (
-    <div className="flex items-center justify-between p-4 border rounded-lg bg-card">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border rounded-lg bg-card">
       <div className="flex items-center gap-4">
-        <div className="p-2 bg-muted rounded-lg">
+        <div className="p-2 bg-muted rounded-lg shrink-0">
           {config.icon}
         </div>
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-semibold">{config.name}</h3>
             <Badge variant={hasAllSecrets ? "default" : "secondary"}>
               {hasAllSecrets ? (
@@ -380,7 +380,7 @@ function ApiIntegrationCard({ config }: { config: ApiConfig }) {
           )}
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
         {config.docsUrl && (
           <Button variant="ghost" size="sm" asChild>
             <a href={config.docsUrl} target="_blank" rel="noopener noreferrer">

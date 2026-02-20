@@ -202,8 +202,8 @@ const UsersPage = () => {
         </Button>
       </div>
 
-      {/* Users table */}
-      <div className="card-premium overflow-hidden">
+      {/* Desktop Table */}
+      <div className="card-premium overflow-hidden hidden md:block">
         <Table>
           <TableHeader>
             <TableRow className="border-border hover:bg-transparent">
@@ -218,10 +218,7 @@ const UsersPage = () => {
           <TableBody>
             {users.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="text-center py-12 text-muted-foreground"
-                >
+                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
                   Nenhum usuário encontrado
                 </TableCell>
               </TableRow>
@@ -233,18 +230,12 @@ const UsersPage = () => {
                       <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                         <Users className="h-4 w-4 text-primary" />
                       </div>
-                      <span className="font-medium">
-                        {user.full_name || "Sem nome"}
-                      </span>
+                      <span className="font-medium">{user.full_name || "Sem nome"}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {user.email}
-                  </TableCell>
+                  <TableCell className="text-muted-foreground">{user.email}</TableCell>
                   <TableCell>
-                    <code className="text-xs bg-secondary px-2 py-1 rounded font-mono">
-                      {user.id}
-                    </code>
+                    <code className="text-xs bg-secondary px-2 py-1 rounded font-mono">{user.id}</code>
                   </TableCell>
                   <TableCell>
                     {user.role === "admin" ? (
@@ -256,17 +247,10 @@ const UsersPage = () => {
                       <Badge variant="secondary">Usuário</Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatDateTime(user.created_at)}
-                  </TableCell>
+                  <TableCell className="text-muted-foreground">{formatDateTime(user.created_at)}</TableCell>
                   <TableCell>
                     {user.role === "admin" && user.id !== currentUser?.id && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => setDeleteUserId(user.id)}
-                      >
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteUserId(user.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
@@ -276,6 +260,48 @@ const UsersPage = () => {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="md:hidden space-y-3">
+        {users.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground card-premium rounded-lg">
+            Nenhum usuário encontrado
+          </div>
+        ) : (
+          users.map((user) => (
+            <div key={user.id} className="card-premium p-4 rounded-lg">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Users className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium">{user.full_name || "Sem nome"}</p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                </div>
+                {user.role === "admin" ? (
+                  <Badge className="bg-primary/20 text-primary hover:bg-primary/30">
+                    <Shield className="mr-1 h-3 w-3" />
+                    Admin
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary">Usuário</Badge>
+                )}
+              </div>
+              <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">
+                <span>{formatDateTime(user.created_at)}</span>
+                {user.role === "admin" && user.id !== currentUser?.id && (
+                  <Button variant="ghost" size="sm" className="h-7 text-destructive hover:text-destructive" onClick={() => setDeleteUserId(user.id)}>
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Remover
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Add admin modal */}

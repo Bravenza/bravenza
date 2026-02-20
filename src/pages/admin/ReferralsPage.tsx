@@ -344,8 +344,8 @@ export default function ReferralsPage() {
         </CardContent>
       </Card>
 
-      {/* Referrals Table */}
-      <Card className="card-premium">
+      {/* Desktop Referrals Table */}
+      <Card className="card-premium hidden md:block">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -373,27 +373,14 @@ export default function ReferralsPage() {
                     <TableCell>
                       <div>
                         <p className="font-medium">{referral.referrer_name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {referral.referrer_email || "Sem email"}
-                        </p>
+                        <p className="text-xs text-muted-foreground">{referral.referrer_email || "Sem email"}</p>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <code className="bg-secondary px-2 py-1 rounded text-sm font-mono">
-                          {referral.referral_code}
-                        </code>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => handleCopyCode(referral.referral_code)}
-                        >
-                          {copiedCode === referral.referral_code ? (
-                            <Check className="h-3 w-3 text-green-500" />
-                          ) : (
-                            <Copy className="h-3 w-3" />
-                          )}
+                        <code className="bg-secondary px-2 py-1 rounded text-sm font-mono">{referral.referral_code}</code>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopyCode(referral.referral_code)}>
+                          {copiedCode === referral.referral_code ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
                         </Button>
                       </div>
                     </TableCell>
@@ -401,42 +388,23 @@ export default function ReferralsPage() {
                       {referral.referred_name ? (
                         <div>
                           <p className="font-medium">{referral.referred_name}</p>
-                          {referral.referred_order_id && (
-                            <p className="text-xs text-muted-foreground">
-                              Pedido: {referral.referred_order_id}
-                            </p>
-                          )}
+                          {referral.referred_order_id && <p className="text-xs text-muted-foreground">Pedido: {referral.referred_order_id}</p>}
                         </div>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
+                      ) : <span className="text-muted-foreground">-</span>}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="gap-1">
-                        <Percent className="h-3 w-3" />
-                        {referral.discount_percentage}%
-                      </Badge>
+                      <Badge variant="outline" className="gap-1"><Percent className="h-3 w-3" />{referral.discount_percentage}%</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge className={STATUS_COLORS[referral.status] || STATUS_COLORS.pending}>
-                        {STATUS_LABELS[referral.status] || referral.status}
-                      </Badge>
+                      <Badge className={STATUS_COLORS[referral.status] || STATUS_COLORS.pending}>{STATUS_LABELS[referral.status] || referral.status}</Badge>
                     </TableCell>
                     <TableCell>
-                      <p className="text-sm">
-                        {format(new Date(referral.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                      </p>
+                      <p className="text-sm">{format(new Date(referral.created_at), "dd/MM/yyyy", { locale: ptBR })}</p>
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-1">
                         {referral.status === "converted" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleMarkAsRewarded(referral.id)}
-                          >
-                            Aplicar Recompensa
-                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleMarkAsRewarded(referral.id)}>Aplicar Recompensa</Button>
                         )}
                       </div>
                     </TableCell>
@@ -447,6 +415,53 @@ export default function ReferralsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Mobile Referral Cards */}
+      <div className="md:hidden space-y-3">
+        {filteredReferrals.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground card-premium rounded-lg">
+            <Gift className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            Nenhuma indicação encontrada
+          </div>
+        ) : (
+          filteredReferrals.map((referral) => (
+            <Card key={referral.id} className="card-premium">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <p className="font-medium">{referral.referrer_name}</p>
+                    <p className="text-xs text-muted-foreground">{referral.referrer_email || "Sem email"}</p>
+                  </div>
+                  <Badge className={STATUS_COLORS[referral.status] || STATUS_COLORS.pending}>
+                    {STATUS_LABELS[referral.status] || referral.status}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2 mb-3">
+                  <code className="bg-secondary px-2 py-1 rounded text-sm font-mono">{referral.referral_code}</code>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopyCode(referral.referral_code)}>
+                    {copiedCode === referral.referral_code ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                  </Button>
+                  <Badge variant="outline" className="gap-1 ml-auto"><Percent className="h-3 w-3" />{referral.discount_percentage}%</Badge>
+                </div>
+                {referral.referred_name && (
+                  <div className="text-sm mb-2">
+                    <span className="text-muted-foreground">Indicado: </span>
+                    <span className="font-medium">{referral.referred_name}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{format(new Date(referral.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
+                  {referral.status === "converted" && (
+                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => handleMarkAsRewarded(referral.id)}>
+                      Recompensa
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
 
       {/* Create Referral Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
