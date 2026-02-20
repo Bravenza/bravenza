@@ -75,7 +75,7 @@ function BottomTabBarComponent({
       </AnimatePresence>
 
       {/* Primary tab bar */}
-      <nav className="border-t border-border/30 bg-background/95 backdrop-blur-xl safe-area-bottom">
+      <nav className="border-t border-border/30 bg-background/95 backdrop-blur-xl safe-area-bottom" aria-label="Navegação principal">
         <div className="flex items-stretch justify-around max-w-lg mx-auto">
           {visibleTabs.map((tab) => {
             const isActive =

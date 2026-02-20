@@ -262,7 +262,7 @@ export default function UnifiedDashboard() {
             </div>
 
             {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center gap-2">
+            <nav className="hidden md:flex items-center gap-2" aria-label="Seções do dashboard">
               <button
                 onClick={() => handleSectionChange("pedidos")}
                 className={cn(
