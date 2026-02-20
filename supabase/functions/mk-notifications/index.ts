@@ -202,19 +202,98 @@ Deno.serve(async (req) => {
     }
     results.expiry_warnings = expiryWarnings;
 
-    // ===== 5. RECORD SALE PRICES FOR ANALYTICS =====
-    // Update marketplace_offers sold_at when order is completed
+    // ===== 5. STALE LISTING REMINDERS =====
+    // Remind sellers with listings active for 14+ days with no views
+    console.log("[mk-notifications] Checking stale listings...");
+    const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+    
+    const { data: staleListings } = await sb.from("marketplace_offers")
+      .select("id, product_id, seller_id, price, size, created_at, views_count")
+      .eq("status", "active")
+      .lte("created_at", fourteenDaysAgo)
+      .lt("views_count", 5);
+
+    let staleReminders = 0;
+    for (const listing of (staleListings || [])) {
+      const { data: sl } = await sb.from("vault_seller_profiles")
+        .select("member_id")
+        .eq("id", listing.seller_id).maybeSingle();
+      if (!sl?.member_id) continue;
+      
+      const { data: member } = await sb.from("vault_members")
+        .select("client_cpf, client_name, client_email")
+        .eq("id", sl.member_id).maybeSingle();
+      if (!member) continue;
+
+      await notify(sb, "📉 Anúncio com poucas visualizações",
+        `Seu anúncio de R$ ${listing.price.toFixed(2)} está ativo há 14+ dias com poucas views. Considere reduzir o preço.`,
+        member.client_cpf, listing.id, "marketplace_stale_listing");
+
+      if (member.client_email) {
+        sendEmail("mk_stale_listing", {
+          recipient_name: member.client_name,
+          recipient_email: member.client_email,
+          listing_price: listing.price,
+          listing_views: listing.views_count,
+          days_active: Math.floor((Date.now() - new Date(listing.created_at).getTime()) / (1000 * 60 * 60 * 24)),
+        });
+      }
+      staleReminders++;
+    }
+    results.stale_reminders = staleReminders;
+
+    // ===== 6. SUBSCRIPTION EXPIRY ALERTS =====
+    // Warn sellers 3 days before subscription expires
+    console.log("[mk-notifications] Checking subscription expiry...");
+    const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+    
+    const { data: expiringSubs } = await sb.from("marketplace_subscriptions")
+      .select("id, seller_id, plan_id, current_period_end, status")
+      .eq("status", "active")
+      .not("current_period_end", "is", null)
+      .lte("current_period_end", threeDaysFromNow);
+
+    let subAlerts = 0;
+    for (const sub of (expiringSubs || [])) {
+      if (!sub.current_period_end || new Date(sub.current_period_end) <= now) continue;
+      
+      const { data: sl } = await sb.from("vault_seller_profiles")
+        .select("member_id")
+        .eq("id", sub.seller_id).maybeSingle();
+      if (!sl?.member_id) continue;
+      
+      const { data: member } = await sb.from("vault_members")
+        .select("client_cpf, client_name, client_email")
+        .eq("id", sl.member_id).maybeSingle();
+      if (!member) continue;
+
+      const expDate = new Date(sub.current_period_end).toLocaleDateString("pt-BR");
+      await notify(sb, "⏰ Plano expirando em breve",
+        `Seu plano ${sub.plan_id} expira em ${expDate}. Renove para manter seus benefícios!`,
+        member.client_cpf, sub.id, "marketplace_subscription");
+
+      if (member.client_email) {
+        sendEmail("mk_subscription_expiring", {
+          recipient_name: member.client_name,
+          recipient_email: member.client_email,
+          plan_name: sub.plan_id,
+          expires_at: expDate,
+        });
+      }
+      subAlerts++;
+    }
+    results.subscription_alerts = subAlerts;
+
+    // ===== 7. RECORD SALE PRICES FOR ANALYTICS =====
     console.log("[mk-notifications] Syncing completed sales for analytics...");
     const { data: completedOrders } = await sb.from("vault_marketplace_orders")
       .select("id, listing_id, sale_price, status")
       .in("status", ["completed", "payout_released"])
       .is("payout_released_at", null);
 
-    // Update product stats from completed sales
     let salesRecorded = 0;
     const productIds = new Set<string>();
     
-    // Get all completed order listing_ids → product_ids
     for (const order of (completedOrders || [])) {
       if (!order.listing_id) continue;
       const { data: listing } = await sb.from("vault_marketplace_listings")
@@ -224,7 +303,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update product stats (lowest_price, total_offers)
     for (const pid of productIds) {
       const { data: activeOffers } = await sb.from("marketplace_offers")
         .select("price").eq("product_id", pid).eq("status", "active");
