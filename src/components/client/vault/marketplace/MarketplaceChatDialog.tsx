@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, MessageCircle } from "lucide-react";
+import { Send, MessageCircle, ShieldCheck } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,8 +27,10 @@ interface ChatMessage {
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub`;
 
 interface MarketplaceChatDialogProps {
-  orderId: string;
-  orderCode: string;
+  orderId?: string;
+  orderCode?: string;
+  listingId?: string;
+  listingTitle?: string;
   clientCpf: string;
   clientName: string;
   trigger?: React.ReactNode;
@@ -36,6 +39,8 @@ interface MarketplaceChatDialogProps {
 export function MarketplaceChatDialog({
   orderId,
   orderCode,
+  listingId,
+  listingTitle,
   clientCpf,
   clientName,
   trigger,
@@ -46,11 +51,17 @@ export function MarketplaceChatDialog({
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const chatContext = orderId || listingId || "";
+  const chatLabel = orderCode || listingTitle || "Chat";
+  const isPrePurchase = !orderId && !!listingId;
+
   const fetchMessages = async () => {
     try {
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const headers = await getMarketplaceHeaders();
-      const params = new URLSearchParams({ action: "chat-messages", order_id: orderId });
+      const params = new URLSearchParams({ action: "chat-messages" });
+      if (orderId) params.set("order_id", orderId);
+      if (listingId) params.set("listing_id", listingId);
       const res = await fetch(`${FUNCTION_URL}?${params}`, { headers });
       const data = await res.json();
       setMessages(data.messages || []);
@@ -69,15 +80,19 @@ export function MarketplaceChatDialog({
   useEffect(() => {
     if (!open) return;
 
+    const filter = orderId
+      ? `order_id=eq.${orderId}`
+      : `listing_id=eq.${listingId}`;
+
     const channel = supabase
-      .channel(`marketplace-chat-${orderId}`)
+      .channel(`marketplace-chat-${chatContext}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "vault_marketplace_messages",
-          filter: `order_id=eq.${orderId}`,
+          filter,
         },
         (payload) => {
           setMessages((prev) => [...prev, payload.new as ChatMessage]);
@@ -88,7 +103,7 @@ export function MarketplaceChatDialog({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [open, orderId]);
+  }, [open, chatContext]);
 
   // Auto-scroll
   useEffect(() => {
@@ -103,14 +118,17 @@ export function MarketplaceChatDialog({
     try {
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const headers = await getMarketplaceHeaders();
+      const body: Record<string, string> = {
+        sender_name: clientName,
+        message: newMsg.trim(),
+      };
+      if (orderId) body.order_id = orderId;
+      if (listingId) body.listing_id = listingId;
+
       const res = await fetch(`${FUNCTION_URL}?action=send-message`, {
         method: "POST",
         headers,
-        body: JSON.stringify({
-          order_id: orderId,
-          sender_name: clientName,
-          message: newMsg.trim(),
-        }),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         setNewMsg("");
@@ -128,21 +146,42 @@ export function MarketplaceChatDialog({
         {trigger || (
           <Button variant="outline" size="sm" className="gap-1 text-xs">
             <MessageCircle className="h-3 w-3" />
-            Chat
+            {isPrePurchase ? "Perguntar" : "Chat"}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md flex flex-col max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle className="text-base">Chat - {orderCode}</DialogTitle>
+          <DialogTitle className="text-base flex items-center gap-2">
+            <MessageCircle className="h-4 w-4 text-primary" />
+            {isPrePurchase ? "Perguntar ao Vendedor" : `Chat - ${chatLabel}`}
+          </DialogTitle>
+          {isPrePurchase && (
+            <div className="flex items-center gap-1.5 mt-1">
+              <Badge variant="outline" className="text-[10px]">
+                <ShieldCheck className="h-2.5 w-2.5 mr-1" />
+                Mediado pela Bravenza
+              </Badge>
+            </div>
+          )}
         </DialogHeader>
 
         <ScrollArea className="flex-1 min-h-[300px] max-h-[400px] pr-4" ref={scrollRef}>
           <div className="space-y-3 py-2">
             {messages.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                Nenhuma mensagem ainda. Inicie a conversa!
-              </p>
+              <div className="text-center py-8">
+                <MessageCircle className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  {isPrePurchase
+                    ? "Faça uma pergunta ao vendedor sobre este produto"
+                    : "Nenhuma mensagem ainda. Inicie a conversa!"}
+                </p>
+                {isPrePurchase && (
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Dica: pergunte sobre condição, defeitos ou disponibilidade
+                  </p>
+                )}
+              </div>
             ) : (
               messages.map((msg) => {
                 const isOwn = msg.sender_cpf === clientCpf;
@@ -163,7 +202,7 @@ export function MarketplaceChatDialog({
                     >
                       {!isOwn && (
                         <p className="text-[10px] font-medium mb-0.5 opacity-70">
-                          {msg.is_admin ? "Admin" : msg.sender_name}
+                          {msg.is_admin ? "Bravenza" : msg.sender_name}
                         </p>
                       )}
                       <p className="whitespace-pre-line">{msg.message}</p>
@@ -182,7 +221,7 @@ export function MarketplaceChatDialog({
           <Input
             value={newMsg}
             onChange={(e) => setNewMsg(e.target.value)}
-            placeholder="Digite sua mensagem..."
+            placeholder={isPrePurchase ? "Sua pergunta..." : "Digite sua mensagem..."}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             disabled={sending}
           />
