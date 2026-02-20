@@ -27,6 +27,8 @@ import {
   Activity,
   Mail,
   BarChart3,
+  Scale,
+  Flag,
 } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "@/components/Logo";
@@ -70,6 +72,8 @@ const vaultNavItems = [
   { icon: Shield, label: "Hub PRO", path: "/admin/vault/marketplace/inspecao" },
   { icon: Crown, label: "Planos", path: "/admin/vault/marketplace/planos" },
   { icon: BarChart3, label: "Analytics MKT", path: "/admin/vault/marketplace/analytics" },
+  { icon: Flag, label: "Moderação", path: "/admin/vault/marketplace/moderacao" },
+  { icon: Scale, label: "Disputas", path: "/admin/vault/marketplace/disputas" },
 ];
 
 const AdminLayout = () => {

@@ -672,6 +672,68 @@ Deno.serve(async (req) => {
       return j({ orders: data || [] });
     }
 
+    // ==================== ADMIN MODERATION ====================
+
+    if (mt === "GET" && a === "admin-pending-offers") {
+      // Fetch offers with status 'pending_review' or recently created for moderation
+      const statusFilter = url.searchParams.get("status") || "pending_review";
+      let q = sb.from("marketplace_offers").select(
+        `*, product:marketplace_products!inner(brand, model, images), seller:vault_seller_profiles!inner(id, plan_id, kyc_status, member:vault_members!inner(client_name, client_cpf))`
+      ).order("created_at", { ascending: false });
+      if (statusFilter !== "all") q = q.eq("status", statusFilter);
+      const { data, error } = await q.limit(100);
+      if (error) throw error;
+      return j({ offers: data || [] });
+    }
+
+    if (mt === "PUT" && a === "admin-moderate-offer") {
+      const b = await req.json();
+      const { offer_id, action: modAction, reason } = b;
+      if (!offer_id || !modAction) throw new Error("offer_id e action obrigatórios");
+      const updates: Record<string, any> = { updated_at: new Date().toISOString() };
+      if (modAction === "approve") {
+        updates.status = "active";
+        updates.activated_at = new Date().toISOString();
+      } else if (modAction === "reject") {
+        updates.status = "rejected";
+        updates.pro_recommendation = reason || "Rejeitado pela moderação";
+      } else if (modAction === "flag") {
+        updates.status = "flagged";
+        updates.pro_recommendation = reason || "Flagged for review";
+      }
+      const { error } = await sb.from("marketplace_offers").update(updates).eq("id", offer_id);
+      if (error) throw error;
+      // Notify seller
+      const { data: offer } = await sb.from("marketplace_offers").select(
+        `seller:vault_seller_profiles!inner(member:vault_members!inner(client_cpf))`
+      ).eq("id", offer_id).single();
+      if (offer?.seller?.member?.client_cpf) {
+        const statusLabel = modAction === "approve" ? "aprovado" : modAction === "reject" ? "rejeitado" : "sinalizado";
+        await nt(sb, `Anúncio ${statusLabel}`, reason || `Seu anúncio foi ${statusLabel} pela moderação.`, offer.seller.member.client_cpf, offer_id, "marketplace_moderation");
+      }
+      return j({ success: true });
+    }
+
+    if (mt === "GET" && a === "admin-disputes") {
+      const { data, error } = await sb.from("vault_marketplace_orders").select(
+        `*, listing:vault_marketplace_listings!inner(title, brand, model, size, photos, condition)`
+      ).not("dispute_status", "is", null).order("dispute_opened_at", { ascending: false });
+      if (error) throw error;
+      return j({ disputes: data || [] });
+    }
+
+    if (mt === "PUT" && a === "admin-flag-listing") {
+      const b = await req.json();
+      const { listing_id, flagged, reason } = b;
+      if (!listing_id) throw new Error("listing_id obrigatório");
+      const newStatus = flagged ? "flagged" : "active";
+      const { error } = await sb.from("vault_marketplace_listings").update({
+        status: newStatus, pro_recommendation: flagged ? (reason || "Flagged") : null,
+      }).eq("id", listing_id);
+      if (error) throw error;
+      return j({ success: true });
+    }
+
     // ==================== CHAT (mkchat) ====================
 
     if (mt === "GET" && a === "chat-messages") {
