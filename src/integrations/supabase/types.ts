@@ -843,6 +843,41 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_seller_badges: {
+        Row: {
+          badge_icon: string
+          badge_name: string
+          badge_type: string
+          earned_at: string
+          id: string
+          seller_id: string
+        }
+        Insert: {
+          badge_icon?: string
+          badge_name: string
+          badge_type: string
+          earned_at?: string
+          id?: string
+          seller_id: string
+        }
+        Update: {
+          badge_icon?: string
+          badge_name?: string
+          badge_type?: string
+          earned_at?: string
+          id?: string
+          seller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_seller_badges_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "vault_seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_subscriptions: {
         Row: {
           cancel_at_period_end: boolean

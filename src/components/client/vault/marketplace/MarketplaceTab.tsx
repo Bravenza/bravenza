@@ -25,6 +25,7 @@ import { CouponsManager } from "./CouponsManager";
 import { ActivityFeed } from "./ActivityFeed";
 import { supabase } from "@/integrations/supabase/client";
 import { RecentlyViewedSection } from "@/components/marketplace/home/RecentlyViewedSection";
+import { LoyaltyPointsWidget } from "@/components/marketplace/LoyaltyPointsWidget";
 
 interface MarketplaceTabProps {
   clientCpf: string;
@@ -325,7 +326,10 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
         </TabsContent>
 
         {/* Pedidos */}
-        <TabsContent value="pedidos" className="mt-4">
+        <TabsContent value="pedidos" className="mt-4 space-y-4">
+          {/* Loyalty Points Widget */}
+          <LoyaltyPointsWidget clientCpf={clientCpf} />
+
           <MarketplaceOrdersView
             orders={myOrders}
             sales={mySales}
