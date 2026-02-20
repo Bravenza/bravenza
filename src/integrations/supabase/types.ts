@@ -679,6 +679,47 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_price_history: {
+        Row: {
+          avg_price: number
+          created_at: string
+          id: string
+          max_price: number
+          min_price: number
+          offers_count: number
+          product_id: string
+          recorded_date: string
+        }
+        Insert: {
+          avg_price: number
+          created_at?: string
+          id?: string
+          max_price: number
+          min_price: number
+          offers_count?: number
+          product_id: string
+          recorded_date?: string
+        }
+        Update: {
+          avg_price?: number
+          created_at?: string
+          id?: string
+          max_price?: number
+          min_price?: number
+          offers_count?: number
+          product_id?: string
+          recorded_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_price_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_product_comments: {
         Row: {
           content: string
@@ -873,6 +914,42 @@ export type Database = {
           slug?: string | null
           total_offers?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      marketplace_saved_searches: {
+        Row: {
+          created_at: string
+          filters: Json
+          id: string
+          last_notified_at: string | null
+          name: string
+          notify_new_listings: boolean
+          results_count: number
+          updated_at: string
+          user_cpf: string
+        }
+        Insert: {
+          created_at?: string
+          filters?: Json
+          id?: string
+          last_notified_at?: string | null
+          name: string
+          notify_new_listings?: boolean
+          results_count?: number
+          updated_at?: string
+          user_cpf: string
+        }
+        Update: {
+          created_at?: string
+          filters?: Json
+          id?: string
+          last_notified_at?: string | null
+          name?: string
+          notify_new_listings?: boolean
+          results_count?: number
+          updated_at?: string
+          user_cpf?: string
         }
         Relationships: []
       }
@@ -3724,6 +3801,9 @@ export type Database = {
           pro_approval_rate: number | null
           ratings_count: number
           seller_cep: string | null
+          storefront_banner: string | null
+          storefront_tagline: string | null
+          storefront_theme: string | null
           support_priority: number
           terms_accepted_at: string | null
           tier: string
@@ -3775,6 +3855,9 @@ export type Database = {
           pro_approval_rate?: number | null
           ratings_count?: number
           seller_cep?: string | null
+          storefront_banner?: string | null
+          storefront_tagline?: string | null
+          storefront_theme?: string | null
           support_priority?: number
           terms_accepted_at?: string | null
           tier?: string
@@ -3826,6 +3909,9 @@ export type Database = {
           pro_approval_rate?: number | null
           ratings_count?: number
           seller_cep?: string | null
+          storefront_banner?: string | null
+          storefront_tagline?: string | null
+          storefront_theme?: string | null
           support_priority?: number
           terms_accepted_at?: string | null
           tier?: string

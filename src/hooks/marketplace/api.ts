@@ -16,6 +16,9 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
   "seller-analytics": "mk-hub", "my-coupons": "mk-hub", "create-coupon": "mk-hub",
   "update-coupon": "mk-hub", "delete-coupon": "mk-hub", "validate-coupon": "mk-hub",
   "use-coupon": "mk-hub", "activity-feed": "mk-hub", "log-activity": "mk-hub",
+  "price-history": "mk-hub", "recommendations": "mk-hub",
+  "saved-searches": "mk-hub", "save-search": "mk-hub", "delete-saved-search": "mk-hub",
+  "update-storefront": "mk-hub", "snapshot-prices": "mk-hub",
 };
 
 export async function marketplaceRequest(
