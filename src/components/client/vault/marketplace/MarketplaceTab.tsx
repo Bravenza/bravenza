@@ -24,6 +24,7 @@ import { SellerAnalyticsDashboard } from "./SellerAnalyticsDashboard";
 import { CouponsManager } from "./CouponsManager";
 import { ActivityFeed } from "./ActivityFeed";
 import { supabase } from "@/integrations/supabase/client";
+import { RecentlyViewedSection } from "@/components/marketplace/home/RecentlyViewedSection";
 
 interface MarketplaceTabProps {
   clientCpf: string;
@@ -318,6 +319,9 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
               ))}
             </div>
           )}
+
+          {/* Vistos recentemente */}
+          <RecentlyViewedSection />
         </TabsContent>
 
         {/* Pedidos */}

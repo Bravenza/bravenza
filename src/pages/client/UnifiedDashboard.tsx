@@ -44,8 +44,10 @@ import { Logo } from "@/components/Logo";
 
 const Footer = lazy(() => import("@/components/home/Footer").then(m => ({ default: m.Footer })));
 const FloatingWhatsApp = lazy(() => import("@/components/FloatingWhatsApp").then(m => ({ default: m.FloatingWhatsApp })));
+const VaultOnboardingTour = lazy(() => import("@/components/client/vault/VaultOnboardingTour").then(m => ({ default: m.VaultOnboardingTour })));
 import { ClientNotificationBell } from "@/components/client/ClientNotificationBell";
 import { ClientPreferences } from "@/components/client/ClientPreferences";
+import { DashboardSearch } from "@/components/client/DashboardSearch";
 import { OrdersTab } from "@/components/client/dashboard";
 import { BottomTabBar } from "@/components/client/BottomTabBar";
 
@@ -55,6 +57,7 @@ const VaultWishlistTab = lazy(() => import("@/components/client/vault/VaultWishl
 const VaultIntelTab = lazy(() => import("@/components/client/vault/VaultIntelTab").then(m => ({ default: m.VaultIntelTab })));
 const VaultClubTab = lazy(() => import("@/components/client/vault/VaultClubTab").then(m => ({ default: m.VaultClubTab })));
 const VaultCommunityTab = lazy(() => import("@/components/client/vault/VaultCommunityTab").then(m => ({ default: m.VaultCommunityTab })));
+const VaultMemberStatsCard = lazy(() => import("@/components/client/vault/VaultMemberStatsCard").then(m => ({ default: m.VaultMemberStatsCard })));
 import { Loader2 } from "lucide-react";
 import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 import { OrdersTabSkeleton, SectionHeaderSkeleton } from "@/components/skeletons/DashboardSkeleton";
@@ -252,6 +255,12 @@ export default function UnifiedDashboard() {
               <Logo size="md" />
             </Link>
 
+            {/* Dashboard Search - Desktop */}
+            <div className="hidden md:flex flex-1 justify-center max-w-md mx-4">
+              <DashboardSearch onNavigate={(tab) => handleSectionChange(tab)} />
+
+            </div>
+
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-2">
               <button
@@ -418,24 +427,35 @@ export default function UnifiedDashboard() {
                     <VaultIntelTab clientCpf={profile.cpf} />
                   )}
                   {activeSection === "clube" && (vaultMember || isSuperAdmin) && (
-                    <VaultClubTab
-                      clientCpf={profile.cpf}
-                      member={vaultMember || {
-                        id: "super-admin",
-                        tier: "elite" as const,
-                        total_purchases: 0,
-                        active_hunts: 0,
-                        max_active_hunts: 999,
-                        max_wishlist_items: 999,
-                        invites_remaining: 999,
-                        community_opt_in: true,
-                        stats_purchases_count_12m: 0,
-                        stats_spend_total_12m: 0,
-                        stats_decision_rate: 100,
-                        stats_converted_invites: 0,
-                      }}
-                      onMemberUpdate={refreshVaultMember}
-                    />
+                    <div className="space-y-6">
+                      <VaultMemberStatsCard
+                        member={vaultMember || {
+                          tier: "elite" as const,
+                          total_purchases: 0,
+                          stats_spend_total_12m: 0,
+                          stats_decision_rate: 100,
+                          stats_converted_invites: 0,
+                        }}
+                      />
+                      <VaultClubTab
+                        clientCpf={profile.cpf}
+                        member={vaultMember || {
+                          id: "super-admin",
+                          tier: "elite" as const,
+                          total_purchases: 0,
+                          active_hunts: 0,
+                          max_active_hunts: 999,
+                          max_wishlist_items: 999,
+                          invites_remaining: 999,
+                          community_opt_in: true,
+                          stats_purchases_count_12m: 0,
+                          stats_spend_total_12m: 0,
+                          stats_decision_rate: 100,
+                          stats_converted_invites: 0,
+                        }}
+                        onMemberUpdate={refreshVaultMember}
+                      />
+                    </div>
                   )}
                   {activeSection === "comunidade" && (vaultMember || isSuperAdmin) && (
                     <VaultCommunityTab
@@ -534,6 +554,12 @@ export default function UnifiedDashboard() {
         onSettingsOpen={() => setShowPreferences(true)}
         hasVaultAccess={hasVaultAccess}
       />
+
+      {hasVaultAccess && (
+        <Suspense fallback={null}>
+          <VaultOnboardingTour onNavigate={handleSectionChange} />
+        </Suspense>
+      )}
 
       <Suspense fallback={null}>
         <Footer />
