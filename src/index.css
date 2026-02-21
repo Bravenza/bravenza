@@ -1151,3 +1151,12 @@ main {
 .vault-card-shimmer:hover::after {
   transform: translateX(100%);
 }
+
+/* Hide scrollbar for horizontal-scroll tabs */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
