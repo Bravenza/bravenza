@@ -186,7 +186,7 @@ export function DashboardMetrics() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-muted-foreground">{kpi.title}</p>
-                    <p className="text-2xl font-bold mt-1 break-words">{kpi.value}</p>
+                    <p className="text-2xl font-bold mt-1 whitespace-nowrap">{kpi.value}</p>
                     <p className="text-xs text-muted-foreground mt-1">{kpi.description}</p>
                   </div>
                   <div className={`p-3 rounded-lg shrink-0 ${kpi.bgColor}`}>
@@ -282,17 +282,17 @@ export function DashboardMetrics() {
               <div className="text-center p-4 rounded-lg bg-success/10 border border-success/20">
                 <CheckCircle2 className="h-6 w-6 mx-auto text-success mb-2" />
                 <p className="text-xs text-muted-foreground">Sinal Recebido</p>
-                <p className="text-lg font-bold text-success break-words">{formatCurrency(metrics.sinalReceived)}</p>
+                <p className="text-lg font-bold text-success whitespace-nowrap">{formatCurrency(metrics.sinalReceived)}</p>
               </div>
               <div className="text-center p-4 rounded-lg bg-primary/10 border border-primary/20">
                 <CheckCircle2 className="h-6 w-6 mx-auto text-primary mb-2" />
                 <p className="text-xs text-muted-foreground">Saldo Recebido</p>
-                <p className="text-lg font-bold text-primary break-words">{formatCurrency(metrics.balanceReceived)}</p>
+                <p className="text-lg font-bold text-primary whitespace-nowrap">{formatCurrency(metrics.balanceReceived)}</p>
               </div>
               <div className="text-center p-4 rounded-lg bg-warning/10 border border-warning/20">
                 <Clock className="h-6 w-6 mx-auto text-warning mb-2" />
                 <p className="text-xs text-muted-foreground">Pendente</p>
-                <p className="text-lg font-bold text-warning break-words">{formatCurrency(metrics.pendingRevenue)}</p>
+                <p className="text-lg font-bold text-warning whitespace-nowrap">{formatCurrency(metrics.pendingRevenue)}</p>
               </div>
               <div className="text-center p-4 rounded-lg bg-muted/30 border border-border">
                 <AlertTriangle className="h-6 w-6 mx-auto text-muted-foreground mb-2" />

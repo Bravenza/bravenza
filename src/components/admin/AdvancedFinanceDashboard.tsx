@@ -120,7 +120,7 @@ export function AdvancedFinanceDashboard() {
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-sm text-muted-foreground truncate">{kpi.title}</p>
-                    <p className="text-2xl font-bold mt-1 truncate">{kpi.value}</p>
+                    <p className="text-2xl font-bold mt-1 whitespace-nowrap">{kpi.value}</p>
                     {kpi.change !== null && (
                       <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${kpi.change >= 0 ? "text-success" : "text-destructive"}`}>
                         {kpi.change >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
@@ -213,7 +213,7 @@ export function AdvancedFinanceDashboard() {
               </div>
               <div className="text-center p-4 rounded-lg bg-muted/30">
                 <p className="text-xs text-muted-foreground">Ticket Médio</p>
-                <p className="text-xl font-bold truncate">
+                <p className="text-xl font-bold whitespace-nowrap">
                   {comparison.current.orders > 0
                     ? formatCurrency(comparison.current.revenue / comparison.current.orders)
                     : "-"}
@@ -221,7 +221,7 @@ export function AdvancedFinanceDashboard() {
               </div>
               <div className="text-center p-4 rounded-lg bg-muted/30">
                 <p className="text-xs text-muted-foreground">Lucro/Pedido</p>
-                <p className="text-xl font-bold truncate">
+                <p className="text-xl font-bold whitespace-nowrap">
                   {comparison.current.orders > 0
                     ? formatCurrency(comparison.current.profit / comparison.current.orders)
                     : "-"}
