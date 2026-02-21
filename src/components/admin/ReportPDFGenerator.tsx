@@ -6,8 +6,6 @@ import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { formatCurrency, ORDER_STATUS_LABELS } from "@/lib/constants";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 
 export function ReportPDFGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -15,6 +13,12 @@ export function ReportPDFGenerator() {
   const generateReport = async () => {
     setIsGenerating(true);
     try {
+      // Dynamic import – jsPDF (~200KB) only loads when user clicks
+      const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+        import("jspdf"),
+        import("jspdf-autotable"),
+      ]);
+
       const now = new Date();
       const monthStart = startOfMonth(now);
       const monthEnd = endOfMonth(now);
@@ -32,15 +36,17 @@ export function ReportPDFGenerator() {
       if (error) throw error;
       const d = data as any;
 
-      const revenue = d.revenue || 0;
-      const costs = d.costs || 0;
-      const profit = d.profit || 0;
-      const margin = d.margin || 0;
-      const paidCount = d.paid_count || 0;
-      const avgTicket = d.avg_ticket || 0;
-      const revenueChange = d.revenue_change || 0;
       const orders = d.orders || [];
       const statusDist = d.status_distribution || {};
+
+      const revenue = d.revenue || 0;
+      const lastRevenue = d.last_revenue || 0;
+      const revenueChange = lastRevenue > 0 ? ((revenue - lastRevenue) / lastRevenue) * 100 : 0;
+      const costs = d.costs || 0;
+      const profit = revenue - costs;
+      const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+      const paidCount = d.paid_count || 0;
+      const avgTicket = paidCount > 0 ? revenue / paidCount : 0;
 
       // Generate PDF
       const doc = new jsPDF();

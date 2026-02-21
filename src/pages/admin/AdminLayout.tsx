@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   Package,
@@ -126,18 +125,15 @@ const AdminLayout = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative theme-light">
-      {/* Background Effects */}
+      {/* Background Effects – will-change hints for GPU compositing */}
       <div className="fixed inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
-      <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="fixed bottom-0 left-0 w-[400px] h-[400px] bg-primary/3 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl pointer-events-none will-change-transform" />
+      <div className="fixed bottom-0 left-0 w-[400px] h-[400px] bg-primary/3 rounded-full blur-3xl pointer-events-none will-change-transform" />
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden animate-in fade-in duration-200"
           onClick={() => setSidebarOpen(false)}
         />
       )}
