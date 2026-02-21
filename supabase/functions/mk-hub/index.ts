@@ -446,7 +446,7 @@ Deno.serve(async (req) => {
 
     if (mt === "GET" && a === "my-orders") {
       const { data, error } = await sb.from("vault_marketplace_orders").select(
-        `*, listing:vault_marketplace_listings!inner(title, brand, model, size, photos, condition, is_vault_certified)`
+        `*, listing:vault_marketplace_listings(title, brand, model, size, photos, condition, is_vault_certified)`
       ).eq("buyer_cpf", cpf).order("created_at", { ascending: false });
       if (error) throw error;
       return j({ orders: data || [] });
@@ -458,7 +458,7 @@ Deno.serve(async (req) => {
       const { data: sl } = await sb.from("vault_seller_profiles").select("id").eq("member_id", mb.id).maybeSingle();
       if (!sl) return j({ orders: [] });
       const { data, error } = await sb.from("vault_marketplace_orders").select(
-        `*, listing:vault_marketplace_listings!inner(title, brand, model, size, photos, condition)`
+        `*, listing:vault_marketplace_listings(title, brand, model, size, photos, condition)`
       ).eq("seller_id", sl.id).order("created_at", { ascending: false });
       if (error) throw error;
       return j({ orders: data || [] });
@@ -525,7 +525,7 @@ Deno.serve(async (req) => {
       // Send emails for shipped/delivered/cancelled status changes
       if (["shipped", "delivered", "cancelled"].includes(b.status)) {
         const { data: orderData } = await sb.from("vault_marketplace_orders").select(
-          `order_code, buyer_cpf, buyer_name, seller_id, shipping_mode, tracking_code, listing:vault_marketplace_listings!inner(title, size, condition)`
+          `order_code, buyer_cpf, buyer_name, seller_id, shipping_mode, tracking_code, listing:vault_marketplace_listings(title, size, condition)`
         ).eq("id", b.order_id).single();
         if (orderData) {
           if (b.status === "cancelled") {
@@ -582,7 +582,7 @@ Deno.serve(async (req) => {
       if (error) throw error;
       // Email: dispute opened - notify both parties
       const { data: disputeOrder } = await sb.from("vault_marketplace_orders").select(
-        `order_code, buyer_cpf, buyer_name, seller_id, listing:vault_marketplace_listings!inner(title)`
+        `order_code, buyer_cpf, buyer_name, seller_id, listing:vault_marketplace_listings(title)`
       ).eq("id", b.order_id).single();
       if (disputeOrder) {
         // Notify seller
@@ -665,7 +665,7 @@ Deno.serve(async (req) => {
     if (mt === "GET" && a === "admin-orders") {
       const st = url.searchParams.get("status");
       let q = sb.from("vault_marketplace_orders").select(
-        `*, listing:vault_marketplace_listings!inner(title, brand, model, size, photos, condition)`
+        `*, listing:vault_marketplace_listings(title, brand, model, size, photos, condition)`
       ).order("created_at", { ascending: false });
       if (st && st !== "all") q = q.eq("status", st);
       const { data, error } = await q;
@@ -717,7 +717,7 @@ Deno.serve(async (req) => {
 
     if (mt === "GET" && a === "admin-disputes") {
       const { data, error } = await sb.from("vault_marketplace_orders").select(
-        `*, listing:vault_marketplace_listings!inner(title, brand, model, size, photos, condition)`
+        `*, listing:vault_marketplace_listings(title, brand, model, size, photos, condition)`
       ).not("dispute_status", "is", null).order("dispute_opened_at", { ascending: false });
       if (error) throw error;
       return j({ disputes: data || [] });
@@ -762,7 +762,7 @@ Deno.serve(async (req) => {
       if (error) throw error;
       if (b.order_id) {
         const { data: od } = await sb.from("vault_marketplace_orders").select(
-          `buyer_cpf, listing:vault_marketplace_listings!inner(title), seller:vault_seller_profiles!inner(member:vault_members!inner(client_cpf))`
+          `buyer_cpf, listing:vault_marketplace_listings(title), seller:vault_seller_profiles!inner(member:vault_members!inner(client_cpf))`
         ).eq("id", b.order_id).single();
         if (od) {
           const to = cpf === od.buyer_cpf ? od.seller?.member?.client_cpf : od.buyer_cpf;
