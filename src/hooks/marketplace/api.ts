@@ -14,6 +14,12 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
   "price-history": "mk-hub", "recommendations": "mk-hub",
   "saved-searches": "mk-hub", "save-search": "mk-hub", "delete-saved-search": "mk-hub",
   "drop-reminders": "mk-hub", "toggle-drop-reminder": "mk-hub",
+  "catalog-products": "mk-hub", "catalog-product": "mk-hub", "catalog-offers": "mk-hub",
+  "catalog-search": "mk-hub", "catalog-create-product": "mk-hub", "catalog-create-offer": "mk-hub",
+  "watchlist-check": "mk-hub", "watchlist-toggle": "mk-hub",
+  "product-comments": "mk-hub", "product-comment": "mk-hub",
+  "product-reviews": "mk-hub", "product-review": "mk-hub",
+  "check-purchase": "mk-hub", "product-analytics": "mk-hub", "freight-quote": "mk-hub",
 
   // mk-orders: Orders, Payments, Disputes, Chat, Hub PRO
   "create-order": "mk-orders", "confirm-payment": "mk-orders", "my-orders": "mk-orders",
@@ -21,15 +27,22 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
   "rate-seller": "mk-orders", "admin-orders": "mk-orders", "open-dispute": "mk-orders",
   "admin-disputes": "mk-orders",
   "chat-messages": "mk-orders", "send-message": "mk-orders",
+  "hub-orders": "mk-orders", "hub-update-status": "mk-orders", "hub-inspect": "mk-orders",
+  "laudo-lookup": "mk-orders", "check-auto-payout": "mk-orders",
 
-  // mk-seller: Seller Onboarding, Analytics, Coupons, Boosts, Collections
+  // mk-seller: Seller Onboarding, Analytics, Coupons, Boosts, Collections, Social
   "seller-onboarding": "mk-seller", "seller-onboarding-status": "mk-seller",
   "price-drop-suggestions": "mk-seller",
   "seller-analytics": "mk-seller", "my-coupons": "mk-seller", "create-coupon": "mk-seller",
   "update-coupon": "mk-seller", "delete-coupon": "mk-seller", "validate-coupon": "mk-seller",
   "use-coupon": "mk-seller",
   "update-storefront": "mk-seller", "snapshot-prices": "mk-seller",
-  "recalc-seller-tier": "mk-seller",
+  "recalc-seller-tier": "mk-seller", "seller-tier-info": "mk-seller",
+  "boost-activate": "mk-seller", "boost-deactivate": "mk-seller", "my-boosts": "mk-seller",
+  "my-collections": "mk-seller", "create-collection": "mk-seller",
+  "update-collection": "mk-seller", "delete-collection": "mk-seller",
+  "toggle-follow": "mk-seller", "is-following": "mk-seller", "my-follows": "mk-seller",
+  "loyalty-balance": "mk-seller", "seller-leaderboard": "mk-seller", "check-badges": "mk-seller",
 };
 
 export async function marketplaceRequest(

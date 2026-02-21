@@ -82,7 +82,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
   payout_released: { label: "Pago", color: "bg-success/20 text-success", icon: CheckCircle2 },
 };
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub`;
+const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-orders`;
 
 export default function MarketplaceOrdersPage() {
   const { toast } = useToast();

@@ -14,7 +14,7 @@ import {
   LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, ComposedChart
 } from "recharts";
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub`;
+const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-seller`;
 
 interface SellerAnalytics {
   total_views: number;

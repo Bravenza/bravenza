@@ -27,7 +27,7 @@ const disputeReasons = [
   { value: "other", label: "Outro motivo", icon: "💬", severity: "low" },
 ];
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub`;
+const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-orders`;
 
 interface DisputeDialogProps {
   orderId: string;
