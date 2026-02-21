@@ -352,7 +352,8 @@ const AdminLayout = () => {
             </nav>
 
             {/* Footer */}
-            <div className="p-3 border-t border-border/30 shrink-0">
+            <div className="p-3 border-t border-border/30 shrink-0 space-y-1">
+              <ReportPDFGenerator />
               <Button
                 variant="ghost"
                 onClick={handleSignOut}
@@ -382,7 +383,6 @@ const AdminLayout = () => {
               </div>
               <div className="flex items-center gap-3">
                 <GlobalSearch />
-                <ReportPDFGenerator />
                 <NotificationBell />
               </div>
             </div>

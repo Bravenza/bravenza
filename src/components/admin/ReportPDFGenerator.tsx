@@ -153,9 +153,9 @@ export function ReportPDFGenerator() {
   };
 
   return (
-    <Button variant="outline" onClick={generateReport} disabled={isGenerating}>
-      {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
-      Relatório PDF
+    <Button variant="ghost" onClick={generateReport} disabled={isGenerating} className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground transition-colors">
+      {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+      <span className="text-sm">Relatório PDF</span>
     </Button>
   );
 }
