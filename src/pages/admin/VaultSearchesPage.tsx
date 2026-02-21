@@ -41,6 +41,9 @@ import {
   XCircle,
   Plus,
   Layers,
+  BarChart3,
+  TrendingUp,
+  PieChart,
 } from "lucide-react";
 import { formatDate } from "@/lib/constants";
 
@@ -117,6 +120,9 @@ interface MatchRoom {
   decision_status: DecisionStatus | null;
   decision_at: string | null;
   decision_notes_from_customer: string | null;
+  rejection_category: string | null;
+  rejection_reason: string | null;
+  auto_research_search_id: string | null;
   created_at: string | null;
 }
 
@@ -168,6 +174,10 @@ const VaultSearchesPage = () => {
             <Layers className="h-4 w-4" />
             Match Rooms
           </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Analytics
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="buscas">
@@ -175,6 +185,9 @@ const VaultSearchesPage = () => {
         </TabsContent>
         <TabsContent value="match-rooms">
           <MatchRoomsTab />
+        </TabsContent>
+        <TabsContent value="analytics">
+          <AnalyticsTab />
         </TabsContent>
       </Tabs>
     </div>
@@ -216,6 +229,12 @@ function SearchesTab() {
 
   useEffect(() => { fetchSearches(); }, []);
 
+  const progressMap: Record<string, number> = {
+    RECEIVED: 10, IN_CURATION: 35, OPTIONS_IDENTIFIED: 55,
+    VALIDATING: 70, MATCH_SENT: 85, AWAITING_DECISION: 90,
+    CLOSED_APPROVED: 100, CLOSED_NOT_FOUND: 100, CLOSED_CANCELLED: 100,
+  };
+
   const handleUpdateStatus = async (search: VaultSearch, newStatus: SearchStatus) => {
     try {
       const { error } = await supabase
@@ -224,6 +243,7 @@ function SearchesTab() {
           status: newStatus,
           last_update_at: new Date().toISOString(),
           is_active: !["CLOSED_APPROVED", "CLOSED_NOT_FOUND", "CLOSED_CANCELLED"].includes(newStatus),
+          progress_percentage: progressMap[newStatus] || 0,
         })
         .eq("id", search.id);
 
@@ -246,11 +266,15 @@ function SearchesTab() {
         visible_to_customer: true,
       });
       if (error) throw error;
+      // Update the progress message visible to client
       await supabase
         .from("vault_searches")
-        .update({ last_update_at: new Date().toISOString() })
+        .update({ 
+          last_update_at: new Date().toISOString(),
+          progress_message: updateMessage,
+        })
         .eq("id", selectedSearch.id);
-      toast.success("Atualização enviada");
+      toast.success("Atualização enviada ao cliente");
       setUpdateMessage("");
       setIsUpdateOpen(false);
       fetchSearches();
@@ -865,6 +889,26 @@ function MatchRoomsTab() {
                     <p className="text-sm mt-1 p-2 bg-secondary rounded">{selectedRoom.decision_notes_from_customer}</p>
                   </div>
                 )}
+                {(selectedRoom as any).rejection_category && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Motivo da recusa</p>
+                    <Badge variant="outline" className="mt-1 border-red-500/50 text-red-500">
+                      {(selectedRoom as any).rejection_category === "price_high" ? "Preço alto" :
+                       (selectedRoom as any).rejection_category === "wrong_condition" ? "Condição diferente" :
+                       (selectedRoom as any).rejection_category === "wrong_color" ? "Cor diferente" :
+                       (selectedRoom as any).rejection_category === "wrong_size" ? "Tamanho indisponível" :
+                       (selectedRoom as any).rejection_category === "supplier_trust" ? "Fornecedor" :
+                       (selectedRoom as any).rejection_category === "found_elsewhere" ? "Encontrou em outro lugar" :
+                       (selectedRoom as any).rejection_category || "Outro"}
+                    </Badge>
+                  </div>
+                )}
+                {(selectedRoom as any).rejection_reason && (
+                  <div className="col-span-2">
+                    <p className="text-sm text-muted-foreground">Detalhes da recusa</p>
+                    <p className="text-sm mt-1 p-2 bg-red-500/10 rounded border border-red-500/20">{(selectedRoom as any).rejection_reason}</p>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -905,6 +949,79 @@ function MatchRoomsTab() {
                   </div>
                 )}
               </div>
+
+              {/* Auto Re-search Button for declined rooms */}
+              {selectedRoom.decision_status === "DECLINED" && !selectedRoom.auto_research_search_id && (
+                <Card className="border-amber-500/30 bg-amber-500/5">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm">Re-busca automática</p>
+                        <p className="text-xs text-muted-foreground">
+                          Reabrir busca com feedback do cliente ({(selectedRoom as any).rejection_category || "sem motivo"})
+                        </p>
+                      </div>
+                      <Button size="sm" onClick={async () => {
+                        try {
+                          // Create new search linked to original
+                          const originalSearch = pendingSearches.find(s => s.id === selectedRoom.search_id) || 
+                            { user_id: selectedRoom.user_id };
+                          
+                          // Get the original search's wishlist_item_id
+                          const { data: origSearch } = await supabase
+                            .from("vault_searches")
+                            .select("wishlist_item_id, user_id, decline_count")
+                            .eq("id", selectedRoom.search_id)
+                            .single();
+
+                          if (!origSearch) { toast.error("Busca original não encontrada"); return; }
+
+                          const { data: newSearch, error } = await supabase
+                            .from("vault_searches")
+                            .insert({
+                              user_id: origSearch.user_id,
+                              wishlist_item_id: origSearch.wishlist_item_id,
+                              status: "IN_CURATION",
+                              is_active: true,
+                              started_at: new Date().toISOString(),
+                              last_update_at: new Date().toISOString(),
+                              original_search_id: selectedRoom.search_id,
+                              decline_count: (origSearch.decline_count || 0) + 1,
+                              last_decline_category: (selectedRoom as any).rejection_category,
+                              last_decline_reason: (selectedRoom as any).rejection_reason,
+                              progress_message: "Nova busca iniciada com base no seu feedback",
+                            })
+                            .select().single();
+
+                          if (error) throw error;
+
+                          // Link back
+                          await supabase
+                            .from("vault_match_rooms")
+                            .update({ auto_research_search_id: newSearch.id })
+                            .eq("id", selectedRoom.id);
+
+                          toast.success("Re-busca criada automaticamente");
+                          fetchMatchRooms();
+                          setIsDetailOpen(false);
+                        } catch (err) {
+                          console.error("Error creating re-search:", err);
+                          toast.error("Erro ao criar re-busca");
+                        }
+                      }}>
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Reabrir busca
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              {selectedRoom.auto_research_search_id && (
+                <p className="text-xs text-emerald-500 flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3" />
+                  Re-busca já criada
+                </p>
+              )}
 
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>
@@ -972,6 +1089,236 @@ function MatchRoomsTab() {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// ─── Analytics Tab ───
+function AnalyticsTab() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalSearches: 0,
+    totalMatchRooms: 0,
+    approvedCount: 0,
+    declinedCount: 0,
+    expiredCount: 0,
+    avgSearchDays: 0,
+    acceptanceRate: 0,
+    rejectionReasons: [] as { category: string; count: number }[],
+    reSearchCount: 0,
+  });
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, []);
+
+  const fetchAnalytics = async () => {
+    setIsLoading(true);
+    try {
+      const [searchesRes, matchRoomsRes] = await Promise.all([
+        supabase.from("vault_searches").select("id, status, started_at, created_at, decline_count, last_decline_category"),
+        supabase.from("vault_match_rooms").select("id, decision_status, rejection_category, created_at, decision_at"),
+      ]);
+
+      const searches = searchesRes.data || [];
+      const matchRooms = matchRoomsRes.data || [];
+
+      const approved = matchRooms.filter((r) => r.decision_status === "APPROVED");
+      const declined = matchRooms.filter((r) => r.decision_status === "DECLINED");
+      const expired = matchRooms.filter((r) => r.decision_status === "EXPIRED");
+      const totalDecided = approved.length + declined.length + expired.length;
+
+      // Avg search time (from created to decision)
+      const completedSearches = searches.filter((s) => 
+        ["CLOSED_APPROVED", "CLOSED_NOT_FOUND", "CLOSED_CANCELLED"].includes(s.status) && s.started_at
+      );
+      const avgDays = completedSearches.length > 0
+        ? completedSearches.reduce((sum, s) => {
+            const start = new Date(s.started_at || s.created_at!);
+            const end = new Date(); // approximate
+            return sum + (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+          }, 0) / completedSearches.length
+        : 0;
+
+      // Rejection reasons breakdown
+      const reasonCounts: Record<string, number> = {};
+      declined.forEach((r) => {
+        const cat = r.rejection_category || "não informado";
+        reasonCounts[cat] = (reasonCounts[cat] || 0) + 1;
+      });
+
+      const rejectionReasons = Object.entries(reasonCounts)
+        .map(([category, count]) => ({ category, count }))
+        .sort((a, b) => b.count - a.count);
+
+      const reSearchCount = searches.filter((s) => (s.decline_count ?? 0) > 0).length;
+
+      setStats({
+        totalSearches: searches.length,
+        totalMatchRooms: matchRooms.length,
+        approvedCount: approved.length,
+        declinedCount: declined.length,
+        expiredCount: expired.length,
+        avgSearchDays: Math.round(avgDays),
+        acceptanceRate: totalDecided > 0 ? Math.round((approved.length / totalDecided) * 100) : 0,
+        rejectionReasons,
+        reSearchCount,
+      });
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      toast.error("Erro ao carregar analytics");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const categoryLabels: Record<string, string> = {
+    price_high: "Preço alto",
+    wrong_condition: "Condição diferente",
+    wrong_color: "Cor diferente",
+    wrong_size: "Tamanho indisponível",
+    supplier_trust: "Fornecedor",
+    found_elsewhere: "Encontrou em outro lugar",
+    other: "Outro",
+    "não informado": "Não informado",
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24" />)}
+        </div>
+        <Skeleton className="h-64" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-end">
+        <Button onClick={fetchAnalytics} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Atualizar
+        </Button>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-emerald-500" />
+              <div>
+                <p className="text-2xl font-bold">{stats.acceptanceRate}%</p>
+                <p className="text-xs text-muted-foreground">Taxa de aceite</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-blue-500" />
+              <div>
+                <p className="text-2xl font-bold">{stats.avgSearchDays}d</p>
+                <p className="text-xs text-muted-foreground">Tempo médio de busca</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <RefreshCw className="h-5 w-5 text-purple-500" />
+              <div>
+                <p className="text-2xl font-bold">{stats.reSearchCount}</p>
+                <p className="text-xs text-muted-foreground">Re-buscas</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-2xl font-bold">{stats.totalMatchRooms}</p>
+                <p className="text-xs text-muted-foreground">Match rooms criadas</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Decision Breakdown */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <PieChart className="h-4 w-4" />
+              Decisões dos clientes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Aprovadas</span>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 rounded-full bg-emerald-500" style={{ width: `${(stats.approvedCount / Math.max(stats.totalMatchRooms, 1)) * 100}px`, minWidth: "4px" }} />
+                  <span className="font-semibold text-emerald-500">{stats.approvedCount}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Recusadas</span>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 rounded-full bg-red-500" style={{ width: `${(stats.declinedCount / Math.max(stats.totalMatchRooms, 1)) * 100}px`, minWidth: "4px" }} />
+                  <span className="font-semibold text-red-500">{stats.declinedCount}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Expiradas</span>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 rounded-full bg-zinc-500" style={{ width: `${(stats.expiredCount / Math.max(stats.totalMatchRooms, 1)) * 100}px`, minWidth: "4px" }} />
+                  <span className="font-semibold text-zinc-500">{stats.expiredCount}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Pendentes</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-amber-500">{stats.totalMatchRooms - stats.approvedCount - stats.declinedCount - stats.expiredCount}</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <XCircle className="h-4 w-4" />
+              Motivos de recusa
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {stats.rejectionReasons.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhuma recusa registrada</p>
+            ) : (
+              <div className="space-y-3">
+                {stats.rejectionReasons.map((reason) => (
+                  <div key={reason.category} className="flex items-center justify-between">
+                    <span className="text-sm">{categoryLabels[reason.category] || reason.category}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 rounded-full bg-red-500/50" style={{ width: `${(reason.count / Math.max(stats.declinedCount, 1)) * 80}px`, minWidth: "4px" }} />
+                      <span className="text-sm font-medium">{reason.count}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

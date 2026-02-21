@@ -146,7 +146,7 @@ const VaultMatchRoomsPage = () => {
             client_email,
             tier
           ),
-          vault_searches (
+          vault_searches!vault_match_rooms_search_id_fkey (
             status,
             vault_wishlists (
               title,
