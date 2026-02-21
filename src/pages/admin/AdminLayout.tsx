@@ -168,35 +168,29 @@ const AdminLayout = () => {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-            {navItems.map((item, index) => {
+          <nav className="flex-1 p-3 space-y-1 overflow-y-auto" aria-label="Menu principal admin">
+            {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
-                <motion.div
+                <Link
                   key={item.path}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.03 }}
+                  to={item.path}
+                  onClick={() => setSidebarOpen(false)}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+                    isActive
+                      ? "bg-primary/10 text-primary shadow-[0_0_20px_rgba(212,175,55,0.1)]"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                  }`}
                 >
-                  <Link
-                    to={item.path}
-                    onClick={() => setSidebarOpen(false)}
-                    aria-current={isActive ? "page" : undefined}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
-                      isActive
-                        ? "bg-primary/10 text-primary shadow-[0_0_20px_rgba(212,175,55,0.1)]"
-                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                    }`}
-                  >
-                    <item.icon className={`h-5 w-5 transition-transform group-hover:scale-110 ${isActive ? "text-primary" : ""}`} />
-                    <span className="font-medium text-sm">{item.label}</span>
-                    {isActive && (
-                      <div
-                        className="absolute left-0 w-1 h-6 bg-primary rounded-r-full"
-                      />
-                    )}
-                  </Link>
-                </motion.div>
+                  <item.icon className={`h-5 w-5 transition-transform group-hover:scale-110 ${isActive ? "text-primary" : ""}`} />
+                  <span className="font-medium text-sm">{item.label}</span>
+                  {isActive && (
+                    <div
+                      className="absolute left-0 w-1 h-6 bg-primary rounded-r-full"
+                    />
+                  )}
+                </Link>
               );
             })}
 
@@ -206,29 +200,23 @@ const AdminLayout = () => {
               Vault Club
             </p>
 
-            {vaultNavItems.map((item, index) => {
+            {vaultNavItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
-                <motion.div
+                <Link
                   key={item.path}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: (navItems.length + index) * 0.03 }}
+                  to={item.path}
+                  onClick={() => setSidebarOpen(false)}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+                    isActive
+                      ? "bg-primary/10 text-primary shadow-[0_0_20px_rgba(212,175,55,0.1)]"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                  }`}
                 >
-                  <Link
-                    to={item.path}
-                    onClick={() => setSidebarOpen(false)}
-                    aria-current={isActive ? "page" : undefined}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
-                      isActive
-                        ? "bg-primary/10 text-primary shadow-[0_0_20px_rgba(212,175,55,0.1)]"
-                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                    }`}
-                  >
-                    <item.icon className={`h-5 w-5 transition-transform group-hover:scale-110 ${isActive ? "text-primary" : ""}`} />
-                    <span className="font-medium text-sm">{item.label}</span>
-                  </Link>
-                </motion.div>
+                  <item.icon className={`h-5 w-5 transition-transform group-hover:scale-110 ${isActive ? "text-primary" : ""}`} />
+                  <span className="font-medium text-sm">{item.label}</span>
+                </Link>
               );
             })}
           </nav>
