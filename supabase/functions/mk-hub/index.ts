@@ -3,7 +3,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   corsHeaders, jsonResponse, createSupabaseClient, resolveCpf,
-  getMember, getSellerProfile, notify, getMemberEmail, sendMarketplaceEmail,
+  getMember, getSellerProfile, notify, getMemberEmail, sendMarketplaceEmail, sendMarketplaceWhatsApp,
 } from "../_shared/mk-helpers.ts";
 
 const j = jsonResponse;
@@ -12,6 +12,7 @@ const gs = getSellerProfile;
 const nt = notify;
 const ge = getMemberEmail;
 const em = sendMarketplaceEmail;
+const wa = sendMarketplaceWhatsApp;
 
 const PUBLIC_ACTIONS = new Set([
   "listings", "listing-detail", "seller-public-profile",

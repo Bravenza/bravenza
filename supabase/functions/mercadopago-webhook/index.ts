@@ -115,6 +115,27 @@ async function handleMarketplacePayment(
     reference_id: order.id,
     reference_type: "marketplace_order",
   });
+
+  // Send payment confirmation email + WhatsApp (fire-and-forget)
+  const baseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (baseUrl && serviceKey) {
+    const sendFn = (endpoint: string, body: any) => {
+      fetch(`${baseUrl}/functions/v1/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
+        body: JSON.stringify(body),
+      }).catch((e: any) => console.error(`[webhook] ${endpoint} error:`, e));
+    };
+    // Get buyer info
+    const { data: buyerMember } = await supabase.from("vault_members").select("client_name, client_email, client_phone").eq("client_cpf", order.buyer_cpf).maybeSingle();
+    if (buyerMember?.client_email) {
+      sendFn("send-marketplace-email", { type: "mk_payment_confirmed", recipient_name: buyerMember.client_name, recipient_email: buyerMember.client_email, order_code: orderCode, payment_amount: payment.transaction_amount, payment_method_label: method === "pix" ? "PIX" : "Cartão" });
+    }
+    if (buyerMember?.client_phone) {
+      sendFn("send-whatsapp", { message_type: "mk_payment_confirmed", recipient_phone: buyerMember.client_phone, recipient_name: buyerMember.client_name, order_code: orderCode, payment_amount: payment.transaction_amount });
+    }
+  }
 }
 
 /** Handle standard order payments */

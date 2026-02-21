@@ -24,6 +24,12 @@ type MarketplaceEmailType =
   | "mk_shipping_reminder"
   | "mk_protection_expiring"
   | "mk_review_request"
+  | "mk_stale_listing"
+  | "mk_subscription_expiring"
+  | "mk_offer_rejected"
+  | "mk_payment_confirmed"
+  | "mk_kyc_approved"
+  | "mk_kyc_rejected"
   | "community_welcome"
   | "community_post_reported"
   | "community_new_follower"
@@ -76,6 +82,14 @@ interface MarketplaceEmailRequest {
   product_brand?: string;
   product_model?: string;
   shoe_size?: string;
+  listing_price?: number;
+  listing_views?: number;
+  days_active?: number;
+  plan_name?: string;
+  expires_at?: string;
+  kyc_rejection_reason?: string;
+  payment_amount?: number;
+  payment_method_label?: string;
 }
 
 const formatCurrency = (value: number) =>
@@ -99,6 +113,12 @@ const getSubject = (type: MarketplaceEmailType, data: MarketplaceEmailRequest): 
     mk_shipping_reminder: `⚠️ Envio pendente! - ${data.order_code}`,
     mk_protection_expiring: `🛡️ Proteção expirando - ${data.order_code}`,
     mk_review_request: `⭐ Como foi sua compra? - ${data.order_code}`,
+    mk_stale_listing: `📉 Seu anúncio precisa de atenção`,
+    mk_subscription_expiring: `⏰ Seu plano está expirando!`,
+    mk_offer_rejected: `❌ Sua oferta não foi aceita - "${data.listing_title}"`,
+    mk_payment_confirmed: `✅ Pagamento confirmado! - ${data.order_code}`,
+    mk_kyc_approved: `✅ Cadastro de vendedor aprovado!`,
+    mk_kyc_rejected: `⚠️ Documentos do cadastro precisam de atenção`,
     community_welcome: `👋 Bem-vindo à Comunidade Bravenza!`,
     community_post_reported: `🚩 Post reportado na comunidade`,
     community_new_follower: `👤 Novo seguidor na comunidade!`,
@@ -485,6 +505,99 @@ const getEmailHtml = (type: MarketplaceEmailType, data: MarketplaceEmailRequest)
           ⏰ Produtos populares são vendidos rapidamente!
         </p>
         ${ctaButton("Ver Anúncio", `${appUrl}/vault/marketplace`)}
+      `,
+    },
+
+    // ===== STALE LISTING =====
+    mk_stale_listing: {
+      subtitle: "Anúncio com Poucas Visualizações 📉",
+      content: `
+        ${warningBanner("Seu anúncio está ativo há " + (data.days_active || 14) + " dias com poucas visualizações.")}
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+          ${infoCard("Preço Atual", formatCurrency(data.listing_price || 0))}
+          ${infoCard("Visualizações", String(data.listing_views || 0))}
+          ${infoCard("Dias Ativo", (data.days_active || 14) + " dias")}
+        </div>
+        <p style="color: #a0a0a0; font-size: 14px; margin: 0 0 16px; line-height: 1.6;">
+          Considere <strong style="color: #d4af37;">reduzir o preço</strong> ou melhorar as fotos para atrair mais compradores.
+        </p>
+        ${ctaButton("Editar Anúncio", `${appUrl}/vault/marketplace`)}
+      `,
+    },
+    mk_subscription_expiring: {
+      subtitle: "Plano Expirando! ⏰",
+      content: `
+        ${warningBanner("Seu plano " + (data.plan_name || "") + " expira em " + (data.expires_at || "breve") + "!")}
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          Renove para manter seus benefícios: destaque na busca, boost slots, taxa reduzida e mais.
+        </p>
+        ${ctaButton("Renovar Plano", `${appUrl}/marketplace/planos`)}
+      `,
+    },
+    mk_offer_rejected: {
+      subtitle: "Oferta Não Aceita ❌",
+      content: `
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          Sua oferta de <strong style="color: #d4af37;">${formatCurrency(data.offer_price || 0)}</strong> pelo 
+          <strong style="color: #fff;">"${data.listing_title || ""}"</strong> não foi aceita pelo vendedor.
+        </p>
+        <p style="color: #a0a0a0; font-size: 14px; margin: 0 0 16px; line-height: 1.6;">
+          Que tal tentar um valor diferente ou explorar outros anúncios?
+        </p>
+        ${ctaButton("Ver Mais Anúncios", `${appUrl}/marketplace`)}
+      `,
+    },
+    mk_payment_confirmed: {
+      subtitle: "Pagamento Confirmado! ✅",
+      content: `
+        ${successBanner("Pagamento processado com sucesso!")}
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          O pagamento do pedido <strong style="color: #d4af37;">${data.order_code}</strong> foi confirmado.
+        </p>
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+          ${infoCard("Valor", formatCurrency(data.payment_amount || data.price || 0))}
+          ${data.payment_method_label ? infoCard("Método", data.payment_method_label) : ""}
+          ${data.product_name ? infoCard("Produto", data.product_name) : ""}
+        </div>
+        <p style="color: #a0a0a0; font-size: 14px; margin: 0 0 16px; line-height: 1.6;">
+          O vendedor foi notificado e enviará o produto em até <strong style="color: #d4af37;">3 dias úteis</strong>.
+        </p>
+        ${ctaButton("Acompanhar Pedido", `${appUrl}/vault/marketplace`)}
+      `,
+    },
+    mk_kyc_approved: {
+      subtitle: "Cadastro Aprovado! ✅",
+      content: `
+        ${successBanner("Parabéns! Sua verificação de identidade foi aprovada!")}
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          Agora você pode publicar anúncios e vender no marketplace Bravenza.
+        </p>
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+          <p style="color: #fff; font-size: 40px; margin: 0 0 8px;">🎉</p>
+          <p style="color: #a0a0a0; font-size: 14px; margin: 0;">
+            Personalize sua loja e publique seu primeiro anúncio!
+          </p>
+        </div>
+        ${ctaButton("Ir para Minha Loja", `${appUrl}/marketplace/minha-loja`)}
+      `,
+    },
+    mk_kyc_rejected: {
+      subtitle: "Documentos Precisam de Atenção ⚠️",
+      content: `
+        ${warningBanner("Sua verificação de identidade não foi aprovada.")}
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          Infelizmente, seus documentos não atenderam aos nossos critérios de verificação.
+        </p>
+        ${data.kyc_rejection_reason ? `
+          <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+            <p style="color: #a0a0a0; font-size: 14px; margin: 0 0 8px;">Motivo:</p>
+            <p style="color: #fff; font-size: 15px; margin: 0;">${data.kyc_rejection_reason}</p>
+          </div>
+        ` : ""}
+        <p style="color: #a0a0a0; font-size: 14px; margin: 0 0 16px; line-height: 1.6;">
+          Você pode enviar novos documentos para uma nova análise.
+        </p>
+        ${ctaButton("Reenviar Documentos", `${appUrl}/marketplace/minha-loja`)}
       `,
     },
 

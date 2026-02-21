@@ -1,7 +1,7 @@
 // mk-orders: Orders, Payments, Disputes, Chat, Hub PRO, Inspection, Auto-payout
 import {
   corsHeaders, jsonResponse, createSupabaseClient, resolveCpf,
-  getMember, getSellerProfile, notify, getMemberEmail, sendMarketplaceEmail, generateOrderCode,
+  getMember, getSellerProfile, notify, getMemberEmail, sendMarketplaceEmail, sendMarketplaceWhatsApp, generateOrderCode,
 } from "../_shared/mk-helpers.ts";
 
 const j = jsonResponse;
@@ -10,6 +10,7 @@ const gs = getSellerProfile;
 const nt = notify;
 const ge = getMemberEmail;
 const em = sendMarketplaceEmail;
+const wa = sendMarketplaceWhatsApp;
 const gc = generateOrderCode;
 
 const PUBLIC_ACTIONS = new Set(["laudo-lookup", "check-auto-payout"]);
@@ -95,6 +96,7 @@ Deno.serve(async (req) => {
           price: li.price, size: li.size || b.size, condition: li.condition,
           shipping_mode: li.shipping_mode || "direct",
         });
+        if (buyerInfo.phone) wa("mk_purchase_confirmed", { recipient_phone: buyerInfo.phone, recipient_name: buyerInfo.name, order_code: od.order_code, product_name: titleForNotification, price: li.price });
       }
       const sellerInfo = await ge(sb, li.seller.member.client_cpf);
       if (sellerInfo) {
@@ -104,6 +106,7 @@ Deno.serve(async (req) => {
           price: li.price, size: li.size || b.size, buyer_name: b.buyer_name,
           shipping_mode: li.shipping_mode || "direct",
         });
+        if (sellerInfo.phone) wa("mk_new_sale", { recipient_phone: sellerInfo.phone, recipient_name: sellerInfo.name, order_code: od.order_code, product_name: titleForNotification, price: li.price, buyer_name: b.buyer_name, shipping_mode: li.shipping_mode || "direct" });
       }
       return j({ success: true, order: od });
     }
