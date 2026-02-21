@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import {
   Package,
@@ -16,10 +16,22 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ORDER_STATUS_LABELS, formatDate } from "@/lib/constants";
-import { DashboardMetrics } from "@/components/admin/DashboardMetrics";
-import { AdvancedFinanceDashboard } from "@/components/admin/AdvancedFinanceDashboard";
-import { ClientHeatmap } from "@/components/admin/ClientHeatmap";
-import { AutomationHealthDashboard } from "@/components/admin/AutomationHealthDashboard";
+
+// Lazy load heavy tab components (recharts ~200KB each)
+const DashboardMetrics = lazy(() => import("@/components/admin/DashboardMetrics").then(m => ({ default: m.DashboardMetrics })));
+const AdvancedFinanceDashboard = lazy(() => import("@/components/admin/AdvancedFinanceDashboard").then(m => ({ default: m.AdvancedFinanceDashboard })));
+const ClientHeatmap = lazy(() => import("@/components/admin/ClientHeatmap").then(m => ({ default: m.ClientHeatmap })));
+const AutomationHealthDashboard = lazy(() => import("@/components/admin/AutomationHealthDashboard").then(m => ({ default: m.AutomationHealthDashboard })));
+
+const TabFallback = () => (
+  <div className="space-y-4">
+    <Skeleton className="h-32 w-full" />
+    <div className="grid grid-cols-2 gap-4">
+      <Skeleton className="h-64" />
+      <Skeleton className="h-64" />
+    </div>
+  </div>
+);
 
 interface Order {
   order_id: string;
@@ -306,19 +318,27 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="metrics">
-          <DashboardMetrics />
+          <Suspense fallback={<TabFallback />}>
+            <DashboardMetrics />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="finance">
-          <AdvancedFinanceDashboard />
+          <Suspense fallback={<TabFallback />}>
+            <AdvancedFinanceDashboard />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="heatmap">
-          <ClientHeatmap />
+          <Suspense fallback={<TabFallback />}>
+            <ClientHeatmap />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="automation">
-          <AutomationHealthDashboard />
+          <Suspense fallback={<TabFallback />}>
+            <AutomationHealthDashboard />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </div>

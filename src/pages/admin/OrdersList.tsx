@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Search,
@@ -62,10 +62,23 @@ const OrdersList = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Debounce search input (400ms)
+  useEffect(() => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, [search]);
 
   // Fetch orders with server-side pagination
   useEffect(() => {
@@ -106,8 +119,8 @@ const OrdersList = () => {
         }
 
         // Search filter (server-side for order_id and client_name)
-        if (search) {
-          query = query.or(`order_id.ilike.%${search}%,client_name.ilike.%${search}%,product_name.ilike.%${search}%`);
+        if (debouncedSearch) {
+          query = query.or(`order_id.ilike.%${debouncedSearch}%,client_name.ilike.%${debouncedSearch}%,product_name.ilike.%${debouncedSearch}%`);
         }
 
         // Pagination
@@ -129,12 +142,12 @@ const OrdersList = () => {
     };
 
     fetchOrders();
-  }, [page, statusFilter, dateFilter, search]);
+  }, [page, statusFilter, dateFilter, debouncedSearch]);
 
   // Reset page when filters change
   useEffect(() => {
     setPage(0);
-  }, [statusFilter, dateFilter, search]);
+  }, [statusFilter, dateFilter, debouncedSearch]);
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
