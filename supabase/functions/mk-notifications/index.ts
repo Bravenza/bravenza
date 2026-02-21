@@ -30,6 +30,20 @@ function sendEmail(type: string, data: Record<string, any>) {
   } catch (_) {}
 }
 
+// Fire-and-forget WhatsApp via send-whatsapp edge function
+function sendWhatsApp(type: string, data: Record<string, any>) {
+  try {
+    const baseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!baseUrl || !serviceKey) return;
+    fetch(`${baseUrl}/functions/v1/send-whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
+      body: JSON.stringify({ message_type: type, ...data }),
+    }).catch((e: any) => console.error("[mk-notifications] whatsapp error:", e));
+  } catch (_) {}
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -110,7 +124,7 @@ Deno.serve(async (req) => {
           `Pedido ${order.order_code}: já se passaram 3+ dias desde o pagamento. Envie ${dest} o mais rápido possível.`,
           sl.member.client_cpf, order.id, "marketplace_shipping");
         // Email: shipping reminder
-        const { data: sellerMember } = await sb.from("vault_members").select("client_name, client_email").eq("client_cpf", sl.member.client_cpf).maybeSingle();
+        const { data: sellerMember } = await sb.from("vault_members").select("client_name, client_email, client_phone").eq("client_cpf", sl.member.client_cpf).maybeSingle();
         if (sellerMember?.client_email) {
           const daysDiff = Math.floor((Date.now() - new Date(order.paid_at).getTime()) / (1000 * 60 * 60 * 24));
           sendEmail("mk_shipping_reminder", {
@@ -120,6 +134,15 @@ Deno.serve(async (req) => {
             shipping_mode: order.shipping_mode,
             days_pending: daysDiff,
           });
+          if (sellerMember.client_phone) {
+            sendWhatsApp("mk_shipping_reminder", {
+              recipient_phone: sellerMember.client_phone,
+              recipient_name: sellerMember.client_name,
+              order_code: order.order_code,
+              shipping_mode: order.shipping_mode,
+              days_pending: daysDiff,
+            });
+          }
         }
         shippingReminders++;
       }
@@ -350,6 +373,13 @@ Deno.serve(async (req) => {
         sendEmail("mk_review_request", {
           recipient_name: buyerMember.client_name,
           recipient_email: buyerMember.client_email,
+          order_code: order.order_code,
+        });
+      }
+      if (buyerMember.client_phone) {
+        sendWhatsApp("mk_review_request", {
+          recipient_phone: buyerMember.client_phone,
+          recipient_name: buyerMember.client_name,
           order_code: order.order_code,
         });
       }

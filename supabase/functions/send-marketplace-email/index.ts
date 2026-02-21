@@ -30,6 +30,8 @@ type MarketplaceEmailType =
   | "mk_payment_confirmed"
   | "mk_kyc_approved"
   | "mk_kyc_rejected"
+  | "mk_hub_received"
+  | "mk_hub_shipped_to_buyer"
   | "community_welcome"
   | "community_post_reported"
   | "community_new_follower"
@@ -119,6 +121,8 @@ const getSubject = (type: MarketplaceEmailType, data: MarketplaceEmailRequest): 
     mk_payment_confirmed: `✅ Pagamento confirmado! - ${data.order_code}`,
     mk_kyc_approved: `✅ Cadastro de vendedor aprovado!`,
     mk_kyc_rejected: `⚠️ Documentos do cadastro precisam de atenção`,
+    mk_hub_received: `📦 Pedido recebido no Hub - ${data.order_code}`,
+    mk_hub_shipped_to_buyer: `🚚 Pedido enviado do Hub para você! - ${data.order_code}`,
     community_welcome: `👋 Bem-vindo à Comunidade Bravenza!`,
     community_post_reported: `🚩 Post reportado na comunidade`,
     community_new_follower: `👤 Novo seguidor na comunidade!`,
@@ -702,6 +706,40 @@ const getEmailHtml = (type: MarketplaceEmailType, data: MarketplaceEmailRequest)
           </p>
         </div>
         ${ctaButton("Fazer Nova Solicitação", `${appUrl}/solicitar`)}
+      `,
+    },
+    mk_hub_received: {
+      subtitle: "Pedido Recebido no Hub",
+      content: `
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          Seu pedido <strong style="color: #d4af37;">${data.order_code}</strong> foi recebido no 
+          <strong style="color: #fff;">Hub Bravenza</strong> e será inspecionado por nossa equipe de autenticação.
+        </p>
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+          ${infoCard("Status", "Recebido no Hub ✅")}
+          ${infoCard("Próximo passo", "Inspeção de autenticidade")}
+        </div>
+        <p style="color: #a0a0a0; font-size: 14px; margin: 0 0 16px; line-height: 1.6;">
+          Você será notificado assim que a inspeção for concluída.
+        </p>
+        ${ctaButton("Acompanhar Pedido", `${appUrl}/vault/marketplace`)}
+      `,
+    },
+    mk_hub_shipped_to_buyer: {
+      subtitle: "Pedido Enviado do Hub",
+      content: `
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          Ótima notícia! Seu pedido <strong style="color: #d4af37;">${data.order_code}</strong> foi 
+          <strong style="color: #00c853;">aprovado na inspeção</strong> e já saiu do Hub Bravenza rumo a você! 🎉
+        </p>
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+          ${infoCard("Status", "Enviado para você 🚚")}
+          ${data.tracking_code ? infoCard("Rastreio", data.tracking_code) : ""}
+        </div>
+        <p style="color: #a0a0a0; font-size: 14px; margin: 0 0 16px; line-height: 1.6;">
+          Acompanhe o envio pelo código de rastreio acima.
+        </p>
+        ${ctaButton("Acompanhar Pedido", `${appUrl}/vault/marketplace`)}
       `,
     },
   };
