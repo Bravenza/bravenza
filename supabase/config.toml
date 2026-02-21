@@ -92,3 +92,9 @@ verify_jwt = false
 
 [functions.mk-cron-tasks]
 verify_jwt = false
+
+[functions.mk-orders]
+verify_jwt = false
+
+[functions.mk-seller]
+verify_jwt = false
