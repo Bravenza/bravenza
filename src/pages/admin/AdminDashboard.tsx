@@ -159,14 +159,14 @@ const AdminDashboard = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="card-premium">
+                <Card className="card-premium h-full">
                   <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">{stat.title}</p>
-                        <p className="text-3xl font-bold mt-1">{stat.value}</p>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm text-muted-foreground truncate">{stat.title}</p>
+                        <p className="text-2xl font-bold mt-1">{stat.value}</p>
                       </div>
-                      <div className={`p-3 rounded-lg ${stat.bgColor}`}>
+                      <div className={`p-3 rounded-lg shrink-0 ${stat.bgColor}`}>
                         <stat.icon className={`h-6 w-6 ${stat.color}`} />
                       </div>
                     </div>
@@ -184,7 +184,7 @@ const AdminDashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <Card className="card-premium">
+              <Card className="card-premium h-full">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <Package className="h-5 w-5 text-primary" />
@@ -243,7 +243,7 @@ const AdminDashboard = () => {
               className="space-y-6"
             >
               {/* Pending Requests Card */}
-              <Card className="card-premium">
+              <Card className="card-premium h-full">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <ClipboardList className="h-5 w-5 text-primary" />
@@ -278,7 +278,7 @@ const AdminDashboard = () => {
               </Card>
 
               {/* Overdue Orders Card */}
-              <Card className="card-premium">
+              <Card className="card-premium h-full">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CalendarClock className="h-5 w-5 text-destructive" />
