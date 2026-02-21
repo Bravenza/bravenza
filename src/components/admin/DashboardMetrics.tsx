@@ -183,8 +183,8 @@ export function DashboardMetrics() {
           >
             <Card className="card-premium h-full">
               <CardContent className="p-6">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm text-muted-foreground">{kpi.title}</p>
                     <p className="text-2xl font-bold mt-1 break-words">{kpi.value}</p>
                     <p className="text-xs text-muted-foreground mt-1">{kpi.description}</p>
