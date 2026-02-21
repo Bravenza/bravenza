@@ -268,6 +268,8 @@ Deno.serve(async (req) => {
         u.status = "rejected";
         await sb.from("marketplace_negotiation_events").insert({ offer_id: of2.id, event_type: "rejected", actor_cpf: cpf, message: b.reason || null });
         await nt(sb, "❌ Recusada", `Oferta por "${of2.listing?.title}" recusada.`, of2.buyer_cpf, of2.listing_id, "marketplace_offer");
+        const buyerRejEmail = await ge(sb, of2.buyer_cpf);
+        if (buyerRejEmail) em("mk_offer_rejected", { recipient_name: buyerRejEmail.name, recipient_email: buyerRejEmail.email, listing_title: of2.listing?.title, offer_price: of2.offer_price, reject_reason: b.reason || "Sem motivo informado" });
       } else if (b.response === "counter") {
         u.status = "counter"; u.counter_price = b.counter_price; u.counter_message = b.counter_message || null;
         u.expires_at = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
