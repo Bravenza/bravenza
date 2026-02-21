@@ -405,9 +405,21 @@ Deno.serve(async (req) => {
       const b = await req.json();
       const mb = await gm(sb, cpf); if (!mb) throw new Error("Membro não encontrado");
       const sl = await gs(sb, mb.id); if (!sl) throw new Error("Vendedor não encontrado");
-      const { error } = await sb.from("vault_seller_profiles").update({ bio: b.bio, storefront_banner: b.banner, storefront_tagline: b.tagline, storefront_theme: b.theme }).eq("id", sl.id);
+      const updateData: Record<string, unknown> = {};
+      if (b.bio !== undefined) updateData.bio = b.bio;
+      if (b.banner !== undefined) updateData.storefront_banner = b.banner;
+      if (b.tagline !== undefined) updateData.storefront_tagline = b.tagline;
+      if (b.theme !== undefined) updateData.storefront_theme = b.theme;
+      if (b.avatar_url !== undefined) updateData.avatar_url = b.avatar_url;
+      const { error } = await sb.from("vault_seller_profiles").update(updateData).eq("id", sl.id);
       if (error) throw error;
       return j({ success: true });
+    }
+
+    if (mt === "GET" && a === "my-storefront") {
+      const mb = await gm(sb, cpf); if (!mb) return j({ storefront: null });
+      const sl = await gs(sb, mb.id); if (!sl) return j({ storefront: null });
+      return j({ storefront: { bio: sl.bio, banner: sl.storefront_banner, tagline: sl.storefront_tagline, theme: sl.storefront_theme, avatar_url: sl.avatar_url, seller_id: sl.id } });
     }
 
     // ==================== SNAPSHOT PRICES (cron) ====================

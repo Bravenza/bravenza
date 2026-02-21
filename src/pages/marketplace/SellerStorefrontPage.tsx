@@ -91,8 +91,12 @@ export default function SellerStorefrontPage() {
       {/* Profile Info */}
       <div className="max-w-5xl mx-auto px-4 -mt-16 relative z-10">
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-end">
-          <div className="w-24 h-24 rounded-2xl bg-card border-4 border-background shadow-lg flex items-center justify-center text-3xl font-black text-primary">
-            {(seller.member?.client_name || "V").charAt(0)}
+          <div className="w-24 h-24 rounded-2xl bg-card border-4 border-background shadow-lg flex items-center justify-center text-3xl font-black text-primary overflow-hidden">
+            {seller.avatar_url ? (
+              <img src={seller.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              (seller.member?.client_name || "V").charAt(0)
+            )}
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">

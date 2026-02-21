@@ -3948,6 +3948,7 @@ export type Database = {
       vault_seller_profiles: {
         Row: {
           account_type: string | null
+          avatar_url: string | null
           average_rating: number | null
           bank_name: string | null
           bio: string | null
@@ -4002,6 +4003,7 @@ export type Database = {
         }
         Insert: {
           account_type?: string | null
+          avatar_url?: string | null
           average_rating?: number | null
           bank_name?: string | null
           bio?: string | null
@@ -4056,6 +4058,7 @@ export type Database = {
         }
         Update: {
           account_type?: string | null
+          avatar_url?: string | null
           average_rating?: number | null
           bank_name?: string | null
           bio?: string | null
