@@ -280,14 +280,29 @@ export default function PaymentPage() {
 
   // Handle successful card payment
   const handleCardPaymentSuccess = () => {
-    // Reload order data to reflect payment
-    window.location.reload();
+    navigate(`/confirmacao/${token}?method=card`);
   };
 
   // Handle card payment error
   const handleCardPaymentError = (error: string) => {
     console.error("Card payment error:", error);
   };
+
+  // Poll for PIX payment status
+  useEffect(() => {
+    if (!pixData || !token || !order) return;
+    const interval = setInterval(async () => {
+      try {
+        const { data } = await supabase.rpc("get_order_by_token", { p_token: token });
+        const orderData = data as any;
+        if (orderData?.[0]?.sinal_paid) {
+          clearInterval(interval);
+          navigate(`/confirmacao/${token}?method=pix`);
+        }
+      } catch { /* ignore */ }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [pixData, token, order, navigate]);
 
   // Handle contract acceptance
   const handleContractAccept = async () => {
@@ -345,22 +360,9 @@ export default function PaymentPage() {
 
   // Payment complete check
   if (order.sinal_paid) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="max-w-md w-full text-center">
-          <CardContent className="pt-8 pb-8">
-            <CheckCircle2 className="h-16 w-16 text-success mx-auto mb-4" />
-            <h1 className="text-2xl font-bold mb-2">Pagamento Completo!</h1>
-            <p className="text-muted-foreground mb-4">
-              O pagamento do seu pedido foi confirmado. Obrigado!
-            </p>
-            <Button onClick={() => navigate(`/rastreio/${order.order_id}`)}>
-              Acompanhar Pedido
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    // Redirect to confirmation page
+    navigate(`/confirmacao/${token}?method=pix`, { replace: true });
+    return null;
   }
 
   const baseAmount = order.product_price;
@@ -578,10 +580,15 @@ export default function PaymentPage() {
                         </div>
                       </div>
 
-                      <div className="p-4 bg-primary/10 rounded-lg">
-                        <p className="text-sm text-primary">
-                          💡 Após o pagamento, a confirmação é automática e você
-                          receberá uma notificação.
+                      <div className="p-4 bg-primary/10 rounded-lg space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                          <p className="text-sm text-primary font-medium">
+                            Aguardando pagamento...
+                          </p>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          A confirmação é automática. Você será redirecionado assim que o pagamento for detectado.
                         </p>
                       </div>
                     </div>
