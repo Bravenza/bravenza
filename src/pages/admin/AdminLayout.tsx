@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -30,10 +30,10 @@ import {
   Flag,
   Bell,
 } from "lucide-react";
-import { useState } from "react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NotificationBell } from "@/components/admin/NotificationBell";
 import { GlobalSearch } from "@/components/admin/GlobalSearch";
@@ -82,11 +82,28 @@ const AdminLayout = () => {
   const location = useLocation();
   const { user, isAdmin, isLoading, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mfaChecked, setMfaChecked] = useState(false);
   useRealtimeAdmin();
 
   useEffect(() => {
     if (!isLoading && (!user || !isAdmin)) {
       navigate("/admin/login");
+      return;
+    }
+    // Check MFA AAL level - admin must have aal2
+    if (user && isAdmin && !isLoading) {
+      (async () => {
+        const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        const hasVerifiedFactor = factors?.totp?.some((f) => f.status === "verified");
+        
+        if (!hasVerifiedFactor || data?.currentLevel !== "aal2") {
+          // Redirect to login to complete MFA
+          navigate("/admin/login");
+          return;
+        }
+        setMfaChecked(true);
+      })();
     }
   }, [user, isAdmin, isLoading, navigate]);
 
@@ -95,7 +112,7 @@ const AdminLayout = () => {
     navigate("/admin/login");
   };
 
-  if (isLoading) {
+  if (isLoading || !mfaChecked) {
     return (
       <div className="min-h-screen bg-background flex theme-light">
         <div className="hidden lg:block w-64 border-r border-border/30 p-4 bg-card/50">

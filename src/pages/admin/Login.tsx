@@ -12,6 +12,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { Logo } from "@/components/Logo";
+import { MFAVerify } from "@/components/admin/mfa/MFAVerify";
+import { MFAEnroll } from "@/components/admin/mfa/MFAEnroll";
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -31,7 +33,7 @@ const signupSchema = z.object({
 const Login = forwardRef<HTMLDivElement>((_, ref) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, isAdmin, signIn, signUp, isLoading: authLoading, isPasswordRecovery, clearPasswordRecovery } = useAuth();
+  const { user, isAdmin, signIn, signUp, signOut, isLoading: authLoading, isPasswordRecovery, clearPasswordRecovery } = useAuth();
 
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +42,7 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
   const [resetEmail, setResetEmail] = useState("");
   const [resetSent, setResetSent] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [mfaStep, setMfaStep] = useState<"none" | "verify" | "enroll">("none");
 
   // Login form
   const [loginEmail, setLoginEmail] = useState("");
@@ -63,10 +66,26 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
   }, []);
 
   useEffect(() => {
-    if (user && isAdmin && !showResetPassword && !isPasswordRecovery) {
-      navigate("/admin");
+    if (user && isAdmin && !showResetPassword && !isPasswordRecovery && mfaStep === "none") {
+      // Check MFA status before redirecting
+      (async () => {
+        const { data } = await supabase.auth.mfa.listFactors();
+        const verifiedFactor = data?.totp?.find((f) => f.status === "verified");
+        if (verifiedFactor) {
+          // Has MFA - check AAL level
+          const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+          if (aalData?.currentLevel === "aal2") {
+            navigate("/admin");
+          } else {
+            setMfaStep("verify");
+          }
+        } else {
+          // No MFA configured - force enrollment
+          setMfaStep("enroll");
+        }
+      })();
     }
-  }, [user, isAdmin, navigate, showResetPassword, isPasswordRecovery]);
+  }, [user, isAdmin, navigate, showResetPassword, isPasswordRecovery, mfaStep]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,6 +168,45 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // MFA Verify screen
+  if (mfaStep === "verify") {
+    return (
+      <MFAVerify
+        onVerified={() => navigate("/admin")}
+        onSignOut={async () => {
+          await signOut();
+          setMfaStep("none");
+        }}
+      />
+    );
+  }
+
+  // MFA Enrollment screen (mandatory for admins)
+  if (mfaStep === "enroll") {
+    return (
+      <div className="min-h-[100dvh] bg-background flex flex-col items-center justify-center px-4 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute inset-0 bg-grid-pattern opacity-5 md:opacity-10" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/8 rounded-full blur-[120px]" />
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+        </div>
+        <div className="relative z-10 w-full max-w-[440px]">
+          <div className="text-center mb-6">
+            <Logo size="lg" className="mx-auto mb-4" />
+            <p className="text-xs tracking-[0.25em] uppercase text-muted-foreground">
+              Configuração Obrigatória de Segurança
+            </p>
+          </div>
+          <div className="bg-card/80 backdrop-blur-xl border border-border/40 rounded-xl p-7">
+            <MFAEnroll
+              onEnrolled={() => navigate("/admin")}
+            />
+          </div>
+        </div>
       </div>
     );
   }
