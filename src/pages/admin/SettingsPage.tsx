@@ -7,8 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, QrCode, CheckCircle2, XCircle, ExternalLink, Mail, MessageSquare, Percent, Users, Loader2, Truck, Info, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { EmailSettingsTab } from "@/components/admin/settings/EmailSettingsTab";
-import { WhatsAppSettingsTab } from "@/components/admin/settings/WhatsAppSettingsTab";
 
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -153,14 +151,6 @@ export default function SettingsPage() {
             <ShieldCheck className="h-4 w-4" />
             Segurança
           </TabsTrigger>
-          <TabsTrigger value="emails" className="flex items-center gap-2">
-            <Mail className="h-4 w-4" />
-            Emails
-          </TabsTrigger>
-          <TabsTrigger value="whatsapp" className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" />
-            WhatsApp
-          </TabsTrigger>
           <TabsTrigger value="admins" className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4" />
             Administradores
@@ -223,19 +213,9 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-
-        <TabsContent value="emails">
-          <EmailSettingsTab />
-        </TabsContent>
-
         <TabsContent value="seguranca">
           <SecuritySettingsTab />
         </TabsContent>
-
-        <TabsContent value="whatsapp">
-          <WhatsAppSettingsTab />
-        </TabsContent>
-
 
         <TabsContent value="admins">
           <AdminSettingsTab />
