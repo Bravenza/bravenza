@@ -12,12 +12,12 @@ const trustItems = [
 const HeroSectionComponent = () => {
   return (
     <section className="relative min-h-[85vh] md:min-h-[95vh] flex items-center justify-center overflow-hidden">
-      {/* Tech grid background — reduced opacity for WebView compatibility */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-20 md:opacity-40" />
+      {/* Tech grid background — hidden on mobile to prevent WebView rendering artifacts */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-0 md:opacity-40" style={{ backgroundColor: 'transparent' }} />
       
-      {/* Radial glow effects */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-radial-glow" />
+      {/* Radial glow effects — desktop only to avoid PWA artifacts */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-radial-glow" style={{ backgroundColor: 'transparent' }} />
         
         <div
           className="absolute top-20 right-[20%] w-2 h-2 rounded-full bg-primary shadow-[0_0_40px_15px_hsl(45,100%,50%,0.2)] animate-hero-glow-1"
