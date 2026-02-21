@@ -393,6 +393,16 @@ Deno.serve(async (req) => {
         if (od?.buyer_cpf) {
           const msgs: Record<string, string> = { hub_received: `Pedido ${od.order_code} recebido no Hub Bravenza para inspeção.`, in_transit_to_buyer: `Pedido ${od.order_code} aprovado e enviado para você!` };
           await nt(sb, "📦 Atualização do pedido", msgs[b.status] || "Status atualizado.", od.buyer_cpf, b.order_id, "marketplace_order");
+          const buyerHubEmail = await ge(sb, od.buyer_cpf);
+          if (buyerHubEmail) {
+            if (b.status === "hub_received") {
+              em("mk_hub_received", { recipient_name: buyerHubEmail.name, recipient_email: buyerHubEmail.email, order_code: od.order_code });
+              if (buyerHubEmail.phone) wa("mk_hub_received", { recipient_phone: buyerHubEmail.phone, recipient_name: buyerHubEmail.name, order_code: od.order_code });
+            } else {
+              em("mk_hub_shipped_to_buyer", { recipient_name: buyerHubEmail.name, recipient_email: buyerHubEmail.email, order_code: od.order_code, tracking_code: b.hub_tracking_to_buyer || null });
+              if (buyerHubEmail.phone) wa("mk_hub_shipped_to_buyer", { recipient_phone: buyerHubEmail.phone, recipient_name: buyerHubEmail.name, order_code: od.order_code, tracking_code: b.hub_tracking_to_buyer || null });
+            }
+          }
         }
       }
       return j({ success: true });
@@ -428,7 +438,21 @@ Deno.serve(async (req) => {
           if (sl?.member?.client_cpf) await nt(sb, "❌ Item reprovado na inspeção", `Pedido ${od.order_code}: ${b.rejection_reason || "Não passou na autenticação"}.`, sl.member.client_cpf, b.order_id, "marketplace_inspection");
         }
         const buyerEmail = await ge(sb, od.buyer_cpf);
-        if (buyerEmail) em("mk_inspection_result", { recipient_name: buyerEmail.name, recipient_email: buyerEmail.email, order_code: od.order_code, inspection_result: b.result, rejection_reason: b.rejection_reason || null });
+        if (buyerEmail) {
+          em("mk_inspection_result", { recipient_name: buyerEmail.name, recipient_email: buyerEmail.email, order_code: od.order_code, inspection_result: b.result, rejection_reason: b.rejection_reason || null });
+          if (buyerEmail.phone) {
+            const waType = b.result === "approved" ? "mk_hub_shipped_to_buyer" : "mk_hub_received";
+            wa(waType, { recipient_phone: buyerEmail.phone, recipient_name: buyerEmail.name, order_code: od.order_code });
+          }
+        }
+        // Also notify seller on rejection via WhatsApp
+        if (b.result !== "approved" && od.seller_id) {
+          const { data: slInsp } = await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf)").eq("id", od.seller_id).single();
+          if (slInsp?.member?.client_cpf) {
+            const sellerInspInfo = await ge(sb, slInsp.member.client_cpf);
+            if (sellerInspInfo?.phone) wa("mk_dispute_opened", { recipient_phone: sellerInspInfo.phone, recipient_name: sellerInspInfo.name, order_code: od.order_code, dispute_reason: b.rejection_reason || "Item reprovado na inspeção" });
+          }
+        }
       }
       return j({ success: true, inspection: insp, laudo_id: laudoId, laudo_qr_url: laudoQrUrl });
     }

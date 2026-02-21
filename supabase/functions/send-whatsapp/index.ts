@@ -12,7 +12,8 @@ interface WhatsAppRequest {
   message_type: "budget_sent" | "budget_expiring" | "sinal_confirmed" | "sinal_reminder" | "balance_confirmed" | "status_update" | "review_request" | "referral_confirmed" | "cashback_expiring" | "vault_welcome" | "custom"
     | "mk_purchase_confirmed" | "mk_new_sale" | "mk_seller_shipped" | "mk_delivery_confirmed"
     | "mk_dispute_opened" | "mk_dispute_resolved" | "mk_payout_released" | "mk_payment_confirmed"
-    | "mk_kyc_approved" | "mk_kyc_rejected" | "mk_review_request";
+    | "mk_kyc_approved" | "mk_kyc_rejected" | "mk_review_request"
+    | "mk_hub_received" | "mk_hub_shipped_to_buyer" | "mk_shipping_reminder";
   custom_message?: string;
   // For referral notifications
   referrer_phone?: string;
@@ -223,6 +224,27 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `Pedido *${data.order_code}* finalizado com sucesso! 🎉\n\n` +
     `Sua opinião é muito importante. Avalie em apenas 1 minuto!\n` +
     `Acesse: https://bravenza.lovable.app/vault/marketplace\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_hub_received: (data: any) =>
+    `📦 *Pedido Recebido no Hub!*\n\n` +
+    `Olá ${data.recipient_name || "Cliente"}!\n\n` +
+    `Seu pedido *${data.order_code}* chegou ao Hub Bravenza e será inspecionado pela nossa equipe.\n\n` +
+    `Você será notificado assim que a inspeção for concluída.\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_hub_shipped_to_buyer: (data: any) =>
+    `🚚 *Pedido Enviado do Hub!*\n\n` +
+    `Olá ${data.recipient_name || "Cliente"}!\n\n` +
+    `Pedido *${data.order_code}* aprovado na inspeção e enviado para você! 🎉\n\n` +
+    `${data.tracking_code ? `📦 Rastreio: ${data.tracking_code}\n\n` : ""}` +
+    `_Bravenza Marketplace_`,
+
+  mk_shipping_reminder: (data: any) =>
+    `⚠️ *Lembrete de Envio!*\n\n` +
+    `Olá ${data.recipient_name || "Vendedor"}!\n\n` +
+    `Pedido *${data.order_code}* está pendente de envio há *${data.days_pending || 3}+ dias*.\n\n` +
+    `${data.shipping_mode === "bravenza" ? "Envie ao Hub Bravenza" : "Envie ao comprador"} o mais rápido possível para evitar cancelamento.\n\n` +
     `_Bravenza Marketplace_`,
 };
 const STATUS_LABELS: Record<string, string> = {
@@ -472,7 +494,8 @@ Deno.serve(async (req) => {
     // Handle marketplace notifications (use recipient_phone)
     const mkTypes = ["mk_purchase_confirmed", "mk_new_sale", "mk_seller_shipped", "mk_delivery_confirmed",
       "mk_dispute_opened", "mk_dispute_resolved", "mk_payout_released", "mk_payment_confirmed",
-      "mk_kyc_approved", "mk_kyc_rejected", "mk_review_request"];
+      "mk_kyc_approved", "mk_kyc_rejected", "mk_review_request",
+      "mk_hub_received", "mk_hub_shipped_to_buyer", "mk_shipping_reminder"];
     
     if (mkTypes.includes(message_type)) {
       const phoneToUse = requestData.recipient_phone;
