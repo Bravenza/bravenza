@@ -188,6 +188,7 @@ Deno.serve(async (req) => {
                   order_code: orderInfo?.order_code, payout_amount: orderInfo?.seller_payout,
                   payout_method: b.payout_method || "pix",
                 });
+                if (sellerEmail.phone) wa("mk_payout_released", { recipient_phone: sellerEmail.phone, recipient_name: sellerEmail.name, order_code: orderInfo?.order_code, payout_amount: orderInfo?.seller_payout });
               }
             }
           }
@@ -201,29 +202,36 @@ Deno.serve(async (req) => {
 
       if (["shipped", "delivered", "cancelled"].includes(b.status)) {
         const { data: orderData } = await sb.from("vault_marketplace_orders").select(
-          `order_code, buyer_cpf, buyer_name, seller_id, shipping_mode, tracking_code, listing:vault_marketplace_listings(title, size, condition)`
+          `order_code, buyer_cpf, buyer_name, seller_id, shipping_mode, tracking_code, sale_price, listing:vault_marketplace_listings(title, size, condition)`
         ).eq("id", b.order_id).single();
         if (orderData) {
+          const productName = orderData.listing?.title || "Sneaker";
+          const { data: slInfo } = await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf)").eq("id", orderData.seller_id).single();
+          const sellerCpf = slInfo?.member?.client_cpf;
+
           if (b.status === "cancelled") {
             const buyerCancelEmail = await ge(sb, orderData.buyer_cpf);
             if (buyerCancelEmail) {
-              em("mk_order_cancelled", { recipient_name: buyerCancelEmail.name, recipient_email: buyerCancelEmail.email, order_code: orderData.order_code, product_name: orderData.listing?.title, cancel_reason: b.admin_notes || "Cancelado" });
+              em("mk_order_cancelled", { recipient_name: buyerCancelEmail.name, recipient_email: buyerCancelEmail.email, order_code: orderData.order_code, product_name: productName, cancel_reason: b.admin_notes || "Cancelado" });
+              if (buyerCancelEmail.phone) wa("mk_purchase_confirmed", { recipient_phone: buyerCancelEmail.phone, recipient_name: buyerCancelEmail.name, order_code: orderData.order_code, product_name: productName, price: orderData.sale_price });
             }
-            const { data: slCancel } = await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf)").eq("id", orderData.seller_id).single();
-            if (slCancel?.member?.client_cpf) {
-              const sellerCancelEmail = await ge(sb, slCancel.member.client_cpf);
+            if (sellerCpf) {
+              const sellerCancelEmail = await ge(sb, sellerCpf);
               if (sellerCancelEmail) {
-                em("mk_order_cancelled", { recipient_name: sellerCancelEmail.name, recipient_email: sellerCancelEmail.email, order_code: orderData.order_code, product_name: orderData.listing?.title, cancel_reason: b.admin_notes || "Cancelado" });
+                em("mk_order_cancelled", { recipient_name: sellerCancelEmail.name, recipient_email: sellerCancelEmail.email, order_code: orderData.order_code, product_name: productName, cancel_reason: b.admin_notes || "Cancelado" });
               }
             }
-          } else {
+          } else if (b.status === "shipped") {
             const buyerEmail = await ge(sb, orderData.buyer_cpf);
             if (buyerEmail) {
-              if (b.status === "shipped") {
-                em("mk_seller_shipped", { recipient_name: buyerEmail.name, recipient_email: buyerEmail.email, order_code: orderData.order_code, product_name: orderData.listing?.title, tracking_code: orderData.tracking_code || b.tracking_code, shipping_mode: orderData.shipping_mode });
-              } else if (b.status === "delivered") {
-                em("mk_delivery_confirmed", { recipient_name: buyerEmail.name, recipient_email: buyerEmail.email, order_code: orderData.order_code, product_name: orderData.listing?.title });
-              }
+              em("mk_seller_shipped", { recipient_name: buyerEmail.name, recipient_email: buyerEmail.email, order_code: orderData.order_code, product_name: productName, tracking_code: orderData.tracking_code || b.tracking_code, shipping_mode: orderData.shipping_mode });
+              if (buyerEmail.phone) wa("mk_seller_shipped", { recipient_phone: buyerEmail.phone, recipient_name: buyerEmail.name, order_code: orderData.order_code, product_name: productName, tracking_code: orderData.tracking_code || b.tracking_code, shipping_mode: orderData.shipping_mode });
+            }
+          } else if (b.status === "delivered") {
+            const buyerEmail = await ge(sb, orderData.buyer_cpf);
+            if (buyerEmail) {
+              em("mk_delivery_confirmed", { recipient_name: buyerEmail.name, recipient_email: buyerEmail.email, order_code: orderData.order_code, product_name: productName });
+              if (buyerEmail.phone) wa("mk_delivery_confirmed", { recipient_phone: buyerEmail.phone, recipient_name: buyerEmail.name, order_code: orderData.order_code, product_name: productName });
             }
           }
         }
@@ -245,10 +253,16 @@ Deno.serve(async (req) => {
         const { data: sellerData } = await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf, client_name)").eq("id", disputeOrder.seller_id).single();
         if (sellerData?.member?.client_cpf) {
           const sellerEmail = await ge(sb, sellerData.member.client_cpf);
-          if (sellerEmail) em("mk_dispute_opened", { recipient_name: sellerEmail.name, recipient_email: sellerEmail.email, order_code: disputeOrder.order_code, dispute_reason: b.reason, dispute_opened_by: disputeOrder.buyer_name || "Comprador" });
+          if (sellerEmail) {
+            em("mk_dispute_opened", { recipient_name: sellerEmail.name, recipient_email: sellerEmail.email, order_code: disputeOrder.order_code, dispute_reason: b.reason, dispute_opened_by: disputeOrder.buyer_name || "Comprador" });
+            if (sellerEmail.phone) wa("mk_dispute_opened", { recipient_phone: sellerEmail.phone, recipient_name: sellerEmail.name, order_code: disputeOrder.order_code, dispute_reason: b.reason });
+          }
         }
         const buyerEmail = await ge(sb, cpf);
-        if (buyerEmail) em("mk_dispute_opened", { recipient_name: buyerEmail.name, recipient_email: buyerEmail.email, order_code: disputeOrder.order_code, dispute_reason: b.reason, dispute_opened_by: "Você" });
+        if (buyerEmail) {
+          em("mk_dispute_opened", { recipient_name: buyerEmail.name, recipient_email: buyerEmail.email, order_code: disputeOrder.order_code, dispute_reason: b.reason, dispute_opened_by: "Você" });
+          if (buyerEmail.phone) wa("mk_dispute_opened", { recipient_phone: buyerEmail.phone, recipient_name: buyerEmail.name, order_code: disputeOrder.order_code, dispute_reason: b.reason });
+        }
       }
       return j({ success: true });
     }
@@ -263,11 +277,17 @@ Deno.serve(async (req) => {
       const { data: drOrder } = await sb.from("vault_marketplace_orders").select(`order_code, buyer_cpf, seller_id`).eq("id", b.order_id).single();
       if (drOrder) {
         const buyerDrEmail = await ge(sb, drOrder.buyer_cpf);
-        if (buyerDrEmail) em("mk_dispute_resolved", { recipient_name: buyerDrEmail.name, recipient_email: buyerDrEmail.email, order_code: drOrder.order_code, dispute_resolution: b.admin_notes || b.resolution });
+        if (buyerDrEmail) {
+          em("mk_dispute_resolved", { recipient_name: buyerDrEmail.name, recipient_email: buyerDrEmail.email, order_code: drOrder.order_code, dispute_resolution: b.admin_notes || b.resolution });
+          if (buyerDrEmail.phone) wa("mk_dispute_resolved", { recipient_phone: buyerDrEmail.phone, recipient_name: buyerDrEmail.name, order_code: drOrder.order_code });
+        }
         const { data: slDr } = await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf)").eq("id", drOrder.seller_id).single();
         if (slDr?.member?.client_cpf) {
           const sellerDrEmail = await ge(sb, slDr.member.client_cpf);
-          if (sellerDrEmail) em("mk_dispute_resolved", { recipient_name: sellerDrEmail.name, recipient_email: sellerDrEmail.email, order_code: drOrder.order_code, dispute_resolution: b.admin_notes || b.resolution });
+          if (sellerDrEmail) {
+            em("mk_dispute_resolved", { recipient_name: sellerDrEmail.name, recipient_email: sellerDrEmail.email, order_code: drOrder.order_code, dispute_resolution: b.admin_notes || b.resolution });
+            if (sellerDrEmail.phone) wa("mk_dispute_resolved", { recipient_phone: sellerDrEmail.phone, recipient_name: sellerDrEmail.name, order_code: drOrder.order_code });
+          }
         }
       }
       return j({ success: true });
