@@ -125,19 +125,11 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Visão geral do sistema de pedidos
-          </p>
-        </div>
-        <Link to="/admin/pedidos/novo">
-          <Button className="btn-gold">
-            <Package className="mr-2 h-4 w-4" />
-            Novo Pedido
-          </Button>
-        </Link>
+      <div>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Visão geral do sistema de pedidos
+        </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
