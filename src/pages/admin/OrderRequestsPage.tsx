@@ -245,8 +245,8 @@ export default function OrderRequestsPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <ClipboardList className="h-8 w-8" />
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <ClipboardList className="h-6 w-6" />
             Solicitações de Orçamento
             {pendingCount > 0 && (
               <Badge variant="default" className="ml-2">{pendingCount} novas</Badge>

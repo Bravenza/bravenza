@@ -132,8 +132,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-          <Settings className="h-8 w-8" />
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+          <Settings className="h-6 w-6" />
           Configurações
         </h1>
         <p className="text-muted-foreground mt-2">
@@ -142,16 +142,16 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="geral" className="space-y-6">
-        <TabsList className="bg-muted/50 p-1 h-auto">
-          <TabsTrigger value="geral" className="flex items-center gap-2">
+        <TabsList className="w-full overflow-x-auto flex-nowrap justify-start bg-muted/50 p-1 h-auto">
+          <TabsTrigger value="geral" className="flex items-center gap-2 whitespace-nowrap">
             <Settings className="h-4 w-4" />
             Geral
           </TabsTrigger>
-          <TabsTrigger value="seguranca" className="flex items-center gap-2">
+          <TabsTrigger value="seguranca" className="flex items-center gap-2 whitespace-nowrap">
             <ShieldCheck className="h-4 w-4" />
             Segurança
           </TabsTrigger>
-          <TabsTrigger value="admins" className="flex items-center gap-2">
+          <TabsTrigger value="admins" className="flex items-center gap-2 whitespace-nowrap">
             <ShieldCheck className="h-4 w-4" />
             Administradores
           </TabsTrigger>
