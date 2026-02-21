@@ -6,7 +6,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AuthToggle } from "@/components/auth/AuthToggle";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -220,13 +220,20 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
                 />
               ) : (
                 <>
-                  <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "signup")}>
-                    <TabsList className="grid w-full grid-cols-2 mb-6 bg-secondary/50">
-                      <TabsTrigger value="login" className="text-sm">Entrar</TabsTrigger>
-                      <TabsTrigger value="signup" className="text-sm">Cadastrar</TabsTrigger>
-                    </TabsList>
+                  <div>
+                    <div className="mb-6">
+                      <AuthToggle
+                        activeTab={activeTab}
+                        onTabChange={(v) => setActiveTab(v as "login" | "signup")}
+                        tabs={[
+                          { value: "login", label: "Entrar" },
+                          { value: "signup", label: "Cadastrar" },
+                        ]}
+                      />
+                    </div>
 
-                    <TabsContent value="login">
+                    {activeTab === "login" && (
+                      <>
                       {showForgotPassword ? (
                         <div className="space-y-4">
                           <button
@@ -327,9 +334,10 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
                           </Button>
                         </form>
                       )}
-                    </TabsContent>
+                      </>
+                    )}
 
-                    <TabsContent value="signup">
+                    {activeTab === "signup" && (
                       <form onSubmit={handleSignup} className="space-y-4">
                         <div className="space-y-2">
                           <Label htmlFor="signup-name" className="text-xs tracking-wide uppercase text-muted-foreground">Nome completo</Label>
@@ -352,8 +360,8 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
                           Criar conta
                         </Button>
                       </form>
-                    </TabsContent>
-                  </Tabs>
+                    )}
+                  </div>
 
                   {/* Bottom accent */}
                   <div className="mt-6 pt-5 border-t border-border/20">

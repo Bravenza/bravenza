@@ -6,7 +6,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AuthToggle } from "@/components/auth/AuthToggle";
 import { useToast } from "@/hooks/use-toast";
 import { useClientSession } from "@/hooks/useClientSession";
 import { supabase } from "@/integrations/supabase/client";
@@ -282,14 +282,21 @@ export default function ClientAuthPage() {
                     </p>
                   </div>
 
-                  <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="grid w-full grid-cols-2 mb-6">
-                      <TabsTrigger value="login">Entrar</TabsTrigger>
-                      <TabsTrigger value="signup">Criar Conta</TabsTrigger>
-                    </TabsList>
+                  <div>
+                    <div className="mb-6">
+                      <AuthToggle
+                        activeTab={activeTab}
+                        onTabChange={setActiveTab}
+                        tabs={[
+                          { value: "login", label: "Entrar" },
+                          { value: "signup", label: "Criar Conta" },
+                        ]}
+                      />
+                    </div>
 
                     {/* Login Tab */}
-                    <TabsContent value="login">
+                    {activeTab === "login" && (
+                      <>
                       {showForgotPassword ? (
                         <div className="space-y-4">
                           <button
@@ -388,10 +395,11 @@ export default function ClientAuthPage() {
                           </Button>
                         </form>
                       )}
-                    </TabsContent>
+                      </>
+                    )}
 
                     {/* Signup Tab */}
-                    <TabsContent value="signup">
+                    {activeTab === "signup" && (
                       <form onSubmit={handleSignup} className="space-y-4">
                         <div className="space-y-2">
                           <Label htmlFor="full-name">Nome Completo</Label>
@@ -454,8 +462,8 @@ export default function ClientAuthPage() {
                           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Criar Conta"}
                         </Button>
                       </form>
-                    </TabsContent>
-                  </Tabs>
+                    )}
+                  </div>
 
                   {/* Trust footer */}
                   <div className="mt-6 pt-4 border-t border-border/30 flex items-center justify-center gap-4">
