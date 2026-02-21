@@ -1,12 +1,11 @@
 import { useState, useEffect, forwardRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Eye, EyeOff, Loader2, LogIn, UserPlus, ArrowLeft, Shield } from "lucide-react";
+import { Eye, EyeOff, Loader2, LogIn, ArrowLeft, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AuthToggle } from "@/components/auth/AuthToggle";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,45 +13,29 @@ import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { Logo } from "@/components/Logo";
 import { MFAVerify } from "@/components/admin/mfa/MFAVerify";
 import { MFAEnroll } from "@/components/admin/mfa/MFAEnroll";
+import { ForcePasswordChange } from "@/components/admin/mfa/ForcePasswordChange";
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
 });
 
-const signupSchema = z.object({
-  fullName: z.string().min(2, "Nome deve ter no mínimo 2 caracteres"),
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Senhas não conferem",
-  path: ["confirmPassword"],
-});
-
 const Login = forwardRef<HTMLDivElement>((_, ref) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, isAdmin, signIn, signUp, signOut, isLoading: authLoading, isPasswordRecovery, clearPasswordRecovery } = useAuth();
+  const { user, isAdmin, signIn, signOut, isLoading: authLoading, isPasswordRecovery, clearPasswordRecovery } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetSent, setResetSent] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
-  const [mfaStep, setMfaStep] = useState<"none" | "verify" | "enroll">("none");
+  const [mfaStep, setMfaStep] = useState<"none" | "verify" | "enroll" | "change_password">("none");
 
   // Login form
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-
-  // Signup form
-  const [signupName, setSignupName] = useState("");
-  const [signupEmail, setSignupEmail] = useState("");
-  const [signupPassword, setSignupPassword] = useState("");
-  const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
 
   useEffect(() => {
     if (isPasswordRecovery) setShowResetPassword(true);
@@ -67,12 +50,23 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
 
   useEffect(() => {
     if (user && isAdmin && !showResetPassword && !isPasswordRecovery && mfaStep === "none") {
-      // Check MFA status before redirecting
       (async () => {
+        // Check if must change password first
+        const { data: adminProfile } = await supabase
+          .from("admin_profiles")
+          .select("must_change_password")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (adminProfile?.must_change_password) {
+          setMfaStep("change_password");
+          return;
+        }
+
+        // Check MFA status
         const { data } = await supabase.auth.mfa.listFactors();
         const verifiedFactor = data?.totp?.find((f) => f.status === "verified");
         if (verifiedFactor) {
-          // Has MFA - check AAL level
           const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
           if (aalData?.currentLevel === "aal2") {
             navigate("/admin");
@@ -80,7 +74,6 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
             setMfaStep("verify");
           }
         } else {
-          // No MFA configured - force enrollment
           setMfaStep("enroll");
         }
       })();
@@ -136,39 +129,24 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
     }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      signupSchema.parse({ fullName: signupName, email: signupEmail, password: signupPassword, confirmPassword: signupConfirmPassword });
-    } catch (err: any) {
-      const errors = JSON.parse(err.message);
-      toast({ title: "Erro de validação", description: errors[0].message, variant: "destructive" });
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const { error } = await signUp(signupEmail, signupPassword, signupName);
-      if (error) {
-        let message = error.message;
-        if (error.message.includes("already registered")) message = "Este email já está cadastrado";
-        toast({ title: "Erro ao cadastrar", description: message, variant: "destructive" });
-        return;
-      }
-      toast({ title: "Conta criada!", description: "Sua conta foi criada com sucesso. Você pode fazer login agora." });
-      setActiveTab("login");
-      setLoginEmail(signupEmail);
-    } catch {
-      toast({ title: "Erro", description: "Ocorreu um erro ao criar a conta.", variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
+    );
+  }
+
+  // Force password change screen
+  if (mfaStep === "change_password") {
+    return (
+      <ForcePasswordChange
+        onComplete={() => setMfaStep("none")}
+        onSignOut={async () => {
+          await signOut();
+          setMfaStep("none");
+        }}
+      />
     );
   }
 
@@ -202,9 +180,7 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
             </p>
           </div>
           <div className="bg-card/80 backdrop-blur-xl border border-border/40 rounded-xl p-7">
-            <MFAEnroll
-              onEnrolled={() => navigate("/admin")}
-            />
+            <MFAEnroll onEnrolled={() => navigate("/admin")} />
           </div>
         </div>
       </div>
@@ -263,7 +239,6 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
 
           {/* Card */}
           <div className="relative rounded-xl overflow-hidden">
-            {/* Gold top line */}
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             
             <div className="bg-card/80 backdrop-blur-xl border border-border/40 rounded-xl p-7">
@@ -278,148 +253,106 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
                 />
               ) : (
                 <>
-                  <div>
-                    <div className="mb-6">
-                      <AuthToggle
-                        activeTab={activeTab}
-                        onTabChange={(v) => setActiveTab(v as "login" | "signup")}
-                        tabs={[
-                          { value: "login", label: "Entrar" },
-                          { value: "signup", label: "Cadastrar" },
-                        ]}
-                      />
-                    </div>
-
-                    {activeTab === "login" && (
-                      <>
-                      {showForgotPassword ? (
-                        <div className="space-y-4">
-                          <button
-                            type="button"
-                            onClick={() => { setShowForgotPassword(false); setResetSent(false); }}
-                            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            <ArrowLeft className="h-3.5 w-3.5" /> Voltar ao login
-                          </button>
-                          {resetSent ? (
-                            <div className="text-center py-6 space-y-3">
-                              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                                <Shield className="h-5 w-5 text-primary" />
-                              </div>
-                              <p className="text-sm text-muted-foreground">
-                                Email de recuperação enviado para <strong className="text-foreground">{resetEmail}</strong>.
-                              </p>
-                            </div>
-                          ) : (
-                            <form onSubmit={handleForgotPassword} className="space-y-4">
-                              <p className="text-sm text-muted-foreground">
-                                Informe seu email para receber o link de redefinição.
-                              </p>
-                              <div className="space-y-2">
-                                <Label htmlFor="reset-email">Email</Label>
-                                <Input
-                                  id="reset-email"
-                                  type="email"
-                                  placeholder="seu@email.com"
-                                  value={resetEmail}
-                                  onChange={(e) => setResetEmail(e.target.value)}
-                                  className="bg-secondary/30 border-border/40 focus-visible:border-primary/40"
-                                />
-                              </div>
-                              <Button type="submit" className="w-full btn-gold h-11" disabled={isLoading}>
-                                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar link"}
-                              </Button>
-                            </form>
-                          )}
+                  {showForgotPassword ? (
+                    <div className="space-y-4">
+                      <button
+                        type="button"
+                        onClick={() => { setShowForgotPassword(false); setResetSent(false); }}
+                        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <ArrowLeft className="h-3.5 w-3.5" /> Voltar ao login
+                      </button>
+                      {resetSent ? (
+                        <div className="text-center py-6 space-y-3">
+                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                            <Shield className="h-5 w-5 text-primary" />
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Email de recuperação enviado para <strong className="text-foreground">{resetEmail}</strong>.
+                          </p>
                         </div>
                       ) : (
-                        <form onSubmit={handleLogin} className="space-y-5">
+                        <form onSubmit={handleForgotPassword} className="space-y-4">
+                          <p className="text-sm text-muted-foreground">
+                            Informe seu email para receber o link de redefinição.
+                          </p>
                           <div className="space-y-2">
-                            <Label htmlFor="login-email" className="text-xs tracking-wide uppercase text-muted-foreground">Email</Label>
+                            <Label htmlFor="reset-email">Email</Label>
                             <Input
-                              id="login-email"
+                              id="reset-email"
                               type="email"
-                              inputMode="email"
-                              autoComplete="username"
-                              autoCapitalize="none"
-                              autoCorrect="off"
-                              spellCheck={false}
                               placeholder="seu@email.com"
-                              value={loginEmail}
-                              onChange={(e) => setLoginEmail(e.target.value)}
-                              className="bg-secondary/30 border-border/40 h-11 focus-visible:border-primary/40"
+                              value={resetEmail}
+                              onChange={(e) => setResetEmail(e.target.value)}
+                              className="bg-secondary/30 border-border/40 focus-visible:border-primary/40"
                             />
                           </div>
-
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <Label htmlFor="login-password" className="text-xs tracking-wide uppercase text-muted-foreground">Senha</Label>
-                              <button
-                                type="button"
-                                onClick={() => { setShowForgotPassword(true); setResetEmail(loginEmail); }}
-                                className="text-[11px] text-primary/80 hover:text-primary transition-colors"
-                              >
-                                Esqueceu a senha?
-                              </button>
-                            </div>
-                            <div className="relative">
-                              <Input
-                                id="login-password"
-                                type={showPassword ? "text" : "password"}
-                                autoComplete="current-password"
-                                placeholder="••••••••"
-                                value={loginPassword}
-                                onChange={(e) => setLoginPassword(e.target.value)}
-                                className="bg-secondary/30 border-border/40 h-11 pr-10 focus-visible:border-primary/40"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                              >
-                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                              </button>
-                            </div>
-                          </div>
-
-                          <Button type="submit" className="w-full btn-gold h-11 text-sm tracking-wide" disabled={isLoading}>
-                            {isLoading ? (
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                              <LogIn className="mr-2 h-4 w-4" />
-                            )}
-                            Entrar
+                          <Button type="submit" className="w-full btn-gold h-11" disabled={isLoading}>
+                            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar link"}
                           </Button>
                         </form>
                       )}
-                      </>
-                    )}
+                    </div>
+                  ) : (
+                    <form onSubmit={handleLogin} className="space-y-5">
+                      <div className="space-y-2">
+                        <Label htmlFor="login-email" className="text-xs tracking-wide uppercase text-muted-foreground">Email</Label>
+                        <Input
+                          id="login-email"
+                          type="email"
+                          inputMode="email"
+                          autoComplete="username"
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck={false}
+                          placeholder="seu@email.com"
+                          value={loginEmail}
+                          onChange={(e) => setLoginEmail(e.target.value)}
+                          className="bg-secondary/30 border-border/40 h-11 focus-visible:border-primary/40"
+                        />
+                      </div>
 
-                    {activeTab === "signup" && (
-                      <form onSubmit={handleSignup} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="signup-name" className="text-xs tracking-wide uppercase text-muted-foreground">Nome completo</Label>
-                          <Input id="signup-name" type="text" placeholder="Seu nome" value={signupName} onChange={(e) => setSignupName(e.target.value)} className="bg-secondary/30 border-border/40 h-11 focus-visible:border-primary/40" />
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="login-password" className="text-xs tracking-wide uppercase text-muted-foreground">Senha</Label>
+                          <button
+                            type="button"
+                            onClick={() => { setShowForgotPassword(true); setResetEmail(loginEmail); }}
+                            className="text-[11px] text-primary/80 hover:text-primary transition-colors"
+                          >
+                            Esqueceu a senha?
+                          </button>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="signup-email" className="text-xs tracking-wide uppercase text-muted-foreground">Email</Label>
-                          <Input id="signup-email" type="email" placeholder="seu@email.com" value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} className="bg-secondary/30 border-border/40 h-11 focus-visible:border-primary/40" />
+                        <div className="relative">
+                          <Input
+                            id="login-password"
+                            type={showPassword ? "text" : "password"}
+                            autoComplete="current-password"
+                            placeholder="••••••••"
+                            value={loginPassword}
+                            onChange={(e) => setLoginPassword(e.target.value)}
+                            className="bg-secondary/30 border-border/40 h-11 pr-10 focus-visible:border-primary/40"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="signup-password" className="text-xs tracking-wide uppercase text-muted-foreground">Senha</Label>
-                          <Input id="signup-password" type="password" placeholder="••••••••" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} className="bg-secondary/30 border-border/40 h-11 focus-visible:border-primary/40" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="signup-confirm" className="text-xs tracking-wide uppercase text-muted-foreground">Confirmar senha</Label>
-                          <Input id="signup-confirm" type="password" placeholder="••••••••" value={signupConfirmPassword} onChange={(e) => setSignupConfirmPassword(e.target.value)} className="bg-secondary/30 border-border/40 h-11 focus-visible:border-primary/40" />
-                        </div>
-                        <Button type="submit" className="w-full btn-gold h-11 text-sm tracking-wide" disabled={isLoading}>
-                          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                          Criar conta
-                        </Button>
-                      </form>
-                    )}
-                  </div>
+                      </div>
+
+                      <Button type="submit" className="w-full btn-gold h-11 text-sm tracking-wide" disabled={isLoading}>
+                        {isLoading ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <LogIn className="mr-2 h-4 w-4" />
+                        )}
+                        Entrar
+                      </Button>
+                    </form>
+                  )}
 
                   {/* Bottom accent */}
                   <div className="mt-6 pt-5 border-t border-border/20">

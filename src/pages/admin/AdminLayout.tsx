@@ -57,6 +57,7 @@ const navItems = [
   { icon: MessageSquare, label: "Fluxo WhatsApp", path: "/admin/whatsapp" },
   { icon: FileText, label: "FAQ", path: "/admin/faq" },
   { icon: Activity, label: "Logs", path: "/admin/logs" },
+  { icon: Shield, label: "Administradores", path: "/admin/administradores" },
   { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
 ];
 
