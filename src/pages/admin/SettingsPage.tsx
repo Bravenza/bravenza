@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, QrCode, CheckCircle2, XCircle, ExternalLink, Mail, MessageSquare, Percent, Users, Loader2, HelpCircle, Activity, Truck, Info, ShieldCheck } from "lucide-react";
+import { Settings, QrCode, CheckCircle2, XCircle, ExternalLink, Mail, MessageSquare, Percent, Users, Loader2, Activity, Truck, Info, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { EmailSettingsTab } from "@/components/admin/settings/EmailSettingsTab";
 import { WhatsAppSettingsTab } from "@/components/admin/settings/WhatsAppSettingsTab";
-import { FAQSettingsTab } from "@/components/admin/settings/FAQSettingsTab";
+
 import { LogsSettingsTab } from "@/components/admin/settings/LogsSettingsTab";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SecuritySettingsTab } from "@/components/admin/settings/SecuritySettingsTab";
@@ -161,10 +161,6 @@ export default function SettingsPage() {
             <MessageSquare className="h-4 w-4" />
             WhatsApp
           </TabsTrigger>
-          <TabsTrigger value="faq" className="flex items-center gap-2">
-            <HelpCircle className="h-4 w-4" />
-            FAQ
-          </TabsTrigger>
           <TabsTrigger value="logs" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
             Logs
@@ -244,9 +240,6 @@ export default function SettingsPage() {
           <WhatsAppSettingsTab />
         </TabsContent>
 
-        <TabsContent value="faq">
-          <FAQSettingsTab />
-        </TabsContent>
 
         <TabsContent value="logs">
           <LogsSettingsTab />
