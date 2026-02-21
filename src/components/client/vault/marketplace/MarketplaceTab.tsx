@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { Store, Package, TrendingDown, ShoppingBag, BarChart3, Tag, Activity, Megaphone, HelpCircle, ChevronRight } from "lucide-react";
 import { MarketplaceHowItWorks } from "./MarketplaceHowItWorks";
@@ -20,7 +20,7 @@ import { SellerProfileSheet } from "./SellerProfileSheet";
 import { OffersListDialog } from "./OffersListDialog";
 import { SellerOnboardingDialog } from "./SellerOnboardingDialog";
 import { PriceDropSuggestions } from "./PriceDropSuggestions";
-import { SellerAnalyticsDashboard } from "./SellerAnalyticsDashboard";
+const SellerAnalyticsDashboard = lazy(() => import("./SellerAnalyticsDashboard").then(m => ({ default: m.SellerAnalyticsDashboard })));
 import { CouponsManager } from "./CouponsManager";
 import { ActivityFeed } from "./ActivityFeed";
 import { supabase } from "@/integrations/supabase/client";
@@ -479,7 +479,9 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
 
                 {/* Analytics sub-tab */}
                 {sellerSubTab === "analytics" && isSellerApproved && (
-                  <SellerAnalyticsDashboard clientCpf={clientCpf} />
+                  <Suspense fallback={<div className="h-64 animate-pulse bg-muted rounded-xl" />}>
+                    <SellerAnalyticsDashboard clientCpf={clientCpf} />
+                  </Suspense>
                 )}
 
                 {/* Cupons sub-tab */}

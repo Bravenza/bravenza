@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo, useRef, lazy, Suspense } from "react";
 import { Helmet } from "react-helmet-async";
 import { saveRecentlyViewed } from "@/components/marketplace/home/RecentlyViewedSection";
 import { useParams, useNavigate } from "react-router-dom";
@@ -21,23 +21,12 @@ import { useClientSession } from "@/hooks/useClientSession";
 import { MarketplaceCheckoutDialog } from "@/components/client/vault/marketplace/MarketplaceCheckoutDialog";
 import { ListingDetailSheet } from "@/components/client/vault/marketplace/ListingDetailSheet";
 import { ProductWatchlistButton } from "@/components/marketplace/ProductWatchlistButton";
-import { ProductReviews } from "@/components/marketplace/ProductReviews";
-import { ProductAnalyticsChart } from "@/components/marketplace/ProductAnalyticsChart";
 import { TrustBadges } from "@/components/marketplace/TrustBadges";
-import { ProtectedPurchaseSection } from "@/components/marketplace/ProtectedPurchaseSection";
-import { RelatedProductsSection } from "@/components/marketplace/RelatedProductsSection";
-import { RecentlyViewedSection } from "@/components/marketplace/home/RecentlyViewedSection";
 import { SpecRow } from "@/components/marketplace/SpecRow";
 import { OfferCard } from "@/components/marketplace/OfferCard";
 import { ProductGallery } from "@/components/marketplace/ProductGallery";
 import { ProductPriceBlock } from "@/components/marketplace/ProductPriceBlock";
 import { AuthenticityBadge } from "@/components/marketplace/AuthenticityBadge";
-import { PriceSparkline } from "@/components/marketplace/PriceSparkline";
-import { SizePriceGrid } from "@/components/marketplace/SizePriceGrid";
-import { PriceComparator } from "@/components/marketplace/PriceComparator";
-import { RetailComparison } from "@/components/marketplace/RetailComparison";
-import { PriceHistoryChart } from "@/components/marketplace/PriceHistoryChart";
-import { SmartRecommendations } from "@/components/marketplace/SmartRecommendations";
 import { StickyBuyBar } from "@/components/marketplace/StickyBuyBar";
 import { conditionLabels, conditionColors, normalizeShippingMode } from "@/lib/marketplace-constants";
 import { generateInstallmentOptions, formatPriceBR } from "@/lib/budget-calculator";
@@ -45,6 +34,19 @@ import { formatProductName } from "@/lib/text-utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+// Lazy-load below-fold heavy components (recharts ~200KB, recommendations, etc.)
+const ProductAnalyticsChart = lazy(() => import("@/components/marketplace/ProductAnalyticsChart").then(m => ({ default: m.ProductAnalyticsChart })));
+const ProductReviews = lazy(() => import("@/components/marketplace/ProductReviews").then(m => ({ default: m.ProductReviews })));
+const PriceHistoryChart = lazy(() => import("@/components/marketplace/PriceHistoryChart").then(m => ({ default: m.PriceHistoryChart })));
+import { PriceSparkline } from "@/components/marketplace/PriceSparkline";
+import { SizePriceGrid } from "@/components/marketplace/SizePriceGrid";
+import { PriceComparator } from "@/components/marketplace/PriceComparator";
+import { RetailComparison } from "@/components/marketplace/RetailComparison";
+const SmartRecommendations = lazy(() => import("@/components/marketplace/SmartRecommendations").then(m => ({ default: m.SmartRecommendations })));
+const ProtectedPurchaseSection = lazy(() => import("@/components/marketplace/ProtectedPurchaseSection").then(m => ({ default: m.ProtectedPurchaseSection })));
+const RelatedProductsSection = lazy(() => import("@/components/marketplace/RelatedProductsSection").then(m => ({ default: m.RelatedProductsSection })));
+const RecentlyViewedSection = lazy(() => import("@/components/marketplace/home/RecentlyViewedSection").then(m => ({ default: m.RecentlyViewedSection })));
 
 const proLabels: Record<string, { text: string; color: string; icon: typeof ShieldCheck }> = {
   pro_mandatory: { text: "PRO obrigatório", color: "bg-primary/20 text-primary border-primary/30", icon: ShieldCheck },
@@ -585,59 +587,62 @@ export default function ProductDetailPage() {
           )}
         </div>
 
-        {/* ===== PRICE HISTORY ===== */}
-        <div className="mt-14">
-          <PriceHistoryChart productId={product.id} cpf={cpf || "visitor"} />
-        </div>
+        {/* ===== BELOW-FOLD LAZY SECTIONS ===== */}
+        <Suspense fallback={<Skeleton className="h-64 w-full mt-14 rounded-2xl" />}>
+          {/* ===== PRICE HISTORY ===== */}
+          <div className="mt-14">
+            <PriceHistoryChart productId={product.id} cpf={cpf || "visitor"} />
+          </div>
 
-        {/* ===== SMART RECOMMENDATIONS ===== */}
-        <div className="mt-14">
-          <SmartRecommendations productId={product.id} cpf={cpf || "visitor"} />
-        </div>
+          {/* ===== SMART RECOMMENDATIONS ===== */}
+          <div className="mt-14">
+            <SmartRecommendations productId={product.id} cpf={cpf || "visitor"} />
+          </div>
 
-        {/* ===== RELATED PRODUCTS ===== */}
-        <RelatedProductsSection
-          currentProductId={product.id}
-          brand={product.brand}
-          category={product.category}
-          cpf={cpf || "visitor"}
-        />
-
-        {/* ===== RECENTLY VIEWED ===== */}
-        <div className="mt-14">
-          <RecentlyViewedSection />
-        </div>
-
-        {/* ===== PRICE INSIGHTS ===== */}
-        <div className="mt-14 bg-white rounded-2xl border border-border/20 p-6">
-          <ProductAnalyticsChart
-            analytics={analytics}
-            isLoading={analyticsLoading}
-            productName={formattedName}
+          {/* ===== RELATED PRODUCTS ===== */}
+          <RelatedProductsSection
+            currentProductId={product.id}
+            brand={product.brand}
+            category={product.category}
+            cpf={cpf || "visitor"}
           />
-        </div>
 
-        {/* ===== REVIEWS ===== */}
-        <div className="mt-14 bg-white rounded-2xl border border-border/20 p-6">
-          <ProductReviews
-            productId={product.id}
-            reviews={reviews}
-            average={reviewsAverage}
-            total={reviewsTotal}
-            isLoading={reviewsLoading}
-            canReview={canReview}
-            onSubmit={async (rating, comment, details) => {
-              return submitReview(product.id, rating, comment, details);
-            }}
-            onRefresh={() => fetchReviews(product.id)}
-            currentUserName={profile?.full_name}
-          />
-        </div>
+          {/* ===== RECENTLY VIEWED ===== */}
+          <div className="mt-14">
+            <RecentlyViewedSection />
+          </div>
 
-        {/* ===== PROTECTED PURCHASE ===== */}
-        <div className="mt-14 bg-white rounded-2xl border border-border/20 p-6">
-          <ProtectedPurchaseSection />
-        </div>
+          {/* ===== PRICE INSIGHTS ===== */}
+          <div className="mt-14 bg-white rounded-2xl border border-border/20 p-6">
+            <ProductAnalyticsChart
+              analytics={analytics}
+              isLoading={analyticsLoading}
+              productName={formattedName}
+            />
+          </div>
+
+          {/* ===== REVIEWS ===== */}
+          <div className="mt-14 bg-white rounded-2xl border border-border/20 p-6">
+            <ProductReviews
+              productId={product.id}
+              reviews={reviews}
+              average={reviewsAverage}
+              total={reviewsTotal}
+              isLoading={reviewsLoading}
+              canReview={canReview}
+              onSubmit={async (rating, comment, details) => {
+                return submitReview(product.id, rating, comment, details);
+              }}
+              onRefresh={() => fetchReviews(product.id)}
+              currentUserName={profile?.full_name}
+            />
+          </div>
+
+          {/* ===== PROTECTED PURCHASE ===== */}
+          <div className="mt-14 bg-white rounded-2xl border border-border/20 p-6">
+            <ProtectedPurchaseSection />
+          </div>
+        </Suspense>
       </main>
 
       {/* Offer Detail Sheet */}

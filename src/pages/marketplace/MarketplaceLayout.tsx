@@ -1,13 +1,14 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { Search, ShoppingBag, Store, Activity, User, Menu, X, ArrowLeft, Crown } from "lucide-react";
-import { Footer } from "@/components/home/Footer";
-import { useState, useRef } from "react";
+import { lazy, Suspense, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/Logo";
 import { useClientSession } from "@/hooks/useClientSession";
+
+const Footer = lazy(() => import("@/components/home/Footer").then(m => ({ default: m.Footer })));
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -199,7 +200,9 @@ export default function MarketplaceLayout() {
       </main>
 
       <div className="pb-20 md:pb-0">
-        <Footer />
+        <Suspense fallback={null}>
+          <Footer />
+        </Suspense>
       </div>
 
       {/* Mobile Bottom Nav */}
