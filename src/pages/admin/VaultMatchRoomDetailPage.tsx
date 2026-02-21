@@ -75,7 +75,7 @@ export default function VaultMatchRoomDetailPage() {
         .single();
 
       if (error) {
-        navigate("/admin/vault/matchrooms");
+        navigate("/admin/vault/buscas");
         return;
       }
       setRoom(data);
@@ -140,7 +140,7 @@ export default function VaultMatchRoomDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link to="/admin/vault/matchrooms">
+        <Link to="/admin/vault/buscas">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -307,7 +307,7 @@ export default function VaultMatchRoomDetailPage() {
       )}
 
       <div className="flex justify-end">
-        <Link to="/admin/vault/matchrooms">
+        <Link to="/admin/vault/buscas">
           <Button variant="outline">Voltar</Button>
         </Link>
       </div>
