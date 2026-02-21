@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, QrCode, CheckCircle2, XCircle, ExternalLink, Mail, MessageSquare, Percent, Users, Loader2, HelpCircle, Activity, Truck, Info } from "lucide-react";
+import { Settings, QrCode, CheckCircle2, XCircle, ExternalLink, Mail, MessageSquare, Percent, Users, Loader2, HelpCircle, Activity, Truck, Info, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { EmailSettingsTab } from "@/components/admin/settings/EmailSettingsTab";
@@ -12,6 +12,7 @@ import { WhatsAppSettingsTab } from "@/components/admin/settings/WhatsAppSetting
 import { FAQSettingsTab } from "@/components/admin/settings/FAQSettingsTab";
 import { LogsSettingsTab } from "@/components/admin/settings/LogsSettingsTab";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { SecuritySettingsTab } from "@/components/admin/settings/SecuritySettingsTab";
 
 interface ApiConfig {
   id: string;
@@ -147,6 +148,10 @@ export default function SettingsPage() {
             <Settings className="h-4 w-4" />
             Geral
           </TabsTrigger>
+          <TabsTrigger value="seguranca" className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4" />
+            Segurança
+          </TabsTrigger>
           <TabsTrigger value="emails" className="flex items-center gap-2">
             <Mail className="h-4 w-4" />
             Emails
@@ -224,6 +229,10 @@ export default function SettingsPage() {
 
         <TabsContent value="emails">
           <EmailSettingsTab />
+        </TabsContent>
+
+        <TabsContent value="seguranca">
+          <SecuritySettingsTab />
         </TabsContent>
 
         <TabsContent value="whatsapp">
