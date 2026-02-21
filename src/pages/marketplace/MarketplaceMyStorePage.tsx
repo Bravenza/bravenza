@@ -3,7 +3,7 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import {
   Store, Package, Megaphone, BarChart3, Tag, TrendingDown, HelpCircle,
-  Plus, ShoppingBag, Rocket, Layout, Lock, Layers
+  Plus, ShoppingBag, Rocket, Layout, Lock, Layers, Palette
 } from "lucide-react";
 import { CollectionsManager } from "@/components/marketplace/CollectionsManager";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ import { SellerPlanBanner } from "@/components/marketplace/SellerPlanBanner";
 import { BatchEditListings } from "@/components/marketplace/BatchEditListings";
 import { PlanLimitModal } from "@/components/marketplace/PlanLimitModal";
 import { useSellerPlan } from "@/hooks/marketplace/useSellerPlan";
+import { StoreCustomizationPanel } from "@/components/marketplace/StoreCustomizationPanel";
 import { supabase } from "@/integrations/supabase/client";
 
 interface VaultItem {
@@ -149,6 +150,7 @@ export default function MarketplaceMyStorePage() {
   const sellerSubItems = [
     { id: "anuncios", label: "Meus anúncios", icon: Megaphone },
     ...(isSellerApproved ? [
+      { id: "personalizar", label: "Personalizar", icon: Palette },
       ...(hasPaidPlan ? [{ id: "boosts", label: "Boosts", icon: Rocket }] : []),
       ...(hasStorefront ? [{ id: "colecoes", label: "Coleções", icon: Layout }] : []),
       { id: "analytics", label: "Analytics", icon: BarChart3 },
@@ -330,6 +332,11 @@ export default function MarketplaceMyStorePage() {
                 </div>
               )}
             </>
+          )}
+
+          {/* Personalizar */}
+          {sellerSubTab === "personalizar" && isSellerApproved && cpf && (
+            <StoreCustomizationPanel cpf={cpf} />
           )}
 
           {/* Analytics */}

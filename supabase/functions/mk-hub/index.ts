@@ -194,7 +194,7 @@ Deno.serve(async (req) => {
       const sid = url.searchParams.get("seller_id");
       if (!sid) throw new Error("seller_id obrigatório");
       const { data: sl } = await sb.from("vault_seller_profiles").select(
-        `id, bio, total_sales_count, total_sales_value, average_rating, ratings_count, current_fee_percent, plan_id, verified_badge, member:vault_members!inner(client_name, tier, created_at)`
+        `id, bio, avatar_url, storefront_banner, storefront_tagline, total_sales_count, total_sales_value, average_rating, ratings_count, current_fee_percent, plan_id, verified_badge, followers_count, member:vault_members!inner(client_name, tier, created_at)`
       ).eq("id", sid).single();
       if (!sl) throw new Error("Vendedor não encontrado");
       const { data: ls } = await sb.from("vault_marketplace_listings").select("*").eq("seller_id", sid).eq("status", "active").order("published_at", { ascending: false });
