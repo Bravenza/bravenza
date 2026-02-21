@@ -3,25 +3,33 @@ import { supabase } from "@/integrations/supabase/client";
 const FUNCTION_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
 const ACTION_TO_FUNCTION: Record<string, string> = {
+  // mk-hub: Catalog, Listings, Search, Offers/Negotiation, Product interactions
   "listings": "mk-hub", "listing-detail": "mk-hub", "my-listings": "mk-hub",
   "create-listing": "mk-hub", "update-listing": "mk-hub", "delete-listing": "mk-hub",
   "toggle-favorite": "mk-hub", "seller-profile": "mk-hub", "seller-public-profile": "mk-hub",
-  "create-order": "mk-hub", "confirm-payment": "mk-hub", "my-orders": "mk-hub",
-  "my-sales": "mk-hub", "update-order-status": "mk-hub", "resolve-dispute": "mk-hub",
-  "rate-seller": "mk-hub", "admin-orders": "mk-hub", "open-dispute": "mk-hub",
-  "chat-messages": "mk-hub", "send-message": "mk-hub",
   "make-offer": "mk-hub", "listing-offers": "mk-hub", "my-offers": "mk-hub", "respond-offer": "mk-hub",
   "accept-counter": "mk-hub", "reject-counter": "mk-hub",
   "bundle-offer": "mk-hub", "negotiation-timeline": "mk-hub", "expire-offers": "mk-hub",
-  "seller-onboarding": "mk-hub", "seller-onboarding-status": "mk-hub",
-  "price-drop-suggestions": "mk-hub",
-  "seller-analytics": "mk-hub", "my-coupons": "mk-hub", "create-coupon": "mk-hub",
-  "update-coupon": "mk-hub", "delete-coupon": "mk-hub", "validate-coupon": "mk-hub",
-  "use-coupon": "mk-hub", "activity-feed": "mk-hub", "log-activity": "mk-hub",
+  "activity-feed": "mk-hub", "log-activity": "mk-hub",
   "price-history": "mk-hub", "recommendations": "mk-hub",
   "saved-searches": "mk-hub", "save-search": "mk-hub", "delete-saved-search": "mk-hub",
-  "update-storefront": "mk-hub", "snapshot-prices": "mk-hub",
   "drop-reminders": "mk-hub", "toggle-drop-reminder": "mk-hub",
+
+  // mk-orders: Orders, Payments, Disputes, Chat, Hub PRO
+  "create-order": "mk-orders", "confirm-payment": "mk-orders", "my-orders": "mk-orders",
+  "my-sales": "mk-orders", "update-order-status": "mk-orders", "resolve-dispute": "mk-orders",
+  "rate-seller": "mk-orders", "admin-orders": "mk-orders", "open-dispute": "mk-orders",
+  "admin-disputes": "mk-orders",
+  "chat-messages": "mk-orders", "send-message": "mk-orders",
+
+  // mk-seller: Seller Onboarding, Analytics, Coupons, Boosts, Collections
+  "seller-onboarding": "mk-seller", "seller-onboarding-status": "mk-seller",
+  "price-drop-suggestions": "mk-seller",
+  "seller-analytics": "mk-seller", "my-coupons": "mk-seller", "create-coupon": "mk-seller",
+  "update-coupon": "mk-seller", "delete-coupon": "mk-seller", "validate-coupon": "mk-seller",
+  "use-coupon": "mk-seller",
+  "update-storefront": "mk-seller", "snapshot-prices": "mk-seller",
+  "recalc-seller-tier": "mk-seller",
 };
 
 export async function marketplaceRequest(
