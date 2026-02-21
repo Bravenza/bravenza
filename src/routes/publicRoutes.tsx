@@ -8,6 +8,7 @@ const TrackingPage = lazy(() => import("@/pages/TrackingPage"));
 const BudgetApprovalPage = lazy(() => import("@/pages/BudgetApprovalPage"));
 const PaymentPage = lazy(() => import("@/pages/PaymentPage"));
 const OrderConfirmationPage = lazy(() => import("@/pages/OrderConfirmationPage"));
+const CheckoutPreviewPage = lazy(() => import("@/pages/CheckoutPreviewPage"));
 const OrderRequestPage = lazy(() => import("@/pages/OrderRequestPage"));
 const TermsPage = lazy(() => import("@/pages/TermsPage"));
 const PrivacyPage = lazy(() => import("@/pages/PrivacyPage"));
@@ -32,6 +33,7 @@ export const publicRoutes = (
     <Route path="/orcamento/:token" element={<BudgetApprovalPage />} />
     <Route path="/pagamento/:token" element={<PaymentPage />} />
     <Route path="/confirmacao/:token" element={<OrderConfirmationPage />} />
+    <Route path="/checkout-preview" element={<CheckoutPreviewPage />} />
     <Route path="/termos" element={<TermsPage />} />
     <Route path="/politicas" element={<PrivacyPage />} />
     <Route path="/trocas-devolucoes" element={<ReturnsPage />} />
