@@ -27,6 +27,7 @@ import { formatCurrency } from "@/lib/constants";
 
 interface ConfirmationData {
   order_id: string;
+  order_type: string;
   client_name: string;
   product_name: string;
   product_brand: string | null;
@@ -295,32 +296,60 @@ export default function OrderConfirmationPage() {
                 </h3>
 
                 <div className="space-y-0">
-                  {[
-                    {
-                      icon: CheckCircle2,
-                      title: "Pagamento confirmado",
-                      desc: "Seu pagamento foi aprovado com sucesso",
-                      status: "done" as const,
-                    },
-                    {
-                      icon: Shield,
-                      title: "Busca e curadoria",
-                      desc: "Iniciamos a busca pelo seu produto com fornecedores verificados",
-                      status: "active" as const,
-                    },
-                    {
-                      icon: Package,
-                      title: "Autenticação técnica",
-                      desc: "O produto passa por verificação de autenticidade",
-                      status: "pending" as const,
-                    },
-                    {
-                      icon: Truck,
-                      title: "Envio e entrega",
-                      desc: `Prazo estimado: ${estimatedDays}`,
-                      status: "pending" as const,
-                    },
-                  ].map((step, i) => (
+                {(order.order_type === "marketplace"
+                  ? [
+                      {
+                        icon: CheckCircle2,
+                        title: "Pagamento confirmado",
+                        desc: "Seu pagamento foi aprovado com sucesso",
+                        status: "done" as const,
+                      },
+                      {
+                        icon: Package,
+                        title: "Envio ao HUB",
+                        desc: "O vendedor envia o produto para nosso centro de inspeção",
+                        status: "active" as const,
+                      },
+                      {
+                        icon: Shield,
+                        title: "Autenticação técnica",
+                        desc: "O produto passa por verificação de autenticidade",
+                        status: "pending" as const,
+                      },
+                      {
+                        icon: Truck,
+                        title: "Envio e entrega",
+                        desc: `Prazo estimado: ${estimatedDays}`,
+                        status: "pending" as const,
+                      },
+                    ]
+                  : [
+                      {
+                        icon: CheckCircle2,
+                        title: "Pagamento confirmado",
+                        desc: "Seu pagamento foi aprovado com sucesso",
+                        status: "done" as const,
+                      },
+                      {
+                        icon: Shield,
+                        title: "Busca e curadoria",
+                        desc: "Iniciamos a busca pelo seu produto com fornecedores verificados",
+                        status: "active" as const,
+                      },
+                      {
+                        icon: Package,
+                        title: "Autenticação técnica",
+                        desc: "O produto passa por verificação de autenticidade",
+                        status: "pending" as const,
+                      },
+                      {
+                        icon: Truck,
+                        title: "Envio e entrega",
+                        desc: `Prazo estimado: ${estimatedDays}`,
+                        status: "pending" as const,
+                      },
+                    ]
+                ).map((step, i) => (
                     <div key={i} className="flex gap-3">
                       <div className="flex flex-col items-center">
                         <div
