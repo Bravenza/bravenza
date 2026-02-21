@@ -17,7 +17,6 @@ import {
   Sparkles,
   Crown,
   Search,
-  
   Shield,
   Ticket,
   FileText,
@@ -30,6 +29,8 @@ import {
   Flag,
   Bell,
   ChevronDown,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
@@ -39,8 +40,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { NotificationBell } from "@/components/admin/NotificationBell";
 import { GlobalSearch } from "@/components/admin/GlobalSearch";
 import { ReportPDFGenerator } from "@/components/admin/ReportPDFGenerator";
-
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useRealtimeAdmin } from "@/hooks/useRealtimeAdmin";
+import { cn } from "@/lib/utils";
 
 interface NavItem {
   icon: React.ElementType;
@@ -125,13 +127,48 @@ function NavGroupSection({
   onNavigate,
   isOpen,
   onToggle,
+  collapsed,
 }: {
   group: NavGroup;
   currentPath: string;
   onNavigate: () => void;
   isOpen: boolean;
   onToggle: () => void;
+  collapsed: boolean;
 }) {
+  const hasActiveChild = group.items.some((i) => currentPath === i.path);
+
+  if (collapsed) {
+    return (
+      <div className="space-y-0.5">
+        {group.items.map((item) => {
+          const isActive = currentPath === item.path;
+          return (
+            <Tooltip key={item.path} delayDuration={0}>
+              <TooltipTrigger asChild>
+                <Link
+                  to={item.path}
+                  onClick={onNavigate}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all duration-200",
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                  )}
+                >
+                  <item.icon className={cn("h-4 w-4", isActive && "text-primary")} />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                {item.label}
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -144,7 +181,7 @@ function NavGroupSection({
           {group.label}
         </span>
         <ChevronDown
-          className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? "rotate-0" : "-rotate-90"}`}
+          className={cn("h-3.5 w-3.5 transition-transform duration-200", isOpen ? "rotate-0" : "-rotate-90")}
         />
       </button>
       {isOpen && (
@@ -157,14 +194,15 @@ function NavGroupSection({
                 to={item.path}
                 onClick={onNavigate}
                 aria-current={isActive ? "page" : undefined}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group text-sm ${
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group text-sm",
                   isActive
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                }`}
+                )}
               >
-                <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : ""}`} />
-                <span className="font-medium truncate">{item.label}</span>
+                <item.icon className={cn("h-4 w-4 shrink-0", isActive && "text-primary")} />
+                <span className="font-medium">{item.label}</span>
               </Link>
             );
           })}
@@ -179,6 +217,7 @@ const AdminLayout = () => {
   const location = useLocation();
   const { user, isAdmin, isLoading, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mfaChecked, setMfaChecked] = useState(false);
   const activeGroup = navGroups.find((g) => g.items.some((i) => location.pathname === i.path));
   const [openGroup, setOpenGroup] = useState<string | null>(activeGroup?.label ?? null);
@@ -244,6 +283,8 @@ const AdminLayout = () => {
     return null;
   }
 
+  const sidebarWidth = sidebarCollapsed ? "w-16" : "w-64";
+
   return (
     <div className="min-h-screen bg-background flex flex-col relative theme-light">
       <div className="fixed inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
@@ -260,21 +301,29 @@ const AdminLayout = () => {
       <div className="flex flex-1">
         {/* Sidebar */}
         <aside
-          className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-card/80 backdrop-blur-xl border-r border-border/30 transform transition-transform duration-300 lg:translate-x-0 theme-dark ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+          className={cn(
+            "fixed lg:static inset-y-0 left-0 z-50 bg-card/80 backdrop-blur-xl border-r border-border/30 transform transition-all duration-300 lg:translate-x-0 theme-dark",
+            sidebarWidth,
+            sidebarOpen ? "translate-x-0 w-64" : "-translate-x-full"
+          )}
         >
           <div className="absolute top-0 right-0 bottom-0 w-px bg-gradient-to-b from-primary/20 via-primary/5 to-transparent" />
 
           <div className="flex flex-col h-full relative">
             {/* Logo */}
             <div className="p-4 border-b border-border/30 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2">
-                <Logo size="md" />
-                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                  Admin
-                </span>
-              </div>
+              {!sidebarCollapsed ? (
+                <div className="flex items-center gap-2">
+                  <Logo size="md" />
+                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    Admin
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center w-full">
+                  <Logo size="sm" />
+                </div>
+              )}
               <button
                 onClick={closeSidebar}
                 className="lg:hidden p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors active:scale-95"
@@ -292,21 +341,46 @@ const AdminLayout = () => {
               {/* Dashboard (standalone) */}
               {standaloneItems.map((item) => {
                 const isActive = location.pathname === item.path;
+
+                if (sidebarCollapsed) {
+                  return (
+                    <Tooltip key={item.path} delayDuration={0}>
+                      <TooltipTrigger asChild>
+                        <Link
+                          to={item.path}
+                          onClick={closeSidebar}
+                          aria-current={isActive ? "page" : undefined}
+                          className={cn(
+                            "flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all duration-200",
+                            isActive
+                              ? "bg-primary/10 text-primary"
+                              : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                          )}
+                        >
+                          <item.icon className={cn("h-5 w-5", isActive && "text-primary")} />
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" sideOffset={8}>
+                        {item.label}
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                }
+
                 return (
                   <Link
                     key={item.path}
                     to={item.path}
                     onClick={closeSidebar}
                     aria-current={isActive ? "page" : undefined}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                       isActive
                         ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                    }`}
+                    )}
                   >
-                    <item.icon
-                      className={`h-5 w-5 ${isActive ? "text-primary" : ""}`}
-                    />
+                    <item.icon className={cn("h-5 w-5", isActive && "text-primary")} />
                     <span className="font-medium text-sm">{item.label}</span>
                   </Link>
                 );
@@ -322,28 +396,54 @@ const AdminLayout = () => {
                     onNavigate={closeSidebar}
                     isOpen={openGroup === group.label}
                     onToggle={() => setOpenGroup(openGroup === group.label ? null : group.label)}
+                    collapsed={sidebarCollapsed}
                   />
                 ))}
               </div>
 
-              {/* Settings (standalone, bottom) */}
+              {/* Settings */}
               <div className="pt-2">
                 {(() => {
                   const isActive = location.pathname === settingsItem.path;
+
+                  if (sidebarCollapsed) {
+                    return (
+                      <Tooltip delayDuration={0}>
+                        <TooltipTrigger asChild>
+                          <Link
+                            to={settingsItem.path}
+                            onClick={closeSidebar}
+                            aria-current={isActive ? "page" : undefined}
+                            className={cn(
+                              "flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all duration-200",
+                              isActive
+                                ? "bg-primary/10 text-primary"
+                                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                            )}
+                          >
+                            <settingsItem.icon className={cn("h-5 w-5", isActive && "text-primary")} />
+                          </Link>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" sideOffset={8}>
+                          {settingsItem.label}
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  }
+
                   return (
                     <Link
                       to={settingsItem.path}
                       onClick={closeSidebar}
                       aria-current={isActive ? "page" : undefined}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                         isActive
                           ? "bg-primary/10 text-primary"
                           : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                      }`}
+                      )}
                     >
-                      <settingsItem.icon
-                        className={`h-5 w-5 ${isActive ? "text-primary" : ""}`}
-                      />
+                      <settingsItem.icon className={cn("h-5 w-5", isActive && "text-primary")} />
                       <span className="font-medium text-sm">{settingsItem.label}</span>
                     </Link>
                   );
@@ -353,14 +453,38 @@ const AdminLayout = () => {
 
             {/* Footer */}
             <div className="p-3 border-t border-border/30 shrink-0 space-y-1">
-              <ReportPDFGenerator />
+              {!sidebarCollapsed && <ReportPDFGenerator />}
+
+              {/* Collapse toggle (desktop only) */}
+              <Button
+                variant="ghost"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className={cn(
+                  "hidden lg:flex w-full gap-3 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors",
+                  sidebarCollapsed ? "justify-center" : "justify-start"
+                )}
+                aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
+              >
+                {sidebarCollapsed ? (
+                  <PanelLeftOpen className="h-4 w-4" />
+                ) : (
+                  <>
+                    <PanelLeftClose className="h-4 w-4" />
+                    <span className="text-sm">Recolher</span>
+                  </>
+                )}
+              </Button>
+
               <Button
                 variant="ghost"
                 onClick={handleSignOut}
-                className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-destructive/10 transition-colors"
+                className={cn(
+                  "w-full gap-3 text-muted-foreground hover:text-foreground hover:bg-destructive/10 transition-colors",
+                  sidebarCollapsed ? "justify-center px-0" : "justify-start"
+                )}
               >
-                <LogOut className="h-4 w-4" />
-                <span className="text-sm">Sair</span>
+                <LogOut className="h-4 w-4 shrink-0" />
+                {!sidebarCollapsed && <span className="text-sm">Sair</span>}
               </Button>
             </div>
           </div>
