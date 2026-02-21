@@ -6,11 +6,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Mobile: remove decorative GPU-heavy backgrounds that cause black-rectangle
-   artifacts in PWA / WebView / Instagram browsers ── */
+/* ── Mobile: remove ALL decorative GPU-heavy backgrounds that cause
+   black-rectangle artifacts in PWA / WebView / Instagram browsers.
+   Covers: grid patterns, radial glows, and large blurred circles ── */
 @media (max-width: 767px) {
   .bg-grid-pattern,
-  .bg-radial-glow {
+  .bg-radial-glow,
+  .blur-3xl,
+  .blur-\[120px\],
+  .blur-\[100px\] {
     display: none !important;
   }
 }
