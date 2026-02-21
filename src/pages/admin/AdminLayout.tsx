@@ -123,23 +123,20 @@ function NavGroupSection({
   group,
   currentPath,
   onNavigate,
+  isOpen,
+  onToggle,
 }: {
   group: NavGroup;
   currentPath: string;
   onNavigate: () => void;
+  isOpen: boolean;
+  onToggle: () => void;
 }) {
-  const hasActive = group.items.some((item) => currentPath === item.path);
-  const [open, setOpen] = useState(hasActive);
-
-  // Auto-open when a route inside becomes active
-  useEffect(() => {
-    if (hasActive && !open) setOpen(true);
-  }, [hasActive]);
 
   return (
     <div>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={onToggle}
         className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors rounded-lg"
       >
         <span className="flex items-center gap-2">
@@ -147,10 +144,10 @@ function NavGroupSection({
           {group.label}
         </span>
         <ChevronDown
-          className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? "rotate-0" : "-rotate-90"}`}
+          className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? "rotate-0" : "-rotate-90"}`}
         />
       </button>
-      {open && (
+      {isOpen && (
         <div className="space-y-0.5 mt-0.5">
           {group.items.map((item) => {
             const isActive = currentPath === item.path;
@@ -183,7 +180,14 @@ const AdminLayout = () => {
   const { user, isAdmin, isLoading, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mfaChecked, setMfaChecked] = useState(false);
+  const activeGroup = navGroups.find((g) => g.items.some((i) => location.pathname === i.path));
+  const [openGroup, setOpenGroup] = useState<string | null>(activeGroup?.label ?? null);
   useRealtimeAdmin();
+
+  useEffect(() => {
+    const active = navGroups.find((g) => g.items.some((i) => location.pathname === i.path));
+    if (active) setOpenGroup(active.label);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!isLoading && (!user || !isAdmin)) {
@@ -316,6 +320,8 @@ const AdminLayout = () => {
                     group={group}
                     currentPath={location.pathname}
                     onNavigate={closeSidebar}
+                    isOpen={openGroup === group.label}
+                    onToggle={() => setOpenGroup(openGroup === group.label ? null : group.label)}
                   />
                 ))}
               </div>
