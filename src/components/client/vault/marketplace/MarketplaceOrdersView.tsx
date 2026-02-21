@@ -115,14 +115,14 @@ export function MarketplaceOrdersView({
               {order.listing?.photos?.[0] && (
                 <img
                   src={order.listing.photos[0]}
-                  alt={order.listing?.title}
+                  alt={order.listing?.title || order.order_code}
                   className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
                 />
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="font-medium text-sm line-clamp-1">{order.listing?.title}</p>
+                    <p className="font-medium text-sm line-clamp-1">{order.listing?.title || `Pedido ${order.order_code}`}</p>
                     <p className="text-xs text-muted-foreground">
                       {order.order_code} · {new Date(order.created_at).toLocaleDateString("pt-BR")}
                     </p>
@@ -232,7 +232,7 @@ export function MarketplaceOrdersView({
                   {/* Share purchase (completed orders) */}
                   {!isSale && ["delivered", "completed", "payout_released"].includes(order.status) && (
                     <SharePurchaseButton
-                      productName={order.listing?.title || "sneaker"}
+                      productName={order.listing?.title || `Sneaker ${order.order_code}`}
                       orderCode={order.order_code}
                       className="text-xs"
                     />
