@@ -1,43 +1,23 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
-  Search,
-  Plus,
-  Eye,
-  RefreshCw,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Layers,
+  Search, Plus, Eye, RefreshCw, Clock, CheckCircle, XCircle, AlertTriangle, Layers,
 } from "lucide-react";
 import { formatDate } from "@/lib/constants";
 
@@ -49,63 +29,21 @@ interface MatchRoom {
   user_id: string;
   decision_deadline_at: string | null;
   decision_status: DecisionStatus | null;
-  decision_at: string | null;
-  decision_notes_from_customer: string | null;
   created_at: string | null;
-  vault_members?: {
-    client_name: string;
-    client_email: string | null;
-    tier: string;
-  };
-  vault_searches?: {
-    status: string;
-    vault_wishlists?: {
-      title: string | null;
-      product_name: string | null;
-    };
-  };
-}
-
-interface MatchOption {
-  id: string;
-  match_room_id: string;
-  option_title: string;
-  region: string | null;
-  condition: string | null;
-  price_estimate: number | null;
-  currency: string | null;
-  pros: string | null;
-  risks: string | null;
-  evidence_urls: string[] | null;
+  vault_members?: { client_name: string; tier: string; };
+  vault_searches?: { status: string; vault_wishlists?: { title: string | null; product_name: string | null; }; };
 }
 
 interface PendingSearch {
   id: string;
   user_id: string;
   status: string;
-  vault_members?: {
-    client_name: string;
-    tier: string;
-  };
-  vault_wishlists?: {
-    title: string | null;
-    product_name: string | null;
-  };
+  vault_members?: { client_name: string; tier: string; };
+  vault_wishlists?: { title: string | null; product_name: string | null; };
 }
 
-const statusLabels: Record<DecisionStatus, string> = {
-  PENDING: "Pendente",
-  APPROVED: "Aprovada",
-  DECLINED: "Recusada",
-  EXPIRED: "Expirada",
-};
-
-const statusColors: Record<DecisionStatus, string> = {
-  PENDING: "bg-amber-500",
-  APPROVED: "bg-emerald-600",
-  DECLINED: "bg-red-500",
-  EXPIRED: "bg-zinc-500",
-};
+const statusLabels: Record<DecisionStatus, string> = { PENDING: "Pendente", APPROVED: "Aprovada", DECLINED: "Recusada", EXPIRED: "Expirada" };
+const statusColors: Record<DecisionStatus, string> = { PENDING: "bg-amber-500", APPROVED: "bg-emerald-600", DECLINED: "bg-red-500", EXPIRED: "bg-zinc-500" };
 
 const VaultMatchRoomsPage = () => {
   const [matchRooms, setMatchRooms] = useState<MatchRoom[]>([]);
@@ -113,71 +51,24 @@ const VaultMatchRoomsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedRoom, setSelectedRoom] = useState<MatchRoom | null>(null);
-  const [roomOptions, setRoomOptions] = useState<MatchOption[]>([]);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isAddOptionOpen, setIsAddOptionOpen] = useState(false);
-  
-  const [createForm, setCreateForm] = useState({
-    search_id: "",
-    decision_hours: "24",
-  });
-  
-  const [optionForm, setOptionForm] = useState({
-    option_title: "",
-    region: "",
-    condition: "DS",
-    price_estimate: "",
-    currency: "BRL",
-    pros: "",
-    risks: "",
-  });
+  const [createForm, setCreateForm] = useState({ search_id: "", decision_hours: "24" });
 
   const fetchMatchRooms = async () => {
     setIsLoading(true);
     try {
       const { data: rooms, error: roomsError } = await supabase
         .from("vault_match_rooms")
-        .select(`
-          *,
-          vault_members (
-            client_name,
-            client_email,
-            tier
-          ),
-          vault_searches!vault_match_rooms_search_id_fkey (
-            status,
-            vault_wishlists (
-              title,
-              product_name
-            )
-          )
-        `)
+        .select(`*, vault_members (client_name, tier), vault_searches!vault_match_rooms_search_id_fkey (status, vault_wishlists (title, product_name))`)
         .order("created_at", { ascending: false });
-
       if (roomsError) throw roomsError;
       setMatchRooms(rooms || []);
 
-      // Fetch pending searches (those without match room)
       const { data: searches, error: searchesError } = await supabase
         .from("vault_searches")
-        .select(`
-          id,
-          user_id,
-          status,
-          vault_members (
-            client_name,
-            tier
-          ),
-          vault_wishlists (
-            title,
-            product_name
-          )
-        `)
+        .select(`id, user_id, status, vault_members (client_name, tier), vault_wishlists (title, product_name)`)
         .in("status", ["OPTIONS_IDENTIFIED", "VALIDATING"])
         .is("match_room_id", null);
-
       if (searchesError) throw searchesError;
       setPendingSearches(searches || []);
     } catch (error) {
@@ -188,66 +79,23 @@ const VaultMatchRoomsPage = () => {
     }
   };
 
-  const fetchRoomOptions = async (roomId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("vault_match_options")
-        .select("*")
-        .eq("match_room_id", roomId);
-
-      if (error) throw error;
-      setRoomOptions(data || []);
-    } catch (error) {
-      console.error("Error fetching options:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchMatchRooms();
-  }, []);
-
-  const handleOpenDetail = async (room: MatchRoom) => {
-    setSelectedRoom(room);
-    await fetchRoomOptions(room.id);
-    setIsDetailOpen(true);
-  };
+  useEffect(() => { fetchMatchRooms(); }, []);
 
   const handleCreateMatchRoom = async () => {
-    if (!createForm.search_id) {
-      toast.error("Selecione uma busca");
-      return;
-    }
-
+    if (!createForm.search_id) { toast.error("Selecione uma busca"); return; }
     try {
-      const search = pendingSearches.find((s) => s.id === createForm.search_id);
+      const search = pendingSearches.find(s => s.id === createForm.search_id);
       if (!search) return;
-
-      const deadlineHours = parseInt(createForm.decision_hours);
       const deadline = new Date();
-      deadline.setHours(deadline.getHours() + deadlineHours);
+      deadline.setHours(deadline.getHours() + parseInt(createForm.decision_hours));
 
       const { data: newRoom, error: roomError } = await supabase
         .from("vault_match_rooms")
-        .insert({
-          search_id: search.id,
-          user_id: search.user_id,
-          decision_deadline_at: deadline.toISOString(),
-          decision_status: "PENDING",
-        })
-        .select()
-        .single();
-
+        .insert({ search_id: search.id, user_id: search.user_id, decision_deadline_at: deadline.toISOString(), decision_status: "PENDING" })
+        .select().single();
       if (roomError) throw roomError;
 
-      // Update search with match room reference
-      await supabase
-        .from("vault_searches")
-        .update({
-          match_room_id: newRoom.id,
-          status: "MATCH_SENT",
-          last_update_at: new Date().toISOString(),
-        })
-        .eq("id", search.id);
+      await supabase.from("vault_searches").update({ match_room_id: newRoom.id, status: "MATCH_SENT", last_update_at: new Date().toISOString() }).eq("id", search.id);
 
       toast.success("Match room criada");
       setIsCreateOpen(false);
@@ -259,79 +107,26 @@ const VaultMatchRoomsPage = () => {
     }
   };
 
-  const handleAddOption = async () => {
-    if (!selectedRoom || !optionForm.option_title) {
-      toast.error("Preencha o título da opção");
-      return;
-    }
-
-    try {
-      const { error } = await supabase.from("vault_match_options").insert({
-        match_room_id: selectedRoom.id,
-        option_title: optionForm.option_title,
-        region: optionForm.region || null,
-        condition: optionForm.condition,
-        price_estimate: optionForm.price_estimate
-          ? parseFloat(optionForm.price_estimate)
-          : null,
-        currency: optionForm.currency,
-        pros: optionForm.pros || null,
-        risks: optionForm.risks || null,
-      });
-
-      if (error) throw error;
-
-      toast.success("Opção adicionada");
-      setIsAddOptionOpen(false);
-      setOptionForm({
-        option_title: "",
-        region: "",
-        condition: "DS",
-        price_estimate: "",
-        currency: "BRL",
-        pros: "",
-        risks: "",
-      });
-      await fetchRoomOptions(selectedRoom.id);
-    } catch (error) {
-      console.error("Error adding option:", error);
-      toast.error("Erro ao adicionar opção");
-    }
-  };
-
   const filteredRooms = matchRooms.filter((room) => {
     const memberName = room.vault_members?.client_name?.toLowerCase() || "";
-    const productTitle =
-      room.vault_searches?.vault_wishlists?.title?.toLowerCase() ||
-      room.vault_searches?.vault_wishlists?.product_name?.toLowerCase() ||
-      "";
-
-    const matchesSearch =
-      memberName.includes(searchTerm.toLowerCase()) ||
-      productTitle.includes(searchTerm.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "all" || room.decision_status === statusFilter;
-
+    const productTitle = room.vault_searches?.vault_wishlists?.title?.toLowerCase() || room.vault_searches?.vault_wishlists?.product_name?.toLowerCase() || "";
+    const matchesSearch = memberName.includes(searchTerm.toLowerCase()) || productTitle.includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || room.decision_status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const stats = {
     total: matchRooms.length,
-    pending: matchRooms.filter((r) => r.decision_status === "PENDING").length,
-    approved: matchRooms.filter((r) => r.decision_status === "APPROVED").length,
-    declined: matchRooms.filter((r) => r.decision_status === "DECLINED").length,
+    pending: matchRooms.filter(r => r.decision_status === "PENDING").length,
+    approved: matchRooms.filter(r => r.decision_status === "APPROVED").length,
+    declined: matchRooms.filter(r => r.decision_status === "DECLINED").length,
   };
 
   if (isLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-24" />
-          ))}
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">{[1,2,3,4].map(i => <Skeleton key={i} className="h-24" />)}</div>
         <Skeleton className="h-96" />
       </div>
     );
@@ -341,88 +136,30 @@ const VaultMatchRoomsPage = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Match rooms</h1>
-          <p className="text-muted-foreground">
-            Gerencie as salas de decisão dos membros
-          </p>
+          <h1 className="text-2xl font-bold">Match Rooms</h1>
+          <p className="text-muted-foreground">Gerencie as salas de decisão dos membros</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={fetchMatchRooms} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Atualizar
-          </Button>
-          <Button onClick={() => setIsCreateOpen(true)} size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Nova match room
-          </Button>
+          <Button onClick={fetchMatchRooms} variant="outline" size="sm"><RefreshCw className="h-4 w-4 mr-2" />Atualizar</Button>
+          <Button onClick={() => setIsCreateOpen(true)} size="sm"><Plus className="h-4 w-4 mr-2" />Nova match room</Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Layers className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">Total</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-amber-500" />
-              <div>
-                <p className="text-2xl font-bold">{stats.pending}</p>
-                <p className="text-xs text-muted-foreground">Pendentes</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-emerald-500" />
-              <div>
-                <p className="text-2xl font-bold">{stats.approved}</p>
-                <p className="text-xs text-muted-foreground">Aprovadas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <XCircle className="h-5 w-5 text-red-500" />
-              <div>
-                <p className="text-2xl font-bold">{stats.declined}</p>
-                <p className="text-xs text-muted-foreground">Recusadas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Card><CardContent className="p-4"><div className="flex items-center gap-2"><Layers className="h-5 w-5 text-muted-foreground" /><div><p className="text-2xl font-bold">{stats.total}</p><p className="text-xs text-muted-foreground">Total</p></div></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="flex items-center gap-2"><Clock className="h-5 w-5 text-amber-500" /><div><p className="text-2xl font-bold">{stats.pending}</p><p className="text-xs text-muted-foreground">Pendentes</p></div></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-emerald-500" /><div><p className="text-2xl font-bold">{stats.approved}</p><p className="text-xs text-muted-foreground">Aprovadas</p></div></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="flex items-center gap-2"><XCircle className="h-5 w-5 text-red-500" /><div><p className="text-2xl font-bold">{stats.declined}</p><p className="text-xs text-muted-foreground">Recusadas</p></div></div></CardContent></Card>
       </div>
 
-      {/* Pending Searches Alert */}
       {pendingSearches.length > 0 && (
         <Card className="border-amber-500 bg-amber-500/10">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-500" />
-              <p className="font-medium">
-                {pendingSearches.length} busca(s) com opções prontas para criar match room
-              </p>
-              <Button
-                size="sm"
-                variant="outline"
-                className="ml-auto"
-                onClick={() => setIsCreateOpen(true)}
-              >
-                Criar match room
-              </Button>
+              <p className="font-medium">{pendingSearches.length} busca(s) com opções prontas para criar match room</p>
+              <Button size="sm" variant="outline" className="ml-auto" onClick={() => setIsCreateOpen(true)}>Criar match room</Button>
             </div>
           </CardContent>
         </Card>
@@ -432,17 +169,10 @@ const VaultMatchRoomsPage = () => {
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por membro ou produto..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+          <Input placeholder="Buscar por membro ou produto..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Filtrar por status" />
-          </SelectTrigger>
+          <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Filtrar por status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="PENDING">Pendentes</SelectItem>
@@ -453,8 +183,8 @@ const VaultMatchRoomsPage = () => {
         </Select>
       </div>
 
-      {/* Match Rooms Table */}
-      <Card>
+      {/* Desktop Table */}
+      <Card className="hidden md:block">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -469,59 +199,25 @@ const VaultMatchRoomsPage = () => {
             </TableHeader>
             <TableBody>
               {filteredRooms.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
-                    <p className="text-muted-foreground">
-                      Nenhuma match room encontrada
-                    </p>
-                  </TableCell>
-                </TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhuma match room encontrada</TableCell></TableRow>
               ) : (
                 filteredRooms.map((room) => (
                   <TableRow key={room.id}>
                     <TableCell>
                       <div>
-                        <p className="font-medium">
-                          {room.vault_members?.client_name || "Membro desconhecido"}
-                        </p>
-                        <Badge variant="outline" className="text-xs mt-1">
-                          {room.vault_members?.tier === "elite"
-                            ? "Black"
-                            : room.vault_members?.tier === "collector"
-                            ? "Privilege"
-                            : "Access"}
-                        </Badge>
+                        <p className="font-medium">{room.vault_members?.client_name || "Desconhecido"}</p>
+                        <Badge variant="outline" className="text-xs mt-1">{room.vault_members?.tier === "elite" ? "Black" : room.vault_members?.tier === "collector" ? "Privilege" : "Access"}</Badge>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <p className="font-medium">
-                        {room.vault_searches?.vault_wishlists?.title ||
-                          room.vault_searches?.vault_wishlists?.product_name ||
-                          "Produto não especificado"}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[room.decision_status || "PENDING"]}>
-                        {statusLabels[room.decision_status || "PENDING"]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {room.decision_deadline_at
-                        ? formatDate(room.decision_deadline_at)
-                        : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {room.created_at ? formatDate(room.created_at) : "-"}
-                    </TableCell>
+                    <TableCell><p className="font-medium">{room.vault_searches?.vault_wishlists?.title || room.vault_searches?.vault_wishlists?.product_name || "Não especificado"}</p></TableCell>
+                    <TableCell><Badge className={statusColors[room.decision_status || "PENDING"]}>{statusLabels[room.decision_status || "PENDING"]}</Badge></TableCell>
+                    <TableCell>{room.decision_deadline_at ? formatDate(room.decision_deadline_at) : "-"}</TableCell>
+                    <TableCell>{room.created_at ? formatDate(room.created_at) : "-"}</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenDetail(room)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <Link to={`/admin/vault/matchrooms/${room.id}`}>
+                          <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
+                        </Link>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -532,48 +228,53 @@ const VaultMatchRoomsPage = () => {
         </CardContent>
       </Card>
 
-      {/* Create Match Room Dialog */}
+      {/* Mobile Cards */}
+      <div className="md:hidden space-y-3">
+        {filteredRooms.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground card-premium rounded-lg">Nenhuma match room encontrada</div>
+        ) : (
+          filteredRooms.map((room) => (
+            <Link key={room.id} to={`/admin/vault/matchrooms/${room.id}`}>
+              <Card className="card-premium active:scale-[0.98] transition-transform">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-medium text-sm">{room.vault_members?.client_name}</p>
+                    <Badge className={statusColors[room.decision_status || "PENDING"]}>{statusLabels[room.decision_status || "PENDING"]}</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{room.vault_searches?.vault_wishlists?.title || room.vault_searches?.vault_wishlists?.product_name}</p>
+                  <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+                    <span>{room.decision_deadline_at ? formatDate(room.decision_deadline_at) : "-"}</span>
+                    <span>{room.created_at ? formatDate(room.created_at) : "-"}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))
+        )}
+      </div>
+
+      {/* Create Match Room Dialog - kept as modal (only 2 fields) */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Criar match room</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Criar match room</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Busca</label>
-              <Select
-                value={createForm.search_id}
-                onValueChange={(value) =>
-                  setCreateForm({ ...createForm, search_id: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma busca" />
-                </SelectTrigger>
+              <Select value={createForm.search_id} onValueChange={(value) => setCreateForm({ ...createForm, search_id: value })}>
+                <SelectTrigger><SelectValue placeholder="Selecione uma busca" /></SelectTrigger>
                 <SelectContent>
                   {pendingSearches.map((search) => (
                     <SelectItem key={search.id} value={search.id}>
-                      {search.vault_members?.client_name} -{" "}
-                      {search.vault_wishlists?.title || search.vault_wishlists?.product_name}
+                      {search.vault_members?.client_name} - {search.vault_wishlists?.title || search.vault_wishlists?.product_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Janela de decisão (horas)
-              </label>
-              <Select
-                value={createForm.decision_hours}
-                onValueChange={(value) =>
-                  setCreateForm({ ...createForm, decision_hours: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+              <label className="text-sm font-medium">Janela de decisão (horas)</label>
+              <Select value={createForm.decision_hours} onValueChange={(value) => setCreateForm({ ...createForm, decision_hours: value })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="6">6 horas (Access)</SelectItem>
                   <SelectItem value="12">12 horas (Privilege)</SelectItem>
@@ -582,251 +283,9 @@ const VaultMatchRoomsPage = () => {
                 </SelectContent>
               </Select>
             </div>
-
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
-                Cancelar
-              </Button>
+              <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
               <Button onClick={handleCreateMatchRoom}>Criar</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Room Detail Dialog */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Detalhes da match room</DialogTitle>
-          </DialogHeader>
-          {selectedRoom && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Membro</p>
-                  <p className="font-medium">
-                    {selectedRoom.vault_members?.client_name}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Status</p>
-                  <Badge
-                    className={
-                      statusColors[selectedRoom.decision_status || "PENDING"]
-                    }
-                  >
-                    {statusLabels[selectedRoom.decision_status || "PENDING"]}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Deadline</p>
-                  <p className="font-medium">
-                    {selectedRoom.decision_deadline_at
-                      ? formatDate(selectedRoom.decision_deadline_at)
-                      : "-"}
-                  </p>
-                </div>
-                {selectedRoom.decision_notes_from_customer && (
-                  <div className="col-span-2">
-                    <p className="text-sm text-muted-foreground">
-                      Notas do cliente
-                    </p>
-                    <p className="text-sm mt-1 p-2 bg-secondary rounded">
-                      {selectedRoom.decision_notes_from_customer}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold">Opções ({roomOptions.length})</h3>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setIsAddOptionOpen(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Adicionar opção
-                  </Button>
-                </div>
-
-                {roomOptions.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-4">
-                    Nenhuma opção adicionada
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {roomOptions.map((option) => (
-                      <Card key={option.id}>
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <p className="font-medium">{option.option_title}</p>
-                              <div className="flex gap-2 mt-1">
-                                {option.region && (
-                                  <Badge variant="outline">{option.region}</Badge>
-                                )}
-                                {option.condition && (
-                                  <Badge variant="outline">{option.condition}</Badge>
-                                )}
-                              </div>
-                            </div>
-                            <p className="font-bold">
-                              {option.price_estimate
-                                ? new Intl.NumberFormat("pt-BR", {
-                                    style: "currency",
-                                    currency: option.currency || "BRL",
-                                  }).format(option.price_estimate)
-                                : "-"}
-                            </p>
-                          </div>
-                          {(option.pros || option.risks) && (
-                            <div className="grid grid-cols-2 gap-4 mt-3 text-sm">
-                              {option.pros && (
-                                <div>
-                                  <p className="text-green-500 font-medium">Prós</p>
-                                  <p className="text-muted-foreground">{option.pros}</p>
-                                </div>
-                              )}
-                              {option.risks && (
-                                <div>
-                                  <p className="text-red-500 font-medium">Riscos</p>
-                                  <p className="text-muted-foreground">{option.risks}</p>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setIsDetailOpen(false)}>
-                  Fechar
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Option Dialog */}
-      <Dialog open={isAddOptionOpen} onOpenChange={setIsAddOptionOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Adicionar opção</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Título *</label>
-              <Input
-                value={optionForm.option_title}
-                onChange={(e) =>
-                  setOptionForm({ ...optionForm, option_title: e.target.value })
-                }
-                placeholder="Ex: StockX - Nova York"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Região</label>
-                <Input
-                  value={optionForm.region}
-                  onChange={(e) =>
-                    setOptionForm({ ...optionForm, region: e.target.value })
-                  }
-                  placeholder="Ex: EUA"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Condição</label>
-                <Select
-                  value={optionForm.condition}
-                  onValueChange={(value) =>
-                    setOptionForm({ ...optionForm, condition: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="DS">Deadstock (DS)</SelectItem>
-                    <SelectItem value="VNDS">Very Near DS (VNDS)</SelectItem>
-                    <SelectItem value="USED">Usado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Preço estimado</label>
-                <Input
-                  type="number"
-                  value={optionForm.price_estimate}
-                  onChange={(e) =>
-                    setOptionForm({ ...optionForm, price_estimate: e.target.value })
-                  }
-                  placeholder="0.00"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Moeda</label>
-                <Select
-                  value={optionForm.currency}
-                  onValueChange={(value) =>
-                    setOptionForm({ ...optionForm, currency: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BRL">BRL</SelectItem>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Prós</label>
-              <Textarea
-                value={optionForm.pros}
-                onChange={(e) =>
-                  setOptionForm({ ...optionForm, pros: e.target.value })
-                }
-                placeholder="Vantagens desta opção..."
-                rows={2}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Riscos</label>
-              <Textarea
-                value={optionForm.risks}
-                onChange={(e) =>
-                  setOptionForm({ ...optionForm, risks: e.target.value })
-                }
-                placeholder="Possíveis riscos..."
-                rows={2}
-              />
-            </div>
-
-            <div className="flex gap-2 justify-end">
-              <Button
-                variant="outline"
-                onClick={() => setIsAddOptionOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button onClick={handleAddOption}>Adicionar</Button>
             </div>
           </div>
         </DialogContent>
