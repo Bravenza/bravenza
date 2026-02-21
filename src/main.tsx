@@ -1,3 +1,4 @@
+// Build bust: 2026-02-21T17:05:00Z
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
