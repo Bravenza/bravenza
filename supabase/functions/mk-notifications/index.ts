@@ -323,6 +323,40 @@ Deno.serve(async (req) => {
     }
     results.products_updated = salesRecorded;
 
+    // ===== 8. AUTO REVIEW REQUEST (3 days after delivery) =====
+    console.log("[mk-notifications] Checking review requests...");
+    const threeDaysAgoReview = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    const fourDaysAgoReview = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: reviewOrders } = await sb.from("vault_marketplace_orders")
+      .select("id, order_code, buyer_cpf, delivered_at")
+      .eq("status", "delivered")
+      .is("buyer_rating", null)
+      .lte("delivered_at", threeDaysAgoReview)
+      .gte("delivered_at", fourDaysAgoReview);
+
+    let reviewRequests = 0;
+    for (const order of (reviewOrders || [])) {
+      const { data: buyerMember } = await sb.from("vault_members")
+        .select("client_name, client_email, client_phone")
+        .eq("client_cpf", order.buyer_cpf).maybeSingle();
+      if (!buyerMember) continue;
+
+      await notify(sb, "⭐ Avalie sua compra!",
+        `Pedido ${order.order_code} entregue! Como foi sua experiência?`,
+        order.buyer_cpf, order.id, "marketplace_review");
+
+      if (buyerMember.client_email) {
+        sendEmail("mk_review_request", {
+          recipient_name: buyerMember.client_name,
+          recipient_email: buyerMember.client_email,
+          order_code: order.order_code,
+        });
+      }
+      reviewRequests++;
+    }
+    results.review_requests = reviewRequests;
+
     console.log("[mk-notifications] Done:", JSON.stringify(results));
     return new Response(JSON.stringify({ success: true, ...results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

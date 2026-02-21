@@ -1,7 +1,7 @@
 // mk-seller: Seller Onboarding, Analytics, Tier, Coupons, Collections, Boosts, Social, Badges, Storefront
 import {
   corsHeaders, jsonResponse, createSupabaseClient, resolveCpf,
-  getMember, getSellerProfile, notify, getMemberEmail, sendMarketplaceEmail,
+  getMember, getSellerProfile, notify, getMemberEmail, sendMarketplaceEmail, sendMarketplaceWhatsApp,
 } from "../_shared/mk-helpers.ts";
 
 const j = jsonResponse;
@@ -10,6 +10,7 @@ const gs = getSellerProfile;
 const nt = notify;
 const ge = getMemberEmail;
 const em = sendMarketplaceEmail;
+const wa = sendMarketplaceWhatsApp;
 
 const PUBLIC_ACTIONS = new Set(["seller-tier-info", "seller-leaderboard"]);
 
@@ -420,6 +421,32 @@ Deno.serve(async (req) => {
       const mb = await gm(sb, cpf); if (!mb) return j({ storefront: null });
       const sl = await gs(sb, mb.id); if (!sl) return j({ storefront: null });
       return j({ storefront: { bio: sl.bio, banner: sl.storefront_banner, tagline: sl.storefront_tagline, theme: sl.storefront_theme, avatar_url: sl.avatar_url, seller_id: sl.id } });
+    }
+
+    // ==================== KYC REVIEW (admin) ====================
+    if (mt === "PUT" && a === "review-kyc") {
+      const b = await req.json();
+      if (!b.seller_id || !b.decision) throw new Error("seller_id e decision obrigatórios");
+      const updateData: Record<string, unknown> = {
+        kyc_status: b.decision, // "approved" or "rejected"
+        kyc_reviewed_at: new Date().toISOString(),
+        kyc_reviewed_by: cpf,
+      };
+      if (b.decision === "rejected" && b.reason) updateData.kyc_rejection_reason = b.reason;
+      const { error } = await sb.from("vault_seller_profiles").update(updateData).eq("id", b.seller_id);
+      if (error) throw error;
+      // Notify seller
+      const { data: sl } = await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf, client_name, client_email, client_phone)").eq("id", b.seller_id).single();
+      if (sl?.member) {
+        const emailType = b.decision === "approved" ? "mk_kyc_approved" : "mk_kyc_rejected";
+        const waType = emailType;
+        const notifTitle = b.decision === "approved" ? "✅ Cadastro aprovado!" : "⚠️ Documentos não aprovados";
+        const notifMsg = b.decision === "approved" ? "Parabéns! Você já pode vender no marketplace." : `Seus documentos não foram aprovados. ${b.reason || "Veja detalhes na plataforma."}`;
+        await nt(sb, notifTitle, notifMsg, sl.member.client_cpf, b.seller_id, "marketplace_kyc");
+        if (sl.member.client_email) em(emailType, { recipient_name: sl.member.client_name, recipient_email: sl.member.client_email, kyc_rejection_reason: b.reason || null });
+        if (sl.member.client_phone) wa(waType, { recipient_phone: sl.member.client_phone, recipient_name: sl.member.client_name, kyc_rejection_reason: b.reason || null });
+      }
+      return j({ success: true });
     }
 
     // ==================== SNAPSHOT PRICES (cron) ====================

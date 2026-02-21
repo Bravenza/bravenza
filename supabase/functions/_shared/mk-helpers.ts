@@ -75,11 +75,11 @@ export async function notify(sb: any, title: string, message: string, clientCpf:
   } catch (_) {}
 }
 
-/** Get member name + email by CPF */
-export async function getMemberEmail(sb: any, cpf: string): Promise<{ name: string; email: string } | null> {
-  const { data } = await sb.from("vault_members").select("client_name, client_email").eq("client_cpf", cpf).maybeSingle();
+/** Get member name + email + phone by CPF */
+export async function getMemberEmail(sb: any, cpf: string): Promise<{ name: string; email: string; phone?: string } | null> {
+  const { data } = await sb.from("vault_members").select("client_name, client_email, client_phone").eq("client_cpf", cpf).maybeSingle();
   if (!data?.client_email) return null;
-  return { name: data.client_name, email: data.client_email };
+  return { name: data.client_name, email: data.client_email, phone: data.client_phone || undefined };
 }
 
 /** Send marketplace email via edge function (fire-and-forget) */
@@ -94,6 +94,20 @@ export async function sendMarketplaceEmail(type: string, data: Record<string, an
       body: JSON.stringify({ type, ...data }),
     }).catch((e: any) => console.error("[mk] email fire-and-forget error:", e));
   } catch (e) { console.error("[mk] email error:", e); }
+}
+
+/** Send marketplace WhatsApp via edge function (fire-and-forget) */
+export async function sendMarketplaceWhatsApp(type: string, data: Record<string, any>) {
+  try {
+    const baseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!baseUrl || !serviceKey) return;
+    fetch(`${baseUrl}/functions/v1/send-whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
+      body: JSON.stringify({ message_type: type, ...data }),
+    }).catch((e: any) => console.error("[mk] whatsapp fire-and-forget error:", e));
+  } catch (e) { console.error("[mk] whatsapp error:", e); }
 }
 
 /** Generate marketplace order code */

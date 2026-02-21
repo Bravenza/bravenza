@@ -9,7 +9,10 @@ const corsHeaders = {
 
 interface WhatsAppRequest {
   order_id?: string;
-  message_type: "budget_sent" | "budget_expiring" | "sinal_confirmed" | "sinal_reminder" | "balance_confirmed" | "status_update" | "review_request" | "referral_confirmed" | "cashback_expiring" | "vault_welcome" | "custom";
+  message_type: "budget_sent" | "budget_expiring" | "sinal_confirmed" | "sinal_reminder" | "balance_confirmed" | "status_update" | "review_request" | "referral_confirmed" | "cashback_expiring" | "vault_welcome" | "custom"
+    | "mk_purchase_confirmed" | "mk_new_sale" | "mk_seller_shipped" | "mk_delivery_confirmed"
+    | "mk_dispute_opened" | "mk_dispute_resolved" | "mk_payout_released" | "mk_payment_confirmed"
+    | "mk_kyc_approved" | "mk_kyc_rejected" | "mk_review_request";
   custom_message?: string;
   // For referral notifications
   referrer_phone?: string;
@@ -24,6 +27,21 @@ interface WhatsAppRequest {
   member_name?: string;
   member_phone?: string;
   member_tier?: string;
+  // For marketplace notifications
+  recipient_phone?: string;
+  recipient_name?: string;
+  order_code?: string;
+  product_name?: string;
+  price?: number;
+  buyer_name?: string;
+  seller_name?: string;
+  tracking_code?: string;
+  shipping_mode?: string;
+  dispute_reason?: string;
+  payout_amount?: number;
+  payment_amount?: number;
+  payment_method_label?: string;
+  kyc_rejection_reason?: string;
 }
 
 // Message templates
@@ -118,9 +136,95 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `Acesse agora e adicione sua primeira wishlist!\n` +
     `https://bravenza.com.br/vault\n\n` +
     `_Bravenza Vault Club - Exclusividade Premium_`,
-};
 
-// Status labels for WhatsApp messages
+  // ===== MARKETPLACE TEMPLATES =====
+  mk_purchase_confirmed: (data: any) =>
+    `✅ *Compra Confirmada!*\n\n` +
+    `Olá ${data.recipient_name || "Cliente"}!\n\n` +
+    `Seu pedido *${data.order_code}* foi confirmado.\n\n` +
+    `📦 Produto: ${data.product_name || "-"}\n` +
+    `💰 Valor: R$ ${(data.price || 0).toFixed(2)}\n\n` +
+    `O vendedor tem até 3 dias úteis para enviar.\n` +
+    `Acompanhe: https://bravenza.lovable.app/vault/marketplace\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_new_sale: (data: any) =>
+    `🎉 *Nova Venda!*\n\n` +
+    `Olá ${data.recipient_name || "Vendedor"}!\n\n` +
+    `Pedido *${data.order_code}* confirmado pelo comprador *${data.buyer_name || ""}*.\n\n` +
+    `📦 Produto: ${data.product_name || "-"}\n` +
+    `💰 Valor: R$ ${(data.price || 0).toFixed(2)}\n\n` +
+    `⏰ Envie em até *3 dias úteis*${data.shipping_mode === "bravenza" ? " ao Hub Bravenza" : ""}.\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_seller_shipped: (data: any) =>
+    `📦 *Produto Enviado!*\n\n` +
+    `Olá ${data.recipient_name || "Cliente"}!\n\n` +
+    `O vendedor enviou o produto do pedido *${data.order_code}*.\n\n` +
+    `${data.tracking_code ? `🚚 Rastreio: ${data.tracking_code}\n` : ""}` +
+    `${data.shipping_mode === "bravenza" ? "O produto será inspecionado no Hub Bravenza antes do envio a você.\n" : "O produto está a caminho!\n"}\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_delivery_confirmed: (data: any) =>
+    `✅ *Entrega Confirmada!*\n\n` +
+    `Olá ${data.recipient_name || "Cliente"}!\n\n` +
+    `Pedido *${data.order_code}* foi entregue!\n\n` +
+    `🛡️ Você tem *7 dias* para abrir uma disputa caso haja algum problema.\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_dispute_opened: (data: any) =>
+    `⚠️ *Disputa Aberta*\n\n` +
+    `Olá ${data.recipient_name || ""}!\n\n` +
+    `Uma disputa foi aberta para o pedido *${data.order_code}*.\n\n` +
+    `${data.dispute_reason ? `📝 Motivo: ${data.dispute_reason}\n\n` : ""}` +
+    `Nossa equipe irá mediar a situação.\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_dispute_resolved: (data: any) =>
+    `✅ *Disputa Resolvida*\n\n` +
+    `Olá ${data.recipient_name || ""}!\n\n` +
+    `A disputa do pedido *${data.order_code}* foi resolvida.\n\n` +
+    `Acesse sua conta para ver os detalhes.\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_payout_released: (data: any) =>
+    `💰 *Pagamento Liberado!*\n\n` +
+    `Olá ${data.recipient_name || "Vendedor"}!\n\n` +
+    `Pedido *${data.order_code}* — R$ ${(data.payout_amount || 0).toFixed(2)} será transferido via PIX em até 2 dias úteis.\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_payment_confirmed: (data: any) =>
+    `✅ *Pagamento Confirmado!*\n\n` +
+    `Olá ${data.recipient_name || "Cliente"}!\n\n` +
+    `O pagamento de R$ ${(data.payment_amount || 0).toFixed(2)} do pedido *${data.order_code}* foi aprovado.\n\n` +
+    `O vendedor foi notificado para envio.\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_kyc_approved: (data: any) =>
+    `✅ *Cadastro de Vendedor Aprovado!*\n\n` +
+    `Olá ${data.recipient_name || "Vendedor"}!\n\n` +
+    `Seus documentos foram verificados e aprovados! 🎉\n\n` +
+    `Agora você pode publicar anúncios no marketplace.\n` +
+    `Acesse: https://bravenza.lovable.app/marketplace/minha-loja\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_kyc_rejected: (data: any) =>
+    `⚠️ *Documentos Não Aprovados*\n\n` +
+    `Olá ${data.recipient_name || ""}!\n\n` +
+    `Sua verificação de identidade não foi aprovada.\n\n` +
+    `${data.kyc_rejection_reason ? `📝 Motivo: ${data.kyc_rejection_reason}\n\n` : ""}` +
+    `Você pode enviar novos documentos para análise.\n` +
+    `Acesse: https://bravenza.lovable.app/marketplace/minha-loja\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_review_request: (data: any) =>
+    `⭐ *Avalie sua Compra!*\n\n` +
+    `Olá ${data.recipient_name || "Cliente"}!\n\n` +
+    `Pedido *${data.order_code}* finalizado com sucesso! 🎉\n\n` +
+    `Sua opinião é muito importante. Avalie em apenas 1 minuto!\n` +
+    `Acesse: https://bravenza.lovable.app/vault/marketplace\n\n` +
+    `_Bravenza Marketplace_`,
+};
 const STATUS_LABELS: Record<string, string> = {
   ORDER_CONFIRMED: "Pedido Confirmado",
   SOURCING: "Localizando seu Produto",
@@ -361,6 +465,44 @@ Deno.serve(async (req) => {
           success: true, 
           message_id: result.messageId 
         }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Handle marketplace notifications (use recipient_phone)
+    const mkTypes = ["mk_purchase_confirmed", "mk_new_sale", "mk_seller_shipped", "mk_delivery_confirmed",
+      "mk_dispute_opened", "mk_dispute_resolved", "mk_payout_released", "mk_payment_confirmed",
+      "mk_kyc_approved", "mk_kyc_rejected", "mk_review_request"];
+    
+    if (mkTypes.includes(message_type)) {
+      const phoneToUse = requestData.recipient_phone;
+      if (!phoneToUse) {
+        console.log(`No recipient_phone for ${message_type}`);
+        return new Response(
+          JSON.stringify({ success: false, message: "Telefone do destinatário não fornecido", skipped: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      let phone = phoneToUse.replace(/\D/g, '');
+      if (phone.startsWith('0')) phone = phone.substring(1);
+      if (!phone.startsWith('55')) phone = '55' + phone;
+
+      const templateFn = MESSAGE_TEMPLATES[message_type];
+      if (!templateFn) {
+        return new Response(
+          JSON.stringify({ success: false, message: "Template não encontrado", skipped: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const message = templateFn(requestData);
+      const result = await sendTwilioWhatsApp(twilioAccountSid, twilioAuthToken, twilioWhatsAppNumber, phone, message);
+      if (!result.success) throw new Error(result.error || "Erro ao enviar WhatsApp via Twilio");
+
+      console.log(`MKT WhatsApp (${message_type}) sent to +${phone}: ${result.messageId}`);
+      return new Response(
+        JSON.stringify({ success: true, message_id: result.messageId }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
