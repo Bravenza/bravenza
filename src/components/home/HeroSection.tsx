@@ -11,9 +11,9 @@ const trustItems = [
 
 const HeroSectionComponent = () => {
   return (
-    <section className="relative min-h-[95vh] flex items-center justify-center overflow-hidden">
-      {/* Tech grid background */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-40" />
+    <section className="relative min-h-[85vh] md:min-h-[95vh] flex items-center justify-center overflow-hidden">
+      {/* Tech grid background — reduced opacity for WebView compatibility */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-20 md:opacity-40" />
       
       {/* Radial glow effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">

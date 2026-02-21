@@ -157,14 +157,14 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
     <div className="min-h-[100dvh] bg-background flex flex-col relative overflow-hidden">
       {/* Dramatic background */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <div className="absolute inset-0 bg-grid-pattern opacity-10" />
+        <div className="absolute inset-0 bg-grid-pattern opacity-5 md:opacity-10" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/8 rounded-full blur-[120px]" />
         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px]" />
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
       </div>
 
       {/* Minimal header */}
-      <header className="relative z-10 px-6 py-5 flex items-center justify-between">
+      <header className="relative z-10 px-6 py-4 flex items-center justify-between" style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 1rem)' }}>
         <Link to="/" className="opacity-60 hover:opacity-100 transition-opacity">
           <ArrowLeft className="h-5 w-5" />
         </Link>

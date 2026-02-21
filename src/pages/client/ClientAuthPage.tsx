@@ -227,7 +227,7 @@ export default function ClientAuthPage() {
       {/* Right panel — form */}
       <div className="flex-1 flex flex-col">
         {/* Mobile header */}
-        <header className="lg:hidden relative border-b border-border/30 bg-card/80 backdrop-blur-xl theme-dark">
+        <header className="lg:hidden relative border-b border-border/30 bg-card/80 backdrop-blur-xl theme-dark" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
           <div className="container mx-auto px-4 h-14 flex items-center justify-between">
             <Link to="/">
@@ -249,7 +249,7 @@ export default function ClientAuthPage() {
         </div>
 
         {/* Form container */}
-        <main className="flex-1 flex items-center justify-center px-5 py-8 lg:px-12">
+        <main className="flex-1 flex items-center justify-center px-5 py-5 lg:py-8 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -257,7 +257,7 @@ export default function ClientAuthPage() {
             className="w-full max-w-[440px]"
           >
             {/* Mobile branding */}
-            <div className="lg:hidden text-center mb-6">
+            <div className="lg:hidden text-center mb-4">
               <p className="text-xs tracking-[0.2em] uppercase text-muted-foreground font-medium">
                 Área do Cliente
               </p>
