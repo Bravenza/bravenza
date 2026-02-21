@@ -320,17 +320,37 @@ const AdminLayout = () => {
                   </span>
                 </div>
               ) : (
-                <div className="flex items-center justify-center w-full">
-                  <Logo size="sm" />
-                </div>
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setSidebarCollapsed(false)}
+                      className="flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                      aria-label="Expandir menu"
+                    >
+                      <PanelLeftOpen className="h-5 w-5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={8}>Expandir menu</TooltipContent>
+                </Tooltip>
               )}
-              <button
-                onClick={closeSidebar}
-                className="lg:hidden p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors active:scale-95"
-                aria-label="Fechar menu"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                {!sidebarCollapsed && (
+                  <button
+                    onClick={() => setSidebarCollapsed(true)}
+                    className="hidden lg:flex p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                    aria-label="Recolher menu"
+                  >
+                    <PanelLeftClose className="h-4 w-4" />
+                  </button>
+                )}
+                <button
+                  onClick={closeSidebar}
+                  className="lg:hidden p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors active:scale-95"
+                  aria-label="Fechar menu"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {/* Navigation */}
@@ -455,25 +475,6 @@ const AdminLayout = () => {
             <div className="p-3 border-t border-border/30 shrink-0 space-y-1">
               {!sidebarCollapsed && <ReportPDFGenerator />}
 
-              {/* Collapse toggle (desktop only) */}
-              <Button
-                variant="ghost"
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className={cn(
-                  "hidden lg:flex w-full gap-3 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors",
-                  sidebarCollapsed ? "justify-center" : "justify-start"
-                )}
-                aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
-              >
-                {sidebarCollapsed ? (
-                  <PanelLeftOpen className="h-4 w-4" />
-                ) : (
-                  <>
-                    <PanelLeftClose className="h-4 w-4" />
-                    <span className="text-sm">Recolher</span>
-                  </>
-                )}
-              </Button>
 
               <Button
                 variant="ghost"
