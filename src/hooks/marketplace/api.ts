@@ -17,6 +17,7 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
   "catalog-products": "mk-hub", "catalog-product": "mk-hub", "catalog-offers": "mk-hub",
   "catalog-search": "mk-hub", "catalog-create-product": "mk-hub", "catalog-create-offer": "mk-hub",
   "watchlist-check": "mk-hub", "watchlist-toggle": "mk-hub",
+  "admin-pending-offers": "mk-hub", "admin-moderate-offer": "mk-hub",
   "product-comments": "mk-hub", "product-comment": "mk-hub",
   "product-reviews": "mk-hub", "product-review": "mk-hub",
   "check-purchase": "mk-hub", "product-analytics": "mk-hub", "freight-quote": "mk-hub",

@@ -1,5 +1,6 @@
-// mk-hub: Catalog, Listings, Search, Offers/Negotiation, Product interactions
+// mk-hub: Catalog, Listings, Search, Offers/Negotiation, Product interactions, Admin Moderation
 // Orders/payments → mk-orders | Seller operations → mk-seller
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   corsHeaders, jsonResponse, createSupabaseClient, resolveCpf,
   getMember, getSellerProfile, notify, getMemberEmail, sendMarketplaceEmail,
@@ -807,6 +808,83 @@ Deno.serve(async (req) => {
         release_date: release_date || new Date().toISOString().split("T")[0],
       });
       return j({ active: true });
+    }
+
+    // ==================== ADMIN MODERATION ====================
+
+    if (mt === "GET" && a === "admin-pending-offers") {
+      // Verify admin role
+      const authHeader = req.headers.get("authorization");
+      const token = authHeader?.replace("Bearer ", "") || "";
+      const anonClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data: userData } = await anonClient.auth.getUser(token);
+      if (!userData?.user) return j({ error: "Não autenticado" }, 401);
+      const { data: isAdmin } = await sb.rpc("is_admin", { _user_id: userData.user.id });
+      if (!isAdmin) return j({ error: "Acesso negado" }, 403);
+
+      const statusFilter = url.searchParams.get("status") || "pending_review";
+      let q = sb.from("marketplace_offers").select(
+        `id, price, size, condition, description, photos, status, created_at, views_count, has_receipt, defects,
+         product:marketplace_products!inner(brand, model, images),
+         seller:vault_seller_profiles!inner(id, plan_id, kyc_status, member:vault_members!inner(client_name, client_cpf))`
+      );
+      if (statusFilter !== "all") q = q.eq("status", statusFilter);
+      q = q.order("created_at", { ascending: false }).limit(100);
+      const { data, error } = await q;
+      if (error) throw error;
+      return j({ offers: data || [] });
+    }
+
+    if (mt === "PUT" && a === "admin-moderate-offer") {
+      // Verify admin role
+      const authHeader2 = req.headers.get("authorization");
+      const token2 = authHeader2?.replace("Bearer ", "") || "";
+      const anonClient2 = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: `Bearer ${token2}` } },
+      });
+      const { data: userData2 } = await anonClient2.auth.getUser(token2);
+      if (!userData2?.user) return j({ error: "Não autenticado" }, 401);
+      const { data: isAdmin2 } = await sb.rpc("is_admin", { _user_id: userData2.user.id });
+      if (!isAdmin2) return j({ error: "Acesso negado" }, 403);
+
+      const b = await req.json();
+      const { offer_id, action: modAction, reason } = b;
+      if (!offer_id || !modAction) throw new Error("offer_id e action obrigatórios");
+
+      const updateData: Record<string, any> = { updated_at: new Date().toISOString() };
+      if (modAction === "approve") {
+        updateData.status = "active";
+        updateData.published_at = new Date().toISOString();
+        updateData.activated_at = new Date().toISOString();
+      } else if (modAction === "reject") {
+        updateData.status = "rejected";
+      } else if (modAction === "flag") {
+        updateData.status = "flagged";
+      } else {
+        throw new Error("Ação inválida: use approve, reject ou flag");
+      }
+
+      const { error } = await sb.from("marketplace_offers").update(updateData).eq("id", offer_id);
+      if (error) throw error;
+
+      // Notify seller
+      const { data: offer } = await sb.from("marketplace_offers").select(
+        `product:marketplace_products(brand, model), seller:vault_seller_profiles!inner(member:vault_members!inner(client_cpf))`
+      ).eq("id", offer_id).single();
+
+      if (offer?.seller?.member?.client_cpf) {
+        const productName = `${offer.product?.brand || ""} ${offer.product?.model || ""}`.trim();
+        const msgs: Record<string, string> = {
+          approve: `✅ Seu anúncio "${productName}" foi aprovado e já está ativo!`,
+          reject: `❌ Seu anúncio "${productName}" foi rejeitado.${reason ? ` Motivo: ${reason}` : ""}`,
+          flag: `⚠️ Seu anúncio "${productName}" foi sinalizado para revisão.`,
+        };
+        await nt(sb, "Moderação de Anúncio", msgs[modAction] || "", offer.seller.member.client_cpf, offer_id, "marketplace_moderation");
+      }
+
+      return j({ success: true });
     }
 
     return j({ error: "Ação não encontrada" }, 404);
