@@ -101,7 +101,7 @@ export function EmailSettingsTab() {
 
       {/* Tabbed Templates */}
       <Tabs defaultValue="orders" className="w-full">
-        <TabsList className="w-full grid grid-cols-4">
+        <TabsList className="w-full grid grid-cols-2 md:grid-cols-4">
           <TabsTrigger value="orders" className="text-xs sm:text-sm">Pedidos</TabsTrigger>
           <TabsTrigger value="marketplace" className="text-xs sm:text-sm">Marketplace</TabsTrigger>
           <TabsTrigger value="community" className="text-xs sm:text-sm">Comunidade</TabsTrigger>

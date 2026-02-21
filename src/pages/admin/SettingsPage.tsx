@@ -144,7 +144,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="geral" className="space-y-6">
-        <TabsList className="bg-muted/50 p-1 h-auto flex-wrap overflow-x-auto">
+        <TabsList className="bg-muted/50 p-1 h-auto">
           <TabsTrigger value="geral" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             Geral

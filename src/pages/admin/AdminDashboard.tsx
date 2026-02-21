@@ -143,9 +143,9 @@ const AdminDashboard = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="metrics">Métricas Detalhadas</TabsTrigger>
-          <TabsTrigger value="finance">Financeiro Avançado</TabsTrigger>
-          <TabsTrigger value="heatmap">Mapa de Clientes</TabsTrigger>
+          <TabsTrigger value="metrics">Métricas</TabsTrigger>
+          <TabsTrigger value="finance">Financeiro</TabsTrigger>
+          <TabsTrigger value="heatmap">Mapa</TabsTrigger>
           <TabsTrigger value="automation">Automações</TabsTrigger>
         </TabsList>
 

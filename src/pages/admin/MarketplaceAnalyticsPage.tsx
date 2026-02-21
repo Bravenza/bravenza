@@ -251,7 +251,7 @@ export default function MarketplaceAnalyticsPage() {
 
       {/* Charts */}
       <Tabs defaultValue="gmv" className="w-full">
-        <TabsList className="w-full grid grid-cols-5 h-9">
+        <TabsList className="w-full h-auto">
           <TabsTrigger value="gmv" className="text-xs">GMV</TabsTrigger>
           <TabsTrigger value="sellers" className="text-xs">Sellers</TabsTrigger>
           <TabsTrigger value="ranking" className="text-xs">Ranking</TabsTrigger>
