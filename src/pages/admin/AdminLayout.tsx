@@ -17,7 +17,7 @@ import {
   Sparkles,
   Crown,
   Search,
-  Layers,
+  
   Shield,
   Ticket,
   FileText,
@@ -95,8 +95,7 @@ const navGroups: NavGroup[] = [
     icon: Crown,
     items: [
       { icon: Crown, label: "Membros", path: "/admin/vault/membros" },
-      { icon: Search, label: "Buscas", path: "/admin/vault/buscas" },
-      { icon: Layers, label: "Match Rooms", path: "/admin/vault/match-rooms" },
+      { icon: Search, label: "Curadoria", path: "/admin/vault/buscas" },
       { icon: Shield, label: "Items", path: "/admin/vault/items" },
       { icon: Ticket, label: "Convites", path: "/admin/vault/convites" },
       { icon: FileText, label: "Drops", path: "/admin/vault/drops" },

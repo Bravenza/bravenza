@@ -19,7 +19,7 @@ const InstallmentCalculatorPage = lazy(() => import("@/pages/admin/InstallmentCa
 const FeaturedModelsPage = lazy(() => import("@/pages/admin/FeaturedModelsPage"));
 const VaultMembersPage = lazy(() => import("@/pages/admin/VaultMembersPage"));
 const VaultSearchesPage = lazy(() => import("@/pages/admin/VaultSearchesPage"));
-const VaultMatchRoomsPage = lazy(() => import("@/pages/admin/VaultMatchRoomsPage"));
+
 const VaultItemsPage = lazy(() => import("@/pages/admin/VaultItemsPage"));
 const VaultInvitesPage = lazy(() => import("@/pages/admin/VaultInvitesPage"));
 const VaultIntelAdminPage = lazy(() => import("@/pages/admin/VaultIntelAdminPage"));
@@ -66,7 +66,7 @@ export const adminRoutes = (
       {/* Vault Club Admin */}
       <Route path="vault/membros" element={<VaultMembersPage />} />
       <Route path="vault/buscas" element={<VaultSearchesPage />} />
-      <Route path="vault/match-rooms" element={<VaultMatchRoomsPage />} />
+      
       <Route path="vault/items" element={<VaultItemsPage />} />
       <Route path="vault/convites" element={<VaultInvitesPage />} />
       <Route path="vault/drops" element={<VaultIntelAdminPage />} />
