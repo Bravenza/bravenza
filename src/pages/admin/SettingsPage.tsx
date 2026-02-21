@@ -13,6 +13,7 @@ import { FAQSettingsTab } from "@/components/admin/settings/FAQSettingsTab";
 import { LogsSettingsTab } from "@/components/admin/settings/LogsSettingsTab";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SecuritySettingsTab } from "@/components/admin/settings/SecuritySettingsTab";
+import { AdminSettingsTab } from "@/components/admin/settings/AdminSettingsTab";
 
 interface ApiConfig {
   id: string;
@@ -168,6 +169,10 @@ export default function SettingsPage() {
             <Activity className="h-4 w-4" />
             Logs
           </TabsTrigger>
+          <TabsTrigger value="admins" className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4" />
+            Administradores
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="geral" className="space-y-6">
@@ -245,6 +250,10 @@ export default function SettingsPage() {
 
         <TabsContent value="logs">
           <LogsSettingsTab />
+        </TabsContent>
+
+        <TabsContent value="admins">
+          <AdminSettingsTab />
         </TabsContent>
       </Tabs>
     </div>
