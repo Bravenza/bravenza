@@ -2,11 +2,12 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Clock, CheckCircle2, AlertCircle, ArrowRight, Sparkles,
-  Search, Eye, MessageSquare
+  Search, Eye, MessageSquare, Info
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface SearchItem {
   search_id: string;
@@ -18,6 +19,9 @@ interface SearchItem {
   has_match_room: boolean;
   match_room_id: string | null;
   decision_status: string | null;
+  progress_message?: string | null;
+  progress_percentage?: number | null;
+  decline_count?: number | null;
 }
 
 interface SearchStatusCardProps {
@@ -25,21 +29,38 @@ interface SearchStatusCardProps {
   index: number;
 }
 
-const searchStatusConfig: Record<string, { label: string; color: string; bgColor: string; icon: typeof Clock }> = {
-  RECEIVED: { label: "Recebida", color: "text-blue-400", bgColor: "bg-blue-500/10", icon: Clock },
-  IN_CURATION: { label: "Em curadoria", color: "text-amber-400", bgColor: "bg-amber-500/10", icon: Search },
-  OPTIONS_IDENTIFIED: { label: "Opções encontradas", color: "text-purple-400", bgColor: "bg-purple-500/10", icon: Eye },
-  VALIDATING: { label: "Validando", color: "text-cyan-400", bgColor: "bg-cyan-500/10", icon: Search },
-  MATCH_SENT: { label: "Match enviado", color: "text-emerald-400", bgColor: "bg-emerald-500/10", icon: Sparkles },
-  AWAITING_DECISION: { label: "Aguardando decisão", color: "text-orange-400", bgColor: "bg-orange-500/10", icon: AlertCircle },
-  CLOSED_APPROVED: { label: "Aprovada", color: "text-green-400", bgColor: "bg-green-500/10", icon: CheckCircle2 },
-  CLOSED_NOT_FOUND: { label: "Não encontrado", color: "text-zinc-400", bgColor: "bg-zinc-500/10", icon: AlertCircle },
-  CLOSED_CANCELLED: { label: "Cancelada", color: "text-red-400", bgColor: "bg-red-500/10", icon: AlertCircle },
+const searchStatusConfig: Record<string, { label: string; color: string; bgColor: string; icon: typeof Clock; description: string }> = {
+  RECEIVED: { label: "Recebida", color: "text-blue-400", bgColor: "bg-blue-500/10", icon: Clock, description: "Seu pedido foi recebido pela equipe de curadoria" },
+  IN_CURATION: { label: "Em curadoria", color: "text-amber-400", bgColor: "bg-amber-500/10", icon: Search, description: "Nossa equipe está pesquisando fornecedores e opções" },
+  OPTIONS_IDENTIFIED: { label: "Opções encontradas", color: "text-purple-400", bgColor: "bg-purple-500/10", icon: Eye, description: "Fornecedores contatados, cotações em andamento" },
+  VALIDATING: { label: "Validando", color: "text-cyan-400", bgColor: "bg-cyan-500/10", icon: Search, description: "Verificando autenticidade e condições das opções" },
+  MATCH_SENT: { label: "Match enviado", color: "text-emerald-400", bgColor: "bg-emerald-500/10", icon: Sparkles, description: "Opções prontas para sua decisão!" },
+  AWAITING_DECISION: { label: "Aguardando decisão", color: "text-orange-400", bgColor: "bg-orange-500/10", icon: AlertCircle, description: "Confira as opções e tome sua decisão" },
+  CLOSED_APPROVED: { label: "Aprovada", color: "text-green-400", bgColor: "bg-green-500/10", icon: CheckCircle2, description: "Busca concluída com sucesso" },
+  CLOSED_NOT_FOUND: { label: "Não encontrado", color: "text-zinc-400", bgColor: "bg-zinc-500/10", icon: AlertCircle, description: "Infelizmente não encontramos o produto" },
+  CLOSED_CANCELLED: { label: "Cancelada", color: "text-red-400", bgColor: "bg-red-500/10", icon: AlertCircle, description: "Busca cancelada" },
+};
+
+const getProgressPercentage = (status: string, customPercentage?: number | null): number => {
+  if (customPercentage && customPercentage > 0) return customPercentage;
+  const defaults: Record<string, number> = {
+    RECEIVED: 10,
+    IN_CURATION: 35,
+    OPTIONS_IDENTIFIED: 55,
+    VALIDATING: 70,
+    MATCH_SENT: 85,
+    AWAITING_DECISION: 90,
+    CLOSED_APPROVED: 100,
+    CLOSED_NOT_FOUND: 100,
+    CLOSED_CANCELLED: 100,
+  };
+  return defaults[status] || 0;
 };
 
 export function SearchStatusCard({ search, index }: SearchStatusCardProps) {
   const statusInfo = searchStatusConfig[search.status] || searchStatusConfig.RECEIVED;
   const StatusIcon = statusInfo.icon;
+  const progress = getProgressPercentage(search.status, search.progress_percentage);
 
   const formatRelativeTime = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -71,9 +92,22 @@ export function SearchStatusCard({ search, index }: SearchStatusCardProps) {
                   <StatusIcon className="h-3 w-3 mr-1" />
                   {statusInfo.label}
                 </Badge>
+                {(search.decline_count ?? 0) > 0 && (
+                  <Badge variant="outline" className="text-xs border-zinc-700 text-zinc-400">
+                    Re-busca #{search.decline_count}
+                  </Badge>
+                )}
               </div>
               
               <h3 className="font-semibold truncate mb-1">{search.wishlist_title}</h3>
+              
+              {/* Progress message from admin */}
+              {search.progress_message && (
+                <p className="text-xs text-zinc-400 mb-2 flex items-start gap-1">
+                  <Info className="h-3 w-3 mt-0.5 shrink-0 text-primary" />
+                  {search.progress_message}
+                </p>
+              )}
               
               <div className="flex items-center gap-4 text-xs text-zinc-500">
                 <span>Iniciada: {formatRelativeTime(search.started_at)}</span>
@@ -105,28 +139,32 @@ export function SearchStatusCard({ search, index }: SearchStatusCardProps) {
             </div>
           </div>
 
-          {/* Progress indicator for active searches */}
+          {/* Progress bar with status description */}
           {search.is_active && (
             <div className="mt-3 pt-3 border-t border-zinc-800">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-zinc-500">Progresso da busca</span>
-                <span className={statusInfo.color}>{statusInfo.label}</span>
-              </div>
-              <div className="mt-2 h-1 bg-zinc-800 rounded-full overflow-hidden">
-                <motion.div
-                  className={`h-full ${statusInfo.bgColor.replace('/10', '')}`}
-                  initial={{ width: 0 }}
-                  animate={{ 
-                    width: search.status === "RECEIVED" ? "15%" :
-                           search.status === "IN_CURATION" ? "40%" :
-                           search.status === "OPTIONS_IDENTIFIED" ? "60%" :
-                           search.status === "VALIDATING" ? "75%" :
-                           search.status === "MATCH_SENT" ? "90%" :
-                           search.status === "AWAITING_DECISION" ? "95%" : "100%"
-                  }}
-                  transition={{ duration: 0.5 }}
-                />
-              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="cursor-help">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-zinc-500">Progresso da busca</span>
+                        <span className={statusInfo.color}>{progress}%</span>
+                      </div>
+                      <div className="mt-2 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                        <motion.div
+                          className="h-full bg-primary rounded-full"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${progress}%` }}
+                          transition={{ duration: 0.5 }}
+                        />
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p className="text-xs">{statusInfo.description}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           )}
         </CardContent>

@@ -3497,6 +3497,7 @@ export type Database = {
       }
       vault_match_rooms: {
         Row: {
+          auto_research_search_id: string | null
           created_at: string | null
           created_by_admin_id: string | null
           decision_at: string | null
@@ -3506,10 +3507,13 @@ export type Database = {
             | Database["public"]["Enums"]["match_decision_status"]
             | null
           id: string
+          rejection_category: string | null
+          rejection_reason: string | null
           search_id: string
           user_id: string
         }
         Insert: {
+          auto_research_search_id?: string | null
           created_at?: string | null
           created_by_admin_id?: string | null
           decision_at?: string | null
@@ -3519,10 +3523,13 @@ export type Database = {
             | Database["public"]["Enums"]["match_decision_status"]
             | null
           id?: string
+          rejection_category?: string | null
+          rejection_reason?: string | null
           search_id: string
           user_id: string
         }
         Update: {
+          auto_research_search_id?: string | null
           created_at?: string | null
           created_by_admin_id?: string | null
           decision_at?: string | null
@@ -3532,10 +3539,19 @@ export type Database = {
             | Database["public"]["Enums"]["match_decision_status"]
             | null
           id?: string
+          rejection_category?: string | null
+          rejection_reason?: string | null
           search_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "vault_match_rooms_auto_research_search_id_fkey"
+            columns: ["auto_research_search_id"]
+            isOneToOne: false
+            referencedRelation: "vault_searches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vault_match_rooms_search_id_fkey"
             columns: ["search_id"]
@@ -3831,11 +3847,17 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by_admin_id: string | null
+          decline_count: number | null
           id: string
           internal_notes: string | null
           is_active: boolean | null
+          last_decline_category: string | null
+          last_decline_reason: string | null
           last_update_at: string | null
           match_room_id: string | null
+          original_search_id: string | null
+          progress_message: string | null
+          progress_percentage: number | null
           sla_next_update_due_at: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["search_status"]
@@ -3846,11 +3868,17 @@ export type Database = {
         Insert: {
           created_at?: string | null
           created_by_admin_id?: string | null
+          decline_count?: number | null
           id?: string
           internal_notes?: string | null
           is_active?: boolean | null
+          last_decline_category?: string | null
+          last_decline_reason?: string | null
           last_update_at?: string | null
           match_room_id?: string | null
+          original_search_id?: string | null
+          progress_message?: string | null
+          progress_percentage?: number | null
           sla_next_update_due_at?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["search_status"]
@@ -3861,11 +3889,17 @@ export type Database = {
         Update: {
           created_at?: string | null
           created_by_admin_id?: string | null
+          decline_count?: number | null
           id?: string
           internal_notes?: string | null
           is_active?: boolean | null
+          last_decline_category?: string | null
+          last_decline_reason?: string | null
           last_update_at?: string | null
           match_room_id?: string | null
+          original_search_id?: string | null
+          progress_message?: string | null
+          progress_percentage?: number | null
           sla_next_update_due_at?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["search_status"]
@@ -3879,6 +3913,13 @@ export type Database = {
             columns: ["match_room_id"]
             isOneToOne: false
             referencedRelation: "vault_match_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_searches_original_search_id_fkey"
+            columns: ["original_search_id"]
+            isOneToOne: false
+            referencedRelation: "vault_searches"
             referencedColumns: ["id"]
           },
           {

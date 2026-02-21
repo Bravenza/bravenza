@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   MapPin, DollarSign, AlertTriangle, CheckCircle2, 
-  ThumbsUp, ThumbsDown, Clock, ExternalLink, Image as ImageIcon
+  ThumbsUp, ThumbsDown, Clock, ExternalLink, Image as ImageIcon,
+  Timer
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,9 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { format, differenceInHours } from "date-fns";
+import { format, differenceInHours, differenceInMinutes, differenceInSeconds } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface MatchOption {
@@ -43,6 +45,67 @@ interface MatchRoomViewProps {
   onDecisionMade: () => void;
 }
 
+const REJECTION_CATEGORIES = [
+  { value: "price_high", label: "Preço acima do esperado" },
+  { value: "wrong_condition", label: "Condição diferente do desejado" },
+  { value: "wrong_color", label: "Cor/colorway diferente" },
+  { value: "wrong_size", label: "Tamanho indisponível" },
+  { value: "supplier_trust", label: "Não confio no fornecedor" },
+  { value: "found_elsewhere", label: "Encontrei em outro lugar" },
+  { value: "other", label: "Outro motivo" },
+];
+
+function CountdownTimer({ deadline }: { deadline: string }) {
+  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0, expired: false });
+
+  useEffect(() => {
+    const update = () => {
+      const now = new Date();
+      const end = new Date(deadline);
+      const diffMs = end.getTime() - now.getTime();
+
+      if (diffMs <= 0) {
+        setTimeLeft({ hours: 0, minutes: 0, seconds: 0, expired: true });
+        return;
+      }
+
+      const totalSeconds = Math.floor(diffMs / 1000);
+      setTimeLeft({
+        hours: Math.floor(totalSeconds / 3600),
+        minutes: Math.floor((totalSeconds % 3600) / 60),
+        seconds: totalSeconds % 60,
+        expired: false,
+      });
+    };
+
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [deadline]);
+
+  if (timeLeft.expired) {
+    return (
+      <div className="flex items-center gap-2 text-destructive font-semibold text-sm">
+        <Timer className="h-4 w-4" />
+        Tempo expirado
+      </div>
+    );
+  }
+
+  const isUrgent = timeLeft.hours < 2;
+  const colorClass = isUrgent ? "text-destructive" : "text-amber-500";
+
+  return (
+    <div className={`flex items-center gap-2 font-mono text-sm font-semibold ${colorClass}`}>
+      <Timer className={`h-4 w-4 ${isUrgent ? "animate-pulse" : ""}`} />
+      <span>
+        {String(timeLeft.hours).padStart(2, "0")}:{String(timeLeft.minutes).padStart(2, "0")}:{String(timeLeft.seconds).padStart(2, "0")}
+      </span>
+      <span className="text-xs font-normal opacity-70">restantes</span>
+    </div>
+  );
+}
+
 export function MatchRoomView({ clientCpf, matchRoomId, onDecisionMade }: MatchRoomViewProps) {
   const { toast } = useToast();
   
@@ -51,6 +114,7 @@ export function MatchRoomView({ clientCpf, matchRoomId, onDecisionMade }: MatchR
   const [isDeciding, setIsDeciding] = useState(false);
   const [showDeclineDialog, setShowDeclineDialog] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
+  const [declineCategory, setDeclineCategory] = useState("");
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
   useEffect(() => {
@@ -110,6 +174,10 @@ export function MatchRoomView({ clientCpf, matchRoomId, onDecisionMade }: MatchR
   };
 
   const handleDecline = async () => {
+    if (!declineCategory) {
+      toast({ title: "Selecione um motivo", variant: "destructive" });
+      return;
+    }
     setIsDeciding(true);
     try {
       const { error } = await supabase
@@ -121,9 +189,18 @@ export function MatchRoomView({ clientCpf, matchRoomId, onDecisionMade }: MatchR
 
       if (error) throw error;
 
+      // Save rejection category separately  
+      await supabase
+        .from("vault_match_rooms")
+        .update({ 
+          rejection_category: declineCategory,
+          rejection_reason: declineReason || REJECTION_CATEGORIES.find(c => c.value === declineCategory)?.label || null,
+        })
+        .eq("id", matchRoomId);
+
       toast({
         title: "Match recusado",
-        description: "Continuaremos a busca por outras opções",
+        description: "Continuaremos buscando opções melhores com base no seu feedback",
       });
 
       setShowDeclineDialog(false);
@@ -147,16 +224,6 @@ export function MatchRoomView({ clientCpf, matchRoomId, onDecisionMade }: MatchR
     }).format(value);
   };
 
-  const getTimeRemaining = () => {
-    if (!matchRoom?.decision_deadline_at) return null;
-    const deadline = new Date(matchRoom.decision_deadline_at);
-    const hoursLeft = differenceInHours(deadline, new Date());
-    
-    if (hoursLeft <= 0) return "Expirado";
-    if (hoursLeft < 24) return `${hoursLeft}h restantes`;
-    return `${Math.floor(hoursLeft / 24)}d restantes`;
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -173,12 +240,11 @@ export function MatchRoomView({ clientCpf, matchRoomId, onDecisionMade }: MatchR
     );
   }
 
-  const timeRemaining = getTimeRemaining();
   const isPending = matchRoom.decision_status === "PENDING";
 
   return (
     <div className="space-y-4">
-      {/* Header */}
+      {/* Header with Countdown */}
       <Card className="border-primary/30 bg-primary/5">
         <CardContent className="pt-4">
           <div className="flex items-start justify-between gap-4">
@@ -188,12 +254,6 @@ export function MatchRoomView({ clientCpf, matchRoomId, onDecisionMade }: MatchR
                 {matchRoom.options.length} {matchRoom.options.length === 1 ? "opção encontrada" : "opções encontradas"}
               </p>
             </div>
-            {timeRemaining && isPending && (
-              <Badge variant="outline" className="border-amber-500/50 text-amber-500">
-                <Clock className="h-3 w-3 mr-1" />
-                {timeRemaining}
-              </Badge>
-            )}
             {matchRoom.decision_status === "APPROVED" && (
               <Badge className="bg-green-500/20 text-green-500 border-0">
                 <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -201,6 +261,16 @@ export function MatchRoomView({ clientCpf, matchRoomId, onDecisionMade }: MatchR
               </Badge>
             )}
           </div>
+          
+          {/* Live Countdown */}
+          {isPending && matchRoom.decision_deadline_at && (
+            <div className="mt-3 pt-3 border-t border-primary/20">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Tempo para decidir</span>
+                <CountdownTimer deadline={matchRoom.decision_deadline_at} />
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -315,10 +385,23 @@ export function MatchRoomView({ clientCpf, matchRoomId, onDecisionMade }: MatchR
               </DialogHeader>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Ao recusar, a busca voltará para curadoria. Podemos buscar outras opções.
+                  Seu feedback nos ajuda a encontrar a opção perfeita. A busca será reaberta automaticamente.
                 </p>
+                
                 <div className="space-y-2">
-                  <Label>Motivo (opcional)</Label>
+                  <Label className="font-medium">Qual o principal motivo? *</Label>
+                  <RadioGroup value={declineCategory} onValueChange={setDeclineCategory} className="space-y-2">
+                    {REJECTION_CATEGORIES.map((cat) => (
+                      <div key={cat.value} className="flex items-center space-x-2">
+                        <RadioGroupItem value={cat.value} id={cat.value} />
+                        <Label htmlFor={cat.value} className="font-normal cursor-pointer">{cat.label}</Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Detalhes adicionais (opcional)</Label>
                   <Textarea
                     value={declineReason}
                     onChange={(e) => setDeclineReason(e.target.value)}
@@ -333,7 +416,7 @@ export function MatchRoomView({ clientCpf, matchRoomId, onDecisionMade }: MatchR
                 <Button 
                   variant="destructive" 
                   onClick={handleDecline}
-                  disabled={isDeciding}
+                  disabled={isDeciding || !declineCategory}
                 >
                   {isDeciding ? "Recusando..." : "Confirmar recusa"}
                 </Button>
