@@ -183,14 +183,14 @@ export function DashboardMetrics() {
           >
             <Card className="card-premium h-full">
               <CardContent className="p-6">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-muted-foreground">{kpi.title}</p>
-                    <p className="text-2xl font-bold mt-1 whitespace-nowrap">{kpi.value}</p>
+                    <p className="text-lg md:text-2xl font-bold mt-1 whitespace-nowrap">{kpi.value}</p>
                     <p className="text-xs text-muted-foreground mt-1">{kpi.description}</p>
                   </div>
-                  <div className={`p-3 rounded-lg shrink-0 ${kpi.bgColor}`}>
-                    <kpi.icon className={`h-6 w-6 ${kpi.color}`} />
+                  <div className={`p-2.5 md:p-3 rounded-lg shrink-0 ${kpi.bgColor}`}>
+                    <kpi.icon className={`h-5 w-5 md:h-6 md:w-6 ${kpi.color}`} />
                   </div>
                 </div>
               </CardContent>
@@ -279,25 +279,25 @@ export function DashboardMetrics() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 rounded-lg bg-success/10 border border-success/20">
-                <CheckCircle2 className="h-6 w-6 mx-auto text-success mb-2" />
+              <div className="text-center p-3 md:p-4 rounded-lg bg-success/10 border border-success/20">
+                <CheckCircle2 className="h-5 w-5 md:h-6 md:w-6 mx-auto text-success mb-2" />
                 <p className="text-xs text-muted-foreground">Sinal Recebido</p>
-                <p className="text-lg font-bold text-success whitespace-nowrap">{formatCurrency(metrics.sinalReceived)}</p>
+                <p className="text-base md:text-lg font-bold text-success whitespace-nowrap">{formatCurrency(metrics.sinalReceived)}</p>
               </div>
-              <div className="text-center p-4 rounded-lg bg-primary/10 border border-primary/20">
-                <CheckCircle2 className="h-6 w-6 mx-auto text-primary mb-2" />
+              <div className="text-center p-3 md:p-4 rounded-lg bg-primary/10 border border-primary/20">
+                <CheckCircle2 className="h-5 w-5 md:h-6 md:w-6 mx-auto text-primary mb-2" />
                 <p className="text-xs text-muted-foreground">Saldo Recebido</p>
-                <p className="text-lg font-bold text-primary whitespace-nowrap">{formatCurrency(metrics.balanceReceived)}</p>
+                <p className="text-base md:text-lg font-bold text-primary whitespace-nowrap">{formatCurrency(metrics.balanceReceived)}</p>
               </div>
-              <div className="text-center p-4 rounded-lg bg-warning/10 border border-warning/20">
-                <Clock className="h-6 w-6 mx-auto text-warning mb-2" />
+              <div className="text-center p-3 md:p-4 rounded-lg bg-warning/10 border border-warning/20">
+                <Clock className="h-5 w-5 md:h-6 md:w-6 mx-auto text-warning mb-2" />
                 <p className="text-xs text-muted-foreground">Pendente</p>
-                <p className="text-lg font-bold text-warning whitespace-nowrap">{formatCurrency(metrics.pendingRevenue)}</p>
+                <p className="text-base md:text-lg font-bold text-warning whitespace-nowrap">{formatCurrency(metrics.pendingRevenue)}</p>
               </div>
-              <div className="text-center p-4 rounded-lg bg-muted/30 border border-border">
-                <AlertTriangle className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
+              <div className="text-center p-3 md:p-4 rounded-lg bg-muted/30 border border-border">
+                <AlertTriangle className="h-5 w-5 md:h-6 md:w-6 mx-auto text-muted-foreground mb-2" />
                 <p className="text-xs text-muted-foreground">Orçamentos Abertos</p>
-                <p className="text-lg font-bold">{metrics.pendingBudgets}</p>
+                <p className="text-base md:text-lg font-bold">{metrics.pendingBudgets}</p>
               </div>
             </div>
           </CardContent>

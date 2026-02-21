@@ -117,10 +117,10 @@ export function AdvancedFinanceDashboard() {
           <motion.div key={kpi.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
             <Card className="card-premium h-full">
               <CardContent className="p-6">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-muted-foreground">{kpi.title}</p>
-                    <p className="text-2xl font-bold mt-1 whitespace-nowrap">{kpi.value}</p>
+                    <p className="text-lg md:text-2xl font-bold mt-1 whitespace-nowrap">{kpi.value}</p>
                     {kpi.change !== null && (
                       <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${kpi.change >= 0 ? "text-success" : "text-destructive"}`}>
                         {kpi.change >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
@@ -128,8 +128,8 @@ export function AdvancedFinanceDashboard() {
                       </div>
                     )}
                   </div>
-                  <div className="p-3 rounded-lg bg-primary/10 shrink-0">
-                    <kpi.icon className="h-6 w-6 text-primary" />
+                  <div className="p-2.5 md:p-3 rounded-lg bg-primary/10 shrink-0">
+                    <kpi.icon className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                   </div>
                 </div>
               </CardContent>
@@ -202,26 +202,26 @@ export function AdvancedFinanceDashboard() {
         </CardHeader>
         <CardContent>
           {comparison && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 rounded-lg bg-primary/10">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              <div className="text-center p-3 md:p-4 rounded-lg bg-primary/10">
                 <p className="text-xs text-muted-foreground">Pedidos</p>
-                <p className="text-xl font-bold">{comparison.current.orders}</p>
+                <p className="text-lg md:text-xl font-bold">{comparison.current.orders}</p>
               </div>
-              <div className="text-center p-4 rounded-lg bg-success/10">
+              <div className="text-center p-3 md:p-4 rounded-lg bg-success/10">
                 <p className="text-xs text-muted-foreground">Margem Média</p>
-                <p className="text-xl font-bold">{comparison.current.margin.toFixed(1)}%</p>
+                <p className="text-lg md:text-xl font-bold whitespace-nowrap">{comparison.current.margin.toFixed(1)}%</p>
               </div>
-              <div className="text-center p-4 rounded-lg bg-muted/30">
+              <div className="text-center p-3 md:p-4 rounded-lg bg-muted/30">
                 <p className="text-xs text-muted-foreground">Ticket Médio</p>
-                <p className="text-xl font-bold whitespace-nowrap">
+                <p className="text-base md:text-xl font-bold whitespace-nowrap">
                   {comparison.current.orders > 0
                     ? formatCurrency(comparison.current.revenue / comparison.current.orders)
                     : "-"}
                 </p>
               </div>
-              <div className="text-center p-4 rounded-lg bg-muted/30">
+              <div className="text-center p-3 md:p-4 rounded-lg bg-muted/30">
                 <p className="text-xs text-muted-foreground">Lucro/Pedido</p>
-                <p className="text-xl font-bold whitespace-nowrap">
+                <p className="text-base md:text-xl font-bold whitespace-nowrap">
                   {comparison.current.orders > 0
                     ? formatCurrency(comparison.current.profit / comparison.current.orders)
                     : "-"}
