@@ -121,6 +121,12 @@ const navGroups: NavGroup[] = [
 
 const settingsItem: NavItem = { icon: Settings, label: "Configurações", path: "/admin/configuracoes" };
 
+// Helper: check if current path matches a nav item (supports sub-routes)
+function isNavActive(currentPath: string, itemPath: string) {
+  if (itemPath === "/admin") return currentPath === "/admin";
+  return currentPath === itemPath || currentPath.startsWith(itemPath + "/");
+}
+
 function NavGroupSection({
   group,
   currentPath,
@@ -136,13 +142,13 @@ function NavGroupSection({
   onToggle: () => void;
   collapsed: boolean;
 }) {
-  const hasActiveChild = group.items.some((i) => currentPath === i.path);
+  const hasActiveChild = group.items.some((i) => isNavActive(currentPath, i.path));
 
   if (collapsed) {
     return (
       <div className="space-y-0.5">
         {group.items.map((item) => {
-          const isActive = currentPath === item.path;
+          const isActive = isNavActive(currentPath, item.path);
           return (
             <Tooltip key={item.path} delayDuration={0}>
               <TooltipTrigger asChild>
@@ -187,7 +193,7 @@ function NavGroupSection({
       {isOpen && (
         <div className="space-y-0.5 mt-0.5">
           {group.items.map((item) => {
-            const isActive = currentPath === item.path;
+            const isActive = isNavActive(currentPath, item.path);
             return (
               <Link
                 key={item.path}
@@ -219,13 +225,13 @@ const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mfaChecked, setMfaChecked] = useState(false);
-  const activeGroup = navGroups.find((g) => g.items.some((i) => location.pathname === i.path));
+  const activeGroup = navGroups.find((g) => g.items.some((i) => isNavActive(location.pathname, i.path)));
   const [openGroup, setOpenGroup] = useState<string | null>(activeGroup?.label ?? null);
   useRealtimeAdmin();
 
   useEffect(() => {
-    const active = navGroups.find((g) => g.items.some((i) => location.pathname === i.path));
-    if (active) setOpenGroup(active.label);
+    const active = navGroups.find((g) => g.items.some((i) => isNavActive(location.pathname, i.path)));
+    if (active && active.label !== openGroup) setOpenGroup(active.label);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -360,7 +366,7 @@ const AdminLayout = () => {
             >
               {/* Dashboard (standalone) */}
               {standaloneItems.map((item) => {
-                const isActive = location.pathname === item.path;
+                const isActive = isNavActive(location.pathname, item.path);
 
                 if (sidebarCollapsed) {
                   return (
@@ -424,7 +430,7 @@ const AdminLayout = () => {
               {/* Settings */}
               <div className="pt-2">
                 {(() => {
-                  const isActive = location.pathname === settingsItem.path;
+                  const isActive = isNavActive(location.pathname, settingsItem.path);
 
                   if (sidebarCollapsed) {
                     return (
