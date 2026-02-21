@@ -4,13 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, QrCode, CheckCircle2, XCircle, ExternalLink, Mail, MessageSquare, Percent, Users, Loader2, Activity, Truck, Info, ShieldCheck } from "lucide-react";
+import { Settings, QrCode, CheckCircle2, XCircle, ExternalLink, Mail, MessageSquare, Percent, Users, Loader2, Truck, Info, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { EmailSettingsTab } from "@/components/admin/settings/EmailSettingsTab";
 import { WhatsAppSettingsTab } from "@/components/admin/settings/WhatsAppSettingsTab";
 
-import { LogsSettingsTab } from "@/components/admin/settings/LogsSettingsTab";
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SecuritySettingsTab } from "@/components/admin/settings/SecuritySettingsTab";
 import { AdminSettingsTab } from "@/components/admin/settings/AdminSettingsTab";
@@ -161,10 +161,6 @@ export default function SettingsPage() {
             <MessageSquare className="h-4 w-4" />
             WhatsApp
           </TabsTrigger>
-          <TabsTrigger value="logs" className="flex items-center gap-2">
-            <Activity className="h-4 w-4" />
-            Logs
-          </TabsTrigger>
           <TabsTrigger value="admins" className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4" />
             Administradores
@@ -240,10 +236,6 @@ export default function SettingsPage() {
           <WhatsAppSettingsTab />
         </TabsContent>
 
-
-        <TabsContent value="logs">
-          <LogsSettingsTab />
-        </TabsContent>
 
         <TabsContent value="admins">
           <AdminSettingsTab />
