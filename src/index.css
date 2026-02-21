@@ -380,6 +380,7 @@
 
   /* Tech grid pattern background */
   .bg-grid-pattern {
+    background-color: transparent;
     background-image: 
       linear-gradient(hsl(45, 100%, 50%, 0.03) 1px, transparent 1px),
       linear-gradient(90deg, hsl(45, 100%, 50%, 0.03) 1px, transparent 1px);
@@ -388,6 +389,7 @@
 
   /* Radial glow background */
   .bg-radial-glow {
+    background-color: transparent;
     background: var(--gradient-radial);
   }
 
