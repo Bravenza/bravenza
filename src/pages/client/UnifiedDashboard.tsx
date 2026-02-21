@@ -154,12 +154,10 @@ export default function UnifiedDashboard() {
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [vaultMember, setVaultMember] = useState<VaultMemberData | null>(null);
-  const [activeSection, setActiveSection] = useState(() => {
+   const [activeSection, setActiveSection] = useState(() => {
     const tabParam = searchParams.get("tab");
     if (tabParam) return tabParam;
-    // Fallback to last visited tab stored in localStorage
-    const saved = localStorage.getItem("bvz_dashboard_tab");
-    return saved || "pedidos";
+    return "pedidos";
   });
   const [showPreferences, setShowPreferences] = useState(false);
   const isMobile = useIsMobile();
