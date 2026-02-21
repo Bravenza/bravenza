@@ -1,5 +1,5 @@
 import { useOutletContext, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import {
   Store, Package, Megaphone, BarChart3, Tag, TrendingDown, HelpCircle,
@@ -17,7 +17,7 @@ import { EditListingDialog } from "@/components/client/vault/marketplace/EditLis
 import { ListingDetailSheet } from "@/components/client/vault/marketplace/ListingDetailSheet";
 import { OffersListDialog } from "@/components/client/vault/marketplace/OffersListDialog";
 import { SellerOnboardingDialog } from "@/components/client/vault/marketplace/SellerOnboardingDialog";
-import { SellerAnalyticsDashboard } from "@/components/client/vault/marketplace/SellerAnalyticsDashboard";
+const SellerAnalyticsDashboard = lazy(() => import("@/components/client/vault/marketplace/SellerAnalyticsDashboard").then(m => ({ default: m.SellerAnalyticsDashboard })));
 import { CouponsManager } from "@/components/client/vault/marketplace/CouponsManager";
 import { PriceDropSuggestions } from "@/components/client/vault/marketplace/PriceDropSuggestions";
 import { MarketplaceHowItWorks } from "@/components/client/vault/marketplace/MarketplaceHowItWorks";
@@ -334,7 +334,9 @@ export default function MarketplaceMyStorePage() {
 
           {/* Analytics */}
           {sellerSubTab === "analytics" && isSellerApproved && cpf && (
-            <SellerAnalyticsDashboard clientCpf={cpf} />
+            <Suspense fallback={<div className="h-64 animate-pulse bg-muted rounded-xl" />}>
+              <SellerAnalyticsDashboard clientCpf={cpf} />
+            </Suspense>
           )}
 
           {/* Boosts (paid plans only) */}
