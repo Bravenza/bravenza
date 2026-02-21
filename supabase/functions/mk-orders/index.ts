@@ -213,7 +213,7 @@ Deno.serve(async (req) => {
             const buyerCancelEmail = await ge(sb, orderData.buyer_cpf);
             if (buyerCancelEmail) {
               em("mk_order_cancelled", { recipient_name: buyerCancelEmail.name, recipient_email: buyerCancelEmail.email, order_code: orderData.order_code, product_name: productName, cancel_reason: b.admin_notes || "Cancelado" });
-              if (buyerCancelEmail.phone) wa("mk_purchase_confirmed", { recipient_phone: buyerCancelEmail.phone, recipient_name: buyerCancelEmail.name, order_code: orderData.order_code, product_name: productName, price: orderData.sale_price });
+              if (buyerCancelEmail.phone) wa("mk_order_cancelled", { recipient_phone: buyerCancelEmail.phone, recipient_name: buyerCancelEmail.name, order_code: orderData.order_code, product_name: productName, cancel_reason: b.admin_notes || "Cancelado" });
             }
             if (sellerCpf) {
               const sellerCancelEmail = await ge(sb, sellerCpf);
@@ -441,8 +441,7 @@ Deno.serve(async (req) => {
         if (buyerEmail) {
           em("mk_inspection_result", { recipient_name: buyerEmail.name, recipient_email: buyerEmail.email, order_code: od.order_code, inspection_result: b.result, rejection_reason: b.rejection_reason || null });
           if (buyerEmail.phone) {
-            const waType = b.result === "approved" ? "mk_hub_shipped_to_buyer" : "mk_hub_received";
-            wa(waType, { recipient_phone: buyerEmail.phone, recipient_name: buyerEmail.name, order_code: od.order_code });
+            wa("mk_inspection_result", { recipient_phone: buyerEmail.phone, recipient_name: buyerEmail.name, order_code: od.order_code, inspection_result: b.result, rejection_reason: b.rejection_reason || null });
           }
         }
         // Also notify seller on rejection via WhatsApp
@@ -450,7 +449,7 @@ Deno.serve(async (req) => {
           const { data: slInsp } = await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf)").eq("id", od.seller_id).single();
           if (slInsp?.member?.client_cpf) {
             const sellerInspInfo = await ge(sb, slInsp.member.client_cpf);
-            if (sellerInspInfo?.phone) wa("mk_dispute_opened", { recipient_phone: sellerInspInfo.phone, recipient_name: sellerInspInfo.name, order_code: od.order_code, dispute_reason: b.rejection_reason || "Item reprovado na inspeção" });
+            if (sellerInspInfo?.phone) wa("mk_inspection_result", { recipient_phone: sellerInspInfo.phone, recipient_name: sellerInspInfo.name, order_code: od.order_code, inspection_result: "rejected", rejection_reason: b.rejection_reason || "Item reprovado na inspeção" });
           }
         }
       }

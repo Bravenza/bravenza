@@ -13,7 +13,10 @@ interface WhatsAppRequest {
     | "mk_purchase_confirmed" | "mk_new_sale" | "mk_seller_shipped" | "mk_delivery_confirmed"
     | "mk_dispute_opened" | "mk_dispute_resolved" | "mk_payout_released" | "mk_payment_confirmed"
     | "mk_kyc_approved" | "mk_kyc_rejected" | "mk_review_request"
-    | "mk_hub_received" | "mk_hub_shipped_to_buyer" | "mk_shipping_reminder";
+    | "mk_hub_received" | "mk_hub_shipped_to_buyer" | "mk_shipping_reminder"
+    | "mk_order_cancelled" | "mk_inspection_result"
+    | "mk_offer_received" | "mk_offer_accepted" | "mk_offer_rejected" | "mk_offer_counter"
+    | "mk_watchlist_match" | "mk_protection_expiring" | "mk_stale_listing" | "mk_subscription_expiring";
   custom_message?: string;
   // For referral notifications
   referrer_phone?: string;
@@ -245,6 +248,92 @@ const MESSAGE_TEMPLATES: Record<string, (data: any) => string> = {
     `Olá ${data.recipient_name || "Vendedor"}!\n\n` +
     `Pedido *${data.order_code}* está pendente de envio há *${data.days_pending || 3}+ dias*.\n\n` +
     `${data.shipping_mode === "bravenza" ? "Envie ao Hub Bravenza" : "Envie ao comprador"} o mais rápido possível para evitar cancelamento.\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_order_cancelled: (data: any) =>
+    `❌ *Pedido Cancelado*\n\n` +
+    `Olá ${data.recipient_name || "Cliente"}!\n\n` +
+    `O pedido *${data.order_code}* foi cancelado.\n\n` +
+    `${data.cancel_reason ? `📝 Motivo: ${data.cancel_reason}\n\n` : ""}` +
+    `Se houve pagamento, o estorno será processado automaticamente.\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_inspection_result: (data: any) =>
+    data.inspection_result === "approved"
+      ? `✅ *Inspeção Aprovada!*\n\n` +
+        `Olá ${data.recipient_name || "Cliente"}!\n\n` +
+        `O produto do pedido *${data.order_code}* foi autenticado e aprovado no Hub Bravenza! 🎉\n\n` +
+        `O envio será feito em breve.\n\n` +
+        `_Bravenza Marketplace_`
+      : `❌ *Inspeção Reprovada*\n\n` +
+        `Olá ${data.recipient_name || ""}!\n\n` +
+        `O produto do pedido *${data.order_code}* não passou na inspeção.\n\n` +
+        `${data.rejection_reason ? `📝 Motivo: ${data.rejection_reason}\n\n` : ""}` +
+        `Entre em contato para mais detalhes.\n\n` +
+        `_Bravenza Marketplace_`,
+
+  mk_offer_received: (data: any) =>
+    `💰 *Nova Oferta Recebida!*\n\n` +
+    `Olá ${data.recipient_name || "Vendedor"}!\n\n` +
+    `Você recebeu uma oferta de R$ ${(data.offer_price || 0).toFixed(2)} por "${data.listing_title || ""}".\n\n` +
+    `${data.buyer_name ? `👤 Comprador: ${data.buyer_name}\n\n` : ""}` +
+    `Responda rápido para não perder a venda!\n` +
+    `Acesse: https://bravenza.lovable.app/vault/marketplace\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_offer_accepted: (data: any) =>
+    `✅ *Oferta Aceita!*\n\n` +
+    `Olá ${data.recipient_name || "Comprador"}!\n\n` +
+    `Sua oferta de R$ ${(data.offer_price || 0).toFixed(2)} por "${data.listing_title || ""}" foi aceita! 🎉\n\n` +
+    `Finalize a compra agora!\n` +
+    `Acesse: https://bravenza.lovable.app/vault/marketplace\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_offer_rejected: (data: any) =>
+    `❌ *Oferta Recusada*\n\n` +
+    `Olá ${data.recipient_name || "Comprador"}!\n\n` +
+    `Sua oferta de R$ ${(data.offer_price || 0).toFixed(2)} por "${data.listing_title || ""}" não foi aceita.\n\n` +
+    `Que tal tentar um novo valor?\n` +
+    `Acesse: https://bravenza.lovable.app/vault/marketplace\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_offer_counter: (data: any) =>
+    `🔄 *Contra-proposta Recebida!*\n\n` +
+    `Olá ${data.recipient_name || "Comprador"}!\n\n` +
+    `O vendedor fez uma contra-proposta de R$ ${(data.counter_price || 0).toFixed(2)} para "${data.listing_title || ""}".\n\n` +
+    `⏰ Responda em até 48h!\n` +
+    `Acesse: https://bravenza.lovable.app/vault/marketplace\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_watchlist_match: (data: any) =>
+    `🔔 *Produto da Watchlist Disponível!*\n\n` +
+    `Olá ${data.recipient_name || "Cliente"}!\n\n` +
+    `Uma oferta de R$ ${(data.watchlist_price || 0).toFixed(2)} foi publicada para *${data.watchlist_product_name || "um produto que você acompanha"}*!\n\n` +
+    `${data.watchlist_size ? `📏 Tamanho: ${data.watchlist_size}\n\n` : ""}` +
+    `Acesse: https://bravenza.lovable.app/marketplace\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_protection_expiring: (data: any) =>
+    `🛡️ *Proteção Expirando!*\n\n` +
+    `Olá ${data.recipient_name || "Cliente"}!\n\n` +
+    `A proteção do pedido *${data.order_code}* expira em *${data.protection_expires_at || "breve"}*.\n\n` +
+    `Se houver qualquer problema com o produto, abra uma disputa antes do prazo.\n\n` +
+    `Acesse: https://bravenza.lovable.app/vault/marketplace\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_stale_listing: (data: any) =>
+    `📉 *Anúncio com Poucas Visualizações*\n\n` +
+    `Olá ${data.recipient_name || "Vendedor"}!\n\n` +
+    `Seu anúncio de R$ ${(data.listing_price || 0).toFixed(2)} está ativo há ${data.days_active || 14}+ dias com apenas ${data.listing_views || 0} views.\n\n` +
+    `💡 Dica: reduza o preço ou atualize as fotos para atrair mais compradores!\n\n` +
+    `_Bravenza Marketplace_`,
+
+  mk_subscription_expiring: (data: any) =>
+    `⏰ *Plano Expirando!*\n\n` +
+    `Olá ${data.recipient_name || "Vendedor"}!\n\n` +
+    `Seu plano *${data.plan_name || ""}* expira em *${data.expires_at || "breve"}*.\n\n` +
+    `Renove para manter seus benefícios e anúncios ativos!\n` +
+    `Acesse: https://bravenza.lovable.app/marketplace/planos\n\n` +
     `_Bravenza Marketplace_`,
 };
 const STATUS_LABELS: Record<string, string> = {
@@ -495,7 +584,10 @@ Deno.serve(async (req) => {
     const mkTypes = ["mk_purchase_confirmed", "mk_new_sale", "mk_seller_shipped", "mk_delivery_confirmed",
       "mk_dispute_opened", "mk_dispute_resolved", "mk_payout_released", "mk_payment_confirmed",
       "mk_kyc_approved", "mk_kyc_rejected", "mk_review_request",
-      "mk_hub_received", "mk_hub_shipped_to_buyer", "mk_shipping_reminder"];
+      "mk_hub_received", "mk_hub_shipped_to_buyer", "mk_shipping_reminder",
+      "mk_order_cancelled", "mk_inspection_result",
+      "mk_offer_received", "mk_offer_accepted", "mk_offer_rejected", "mk_offer_counter",
+      "mk_watchlist_match", "mk_protection_expiring", "mk_stale_listing", "mk_subscription_expiring"];
     
     if (mkTypes.includes(message_type)) {
       const phoneToUse = requestData.recipient_phone;

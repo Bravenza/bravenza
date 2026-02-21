@@ -95,6 +95,15 @@ Deno.serve(async (req) => {
             watchlist_size: offer.size,
           });
         }
+        if (member?.client_phone) {
+          sendWhatsApp("mk_watchlist_match", {
+            recipient_phone: member.client_phone,
+            recipient_name: member.client_name,
+            watchlist_product_name: product ? `${product.brand} ${product.model}` : "Produto desejado",
+            watchlist_price: offer.price,
+            watchlist_size: offer.size,
+          });
+        }
 
         watchlistAlerts++;
       }
@@ -220,6 +229,14 @@ Deno.serve(async (req) => {
             protection_expires_at: expDate.toLocaleDateString("pt-BR"),
           });
         }
+        if (buyerMember?.client_phone) {
+          sendWhatsApp("mk_protection_expiring", {
+            recipient_phone: buyerMember.client_phone,
+            recipient_name: buyerMember.client_name,
+            order_code: order.order_code,
+            protection_expires_at: expDate.toLocaleDateString("pt-BR"),
+          });
+        }
         expiryWarnings++;
       }
     }
@@ -244,7 +261,7 @@ Deno.serve(async (req) => {
       if (!sl?.member_id) continue;
       
       const { data: member } = await sb.from("vault_members")
-        .select("client_cpf, client_name, client_email")
+        .select("client_cpf, client_name, client_email, client_phone")
         .eq("id", sl.member_id).maybeSingle();
       if (!member) continue;
 
@@ -252,13 +269,23 @@ Deno.serve(async (req) => {
         `Seu anúncio de R$ ${listing.price.toFixed(2)} está ativo há 14+ dias com poucas views. Considere reduzir o preço.`,
         member.client_cpf, listing.id, "marketplace_stale_listing");
 
+      const daysActive = Math.floor((Date.now() - new Date(listing.created_at).getTime()) / (1000 * 60 * 60 * 24));
       if (member.client_email) {
         sendEmail("mk_stale_listing", {
           recipient_name: member.client_name,
           recipient_email: member.client_email,
           listing_price: listing.price,
           listing_views: listing.views_count,
-          days_active: Math.floor((Date.now() - new Date(listing.created_at).getTime()) / (1000 * 60 * 60 * 24)),
+          days_active: daysActive,
+        });
+      }
+      if (member.client_phone) {
+        sendWhatsApp("mk_stale_listing", {
+          recipient_phone: member.client_phone,
+          recipient_name: member.client_name,
+          listing_price: listing.price,
+          listing_views: listing.views_count,
+          days_active: daysActive,
         });
       }
       staleReminders++;
@@ -286,7 +313,7 @@ Deno.serve(async (req) => {
       if (!sl?.member_id) continue;
       
       const { data: member } = await sb.from("vault_members")
-        .select("client_cpf, client_name, client_email")
+        .select("client_cpf, client_name, client_email, client_phone")
         .eq("id", sl.member_id).maybeSingle();
       if (!member) continue;
 
@@ -299,6 +326,14 @@ Deno.serve(async (req) => {
         sendEmail("mk_subscription_expiring", {
           recipient_name: member.client_name,
           recipient_email: member.client_email,
+          plan_name: sub.plan_id,
+          expires_at: expDate,
+        });
+      }
+      if (member.client_phone) {
+        sendWhatsApp("mk_subscription_expiring", {
+          recipient_phone: member.client_phone,
+          recipient_name: member.client_name,
           plan_name: sub.plan_id,
           expires_at: expDate,
         });

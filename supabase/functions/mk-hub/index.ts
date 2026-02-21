@@ -231,6 +231,7 @@ Deno.serve(async (req) => {
           listing_title: li.title, offer_price: b.offer_price,
           buyer_name: b.buyer_name || "Comprador",
         });
+        if (sellerOfferEmail.phone) wa("mk_offer_received", { recipient_phone: sellerOfferEmail.phone, recipient_name: sellerOfferEmail.name, listing_title: li.title, offer_price: b.offer_price, buyer_name: b.buyer_name || "Comprador" });
       }
       return j({ success: true, offer: of2 });
     }
@@ -263,20 +264,29 @@ Deno.serve(async (req) => {
         await sb.from("marketplace_negotiation_events").insert({ offer_id: of2.id, event_type: "accepted", actor_cpf: cpf, price: of2.offer_price });
         await nt(sb, "✅ Oferta aceita!", `Oferta por "${of2.listing?.title}" aceita!`, of2.buyer_cpf, of2.listing_id, "marketplace_offer");
         const buyerAccEmail = await ge(sb, of2.buyer_cpf);
-        if (buyerAccEmail) em("mk_offer_accepted", { recipient_name: buyerAccEmail.name, recipient_email: buyerAccEmail.email, listing_title: of2.listing?.title, offer_price: of2.offer_price });
+        if (buyerAccEmail) {
+          em("mk_offer_accepted", { recipient_name: buyerAccEmail.name, recipient_email: buyerAccEmail.email, listing_title: of2.listing?.title, offer_price: of2.offer_price });
+          if (buyerAccEmail.phone) wa("mk_offer_accepted", { recipient_phone: buyerAccEmail.phone, recipient_name: buyerAccEmail.name, listing_title: of2.listing?.title, offer_price: of2.offer_price });
+        }
       } else if (b.response === "reject") {
         u.status = "rejected";
         await sb.from("marketplace_negotiation_events").insert({ offer_id: of2.id, event_type: "rejected", actor_cpf: cpf, message: b.reason || null });
         await nt(sb, "❌ Recusada", `Oferta por "${of2.listing?.title}" recusada.`, of2.buyer_cpf, of2.listing_id, "marketplace_offer");
         const buyerRejEmail = await ge(sb, of2.buyer_cpf);
-        if (buyerRejEmail) em("mk_offer_rejected", { recipient_name: buyerRejEmail.name, recipient_email: buyerRejEmail.email, listing_title: of2.listing?.title, offer_price: of2.offer_price, reject_reason: b.reason || "Sem motivo informado" });
+        if (buyerRejEmail) {
+          em("mk_offer_rejected", { recipient_name: buyerRejEmail.name, recipient_email: buyerRejEmail.email, listing_title: of2.listing?.title, offer_price: of2.offer_price, reject_reason: b.reason || "Sem motivo informado" });
+          if (buyerRejEmail.phone) wa("mk_offer_rejected", { recipient_phone: buyerRejEmail.phone, recipient_name: buyerRejEmail.name, listing_title: of2.listing?.title, offer_price: of2.offer_price });
+        }
       } else if (b.response === "counter") {
         u.status = "counter"; u.counter_price = b.counter_price; u.counter_message = b.counter_message || null;
         u.expires_at = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
         await sb.from("marketplace_negotiation_events").insert({ offer_id: of2.id, event_type: "counter_sent", actor_cpf: cpf, price: b.counter_price, message: b.counter_message || null });
         await nt(sb, "🔄 Contra-proposta!", `R$ ${b.counter_price?.toFixed(2)} por "${of2.listing?.title}".`, of2.buyer_cpf, of2.listing_id, "marketplace_offer");
         const buyerCntEmail = await ge(sb, of2.buyer_cpf);
-        if (buyerCntEmail) em("mk_offer_counter", { recipient_name: buyerCntEmail.name, recipient_email: buyerCntEmail.email, listing_title: of2.listing?.title, offer_price: of2.offer_price, counter_price: b.counter_price, counter_message: b.counter_message });
+        if (buyerCntEmail) {
+          em("mk_offer_counter", { recipient_name: buyerCntEmail.name, recipient_email: buyerCntEmail.email, listing_title: of2.listing?.title, offer_price: of2.offer_price, counter_price: b.counter_price, counter_message: b.counter_message });
+          if (buyerCntEmail.phone) wa("mk_offer_counter", { recipient_phone: buyerCntEmail.phone, recipient_name: buyerCntEmail.name, listing_title: of2.listing?.title, offer_price: of2.offer_price, counter_price: b.counter_price });
+        }
       }
       const { error } = await sb.from("vault_marketplace_offers").update(u).eq("id", b.offer_id);
       if (error) throw error;
