@@ -173,7 +173,7 @@ export function AutomationHealthDashboard() {
       {/* Job Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {jobs.map((job) => (
-          <Card key={job.job_name} className="card-premium">
+          <Card key={job.job_name} className="card-premium h-full">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">

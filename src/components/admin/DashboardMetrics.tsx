@@ -181,15 +181,15 @@ export function DashboardMetrics() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
           >
-            <Card className="card-premium">
+            <Card className="card-premium h-full">
               <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{kpi.title}</p>
-                    <p className="text-2xl font-bold mt-1">{kpi.value}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{kpi.description}</p>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm text-muted-foreground truncate">{kpi.title}</p>
+                    <p className="text-2xl font-bold mt-1 truncate">{kpi.value}</p>
+                    <p className="text-xs text-muted-foreground mt-1 truncate">{kpi.description}</p>
                   </div>
-                  <div className={`p-3 rounded-lg ${kpi.bgColor}`}>
+                  <div className={`p-3 rounded-lg shrink-0 ${kpi.bgColor}`}>
                     <kpi.icon className={`h-6 w-6 ${kpi.color}`} />
                   </div>
                 </div>
@@ -202,8 +202,8 @@ export function DashboardMetrics() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Orders by Month */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-          <Card className="card-premium">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="h-full">
+          <Card className="card-premium h-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
@@ -232,8 +232,8 @@ export function DashboardMetrics() {
         </motion.div>
 
         {/* Orders by Status */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-          <Card className="card-premium">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="h-full">
+          <Card className="card-premium h-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5 text-primary" />
@@ -248,11 +248,10 @@ export function DashboardMetrics() {
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
-                    outerRadius={100}
+                    outerRadius={90}
                     paddingAngle={2}
                     dataKey="value"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                    labelLine={false}
+                    label={false}
                   >
                     {metrics.ordersByStatus.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -261,6 +260,7 @@ export function DashboardMetrics() {
                   <Tooltip
                     contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
                   />
+                  <Legend wrapperStyle={{ fontSize: "12px" }} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
@@ -278,26 +278,26 @@ export function DashboardMetrics() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-4 rounded-lg bg-success/10 border border-success/20">
-                <CheckCircle2 className="h-8 w-8 mx-auto text-success mb-2" />
-                <p className="text-sm text-muted-foreground">Sinal Recebido</p>
-                <p className="text-2xl font-bold text-success">{formatCurrency(metrics.sinalReceived)}</p>
+                <CheckCircle2 className="h-6 w-6 mx-auto text-success mb-2" />
+                <p className="text-xs text-muted-foreground">Sinal Recebido</p>
+                <p className="text-lg font-bold text-success truncate">{formatCurrency(metrics.sinalReceived)}</p>
               </div>
-              <div className="text-center p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                <CheckCircle2 className="h-8 w-8 mx-auto text-blue-500 mb-2" />
-                <p className="text-sm text-muted-foreground">Saldo Recebido</p>
-                <p className="text-2xl font-bold text-blue-500">{formatCurrency(metrics.balanceReceived)}</p>
+              <div className="text-center p-4 rounded-lg bg-primary/10 border border-primary/20">
+                <CheckCircle2 className="h-6 w-6 mx-auto text-primary mb-2" />
+                <p className="text-xs text-muted-foreground">Saldo Recebido</p>
+                <p className="text-lg font-bold text-primary truncate">{formatCurrency(metrics.balanceReceived)}</p>
               </div>
               <div className="text-center p-4 rounded-lg bg-warning/10 border border-warning/20">
-                <Clock className="h-8 w-8 mx-auto text-warning mb-2" />
-                <p className="text-sm text-muted-foreground">Pendente</p>
-                <p className="text-2xl font-bold text-warning">{formatCurrency(metrics.pendingRevenue)}</p>
+                <Clock className="h-6 w-6 mx-auto text-warning mb-2" />
+                <p className="text-xs text-muted-foreground">Pendente</p>
+                <p className="text-lg font-bold text-warning truncate">{formatCurrency(metrics.pendingRevenue)}</p>
               </div>
               <div className="text-center p-4 rounded-lg bg-muted/30 border border-border">
-                <AlertTriangle className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">Orçamentos Abertos</p>
-                <p className="text-2xl font-bold">{metrics.pendingBudgets}</p>
+                <AlertTriangle className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
+                <p className="text-xs text-muted-foreground">Orçamentos Abertos</p>
+                <p className="text-lg font-bold">{metrics.pendingBudgets}</p>
               </div>
             </div>
           </CardContent>
@@ -319,20 +319,11 @@ export function DashboardMetrics() {
                 const prevValue = index > 0 ? metrics.funnelData[index - 1].value : item.value;
                 const funnelConversionRate = prevValue > 0 ? ((item.value / prevValue) * 100).toFixed(0) : "100";
                 return (
-                  <div key={item.name} className="text-center">
-                    <div 
-                      className="mx-auto mb-3 rounded-lg flex items-center justify-center"
-                      style={{ 
-                        backgroundColor: `${item.fill}20`,
-                        width: `${Math.max(60, 100 - index * 15)}%`,
-                        height: "80px"
-                      }}
-                    >
-                      <span className="text-2xl font-bold" style={{ color: item.fill }}>
-                        {item.value}
-                      </span>
-                    </div>
-                    <p className="text-sm font-medium">{item.name}</p>
+                  <div key={item.name} className="text-center p-4 rounded-lg" style={{ backgroundColor: `${item.fill}15` }}>
+                    <p className="text-2xl font-bold" style={{ color: item.fill }}>
+                      {item.value}
+                    </p>
+                    <p className="text-xs font-medium mt-1 truncate">{item.name}</p>
                     {index > 0 && (
                       <p className="text-xs text-muted-foreground mt-1">
                         {funnelConversionRate}% do anterior

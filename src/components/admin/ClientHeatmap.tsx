@@ -90,18 +90,18 @@ export function ClientHeatmap() {
         ) : (
           <div className="space-y-6">
             {/* Summary */}
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="p-3 rounded-lg bg-primary/10">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center p-4 rounded-lg bg-primary/10">
                 <p className="text-xs text-muted-foreground">Estados Ativos</p>
-                <p className="text-2xl font-bold">{stateData.length}</p>
+                <p className="text-xl font-bold">{stateData.length}</p>
               </div>
-              <div className="p-3 rounded-lg bg-primary/10">
+              <div className="text-center p-4 rounded-lg bg-primary/10">
                 <p className="text-xs text-muted-foreground">Total Clientes</p>
-                <p className="text-2xl font-bold">{totalClients}</p>
+                <p className="text-xl font-bold">{totalClients}</p>
               </div>
-              <div className="p-3 rounded-lg bg-primary/10">
+              <div className="text-center p-4 rounded-lg bg-primary/10">
                 <p className="text-xs text-muted-foreground">Top Estado</p>
-                <p className="text-2xl font-bold">{stateData[0]?.state || "-"}</p>
+                <p className="text-xl font-bold">{stateData[0]?.state || "-"}</p>
               </div>
             </div>
 
