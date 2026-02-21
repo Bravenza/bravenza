@@ -3,30 +3,31 @@ import App from "./App.tsx";
 import "./index.css";
 
 // Force clear all old caches and service workers on app boot
-const APP_VERSION = "3.3.0";
+const APP_VERSION = "3.4.0";
 const VERSION_KEY = "bravenza-app-version";
 
-function clearAllCaches() {
-  // Run in background — don't block rendering
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.getRegistrations().then((regs) =>
-      regs.forEach((r) => r.unregister())
-    );
+// Always unregister service workers and clear caches on every boot
+// to prevent stale preview/PWA cache issues
+(async () => {
+  try {
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister()));
+    }
+    if ("caches" in window) {
+      const names = await caches.keys();
+      await Promise.all(names.map((n) => caches.delete(n)));
+    }
+  } catch {
+    // silently ignore
   }
-  if ("caches" in window) {
-    caches.keys().then((names) =>
-      names.forEach((name) => caches.delete(name))
-    );
-  }
-}
+})();
 
-// Check version — only clear caches on version change
+// Version-based hard reload (one-time on upgrade)
 const storedVersion = localStorage.getItem(VERSION_KEY);
-
 if (storedVersion !== APP_VERSION) {
   console.log(`[BRAVENZA] Upgrading ${storedVersion} → ${APP_VERSION}`);
   localStorage.setItem(VERSION_KEY, APP_VERSION);
-  clearAllCaches();
   if (storedVersion !== null) {
     window.location.reload();
   }
