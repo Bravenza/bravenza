@@ -66,7 +66,7 @@ export const SecuritySection = memo(function SecuritySection() {
             <Fingerprint className="h-8 w-8 md:h-10 md:w-10 text-primary" />
           </motion.div>
 
-          <h2 className="text-2xl md:text-4xl font-black tracking-tight mb-3">
+          <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-3 font-display">
             Segurança e{" "}
             <span className="text-gradient-gold">Autenticidade</span>
           </h2>
