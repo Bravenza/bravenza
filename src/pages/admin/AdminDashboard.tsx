@@ -133,7 +133,7 @@ const AdminDashboard = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="w-full overflow-x-auto flex-nowrap justify-start">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="metrics">Métricas</TabsTrigger>
           <TabsTrigger value="finance">Financeiro</TabsTrigger>
@@ -155,7 +155,7 @@ const AdminDashboard = () => {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm text-muted-foreground truncate">{stat.title}</p>
+                        <p className="text-sm text-muted-foreground">{stat.title}</p>
                         <p className="text-2xl font-bold mt-1">{stat.value}</p>
                       </div>
                       <div className={`p-3 rounded-lg shrink-0 ${stat.bgColor}`}>
