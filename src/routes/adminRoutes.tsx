@@ -12,6 +12,7 @@ const OrderRequestsPage = lazy(() => import("@/pages/admin/OrderRequestsPage"));
 const UsersPage = lazy(() => import("@/pages/admin/UsersPage"));
 const SettingsPage = lazy(() => import("@/pages/admin/SettingsPage"));
 const SuppliersPage = lazy(() => import("@/pages/admin/SuppliersPage"));
+const SupplierFormPage = lazy(() => import("@/pages/admin/SupplierFormPage"));
 const ReviewsPage = lazy(() => import("@/pages/admin/ReviewsPage"));
 const ReferralsPage = lazy(() => import("@/pages/admin/ReferralsPage"));
 const FinancePage = lazy(() => import("@/pages/admin/FinancePage"));
@@ -21,9 +22,13 @@ const VaultMembersPage = lazy(() => import("@/pages/admin/VaultMembersPage"));
 const VaultSearchesPage = lazy(() => import("@/pages/admin/VaultSearchesPage"));
 
 const VaultItemsPage = lazy(() => import("@/pages/admin/VaultItemsPage"));
+const VaultItemFormPage = lazy(() => import("@/pages/admin/VaultItemFormPage"));
+const VaultItemDetailPage = lazy(() => import("@/pages/admin/VaultItemDetailPage"));
 const VaultInvitesPage = lazy(() => import("@/pages/admin/VaultInvitesPage"));
 const VaultIntelAdminPage = lazy(() => import("@/pages/admin/VaultIntelAdminPage"));
 const VaultCommunityAdminPage = lazy(() => import("@/pages/admin/VaultCommunityAdminPage"));
+const VaultMatchRoomsPage = lazy(() => import("@/pages/admin/VaultMatchRoomsPage"));
+const VaultMatchRoomDetailPage = lazy(() => import("@/pages/admin/VaultMatchRoomDetailPage"));
 const MarketplaceOrdersPage = lazy(() => import("@/pages/admin/MarketplaceOrdersPage"));
 const MarketplaceInspectionPage = lazy(() => import("@/pages/admin/MarketplaceInspectionPage"));
 const MarketplacePlansAdminPage = lazy(() => import("@/pages/admin/MarketplacePlansAdminPage"));
@@ -54,6 +59,8 @@ export const adminRoutes = (
       <Route path="calculadora" element={<InstallmentCalculatorPage />} />
       <Route path="modelos" element={<FeaturedModelsPage />} />
       <Route path="fornecedores" element={<SuppliersPage />} />
+      <Route path="fornecedores/novo" element={<SupplierFormPage />} />
+      <Route path="fornecedores/:id/editar" element={<SupplierFormPage />} />
       <Route path="avaliacoes" element={<ReviewsPage />} />
       <Route path="indicacoes" element={<ReferralsPage />} />
       <Route path="usuarios" element={<UsersPage />} />
@@ -68,6 +75,8 @@ export const adminRoutes = (
       <Route path="vault/buscas" element={<VaultSearchesPage />} />
       
       <Route path="vault/items" element={<VaultItemsPage />} />
+      <Route path="vault/items/novo" element={<VaultItemFormPage />} />
+      <Route path="vault/items/:id" element={<VaultItemDetailPage />} />
       <Route path="vault/convites" element={<VaultInvitesPage />} />
       <Route path="vault/drops" element={<VaultIntelAdminPage />} />
       <Route path="vault/comunidade" element={<VaultCommunityAdminPage />} />
@@ -78,6 +87,8 @@ export const adminRoutes = (
       <Route path="vault/marketplace/moderacao" element={<MarketplaceModerationPage />} />
       <Route path="vault/marketplace/disputas" element={<MarketplaceDisputesPage />} />
       <Route path="vault/marketplace/campanhas" element={<MarketplaceCampaignsPage />} />
+      <Route path="vault/matchrooms" element={<VaultMatchRoomsPage />} />
+      <Route path="vault/matchrooms/:id" element={<VaultMatchRoomDetailPage />} />
     </Route>
   </>
 );
