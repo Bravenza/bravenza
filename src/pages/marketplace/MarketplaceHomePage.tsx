@@ -26,7 +26,6 @@ const SellCTASection = lazy(() => import("@/components/marketplace/home/SellCTAS
 const MarketplaceFAQSection = lazy(() => import("@/components/marketplace/home/MarketplaceFAQSection").then(m => ({ default: m.MarketplaceFAQSection })));
 const DropsCountdownSection = lazy(() => import("@/components/marketplace/home/DropsCountdownSection").then(m => ({ default: m.DropsCountdownSection })));
 const UpcomingReleasesSection = lazy(() => import("@/components/marketplace/home/UpcomingReleasesSection").then(m => ({ default: m.UpcomingReleasesSection })));
-const FeaturedCollectionsSection = lazy(() => import("@/components/marketplace/home/FeaturedCollectionsSection").then(m => ({ default: m.FeaturedCollectionsSection })));
 const SellerLeaderboard = lazy(() => import("@/components/marketplace/SellerLeaderboard").then(m => ({ default: m.SellerLeaderboard })));
 
 export default function MarketplaceHomePage() {
@@ -262,13 +261,6 @@ export default function MarketplaceHomePage() {
           )}
         </div>
       </section>
-
-      {/* ===== FEATURED COLLECTIONS ===== */}
-      <LazySection minHeight="300px">
-        <Suspense fallback={<div className="h-[300px]" />}>
-          <FeaturedCollectionsSection />
-        </Suspense>
-      </LazySection>
 
       {/* ===== UPCOMING RELEASES ===== */}
       <LazySection minHeight="300px">

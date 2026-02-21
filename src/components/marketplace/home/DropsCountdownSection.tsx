@@ -169,7 +169,7 @@ export const DropsCountdownSection = memo(function DropsCountdownSection() {
             <Zap className="h-3.5 w-3.5 text-destructive" />
           </motion.div>
 
-          <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-2 font-display">
+          <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-2 font-display">
             Próximo drop em
           </h2>
           <p className="text-sm text-muted-foreground mb-8">
