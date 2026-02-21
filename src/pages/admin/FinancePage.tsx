@@ -213,14 +213,14 @@ const FinancePage = () => {
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="card-premium h-full">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground">Receita Total</p>
-                <p className="text-2xl font-bold text-primary truncate">{formatCurrency(m.total_revenue)}</p>
+                <p className="text-base md:text-xl font-bold text-primary whitespace-nowrap mt-1">{formatCurrency(m.total_revenue)}</p>
                 <p className="text-xs text-muted-foreground mt-1">{m.paid_orders} pedidos pagos</p>
               </div>
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                <DollarSign className="h-6 w-6 text-primary" />
+              <div className="p-2.5 md:p-3 rounded-lg bg-primary/10 shrink-0">
+                <DollarSign className="h-5 w-5 md:h-6 md:w-6 text-primary" />
               </div>
             </div>
           </CardContent>
@@ -228,16 +228,16 @@ const FinancePage = () => {
 
         <Card className="card-premium h-full">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground">Custos Totais</p>
-                <p className="text-2xl font-bold text-destructive truncate">{formatCurrency(m.total_costs + m.total_payment_fees)}</p>
-                <p className="text-xs text-muted-foreground mt-1 truncate">
-                  Produto + frete + taxas ({formatCurrency(m.total_payment_fees)})
+                <p className="text-base md:text-xl font-bold text-destructive whitespace-nowrap mt-1">{formatCurrency(m.total_costs + m.total_payment_fees)}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Produto + frete + taxas
                 </p>
               </div>
-              <div className="w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center shrink-0">
-                <TrendingDown className="h-6 w-6 text-destructive" />
+              <div className="p-2.5 md:p-3 rounded-lg bg-destructive/10 shrink-0">
+                <TrendingDown className="h-5 w-5 md:h-6 md:w-6 text-destructive" />
               </div>
             </div>
           </CardContent>
@@ -245,16 +245,16 @@ const FinancePage = () => {
 
         <Card className="card-premium h-full">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground">Lucro Bruto</p>
-                <p className={`text-2xl font-bold truncate ${m.gross_profit >= 0 ? "text-success" : "text-destructive"}`}>
+                <p className={`text-base md:text-xl font-bold whitespace-nowrap mt-1 ${m.gross_profit >= 0 ? "text-success" : "text-destructive"}`}>
                   {formatCurrency(m.gross_profit)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">Margem: {m.profit_margin.toFixed(1)}%</p>
               </div>
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${m.gross_profit >= 0 ? "bg-success/20" : "bg-destructive/20"}`}>
-                {m.gross_profit >= 0 ? <TrendingUp className="h-6 w-6 text-success" /> : <TrendingDown className="h-6 w-6 text-destructive" />}
+              <div className={`p-2.5 md:p-3 rounded-lg shrink-0 ${m.gross_profit >= 0 ? "bg-success/10" : "bg-destructive/10"}`}>
+                {m.gross_profit >= 0 ? <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-success" /> : <TrendingDown className="h-5 w-5 md:h-6 md:w-6 text-destructive" />}
               </div>
             </div>
           </CardContent>
@@ -262,14 +262,14 @@ const FinancePage = () => {
 
         <Card className="card-premium h-full">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground">Ticket Médio</p>
-                <p className="text-2xl font-bold truncate">{formatCurrency(m.average_ticket)}</p>
+                <p className="text-base md:text-xl font-bold whitespace-nowrap mt-1">{formatCurrency(m.average_ticket)}</p>
                 <p className="text-xs text-muted-foreground mt-1">{m.total_orders} pedidos no período</p>
               </div>
-              <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                <Package className="h-6 w-6 text-muted-foreground" />
+              <div className="p-2.5 md:p-3 rounded-lg bg-muted/30 shrink-0">
+                <Package className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
               </div>
             </div>
           </CardContent>
@@ -353,7 +353,8 @@ const FinancePage = () => {
           </Select>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          {/* Desktop Table */}
+          <div className="overflow-x-auto hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow className="border-border hover:bg-transparent">
@@ -409,6 +410,42 @@ const FinancePage = () => {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-3">
+            {orders.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                Nenhum pedido encontrado no período
+              </div>
+            ) : (
+              orders.map(order => (
+                <Link
+                  key={order.order_id}
+                  to={`/admin/pedidos/${order.order_id}`}
+                  className="block p-4 rounded-lg border border-border bg-card hover:bg-secondary/30 transition-colors active:scale-[0.98]"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-mono text-sm font-medium">{order.order_id}</span>
+                    <Badge variant="outline" className={order.margin >= 20 ? "border-success text-success" : order.margin >= 10 ? "border-warning text-warning" : "border-destructive text-destructive"}>
+                      {order.margin.toFixed(1)}%
+                    </Badge>
+                  </div>
+                  <p className="text-sm font-medium truncate">{order.client_name}</p>
+                  <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
+                    <div>
+                      <span className="text-muted-foreground">Receita: </span>
+                      <span className="font-medium">{formatCurrency(order.revenue)}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Lucro: </span>
+                      <span className={`font-medium ${order.profit >= 0 ? "text-success" : "text-destructive"}`}>{formatCurrency(order.profit)}</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">{formatDate(order.created_at)}</p>
+                </Link>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
