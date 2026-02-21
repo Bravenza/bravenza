@@ -35,6 +35,7 @@ const MarketplaceAnalyticsPage = lazy(() => import("@/pages/admin/MarketplaceAna
 const MarketplaceModerationPage = lazy(() => import("@/pages/admin/MarketplaceModerationPage"));
 const MarketplaceDisputesPage = lazy(() => import("@/pages/admin/MarketplaceDisputesPage"));
 const MarketplaceCampaignsPage = lazy(() => import("@/pages/admin/MarketplaceCampaignsPage"));
+const AdminManagementPage = lazy(() => import("@/pages/admin/AdminManagementPage"));
 
 export const adminRoutes = (
   <>
@@ -57,6 +58,7 @@ export const adminRoutes = (
       <Route path="indicacoes" element={<ReferralsPage />} />
       <Route path="usuarios" element={<UsersPage />} />
       <Route path="configuracoes" element={<SettingsPage />} />
+      <Route path="administradores" element={<AdminManagementPage />} />
       <Route path="logs" element={<ActivityLogsPage />} />
       <Route path="faq" element={<FAQManagerPage />} />
       <Route path="emails" element={<EmailFlowPage />} />
