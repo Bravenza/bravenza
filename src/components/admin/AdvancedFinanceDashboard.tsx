@@ -120,7 +120,7 @@ export function AdvancedFinanceDashboard() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-muted-foreground">{kpi.title}</p>
-                    <p className="text-lg md:text-2xl font-bold mt-1 whitespace-nowrap">{kpi.value}</p>
+                    <p className="text-base md:text-xl font-bold mt-1 whitespace-nowrap">{kpi.value}</p>
                     {kpi.change !== null && (
                       <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${kpi.change >= 0 ? "text-success" : "text-destructive"}`}>
                         {kpi.change >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}

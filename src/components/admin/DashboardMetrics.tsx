@@ -186,7 +186,7 @@ export function DashboardMetrics() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-muted-foreground">{kpi.title}</p>
-                    <p className="text-lg md:text-2xl font-bold mt-1 whitespace-nowrap">{kpi.value}</p>
+                    <p className="text-base md:text-xl font-bold mt-1 whitespace-nowrap">{kpi.value}</p>
                     <p className="text-xs text-muted-foreground mt-1">{kpi.description}</p>
                   </div>
                   <div className={`p-2.5 md:p-3 rounded-lg shrink-0 ${kpi.bgColor}`}>
