@@ -4763,6 +4763,23 @@ export type Database = {
           state_code: string
         }[]
       }
+      get_admin_dashboard_metrics: {
+        Args: never
+        Returns: {
+          approved_budgets: number
+          avg_time_to_approval_hours: number
+          avg_time_to_close_days: number
+          balance_received: number
+          delivered_count: number
+          pending_budgets: number
+          pending_revenue: number
+          rejected_budgets: number
+          sinal_paid_count: number
+          sinal_received: number
+          total_budgets_sent: number
+          total_revenue: number
+        }[]
+      }
       get_admin_dashboard_overview: { Args: never; Returns: Json }
       get_admin_finance_chart: {
         Args: {
@@ -4808,6 +4825,17 @@ export type Database = {
           total_revenue: number
         }[]
       }
+      get_admin_finance_monthly: {
+        Args: never
+        Returns: {
+          costs: number
+          margin: number
+          month_key: string
+          orders_count: number
+          profit: number
+          revenue: number
+        }[]
+      }
       get_admin_finance_orders: {
         Args: {
           p_end: string
@@ -4834,6 +4862,21 @@ export type Database = {
       get_admin_order_requests: {
         Args: { p_limit?: number; p_offset?: number; p_search?: string }
         Returns: Json
+      }
+      get_admin_orders_by_month: {
+        Args: never
+        Returns: {
+          faturamento: number
+          month_key: string
+          pedidos: number
+        }[]
+      }
+      get_admin_orders_by_status: {
+        Args: never
+        Returns: {
+          count: number
+          status_group: string
+        }[]
       }
       get_admin_orders_csv: {
         Args: { p_date_from?: string; p_search?: string; p_status?: string }
