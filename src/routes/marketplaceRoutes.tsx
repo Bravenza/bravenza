@@ -25,8 +25,10 @@ export const marketplaceRoutes = (
       <Route path="loja" element={<MarketplaceMyStorePage />} />
       <Route path="planos" element={<MarketplacePlansPage />} />
       <Route path="drops" element={<MarketplaceDropsPage />} />
-      <Route path="checkout" element={<MarketplaceCheckoutPage />} />
     </Route>
+    <Route path="/marketplace/checkout" element={
+      <ProtectedProviders><MarketplaceCheckoutPage /></ProtectedProviders>
+    } />
     <Route path="/marketplace/product/:slug" element={
       <ProtectedProviders><ProductDetailPage /></ProtectedProviders>
     } />
