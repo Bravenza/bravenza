@@ -63,6 +63,9 @@ Deno.serve(async (req) => {
       .select("id")
       .single();
     cronLogId = logEntry?.id || null;
+
+    const results: Record<string, unknown> = {};
+
     // ===== 1. WATCHLIST ALERTS =====
     // Check new offers matching watchlist entries
     console.log("[mk-notifications] Checking watchlist alerts...");
