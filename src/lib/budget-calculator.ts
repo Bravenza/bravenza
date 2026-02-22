@@ -76,7 +76,7 @@ export function calculateCardTotal(basePrice: number, installments: number): num
  * parcela(n) = round(total_cartao(n) / n, 2)
  */
 export function calculateInstallmentValue(cardTotal: number, installments: number): number {
-  return Math.round((cardTotal / installments) * 100) / 100;
+  return Math.ceil((cardTotal / installments) * 100) / 100;
 }
 
 /**
