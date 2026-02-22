@@ -43,8 +43,8 @@ const conditionLabel: Record<string, string> = {
 
 type Step = "review" | "address" | "freight" | "payment" | "processing" | "success";
 
-// R$30 hub surcharge added to each freight option to cover HUB logistics costs
-const HUB_FREIGHT_SURCHARGE = 30;
+// R$20 hub surcharge added to each freight option to cover HUB logistics costs
+const HUB_FREIGHT_SURCHARGE = 20;
 
 const STEPS: { key: Step; label: string; icon: typeof ShoppingCart }[] = [
   { key: "review", label: "Resumo", icon: ShoppingCart },
@@ -184,7 +184,7 @@ function MarketplaceCheckoutPageInner() {
       const opts = (parsed.quotes || []).filter((q: any) => q.price && !q.error);
       // Filter to only PAC and SEDEX, add hub surcharge
       const pacSedexOnly = opts.filter((q: any) => /pac|sedex/i.test(q.name || q.company?.name || ""));
-      const withSurcharge = (pacSedexOnly.length > 0 ? pacSedexOnly : opts).map((q: any) => ({
+      const withSurcharge = pacSedexOnly.map((q: any) => ({
         ...q,
         price: String((parseFloat(q.price) + HUB_FREIGHT_SURCHARGE).toFixed(2)),
       }));

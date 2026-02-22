@@ -192,9 +192,9 @@ export function MarketplaceCheckoutDialog({
       const parsed = await res.json();
       if (parsed.error) throw new Error(parsed.error);
       const opts = (parsed.quotes || []).filter((q: any) => q.price && !q.error);
-      const HUB_SURCHARGE = 30;
+      const HUB_SURCHARGE = 20;
       const pacSedexOnly = opts.filter((q: any) => /pac|sedex/i.test(q.name || q.company?.name || ""));
-      const withSurcharge = (pacSedexOnly.length > 0 ? pacSedexOnly : opts).map((q: any) => ({
+      const withSurcharge = pacSedexOnly.map((q: any) => ({
         ...q,
         price: String((parseFloat(q.price) + HUB_SURCHARGE).toFixed(2)),
       }));
