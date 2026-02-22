@@ -50,6 +50,8 @@ const highlightFeatures = [
   { key: "boost", label: "Boost / destaques", icon: Rocket, paidOnly: true },
   { key: "autocut", label: "AutoCut (redução automática)", icon: Bot },
   { key: "sla", label: "Suporte SLA", icon: Headphones },
+  { key: "analytics_basic", label: "Analytics básico", icon: Eye },
+  { key: "analytics_advanced", label: "Analytics avançado", icon: BarChart3 },
   { key: "storefront", label: "Vitrine / coleções", icon: Star },
   { key: "badge", label: "Selo Loja Verificada", icon: Shield },
   { key: "batch", label: "Ferramentas de lote", icon: Gauge },
@@ -69,6 +71,8 @@ function getFeatureValue(plan: MarketplacePlan, key: string, feeTiers: FeeTier[]
     case "boost": return plan.id === "free" ? false : `${plan.boost_slots} slot${plan.boost_slots > 1 ? "s" : ""}`;
     case "autocut": return plan.id !== "free";
     case "sla": return plan.support_sla_hours <= 24 ? "Até 24h" : plan.support_sla_hours <= 48 ? "24-48h" : "48-72h";
+    case "analytics_basic": return plan.id === "pro" || plan.id === "elite";
+    case "analytics_advanced": return plan.id === "elite";
     case "storefront": return plan.has_storefront;
     case "badge": return plan.has_verified_badge;
     case "batch": return plan.has_batch_tools;
@@ -97,14 +101,16 @@ const featureSections = [
   {
     icon: BarChart3,
     title: "Analytics Avançado",
-    description: "Acompanhe o desempenho de suas vendas e anúncios de forma simples e prática. Dados de mercado para tomar decisões mais assertivas.",
-    highlights: ["KPIs de conversão", "Funil de vendas", "Insights de mercado e tendências"],
+    badge: "Elite",
+    description: "Acompanhe o desempenho de suas vendas com KPIs detalhados, funil de conversão e insights de mercado. Disponível exclusivamente no plano Seller Elite.",
+    highlights: ["KPIs de conversão avançados", "Funil de vendas completo", "Insights de mercado e tendências"],
     gradient: "from-primary/15 to-primary/5",
   },
   {
     icon: Layers,
     title: "Ferramentas de Lote",
-    description: "Gerencie dezenas de anúncios de uma só vez. Edite preços, pause ou reative em massa. Economize tempo e foque no que importa: vender.",
+    badge: "Elite",
+    description: "Gerencie dezenas de anúncios de uma só vez. Edite preços, pause ou reative em massa. Recurso exclusivo do plano Seller Elite.",
     highlights: ["Edição em massa", "Pausa/reativação em lote", "Gestão profissional de estoque"],
     gradient: "from-muted to-muted/30",
   },
