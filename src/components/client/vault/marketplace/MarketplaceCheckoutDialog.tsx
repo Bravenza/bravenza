@@ -213,7 +213,17 @@ export function MarketplaceCheckoutDialog({
   if (!listing) return null;
 
   const shippingCost = selectedFreight ? parseFloat(selectedFreight.price) : 0;
-  const totalPrice = listing.price + shippingCost + authFee;
+  const baseTotalPrice = listing.price + shippingCost + authFee;
+
+  // Calculate card total with interest for display
+  const cardInterestRate = (form.payment_method === "card" && cardFormData)
+    ? (MERCADO_PAGO_RATES[cardFormData.installments] || 0)
+    : 0;
+  const displayTotalPrice = cardInterestRate > 0
+    ? Math.round((baseTotalPrice / (1 - cardInterestRate)) * 100) / 100
+    : baseTotalPrice;
+  // For backward compatibility, keep totalPrice as base for non-display uses
+  const totalPrice = baseTotalPrice;
   const isAddressValid = form.address_cep?.replace(/\D/g, "").length === 8 && form.address_street && form.address_number && form.address_neighborhood && form.address_city && form.address_state;
   const stateOptions = BR_STATES.map((s) => ({ value: s, label: s }));
 
@@ -749,7 +759,7 @@ export function MarketplaceCheckoutDialog({
                 ) : (
                   <CreditCard className="h-4 w-4" />
                 )}
-                {isSubmitting ? "Processando..." : `Comprar — R$ ${totalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
+                {isSubmitting ? "Processando..." : `Comprar — R$ ${displayTotalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
               </Button>
             </div>
           </div>

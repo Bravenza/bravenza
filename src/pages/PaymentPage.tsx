@@ -24,7 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/constants";
 import { MAX_CASHBACK_PERCENTAGE } from "@/components/client/CashbackBanner";
 import { UnifiedCardForm, tokenizeCard } from "@/components/payment/UnifiedCardForm";
-import { MERCADO_PAGO_RATES, calculateCardTotal } from "@/lib/budget-calculator";
+import { MERCADO_PAGO_RATES } from "@/lib/budget-calculator";
 import { ServiceContract } from "@/components/payment/ServiceContract";
 
 interface OrderData {
@@ -603,12 +603,17 @@ export default function PaymentPage() {
                       email=""
                       interestRates={MERCADO_PAGO_RATES}
                       onSubmit={async (cardToken, cardData) => {
+                        // Use the same formula as the form display: amount / (1 - rate)
+                        const rate = MERCADO_PAGO_RATES[cardData.installments] || 0;
+                        const chargeAmount = rate > 0
+                          ? Math.round((finalAmount / (1 - rate)) * 100) / 100
+                          : finalAmount;
                         const { data, error } = await supabase.functions.invoke("process-card-payment", {
                           body: {
                             token,
                             card_token: cardToken,
                             payment_type: "full",
-                            amount: calculateCardTotal(finalAmount, cardData.installments),
+                            amount: chargeAmount,
                             order_id: order.order_id,
                             product_name: order.product_name,
                             installments: cardData.installments,
@@ -626,7 +631,6 @@ export default function PaymentPage() {
                           throw new Error(data.status_detail || "Pagamento não aprovado");
                         }
                       }}
-                      submitLabel={`Pagar ${formatCurrency(finalAmount)}`}
                     />
                   )}
                 </TabsContent>
