@@ -1,0 +1,2 @@
+ALTER TABLE public.marketplace_offers DROP CONSTRAINT valid_status;
+ALTER TABLE public.marketplace_offers ADD CONSTRAINT valid_status CHECK (status IN ('draft', 'pending_review', 'active', 'reserved', 'sold', 'paused', 'cancelled', 'removed', 'expired'));
