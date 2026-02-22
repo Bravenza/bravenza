@@ -23,7 +23,8 @@ import { Logo } from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/constants";
 import { MAX_CASHBACK_PERCENTAGE } from "@/components/client/CashbackBanner";
-import { CardPaymentForm } from "@/components/payment/CardPaymentForm";
+import { UnifiedCardForm, tokenizeCard } from "@/components/payment/UnifiedCardForm";
+import { MERCADO_PAGO_RATES, calculateCardTotal } from "@/lib/budget-calculator";
 import { ServiceContract } from "@/components/payment/ServiceContract";
 
 interface OrderData {
@@ -597,14 +598,35 @@ export default function PaymentPage() {
 
                 <TabsContent value="card" className="space-y-6">
                   {token && order && (
-                    <CardPaymentForm
-                      token={token}
-                      orderId={order.order_id}
-                      productName={order.product_name}
+                    <UnifiedCardForm
                       amount={finalAmount}
-                      paymentType="full"
-                      onSuccess={handleCardPaymentSuccess}
-                      onError={handleCardPaymentError}
+                      email=""
+                      interestRates={MERCADO_PAGO_RATES}
+                      onSubmit={async (cardToken, cardData) => {
+                        const { data, error } = await supabase.functions.invoke("process-card-payment", {
+                          body: {
+                            token,
+                            card_token: cardToken,
+                            payment_type: "full",
+                            amount: calculateCardTotal(finalAmount, cardData.installments),
+                            order_id: order.order_id,
+                            product_name: order.product_name,
+                            installments: cardData.installments,
+                            payer_email: cardData.email,
+                            payer_identification: {
+                              type: "CPF",
+                              number: cardData.identificationNumber.replace(/\D/g, ""),
+                            },
+                          },
+                        });
+                        if (error) throw error;
+                        if (data.status === "approved" || data.status === "pending" || data.status === "in_process") {
+                          handleCardPaymentSuccess();
+                        } else {
+                          throw new Error(data.status_detail || "Pagamento não aprovado");
+                        }
+                      }}
+                      submitLabel={`Pagar ${formatCurrency(finalAmount)}`}
                     />
                   )}
                 </TabsContent>
