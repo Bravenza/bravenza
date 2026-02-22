@@ -109,14 +109,34 @@ export function UnifiedCardForm({
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
   const [submitError, setSubmitError] = useState("");
 
-  // Load MP SDK
+  // Load MP SDK with timeout fallback
   useEffect(() => {
     if (window.MercadoPago) { setMpReady(true); return; }
+
+    // Check if script is already being loaded
+    const existing = document.querySelector('script[src="https://sdk.mercadopago.com/js/v2"]');
+    if (existing) {
+      // Script exists but hasn't loaded yet — poll for it
+      const interval = setInterval(() => {
+        if (window.MercadoPago) { setMpReady(true); clearInterval(interval); }
+      }, 300);
+      const timeout = setTimeout(() => { clearInterval(interval); setMpReady(true); }, 8000);
+      return () => { clearInterval(interval); clearTimeout(timeout); };
+    }
+
     const script = document.createElement("script");
     script.src = "https://sdk.mercadopago.com/js/v2";
     script.async = true;
     script.onload = () => setMpReady(true);
+    script.onerror = () => {
+      console.warn("MercadoPago SDK failed to load, proceeding without it");
+      setMpReady(true);
+    };
     document.body.appendChild(script);
+
+    // Fallback timeout in case onload never fires (e.g. preview sandbox)
+    const timeout = setTimeout(() => setMpReady(true), 8000);
+    return () => clearTimeout(timeout);
   }, []);
 
   // Validate
