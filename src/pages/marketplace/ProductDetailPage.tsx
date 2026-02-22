@@ -639,13 +639,8 @@ function ProductDetailPageInner() {
             <SmartRecommendations productId={product.id} cpf={cpf || "visitor"} />
           </div>
 
-          {/* ===== RELATED PRODUCTS ===== */}
-          <RelatedProductsSection
-            currentProductId={product.id}
-            brand={product.brand}
-            category={product.category}
-            cpf={cpf || "visitor"}
-          />
+
+
 
           {/* ===== RECENTLY VIEWED ===== */}
           <div className="mt-14">
