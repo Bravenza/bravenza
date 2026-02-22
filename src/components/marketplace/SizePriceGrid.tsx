@@ -30,7 +30,7 @@ export function SizePriceGrid({ allOffers, sizes, selectedSize, onSelectSize, co
 
   return (
     <div>
-      <label className="text-sm font-bold text-foreground mb-3 flex items-center gap-1.5">
+      <label className="sr-only">
         Selecione o tamanho
       </label>
       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">

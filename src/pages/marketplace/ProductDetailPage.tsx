@@ -6,7 +6,7 @@ import { ProductSchema, BreadcrumbSchema } from "@/components/seo/StructuredData
 import {
   ArrowLeft, ShieldCheck, Share2,
   ChevronRight, Package, Tag, Calendar,
-  Palette, Hash, DollarSign, Info, ShoppingBag
+  Palette, Hash, DollarSign, Info, ShoppingBag, Megaphone, BadgeCheck
 } from "lucide-react";
 import { SocialProofViewers } from "@/components/marketplace/SocialProofViewers";
 import { motion, AnimatePresence } from "framer-motion";
@@ -47,6 +47,7 @@ import { PriceComparator } from "@/components/marketplace/PriceComparator";
 import { RetailComparison } from "@/components/marketplace/RetailComparison";
 import { FloatingCouponBadge } from "@/components/marketplace/FloatingCouponBadge";
 import { NotifyMeSection } from "@/components/marketplace/NotifyMeSection";
+import { SizeGuideDialog } from "@/components/marketplace/SizeGuideDialog";
 const SmartRecommendations = lazy(() => import("@/components/marketplace/SmartRecommendations").then(m => ({ default: m.SmartRecommendations })));
 const ProtectedPurchaseSection = lazy(() => import("@/components/marketplace/ProtectedPurchaseSection").then(m => ({ default: m.ProtectedPurchaseSection })));
 const RelatedProductsSection = lazy(() => import("@/components/marketplace/RelatedProductsSection").then(m => ({ default: m.RelatedProductsSection })));
@@ -328,6 +329,13 @@ function ProductDetailPageInner() {
       ]} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24">
+        {/* 100% Original Seal */}
+        <div className="mb-6 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
+          <BadgeCheck className="h-5 w-5 text-emerald-600 shrink-0" />
+          <span className="text-sm font-bold text-emerald-700 tracking-tight">100% Original</span>
+          <span className="text-xs text-emerald-600/80">Todos os produtos passam por autenticação profissional</span>
+        </div>
+
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-6">
           <button onClick={() => navigate("/marketplace")} className="hover:text-foreground transition-colors">
@@ -413,10 +421,10 @@ function ProductDetailPageInner() {
                       key={opt.value}
                       onClick={() => setConditionFilter(opt.value)}
                       className={cn(
-                        "px-4 py-2 rounded-xl text-xs font-semibold transition-all border",
+                        "px-6 py-3 rounded-xl text-sm font-bold transition-all border",
                         conditionFilter === opt.value
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border/30 text-muted-foreground hover:border-primary/30 hover:bg-muted/20"
+                          ? "border-primary bg-primary text-primary-foreground shadow-md"
+                          : "border-border/40 text-muted-foreground hover:border-primary/40 hover:bg-muted/30 bg-muted/10"
                       )}
                     >
                       {opt.label}
@@ -430,6 +438,12 @@ function ProductDetailPageInner() {
               {hasUsedOffers && !hasNewOffers && (
                 <Badge variant="secondary" className="text-xs w-fit">Somente Usados</Badge>
               )}
+
+              {/* Size Guide */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-foreground">Selecione o tamanho</span>
+                <SizeGuideDialog />
+              </div>
 
               {/* Size + Price Grid */}
               <SizePriceGrid
@@ -638,6 +652,26 @@ function ProductDetailPageInner() {
           <div className="mt-14">
             <SmartRecommendations productId={product.id} cpf={cpf || "visitor"} />
           </div>
+        {/* ===== SELL CTA ===== */}
+        <div className="mt-14">
+          <div className="bg-white rounded-2xl border border-border/20 p-8 flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Megaphone className="h-7 w-7 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-black text-foreground tracking-tight">Tem esse modelo? Anuncie aqui!</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Venda seu sneaker de forma segura com autenticação e pagamento protegido.
+              </p>
+            </div>
+            <Button
+              onClick={() => navigate("/marketplace/minha-loja")}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-8 py-3 font-bold text-sm shrink-0"
+            >
+              Quero anunciar
+            </Button>
+          </div>
+        </div>
 
 
 
