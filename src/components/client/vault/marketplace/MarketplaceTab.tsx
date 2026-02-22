@@ -1,7 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Store, Package, TrendingDown, ShoppingBag, BarChart3, Tag, Activity, Megaphone, HelpCircle, ChevronRight } from "lucide-react";
+import { Store, Package, TrendingDown, ShoppingBag, BarChart3, Tag, Activity, Megaphone, HelpCircle, ChevronRight, Bot } from "lucide-react";
 import { MarketplaceHowItWorks } from "./MarketplaceHowItWorks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -21,6 +21,7 @@ import { SellerProfileSheet } from "./SellerProfileSheet";
 import { OffersListDialog } from "./OffersListDialog";
 import { SellerOnboardingDialog } from "./SellerOnboardingDialog";
 import { PriceDropSuggestions } from "./PriceDropSuggestions";
+import { AutoCutManager } from "./AutoCutManager";
 const SellerAnalyticsDashboard = lazy(() => import("./SellerAnalyticsDashboard").then(m => ({ default: m.SellerAnalyticsDashboard })));
 import { CouponsManager } from "./CouponsManager";
 import { ActivityFeed } from "./ActivityFeed";
@@ -236,6 +237,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
     { id: "anuncios", label: "Meus anúncios", icon: Megaphone },
     ...(isSellerApproved ? [
       { id: "analytics", label: "Analytics", icon: BarChart3 },
+      { id: "autocut", label: "AutoCut", icon: Bot },
       { id: "cupons", label: "Cupons", icon: Tag },
       { id: "sugestoes", label: "Sugestões", icon: TrendingDown },
     ] : []),
@@ -501,6 +503,11 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
                 {/* Cupons sub-tab */}
                 {sellerSubTab === "cupons" && isSellerApproved && (
                   <CouponsManager clientCpf={clientCpf} />
+                )}
+
+                {/* AutoCut sub-tab */}
+                {sellerSubTab === "autocut" && isSellerApproved && seller && (
+                  <AutoCutManager sellerId={seller.id} listings={myListings} />
                 )}
 
                 {/* Sugestões sub-tab */}

@@ -379,6 +379,73 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_autocut_rules: {
+        Row: {
+          created_at: string
+          cuts_count: number
+          id: string
+          interval_hours: number
+          is_active: boolean
+          last_cut_at: string | null
+          min_price: number
+          offer_id: string
+          reduction_amount: number
+          reduction_type: string
+          seller_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cuts_count?: number
+          id?: string
+          interval_hours?: number
+          is_active?: boolean
+          last_cut_at?: string | null
+          min_price: number
+          offer_id: string
+          reduction_amount?: number
+          reduction_type?: string
+          seller_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cuts_count?: number
+          id?: string
+          interval_hours?: number
+          is_active?: boolean
+          last_cut_at?: string | null
+          min_price?: number
+          offer_id?: string
+          reduction_amount?: number
+          reduction_type?: string
+          seller_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_autocut_rules_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: true
+            referencedRelation: "marketplace_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_autocut_rules_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: true
+            referencedRelation: "marketplace_offers_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_autocut_rules_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "vault_seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_cart_items: {
         Row: {
           added_at: string

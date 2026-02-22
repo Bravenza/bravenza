@@ -96,6 +96,57 @@ Deno.serve(async (req) => {
       results.price_snapshots = "already_done_today";
     }
 
+    // ── 3. AutoCut — automatic price reduction ──
+    const { data: autocutRules, error: acErr } = await sb
+      .from("marketplace_autocut_rules")
+      .select("*, offer:marketplace_offers(id, price, status)")
+      .eq("is_active", true);
+
+    if (acErr) console.error("[mk-cron-tasks] AutoCut fetch error:", acErr);
+
+    let autocutApplied = 0;
+    for (const rule of autocutRules || []) {
+      const offer = rule.offer;
+      if (!offer || offer.status !== "active") continue;
+
+      // Check interval: skip if last cut was too recent
+      if (rule.last_cut_at) {
+        const lastCut = new Date(rule.last_cut_at).getTime();
+        const intervalMs = (rule.interval_hours || 24) * 60 * 60 * 1000;
+        if (now.getTime() - lastCut < intervalMs) continue;
+      }
+
+      // Calculate new price
+      let newPrice: number;
+      if (rule.reduction_type === "percent") {
+        newPrice = offer.price * (1 - (rule.reduction_amount / 100));
+      } else {
+        newPrice = offer.price - rule.reduction_amount;
+      }
+
+      // Respect min price
+      newPrice = Math.max(newPrice, rule.min_price);
+      // Round to 2 decimals
+      newPrice = Math.round(newPrice * 100) / 100;
+
+      // If price hasn't changed (already at minimum), deactivate
+      if (newPrice >= offer.price) {
+        await sb.from("marketplace_autocut_rules").update({ is_active: false }).eq("id", rule.id);
+        continue;
+      }
+
+      // Apply the cut
+      await sb.from("marketplace_offers").update({ price: newPrice, updated_at: now.toISOString() }).eq("id", offer.id);
+      await sb.from("marketplace_autocut_rules").update({
+        last_cut_at: now.toISOString(),
+        cuts_count: (rule.cuts_count || 0) + 1,
+      }).eq("id", rule.id);
+
+      autocutApplied++;
+      console.log(`[mk-cron-tasks] AutoCut: offer ${offer.id} ${offer.price} → ${newPrice}`);
+    }
+    results.autocut_applied = autocutApplied;
+
     // ── Finalize log ──
     const finishedAt = new Date();
     const durationMs = finishedAt.getTime() - new Date(startedAt).getTime();
