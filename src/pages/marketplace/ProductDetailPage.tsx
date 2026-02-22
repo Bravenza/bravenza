@@ -21,7 +21,7 @@ import { CartProvider, useMarketplaceCart } from "@/hooks/useMarketplaceCart";
 import { CartDrawer } from "@/components/client/vault/marketplace/CartDrawer";
 import type { CartGroup } from "@/hooks/useMarketplaceCart";
 import { useClientSession } from "@/hooks/useClientSession";
-import { MarketplaceCheckoutDialog } from "@/components/client/vault/marketplace/MarketplaceCheckoutDialog";
+// Checkout is now a full page
 import { ListingDetailSheet } from "@/components/client/vault/marketplace/ListingDetailSheet";
 import { ProductWatchlistButton } from "@/components/marketplace/ProductWatchlistButton";
 import { TrustBadges } from "@/components/marketplace/TrustBadges";
@@ -91,8 +91,7 @@ function ProductDetailPageInner() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [loadingOffers, setLoadingOffers] = useState(false);
   const [conditionFilter, setConditionFilter] = useState<"all" | "novo" | "usado">("all");
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [checkoutListing, setCheckoutListing] = useState<MarketplaceListing | null>(null);
+  // checkout is now page-based
   const [detailOffer, setDetailOffer] = useState<ProductOffer | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -146,8 +145,31 @@ function ProductDetailPageInner() {
   };
 
   const handleBuyOffer = (offer: ProductOffer) => {
-    setCheckoutListing(offerToListing(offer));
-    setCheckoutOpen(true);
+    const listing = offerToListing(offer);
+    const group: CartGroup = {
+      sellerId: listing.seller_id,
+      sellerName: listing.seller?.member?.client_name || "Vendedor",
+      items: [{
+        id: listing.id,
+        offer_id: listing.id,
+        product_id: product?.id || "",
+        added_at: new Date().toISOString(),
+        offer: {
+          id: listing.id,
+          price: listing.price,
+          size: listing.size || "",
+          condition: listing.condition,
+          photos: listing.photos,
+          shipping_mode: listing.shipping_mode,
+          seller_id: listing.seller_id,
+          status: listing.status,
+          product: product ? { brand: product.brand, model: product.model, slug: product.slug, images: product.images } : undefined,
+          seller: listing.seller ? { id: listing.seller.id, member: listing.seller.member ? { client_name: listing.seller.member.client_name } : undefined } : undefined,
+        },
+      }],
+      subtotal: listing.price,
+    };
+    navigate("/marketplace/checkout", { state: { group } });
   };
 
   const handleViewOffer = (offer: ProductOffer) => {
@@ -157,18 +179,30 @@ function ProductDetailPageInner() {
   };
 
   const handleBuyFromDetail = (listing: MarketplaceListing) => {
-    setDetailOpen(false);
-    setCheckoutListing(listing);
-    setCheckoutOpen(true);
-  };
-
-  const handleCheckoutConfirm = async (data: any) => {
-    const result = await createOrder(data);
-    if (result) {
-      setCheckoutOpen(false);
-      return result;
-    }
-    return null;
+    const group: CartGroup = {
+      sellerId: listing.seller_id,
+      sellerName: listing.seller?.member?.client_name || "Vendedor",
+      items: [{
+        id: listing.id,
+        offer_id: listing.id,
+        product_id: "",
+        added_at: new Date().toISOString(),
+        offer: {
+          id: listing.id,
+          price: listing.price,
+          size: listing.size || "",
+          condition: listing.condition,
+          photos: listing.photos,
+          shipping_mode: listing.shipping_mode,
+          seller_id: listing.seller_id,
+          status: listing.status,
+          product: listing.brand ? { brand: listing.brand, model: listing.model || "", slug: null, images: listing.photos } : undefined,
+          seller: listing.seller ? { id: listing.seller.id, member: listing.seller.member ? { client_name: listing.seller.member.client_name } : undefined } : undefined,
+        },
+      }],
+      subtotal: listing.price,
+    };
+    navigate("/marketplace/checkout", { state: { group } });
   };
 
   useEffect(() => {
@@ -728,13 +762,7 @@ function ProductDetailPageInner() {
         buyerCpf={cpf}
       />
 
-      <MarketplaceCheckoutDialog
-        listing={checkoutListing}
-        open={checkoutOpen}
-        onOpenChange={setCheckoutOpen}
-        onConfirm={handleCheckoutConfirm}
-        buyerDefaults={{ name: profile?.full_name }}
-      />
+      {/* Checkout is now a full page */}
 
       {/* Sticky Buy Bar — Mobile only */}
       <StickyBuyBar

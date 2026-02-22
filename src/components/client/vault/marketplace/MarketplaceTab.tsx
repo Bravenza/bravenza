@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Store, Package, TrendingDown, ShoppingBag, BarChart3, Tag, Activity, Megaphone, HelpCircle, ChevronRight } from "lucide-react";
 import { MarketplaceHowItWorks } from "./MarketplaceHowItWorks";
@@ -13,7 +14,7 @@ import { CatalogProductCard } from "./CatalogProductCard";
 import { CreateListingDialog } from "./CreateListingDialog";
 import { EditListingDialog } from "./EditListingDialog";
 import { ListingDetailSheet } from "./ListingDetailSheet";
-import { MarketplaceCheckoutDialog } from "./MarketplaceCheckoutDialog";
+// MarketplaceCheckoutDialog removed — checkout is now a full page
 import { MarketplaceOrdersView } from "./MarketplaceOrdersView";
 import { MarketplaceFilters, type MarketplaceFilterValues } from "./MarketplaceFilters";
 import { SellerProfileSheet } from "./SellerProfileSheet";
@@ -78,8 +79,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
   const [sellerSubTab, setSellerSubTab] = useState("anuncios");
   const [selectedListing, setSelectedListing] = useState<MarketplaceListing | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [checkoutListing, setCheckoutListing] = useState<MarketplaceListing | null>(null);
+  // checkout is now page-based
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
   const [filters, setFilters] = useState<MarketplaceFilterValues>({ sort: "recent", search: initialSearch });
   const [sellerProfileOpen, setSellerProfileOpen] = useState(false);
@@ -142,19 +142,33 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
     setDetailOpen(true);
   };
 
+  const tabNavigate = useNavigate();
   const handleBuy = (listing: MarketplaceListing) => {
     setDetailOpen(false);
-    setCheckoutListing(listing);
-    setCheckoutOpen(true);
-  };
-
-  const handleCheckoutConfirm = async (data: any) => {
-    const result = await createOrder(data);
-    if (result) {
-      handleSearch();
-      return result;
-    }
-    return null;
+    const group = {
+      sellerId: listing.seller_id,
+      sellerName: listing.seller?.member?.client_name || "Vendedor",
+      items: [{
+        id: listing.id,
+        offer_id: listing.id,
+        product_id: "",
+        added_at: new Date().toISOString(),
+        offer: {
+          id: listing.id,
+          price: listing.price,
+          size: listing.size || "",
+          condition: listing.condition,
+          photos: listing.photos,
+          shipping_mode: listing.shipping_mode,
+          seller_id: listing.seller_id,
+          status: listing.status,
+          product: listing.brand ? { brand: listing.brand, model: listing.model || "", slug: null, images: listing.photos } : undefined,
+          seller: listing.seller ? { id: listing.seller.id, member: listing.seller.member ? { client_name: listing.seller.member.client_name } : undefined } : undefined,
+        },
+      }],
+      subtotal: listing.price,
+    };
+    tabNavigate("/marketplace/checkout", { state: { group } });
   };
 
   const handleViewSellerProfile = (sellerId: string) => {
@@ -518,13 +532,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
         isOwnListing={selectedListing?.seller_id === seller?.id}
       />
 
-      <MarketplaceCheckoutDialog
-        listing={checkoutListing}
-        open={checkoutOpen}
-        onOpenChange={setCheckoutOpen}
-        onConfirm={handleCheckoutConfirm}
-        buyerDefaults={{ name: buyerName, email: buyerEmail }}
-      />
+      {/* Checkout is now a full page */}
 
       <SellerProfileSheet
         sellerId={sellerProfileId}
