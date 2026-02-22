@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ShoppingCart, ShieldCheck, Truck, CreditCard, Loader2, MapPin, Package, ChevronRight, ArrowLeft, Clock, AlertCircle, Copy, CheckCircle2 } from "lucide-react";
 import { UnifiedCardForm, tokenizeCard, type UnifiedCardFormData } from "@/components/payment/UnifiedCardForm";
+import { MERCADO_PAGO_RATES } from "@/lib/budget-calculator";
 import {
   Dialog,
   DialogContent,
@@ -708,6 +709,7 @@ export function MarketplaceCheckoutDialog({
               <UnifiedCardForm
                 amount={totalPrice}
                 email={form.buyer_email}
+                interestRates={MERCADO_PAGO_RATES}
                 compact
                 onDataChange={(data, valid) => {
                   setCardFormData(data);
