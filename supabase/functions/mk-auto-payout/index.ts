@@ -22,9 +22,10 @@ Deno.serve(async (req) => {
 
   try {
     // Log execution start
+    const startedAt = new Date().toISOString();
     const { data: logEntry } = await sb
       .from("cron_execution_logs")
-      .insert({ job_name: "mk-auto-payout", status: "running" })
+      .insert({ job_name: "mk-auto-payout", started_at: startedAt, status: "running" })
       .select("id")
       .single();
     const logId = logEntry?.id;
@@ -112,7 +113,7 @@ Deno.serve(async (req) => {
       await sb.from("cron_execution_logs").update({
         status: "success",
         finished_at: new Date().toISOString(),
-        duration_ms: Date.now() - new Date(logEntry!.started_at).getTime(),
+        duration_ms: Date.now() - new Date(startedAt).getTime(),
         result: { processed, total_eligible: eligible.length },
       }).eq("id", logId);
     }
