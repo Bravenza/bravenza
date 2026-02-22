@@ -85,7 +85,7 @@ export function PriceHistoryChart({ productId, cpf, className }: PriceHistoryCha
   const TrendIcon = chartData?.trend === "down" ? TrendingDown : chartData?.trend === "up" ? TrendingUp : Minus;
   const trendColor = chartData?.trend === "down" ? "text-emerald-500" : chartData?.trend === "up" ? "text-red-400" : "text-muted-foreground";
 
-  const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
     <Card className={cn("card-premium overflow-hidden", className)}>

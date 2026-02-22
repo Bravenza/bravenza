@@ -40,7 +40,7 @@ export default function SellerStorefrontPage() {
     fetch();
   }, [sellerId, cpf]);
 
-  const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   if (loading) {
     return (

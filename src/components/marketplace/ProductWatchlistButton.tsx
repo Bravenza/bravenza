@@ -56,7 +56,7 @@ export function ProductWatchlistButton({
         <span className="hidden sm:inline">Alertando</span>
         {maxPrice && (
           <span className="text-[10px] opacity-70">
-            ≤ R$ {maxPrice.toLocaleString("pt-BR")}
+            ≤ R$ {maxPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         )}
       </Button>
@@ -99,7 +99,7 @@ export function ProductWatchlistButton({
             </div>
             {lowestPrice && (
               <p className="text-[10px] text-muted-foreground">
-                Menor preço atual: R$ {lowestPrice.toLocaleString("pt-BR")}
+                Menor preço atual: R$ {lowestPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             )}
           </div>

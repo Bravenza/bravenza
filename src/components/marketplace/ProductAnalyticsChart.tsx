@@ -85,7 +85,7 @@ export function ProductAnalyticsChart({
           <DollarSign className="h-4 w-4 mx-auto text-primary mb-1" />
           <p className="text-lg font-bold text-foreground">
             {analytics.avg_sale_price
-              ? `R$ ${analytics.avg_sale_price.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`
+              ? `R$ ${analytics.avg_sale_price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
               : "—"}
           </p>
           <p className="text-[10px] text-muted-foreground">Preço médio</p>

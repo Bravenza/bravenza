@@ -199,7 +199,7 @@ export function ListingDetailSheet({
             <div>
               <div className="flex items-baseline gap-2">
                 <p className="text-3xl font-bold text-foreground">
-                  R$ {listing.price.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
+                  R$ {listing.price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
                 {hasDiscount && (
                   <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-xs">
@@ -379,7 +379,7 @@ export function ListingDetailSheet({
                   onClick={() => onBuy?.(listing)}
                 >
                   <ShoppingBag className="h-4 w-4" />
-                  Comprar — R$ {totalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
+                  Comprar — R$ {totalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Button>
                 {onMakeOffer && (
                   <OfferDialog
