@@ -5,6 +5,7 @@ import { ProtectedProviders } from "@/components/providers/ProtectedProviders";
 const MarketplaceLayout = lazy(() => import("@/pages/marketplace/MarketplaceLayout"));
 const MarketplaceHomePage = lazy(() => import("@/pages/marketplace/MarketplaceHomePage"));
 const MarketplaceDropsPage = lazy(() => import("@/pages/marketplace/MarketplaceDropsPage"));
+const MarketplaceCheckoutPage = lazy(() => import("@/pages/marketplace/MarketplaceCheckoutPage"));
 const MarketplaceOrdersPage2 = lazy(() => import("@/pages/marketplace/MarketplaceOrdersPage2"));
 const MarketplaceFeedPage = lazy(() => import("@/pages/marketplace/MarketplaceFeedPage"));
 const MarketplaceMyStorePage = lazy(() => import("@/pages/marketplace/MarketplaceMyStorePage"));
@@ -24,6 +25,7 @@ export const marketplaceRoutes = (
       <Route path="loja" element={<MarketplaceMyStorePage />} />
       <Route path="planos" element={<MarketplacePlansPage />} />
       <Route path="drops" element={<MarketplaceDropsPage />} />
+      <Route path="checkout" element={<MarketplaceCheckoutPage />} />
     </Route>
     <Route path="/marketplace/product/:slug" element={
       <ProtectedProviders><ProductDetailPage /></ProtectedProviders>

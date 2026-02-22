@@ -115,11 +115,7 @@ function SellerGroup({ group, onRemove, onCheckoutGroup }: { group: CartGroup; o
   );
 }
 
-interface CartDrawerProps {
-  onCheckoutGroup: (group: CartGroup) => void;
-}
-
-export function CartDrawer({ onCheckoutGroup }: CartDrawerProps) {
+export function CartDrawer() {
   const { items, count, removeFromCart, clearCart, groupedBySeller, isLoading } = useMarketplaceCart();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -128,7 +124,7 @@ export function CartDrawer({ onCheckoutGroup }: CartDrawerProps) {
 
   const handleCheckoutGroup = (group: CartGroup) => {
     setOpen(false);
-    onCheckoutGroup(group);
+    navigate("/marketplace/checkout", { state: { group } });
   };
 
   return (
@@ -284,13 +280,13 @@ export function CartDrawer({ onCheckoutGroup }: CartDrawerProps) {
 }
 
 /** Floating cart button for mobile — shows count badge */
-export function FloatingCartButton({ onCheckoutGroup }: CartDrawerProps) {
+export function FloatingCartButton() {
   const { count } = useMarketplaceCart();
   if (count === 0) return null;
 
   return (
     <div className="fixed bottom-20 right-4 z-40 md:hidden">
-      <CartDrawer onCheckoutGroup={onCheckoutGroup} />
+      <CartDrawer />
     </div>
   );
 }
