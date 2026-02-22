@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   BarChart3, Eye, ShoppingBag, DollarSign, TrendingUp, Percent, 
-  ArrowUpRight, ArrowDownRight, Target, Users, Package, Star,
-  Calendar, Filter
+  ArrowUpRight, ArrowDownRight, Target, Package, Star,
+  Lock
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, ComposedChart
+  AreaChart, Area, ComposedChart, Line
 } from "recharts";
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-seller`;
@@ -29,6 +29,15 @@ interface SellerAnalytics {
   fee_percent: number;
   rating: number | null;
   ratings_count: number;
+  revenue_growth: number;
+  sales_growth: number;
+  funnel: {
+    views: number;
+    checkout_starts: number;
+    paid: number;
+    completed: number;
+  };
+  plan_id: string;
 }
 
 interface SellerAnalyticsDashboardProps {
@@ -42,13 +51,6 @@ const PERIOD_OPTIONS = [
   { value: "all", label: "Tudo" },
 ];
 
-const CHART_COLORS = [
-  "hsl(var(--primary))",
-  "hsl(var(--destructive))",
-  "hsl(142, 76%, 36%)",
-  "hsl(var(--accent))",
-];
-
 export function SellerAnalyticsDashboard({ clientCpf }: SellerAnalyticsDashboardProps) {
   const [analytics, setAnalytics] = useState<SellerAnalytics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,14 +58,14 @@ export function SellerAnalyticsDashboard({ clientCpf }: SellerAnalyticsDashboard
 
   useEffect(() => {
     fetchAnalytics();
-  }, []);
+  }, [period]);
 
   const fetchAnalytics = async () => {
     setIsLoading(true);
     try {
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const headers = await getMarketplaceHeaders();
-      const res = await fetch(`${FUNCTION_URL}?action=seller-analytics`, { headers });
+      const res = await fetch(`${FUNCTION_URL}?action=seller-analytics&period=${period}`, { headers });
       const data = await res.json();
       setAnalytics(data.analytics);
     } catch (err) {
@@ -93,6 +95,11 @@ export function SellerAnalyticsDashboard({ clientCpf }: SellerAnalyticsDashboard
     );
   }
 
+  const isElite = analytics.plan_id === "elite";
+  const isPro = analytics.plan_id === "pro";
+  const hasAdvancedAccess = isElite;
+  const hasBasicAccess = isPro || isElite;
+
   const tierColors: Record<string, string> = {
     bronze: "text-amber-700 bg-amber-500/10 border-amber-500/20",
     prata: "text-gray-400 bg-gray-500/10 border-gray-500/20",
@@ -110,18 +117,13 @@ export function SellerAnalyticsDashboard({ clientCpf }: SellerAnalyticsDashboard
     monthLabels[m.month] = months[parseInt(mm) - 1] || m.month;
   });
 
-  // Simulated growth metrics
-  const prevRevenue = analytics.total_revenue * 0.85;
-  const revenueGrowth = ((analytics.total_revenue - prevRevenue) / (prevRevenue || 1) * 100).toFixed(1);
-  const prevSales = Math.max(analytics.total_sales - 2, 0);
-  const salesGrowth = prevSales ? (((analytics.total_sales - prevSales) / prevSales) * 100).toFixed(0) : "100";
-
-  // Status distribution data for pie chart
-  const statusData = [
-    { name: "Vendidos", value: analytics.total_sales, color: "hsl(142, 76%, 36%)" },
-    { name: "Ativos", value: analytics.active_listings, color: "hsl(var(--primary))" },
-    { name: "Visualizações", value: Math.floor(analytics.total_views / 10), color: "hsl(var(--muted-foreground))" },
-  ];
+  const LockedOverlay = ({ label }: { label: string }) => (
+    <div className="absolute inset-0 z-10 bg-card/80 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center gap-2">
+      <Lock className="h-6 w-6 text-muted-foreground/40" />
+      <p className="text-xs text-muted-foreground font-medium">{label}</p>
+      <Badge variant="outline" className="text-[9px]">Plano Elite</Badge>
+    </div>
+  );
 
   return (
     <div className="space-y-5">
@@ -130,6 +132,9 @@ export function SellerAnalyticsDashboard({ clientCpf }: SellerAnalyticsDashboard
         <h3 className="text-lg font-bold flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-primary" />
           Analytics
+          {!hasBasicAccess && <Badge variant="outline" className="text-[9px] ml-1">Free</Badge>}
+          {isPro && !isElite && <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] ml-1">Básico</Badge>}
+          {isElite && <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-[9px] ml-1">Avançado</Badge>}
         </h3>
         <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-0.5">
           {PERIOD_OPTIONS.map((opt) => (
@@ -146,39 +151,35 @@ export function SellerAnalyticsDashboard({ clientCpf }: SellerAnalyticsDashboard
         </div>
       </div>
 
-      {/* KPI Cards with trends */}
+      {/* KPI Cards — available to all */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { 
             icon: DollarSign, 
             value: formatCurrency(analytics.total_revenue), 
             label: "Receita total",
-            trend: `+${revenueGrowth}%`,
-            trendUp: true,
+            trend: `${analytics.revenue_growth >= 0 ? "+" : ""}${analytics.revenue_growth}%`,
+            trendUp: analytics.revenue_growth >= 0,
             color: "text-emerald-500"
           },
           { 
             icon: ShoppingBag, 
             value: analytics.total_sales.toString(), 
             label: "Vendas",
-            trend: `+${salesGrowth}%`,
-            trendUp: true,
+            trend: `${analytics.sales_growth >= 0 ? "+" : ""}${analytics.sales_growth}%`,
+            trendUp: analytics.sales_growth >= 0,
             color: "text-primary"
           },
           { 
             icon: Eye, 
             value: analytics.total_views.toLocaleString(), 
             label: "Visualizações",
-            trend: "+12%",
-            trendUp: true,
             color: "text-blue-500"
           },
           { 
             icon: Target, 
             value: `${analytics.conversion_rate}%`, 
             label: "Conversão",
-            trend: analytics.conversion_rate > 5 ? "+2.1%" : "-0.3%",
-            trendUp: analytics.conversion_rate > 5,
             color: "text-violet-500"
           },
         ].map((kpi, i) => (
@@ -192,10 +193,12 @@ export function SellerAnalyticsDashboard({ clientCpf }: SellerAnalyticsDashboard
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
-                  <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${kpi.trendUp ? "text-emerald-500" : "text-destructive"}`}>
-                    {kpi.trendUp ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                    {kpi.trend}
-                  </span>
+                  {kpi.trend && (
+                    <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${kpi.trendUp ? "text-emerald-500" : "text-destructive"}`}>
+                      {kpi.trendUp ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                      {kpi.trend}
+                    </span>
+                  )}
                 </div>
                 <p className="text-xl font-black tracking-tight">{kpi.value}</p>
                 <p className="text-[11px] text-muted-foreground mt-0.5">{kpi.label}</p>
@@ -205,7 +208,7 @@ export function SellerAnalyticsDashboard({ clientCpf }: SellerAnalyticsDashboard
         ))}
       </div>
 
-      {/* Secondary metrics */}
+      {/* Secondary metrics — Pro+ */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card className="card-premium">
           <CardContent className="p-3 flex items-center gap-3">
@@ -253,7 +256,7 @@ export function SellerAnalyticsDashboard({ clientCpf }: SellerAnalyticsDashboard
         </Card>
       </div>
 
-      {/* Charts Tabs */}
+      {/* Charts — tiered access */}
       <Tabs defaultValue="revenue" className="w-full">
         <TabsList className="w-full grid grid-cols-3 h-9">
           <TabsTrigger value="revenue" className="text-xs">Receita</TabsTrigger>
@@ -261,11 +264,13 @@ export function SellerAnalyticsDashboard({ clientCpf }: SellerAnalyticsDashboard
           <TabsTrigger value="funnel" className="text-xs">Funil</TabsTrigger>
         </TabsList>
 
+        {/* Revenue chart — Pro+ */}
         <TabsContent value="revenue">
-          <Card className="card-premium">
+          <Card className="card-premium relative">
+            {!hasBasicAccess && <LockedOverlay label="Disponível no plano Pro" />}
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center justify-between">
-                <span>Receita vs Taxas</span>
+                <span>Receita vs Vendas</span>
                 <Badge variant="outline" className="text-[10px]">
                   Líquido: {formatCurrency(analytics.total_revenue - analytics.total_fees)}
                 </Badge>
@@ -278,20 +283,25 @@ export function SellerAnalyticsDashboard({ clientCpf }: SellerAnalyticsDashboard
                   <XAxis dataKey="month" tick={{ fontSize: 10 }} tickFormatter={(v) => monthLabels[v] || v} />
                   <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `R$${v}`} />
                   <Tooltip
-                    formatter={(v: number, name: string) => [formatCurrency(v), name === "revenue" ? "Receita" : "Vendas"]}
+                    formatter={(v: number, name: string) => [
+                      name === "revenue" ? formatCurrency(v) : v,
+                      name === "revenue" ? "Receita" : "Vendas"
+                    ]}
                     labelFormatter={(l) => monthLabels[l] || l}
                     contentStyle={{ borderRadius: "12px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }}
                   />
                   <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} opacity={0.9} />
-                  <Line type="monotone" dataKey="sales" stroke="hsl(var(--destructive))" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="sales" stroke="hsl(142, 76%, 36%)" strokeWidth={2} dot={{ r: 3 }} />
                 </ComposedChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Performance — Elite only */}
         <TabsContent value="performance">
-          <Card className="card-premium">
+          <Card className="card-premium relative">
+            {!hasAdvancedAccess && <LockedOverlay label="Disponível no plano Elite" />}
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Visualizações & Vendas</CardTitle>
             </CardHeader>
@@ -323,18 +333,20 @@ export function SellerAnalyticsDashboard({ clientCpf }: SellerAnalyticsDashboard
           </Card>
         </TabsContent>
 
+        {/* Funnel — Elite only, with REAL data */}
         <TabsContent value="funnel">
-          <Card className="card-premium">
+          <Card className="card-premium relative">
+            {!hasAdvancedAccess && <LockedOverlay label="Disponível no plano Elite" />}
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Funil de conversão</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {[
-                  { label: "Visualizações", value: analytics.total_views, pct: 100, color: "bg-primary" },
-                  { label: "Cliques no anúncio", value: Math.floor(analytics.total_views * 0.35), pct: 35, color: "bg-blue-500" },
-                  { label: "Início de checkout", value: Math.floor(analytics.total_views * 0.12), pct: 12, color: "bg-amber-500" },
-                  { label: "Compra finalizada", value: analytics.total_sales, pct: analytics.conversion_rate, color: "bg-emerald-500" },
+                  { label: "Visualizações", value: analytics.funnel.views, pct: 100, color: "bg-primary" },
+                  { label: "Início de checkout", value: analytics.funnel.checkout_starts, pct: analytics.funnel.views > 0 ? Math.round((analytics.funnel.checkout_starts / analytics.funnel.views) * 100) : 0, color: "bg-amber-500" },
+                  { label: "Pagamento confirmado", value: analytics.funnel.paid, pct: analytics.funnel.views > 0 ? Math.round((analytics.funnel.paid / analytics.funnel.views) * 100) : 0, color: "bg-blue-500" },
+                  { label: "Entrega concluída", value: analytics.funnel.completed, pct: analytics.funnel.views > 0 ? Math.round((analytics.funnel.completed / analytics.funnel.views) * 100) : 0, color: "bg-emerald-500" },
                 ].map((step, i) => (
                   <motion.div
                     key={step.label}
@@ -350,7 +362,7 @@ export function SellerAnalyticsDashboard({ clientCpf }: SellerAnalyticsDashboard
                     <div className="h-2.5 bg-muted/50 rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
-                        animate={{ width: `${step.pct}%` }}
+                        animate={{ width: `${Math.max(step.pct, 1)}%` }}
                         transition={{ duration: 0.8, delay: i * 0.15 }}
                         className={`h-full rounded-full ${step.color}`}
                       />
@@ -363,8 +375,9 @@ export function SellerAnalyticsDashboard({ clientCpf }: SellerAnalyticsDashboard
         </TabsContent>
       </Tabs>
 
-      {/* Fees breakdown */}
-      <Card className="card-premium">
+      {/* Fees breakdown — Pro+ */}
+      <Card className="card-premium relative">
+        {!hasBasicAccess && <LockedOverlay label="Disponível no plano Pro" />}
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
             <Percent className="h-4 w-4 text-muted-foreground" />

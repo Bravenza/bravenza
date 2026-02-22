@@ -147,34 +147,91 @@ Deno.serve(async (req) => {
       if (!mb) return j({ analytics: null });
       const sl = await gs(sb, mb.id);
       if (!sl) return j({ analytics: null });
-      const { data: listings } = await sb.from("vault_marketplace_listings").select("id, views_count, price, status, created_at, published_at").eq("seller_id", sl.id);
+
+      const periodParam = url.searchParams.get("period") || "30d";
+      const now = new Date();
+      let periodStart: Date;
+      if (periodParam === "7d") periodStart = new Date(now.getTime() - 7 * 86400000);
+      else if (periodParam === "30d") periodStart = new Date(now.getTime() - 30 * 86400000);
+      else if (periodParam === "90d") periodStart = new Date(now.getTime() - 90 * 86400000);
+      else periodStart = new Date("2020-01-01");
+      const periodISO = periodStart.toISOString();
+
+      // Previous period for growth calc
+      const periodMs = now.getTime() - periodStart.getTime();
+      const prevStart = new Date(periodStart.getTime() - periodMs).toISOString();
+
+      const { data: listings } = await sb.from("vault_marketplace_listings")
+        .select("id, views_count, price, status, created_at, published_at")
+        .eq("seller_id", sl.id);
       const totalViews = (listings || []).reduce((s: number, l: any) => s + (l.views_count || 0), 0);
       const activeListings = (listings || []).filter((l: any) => l.status === "active").length;
-      const { data: orders } = await sb.from("vault_marketplace_orders").select("id, status, sale_price, fee_amount, seller_payout, created_at, paid_at, payout_released_at").eq("seller_id", sl.id);
-      const completedOrders = (orders || []).filter((o: any) => ["delivered", "payout_released", "payout_pending", "completed"].includes(o.status));
-      const totalRevenue = completedOrders.reduce((s: number, o: any) => s + (o.seller_payout || 0), 0);
-      const totalFees = completedOrders.reduce((s: number, o: any) => s + (o.fee_amount || 0), 0);
-      const conversionRate = totalViews > 0 ? Math.round((completedOrders.length / totalViews) * 10000) / 100 : 0;
+
+      const { data: orders } = await sb.from("vault_marketplace_orders")
+        .select("id, status, sale_price, fee_amount, seller_payout, created_at, paid_at, payout_released_at")
+        .eq("seller_id", sl.id);
+
+      const completedStatuses = ["delivered", "payout_released", "payout_pending", "completed"];
+      const allCompleted = (orders || []).filter((o: any) => completedStatuses.includes(o.status));
+
+      // Filter by period
+      const periodOrders = allCompleted.filter((o: any) => o.created_at >= periodISO);
+      const prevOrders = allCompleted.filter((o: any) => o.created_at >= prevStart && o.created_at < periodISO);
+
+      const totalRevenue = periodOrders.reduce((s: number, o: any) => s + (o.seller_payout || 0), 0);
+      const totalFees = periodOrders.reduce((s: number, o: any) => s + (o.fee_amount || 0), 0);
+      const prevRevenue = prevOrders.reduce((s: number, o: any) => s + (o.seller_payout || 0), 0);
+
+      // Real growth calculations
+      const revenueGrowth = prevRevenue > 0 ? Math.round(((totalRevenue - prevRevenue) / prevRevenue) * 1000) / 10 : (totalRevenue > 0 ? 100 : 0);
+      const salesGrowth = prevOrders.length > 0 ? Math.round(((periodOrders.length - prevOrders.length) / prevOrders.length) * 1000) / 10 : (periodOrders.length > 0 ? 100 : 0);
+
+      const conversionRate = totalViews > 0 ? Math.round((periodOrders.length / totalViews) * 10000) / 100 : 0;
+
+      // Real funnel data from orders
+      const allPeriodOrders = (orders || []).filter((o: any) => o.created_at >= periodISO);
+      const checkoutStarts = allPeriodOrders.length; // all orders = checkout started
+      const paidOrders = allPeriodOrders.filter((o: any) => o.paid_at).length;
+
+      // Monthly data
       const monthlyData: Record<string, { revenue: number; sales: number; views: number }> = {};
-      const now = new Date();
       for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
         monthlyData[key] = { revenue: 0, sales: 0, views: 0 };
       }
-      for (const o of completedOrders) {
+      for (const o of allCompleted) {
         const key = o.created_at.slice(0, 7);
         if (monthlyData[key]) { monthlyData[key].revenue += o.seller_payout || 0; monthlyData[key].sales += 1; }
       }
+
+      // Subscription/plan info
+      const { data: sub } = await sb.from("marketplace_subscriptions")
+        .select("plan_id, status")
+        .eq("seller_id", sl.id)
+        .eq("status", "active")
+        .maybeSingle();
+
       return j({
         analytics: {
           total_views: totalViews, active_listings: activeListings,
-          total_sales: completedOrders.length, total_revenue: Math.round(totalRevenue * 100) / 100,
+          total_sales: periodOrders.length, total_revenue: Math.round(totalRevenue * 100) / 100,
           total_fees: Math.round(totalFees * 100) / 100, conversion_rate: conversionRate,
-          average_order_value: completedOrders.length > 0 ? Math.round(totalRevenue / completedOrders.length) : 0,
+          average_order_value: periodOrders.length > 0 ? Math.round(totalRevenue / periodOrders.length) : 0,
           monthly: Object.entries(monthlyData).map(([month, data]) => ({ month, ...data })),
           tier: sl.tier || "bronze", fee_percent: sl.current_fee_percent || 14,
           rating: sl.average_rating, ratings_count: sl.ratings_count || 0,
+          // Real growth data
+          revenue_growth: revenueGrowth,
+          sales_growth: salesGrowth,
+          // Real funnel data
+          funnel: {
+            views: totalViews,
+            checkout_starts: checkoutStarts,
+            paid: paidOrders,
+            completed: periodOrders.length,
+          },
+          plan_id: sub?.plan_id || "free",
         },
       });
     }
