@@ -647,14 +647,8 @@ function ProductDetailPageInner() {
             <RecentlyViewedSection />
           </div>
 
-          {/* ===== PRICE INSIGHTS ===== */}
-          <div className="mt-14 bg-white rounded-2xl border border-border/20 p-6">
-            <ProductAnalyticsChart
-              analytics={analytics}
-              isLoading={analyticsLoading}
-              productName={formattedName}
-            />
-          </div>
+
+
 
           {/* ===== REVIEWS ===== */}
           <div className="mt-14 bg-white rounded-2xl border border-border/20 p-6">
