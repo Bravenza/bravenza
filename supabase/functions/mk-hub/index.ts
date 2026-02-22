@@ -767,16 +767,24 @@ Deno.serve(async (req) => {
       const { data: similar } = await sb.from("marketplace_products").select("id, brand, model, colorway, images, lowest_price, total_offers, slug")
         .or(`brand.eq.${source.brand},category.eq.${source.category}`).neq("id", productId).eq("is_active", true).gt("total_offers", 0)
         .order("total_offers", { ascending: false }).limit(limit);
-      const { data: buyerOrders } = await sb.from("vault_marketplace_orders").select("buyer_cpf").eq("product_id", productId).limit(50);
-      const buyerCpfs = [...new Set((buyerOrders || []).map((o: any) => o.buyer_cpf))];
+      // Get buyers who bought offers of this product (join via listing_id → marketplace_offers.product_id)
+      const { data: productOffers } = await sb.from("marketplace_offers").select("id").eq("product_id", productId).eq("status", "sold");
+      const offerIds = (productOffers || []).map((o: any) => o.id);
+      let buyerCpfs: string[] = [];
+      if (offerIds.length > 0) {
+        const { data: buyerOrders } = await sb.from("vault_marketplace_orders").select("buyer_cpf, listing_id").in("listing_id", offerIds.slice(0, 50));
+        buyerCpfs = [...new Set((buyerOrders || []).map((o: any) => o.buyer_cpf))];
+      }
       let alsoBooked: any[] = [];
       if (buyerCpfs.length > 0) {
+        // Find other products these buyers also purchased
         const { data: otherOrders } = await sb.from("vault_marketplace_orders")
-          .select("product_id, product:marketplace_products(id, brand, model, colorway, images, lowest_price, total_offers, slug)")
-          .in("buyer_cpf", buyerCpfs.slice(0, 10)).neq("product_id", productId).limit(20);
+          .select("listing_id, offer:marketplace_offers!inner(product_id, product:marketplace_products!inner(id, brand, model, colorway, images, lowest_price, total_offers, slug))")
+          .in("buyer_cpf", buyerCpfs.slice(0, 10)).limit(30);
         const freq: Record<string, { product: any; count: number }> = {};
         for (const o of (otherOrders || [])) {
-          if (o.product) { const pid = (o.product as any).id; if (!freq[pid]) freq[pid] = { product: o.product, count: 0 }; freq[pid].count++; }
+          const prod = (o as any).offer?.product;
+          if (prod && prod.id !== productId) { if (!freq[prod.id]) freq[prod.id] = { product: prod, count: 0 }; freq[prod.id].count++; }
         }
         alsoBooked = Object.values(freq).sort((a, b) => b.count - a.count).slice(0, 4).map(f => f.product);
       }
