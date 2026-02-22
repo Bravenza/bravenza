@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Package, Truck, CheckCircle2, Clock, AlertTriangle, Star, XCircle, MessageCircle, ShieldCheck } from "lucide-react";
+import { Package, Truck, CheckCircle2, Clock, AlertTriangle, Star, XCircle, MessageCircle, ShieldCheck, CreditCard, QrCode, RefreshCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import { MarketplaceChatDialog } from "./MarketplaceChatDialog";
 import { DisputeDialog } from "./DisputeDialog";
 import { ContestationBanner } from "@/components/marketplace/ContestationBanner";
 import { SharePurchaseButton } from "@/components/marketplace/SharePurchaseButton";
+import { PaymentRetryDialog } from "./PaymentRetryDialog";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   pending_payment: { label: "Aguardando pagamento", color: "bg-warning/20 text-warning", icon: Clock },
@@ -67,6 +68,8 @@ export function MarketplaceOrdersView({
   const [review, setReview] = useState("");
   const [shipDialog, setShipDialog] = useState<{ orderId: string } | null>(null);
   const [trackingCode, setTrackingCode] = useState("");
+  const [payRetryOrder, setPayRetryOrder] = useState<MarketplaceOrder | null>(null);
+  const [payRetrySwitchMethod, setPayRetrySwitchMethod] = useState(false);
 
   useEffect(() => {
     onRefreshOrders();
@@ -176,6 +179,35 @@ export function MarketplaceOrdersView({
 
                 {/* Actions */}
                 <div className="flex flex-wrap gap-2 mt-3">
+                  {/* Payment retry buttons (buyer, pending_payment) */}
+                  {!isSale && order.status === "pending_payment" && (
+                    <>
+                      <Button
+                        size="sm"
+                        className="text-xs gap-1 btn-gold"
+                        onClick={() => {
+                          setPayRetryOrder(order);
+                          setPayRetrySwitchMethod(false);
+                        }}
+                      >
+                        {order.payment_method === "pix" ? <QrCode className="h-3 w-3" /> : <CreditCard className="h-3 w-3" />}
+                        Pagar agora
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs gap-1"
+                        onClick={() => {
+                          setPayRetryOrder(order);
+                          setPayRetrySwitchMethod(true);
+                        }}
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        {order.payment_method === "card" ? "Tentar outro cartão" : "Mudar forma de pagamento"}
+                      </Button>
+                    </>
+                  )}
+
                   {/* Chat button - available for all non-cancelled orders */}
                   {!["cancelled"].includes(order.status) && (
                     <MarketplaceChatDialog
@@ -349,6 +381,15 @@ export function MarketplaceOrdersView({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Payment retry dialog */}
+      <PaymentRetryDialog
+        order={payRetryOrder}
+        open={!!payRetryOrder}
+        onOpenChange={(o) => !o && setPayRetryOrder(null)}
+        onSuccess={onRefreshOrders}
+        switchMethod={payRetrySwitchMethod}
+      />
     </div>
   );
 }
