@@ -1,12 +1,17 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { Search, ShoppingBag, Store, Activity, User, Menu, X, ArrowLeft, Crown } from "lucide-react";
-import { lazy, Suspense, useState, useRef } from "react";
+import { lazy, Suspense, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/Logo";
 import { useClientSession } from "@/hooks/useClientSession";
+import { CartProvider } from "@/hooks/useMarketplaceCart";
+import { CartDrawer } from "@/components/client/vault/marketplace/CartDrawer";
+import type { CartGroup } from "@/hooks/useMarketplaceCart";
+import { MarketplaceCheckoutDialog } from "@/components/client/vault/marketplace/MarketplaceCheckoutDialog";
+import { useMarketplace, type MarketplaceListing } from "@/hooks/useMarketplace";
 
 const Footer = lazy(() => import("@/components/home/Footer").then(m => ({ default: m.Footer })));
 import { cn } from "@/lib/utils";
@@ -23,9 +28,92 @@ export default function MarketplaceLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useClientSession();
+  const cpf = profile?.cpf || null;
+  const { createOrder } = useMarketplace(cpf);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  const [cartCheckoutOpen, setCartCheckoutOpen] = useState(false);
+  const [cartCheckoutListing, setCartCheckoutListing] = useState<MarketplaceListing | null>(null);
+  const [pendingCartGroup, setPendingCartGroup] = useState<CartGroup | null>(null);
+  const [cartGroupIndex, setCartGroupIndex] = useState(0);
+
+  const handleCartCheckoutGroup = useCallback((group: CartGroup) => {
+    // Checkout first item in group, then proceed to next
+    setPendingCartGroup(group);
+    setCartGroupIndex(0);
+    const firstItem = group.items[0];
+    if (firstItem?.offer) {
+      const offer = firstItem.offer;
+      setCartCheckoutListing({
+        id: offer.id,
+        seller_id: offer.seller_id,
+        vault_item_id: null,
+        title: offer.product ? `${offer.product.brand} ${offer.product.model}` : "Produto",
+        description: null,
+        brand: offer.product?.brand || null,
+        model: offer.product?.model || null,
+        colorway: null,
+        size: offer.size,
+        condition: offer.condition,
+        photos: offer.photos?.length ? offer.photos : (offer.product?.images || []),
+        price: offer.price,
+        original_purchase_price: null,
+        shipping_mode: offer.shipping_mode || "direct",
+        shipping_cost_estimate: 0,
+        is_vault_certified: false,
+        status: offer.status,
+        views_count: 0,
+        favorites_count: 0,
+        published_at: null,
+        created_at: firstItem.added_at,
+      });
+      setCartCheckoutOpen(true);
+    }
+  }, []);
+
+  const handleCartCheckoutConfirm = async (data: any) => {
+    const result = await createOrder(data);
+    if (result && pendingCartGroup) {
+      const nextIdx = cartGroupIndex + 1;
+      if (nextIdx < pendingCartGroup.items.length) {
+        // Proceed to next item in the same seller group
+        setCartGroupIndex(nextIdx);
+        const nextItem = pendingCartGroup.items[nextIdx];
+        if (nextItem?.offer) {
+          const offer = nextItem.offer;
+          setCartCheckoutListing({
+            id: offer.id,
+            seller_id: offer.seller_id,
+            vault_item_id: null,
+            title: offer.product ? `${offer.product.brand} ${offer.product.model}` : "Produto",
+            description: null,
+            brand: offer.product?.brand || null,
+            model: offer.product?.model || null,
+            colorway: null,
+            size: offer.size,
+            condition: offer.condition,
+            photos: offer.photos?.length ? offer.photos : (offer.product?.images || []),
+            price: offer.price,
+            original_purchase_price: null,
+            shipping_mode: offer.shipping_mode || "direct",
+            shipping_cost_estimate: 0,
+            is_vault_certified: false,
+            status: offer.status,
+            views_count: 0,
+            favorites_count: 0,
+            published_at: null,
+            created_at: nextItem.added_at,
+          });
+        }
+      } else {
+        setCartCheckoutOpen(false);
+        setPendingCartGroup(null);
+      }
+      return result;
+    }
+    return null;
+  };
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -37,6 +125,7 @@ export default function MarketplaceLayout() {
   };
 
   return (
+    <CartProvider cpf={cpf}>
     <div className="min-h-screen bg-background flex flex-col theme-light">
       {/* ===== MARKETPLACE HEADER ===== */}
       <header className="sticky top-0 z-50 theme-dark" style={{ top: "var(--safe-area-top, 0px)" }}>
@@ -101,6 +190,9 @@ export default function MarketplaceLayout() {
                 >
                   <Search className="h-4 w-4" />
                 </Button>
+
+                {/* Cart */}
+                <CartDrawer onCheckoutGroup={handleCartCheckoutGroup} />
 
                 {/* Back to dashboard */}
                 <Link to="/minha-conta">
@@ -229,6 +321,15 @@ export default function MarketplaceLayout() {
           })}
         </div>
       </nav>
+
+      <MarketplaceCheckoutDialog
+        listing={cartCheckoutListing}
+        open={cartCheckoutOpen}
+        onOpenChange={setCartCheckoutOpen}
+        onConfirm={handleCartCheckoutConfirm}
+        buyerDefaults={{ name: profile?.full_name, email: undefined }}
+      />
     </div>
+    </CartProvider>
   );
 }
