@@ -69,7 +69,7 @@ function getFeatureValue(plan: MarketplacePlan, key: string, feeTiers: FeeTier[]
     case "active": return plan.max_active_listings === null ? "Ilimitado" : String(plan.max_active_listings);
     case "new": return plan.max_new_listings_month === null ? "Ilimitado" : `${plan.max_new_listings_month}/mês`;
     case "boost": return plan.id === "free" ? false : `${plan.boost_slots} slot${plan.boost_slots > 1 ? "s" : ""}`;
-    case "autocut": return plan.id !== "free";
+    case "autocut": return plan.id === "elite";
     case "sla": return plan.support_sla_hours <= 24 ? "Até 24h" : plan.support_sla_hours <= 48 ? "24-48h" : "48-72h";
     case "analytics_basic": return plan.id === "pro" || plan.id === "elite";
     case "analytics_advanced": return plan.id === "elite";
@@ -93,8 +93,8 @@ const featureSections = [
   {
     icon: Bot,
     title: "AutoCut",
-    badge: "Exclusivo",
-    description: "Fique sempre na frente. Com o AutoCut você reduz preços automaticamente e vende mais rápido. Configure o valor mínimo e o intervalo — o sistema faz o resto.",
+    badge: "Elite",
+    description: "Fique sempre na frente. Com o AutoCut você reduz preços automaticamente e vende mais rápido. Configure o valor mínimo e o intervalo — o sistema faz o resto. Exclusivo do plano Seller Elite.",
     highlights: ["Redução automática de preço", "Configuração de preço mínimo", "Venda mais rápido que a concorrência"],
     gradient: "from-accent/20 to-accent/5",
   },
