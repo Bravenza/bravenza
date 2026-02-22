@@ -3318,7 +3318,7 @@ export type Database = {
           id: string
           inspection_id: string | null
           inspection_result: string | null
-          listing_id: string
+          listing_id: string | null
           mp_payment_id: string | null
           order_code: string | null
           paid_at: string | null
@@ -3376,7 +3376,7 @@ export type Database = {
           id?: string
           inspection_id?: string | null
           inspection_result?: string | null
-          listing_id: string
+          listing_id?: string | null
           mp_payment_id?: string | null
           order_code?: string | null
           paid_at?: string | null
@@ -3434,7 +3434,7 @@ export type Database = {
           id?: string
           inspection_id?: string | null
           inspection_result?: string | null
-          listing_id?: string
+          listing_id?: string | null
           mp_payment_id?: string | null
           order_code?: string | null
           paid_at?: string | null
