@@ -169,6 +169,10 @@ export default function MarketplacePlansPage() {
     document.getElementById("plans-section")?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const scrollToFeatures = () => {
+    document.getElementById("features-section")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <div className="pb-28 md:pb-12">
       {/* ═══════════ HERO SECTION ═══════════ */}
@@ -193,7 +197,7 @@ export default function MarketplacePlansPage() {
               <Button size="lg" className="btn-gold text-base gap-2 h-12 px-8 rounded-xl font-bold" onClick={scrollToPlans}>
                 Começar a usar <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="lg" className="text-base h-12 px-8 rounded-xl font-semibold" onClick={scrollToPlans}>
+              <Button variant="outline" size="lg" className="text-base h-12 px-8 rounded-xl font-semibold" onClick={scrollToFeatures}>
                 <ArrowDown className="h-4 w-4 mr-2" /> Saiba mais
               </Button>
             </div>
@@ -216,7 +220,7 @@ export default function MarketplacePlansPage() {
       </section>
 
       {/* ═══════════ FEATURE SECTIONS ═══════════ */}
-      <section className="max-w-6xl mx-auto px-4 py-16">
+      <section id="features-section" className="max-w-6xl mx-auto px-4 py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
