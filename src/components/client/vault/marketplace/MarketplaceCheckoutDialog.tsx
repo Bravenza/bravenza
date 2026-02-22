@@ -571,20 +571,17 @@ export function MarketplaceCheckoutDialog({
           <div className="space-y-4 mt-1">
             <div className="flex items-center gap-2">
               <Truck className="h-4 w-4 text-primary" />
-              <Label className="text-sm font-semibold">Opções de envio</Label>
-             {normalizedShippingMode === "bravenza" && (
-                <Badge className="bg-primary/20 text-primary text-[10px] gap-0.5 px-1.5">
-                  <ShieldCheck className="h-2.5 w-2.5" /> Via Bravenza
-                </Badge>
-              )}
+              <Label className="text-sm font-semibold">Escolha a modalidade de entrega</Label>
             </div>
 
-            {normalizedShippingMode === "bravenza" && (
-              <div className="p-2.5 bg-primary/5 border border-primary/20 rounded-lg text-[11px] text-muted-foreground">
-                <ShieldCheck className="h-3 w-3 inline mr-1 text-primary" />
-                O produto passará pela BRAVENZA para autenticação antes de chegar a você. O frete inclui os dois trechos.
+            {/* PRO info banner */}
+            <div className="p-2.5 bg-primary/5 border border-primary/20 rounded-lg text-[11px] text-muted-foreground space-y-0.5">
+              <div className="flex items-center gap-1 text-primary font-semibold text-xs mb-0.5">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Compra PRO — Autenticação garantida
               </div>
-            )}
+              <p>Seu item passa pelo HUB Bravenza para certificação de autenticidade antes do envio.</p>
+            </div>
 
             {isLoadingFreight ? (
               <div className="flex flex-col items-center gap-3 py-8">
@@ -599,38 +596,72 @@ export function MarketplaceCheckoutDialog({
               </div>
             ) : (
               <div className="space-y-2">
-                {freightOptions.map((opt) => (
-                  <button
-                    key={opt.id}
-                    onClick={() => setSelectedFreight(opt)}
-                    className={cn(
-                      "w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-all",
-                      selectedFreight?.id === opt.id
-                        ? "border-primary bg-primary/10"
-                        : "border-border/50 hover:border-primary/40"
-                    )}
-                  >
-                    <Package className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{opt.name || opt.company?.name || `Serviço ${opt.id}`}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                        <Clock className="h-3 w-3" />
-                        {opt.delivery_time} dia{opt.delivery_time !== 1 ? "s" : ""} útei{opt.delivery_time !== 1 ? "s" : ""}
-                        {opt.legs && (
-                          <span className="text-[10px]">
-                            ({opt.legs.seller_to_bravenza?.delivery_time}d + {opt.legs.bravenza_processing?.delivery_time || 5}d verificação + {opt.legs.bravenza_to_buyer?.delivery_time}d)
-                          </span>
+                {(() => {
+                  const sorted = [...freightOptions].sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+                  const cheapestId = sorted[0]?.id;
+                  const fastestId = sorted.length > 1
+                    ? sorted.reduce((f, o) => o.delivery_time < f.delivery_time ? o : f, sorted[0]).id
+                    : null;
+
+                  return freightOptions.map((opt) => {
+                    const optName = opt.name || opt.company?.name || "";
+                    const isPac = /pac/i.test(optName);
+                    const isSedex = /sedex|expresso/i.test(optName);
+                    const minDays = isSedex ? 3 : isPac ? 11 : Math.max(1, opt.delivery_time - 7);
+                    const maxDays = isSedex ? 17 : isPac ? 24 : opt.delivery_time;
+                    const isCheapest = opt.id === cheapestId;
+                    const isFastest = opt.id === fastestId && fastestId !== cheapestId;
+
+                    return (
+                      <button
+                        key={opt.id}
+                        onClick={() => setSelectedFreight(opt)}
+                        className={cn(
+                          "w-full p-3 rounded-lg border text-left transition-all",
+                          selectedFreight?.id === opt.id
+                            ? "border-primary bg-primary/10"
+                            : "border-border/50 hover:border-primary/40"
                         )}
-                      </div>
-                    </div>
-                    <p className={cn(
-                      "text-sm font-bold whitespace-nowrap",
-                      selectedFreight?.id === opt.id ? "text-primary" : "text-foreground"
-                    )}>
-                      R$ {parseFloat(opt.price).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                    </p>
-                  </button>
-                ))}
+                      >
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          {isCheapest && (
+                            <Badge className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30 text-[9px] px-1.5 py-0 h-4">
+                              Mais econômico
+                            </Badge>
+                          )}
+                          {isFastest && (
+                            <Badge className="bg-sky-500/15 text-sky-500 border-sky-500/30 text-[9px] px-1.5 py-0 h-4">
+                              Mais rápido
+                            </Badge>
+                          )}
+                          <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] px-1.5 py-0 h-4 gap-0.5">
+                            <ShieldCheck className="h-2.5 w-2.5" /> PRO
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Package className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium">{optName || `Serviço ${opt.id}`}</p>
+                            <p className="text-[10px] text-muted-foreground">Passa pelo HUB para certificação</p>
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                              <Clock className="h-3 w-3" />
+                              {minDays === maxDays
+                                ? `${maxDays} dias úteis`
+                                : `${minDays} a ${maxDays} dias úteis`
+                              }
+                            </div>
+                          </div>
+                          <p className={cn(
+                            "text-sm font-bold whitespace-nowrap",
+                            selectedFreight?.id === opt.id ? "text-primary" : "text-foreground"
+                          )}>
+                            R$ {parseFloat(opt.price).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  });
+                })()}
               </div>
             )}
 
