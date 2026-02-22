@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ShoppingCart, ShieldCheck, Truck, CreditCard, Loader2, MapPin, Package, ChevronRight, ArrowLeft, Clock, AlertCircle, Copy, CheckCircle2 } from "lucide-react";
-import { MarketplaceCardForm, tokenizeCard, type CardFormData } from "./MarketplaceCardForm";
+import { UnifiedCardForm, tokenizeCard, type UnifiedCardFormData } from "@/components/payment/UnifiedCardForm";
 import {
   Dialog,
   DialogContent,
@@ -87,7 +87,7 @@ export function MarketplaceCheckoutDialog({
     error?: string;
   } | null>(null);
   const [pixCopied, setPixCopied] = useState(false);
-  const [cardFormData, setCardFormData] = useState<CardFormData | null>(null);
+  const [cardFormData, setCardFormData] = useState<UnifiedCardFormData | null>(null);
   const [isCardValid, setIsCardValid] = useState(false);
   const [chosenMode, setChosenMode] = useState<"direct" | "bravenza">("direct");
   const [form, setForm] = useState({
@@ -705,9 +705,10 @@ export function MarketplaceCheckoutDialog({
 
             {/* Card form (conditional) */}
             {form.payment_method === "card" && (
-              <MarketplaceCardForm
-                totalAmount={totalPrice}
-                buyerEmail={form.buyer_email}
+              <UnifiedCardForm
+                amount={totalPrice}
+                email={form.buyer_email}
+                compact
                 onDataChange={(data, valid) => {
                   setCardFormData(data);
                   setIsCardValid(valid);
