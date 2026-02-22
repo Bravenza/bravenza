@@ -41,7 +41,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 // Lazy-load below-fold heavy components (recharts ~200KB, recommendations, etc.)
 const ProductAnalyticsChart = lazy(() => import("@/components/marketplace/ProductAnalyticsChart").then(m => ({ default: m.ProductAnalyticsChart })));
 const ProductReviews = lazy(() => import("@/components/marketplace/ProductReviews").then(m => ({ default: m.ProductReviews })));
-const PriceHistoryChart = lazy(() => import("@/components/marketplace/PriceHistoryChart").then(m => ({ default: m.PriceHistoryChart })));
+// PriceHistoryChart removed — duplicated by PriceSparkline + ProductAnalyticsChart
 import { PriceSparkline } from "@/components/marketplace/PriceSparkline";
 import { SizePriceGrid } from "@/components/marketplace/SizePriceGrid";
 import { PriceComparator } from "@/components/marketplace/PriceComparator";
@@ -634,11 +634,6 @@ function ProductDetailPageInner() {
 
         {/* ===== BELOW-FOLD LAZY SECTIONS ===== */}
         <Suspense fallback={<Skeleton className="h-64 w-full mt-14 rounded-2xl" />}>
-          {/* ===== PRICE HISTORY ===== */}
-          <div className="mt-14">
-            <PriceHistoryChart productId={product.id} cpf={cpf || "visitor"} />
-          </div>
-
           {/* ===== SMART RECOMMENDATIONS ===== */}
           <div className="mt-14">
             <SmartRecommendations productId={product.id} cpf={cpf || "visitor"} />
