@@ -1,9 +1,17 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, ShoppingBag, Store, Activity, User, Menu, X, ArrowLeft, Crown } from "lucide-react";
+import { Search, ShoppingBag, Store, Activity, User, Menu, X, ArrowLeft, Crown, Heart, Package, MapPin, Tag, LogOut, Settings, Ticket } from "lucide-react";
 import { lazy, Suspense, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Logo } from "@/components/Logo";
 import { useClientSession } from "@/hooks/useClientSession";
 import { CartProvider } from "@/hooks/useMarketplaceCart";
@@ -15,6 +23,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { path: "/marketplace", label: "Explorar", mobileLabel: "Explorar", exact: true },
   { path: "/marketplace/pedidos", label: "Pedidos", mobileLabel: "Pedidos", icon: ShoppingBag },
+  { path: "/marketplace/favoritos", label: "Favoritos", mobileLabel: "Favoritos", icon: Heart },
   { path: "/marketplace/feed", label: "Feed", mobileLabel: "Feed", icon: Activity },
   { path: "/marketplace/loja", label: "Minha Loja", mobileLabel: "Loja", icon: Store },
   { path: "/marketplace/planos", label: "Planos", mobileLabel: "Planos", icon: Crown },
@@ -23,8 +32,11 @@ const navItems = [
 export default function MarketplaceLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile } = useClientSession();
+  const { profile, signOut, isVaultMember } = useClientSession();
   const cpf = profile?.cpf || null;
+  const initials = profile?.full_name
+    ? profile.full_name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase()
+    : "U";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -108,14 +120,52 @@ export default function MarketplaceLayout() {
                 {/* Cart */}
                 <CartDrawer />
 
-                {/* Back to dashboard */}
-                <Link to="/minha-conta">
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
-                    <User className="h-4 w-4" />
-                  </Button>
-                </Link>
-
-                {/* Mobile menu */}
+                {/* User Avatar Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full p-0">
+                      <Avatar className="h-8 w-8 border border-primary/30">
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    {profile && (
+                      <div className="px-3 py-2">
+                        <p className="text-sm font-medium truncate">{profile.full_name}</p>
+                        <p className="text-xs text-muted-foreground">{profile.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.$3-**")}</p>
+                      </div>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/minha-conta")}>
+                      <User className="h-4 w-4 mr-2" /> Meus dados
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/marketplace/pedidos")}>
+                      <Package className="h-4 w-4 mr-2" /> Minhas compras
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/marketplace/favoritos")}>
+                      <Heart className="h-4 w-4 mr-2" /> Favoritos
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/marketplace/loja")}>
+                      <Store className="h-4 w-4 mr-2" /> Quero vender
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/marketplace/planos")}>
+                      <Crown className="h-4 w-4 mr-2" /> Planos
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/minha-conta")}>
+                      <Settings className="h-4 w-4 mr-2" /> Painel do cliente
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => signOut()}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" /> Sair
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button
                   variant="ghost"
                   size="icon"
