@@ -2,6 +2,7 @@ import { memo, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Clock } from "lucide-react";
 import { CatalogProductCard } from "@/components/client/vault/marketplace/CatalogProductCard";
+import { ProductCarousel } from "@/components/marketplace/ProductCarousel";
 import type { CatalogProduct } from "@/hooks/useMarketplaceCatalog";
 
 const STORAGE_KEY = "bvz_recently_viewed";
@@ -44,18 +45,19 @@ export const RecentlyViewedSection = memo(function RecentlyViewedSection() {
           Vistos recentemente
         </h3>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      <ProductCarousel>
         {items.map((product, i) => (
           <motion.div
             key={product.id}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.04 }}
+            className="min-w-[180px] w-[180px] sm:min-w-[200px] sm:w-[200px] snap-start flex-shrink-0"
           >
             <CatalogProductCard product={product} hidePrice />
           </motion.div>
         ))}
-      </div>
+      </ProductCarousel>
     </section>
   );
 });
