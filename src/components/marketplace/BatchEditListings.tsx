@@ -293,7 +293,7 @@ export function BatchEditListings({ listings, onUpdate, onDelete, onRefresh }: B
                   <p className="font-medium text-sm truncate">{listing.title}</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-xs font-bold text-primary">
-                      R$ {listing.price.toLocaleString("pt-BR")}
+                      R$ {listing.price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                     <Badge
                       variant="outline"
