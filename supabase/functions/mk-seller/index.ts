@@ -162,13 +162,13 @@ Deno.serve(async (req) => {
       const prevStart = new Date(periodStart.getTime() - periodMs).toISOString();
 
       const { data: listings } = await sb.from("vault_marketplace_listings")
-        .select("id, views_count, price, status, created_at, published_at")
+        .select("id, views_count, price, status, created_at, published_at, condition, brand, size, model")
         .eq("seller_id", sl.id);
       const totalViews = (listings || []).reduce((s: number, l: any) => s + (l.views_count || 0), 0);
       const activeListings = (listings || []).filter((l: any) => l.status === "active").length;
 
       const { data: orders } = await sb.from("vault_marketplace_orders")
-        .select("id, status, sale_price, fee_amount, seller_payout, created_at, paid_at, payout_released_at")
+        .select("id, status, sale_price, fee_amount, seller_payout, created_at, paid_at, payout_released_at, brand, model, size")
         .eq("seller_id", sl.id);
 
       const completedStatuses = ["delivered", "payout_released", "payout_pending", "completed"];
@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
 
       // Real funnel data from orders
       const allPeriodOrders = (orders || []).filter((o: any) => o.created_at >= periodISO);
-      const checkoutStarts = allPeriodOrders.length; // all orders = checkout started
+      const checkoutStarts = allPeriodOrders.length;
       const paidOrders = allPeriodOrders.filter((o: any) => o.paid_at).length;
 
       // Monthly data
@@ -205,12 +205,88 @@ Deno.serve(async (req) => {
         if (monthlyData[key]) { monthlyData[key].revenue += o.seller_payout || 0; monthlyData[key].sales += 1; }
       }
 
+      // ---- INVENTORY SUMMARY (Pro+) ----
+      const activeItems = (listings || []).filter((l: any) => l.status === "active");
+      const inventoryValue = activeItems.reduce((s: number, l: any) => s + (l.price || 0), 0);
+      const avgPrice = activeItems.length > 0 ? Math.round(inventoryValue / activeItems.length) : 0;
+
+      // By condition
+      const conditionMap: Record<string, number> = {};
+      activeItems.forEach((l: any) => { const c = l.condition || "unknown"; conditionMap[c] = (conditionMap[c] || 0) + 1; });
+      const inventoryByCondition = Object.entries(conditionMap).map(([condition, count]) => ({ condition, count })).sort((a, b) => b.count - a.count);
+
+      // By brand
+      const brandMap: Record<string, number> = {};
+      activeItems.forEach((l: any) => { const b = l.brand || "Outro"; brandMap[b] = (brandMap[b] || 0) + 1; });
+      const inventoryByBrand = Object.entries(brandMap).map(([brand, count]) => ({ brand, count })).sort((a, b) => b.count - a.count).slice(0, 8);
+
+      // By size
+      const sizeMap: Record<string, number> = {};
+      activeItems.forEach((l: any) => { const s = l.size || "?"; sizeMap[s] = (sizeMap[s] || 0) + 1; });
+      const inventoryBySize = Object.entries(sizeMap).map(([size, count]) => ({ size, count })).sort((a, b) => b.count - a.count).slice(0, 10);
+
+      // ---- MARKET TRENDS / SALES INSIGHTS (Elite) ----
+      // Top selling brands from this seller's orders
+      const brandSalesMap: Record<string, { count: number; revenue: number }> = {};
+      periodOrders.forEach((o: any) => {
+        const b = o.brand || "Outro";
+        if (!brandSalesMap[b]) brandSalesMap[b] = { count: 0, revenue: 0 };
+        brandSalesMap[b].count += 1;
+        brandSalesMap[b].revenue += o.seller_payout || 0;
+      });
+      const topSellingBrands = Object.entries(brandSalesMap)
+        .map(([brand, d]) => ({ brand, sales: d.count, revenue: Math.round(d.revenue * 100) / 100 }))
+        .sort((a, b) => b.sales - a.sales).slice(0, 5);
+
+      // Top selling models
+      const modelSalesMap: Record<string, { count: number; revenue: number; brand: string }> = {};
+      periodOrders.forEach((o: any) => {
+        const m = o.model || "Desconhecido";
+        if (!modelSalesMap[m]) modelSalesMap[m] = { count: 0, revenue: 0, brand: o.brand || "" };
+        modelSalesMap[m].count += 1;
+        modelSalesMap[m].revenue += o.seller_payout || 0;
+      });
+      const topSellingModels = Object.entries(modelSalesMap)
+        .map(([model, d]) => ({ model, brand: d.brand, sales: d.count, revenue: Math.round(d.revenue * 100) / 100 }))
+        .sort((a, b) => b.sales - a.sales).slice(0, 5);
+
+      // Top sizes sold
+      const sizeSalesMap: Record<string, number> = {};
+      periodOrders.forEach((o: any) => { const s = o.size || "?"; sizeSalesMap[s] = (sizeSalesMap[s] || 0) + 1; });
+      const topSizes = Object.entries(sizeSalesMap).map(([size, count]) => ({ size, count })).sort((a, b) => b.count - a.count).slice(0, 5);
+
+      // Sell-through rate
+      const totalInventory = activeItems.length + periodOrders.length;
+      const sellThroughRate = totalInventory > 0 ? Math.round((periodOrders.length / totalInventory) * 10000) / 100 : 0;
+
+      // Avg days to sell
+      const soldListings = (listings || []).filter((l: any) => l.status === "sold" && l.published_at);
+      let avgDaysToSell = 0;
+      if (soldListings.length > 0) {
+        const totalDays = soldListings.reduce((s: number, l: any) => {
+          const pub = new Date(l.published_at).getTime();
+          const created = new Date(l.created_at).getTime();
+          return s + Math.max(1, Math.round((created - pub) / 86400000));
+        }, 0);
+        avgDaysToSell = Math.round(totalDays / soldListings.length);
+      }
+
       // Subscription/plan info
       const { data: sub } = await sb.from("marketplace_subscriptions")
         .select("plan_id, status")
         .eq("seller_id", sl.id)
         .eq("status", "active")
         .maybeSingle();
+
+      // Global market trends (top brands across ALL marketplace, for Elite)
+      const { data: globalOrders } = await sb.from("vault_marketplace_orders")
+        .select("brand, model")
+        .in("status", completedStatuses)
+        .gte("created_at", periodISO)
+        .limit(500);
+      const globalBrandMap: Record<string, number> = {};
+      (globalOrders || []).forEach((o: any) => { const b = o.brand || "Outro"; globalBrandMap[b] = (globalBrandMap[b] || 0) + 1; });
+      const marketTopBrands = Object.entries(globalBrandMap).map(([brand, count]) => ({ brand, count })).sort((a, b) => b.count - a.count).slice(0, 8);
 
       return j({
         analytics: {
@@ -221,10 +297,8 @@ Deno.serve(async (req) => {
           monthly: Object.entries(monthlyData).map(([month, data]) => ({ month, ...data })),
           tier: sl.tier || "bronze", fee_percent: sl.current_fee_percent || 14,
           rating: sl.average_rating, ratings_count: sl.ratings_count || 0,
-          // Real growth data
           revenue_growth: revenueGrowth,
           sales_growth: salesGrowth,
-          // Real funnel data
           funnel: {
             views: totalViews,
             checkout_starts: checkoutStarts,
@@ -232,6 +306,24 @@ Deno.serve(async (req) => {
             completed: periodOrders.length,
           },
           plan_id: sub?.plan_id || "free",
+          // NEW: Inventory summary (Pro+)
+          inventory: {
+            total_items: activeItems.length,
+            total_value: Math.round(inventoryValue * 100) / 100,
+            avg_price: avgPrice,
+            by_condition: inventoryByCondition,
+            by_brand: inventoryByBrand,
+            by_size: inventoryBySize,
+          },
+          // NEW: Market trends & sales insights (Elite)
+          insights: {
+            top_selling_brands: topSellingBrands,
+            top_selling_models: topSellingModels,
+            top_sizes: topSizes,
+            sell_through_rate: sellThroughRate,
+            avg_days_to_sell: avgDaysToSell,
+            market_top_brands: marketTopBrands,
+          },
         },
       });
     }
