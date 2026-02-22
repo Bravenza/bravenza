@@ -1,4 +1,4 @@
-import { Star, Verified, ChevronRight, Receipt } from "lucide-react";
+import { Star, Verified, ChevronRight, Receipt, ShoppingCart } from "lucide-react";
 import { SellerReputationBadges } from "@/components/marketplace/SellerReputationBadges";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,9 +13,11 @@ interface OfferCardProps {
   productImages: string[];
   onBuy: () => void;
   onClick: () => void;
+  onAddToCart?: () => void;
+  isInCart?: boolean;
 }
 
-export function OfferCard({ offer, isBest, productImages, onBuy, onClick }: OfferCardProps) {
+export function OfferCard({ offer, isBest, productImages, onBuy, onClick, onAddToCart, isInCart }: OfferCardProps) {
   const normalizedMode = normalizeShippingMode(offer.shipping_mode);
   const proKey = offer.pro_recommendation
     || (normalizedMode === "bravenza" ? (offer.price >= 2000 ? "pro_mandatory" : "pro_recommended") : "direct_allowed");
@@ -113,6 +115,16 @@ export function OfferCard({ offer, isBest, productImages, onBuy, onClick }: Offe
             })()}
           </div>
           <div className="flex gap-2">
+            {onAddToCart && (
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn("text-xs h-9 rounded-xl font-semibold border-border/40", isInCart && "border-primary/40 text-primary")}
+                onClick={(e) => { e.stopPropagation(); onAddToCart(); }}
+              >
+                <ShoppingCart className="h-3.5 w-3.5" />
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"

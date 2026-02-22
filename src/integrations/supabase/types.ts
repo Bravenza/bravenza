@@ -379,6 +379,52 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_cart_items: {
+        Row: {
+          added_at: string
+          id: string
+          offer_id: string
+          product_id: string
+          user_cpf: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          offer_id: string
+          product_id: string
+          user_cpf: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          offer_id?: string
+          product_id?: string
+          user_cpf?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_cart_items_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_cart_items_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_offers_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_coupons: {
         Row: {
           code: string

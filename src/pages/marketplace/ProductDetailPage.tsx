@@ -17,6 +17,9 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useMarketplaceCatalog, type ProductOffer } from "@/hooks/useMarketplaceCatalog";
 import { useMarketplace, type MarketplaceListing } from "@/hooks/useMarketplace";
+import { CartProvider, useMarketplaceCart } from "@/hooks/useMarketplaceCart";
+import { CartDrawer } from "@/components/client/vault/marketplace/CartDrawer";
+import type { CartGroup } from "@/hooks/useMarketplaceCart";
 import { useClientSession } from "@/hooks/useClientSession";
 import { MarketplaceCheckoutDialog } from "@/components/client/vault/marketplace/MarketplaceCheckoutDialog";
 import { ListingDetailSheet } from "@/components/client/vault/marketplace/ListingDetailSheet";
@@ -53,8 +56,25 @@ const proLabels: Record<string, { text: string; color: string; icon: typeof Shie
   pro_recommended: { text: "PRO recomendado", color: "bg-amber-500/20 text-amber-400 border-amber-500/30", icon: ShieldCheck },
   direct_allowed: { text: "Direto", color: "bg-muted text-muted-foreground border-border", icon: Package },
 };
+// Wrapper for OfferCard with cart integration
+function OfferCardWithCart(props: React.ComponentProps<typeof OfferCard>) {
+  try {
+    const { addToCart, isInCart } = useMarketplaceCart();
+    const inCart = isInCart(props.offer.id);
+    return (
+      <OfferCard
+        {...props}
+        isInCart={inCart}
+        onAddToCart={() => addToCart(props.offer.id, props.offer.product_id)}
+      />
+    );
+  } catch {
+    // If no CartProvider, render without cart
+    return <OfferCard {...props} />;
+  }
+}
 
-export default function ProductDetailPage() {
+function ProductDetailPageInner() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { profile } = useClientSession();
@@ -573,7 +593,7 @@ export default function ProductDetailPage() {
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
               >
                 {sortedOffers.map((offer, index) => (
-                  <OfferCard
+                  <OfferCardWithCart
                     key={offer.id}
                     offer={offer}
                     isBest={index === 0}
@@ -683,5 +703,14 @@ export default function ProductDetailPage() {
         }}
       />
     </div>
+  );
+}
+
+export default function ProductDetailPage() {
+  const { profile } = useClientSession();
+  return (
+    <CartProvider cpf={profile?.cpf || null}>
+      <ProductDetailPageInner />
+    </CartProvider>
   );
 }

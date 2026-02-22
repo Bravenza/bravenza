@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Heart, ShieldCheck, Eye, Star, Truck, Package, ShoppingCart, User, ChevronLeft, ChevronRight, Shield, Clock, Verified, MessageCircle } from "lucide-react";
+import { Heart, ShieldCheck, Eye, Star, Truck, Package, ShoppingCart, ShoppingBag, User, ChevronLeft, ChevronRight, Shield, Clock, Verified, MessageCircle } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -34,6 +34,8 @@ interface ListingDetailSheetProps {
   onOpenChange: (open: boolean) => void;
   onToggleFavorite: (id: string) => void;
   onBuy?: (listing: MarketplaceListing) => void;
+  onAddToCart?: (listing: MarketplaceListing) => void;
+  isInCart?: boolean;
   onMakeOffer?: (data: { listing_id: string; offer_price: number; message?: string }) => Promise<boolean>;
   onViewSellerProfile?: (sellerId: string) => void;
   isOwnListing?: boolean;
@@ -52,6 +54,8 @@ export function ListingDetailSheet({
   onOpenChange,
   onToggleFavorite,
   onBuy,
+  onAddToCart,
+  isInCart,
   onMakeOffer,
   onViewSellerProfile,
   isOwnListing = false,
@@ -360,11 +364,21 @@ export function ListingDetailSheet({
           {!isOwnListing && (
             <div className="space-y-2 pt-2 sticky bottom-0 bg-card pb-safe">
               <div className="flex gap-2">
+                {onAddToCart && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className={cn("h-12 w-12 shrink-0 rounded-xl", isInCart && "border-primary text-primary")}
+                    onClick={() => onAddToCart(listing)}
+                  >
+                    <ShoppingCart className="h-5 w-5" />
+                  </Button>
+                )}
                 <Button
                   className="flex-1 btn-gold gap-2 h-12 text-sm font-bold"
                   onClick={() => onBuy?.(listing)}
                 >
-                  <ShoppingCart className="h-4 w-4" />
+                  <ShoppingBag className="h-4 w-4" />
                   Comprar — R$ {totalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
                 </Button>
                 {onMakeOffer && (
