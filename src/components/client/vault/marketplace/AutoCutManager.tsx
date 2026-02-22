@@ -51,7 +51,7 @@ export function AutoCutManager({ sellerId, listings }: AutoCutManagerProps) {
   const fetchRules = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("marketplace_autocut_rules" as any)
+      .from("marketplace_autocut_rules")
       .select("*")
       .eq("seller_id", sellerId)
       .order("created_at", { ascending: false });
@@ -81,7 +81,7 @@ export function AutoCutManager({ sellerId, listings }: AutoCutManagerProps) {
     setSaving(true);
     try {
       const { error } = await supabase
-        .from("marketplace_autocut_rules" as any)
+        .from("marketplace_autocut_rules")
         .insert({
           seller_id: sellerId,
           offer_id: selectedOffer,
@@ -90,7 +90,7 @@ export function AutoCutManager({ sellerId, listings }: AutoCutManagerProps) {
           reduction_type: reductionType,
           interval_hours: parseInt(intervalHours),
           is_active: true,
-        } as any);
+        });
 
       if (error) throw error;
       toast.success("AutoCut configurado!");
@@ -105,15 +105,15 @@ export function AutoCutManager({ sellerId, listings }: AutoCutManagerProps) {
 
   const toggleRule = async (ruleId: string, active: boolean) => {
     await supabase
-      .from("marketplace_autocut_rules" as any)
-      .update({ is_active: active } as any)
+      .from("marketplace_autocut_rules")
+      .update({ is_active: active })
       .eq("id", ruleId);
     fetchRules();
   };
 
   const deleteRule = async (ruleId: string) => {
     await supabase
-      .from("marketplace_autocut_rules" as any)
+      .from("marketplace_autocut_rules")
       .delete()
       .eq("id", ruleId);
     toast.success("Regra removida");

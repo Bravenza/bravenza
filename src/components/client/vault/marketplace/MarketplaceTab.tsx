@@ -22,6 +22,7 @@ import { OffersListDialog } from "./OffersListDialog";
 import { SellerOnboardingDialog } from "./SellerOnboardingDialog";
 import { PriceDropSuggestions } from "./PriceDropSuggestions";
 import { AutoCutManager } from "./AutoCutManager";
+import { useSellerPlan } from "@/hooks/marketplace/useSellerPlan";
 const SellerAnalyticsDashboard = lazy(() => import("./SellerAnalyticsDashboard").then(m => ({ default: m.SellerAnalyticsDashboard })));
 import { CouponsManager } from "./CouponsManager";
 import { ActivityFeed } from "./ActivityFeed";
@@ -89,6 +90,9 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
   const [sellerOnboarded, setSellerOnboarded] = useState<boolean | null>(null);
   const [sellerKycStatus, setSellerKycStatus] = useState<string | null>(null);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
+
+  const { status: planStatus } = useSellerPlan(seller?.id || null);
+  const isElitePlan = planStatus?.plan?.id === "elite";
 
   useEffect(() => {
     handleSearch();
@@ -237,7 +241,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
     { id: "anuncios", label: "Meus anúncios", icon: Megaphone },
     ...(isSellerApproved ? [
       { id: "analytics", label: "Analytics", icon: BarChart3 },
-      { id: "autocut", label: "AutoCut", icon: Bot },
+      ...(isElitePlan ? [{ id: "autocut", label: "AutoCut", icon: Bot }] : []),
       { id: "cupons", label: "Cupons", icon: Tag },
       { id: "sugestoes", label: "Sugestões", icon: TrendingDown },
     ] : []),
