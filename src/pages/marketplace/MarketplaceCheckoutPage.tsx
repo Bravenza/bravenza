@@ -20,7 +20,7 @@ import { UnifiedCardForm, tokenizeCard, type UnifiedCardFormData } from "@/compo
 import { MERCADO_PAGO_RATES } from "@/lib/budget-calculator";
 import { getMarketplaceHeaders } from "@/hooks/marketplace/api";
 import type { CartGroup, CartItem } from "@/hooks/useMarketplaceCart";
-import { useMarketplaceCart } from "@/hooks/useMarketplaceCart";
+import { CartProvider, useMarketplaceCart } from "@/hooks/useMarketplaceCart";
 import { toast } from "sonner";
 
 const BR_STATES = [
@@ -58,7 +58,7 @@ interface FreightOption {
   company?: { name: string; picture?: string };
 }
 
-export default function MarketplaceCheckoutPage() {
+function MarketplaceCheckoutPageInner() {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useClientSession();
@@ -881,5 +881,15 @@ export default function MarketplaceCheckoutPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function MarketplaceCheckoutPage() {
+  const { profile } = useClientSession();
+  const cpf = profile?.cpf || null;
+  return (
+    <CartProvider cpf={cpf}>
+      <MarketplaceCheckoutPageInner />
+    </CartProvider>
   );
 }
