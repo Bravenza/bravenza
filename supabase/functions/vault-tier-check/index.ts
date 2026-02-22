@@ -39,6 +39,14 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    const cronStartedAt = new Date().toISOString();
+    const { data: logEntry } = await supabase
+      .from("cron_execution_logs")
+      .insert({ job_name: "vault-tier-check", started_at: cronStartedAt, status: "running" })
+      .select("id")
+      .single();
+    const cronLogId = logEntry?.id || null;
+
     let body: TierCheckRequest = {};
     if (req.method === 'POST') {
       try {
@@ -160,6 +168,15 @@ Deno.serve(async (req) => {
 
     console.log(`Tier check complete: ${results.checked} checked, ${results.upgraded} upgraded`);
 
+    if (cronLogId) {
+      await supabase.from("cron_execution_logs").update({
+        status: "success",
+        finished_at: new Date().toISOString(),
+        duration_ms: Date.now() - new Date(cronStartedAt).getTime(),
+        result: { checked: results.checked, upgraded: results.upgraded, unchanged: results.unchanged },
+      }).eq("id", cronLogId);
+    }
+
     return new Response(
       JSON.stringify({ success: true, results }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -167,6 +184,16 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Tier check error:', error);
+
+    try {
+      const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+      await sb.from("cron_execution_logs").insert({
+        job_name: "vault-tier-check", status: "error",
+        error_message: error instanceof Error ? error.message : "Unknown",
+        finished_at: new Date().toISOString(),
+      });
+    } catch (_) {}
+
     return new Response(
       JSON.stringify({ error: 'Erro interno do servidor' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -7,8 +7,17 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const cronStartedAt = new Date().toISOString();
+  let cronLogId: string | null = null;
 
   try {
+    const { data: logEntry } = await sb
+      .from("cron_execution_logs")
+      .insert({ job_name: "mk-releases", started_at: cronStartedAt, status: "running" })
+      .select("id")
+      .single();
+    cronLogId = logEntry?.id || null;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -103,11 +112,30 @@ serve(async (req) => {
       ...r,
       image_url: r.image_url && r.image_url !== "null" && r.image_url !== "" ? r.image_url : null,
     }));
+    if (cronLogId) {
+      await sb.from("cron_execution_logs").update({
+        status: "success",
+        finished_at: new Date().toISOString(),
+        duration_ms: Date.now() - new Date(cronStartedAt).getTime(),
+        result: { releases_count: releases.length },
+      }).eq("id", cronLogId);
+    }
+
     return new Response(JSON.stringify({ releases }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("releases error:", e);
+
+    if (cronLogId) {
+      await sb.from("cron_execution_logs").update({
+        status: "error",
+        finished_at: new Date().toISOString(),
+        duration_ms: Date.now() - new Date(cronStartedAt).getTime(),
+        error_message: e instanceof Error ? e.message : "Unknown",
+      }).eq("id", cronLogId);
+    }
+
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error", releases: [] }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -44,6 +44,14 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    const cronStartedAt = new Date().toISOString();
+    const { data: logEntry } = await supabase
+      .from("cron_execution_logs")
+      .insert({ job_name: "vault-sla-monitor", started_at: cronStartedAt, status: "running" })
+      .select("id")
+      .single();
+    const cronLogId = logEntry?.id || null;
+
     const now = new Date();
     const violations: SLACheckResult[] = [];
     const warnings: SLACheckResult[] = [];
@@ -222,6 +230,15 @@ Deno.serve(async (req) => {
 
     console.log(`SLA Monitor: ${violations.length} violations, ${warnings.length} warnings`);
 
+    if (cronLogId) {
+      await supabase.from("cron_execution_logs").update({
+        status: "success",
+        finished_at: new Date().toISOString(),
+        duration_ms: Date.now() - new Date(cronStartedAt).getTime(),
+        result: { violations: violations.length, warnings: warnings.length, searches: activeSearches?.length || 0 },
+      }).eq("id", cronLogId);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -240,6 +257,16 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('SLA Monitor error:', error);
+
+    try {
+      const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+      await sb.from("cron_execution_logs").insert({
+        job_name: "vault-sla-monitor", status: "error",
+        error_message: error instanceof Error ? error.message : "Unknown",
+        finished_at: new Date().toISOString(),
+      });
+    } catch (_) {}
+
     return new Response(
       JSON.stringify({ error: 'Erro interno do servidor' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

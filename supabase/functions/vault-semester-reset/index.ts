@@ -22,6 +22,14 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    const cronStartedAt = new Date().toISOString();
+    const { data: logEntry } = await supabase
+      .from("cron_execution_logs")
+      .insert({ job_name: "vault-semester-reset", started_at: cronStartedAt, status: "running" })
+      .select("id")
+      .single();
+    const cronLogId = logEntry?.id || null;
+
     const now = new Date();
     const sixMonthsFromNow = new Date(now);
     sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
@@ -91,6 +99,15 @@ Deno.serve(async (req) => {
 
     console.log(`Semester reset complete: ${results.total_reset} members updated, ${expiredCount} invites expired`);
 
+    if (cronLogId) {
+      await supabase.from("cron_execution_logs").update({
+        status: "success",
+        finished_at: new Date().toISOString(),
+        duration_ms: Date.now() - new Date(cronStartedAt).getTime(),
+        result: { reset: results.total_reset, expired_invites: expiredCount },
+      }).eq("id", cronLogId);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -104,6 +121,16 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Semester reset error:', error);
+
+    try {
+      const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+      await sb.from("cron_execution_logs").insert({
+        job_name: "vault-semester-reset", status: "error",
+        error_message: error instanceof Error ? error.message : "Unknown",
+        finished_at: new Date().toISOString(),
+      });
+    } catch (_) {}
+
     return new Response(
       JSON.stringify({ error: 'Erro interno do servidor' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
