@@ -38,7 +38,7 @@ interface UnifiedCardFormProps {
   amount: number;
   /** Pre-filled email */
   email?: string;
-  /** Whether to show interest rates (Bravenza uses MP rates, Marketplace doesn't) */
+  /** Interest rate table keyed by installment count (e.g. MERCADO_PAGO_RATES) */
   interestRates?: Record<number, number>;
   /** Called whenever form data or validity changes */
   onDataChange?: (data: UnifiedCardFormData, isValid: boolean) => void;
@@ -166,11 +166,12 @@ export function UnifiedCardForm({
     onDataChange?.(next, Object.keys(errs).length === 0);
   };
 
-  // Build installment options
+  // Build installment options using the same formula as calculateCardTotal:
+  // total = amount / (1 - rate), which ensures correct interest calculation
   const installmentOptions: InstallmentOption[] = Array.from({ length: 12 }, (_, i) => {
     const n = i + 1;
     const rate = interestRates?.[n] ?? 0;
-    const total = amount * (1 + rate);
+    const total = rate > 0 ? amount / (1 - rate) : amount;
     const perInstallment = total / n;
     return {
       value: n,

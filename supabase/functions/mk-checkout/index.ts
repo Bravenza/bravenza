@@ -27,6 +27,19 @@ function calcProtectionEnd(): string {
   return d.toISOString();
 }
 
+/** Mercado Pago interest rates by installment count */
+const MP_RATES: Record<number, number> = {
+  1: 0, 2: 0.0964, 3: 0.1123, 4: 0.1136, 5: 0.1431, 6: 0.1432,
+  7: 0.1672, 8: 0.1673, 9: 0.1969, 10: 0.2065, 11: 0.2066, 12: 0.2211,
+};
+
+/** Calculate card total with interest: amount / (1 - rate), rounded to 2 decimals */
+function calcCardTotal(baseAmount: number, installments: number): number {
+  const rate = MP_RATES[installments] || 0;
+  if (rate === 0) return baseAmount;
+  return Math.round((baseAmount / (1 - rate)) * 100) / 100;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -137,9 +150,11 @@ Deno.serve(async (req) => {
       if (!card_token) return json({ error: "Token do cartão obrigatório" }, 400);
 
       const validInstallments = Math.min(Math.max(1, installments || 1), 12);
+      // Apply interest for card payments (same rates as Bravenza)
+      const cardTotalAmount = calcCardTotal(totalAmount, validInstallments);
 
       const cardPayload = {
-        transaction_amount: totalAmount,
+        transaction_amount: cardTotalAmount,
         token: card_token,
         description,
         installments: validInstallments,
@@ -160,7 +175,7 @@ Deno.serve(async (req) => {
         },
       };
 
-      console.log("[mk-checkout] Creating card payment:", order.order_code, totalAmount, `${validInstallments}x`);
+      console.log("[mk-checkout] Creating card payment:", order.order_code, `base=${totalAmount}`, `total=${cardTotalAmount}`, `${validInstallments}x`);
 
       const res = await fetch("https://api.mercadopago.com/v1/payments", {
         method: "POST",
@@ -210,7 +225,7 @@ Deno.serve(async (req) => {
         status_detail: paymentResult.status_detail,
         payment_id: paymentResult.id,
         installments: validInstallments,
-        total_amount: totalAmount,
+        total_amount: cardTotalAmount,
         split: {
           seller_payout: order.seller_payout,
           platform_fee: order.fee_amount,
