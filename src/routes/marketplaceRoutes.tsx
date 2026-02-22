@@ -11,6 +11,7 @@ const MarketplaceFeedPage = lazy(() => import("@/pages/marketplace/MarketplaceFe
 const MarketplaceMyStorePage = lazy(() => import("@/pages/marketplace/MarketplaceMyStorePage"));
 const MarketplacePlansPage = lazy(() => import("@/pages/marketplace/MarketplacePlansPage"));
 const MarketplaceFavoritesPage = lazy(() => import("@/pages/marketplace/MarketplaceFavoritesPage"));
+const MarketplaceProfilePage = lazy(() => import("@/pages/marketplace/MarketplaceProfilePage"));
 const ProductDetailPage = lazy(() => import("@/pages/marketplace/ProductDetailPage"));
 const SellerStorefrontPage = lazy(() => import("@/pages/marketplace/SellerStorefrontPage"));
 const DropsArticlePage = lazy(() => import("@/pages/drops/DropsArticlePage"));
@@ -27,6 +28,7 @@ export const marketplaceRoutes = (
       <Route path="planos" element={<MarketplacePlansPage />} />
       <Route path="drops" element={<MarketplaceDropsPage />} />
       <Route path="favoritos" element={<MarketplaceFavoritesPage />} />
+      <Route path="perfil" element={<MarketplaceProfilePage />} />
     </Route>
     <Route path="/marketplace/checkout" element={
       <ProtectedProviders><MarketplaceCheckoutPage /></ProtectedProviders>
