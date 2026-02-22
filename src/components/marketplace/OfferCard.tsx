@@ -100,7 +100,7 @@ export function OfferCard({ offer, isBest, productImages, onBuy, onClick, onAddT
         </div>
 
         {/* Price + CTA */}
-        <div className="flex items-end justify-between pt-2 border-t border-border/20">
+        <div className="pt-2 border-t border-border/20 space-y-3">
           <div>
             <p className="text-xl font-black text-foreground tracking-tight">
               R$ {offer.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
@@ -128,14 +128,14 @@ export function OfferCard({ offer, isBest, productImages, onBuy, onClick, onAddT
             <Button
               variant="outline"
               size="sm"
-              className="text-xs h-9 rounded-xl font-semibold border-border/40"
+              className="text-xs h-9 rounded-xl font-semibold border-border/40 flex-1"
               onClick={(e) => { e.stopPropagation(); onClick(); }}
             >
               Ver Oferta
             </Button>
             <Button
               size="sm"
-              className="btn-gold text-xs h-9 gap-1 rounded-xl font-bold"
+              className="btn-gold text-xs h-9 gap-1 rounded-xl font-bold flex-1"
               onClick={(e) => { e.stopPropagation(); onBuy(); }}
             >
               Comprar <ChevronRight className="h-3.5 w-3.5" />
