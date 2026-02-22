@@ -130,11 +130,11 @@ export function PriceComparator({
                   </td>
                   <td className="py-2.5 px-3 text-right">
                     <span className={cn("font-bold", isBest ? "text-emerald-600" : "text-foreground")}>
-                      R$ {stat.minPrice.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
+                      R$ {stat.minPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </td>
                   <td className="py-2.5 px-3 text-right text-muted-foreground hidden sm:table-cell">
-                    R$ {stat.avgPrice.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
+                    R$ {stat.avgPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
                   <td className="py-2.5 px-3 text-center">
                     <span className="text-muted-foreground">{stat.offersCount}</span>
