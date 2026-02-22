@@ -1,7 +1,8 @@
 import { memo } from "react";
 import { motion } from "framer-motion";
-import { Trophy } from "lucide-react";
+import { Trophy, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { PriceVariationBadge } from "@/components/marketplace/PriceVariationBadge";
 import type { CatalogProduct } from "@/hooks/useMarketplaceCatalog";
 
 interface Props {
@@ -71,10 +72,24 @@ export const BestSellersSection = memo(function BestSellersSection({ products }:
                 <p className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
                   {product.model}
                 </p>
-                {product.colorway && (
-                  <p className="text-[11px] text-muted-foreground truncate">{product.colorway}</p>
-                )}
+                <div className="flex items-center gap-2 mt-0.5">
+                  {product.colorway && (
+                    <p className="text-[11px] text-muted-foreground truncate">{product.colorway}</p>
+                  )}
+                  <PriceVariationBadge
+                    currentPrice={product.lowest_price}
+                    retailPrice={product.retail_price}
+                  />
+                </div>
               </div>
+
+              {/* Sales count */}
+              {product.total_offers > 0 && (
+                <div className="flex items-center gap-1 text-[10px] text-muted-foreground shrink-0">
+                  <ShoppingBag className="h-3 w-3" />
+                  <span className="font-semibold">{product.total_offers}</span>
+                </div>
+              )}
             </motion.button>
           ))}
         </div>

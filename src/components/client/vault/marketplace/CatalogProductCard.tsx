@@ -4,6 +4,7 @@ import { ShieldCheck, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatProductName } from "@/lib/text-utils";
+import { PriceVariationBadge } from "@/components/marketplace/PriceVariationBadge";
 import type { CatalogProduct } from "@/hooks/useMarketplaceCatalog";
 
 interface CatalogProductCardProps {
@@ -88,11 +89,17 @@ function CatalogProductCardComponent({ product, hidePrice }: CatalogProductCardP
         {!hidePrice && (
           <div className="pt-2 mt-auto border-t border-border/20">
             {product.lowest_price ? (
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-[10px] text-muted-foreground">a partir de</span>
-                <span className="text-lg font-black text-foreground tracking-tight">
-                  R$ {product.lowest_price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
+              <div className="space-y-1">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-[10px] text-muted-foreground">a partir de</span>
+                  <span className="text-lg font-black text-foreground tracking-tight">
+                    R$ {product.lowest_price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <PriceVariationBadge
+                  currentPrice={product.lowest_price}
+                  retailPrice={product.retail_price}
+                />
               </div>
             ) : (
               <span className="text-xs text-muted-foreground/60 italic">Sem ofertas</span>
