@@ -18,7 +18,7 @@ const PUBLIC_ACTIONS = new Set([
   "listings", "listing-detail", "seller-public-profile",
   "catalog-products", "catalog-product", "catalog-offers", "catalog-search",
   "activity-feed", "product-comments", "product-reviews", "product-analytics",
-  "freight-quote", "price-history", "recommendations",
+  "freight-quote", "price-history", "recommendations", "product-coupons",
 ]);
 
 Deno.serve(async (req) => {
@@ -898,6 +898,26 @@ Deno.serve(async (req) => {
       }
 
       return j({ success: true });
+    }
+
+    // ==================== PRODUCT COUPONS (public) ====================
+    if (mt === "GET" && a === "product-coupons") {
+      const pid = url.searchParams.get("product_id");
+      if (!pid) throw new Error("product_id obrigatório");
+      // Get all active sellers for this product
+      const { data: activeOffers } = await sb.from("marketplace_offers")
+        .select("seller_id").eq("product_id", pid).eq("status", "active");
+      const sellerIds = [...new Set((activeOffers || []).map((o: any) => o.seller_id))];
+      if (sellerIds.length === 0) return j({ coupons: [] });
+      // Get active coupons from those sellers
+      const { data: coupons } = await sb.from("marketplace_coupons")
+        .select("id, code, discount_type, discount_value, min_purchase, valid_until, seller_id")
+        .in("seller_id", sellerIds).eq("is_active", true)
+        .or(`valid_until.is.null,valid_until.gt.${new Date().toISOString()}`);
+      return j({ coupons: (coupons || []).map((c: any) => ({
+        code: c.code, discount_type: c.discount_type, discount_value: c.discount_value,
+        min_purchase: c.min_purchase, valid_until: c.valid_until,
+      })) });
     }
 
     return j({ error: "Ação não encontrada" }, 404);

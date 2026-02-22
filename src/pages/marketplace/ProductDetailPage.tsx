@@ -46,6 +46,8 @@ import { PriceSparkline } from "@/components/marketplace/PriceSparkline";
 import { SizePriceGrid } from "@/components/marketplace/SizePriceGrid";
 import { PriceComparator } from "@/components/marketplace/PriceComparator";
 import { RetailComparison } from "@/components/marketplace/RetailComparison";
+import { FloatingCouponBadge } from "@/components/marketplace/FloatingCouponBadge";
+import { NotifyMeSection } from "@/components/marketplace/NotifyMeSection";
 const SmartRecommendations = lazy(() => import("@/components/marketplace/SmartRecommendations").then(m => ({ default: m.SmartRecommendations })));
 const ProtectedPurchaseSection = lazy(() => import("@/components/marketplace/ProtectedPurchaseSection").then(m => ({ default: m.ProtectedPurchaseSection })));
 const RelatedProductsSection = lazy(() => import("@/components/marketplace/RelatedProductsSection").then(m => ({ default: m.RelatedProductsSection })));
@@ -389,10 +391,11 @@ function ProductDetailPageInner() {
                       displayPrice={displayPrice}
                       showPrefix={showPrefix}
                     />
-                     <RetailComparison
+                      <RetailComparison
                       currentPrice={displayPrice}
                       retailPrice={product.retail_price}
                     />
+                    <FloatingCouponBadge productId={product.id} />
                     <PriceSparkline
                       analytics={analytics}
                       isLoading={analyticsLoading}
@@ -444,6 +447,16 @@ function ProductDetailPageInner() {
               {filteredSizes.length === 0 && sizes.length > 0 && (
                 <p className="text-xs text-muted-foreground">Nenhum tamanho disponível para este filtro.</p>
               )}
+
+              {/* Notify Me for unavailable sizes */}
+              <NotifyMeSection
+                sizes={sizes}
+                availableSizes={filteredSizes}
+                isLoggedIn={!!cpf && cpf !== "visitor"}
+                onNotify={async (size) => {
+                  await toggleWatchlist(product.id, size);
+                }}
+              />
 
               {/* Actions */}
               <div className="flex items-center gap-2">
@@ -582,6 +595,18 @@ function ProductDetailPageInner() {
                   ? "Nenhuma oferta disponível. Seja o primeiro a vender!"
                   : `Nenhuma oferta para o tamanho ${selectedSize}.`}
               </p>
+              {selectedSize && cpf && cpf !== "visitor" && (
+                <div className="mt-4 flex justify-center">
+                  <ProductWatchlistButton
+                    isWatching={watchlistStatus.active}
+                    maxPrice={watchlistStatus.max_price}
+                    lowestPrice={product.lowest_price}
+                    onToggle={async (mp) => {
+                      await toggleWatchlist(product.id, selectedSize, mp);
+                    }}
+                  />
+                </div>
+              )}
             </div>
           ) : (
             <AnimatePresence mode="wait">
