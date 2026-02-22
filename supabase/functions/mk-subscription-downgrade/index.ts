@@ -16,6 +16,14 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
+    const cronStartedAt = new Date().toISOString();
+    const { data: logEntry } = await supabase
+      .from("cron_execution_logs")
+      .insert({ job_name: "mk-subscription-downgrade", started_at: cronStartedAt, status: "running" })
+      .select("id")
+      .single();
+    const cronLogId = logEntry?.id || null;
+
     const now = new Date().toISOString();
 
     // 1. Find subscriptions past their grace period that are still active
@@ -140,12 +148,31 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (cronLogId) {
+      await supabase.from("cron_execution_logs").update({
+        status: "success",
+        finished_at: new Date().toISOString(),
+        duration_ms: Date.now() - new Date(cronStartedAt).getTime(),
+        result: { processed: processedCount, past_due: pastDueSubs?.length || 0 },
+      }).eq("id", cronLogId);
+    }
+
     return new Response(
       JSON.stringify({ message: "Downgrade check complete", processed: processedCount }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
     console.error("mk-subscription-downgrade error:", error);
+
+    // Try to log error
+    try {
+      const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      await supabase.from("cron_execution_logs").insert({
+        job_name: "mk-subscription-downgrade", status: "error", error_message: error.message,
+        finished_at: new Date().toISOString(),
+      });
+    } catch (_) {}
+
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

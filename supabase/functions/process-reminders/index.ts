@@ -16,6 +16,14 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    const cronStartedAt = new Date().toISOString();
+    const { data: logEntry } = await supabase
+      .from("cron_execution_logs")
+      .insert({ job_name: "process-reminders", started_at: cronStartedAt, status: "running" })
+      .select("id")
+      .single();
+    const cronLogId = logEntry?.id || null;
+
     console.log("Processing pending reminders...");
 
     // Get pending reminders that are due
@@ -400,6 +408,15 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (cronLogId) {
+      await supabase.from("cron_execution_logs").update({
+        status: "success",
+        finished_at: new Date().toISOString(),
+        duration_ms: Date.now() - new Date(cronStartedAt).getTime(),
+        result: { processed: results.length },
+      }).eq("id", cronLogId);
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -411,6 +428,16 @@ Deno.serve(async (req) => {
 
   } catch (error: any) {
     console.error("Process reminders error:", error);
+
+    try {
+      const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      await sb.from("cron_execution_logs").insert({
+        job_name: "process-reminders", status: "error",
+        error_message: error.message,
+        finished_at: new Date().toISOString(),
+      });
+    } catch (_) {}
+
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

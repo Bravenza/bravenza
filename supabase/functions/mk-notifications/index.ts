@@ -52,9 +52,17 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  const results: Record<string, any> = {};
+  const cronStartedAt = new Date().toISOString();
+  let cronLogId: string | null = null;
 
   try {
+    // Log execution start
+    const { data: logEntry } = await sb
+      .from("cron_execution_logs")
+      .insert({ job_name: "mk-notifications", started_at: cronStartedAt, status: "running" })
+      .select("id")
+      .single();
+    cronLogId = logEntry?.id || null;
     // ===== 1. WATCHLIST ALERTS =====
     // Check new offers matching watchlist entries
     console.log("[mk-notifications] Checking watchlist alerts...");
@@ -423,11 +431,31 @@ Deno.serve(async (req) => {
     results.review_requests = reviewRequests;
 
     console.log("[mk-notifications] Done:", JSON.stringify(results));
+
+    if (cronLogId) {
+      await sb.from("cron_execution_logs").update({
+        status: "success",
+        finished_at: new Date().toISOString(),
+        duration_ms: Date.now() - new Date(cronStartedAt).getTime(),
+        result: results,
+      }).eq("id", cronLogId);
+    }
+
     return new Response(JSON.stringify({ success: true, ...results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
     console.error("[mk-notifications] Error:", err);
+
+    if (cronLogId) {
+      await sb.from("cron_execution_logs").update({
+        status: "error",
+        finished_at: new Date().toISOString(),
+        duration_ms: Date.now() - new Date(cronStartedAt).getTime(),
+        error_message: err.message,
+      }).eq("id", cronLogId);
+    }
+
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
