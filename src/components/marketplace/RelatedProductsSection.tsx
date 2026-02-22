@@ -2,6 +2,7 @@ import { memo, useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { CatalogProductCard } from "@/components/client/vault/marketplace/CatalogProductCard";
+import { ProductCarousel } from "@/components/marketplace/ProductCarousel";
 import type { CatalogProduct } from "@/hooks/useMarketplaceCatalog";
 
 interface Props {
@@ -41,7 +42,7 @@ export const RelatedProductsSection = memo(function RelatedProductsSection({ cur
         <Sparkles className="h-5 w-5 text-primary" />
         <h3 className="text-base font-bold text-foreground tracking-tight">Relacionados</h3>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      <ProductCarousel>
         {products.map((product, i) => (
           <motion.div
             key={product.id}
@@ -49,11 +50,12 @@ export const RelatedProductsSection = memo(function RelatedProductsSection({ cur
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: i * 0.04 }}
+            className="min-w-[180px] w-[180px] sm:min-w-[200px] sm:w-[200px] snap-start flex-shrink-0"
           >
             <CatalogProductCard product={product} hidePrice />
           </motion.div>
         ))}
-      </div>
+      </ProductCarousel>
     </section>
   );
 });

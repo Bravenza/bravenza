@@ -4,6 +4,7 @@ import { Sparkles, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { marketplaceRequest } from "@/hooks/marketplace/api";
 import { CatalogProductCard } from "@/components/client/vault/marketplace/CatalogProductCard";
+import { ProductCarousel } from "@/components/marketplace/ProductCarousel";
 
 interface RecommendedProduct {
   id: string;
@@ -46,55 +47,33 @@ export function SmartRecommendations({ productId, cpf, className }: SmartRecomme
 
   if (loading || (similar.length === 0 && alsoBought.length === 0)) return null;
 
+  const CarouselRow = ({ items, icon: Icon, title }: { items: RecommendedProduct[]; icon: typeof Sparkles; title: string }) => (
+    <section>
+      <div className="flex items-center gap-2 mb-6">
+        <Icon className="h-5 w-5 text-primary" />
+        <h3 className="text-base font-bold text-foreground tracking-tight">{title}</h3>
+      </div>
+      <ProductCarousel>
+        {items.map((p, i) => (
+          <motion.div
+            key={p.id}
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.04 }}
+            className="min-w-[180px] w-[180px] sm:min-w-[200px] sm:w-[200px] snap-start flex-shrink-0"
+          >
+            <CatalogProductCard product={p as any} hidePrice />
+          </motion.div>
+        ))}
+      </ProductCarousel>
+    </section>
+  );
+
   return (
     <div className={cn("space-y-14", className)}>
-      {alsoBought.length > 0 && (
-        <section>
-          <div className="flex items-center gap-2 mb-6">
-            <ShoppingBag className="h-5 w-5 text-primary" />
-            <h3 className="text-base font-bold text-foreground tracking-tight">
-              Quem comprou também levou
-            </h3>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {alsoBought.map((p, i) => (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.04 }}
-              >
-                <CatalogProductCard product={p as any} hidePrice />
-              </motion.div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {similar.length > 0 && (
-        <section>
-          <div className="flex items-center gap-2 mb-6">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <h3 className="text-base font-bold text-foreground tracking-tight">
-              Modelos similares
-            </h3>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {similar.map((p, i) => (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.04 }}
-              >
-                <CatalogProductCard product={p as any} hidePrice />
-              </motion.div>
-            ))}
-          </div>
-        </section>
-      )}
+      {alsoBought.length > 0 && <CarouselRow items={alsoBought} icon={ShoppingBag} title="Quem comprou também levou" />}
+      {similar.length > 0 && <CarouselRow items={similar} icon={Sparkles} title="Modelos similares" />}
     </div>
   );
 }
