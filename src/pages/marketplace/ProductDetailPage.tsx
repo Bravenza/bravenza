@@ -38,7 +38,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-// Lazy-load below-fold heavy components (recharts ~200KB, recommendations, etc.)
+const Footer = lazy(() => import("@/components/home/Footer").then(m => ({ default: m.Footer })));
 const ProductAnalyticsChart = lazy(() => import("@/components/marketplace/ProductAnalyticsChart").then(m => ({ default: m.ProductAnalyticsChart })));
 const ProductReviews = lazy(() => import("@/components/marketplace/ProductReviews").then(m => ({ default: m.ProductReviews })));
 const PriceHistoryChart = lazy(() => import("@/components/marketplace/PriceHistoryChart").then(m => ({ default: m.PriceHistoryChart })));
@@ -711,6 +711,12 @@ function ProductDetailPageInner() {
           if (sortedOffers.length > 0) handleBuyOffer(sortedOffers[0]);
         }}
       />
+      {/* Footer */}
+      <div className="pb-20 md:pb-0">
+        <Suspense fallback={null}>
+          <Footer />
+        </Suspense>
+      </div>
     </div>
   );
 }
