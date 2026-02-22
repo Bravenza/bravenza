@@ -192,12 +192,17 @@ export function MarketplaceCheckoutDialog({
       const parsed = await res.json();
       if (parsed.error) throw new Error(parsed.error);
       const opts = (parsed.quotes || []).filter((q: any) => q.price && !q.error);
-      if (opts.length === 0) {
+      const HUB_SURCHARGE = 30;
+      const pacSedexOnly = opts.filter((q: any) => /pac|sedex/i.test(q.name || q.company?.name || ""));
+      const withSurcharge = (pacSedexOnly.length > 0 ? pacSedexOnly : opts).map((q: any) => ({
+        ...q,
+        price: String((parseFloat(q.price) + HUB_SURCHARGE).toFixed(2)),
+      }));
+      if (withSurcharge.length === 0) {
         setFreightError("Nenhuma opção de frete disponível para este CEP.");
       } else {
-        setFreightOptions(opts);
-        // Auto-select cheapest
-        const cheapest = opts.reduce((a: FreightOption, b: FreightOption) =>
+        setFreightOptions(withSurcharge);
+        const cheapest = withSurcharge.reduce((a: FreightOption, b: FreightOption) =>
           parseFloat(a.price) < parseFloat(b.price) ? a : b
         );
         setSelectedFreight(cheapest);

@@ -43,6 +43,9 @@ const conditionLabel: Record<string, string> = {
 
 type Step = "review" | "address" | "freight" | "payment" | "processing" | "success";
 
+// R$30 hub surcharge added to each freight option to cover HUB logistics costs
+const HUB_FREIGHT_SURCHARGE = 30;
+
 const STEPS: { key: Step; label: string; icon: typeof ShoppingCart }[] = [
   { key: "review", label: "Resumo", icon: ShoppingCart },
   { key: "address", label: "Endereço", icon: MapPin },
@@ -179,11 +182,17 @@ function MarketplaceCheckoutPageInner() {
       const parsed = await res.json();
       if (parsed.error) throw new Error(parsed.error);
       const opts = (parsed.quotes || []).filter((q: any) => q.price && !q.error);
-      if (opts.length === 0) {
+      // Filter to only PAC and SEDEX, add hub surcharge
+      const pacSedexOnly = opts.filter((q: any) => /pac|sedex/i.test(q.name || q.company?.name || ""));
+      const withSurcharge = (pacSedexOnly.length > 0 ? pacSedexOnly : opts).map((q: any) => ({
+        ...q,
+        price: String((parseFloat(q.price) + HUB_FREIGHT_SURCHARGE).toFixed(2)),
+      }));
+      if (withSurcharge.length === 0) {
         setFreightError("Nenhuma opção de frete disponível para este CEP.");
       } else {
-        setFreightOptions(opts);
-        const cheapest = opts.reduce((a: FreightOption, b: FreightOption) =>
+        setFreightOptions(withSurcharge);
+        const cheapest = withSurcharge.reduce((a: FreightOption, b: FreightOption) =>
           parseFloat(a.price) < parseFloat(b.price) ? a : b
         );
         setSelectedFreight(cheapest);
