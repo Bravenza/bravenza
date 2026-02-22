@@ -391,7 +391,13 @@ Deno.serve(async (req) => {
       else throw new Error("id ou slug obrigatório");
       const { data, error } = await q.single();
       if (error) throw error;
-      return j({ product: data });
+      // Also fetch all active offers for this product
+      const { data: offersData } = await sb.from("marketplace_offers").select(
+        `*, seller:vault_seller_profiles!inner(id, plan_id, verified_badge, average_rating, total_sales_count, current_fee_percent, member:vault_members!inner(client_name, tier))`
+      ).eq("product_id", data.id).eq("status", "active").order("price", { ascending: true });
+      const offers = offersData || [];
+      const sizes = [...new Set(offers.map((o: any) => o.size))].sort();
+      return j({ product: data, offers, sizes });
     }
 
     if (mt === "GET" && a === "catalog-offers") {
