@@ -442,7 +442,7 @@ function ProductDetailPageInner() {
               {/* Size Guide */}
               <div className="flex items-center justify-between">
                 <span className="text-sm font-bold text-foreground">Selecione o tamanho</span>
-                <SizeGuideDialog />
+                <SizeGuideDialog brand={product.brand} />
               </div>
 
               {/* Size + Price Grid */}
