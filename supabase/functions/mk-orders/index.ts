@@ -64,8 +64,8 @@ Deno.serve(async (req) => {
       if (!li) throw new Error("Anúncio não encontrado ou já vendido");
       if (li.seller?.member?.client_cpf === cpf) throw new Error("Não pode comprar próprio anúncio");
       const fp = li.seller?.current_fee_percent || 14;
-      const fa = Math.round(li.price * fp) / 100;
-      const sp = li.price - fa;
+      const fa = Math.round(li.price * fp / 100 * 100) / 100;
+      const sp = Math.round((li.price - fa) * 100) / 100;
       const oc = gc();
       const shippingCost = b.shipping_cost || li.shipping_cost_estimate || 0;
       const reqAuth = li.price >= 2000 || b.requires_authentication === true;
