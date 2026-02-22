@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ShoppingCart, ShieldCheck, Truck, CreditCard, Loader2, MapPin, Package, ChevronRight, ArrowLeft, Clock, AlertCircle, Copy, CheckCircle2 } from "lucide-react";
+import { MarketplaceCardForm, tokenizeCard, type CardFormData } from "./MarketplaceCardForm";
 import {
   Dialog,
   DialogContent,
@@ -86,6 +87,8 @@ export function MarketplaceCheckoutDialog({
     error?: string;
   } | null>(null);
   const [pixCopied, setPixCopied] = useState(false);
+  const [cardFormData, setCardFormData] = useState<CardFormData | null>(null);
+  const [isCardValid, setIsCardValid] = useState(false);
   const [chosenMode, setChosenMode] = useState<"direct" | "bravenza">("direct");
   const [form, setForm] = useState({
     buyer_name: buyerDefaults?.name || "",
@@ -255,6 +258,24 @@ export function MarketplaceCheckoutDialog({
         payment_method: form.payment_method,
         payer_email: form.buyer_email,
       };
+
+      // If card, tokenize first
+      if (form.payment_method === "card" && cardFormData) {
+        try {
+          const cardToken = await tokenizeCard(cardFormData);
+          checkoutBody.card_token = cardToken;
+          checkoutBody.installments = cardFormData.installments;
+          checkoutBody.payer_email = cardFormData.email || form.buyer_email;
+          checkoutBody.payer_identification = {
+            type: "CPF",
+            number: cardFormData.identificationNumber.replace(/\D/g, ""),
+          };
+        } catch (tokenErr: any) {
+          setPaymentResult({ status: "error", error: tokenErr.message || "Erro ao processar cartão" });
+          setIsSubmitting(false);
+          return;
+        }
+      }
 
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const headers = await getMarketplaceHeaders();
@@ -682,6 +703,18 @@ export function MarketplaceCheckoutDialog({
               </div>
             </div>
 
+            {/* Card form (conditional) */}
+            {form.payment_method === "card" && (
+              <MarketplaceCardForm
+                totalAmount={totalPrice}
+                buyerEmail={form.buyer_email}
+                onDataChange={(data, valid) => {
+                  setCardFormData(data);
+                  setIsCardValid(valid);
+                }}
+              />
+            )}
+
             {/* Delivery summary */}
             <div className="p-3 bg-muted/30 border border-border/30 rounded-lg text-xs space-y-1">
               <p className="font-medium text-foreground text-sm mb-1.5">📍 Entrega</p>
@@ -704,7 +737,7 @@ export function MarketplaceCheckoutDialog({
               </Button>
               <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting}
+                disabled={isSubmitting || (form.payment_method === "card" && !isCardValid)}
                 className="flex-1 btn-gold gap-2"
                 size="lg"
               >
