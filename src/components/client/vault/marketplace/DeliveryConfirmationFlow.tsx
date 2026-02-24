@@ -410,7 +410,7 @@ export function DeliveryConfirmationFlow({
                   </div>
 
                   {/* Photo Upload */}
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div>
                       <p className="text-sm font-semibold">
                         Foto do produto <span className="text-muted-foreground font-normal text-xs">(Opcional)</span>
@@ -453,7 +453,7 @@ export function DeliveryConfirmationFlow({
                   </div>
 
                   {/* Comment */}
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div>
                       <p className="text-sm font-semibold">
                         O que você achou? <span className="text-muted-foreground font-normal text-xs">(Opcional)</span>
@@ -527,7 +527,7 @@ export function DeliveryConfirmationFlow({
                   </div>
 
                   {/* Comment */}
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div>
                       <p className="text-sm font-semibold">
                         O que achou do vendedor? <span className="text-muted-foreground font-normal text-xs">(Opcional)</span>
