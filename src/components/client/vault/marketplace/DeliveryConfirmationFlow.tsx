@@ -258,7 +258,7 @@ export function DeliveryConfirmationFlow({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="w-full max-w-md bg-card border border-border/50 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+          className="w-full max-w-lg bg-card border border-border/50 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
         >
           {/* Progress Bar */}
           {step !== "success" && (
