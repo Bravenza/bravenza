@@ -310,21 +310,21 @@ export function DeliveryConfirmationFlow({
                       onChange={() => setChecks((p) => ({ ...p, arrived: !p.arrived }))}
                       icon={Package}
                       title="O produto chegou"
-                      description="A embalagem está intacta e o produto está dentro"
+                      description="Recebi o sneaker, a embalagem está intacta e todos os itens estão dentro (caixa, acessórios, etc.)"
                     />
                     <CheckItem
                       checked={checks.asDescribed}
                       onChange={() => setChecks((p) => ({ ...p, asDescribed: !p.asDescribed }))}
                       icon={Eye}
                       title="Está como descrito"
-                      description="Corresponde às fotos, cor, modelo e condição do anúncio"
+                      description="O sneaker corresponde às fotos do anúncio, incluindo cor, modelo, condição e materiais informados"
                     />
                     <CheckItem
                       checked={checks.sizeCorrect}
                       onChange={() => setChecks((p) => ({ ...p, sizeCorrect: !p.sizeCorrect }))}
                       icon={Ruler}
                       title="O tamanho está correto"
-                      description="Experimente com cuidado, sem danificar o produto"
+                      description="Experimente em superfície limpa, sem dobrar o calcanhar e sem remover etiquetas. Evite uso externo antes de confirmar"
                     />
                   </div>
 
