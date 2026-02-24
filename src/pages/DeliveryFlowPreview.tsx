@@ -28,10 +28,12 @@ export default function DeliveryFlowPreview() {
       {showFlow && (
         <DeliveryConfirmationFlow
           orderId="preview-123"
-          orderCode="BVZ-PREVIEW"
+          orderCode="BVZ-2024-1847"
           productName="Nike Air Jordan 1 Retro High OG 'Chicago'"
           productImage="https://images.unsplash.com/photo-1600269452121-4f2416e55c28?w=200&h=200&fit=crop"
           sellerName="SneakerKing_BR"
+          productSize="42 BR"
+          productCondition="Novo com caixa"
           onConfirmDelivery={async () => {
             await new Promise((r) => setTimeout(r, 800));
             return true;

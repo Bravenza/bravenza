@@ -13,8 +13,6 @@ import {
   ArrowLeft,
   ShoppingBag,
   X,
-  Upload,
-  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +25,8 @@ interface DeliveryConfirmationFlowProps {
   productName: string;
   productImage?: string;
   sellerName: string;
+  productSize?: string;
+  productCondition?: string;
   onConfirmDelivery: () => Promise<boolean>;
   onSubmitReview: (data: {
     productRating: number;
@@ -54,6 +54,8 @@ export function DeliveryConfirmationFlow({
   productName,
   productImage,
   sellerName,
+  productSize,
+  productCondition,
   onConfirmDelivery,
   onSubmitReview,
   onClose,
@@ -62,14 +64,12 @@ export function DeliveryConfirmationFlow({
   const [step, setStep] = useState<FlowStep>("confirm");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Confirmation checklist
   const [checks, setChecks] = useState({
     arrived: false,
     asDescribed: false,
     sizeCorrect: false,
   });
 
-  // Product review
   const [productRating, setProductRating] = useState(0);
   const [productHover, setProductHover] = useState(0);
   const [productComment, setProductComment] = useState("");
@@ -77,7 +77,6 @@ export function DeliveryConfirmationFlow({
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Seller review
   const [sellerRating, setSellerRating] = useState(0);
   const [sellerHover, setSellerHover] = useState(0);
   const [sellerComment, setSellerComment] = useState("");
@@ -137,7 +136,7 @@ export function DeliveryConfirmationFlow({
     onHover: (v: number) => void;
     size?: "lg" | "md";
   }) => (
-    <div className="flex justify-center gap-1.5">
+    <div className="flex justify-center gap-2">
       {[1, 2, 3, 4, 5].map((star) => (
         <button
           key={star}
@@ -145,15 +144,15 @@ export function DeliveryConfirmationFlow({
           onClick={() => onChange(star)}
           onMouseEnter={() => onHover(star)}
           onMouseLeave={() => onHover(0)}
-          className="p-0.5 transition-transform hover:scale-110 active:scale-95"
+          className="p-1 transition-transform hover:scale-110 active:scale-95"
         >
           <Star
             className={cn(
               "transition-all duration-200",
-              size === "lg" ? "h-9 w-9" : "h-7 w-7",
+              size === "lg" ? "h-10 w-10" : "h-8 w-8",
               star <= (hover || value)
-                ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.4)]"
-                : "text-muted-foreground/20"
+                ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]"
+                : "text-muted-foreground/25"
             )}
           />
         </button>
@@ -177,33 +176,72 @@ export function DeliveryConfirmationFlow({
     <button
       onClick={onChange}
       className={cn(
-        "w-full flex items-start gap-4 p-4 rounded-2xl border-2 transition-all duration-300 text-left",
+        "w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all duration-300 text-left",
         checked
           ? "border-primary/50 bg-primary/5"
-          : "border-border/50 bg-card hover:border-border"
+          : "border-border/40 bg-card hover:border-border"
       )}
     >
       <div
         className={cn(
-          "mt-0.5 h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 shrink-0",
+          "h-7 w-7 rounded-full border-2 flex items-center justify-center transition-all duration-300 shrink-0",
           checked
             ? "border-primary bg-primary"
-            : "border-muted-foreground/30"
+            : "border-muted-foreground/25"
         )}
       >
         {checked && <CheckCircle2 className="h-4 w-4 text-primary-foreground" />}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <Icon className={cn("h-4 w-4 shrink-0", checked ? "text-primary" : "text-muted-foreground")} />
-          <p className={cn("font-medium text-sm", checked ? "text-foreground" : "text-muted-foreground")}>{title}</p>
+        <div className="flex items-center gap-2 mb-0.5">
+          <Icon className={cn("h-4 w-4 shrink-0", checked ? "text-primary" : "text-muted-foreground/60")} />
+          <p className={cn("font-semibold text-sm leading-tight", checked ? "text-foreground" : "text-foreground/80")}>{title}</p>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+        <p className="text-xs text-muted-foreground leading-relaxed pl-6">{description}</p>
       </div>
     </button>
   );
 
-  // Progress bar
+  /* Product Info Card — shown at top of confirm + review steps */
+  const ProductInfoCard = ({ compact = false }: { compact?: boolean }) => (
+    <div className={cn(
+      "flex items-center gap-3 rounded-2xl border border-border/40 bg-muted/30 p-3",
+      compact && "p-2.5"
+    )}>
+      {productImage && (
+        <div className={cn(
+          "rounded-xl overflow-hidden border border-border/30 shrink-0 bg-white",
+          compact ? "w-14 h-14" : "w-16 h-16"
+        )}>
+          <img src={productImage} alt={productName} className="w-full h-full object-contain" />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className={cn(
+          "font-semibold text-foreground leading-tight truncate",
+          compact ? "text-xs" : "text-sm"
+        )}>
+          {productName}
+        </p>
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
+          {productSize && (
+            <span className="text-[11px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md font-medium">
+              Tam. {productSize}
+            </span>
+          )}
+          {productCondition && (
+            <span className="text-[11px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md font-medium">
+              {productCondition}
+            </span>
+          )}
+        </div>
+        <p className="text-[11px] text-muted-foreground mt-0.5">
+          Pedido #{orderCode}
+        </p>
+      </div>
+    </div>
+  );
+
   const progressWidth = `${(STEP_PROGRESS[step] / 3) * 100}%`;
 
   return (
@@ -220,30 +258,30 @@ export function DeliveryConfirmationFlow({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="w-full max-w-md bg-card border border-border/50 rounded-3xl shadow-2xl overflow-hidden"
+          className="w-full max-w-md bg-card border border-border/50 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
         >
           {/* Progress Bar */}
           {step !== "success" && (
-            <div className="h-1 bg-muted/50">
+            <div className="h-1 bg-muted/30">
               <motion.div
-                className="h-full bg-gradient-to-r from-primary to-primary/70"
+                className="h-full bg-gradient-to-r from-primary to-primary/60"
                 initial={{ width: 0 }}
                 animate={{ width: progressWidth }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
               />
             </div>
           )}
 
-          {/* Close Button */}
+          {/* Header with close */}
           {step !== "success" && (
-            <div className="flex justify-end p-3 pb-0">
-              <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted/50 transition-colors">
+            <div className="flex justify-end px-5 pt-4">
+              <button onClick={onClose} className="p-2 rounded-full hover:bg-muted/50 transition-colors">
                 <X className="h-4 w-4 text-muted-foreground" />
               </button>
             </div>
           )}
 
-          <div className="px-6 pb-6">
+          <div className={cn("px-6 pb-7", step === "success" ? "pt-2" : "pt-1")}>
             <AnimatePresence mode="wait">
               {/* ====== STEP: CONFIRM DELIVERY ====== */}
               {step === "confirm" && (
@@ -252,23 +290,21 @@ export function DeliveryConfirmationFlow({
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="space-y-5 pt-2"
+                  className="space-y-5"
                 >
-                  {/* Product preview */}
-                  <div className="text-center">
-                    {productImage && (
-                      <div className="w-20 h-20 mx-auto rounded-2xl overflow-hidden border border-border/30 mb-3">
-                        <img src={productImage} alt={productName} className="w-full h-full object-cover" />
-                      </div>
-                    )}
+                  {/* Title */}
+                  <div className="text-center space-y-1">
                     <h2 className="text-lg font-bold tracking-tight">Tudo certo com seu pedido?</h2>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm text-muted-foreground">
                       Antes de confirmar, verifique os itens abaixo
                     </p>
                   </div>
 
+                  {/* Product Card */}
+                  <ProductInfoCard />
+
                   {/* Checklist */}
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     <CheckItem
                       checked={checks.arrived}
                       onChange={() => setChecks((p) => ({ ...p, arrived: !p.arrived }))}
@@ -293,7 +329,7 @@ export function DeliveryConfirmationFlow({
                   </div>
 
                   {/* Actions */}
-                  <div className="space-y-2 pt-1">
+                  <div className="space-y-3 pt-2">
                     <Button
                       onClick={handleConfirmDelivery}
                       disabled={!allChecked || isSubmitting}
@@ -310,7 +346,7 @@ export function DeliveryConfirmationFlow({
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
-                        className="flex-1 h-10 rounded-xl text-xs"
+                        className="flex-1 h-11 rounded-xl text-xs"
                         onClick={onContactSupport}
                       >
                         <MessageCircle className="h-3.5 w-3.5 mr-1.5" />
@@ -318,9 +354,8 @@ export function DeliveryConfirmationFlow({
                       </Button>
                       <Button
                         variant="ghost"
-                        className="flex-1 h-10 rounded-xl text-xs text-muted-foreground"
+                        className="flex-1 h-11 rounded-xl text-xs text-muted-foreground"
                         onClick={() => {
-                          // Open FAQ/help
                           window.open("https://wa.me/5511999999999?text=Preciso%20de%20ajuda%20com%20meu%20pedido%20" + orderCode, "_blank");
                         }}
                       >
@@ -339,43 +374,51 @@ export function DeliveryConfirmationFlow({
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="space-y-5 pt-2"
+                  className="space-y-5"
                 >
-                  <div className="text-center">
-                    <Badge variant="outline" className="text-xs mb-3">Passo 1 de 2</Badge>
-                    <h2 className="text-lg font-bold tracking-tight">Avaliação do produto</h2>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Quantas estrelas esse produto merece?
+                  {/* Header */}
+                  <div className="text-center space-y-2">
+                    <Badge variant="outline" className="text-[11px] font-medium px-3 py-1">Passo 1 de 2</Badge>
+                    <h2 className="text-lg font-bold tracking-tight">Avaliação do sneaker</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Quantas estrelas esse sneaker merece?
                     </p>
                   </div>
 
+                  {/* Product Card */}
+                  <ProductInfoCard compact />
+
                   {/* Stars */}
-                  <div className="text-center py-2">
+                  <div className="text-center py-1">
                     <RatingStars
                       value={productRating}
                       hover={productHover}
                       onChange={setProductRating}
                       onHover={setProductHover}
                     />
-                    {productRating > 0 && (
-                      <motion.p
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-sm text-primary font-medium mt-2"
-                      >
-                        {ratingLabel(productRating)}
-                      </motion.p>
-                    )}
+                    <div className="h-6 mt-1.5">
+                      {productRating > 0 && (
+                        <motion.p
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-sm text-primary font-semibold"
+                        >
+                          {ratingLabel(productRating)}
+                        </motion.p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Photo Upload */}
-                  <div>
-                    <p className="text-sm font-medium mb-2">
-                      Foto do produto <span className="text-muted-foreground font-normal">(Opcional)</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Escolha uma imagem bem iluminada e com alta definição para ajudar outros compradores
-                    </p>
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-sm font-semibold">
+                        Foto do produto <span className="text-muted-foreground font-normal text-xs">(Opcional)</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                        Escolha uma imagem bem iluminada para ajudar outros compradores
+                      </p>
+                    </div>
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -384,7 +427,7 @@ export function DeliveryConfirmationFlow({
                       className="hidden"
                     />
                     {photoPreview ? (
-                      <div className="relative w-full h-32 rounded-2xl overflow-hidden border border-border/30">
+                      <div className="relative w-full h-36 rounded-2xl overflow-hidden border border-border/30">
                         <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
                         <button
                           onClick={() => {
@@ -399,9 +442,9 @@ export function DeliveryConfirmationFlow({
                     ) : (
                       <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-full h-28 rounded-2xl border-2 border-dashed border-border/50 hover:border-primary/30 flex flex-col items-center justify-center gap-2 transition-colors"
+                        className="w-full h-24 rounded-2xl border-2 border-dashed border-border/40 hover:border-primary/30 flex flex-col items-center justify-center gap-2 transition-colors"
                       >
-                        <div className="p-2.5 rounded-xl bg-muted/50">
+                        <div className="p-2.5 rounded-xl bg-muted/40">
                           <Camera className="h-5 w-5 text-muted-foreground" />
                         </div>
                         <span className="text-xs text-muted-foreground">Toque para adicionar foto</span>
@@ -410,21 +453,23 @@ export function DeliveryConfirmationFlow({
                   </div>
 
                   {/* Comment */}
-                  <div>
-                    <p className="text-sm font-medium mb-1.5">
-                      O que você achou? <span className="text-muted-foreground font-normal">(Opcional)</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      Escreva sobre materiais, design, conforto, etc.
-                    </p>
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-sm font-semibold">
+                        O que você achou? <span className="text-muted-foreground font-normal text-xs">(Opcional)</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                        Escreva sobre materiais, design, conforto, etc.
+                      </p>
+                    </div>
                     <Textarea
                       value={productComment}
                       onChange={(e) => setProductComment(e.target.value.slice(0, 200))}
                       placeholder="Excelente qualidade, material premium..."
                       rows={3}
-                      className="rounded-xl resize-none"
+                      className="rounded-xl resize-none text-sm"
                     />
-                    <p className="text-xs text-muted-foreground text-right mt-1">{productComment.length}/200</p>
+                    <p className="text-[11px] text-muted-foreground text-right">{productComment.length}/200</p>
                   </div>
 
                   {/* Next */}
@@ -446,58 +491,63 @@ export function DeliveryConfirmationFlow({
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="space-y-5 pt-2"
+                  className="space-y-5"
                 >
-                  <div className="text-center">
-                    <Badge variant="outline" className="text-xs mb-3">Passo 2 de 2</Badge>
+                  {/* Header */}
+                  <div className="text-center space-y-2">
+                    <Badge variant="outline" className="text-[11px] font-medium px-3 py-1">Passo 2 de 2</Badge>
                     <h2 className="text-lg font-bold tracking-tight">Avalie o vendedor</h2>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      <span className="font-medium text-foreground">{sellerName}</span>
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-semibold text-foreground">{sellerName}</span>
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground leading-relaxed">
                       Quanto mais estrelas, maior sua satisfação com o atendimento
                     </p>
                   </div>
 
                   {/* Stars */}
-                  <div className="text-center py-2">
+                  <div className="text-center py-1">
                     <RatingStars
                       value={sellerRating}
                       hover={sellerHover}
                       onChange={setSellerRating}
                       onHover={setSellerHover}
                     />
-                    {sellerRating > 0 && (
-                      <motion.p
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-sm text-primary font-medium mt-2"
-                      >
-                        {ratingLabel(sellerRating)}
-                      </motion.p>
-                    )}
+                    <div className="h-6 mt-1.5">
+                      {sellerRating > 0 && (
+                        <motion.p
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-sm text-primary font-semibold"
+                        >
+                          {ratingLabel(sellerRating)}
+                        </motion.p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Comment */}
-                  <div>
-                    <p className="text-sm font-medium mb-1.5">
-                      O que achou do vendedor? <span className="text-muted-foreground font-normal">(Opcional)</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      Atendimento, velocidade de entrega, comunicação, etc.
-                    </p>
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-sm font-semibold">
+                        O que achou do vendedor? <span className="text-muted-foreground font-normal text-xs">(Opcional)</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                        Atendimento, velocidade de entrega, comunicação, etc.
+                      </p>
+                    </div>
                     <Textarea
                       value={sellerComment}
                       onChange={(e) => setSellerComment(e.target.value.slice(0, 200))}
                       placeholder="Vendedor atencioso, envio rápido..."
                       rows={3}
-                      className="rounded-xl resize-none"
+                      className="rounded-xl resize-none text-sm"
                     />
-                    <p className="text-xs text-muted-foreground text-right mt-1">{sellerComment.length}/200</p>
+                    <p className="text-[11px] text-muted-foreground text-right">{sellerComment.length}/200</p>
                   </div>
 
                   {/* Actions */}
-                  <div className="space-y-2">
+                  <div className="space-y-2.5 pt-1">
                     <Button
                       onClick={handleSubmitAll}
                       disabled={isSubmitting || sellerRating === 0}
@@ -507,7 +557,7 @@ export function DeliveryConfirmationFlow({
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full text-xs text-muted-foreground"
+                      className="w-full h-10 text-xs text-muted-foreground"
                       onClick={() => setStep("product-review")}
                     >
                       <ArrowLeft className="h-3.5 w-3.5 mr-1" />
@@ -525,7 +575,7 @@ export function DeliveryConfirmationFlow({
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ type: "spring", damping: 20 }}
-                  className="text-center py-8 space-y-5"
+                  className="text-center py-10 space-y-6"
                 >
                   <motion.div
                     initial={{ scale: 0 }}
@@ -536,7 +586,7 @@ export function DeliveryConfirmationFlow({
                     <CheckCircle2 className="h-10 w-10 text-primary" />
                   </motion.div>
 
-                  <div>
+                  <div className="space-y-2">
                     <motion.h2
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -549,7 +599,7 @@ export function DeliveryConfirmationFlow({
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.3 }}
-                      className="text-sm text-muted-foreground mt-2"
+                      className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto"
                     >
                       Obrigado por compartilhar sua experiência. Sua opinião ajuda toda a comunidade BRAVENZA.
                     </motion.p>
@@ -559,12 +609,13 @@ export function DeliveryConfirmationFlow({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
-                    className="flex items-center justify-center gap-1">
+                    className="flex items-center justify-center gap-1.5"
+                  >
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Star
                         key={s}
                         className={cn(
-                          "h-5 w-5",
+                          "h-6 w-6",
                           s <= productRating
                             ? "fill-amber-400 text-amber-400"
                             : "text-muted-foreground/20"
@@ -577,6 +628,7 @@ export function DeliveryConfirmationFlow({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 }}
+                    className="pt-2"
                   >
                     <Button
                       onClick={onClose}
