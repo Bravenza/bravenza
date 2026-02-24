@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Package, Truck, CheckCircle2, Clock, AlertTriangle, Star, XCircle, MessageCircle, ShieldCheck, CreditCard, QrCode, RefreshCw } from "lucide-react";
+import { Package, Truck, CheckCircle2, Clock, AlertTriangle, Star, XCircle, MessageCircle, ShieldCheck, CreditCard, QrCode, RefreshCw, PackageCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { DisputeDialog } from "./DisputeDialog";
 import { ContestationBanner } from "@/components/marketplace/ContestationBanner";
 import { SharePurchaseButton } from "@/components/marketplace/SharePurchaseButton";
 import { PaymentRetryDialog } from "./PaymentRetryDialog";
+import { DeliveryConfirmationFlow } from "./DeliveryConfirmationFlow";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   pending_payment: { label: "Aguardando pagamento", color: "bg-warning/20 text-warning", icon: Clock },
@@ -70,6 +71,7 @@ export function MarketplaceOrdersView({
   const [trackingCode, setTrackingCode] = useState("");
   const [payRetryOrder, setPayRetryOrder] = useState<MarketplaceOrder | null>(null);
   const [payRetrySwitchMethod, setPayRetrySwitchMethod] = useState(false);
+  const [deliveryFlowOrder, setDeliveryFlowOrder] = useState<MarketplaceOrder | null>(null);
 
   useEffect(() => {
     onRefreshOrders();
@@ -218,16 +220,14 @@ export function MarketplaceOrdersView({
                     />
                   )}
 
-                  {/* Rate seller (buyer, delivered) */}
                   {!isSale && order.status === "delivered" && !order.buyer_rating && (
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="text-xs gap-1"
-                      onClick={() => setRateDialog({ orderId: order.id })}
+                      className="text-xs gap-1 btn-gold"
+                      onClick={() => setDeliveryFlowOrder(order)}
                     >
-                      <Star className="h-3 w-3" />
-                      Avaliar vendedor
+                      <PackageCheck className="h-3 w-3" />
+                      Confirmar recebimento
                     </Button>
                   )}
 
@@ -326,7 +326,42 @@ export function MarketplaceOrdersView({
         )}
       </Tabs>
 
-      {/* Rate dialog */}
+      {/* Delivery Confirmation + Review Flow */}
+      {deliveryFlowOrder && (
+        <DeliveryConfirmationFlow
+          orderId={deliveryFlowOrder.id}
+          orderCode={deliveryFlowOrder.order_code}
+          productName={deliveryFlowOrder.listing?.title || `Pedido ${deliveryFlowOrder.order_code}`}
+          productImage={deliveryFlowOrder.listing?.photos?.[0]}
+          sellerName={"Vendedor"}
+          onConfirmDelivery={async () => {
+            // Mark as completed/confirmed
+            const success = await onUpdateOrderStatus(deliveryFlowOrder.id, "completed");
+            return success;
+          }}
+          onSubmitReview={async (data) => {
+            const success = await onRateSeller(
+              deliveryFlowOrder.id,
+              data.sellerRating,
+              data.sellerComment
+            );
+            // TODO: If product review endpoint exists, also submit product rating/photo
+            return success;
+          }}
+          onClose={() => {
+            setDeliveryFlowOrder(null);
+            onRefreshOrders();
+          }}
+          onContactSupport={() => {
+            window.open(
+              `https://wa.me/5511999999999?text=Preciso%20de%20ajuda%20com%20o%20pedido%20${deliveryFlowOrder.order_code}`,
+              "_blank"
+            );
+          }}
+        />
+      )}
+
+      {/* Legacy rate dialog (fallback) */}
       <Dialog open={!!rateDialog} onOpenChange={(o) => !o && setRateDialog(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
