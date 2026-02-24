@@ -19,6 +19,7 @@ const AuthenticityInfoPage = lazy(() => import("@/pages/AuthenticityInfoPage"));
 const AdGuidelinesPage = lazy(() => import("@/pages/AdGuidelinesPage"));
 const MarketplaceRulesPage = lazy(() => import("@/pages/MarketplaceRulesPage"));
 const VerificationPolicyPage = lazy(() => import("@/pages/VerificationPolicyPage"));
+const DeliveryFlowPreview = lazy(() => import("@/pages/DeliveryFlowPreview"));
 
 // Legacy ClientLogin removed — auth migrated to Supabase Auth (ClientAuthPage)
 const ClientAuthPage = lazy(() => import("@/pages/client/ClientAuthPage"));
@@ -44,6 +45,7 @@ export const publicRoutes = (
     <Route path="/diretrizes-anuncio" element={<AdGuidelinesPage />} />
     <Route path="/regras-marketplace" element={<MarketplaceRulesPage />} />
     <Route path="/verificacao-autenticidade" element={<VerificationPolicyPage />} />
+    <Route path="/preview-delivery-flow" element={<DeliveryFlowPreview />} />
 
     {/* Client portal routes */}
     <Route path="/entrar" element={
