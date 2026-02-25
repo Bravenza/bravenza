@@ -54,7 +54,8 @@ function AppShell({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-const App = () => (
+function App() {
+  return (
   <ErrorBoundary>
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
@@ -89,6 +90,7 @@ const App = () => (
     </QueryClientProvider>
   </HelmetProvider>
   </ErrorBoundary>
-);
+  );
+}
 
 export default App;
