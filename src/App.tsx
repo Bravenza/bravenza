@@ -15,6 +15,7 @@ import { ScrollToTop } from "@/components/ScrollToTop";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { PageTransition } from "@/components/PageTransition";
+import { STALE, GC_TIME } from "@/lib/query-config";
 
 const PrivacyConsentBanner = lazy(() => import("@/components/PrivacyConsentBanner").then(m => ({ default: m.PrivacyConsentBanner })));
 
@@ -38,12 +39,13 @@ const PageLoader = () => (
   </div>
 );
 
-// Optimized QueryClient with caching
+// Optimized QueryClient — default = SEMI_STATIC (5 min)
+// See src/lib/query-config.ts for STALE.REALTIME / STATIC overrides
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 2,
-      gcTime: 1000 * 60 * 10,
+      staleTime: STALE.SEMI_STATIC,
+      gcTime: GC_TIME.DEFAULT,
       retry: 1,
       refetchOnWindowFocus: false,
     },
