@@ -365,14 +365,10 @@ function MarketplaceCheckoutPageInner() {
         }
       }
 
-      const headers = await getMarketplaceHeaders();
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-checkout`,
-        { method: "POST", headers, body: JSON.stringify(checkoutBody) }
-      );
-      const payData = await res.json();
+      const { marketplaceRequest } = await import("@/hooks/marketplace/api");
+      const payData = await marketplaceRequest(cpf || "", "checkout", "POST", checkoutBody);
 
-      if (!res.ok || payData.error) {
+      if (payData.error) {
         throw new Error(payData.error || "Erro no pagamento");
       }
 
@@ -582,8 +578,18 @@ function MarketplaceCheckoutPageInner() {
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <Label className="text-xs">E-mail</Label>
-                          <Input value={form.buyer_email} onChange={e => updateField("buyer_email", e.target.value)} placeholder="seu@email.com" className="mt-1.5" />
+                          <Label className="text-xs">E-mail *</Label>
+                          <Input
+                            type="email"
+                            required
+                            value={form.buyer_email}
+                            onChange={e => updateField("buyer_email", e.target.value)}
+                            placeholder="seu@email.com"
+                            className={cn("mt-1.5", form.buyer_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.buyer_email) && "border-destructive")}
+                          />
+                          {form.buyer_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.buyer_email) && (
+                            <p className="text-[10px] text-destructive mt-1">E-mail inválido</p>
+                          )}
                         </div>
                         <div>
                           <Label className="text-xs">Telefone</Label>
@@ -648,7 +654,7 @@ function MarketplaceCheckoutPageInner() {
                       </Button>
                       <Button
                         onClick={handleGoToFreight}
-                        disabled={!form.buyer_name || !isAddressValid}
+                        disabled={!form.buyer_name || !isAddressValid || !form.buyer_email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.buyer_email)}
                         className="flex-1 btn-gold gap-2 h-12 text-sm font-bold rounded-xl"
                         size="lg"
                       >
