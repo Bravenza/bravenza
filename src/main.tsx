@@ -5,7 +5,7 @@ import "./index.css";
 
 // Force clear ALL caches, service workers, and stale data on EVERY page load
 // This guarantees the preview always shows the latest version
-const APP_VERSION = "3.5.4";
+const APP_VERSION = "3.5.5";
 const VERSION_KEY = "bravenza-app-version";
 const FORCE_CLEAN_KEY = "bravenza-force-clean-done";
 
