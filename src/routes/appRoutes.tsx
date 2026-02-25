@@ -20,6 +20,8 @@ const AppDropsPage = lazy(() => import("@/pages/app/AppDropsPage"));
 const AppCommunityPage = lazy(() => import("@/pages/app/AppCommunityPage"));
 const AppMorePage = lazy(() => import("@/pages/app/AppMorePage"));
 const AppNotificationsPage = lazy(() => import("@/pages/app/AppNotificationsPage"));
+const AppDocumentsPage = lazy(() => import("@/pages/app/AppDocumentsPage"));
+const AppMessagesPage = lazy(() => import("@/pages/app/AppMessagesPage"));
 
 export const appRoutes = (
   <>
@@ -39,6 +41,8 @@ export const appRoutes = (
       <Route path="comunidade" element={<AppCommunityPage />} />
       <Route path="mais" element={<AppMorePage />} />
       <Route path="notificacoes" element={<AppNotificationsPage />} />
+      <Route path="documentos" element={<AppDocumentsPage />} />
+      <Route path="mensagens" element={<AppMessagesPage />} />
     </Route>
   </>
 );
