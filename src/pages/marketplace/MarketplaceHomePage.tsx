@@ -170,7 +170,7 @@ export default function MarketplaceHomePage() {
               onSubmit={(e) => {
                 e.preventDefault();
                 const val = (e.currentTarget.elements.namedItem("heroSearch") as HTMLInputElement).value.trim();
-                if (val) navigate(`/marketplace?q=${encodeURIComponent(val)}`);
+                if (val) navigate(`/app?q=${encodeURIComponent(val)}`);
               }}
               className="flex gap-2 max-w-lg mx-auto"
             >

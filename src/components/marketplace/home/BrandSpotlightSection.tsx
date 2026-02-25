@@ -77,7 +77,7 @@ export const BrandSpotlightSection = memo(function BrandSpotlightSection({ produ
                         variant="ghost"
                         size="sm"
                         className="text-sm gap-1 text-muted-foreground hover:text-foreground"
-                        onClick={() => navigate(`/marketplace?q=${encodeURIComponent(spotlight.brand)}`)}
+                        onClick={() => navigate(`/app?q=${encodeURIComponent(spotlight.brand)}`)}
                       >
                         Ver tudo <ArrowRight className="h-3.5 w-3.5" />
                       </Button>

@@ -250,7 +250,7 @@ function MarketplaceCheckoutPageInner() {
   };
 
   const fetchFreightQuotes = useCallback(async () => {
-    if (!group?.items[0]?.offer) return;
+    if (!group?.items?.length) return;
     setIsLoadingFreight(true);
     setFreightError(null);
     setFreightOptions([]);
@@ -263,7 +263,9 @@ function MarketplaceCheckoutPageInner() {
         headers,
         body: JSON.stringify({
           listing_id: group.items[0].offer.id,
+          listing_ids: group.items.map(i => i.offer?.id).filter(Boolean),
           buyer_cep: form.address_cep.replace(/\D/g, ""),
+          items_count: group.items.length,
         }),
       });
       if (!res.ok) {

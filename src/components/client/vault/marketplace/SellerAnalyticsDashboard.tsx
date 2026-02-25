@@ -14,7 +14,7 @@ import {
   AreaChart, Area, ComposedChart, Line, PieChart as RPieChart, Pie, Cell
 } from "recharts";
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-seller`;
+import { marketplaceRequest } from "@/hooks/marketplace/api";
 
 interface SellerAnalytics {
   total_views: number;
@@ -84,10 +84,7 @@ export function SellerAnalyticsDashboard({ clientCpf }: SellerAnalyticsDashboard
   const fetchAnalytics = async () => {
     setIsLoading(true);
     try {
-      const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
-      const headers = await getMarketplaceHeaders();
-      const res = await fetch(`${FUNCTION_URL}?action=seller-analytics&period=${period}`, { headers });
-      const data = await res.json();
+      const data = await marketplaceRequest("", "seller-analytics", "GET", undefined, { period });
       setAnalytics(data.analytics);
     } catch (err) {
       console.error("Fetch analytics error:", err);

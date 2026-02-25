@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-seller`;
+import { marketplaceRequest } from "@/hooks/marketplace/api";
 
 interface Coupon {
   id: string;
@@ -39,19 +39,12 @@ export function CouponsManager({ clientCpf }: CouponsManagerProps) {
     code: "", discount_type: "percent", discount_value: "", min_purchase: "", max_uses: "", valid_until: "",
   });
 
-  const getHeaders = async () => {
-    const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
-    return getMarketplaceHeaders();
-  };
-
   useEffect(() => { fetchCoupons(); }, []);
 
   const fetchCoupons = async () => {
     setIsLoading(true);
     try {
-      const h = await getHeaders();
-      const res = await fetch(`${FUNCTION_URL}?action=my-coupons`, { headers: h });
-      const data = await res.json();
+      const data = await marketplaceRequest("", "my-coupons");
       setCoupons(data.coupons || []);
     } catch (err) {
       console.error(err);
@@ -66,21 +59,13 @@ export function CouponsManager({ clientCpf }: CouponsManagerProps) {
       return;
     }
     try {
-      const h = await getHeaders();
-      const res = await fetch(`${FUNCTION_URL}?action=create-coupon`, {
-        method: "POST", headers: h,
-        body: JSON.stringify({
-          code: form.code, discount_type: form.discount_type,
-          discount_value: parseFloat(form.discount_value),
-          min_purchase: form.min_purchase ? parseFloat(form.min_purchase) : 0,
-          max_uses: form.max_uses ? parseInt(form.max_uses) : null,
-          valid_until: form.valid_until || null,
-        }),
+      await marketplaceRequest("", "create-coupon", "POST", {
+        code: form.code, discount_type: form.discount_type,
+        discount_value: parseFloat(form.discount_value),
+        min_purchase: form.min_purchase ? parseFloat(form.min_purchase) : 0,
+        max_uses: form.max_uses ? parseInt(form.max_uses) : null,
+        valid_until: form.valid_until || null,
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error);
-      }
       toast({ title: "Cupom criado!" });
       setCreateOpen(false);
       setForm({ code: "", discount_type: "percent", discount_value: "", min_purchase: "", max_uses: "", valid_until: "" });
@@ -92,11 +77,7 @@ export function CouponsManager({ clientCpf }: CouponsManagerProps) {
 
   const toggleCoupon = async (coupon: Coupon) => {
     try {
-      const h = await getHeaders();
-      await fetch(`${FUNCTION_URL}?action=update-coupon`, {
-        method: "PUT", headers: h,
-        body: JSON.stringify({ coupon_id: coupon.id, is_active: !coupon.is_active }),
-      });
+      await marketplaceRequest("", "update-coupon", "PUT", { coupon_id: coupon.id, is_active: !coupon.is_active });
       fetchCoupons();
     } catch (err) {
       console.error(err);
@@ -105,8 +86,7 @@ export function CouponsManager({ clientCpf }: CouponsManagerProps) {
 
   const deleteCoupon = async (id: string) => {
     try {
-      const h = await getHeaders();
-      await fetch(`${FUNCTION_URL}?action=delete-coupon&id=${id}`, { method: "DELETE", headers: h });
+      await marketplaceRequest("", "delete-coupon", "DELETE", undefined, { id });
       fetchCoupons();
     } catch (err) {
       console.error(err);

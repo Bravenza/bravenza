@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { FollowSellerButton } from "./FollowSellerButton";
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-seller`;
+import { marketplaceRequest } from "@/hooks/marketplace/api";
 
 interface LeaderboardSeller {
   id: string;
@@ -26,8 +26,7 @@ export function SellerLeaderboard({ className }: { className?: string }) {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const res = await fetch(`${FUNCTION_URL}?action=seller-leaderboard`);
-        const data = await res.json();
+        const data = await marketplaceRequest("", "seller-leaderboard");
         setSellers(data.leaderboard || []);
       } catch {
         // ignore
