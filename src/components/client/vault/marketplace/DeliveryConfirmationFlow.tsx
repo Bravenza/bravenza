@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   Camera,
   MessageCircle,
-  HelpCircle,
   Package,
   Ruler,
   Eye,
@@ -13,6 +12,10 @@ import {
   ArrowLeft,
   ShoppingBag,
   X,
+  AlertTriangle,
+  ShieldAlert,
+  Truck,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,18 +38,48 @@ interface DeliveryConfirmationFlowProps {
     sellerRating: number;
     sellerComment: string;
   }) => Promise<boolean>;
+  onReportProblem?: (data: {
+    reason: string;
+    details: string;
+  }) => Promise<boolean>;
   onClose: () => void;
   onContactSupport: () => void;
 }
 
-type FlowStep = "confirm" | "product-review" | "seller-review" | "success";
+type FlowStep =
+  | "confirm"
+  | "report-problem"
+  | "product-review"
+  | "seller-review"
+  | "success"
+  | "low-rating-prompt";
 
-const STEP_PROGRESS: Record<FlowStep, number> = {
-  confirm: 0,
-  "product-review": 1,
-  "seller-review": 2,
-  success: 3,
-};
+const PROBLEM_REASONS = [
+  {
+    id: "different",
+    icon: Eye,
+    title: "Produto diferente do anúncio",
+    description: "Cor, modelo ou condição não correspondem ao que foi anunciado",
+  },
+  {
+    id: "wrong-size",
+    icon: Ruler,
+    title: "Tamanho incorreto",
+    description: "O tamanho recebido não é o que foi comprado",
+  },
+  {
+    id: "defect",
+    icon: AlertTriangle,
+    title: "Produto com defeito",
+    description: "Dano, mancha ou problema de fabricação no sneaker",
+  },
+  {
+    id: "not-received",
+    icon: Truck,
+    title: "Produto não chegou",
+    description: "A embalagem veio vazia ou o item está faltando",
+  },
+];
 
 export function DeliveryConfirmationFlow({
   orderId,
@@ -58,18 +91,25 @@ export function DeliveryConfirmationFlow({
   productCondition,
   onConfirmDelivery,
   onSubmitReview,
+  onReportProblem,
   onClose,
   onContactSupport,
 }: DeliveryConfirmationFlowProps) {
   const [step, setStep] = useState<FlowStep>("confirm");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Confirmation checklist
   const [checks, setChecks] = useState({
     arrived: false,
     asDescribed: false,
     sizeCorrect: false,
   });
 
+  // Report problem
+  const [problemReason, setProblemReason] = useState<string | null>(null);
+  const [problemDetails, setProblemDetails] = useState("");
+
+  // Product review
   const [productRating, setProductRating] = useState(0);
   const [productHover, setProductHover] = useState(0);
   const [productComment, setProductComment] = useState("");
@@ -77,11 +117,13 @@ export function DeliveryConfirmationFlow({
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Seller review
   const [sellerRating, setSellerRating] = useState(0);
   const [sellerHover, setSellerHover] = useState(0);
   const [sellerComment, setSellerComment] = useState("");
 
   const allChecked = checks.arrived && checks.asDescribed && checks.sizeCorrect;
+  const hasUnchecked = !checks.arrived || !checks.asDescribed || !checks.sizeCorrect;
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -111,7 +153,28 @@ export function DeliveryConfirmationFlow({
       sellerComment: sellerComment.trim(),
     });
     setIsSubmitting(false);
-    if (success) setStep("success");
+    if (success) {
+      // If low rating (1-3 stars), prompt for dispute
+      if (productRating <= 3) {
+        setStep("low-rating-prompt");
+      } else {
+        setStep("success");
+      }
+    }
+  };
+
+  const handleReportProblem = async () => {
+    if (!problemReason) return;
+    setIsSubmitting(true);
+    if (onReportProblem) {
+      await onReportProblem({
+        reason: problemReason,
+        details: problemDetails.trim(),
+      });
+    }
+    setIsSubmitting(false);
+    // Redirect to support
+    onContactSupport();
   };
 
   const ratingLabel = (r: number) => {
@@ -202,7 +265,6 @@ export function DeliveryConfirmationFlow({
     </button>
   );
 
-  /* Product Info Card — shown at top of confirm + review steps */
   const ProductInfoCard = ({ compact = false }: { compact?: boolean }) => (
     <div className={cn(
       "flex items-center gap-3 rounded-2xl border border-border/40 bg-muted/30 p-3",
@@ -242,7 +304,19 @@ export function DeliveryConfirmationFlow({
     </div>
   );
 
-  const progressWidth = `${(STEP_PROGRESS[step] / 3) * 100}%`;
+  const getProgressWidth = () => {
+    const map: Record<FlowStep, number> = {
+      confirm: 0,
+      "report-problem": 0.5,
+      "product-review": 1,
+      "seller-review": 2,
+      success: 3,
+      "low-rating-prompt": 3,
+    };
+    return `${(map[step] / 3) * 100}%`;
+  };
+
+  const showCloseButton = step !== "success" && step !== "low-rating-prompt";
 
   return (
     <AnimatePresence>
@@ -251,7 +325,7 @@ export function DeliveryConfirmationFlow({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
-        onClick={(e) => e.target === e.currentTarget && step !== "success" && onClose()}
+        onClick={(e) => e.target === e.currentTarget && showCloseButton && onClose()}
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -261,19 +335,19 @@ export function DeliveryConfirmationFlow({
           className="w-full max-w-lg bg-card border border-border/50 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
         >
           {/* Progress Bar */}
-          {step !== "success" && (
+          {showCloseButton && (
             <div className="h-1 bg-muted/30">
               <motion.div
                 className="h-full bg-gradient-to-r from-primary to-primary/60"
                 initial={{ width: 0 }}
-                animate={{ width: progressWidth }}
+                animate={{ width: getProgressWidth() }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
               />
             </div>
           )}
 
           {/* Header with close */}
-          {step !== "success" && (
+          {showCloseButton && (
             <div className="flex justify-end px-5 pt-4">
               <button onClick={onClose} className="p-2 rounded-full hover:bg-muted/50 transition-colors">
                 <X className="h-4 w-4 text-muted-foreground" />
@@ -281,7 +355,7 @@ export function DeliveryConfirmationFlow({
             </div>
           )}
 
-          <div className={cn("px-6 pb-7", step === "success" ? "pt-2" : "pt-1")}>
+          <div className={cn("px-6 pb-7", !showCloseButton ? "pt-2" : "pt-1")}>
             <AnimatePresence mode="wait">
               {/* ====== STEP: CONFIRM DELIVERY ====== */}
               {step === "confirm" && (
@@ -292,7 +366,6 @@ export function DeliveryConfirmationFlow({
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-5"
                 >
-                  {/* Title */}
                   <div className="text-center space-y-1">
                     <h2 className="text-lg font-bold tracking-tight">Tudo certo com seu pedido?</h2>
                     <p className="text-sm text-muted-foreground">
@@ -300,10 +373,8 @@ export function DeliveryConfirmationFlow({
                     </p>
                   </div>
 
-                  {/* Product Card */}
                   <ProductInfoCard />
 
-                  {/* Checklist */}
                   <div className="space-y-2.5">
                     <CheckItem
                       checked={checks.arrived}
@@ -329,26 +400,150 @@ export function DeliveryConfirmationFlow({
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-3 pt-2">
-                    <Button
-                      variant="outline"
-                      className="h-12 rounded-2xl text-xs px-4 shrink-0"
-                      onClick={onContactSupport}
+                  <div className="space-y-3 pt-2">
+                    <div className="flex gap-3">
+                      <Button
+                        variant="outline"
+                        className="h-12 rounded-2xl text-xs px-4 shrink-0"
+                        onClick={onContactSupport}
+                      >
+                        <MessageCircle className="h-4 w-4 mr-1.5" />
+                        Suporte
+                      </Button>
+                      <Button
+                        onClick={handleConfirmDelivery}
+                        disabled={!allChecked || isSubmitting}
+                        className="flex-1 h-12 rounded-2xl text-sm font-semibold btn-gold"
+                      >
+                        {isSubmitting ? "Confirmando..." : (
+                          <>
+                            Tudo certo, confirmar
+                            <ArrowRight className="h-4 w-4 ml-2" />
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    {/* Report problem link — visible when something is unchecked */}
+                    {hasUnchecked && (
+                      <motion.button
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="w-full flex items-center justify-center gap-2 py-2 text-xs text-destructive/80 hover:text-destructive transition-colors"
+                        onClick={() => setStep("report-problem")}
+                      >
+                        <ShieldAlert className="h-3.5 w-3.5" />
+                        Algo está errado? Reportar um problema
+                      </motion.button>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ====== STEP: REPORT PROBLEM ====== */}
+              {step === "report-problem" && (
+                <motion.div
+                  key="report-problem"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="space-y-5"
+                >
+                  <div className="text-center space-y-1">
+                    <div className="w-14 h-14 mx-auto rounded-full bg-destructive/10 flex items-center justify-center mb-3">
+                      <ShieldAlert className="h-7 w-7 text-destructive" />
+                    </div>
+                    <h2 className="text-lg font-bold tracking-tight">Reportar um problema</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Selecione o motivo e descreva o que aconteceu
+                    </p>
+                  </div>
+
+                  <ProductInfoCard compact />
+
+                  {/* Reason selection */}
+                  <div className="space-y-2">
+                    {PROBLEM_REASONS.map((reason) => {
+                      const Icon = reason.icon;
+                      const selected = problemReason === reason.id;
+                      return (
+                        <button
+                          key={reason.id}
+                          onClick={() => setProblemReason(reason.id)}
+                          className={cn(
+                            "w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-all duration-200 text-left",
+                            selected
+                              ? "border-destructive/50 bg-destructive/5"
+                              : "border-border/40 bg-card hover:border-border"
+                          )}
+                        >
+                          <div className={cn(
+                            "h-6 w-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
+                            selected
+                              ? "border-destructive bg-destructive"
+                              : "border-muted-foreground/25"
+                          )}>
+                            {selected && <CheckCircle2 className="h-3.5 w-3.5 text-destructive-foreground" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <Icon className={cn("h-4 w-4 shrink-0", selected ? "text-destructive" : "text-muted-foreground/60")} />
+                              <p className={cn("font-semibold text-sm", selected ? "text-foreground" : "text-foreground/80")}>{reason.title}</p>
+                            </div>
+                            <p className="text-xs text-muted-foreground leading-relaxed pl-6 mt-0.5">{reason.description}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Details */}
+                  {problemReason && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      className="space-y-3"
                     >
-                      <MessageCircle className="h-4 w-4 mr-1.5" />
-                      Suporte
-                    </Button>
+                      <div>
+                        <p className="text-sm font-semibold">
+                          Descreva o problema <span className="text-muted-foreground font-normal text-xs">(Opcional)</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                          Quanto mais detalhes, mais rápido conseguiremos resolver
+                        </p>
+                      </div>
+                      <Textarea
+                        value={problemDetails}
+                        onChange={(e) => setProblemDetails(e.target.value.slice(0, 500))}
+                        placeholder="Descreva o que aconteceu com o máximo de detalhes..."
+                        rows={3}
+                        className="rounded-xl resize-none text-sm"
+                      />
+                      <p className="text-[11px] text-muted-foreground text-right">{problemDetails.length}/500</p>
+                    </motion.div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="space-y-2.5 pt-1">
                     <Button
-                      onClick={handleConfirmDelivery}
-                      disabled={!allChecked || isSubmitting}
-                      className="flex-1 h-12 rounded-2xl text-sm font-semibold btn-gold"
+                      onClick={handleReportProblem}
+                      disabled={!problemReason || isSubmitting}
+                      className="w-full h-12 rounded-2xl text-sm font-semibold bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      {isSubmitting ? "Confirmando..." : (
+                      {isSubmitting ? "Enviando..." : (
                         <>
-                          Tudo certo, confirmar
-                          <ArrowRight className="h-4 w-4 ml-2" />
+                          <ShieldAlert className="h-4 w-4 mr-2" />
+                          Abrir disputa
                         </>
                       )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full h-10 text-xs text-muted-foreground"
+                      onClick={() => setStep("confirm")}
+                    >
+                      <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+                      Voltar para verificação
                     </Button>
                   </div>
                 </motion.div>
@@ -363,7 +558,6 @@ export function DeliveryConfirmationFlow({
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-5"
                 >
-                  {/* Header */}
                   <div className="text-center space-y-2">
                     <Badge variant="outline" className="text-[11px] font-medium px-3 py-1">Passo 1 de 2</Badge>
                     <h2 className="text-lg font-bold tracking-tight">Avaliação do sneaker</h2>
@@ -372,10 +566,8 @@ export function DeliveryConfirmationFlow({
                     </p>
                   </div>
 
-                  {/* Product Card */}
                   <ProductInfoCard compact />
 
-                  {/* Stars */}
                   <div className="text-center py-1">
                     <RatingStars
                       value={productRating}
@@ -396,7 +588,6 @@ export function DeliveryConfirmationFlow({
                     </div>
                   </div>
 
-                  {/* Photo Upload */}
                   <div className="space-y-3">
                     <div>
                       <p className="text-sm font-semibold">
@@ -439,7 +630,6 @@ export function DeliveryConfirmationFlow({
                     )}
                   </div>
 
-                  {/* Comment */}
                   <div className="space-y-3">
                     <div>
                       <p className="text-sm font-semibold">
@@ -459,7 +649,6 @@ export function DeliveryConfirmationFlow({
                     <p className="text-[11px] text-muted-foreground text-right">{productComment.length}/200</p>
                   </div>
 
-                  {/* Next */}
                   <Button
                     onClick={() => setStep("seller-review")}
                     disabled={productRating === 0}
@@ -480,7 +669,6 @@ export function DeliveryConfirmationFlow({
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-5"
                 >
-                  {/* Header */}
                   <div className="text-center space-y-2">
                     <Badge variant="outline" className="text-[11px] font-medium px-3 py-1">Passo 2 de 2</Badge>
                     <h2 className="text-lg font-bold tracking-tight">Avalie o vendedor</h2>
@@ -492,7 +680,6 @@ export function DeliveryConfirmationFlow({
                     </p>
                   </div>
 
-                  {/* Stars */}
                   <div className="text-center py-1">
                     <RatingStars
                       value={sellerRating}
@@ -513,7 +700,6 @@ export function DeliveryConfirmationFlow({
                     </div>
                   </div>
 
-                  {/* Comment */}
                   <div className="space-y-3">
                     <div>
                       <p className="text-sm font-semibold">
@@ -533,7 +719,6 @@ export function DeliveryConfirmationFlow({
                     <p className="text-[11px] text-muted-foreground text-right">{sellerComment.length}/200</p>
                   </div>
 
-                  {/* Actions */}
                   <div className="space-y-2.5 pt-1">
                     <Button
                       onClick={handleSubmitAll}
@@ -551,6 +736,86 @@ export function DeliveryConfirmationFlow({
                       Voltar
                     </Button>
                   </div>
+                </motion.div>
+              )}
+
+              {/* ====== STEP: LOW RATING PROMPT ====== */}
+              {step === "low-rating-prompt" && (
+                <motion.div
+                  key="low-rating-prompt"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ type: "spring", damping: 20 }}
+                  className="text-center py-8 space-y-5"
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", delay: 0.1, damping: 12 }}
+                    className="w-20 h-20 mx-auto rounded-full bg-amber-500/10 flex items-center justify-center"
+                  >
+                    <AlertTriangle className="h-10 w-10 text-amber-500" />
+                  </motion.div>
+
+                  <div className="space-y-2">
+                    <motion.h2
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="text-xl font-bold tracking-tight"
+                    >
+                      Avaliação enviada!
+                    </motion.h2>
+                    <motion.p
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto"
+                    >
+                      Notamos que sua experiência não foi ideal. Você gostaria de abrir uma disputa para que possamos ajudar?
+                    </motion.p>
+                    <motion.p
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.35 }}
+                      className="text-xs text-muted-foreground leading-relaxed max-w-xs mx-auto"
+                    >
+                      Você tem até 7 dias após a entrega para contestar
+                    </motion.p>
+                  </div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="space-y-3 pt-2"
+                  >
+                    <Button
+                      onClick={() => {
+                        setStep("report-problem");
+                      }}
+                      className="w-full h-12 rounded-2xl text-sm font-semibold bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      <ShieldAlert className="h-4 w-4 mr-2" />
+                      Abrir disputa
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={onContactSupport}
+                      className="w-full h-11 rounded-2xl text-sm"
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Falar com suporte
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full h-10 text-xs text-muted-foreground"
+                      onClick={() => setStep("success")}
+                    >
+                      Não preciso, continuar comprando
+                    </Button>
+                  </motion.div>
                 </motion.div>
               )}
 

@@ -43,6 +43,11 @@ export default function DeliveryFlowPreview() {
             await new Promise((r) => setTimeout(r, 800));
             return true;
           }}
+          onReportProblem={async (data) => {
+            console.log("Problem reported:", data);
+            await new Promise((r) => setTimeout(r, 800));
+            return true;
+          }}
           onClose={() => setShowFlow(false)}
           onContactSupport={() => alert("Suporte via WhatsApp")}
         />
