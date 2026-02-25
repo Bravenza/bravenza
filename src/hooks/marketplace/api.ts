@@ -3,69 +3,69 @@ import { supabase } from "@/integrations/supabase/client";
 const FUNCTION_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
 const ACTION_TO_FUNCTION: Record<string, string> = {
-  // mk-hub: Listings CRUD, Favorites, Seller Profiles
-  "listings": "mk-hub", "listing-detail": "mk-hub", "my-listings": "mk-hub",
-  "create-listing": "mk-hub", "update-listing": "mk-hub", "delete-listing": "mk-hub",
-  "toggle-favorite": "mk-hub", "seller-profile": "mk-hub", "seller-public-profile": "mk-hub",
+  // mkv2-hub: Listings CRUD, Favorites, Seller Profiles
+  "listings": "mkv2-hub", "listing-detail": "mkv2-hub", "my-listings": "mkv2-hub",
+  "create-listing": "mkv2-hub", "update-listing": "mkv2-hub", "delete-listing": "mkv2-hub",
+  "toggle-favorite": "mkv2-hub", "seller-profile": "mkv2-hub", "seller-public-profile": "mkv2-hub",
 
-  // mk-offers: Offers, Negotiation, Bundle
-  "make-offer": "mk-offers", "listing-offers": "mk-offers", "my-offers": "mk-offers",
-  "respond-offer": "mk-offers", "accept-counter": "mk-offers", "reject-counter": "mk-offers",
-  "bundle-offer": "mk-offers", "negotiation-timeline": "mk-offers", "expire-offers": "mk-offers",
+  // mkv2-offers: Offers, Negotiation, Bundle
+  "make-offer": "mkv2-offers", "listing-offers": "mkv2-offers", "my-offers": "mkv2-offers",
+  "respond-offer": "mkv2-offers", "accept-counter": "mkv2-offers", "reject-counter": "mkv2-offers",
+  "bundle-offer": "mkv2-offers", "negotiation-timeline": "mkv2-offers", "expire-offers": "mkv2-offers",
 
-  // mk-catalog: Catalog CRUD, Watchlist
-  "catalog-products": "mk-catalog", "catalog-product": "mk-catalog", "catalog-offers": "mk-catalog",
-  "catalog-search": "mk-catalog", "catalog-create-product": "mk-catalog", "catalog-create-offer": "mk-catalog",
-  "watchlist-check": "mk-catalog", "watchlist-toggle": "mk-catalog",
+  // mkv2-catalog: Catalog CRUD, Watchlist
+  "catalog-products": "mkv2-catalog", "catalog-product": "mkv2-catalog", "catalog-offers": "mkv2-catalog",
+  "catalog-search": "mkv2-catalog", "catalog-create-product": "mkv2-catalog", "catalog-create-offer": "mkv2-catalog",
+  "watchlist-check": "mkv2-catalog", "watchlist-toggle": "mkv2-catalog",
 
-  // mk-engage: Comments, Reviews, Product Analytics
-  "product-comments": "mk-engage", "product-comment": "mk-engage",
-  "product-reviews": "mk-engage", "product-review": "mk-engage",
-  "check-purchase": "mk-engage", "product-analytics": "mk-engage",
+  // mkv2-engage: Comments, Reviews, Product Analytics
+  "product-comments": "mkv2-engage", "product-comment": "mkv2-engage",
+  "product-reviews": "mkv2-engage", "product-review": "mkv2-engage",
+  "check-purchase": "mkv2-engage", "product-analytics": "mkv2-engage",
 
-  // mk-discover: Freight, Activity, Price History, Recs, Searches, Drops, Admin Mod, Coupons
-  "freight-quote": "mk-discover", "activity-feed": "mk-discover", "log-activity": "mk-discover",
-  "price-history": "mk-discover", "recommendations": "mk-discover",
-  "saved-searches": "mk-discover", "save-search": "mk-discover", "delete-saved-search": "mk-discover",
-  "drop-reminders": "mk-discover", "toggle-drop-reminder": "mk-discover",
-  "admin-flag-listing": "mk-discover", "admin-pending-offers": "mk-discover", "admin-moderate-offer": "mk-discover",
-  "product-coupons": "mk-discover",
+  // mkv2-discover: Freight, Activity, Price History, Recs, Searches, Drops, Admin Mod, Coupons
+  "freight-quote": "mkv2-discover", "activity-feed": "mkv2-discover", "log-activity": "mkv2-discover",
+  "price-history": "mkv2-discover", "recommendations": "mkv2-discover",
+  "saved-searches": "mkv2-discover", "save-search": "mkv2-discover", "delete-saved-search": "mkv2-discover",
+  "drop-reminders": "mkv2-discover", "toggle-drop-reminder": "mkv2-discover",
+  "admin-flag-listing": "mkv2-discover", "admin-pending-offers": "mkv2-discover", "admin-moderate-offer": "mkv2-discover",
+  "product-coupons": "mkv2-discover",
 
-  // mk-orders: Create, Payment, My Orders/Sales, Rate, Wallet
-  "create-order": "mk-orders", "confirm-payment": "mk-orders", "my-orders": "mk-orders",
-  "my-sales": "mk-orders", "rate-seller": "mk-orders",
-  "wallet-balance": "mk-orders", "wallet-transactions": "mk-orders",
+  // mkv2-orders: Create, Payment, My Orders/Sales, Rate, Wallet
+  "create-order": "mkv2-orders", "confirm-payment": "mkv2-orders", "my-orders": "mkv2-orders",
+  "my-sales": "mkv2-orders", "rate-seller": "mkv2-orders",
+  "wallet-balance": "mkv2-orders", "wallet-transactions": "mkv2-orders",
 
-  // mk-order-ops: Status Updates, Admin Orders, Disputes, Cancel
-  "update-order-status": "mk-order-ops", "admin-orders": "mk-order-ops",
-  "admin-disputes": "mk-order-ops", "cancel-buyer-order": "mk-order-ops",
+  // mkv2-order-ops: Status Updates, Admin Orders, Disputes, Cancel
+  "update-order-status": "mkv2-order-ops", "admin-orders": "mkv2-order-ops",
+  "admin-disputes": "mkv2-order-ops", "cancel-buyer-order": "mkv2-order-ops",
 
-  // mk-fulfill: Disputes, Chat, Hub PRO, Inspection, Laudo, Auto-payout
-  "open-dispute": "mk-fulfill", "resolve-dispute": "mk-fulfill",
-  "chat-messages": "mk-fulfill", "send-message": "mk-fulfill",
-  "hub-orders": "mk-fulfill", "hub-update-status": "mk-fulfill", "hub-inspect": "mk-fulfill",
-  "laudo-lookup": "mk-fulfill", "check-auto-payout": "mk-fulfill",
+  // mkv2-fulfill: Disputes, Chat, Hub PRO, Inspection, Laudo, Auto-payout
+  "open-dispute": "mkv2-fulfill", "resolve-dispute": "mkv2-fulfill",
+  "chat-messages": "mkv2-fulfill", "send-message": "mkv2-fulfill",
+  "hub-orders": "mkv2-fulfill", "hub-update-status": "mkv2-fulfill", "hub-inspect": "mkv2-fulfill",
+  "laudo-lookup": "mkv2-fulfill", "check-auto-payout": "mkv2-fulfill",
 
-  // mk-seller: Onboarding, Tier, Leaderboard, Strikes
-  "seller-onboarding": "mk-seller", "seller-onboarding-status": "mk-seller",
-  "seller-tier-info": "mk-seller", "recalc-seller-tier": "mk-seller",
-  "seller-leaderboard": "mk-seller", "my-strikes": "mk-seller", "appeal-strike": "mk-seller",
+  // mkv2-seller: Onboarding, Tier, Leaderboard, Strikes
+  "seller-onboarding": "mkv2-seller", "seller-onboarding-status": "mkv2-seller",
+  "seller-tier-info": "mkv2-seller", "recalc-seller-tier": "mkv2-seller",
+  "seller-leaderboard": "mkv2-seller", "my-strikes": "mkv2-seller", "appeal-strike": "mkv2-seller",
 
-  // mk-seller-data: Analytics, Price Drop
-  "seller-analytics": "mk-seller-data", "price-drop-suggestions": "mk-seller-data",
+  // mkv2-seller-data: Analytics, Price Drop
+  "seller-analytics": "mkv2-seller-data", "price-drop-suggestions": "mkv2-seller-data",
 
-  // mk-store: Coupons, Boosts, Storefront, KYC, Snapshot
-  "my-coupons": "mk-store", "create-coupon": "mk-store",
-  "update-coupon": "mk-store", "delete-coupon": "mk-store", "validate-coupon": "mk-store",
-  "use-coupon": "mk-store", "boost-activate": "mk-store", "boost-deactivate": "mk-store",
-  "my-boosts": "mk-store", "update-storefront": "mk-store", "my-storefront": "mk-store",
-  "review-kyc": "mk-store", "snapshot-prices": "mk-store",
+  // mkv2-store: Coupons, Boosts, Storefront, KYC, Snapshot
+  "my-coupons": "mkv2-store", "create-coupon": "mkv2-store",
+  "update-coupon": "mkv2-store", "delete-coupon": "mkv2-store", "validate-coupon": "mkv2-store",
+  "use-coupon": "mkv2-store", "boost-activate": "mkv2-store", "boost-deactivate": "mkv2-store",
+  "my-boosts": "mkv2-store", "update-storefront": "mkv2-store", "my-storefront": "mkv2-store",
+  "review-kyc": "mkv2-store", "snapshot-prices": "mkv2-store",
 
-  // mk-social: Collections, Follow, Badges, Loyalty
-  "my-collections": "mk-social", "create-collection": "mk-social",
-  "update-collection": "mk-social", "delete-collection": "mk-social",
-  "toggle-follow": "mk-social", "is-following": "mk-social", "my-follows": "mk-social",
-  "loyalty-balance": "mk-social", "check-badges": "mk-social",
+  // mkv2-social: Collections, Follow, Badges, Loyalty
+  "my-collections": "mkv2-social", "create-collection": "mkv2-social",
+  "update-collection": "mkv2-social", "delete-collection": "mkv2-social",
+  "toggle-follow": "mkv2-social", "is-following": "mkv2-social", "my-follows": "mkv2-social",
+  "loyalty-balance": "mkv2-social", "check-badges": "mkv2-social",
 };
 
 export async function marketplaceRequest(
@@ -75,7 +75,7 @@ export async function marketplaceRequest(
   body?: any,
   extraParams?: Record<string, string>
 ) {
-  const fnName = ACTION_TO_FUNCTION[action] || "mk-hub";
+  const fnName = ACTION_TO_FUNCTION[action] || "mkv2-hub";
   const params = new URLSearchParams({ action, ...extraParams });
   const url = `${FUNCTION_BASE}/${fnName}?${params}`;
 
