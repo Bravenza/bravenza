@@ -95,7 +95,7 @@ export function MarketplaceOrdersView({
     setCancelLoading(true);
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-orders?action=cancel-buyer-order`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-order-ops?action=cancel-buyer-order`,
         {
           method: "PUT",
           headers: {
