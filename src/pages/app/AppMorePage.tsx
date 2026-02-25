@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { 
   Package, Heart, DollarSign, Store, Box, Settings, Bell,
-  HelpCircle, Shield, RefreshCw, FileText, LogOut, 
+  HelpCircle, Shield, RefreshCw, FileText, LogOut, Lock, 
   ArrowRight, ChevronLeft, MessageSquare, MapPin,
   Tag, Star, Award, Sparkles, Users, Activity
 } from "lucide-react";
@@ -71,6 +71,7 @@ const getMenuGroups = (isVaultMember: boolean): MenuGroup[] => [
   {
     items: [
       { path: "/app/perfil", label: "Configurações", icon: Settings },
+      { path: "/app/seguranca", label: "Segurança", icon: Shield },
     ],
   },
 ];

@@ -3,7 +3,7 @@ import { useOutletContext, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   User, Mail, Phone, MapPin, Shield, Bell, Save, ArrowLeft,
-  Loader2, Check, Box, Heart, Star, Settings2, Camera
+  Loader2, Check, Box, Heart, Star, Settings2, Camera, AlertCircle, Lock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -24,6 +24,45 @@ import { ClosetCollectionTab } from "@/components/vault/closet/ClosetCollectionT
 import { ClosetFavoritesTab } from "@/components/vault/closet/ClosetFavoritesTab";
 import { ClosetReviewsTab } from "@/components/vault/closet/ClosetReviewsTab";
 import { useClientSession } from "@/hooks/useClientSession";
+
+/** Validates CPF using the standard Brazilian algorithm */
+function isValidCpf(cpf: string): boolean {
+  const digits = cpf.replace(/\D/g, "");
+  if (digits.length !== 11 || /^(\d)\1{10}$/.test(digits)) return false;
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += parseInt(digits[i]) * (10 - i);
+  let remainder = (sum * 10) % 11;
+  if (remainder === 10) remainder = 0;
+  if (remainder !== parseInt(digits[9])) return false;
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += parseInt(digits[i]) * (11 - i);
+  remainder = (sum * 10) % 11;
+  if (remainder === 10) remainder = 0;
+  return remainder === parseInt(digits[10]);
+}
+
+/** Validates email format */
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
+}
+
+/** Validates Brazilian phone (10-11 digits: DDD + number) */
+function isValidBrPhone(phone: string): boolean {
+  const digits = phone.replace(/\D/g, "");
+  return digits.length === 10 || digits.length === 11;
+}
+
+function ValidationBadge({ valid, label }: { valid: boolean; label: string }) {
+  return (
+    <span className={cn(
+      "inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full",
+      valid ? "bg-green-500/10 text-green-600" : "bg-destructive/10 text-destructive"
+    )}>
+      {valid ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+      {label}
+    </span>
+  );
+}
 
 const SHOE_SIZES = [
   "35", "35.5", "36", "36.5", "37", "37.5", "38", "38.5", "39", "39.5",
@@ -366,18 +405,29 @@ export default function MarketplaceProfilePage() {
                       <Input value={fullName} onChange={(e) => setFullName(e.target.value)} className="mt-1" />
                     </div>
                     <div>
-                      <Label>Telefone</Label>
-                      <Input value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1" inputMode="tel" />
+                      <div className="flex items-center justify-between">
+                        <Label>Telefone</Label>
+                        <ValidationBadge valid={isValidBrPhone(phone)} label={isValidBrPhone(phone) ? "Válido" : "Inválido"} />
+                      </div>
+                      <Input value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1" inputMode="tel" placeholder="(51) 98105-5425" />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <Label>Email</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>Email</Label>
+                        <ValidationBadge valid={isValidEmail(email)} label={isValidEmail(email) ? "Válido" : "Inválido"} />
+                      </div>
                       <Input value={email} disabled className="mt-1 opacity-60" />
-                      <p className="text-[10px] text-muted-foreground mt-1">Email não pode ser alterado aqui</p>
+                      <button onClick={() => navigate("/app/seguranca")} className="text-[10px] text-primary hover:underline mt-1 inline-flex items-center gap-1">
+                        <Lock className="h-3 w-3" /> Alterar email ou senha
+                      </button>
                     </div>
                     <div>
-                      <Label>CPF</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>CPF</Label>
+                        <ValidationBadge valid={isValidCpf(cpf || "")} label={isValidCpf(cpf || "") ? "Válido" : "Inválido"} />
+                      </div>
                       <Input value={cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") || ""} disabled className="mt-1 opacity-60" />
                     </div>
                   </div>
