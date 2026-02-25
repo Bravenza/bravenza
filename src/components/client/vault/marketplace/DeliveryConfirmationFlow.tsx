@@ -845,7 +845,7 @@ export function DeliveryConfirmationFlow({
                       transition={{ delay: 0.2 }}
                       className="text-xl font-bold tracking-tight"
                     >
-                      Avaliação enviada com sucesso!
+                      {productRating <= 3 ? "Sua avaliação foi registrada" : "Avaliação enviada com sucesso!"}
                     </motion.h2>
                     <motion.p
                       initial={{ opacity: 0, y: 10 }}
@@ -853,7 +853,9 @@ export function DeliveryConfirmationFlow({
                       transition={{ delay: 0.3 }}
                       className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto"
                     >
-                      Obrigado por compartilhar sua experiência. Sua opinião ajuda toda a comunidade BRAVENZA.
+                      {productRating <= 3
+                        ? "Sentimos muito que sua experiência não tenha sido a melhor. Seu feedback é muito importante para nós e nos ajuda a melhorar cada vez mais. Saiba que estamos aqui caso precise de qualquer coisa."
+                        : "Obrigado por compartilhar sua experiência. Sua opinião ajuda toda a comunidade BRAVENZA."}
                     </motion.p>
                   </div>
 
@@ -876,12 +878,33 @@ export function DeliveryConfirmationFlow({
                     ))}
                   </motion.div>
 
+                  {productRating <= 3 && (
+                    <motion.p
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.45 }}
+                      className="text-xs text-muted-foreground max-w-xs mx-auto"
+                    >
+                      Lembre-se: você ainda pode abrir uma disputa em até 7 dias pela aba "Minhas compras"
+                    </motion.p>
+                  )}
+
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 }}
-                    className="pt-2"
+                    className="space-y-2.5 pt-2"
                   >
+                    {productRating <= 3 && (
+                      <Button
+                        variant="outline"
+                        onClick={onContactSupport}
+                        className="w-full h-11 rounded-2xl text-sm"
+                      >
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        Falar com suporte
+                      </Button>
+                    )}
                     <Button
                       onClick={onClose}
                       className="w-full h-12 rounded-2xl text-sm font-semibold btn-gold"
