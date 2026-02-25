@@ -419,7 +419,7 @@ function MarketplaceCheckoutPageInner() {
             variant="ghost"
             size="icon"
             className="h-9 w-9 rounded-full shrink-0"
-            onClick={() => navigate(-1)}
+            onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/app")}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
