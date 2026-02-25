@@ -156,6 +156,26 @@ export default function MarketplaceProfilePage() {
 
   const fetchAddress = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      // First try default address from client_addresses
+      const { data: addrData } = await supabase
+        .from("client_addresses")
+        .select("cep, street, number, complement, neighborhood, city, state")
+        .eq("user_id", user.id)
+        .eq("is_default", true)
+        .limit(1)
+        .maybeSingle();
+      if (addrData) {
+        setAddress({
+          cep: addrData.cep || "", street: addrData.street || "",
+          number: addrData.number || "", complement: addrData.complement || "",
+          neighborhood: addrData.neighborhood || "", city: addrData.city || "",
+          state: addrData.state || "",
+        });
+        return;
+      }
+      // Fallback: last order_request
       const { data } = await supabase
         .from("order_requests")
         .select("address_cep, address_street, address_number, address_complement, address_neighborhood, address_city, address_state")
