@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { 
-  Search, Package, Box, Heart, Star, Store, Crown, 
+  Search, Package, Box, Heart, Star, Store, Crown, Bell,
   Users, Sparkles, Award, Settings, LogOut, Menu,
   ShoppingBag, MoreHorizontal, X, Activity, ChevronLeft, HelpCircle, DollarSign,
   ArrowRight, FileText, Shield, RefreshCw, ChevronRight
@@ -74,6 +74,7 @@ interface MenuGroup {
 const getMenuGroups = (isVaultMember: boolean): MenuGroup[] => [
   {
     items: [
+      { path: "/app/notificacoes", label: "Notificações", icon: Bell },
       { path: "/app/pedidos", label: "Compras", icon: Package },
       { path: "/app/favoritos", label: "Favoritos", icon: Heart },
     ],

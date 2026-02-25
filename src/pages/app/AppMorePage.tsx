@@ -1,9 +1,9 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { 
-  Package, Heart, DollarSign, Store, Box, Settings,
+  Package, Heart, DollarSign, Store, Box, Settings, Bell,
   HelpCircle, Shield, RefreshCw, FileText, LogOut, 
-  ArrowRight, ChevronLeft, Bell, MessageSquare, MapPin,
+  ArrowRight, ChevronLeft, MessageSquare, MapPin,
   Tag, Star, Award, Sparkles, Users, Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ interface MenuGroup {
 const getMenuGroups = (isVaultMember: boolean): MenuGroup[] => [
   {
     items: [
+      { path: "/app/notificacoes", label: "Notificações", icon: Bell },
       { path: "/app/pedidos", label: "Compras", icon: Package },
       { path: "/app/favoritos", label: "Favoritos", icon: Heart },
     ],
