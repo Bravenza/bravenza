@@ -199,7 +199,7 @@ export function CommunityPostCard({
   const handleShareClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const shareUrl = `${window.location.origin}/minha-conta?tab=comunidade`;
+    const shareUrl = `${window.location.origin}/app/comunidade`;
     const shareData = { title: post.title || "Post da Comunidade Vault", url: shareUrl };
     
     try {

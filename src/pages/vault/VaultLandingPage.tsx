@@ -101,7 +101,7 @@ export default function VaultLandingPage() {
           </Link>
           <div className="flex items-center gap-3">
             <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-              <Link to="/entrar?redirect=/minha-conta">
+              <Link to="/entrar?redirect=/app">
                 Já sou membro
               </Link>
             </Button>

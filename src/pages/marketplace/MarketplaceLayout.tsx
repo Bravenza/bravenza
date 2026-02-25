@@ -155,7 +155,7 @@ export default function MarketplaceLayout() {
                       <Crown className="h-4 w-4 mr-2" /> Planos
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate("/minha-conta")}>
+                    <DropdownMenuItem onClick={() => navigate("/app")}>
                       <Settings className="h-4 w-4 mr-2" /> Painel do cliente
                     </DropdownMenuItem>
                     <DropdownMenuItem

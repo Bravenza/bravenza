@@ -424,7 +424,7 @@ export default function OrderConfirmationPage() {
                 Compartilhar
               </Button>
               <Button variant="outline" asChild className="gap-2">
-                <Link to="/minha-conta">
+                <Link to="/app">
                   <ExternalLink className="h-4 w-4" />
                   Minha Conta
                 </Link>
