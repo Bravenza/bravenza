@@ -82,7 +82,7 @@ export default function SellerStorefrontPage() {
   const initials = (seller.member?.client_name || "V").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 
   return (
-    <div className="pb-20">
+    <div className="pb-20 md:pb-0">
       <Helmet>
         <title>{seller.member?.client_name || "Vendedor"} | Marketplace BRAVENZA</title>
       </Helmet>

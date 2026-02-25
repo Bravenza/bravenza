@@ -1148,3 +1148,39 @@ html.pwa-standalone header.sticky {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* ── Enterprise UX: Smooth scroll anchoring ── */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ── Enterprise UX: Better overflow handling on tables ── */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Enterprise UX: Prevent layout shift on images ── */
+img {
+  content-visibility: auto;
+}
+
+/* ── Enterprise UX: Better modal backdrop for mobile ── */
+@media (max-width: 639px) {
+  [data-state="open"][role="dialog"] {
+    max-height: calc(100dvh - 2rem);
+    max-height: calc(100vh - 2rem);
+  }
+}
+
+/* ── Enterprise UX: Use dvh for mobile viewports ── */
+@supports (height: 100dvh) {
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+}

@@ -114,7 +114,7 @@ export function OfferCard({ offer, isBest, productImages, onBuy, onClick, onAddT
               ) : null;
             })()}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 sm:gap-2">
             {onAddToCart && (
               <Button
                 variant="outline"

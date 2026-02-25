@@ -290,7 +290,7 @@ export default function MarketplaceDropsPage() {
       </div>
 
       {/* ── RELEASES GRID ── */}
-      <div className="max-w-7xl mx-auto px-4 pb-20">
+      <div className="max-w-7xl mx-auto px-4 pb-20 md:pb-8">
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[1,2,3,4].map(i => <Skeleton key={i} className="h-32 rounded-2xl" />)}
