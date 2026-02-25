@@ -3,10 +3,11 @@ import { useOutletContext, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   User, Mail, Phone, MapPin, Shield, Bell, Save, ArrowLeft,
-  Loader2, Check, Box, Heart, Star, Settings2
+  Loader2, Check, Box, Heart, Star, Settings2, Camera
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -57,6 +58,9 @@ export default function MarketplaceProfilePage() {
   const profile = context?.profile;
 
   const [activeTab, setActiveTab] = useState("colecao");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Profile data
   const [fullName, setFullName] = useState("");
@@ -93,6 +97,7 @@ export default function MarketplaceProfilePage() {
     if (profile) {
       setFullName(profile.full_name || "");
       setPhone(profile.phone || "");
+      setAvatarUrl(profile.avatar_url || null);
     }
   }, [profile]);
 
@@ -195,6 +200,39 @@ export default function MarketplaceProfilePage() {
     setSavingPrefs(false);
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !cpf) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Imagem muito grande (máx. 5MB)");
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Não autenticado");
+      const ext = file.name.split(".").pop();
+      const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+      const { data, error } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(data.path);
+      const publicUrl = urlData.publicUrl;
+      const { error: updateError } = await supabase
+        .from("client_profiles")
+        .update({ avatar_url: publicUrl })
+        .eq("cpf", cpf);
+      if (updateError) throw updateError;
+      setAvatarUrl(publicUrl);
+      toast.success("Foto de perfil atualizada!");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar imagem");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const toggleSize = (size: string) => setPreferredSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
   const toggleBrand = (brand: string) => setFavoriteBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
 
@@ -214,9 +252,23 @@ export default function MarketplaceProfilePage() {
     <div className="max-w-3xl mx-auto px-4 py-6 pb-28 md:pb-12 space-y-5">
       {/* Profile Header Card */}
       <div className="flex items-center gap-4">
-        <Avatar className="h-16 w-16 border-2 border-primary/20">
-          <AvatarFallback className="bg-primary/10 text-primary text-lg font-bold">{initials}</AvatarFallback>
-        </Avatar>
+        <div className="relative group">
+          <Avatar className="h-16 w-16 border-2 border-primary/20 cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
+            <AvatarImage src={avatarUrl || undefined} alt={fullName} />
+            <AvatarFallback className="bg-primary/10 text-primary text-lg font-bold">{initials}</AvatarFallback>
+          </Avatar>
+          <div
+            className="absolute inset-0 rounded-full bg-background/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+            onClick={() => avatarInputRef.current?.click()}
+          >
+            {uploadingAvatar ? (
+              <Loader2 className="h-5 w-5 animate-spin text-foreground" />
+            ) : (
+              <Camera className="h-5 w-5 text-foreground" />
+            )}
+          </div>
+          <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+        </div>
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-black tracking-tight truncate">{fullName || "Meu Perfil"}</h1>
           <p className="text-sm text-muted-foreground">

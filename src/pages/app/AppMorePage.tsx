@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useClientSession } from "@/hooks/useClientSession";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 interface MenuItem {
@@ -115,6 +115,7 @@ export default function AppMorePage() {
         className="flex items-center gap-3 mb-6 p-4 rounded-2xl bg-card border border-border/40 w-full text-left hover:bg-secondary/50 transition-colors"
       >
         <Avatar className="h-12 w-12 border border-primary/30">
+          <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || "Avatar"} />
           <AvatarFallback className="bg-primary/15 text-primary text-sm font-bold">{initials}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">

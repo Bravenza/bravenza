@@ -12,6 +12,7 @@ interface ClientProfile {
   vault_member_id: string | null;
   vault_tier: string | null;
   vault_status: string | null;
+  avatar_url: string | null;
 }
 
 interface ClientSessionContextType {
