@@ -41,6 +41,7 @@ const getMenuGroups = (isVaultMember: boolean): MenuGroup[] => [
     items: [
       { path: "/app/mensagens", label: "Mensagens", icon: MessageSquare },
       { path: "/app/closet", label: "Closet", icon: Box },
+      { path: "/app/enderecos", label: "Meus Endereços", icon: MapPin },
       { path: "/app/documentos", label: "Documentos", icon: FileText },
       { path: "/app/feed", label: "Feed", icon: MessageSquare },
     ],
