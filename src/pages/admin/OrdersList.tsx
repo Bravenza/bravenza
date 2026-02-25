@@ -9,6 +9,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { typedRpc, type AdminOrdersCsvRow } from "@/integrations/supabase/typed-rpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -173,7 +174,7 @@ const OrdersList = () => {
         }
       })() : null;
 
-      const { data, error } = await supabase.rpc("get_admin_orders_csv" as any, {
+      const { data, error } = await typedRpc<AdminOrdersCsvRow[]>("get_admin_orders_csv", {
         p_status: statusFilter,
         p_search: search,
         p_date_from: dateFrom,
@@ -181,7 +182,7 @@ const OrdersList = () => {
       if (error) throw error;
 
       const headers = ["Pedido", "Cliente", "CPF", "Produto", "Preço", "Status", "Prazo SLA", "Criado em"];
-      const rows = ((data || []) as any[]).map((o: any) => [
+      const rows = (data || []).map((o) => [
         o.order_id,
         o.client_name,
         formatCPF(o.client_cpf),

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { motion } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
+import { typedRpc, type AdminDashboardMetricsRow, type AdminOrdersByMonthRow, type AdminOrdersByStatusRow } from "@/integrations/supabase/typed-rpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
@@ -53,33 +53,32 @@ export function DashboardMetrics() {
     try {
       // Fetch all data from RPCs in parallel
       const [kpiRes, monthRes, statusRes] = await Promise.all([
-        supabase.rpc("get_admin_dashboard_metrics" as any),
-        supabase.rpc("get_admin_orders_by_month" as any),
-        supabase.rpc("get_admin_orders_by_status" as any),
+        typedRpc<AdminDashboardMetricsRow[]>("get_admin_dashboard_metrics"),
+        typedRpc<AdminOrdersByMonthRow[]>("get_admin_orders_by_month"),
+        typedRpc<AdminOrdersByStatusRow[]>("get_admin_orders_by_status"),
       ]);
 
       if (kpiRes.error) throw kpiRes.error;
       if (monthRes.error) throw monthRes.error;
       if (statusRes.error) throw statusRes.error;
 
-      const kpi = kpiRes.data?.[0] || kpiRes.data;
+      const kpi = (Array.isArray(kpiRes.data) ? kpiRes.data[0] : kpiRes.data) as AdminDashboardMetricsRow | undefined;
       if (!kpi) return;
 
       const totalBudgets = Number(kpi.approved_budgets) + Number(kpi.rejected_budgets);
       const conversionRate = totalBudgets > 0 ? (Number(kpi.approved_budgets) / totalBudgets) * 100 : 0;
 
-      const ordersByMonth = ((monthRes.data || []) as any[]).map((m: any) => ({
+      const ordersByMonth = (monthRes.data || []).map((m) => ({
         name: m.month_key,
         pedidos: Number(m.pedidos),
         faturamento: Number(m.faturamento),
       }));
 
-      const ordersByStatus = ((statusRes.data || []) as any[])
-        .map((s: any) => ({
-          name: s.status_group,
-          value: Number(s.count),
-          color: STATUS_COLORS[s.status_group] || "#6b7280",
-        }));
+      const ordersByStatus = (statusRes.data || []).map((s) => ({
+        name: s.status_group,
+        value: Number(s.count),
+        color: STATUS_COLORS[s.status_group] || "#6b7280",
+      }));
 
       const funnelData = [
         { name: "Orçamentos Enviados", value: Number(kpi.total_budgets_sent), fill: FUNNEL_COLORS[0] },

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { typedRpc, type AdminClientHeatmapRow } from "@/integrations/supabase/typed-rpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin } from "lucide-react";
@@ -38,10 +38,10 @@ export function ClientHeatmap() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data, error } = await supabase.rpc("get_admin_client_heatmap" as any);
+        const { data, error } = await typedRpc<AdminClientHeatmapRow[]>("get_admin_client_heatmap");
         if (error) throw error;
 
-        const result: StateData[] = ((data || []) as any[]).map((row: any) => ({
+        const result: StateData[] = (data || []).map((row) => ({
           state: row.state_code,
           count: Number(row.client_count),
           revenue: Number(row.revenue),

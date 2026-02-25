@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { typedInsert } from "@/integrations/supabase/typed-rpc";
 import { useToast } from "@/hooks/use-toast";
 
 interface Product {
@@ -68,7 +69,7 @@ export function AddToClosetModal({ open, onOpenChange, onSuccess, cpf, memberId 
 
     setIsSaving(true);
     try {
-      const { error } = await supabase.from("vault_items" as any).insert({
+      const { error } = await typedInsert("vault_items", {
         user_id: memberId,
         title: `${selectedProduct.brand} ${selectedProduct.model}`,
         brand: selectedProduct.brand,
@@ -78,7 +79,7 @@ export function AddToClosetModal({ open, onOpenChange, onSuccess, cpf, memberId 
         purchase_price: purchasePrice ? parseFloat(purchasePrice) : null,
         verified_status: "PENDING",
         inspection_photos: selectedProduct.images || [],
-      } as any);
+      });
 
       if (error) throw error;
 

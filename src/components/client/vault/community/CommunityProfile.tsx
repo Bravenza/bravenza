@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { typedRpc, type MemberPublicProfileResult, type ToggleFollowResult } from "@/integrations/supabase/typed-rpc";
 import { CommunityConnectionsList } from "./CommunityConnectionsList";
 
 interface VaultItem {
@@ -132,14 +133,14 @@ export function CommunityProfile({ memberId, clientCpf, onClose, onFollowChange 
     
     setIsLoading(true);
     try {
-      const { data, error } = await (supabase.rpc as any)("get_member_public_profile", {
+      const { data, error } = await typedRpc<MemberPublicProfileResult>("get_member_public_profile", {
         p_cpf: clientCpf,
         p_member_id: memberId,
       });
 
       if (error) throw error;
 
-      const result = data as any;
+      const result = data;
       if (result?.success) {
         setProfile(result.profile);
         setItems(result.items || []);
@@ -161,14 +162,14 @@ export function CommunityProfile({ memberId, clientCpf, onClose, onFollowChange 
 
     setIsToggling(true);
     try {
-      const { data, error } = await (supabase.rpc as any)("toggle_follow", {
+      const { data, error } = await typedRpc<ToggleFollowResult>("toggle_follow", {
         p_cpf: clientCpf,
         p_target_member_id: memberId,
       });
 
       if (error) throw error;
 
-      const result = data as any;
+      const result = data;
       if (result?.success) {
         setIsFollowing(result.is_following);
         setProfile(prev => prev ? {

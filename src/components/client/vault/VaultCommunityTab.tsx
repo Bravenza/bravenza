@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { typedRpc } from "@/integrations/supabase/typed-rpc";
 import {
   CommunityPostCard,
   CommunityOnlineUsers,
@@ -99,7 +100,7 @@ export function VaultCommunityTab({ clientCpf, member }: VaultCommunityTabProps)
     try {
       const currentOffset = refresh ? 0 : offset;
       const rpcName = currentFeedType === "following" ? "get_following_feed" : "get_vault_community_feed";
-      const { data, error } = await (supabase.rpc as any)(rpcName, {
+      const { data, error } = await typedRpc<unknown[]>(rpcName, {
         p_cpf: clientCpf, p_limit: 20, p_offset: currentOffset,
       });
       if (!error && data) {

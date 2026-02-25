@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
+import { typedInsert } from "@/integrations/supabase/typed-rpc";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Camera, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -51,7 +52,7 @@ export function ConsignmentRequestDialog({
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("marketplace_consignments" as any).insert({
+      const { error } = await typedInsert("marketplace_consignments", {
         seller_id: sellerId,
         brand,
         model,
