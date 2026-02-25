@@ -66,6 +66,9 @@ verify_jwt = false
 [functions.mk-hub]
 verify_jwt = false
 
+[functions.mk-catalog]
+verify_jwt = false
+
 [functions.mk-notifications]
 verify_jwt = false
 
@@ -93,5 +96,11 @@ verify_jwt = false
 [functions.mk-orders]
 verify_jwt = false
 
+[functions.mk-fulfill]
+verify_jwt = false
+
 [functions.mk-seller]
+verify_jwt = false
+
+[functions.mk-store]
 verify_jwt = false
