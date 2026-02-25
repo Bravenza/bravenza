@@ -3,49 +3,60 @@ import { supabase } from "@/integrations/supabase/client";
 const FUNCTION_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
 const ACTION_TO_FUNCTION: Record<string, string> = {
-  // mk-hub: Catalog, Listings, Search, Offers/Negotiation, Product interactions
+  // mk-hub: Listings CRUD, Favorites, Seller Profiles, Offers/Negotiation
   "listings": "mk-hub", "listing-detail": "mk-hub", "my-listings": "mk-hub",
   "create-listing": "mk-hub", "update-listing": "mk-hub", "delete-listing": "mk-hub",
   "toggle-favorite": "mk-hub", "seller-profile": "mk-hub", "seller-public-profile": "mk-hub",
   "make-offer": "mk-hub", "listing-offers": "mk-hub", "my-offers": "mk-hub", "respond-offer": "mk-hub",
   "accept-counter": "mk-hub", "reject-counter": "mk-hub",
   "bundle-offer": "mk-hub", "negotiation-timeline": "mk-hub", "expire-offers": "mk-hub",
-  "activity-feed": "mk-hub", "log-activity": "mk-hub",
-  "price-history": "mk-hub", "recommendations": "mk-hub",
-  "saved-searches": "mk-hub", "save-search": "mk-hub", "delete-saved-search": "mk-hub",
-  "drop-reminders": "mk-hub", "toggle-drop-reminder": "mk-hub",
-  "catalog-products": "mk-hub", "catalog-product": "mk-hub", "catalog-offers": "mk-hub",
-  "catalog-search": "mk-hub", "catalog-create-product": "mk-hub", "catalog-create-offer": "mk-hub",
-  "watchlist-check": "mk-hub", "watchlist-toggle": "mk-hub",
-  "admin-pending-offers": "mk-hub", "admin-moderate-offer": "mk-hub",
-  "product-comments": "mk-hub", "product-comment": "mk-hub",
-  "product-reviews": "mk-hub", "product-review": "mk-hub",
-  "check-purchase": "mk-hub", "product-analytics": "mk-hub", "freight-quote": "mk-hub",
 
-  // mk-orders: Orders, Payments, Disputes, Chat, Hub PRO, Wallet
+  // mk-catalog: Catalog, Watchlist, Comments, Reviews, Analytics, Freight, Activity, Recommendations, Saved Searches, Drop Reminders, Admin Moderation
+  "catalog-products": "mk-catalog", "catalog-product": "mk-catalog", "catalog-offers": "mk-catalog",
+  "catalog-search": "mk-catalog", "catalog-create-product": "mk-catalog", "catalog-create-offer": "mk-catalog",
+  "watchlist-check": "mk-catalog", "watchlist-toggle": "mk-catalog",
+  "product-comments": "mk-catalog", "product-comment": "mk-catalog",
+  "product-reviews": "mk-catalog", "product-review": "mk-catalog",
+  "check-purchase": "mk-catalog", "product-analytics": "mk-catalog", "freight-quote": "mk-catalog",
+  "admin-flag-listing": "mk-catalog",
+  "activity-feed": "mk-catalog", "log-activity": "mk-catalog",
+  "price-history": "mk-catalog", "recommendations": "mk-catalog",
+  "saved-searches": "mk-catalog", "save-search": "mk-catalog", "delete-saved-search": "mk-catalog",
+  "drop-reminders": "mk-catalog", "toggle-drop-reminder": "mk-catalog",
+  "admin-pending-offers": "mk-catalog", "admin-moderate-offer": "mk-catalog",
+  "product-coupons": "mk-catalog",
+
+  // mk-orders: Core Orders, Payments, Status, Rate, Admin, Wallet, Buyer Cancel
   "create-order": "mk-orders", "confirm-payment": "mk-orders", "my-orders": "mk-orders",
+  "my-sales": "mk-orders", "update-order-status": "mk-orders",
+  "rate-seller": "mk-orders", "admin-orders": "mk-orders", "admin-disputes": "mk-orders",
+  "cancel-buyer-order": "mk-orders",
   "wallet-balance": "mk-orders", "wallet-transactions": "mk-orders",
-  "my-sales": "mk-orders", "update-order-status": "mk-orders", "resolve-dispute": "mk-orders",
-  "rate-seller": "mk-orders", "admin-orders": "mk-orders", "open-dispute": "mk-orders",
-  "admin-disputes": "mk-orders",
-  "chat-messages": "mk-orders", "send-message": "mk-orders",
-  "hub-orders": "mk-orders", "hub-update-status": "mk-orders", "hub-inspect": "mk-orders",
-  "laudo-lookup": "mk-orders", "check-auto-payout": "mk-orders",
 
-  // mk-seller: Seller Onboarding, Analytics, Coupons, Boosts, Collections, Social, Strikes
+  // mk-fulfill: Disputes, Chat, Hub PRO, Inspection, Laudo, Auto-payout
+  "open-dispute": "mk-fulfill", "resolve-dispute": "mk-fulfill",
+  "chat-messages": "mk-fulfill", "send-message": "mk-fulfill",
+  "hub-orders": "mk-fulfill", "hub-update-status": "mk-fulfill", "hub-inspect": "mk-fulfill",
+  "laudo-lookup": "mk-fulfill", "check-auto-payout": "mk-fulfill",
+
+  // mk-seller: Onboarding, Tier, Analytics, Price Drop, Strikes, Leaderboard
   "seller-onboarding": "mk-seller", "seller-onboarding-status": "mk-seller",
+  "seller-tier-info": "mk-seller", "recalc-seller-tier": "mk-seller",
+  "seller-analytics": "mk-seller", "price-drop-suggestions": "mk-seller",
+  "seller-leaderboard": "mk-seller",
   "my-strikes": "mk-seller", "appeal-strike": "mk-seller",
-  "price-drop-suggestions": "mk-seller",
-  "seller-analytics": "mk-seller", "my-coupons": "mk-seller", "create-coupon": "mk-seller",
-  "update-coupon": "mk-seller", "delete-coupon": "mk-seller", "validate-coupon": "mk-seller",
-  "use-coupon": "mk-seller",
-  "update-storefront": "mk-seller", "snapshot-prices": "mk-seller",
-  "recalc-seller-tier": "mk-seller", "seller-tier-info": "mk-seller",
-  "boost-activate": "mk-seller", "boost-deactivate": "mk-seller", "my-boosts": "mk-seller",
-  "my-collections": "mk-seller", "create-collection": "mk-seller",
-  "update-collection": "mk-seller", "delete-collection": "mk-seller",
-  "toggle-follow": "mk-seller", "is-following": "mk-seller", "my-follows": "mk-seller",
-  "loyalty-balance": "mk-seller", "seller-leaderboard": "mk-seller", "check-badges": "mk-seller",
+
+  // mk-store: Coupons, Boosts, Collections, Social, Badges, Storefront, KYC, Snapshot, Loyalty
+  "my-coupons": "mk-store", "create-coupon": "mk-store",
+  "update-coupon": "mk-store", "delete-coupon": "mk-store", "validate-coupon": "mk-store",
+  "use-coupon": "mk-store",
+  "update-storefront": "mk-store", "my-storefront": "mk-store", "snapshot-prices": "mk-store",
+  "boost-activate": "mk-store", "boost-deactivate": "mk-store", "my-boosts": "mk-store",
+  "my-collections": "mk-store", "create-collection": "mk-store",
+  "update-collection": "mk-store", "delete-collection": "mk-store",
+  "toggle-follow": "mk-store", "is-following": "mk-store", "my-follows": "mk-store",
+  "loyalty-balance": "mk-store", "check-badges": "mk-store",
+  "review-kyc": "mk-store",
 };
 
 export async function marketplaceRequest(
@@ -55,11 +66,10 @@ export async function marketplaceRequest(
   body?: any,
   extraParams?: Record<string, string>
 ) {
-  const fnName = ACTION_TO_FUNCTION[action] || "marketplace-listings";
+  const fnName = ACTION_TO_FUNCTION[action] || "mk-hub";
   const params = new URLSearchParams({ action, ...extraParams });
   const url = `${FUNCTION_BASE}/${fnName}?${params}`;
 
-  // Get current session JWT token for authenticated requests
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
 
@@ -68,7 +78,6 @@ export async function marketplaceRequest(
     apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
   };
 
-  // Send JWT token for authentication (replaces x-client-cpf header trust)
   if (accessToken) {
     headers["Authorization"] = `Bearer ${accessToken}`;
   }
@@ -87,10 +96,6 @@ export async function marketplaceRequest(
   return res.json();
 }
 
-/**
- * Build authenticated headers for mk-hub requests.
- * Use this helper in components that call mk-hub directly (outside marketplaceRequest).
- */
 export async function getMarketplaceHeaders(): Promise<Record<string, string>> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
