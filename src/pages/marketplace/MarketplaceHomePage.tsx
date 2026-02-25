@@ -23,7 +23,7 @@ const BestSellersSection = lazy(() => import("@/components/marketplace/home/Best
 const BrandSpotlightSection = lazy(() => import("@/components/marketplace/home/BrandSpotlightSection").then(m => ({ default: m.BrandSpotlightSection })));
 const RecentlyAddedSection = lazy(() => import("@/components/marketplace/home/RecentlyAddedSection").then(m => ({ default: m.RecentlyAddedSection })));
 const SellCTASection = lazy(() => import("@/components/marketplace/home/SellCTASection").then(m => ({ default: m.SellCTASection })));
-const MarketplaceFAQSection = lazy(() => import("@/components/marketplace/home/MarketplaceFAQSection").then(m => ({ default: m.MarketplaceFAQSection })));
+
 const DropsCountdownSection = lazy(() => import("@/components/marketplace/home/DropsCountdownSection").then(m => ({ default: m.DropsCountdownSection })));
 const UpcomingReleasesSection = lazy(() => import("@/components/marketplace/home/UpcomingReleasesSection").then(m => ({ default: m.UpcomingReleasesSection })));
 const SellerLeaderboard = lazy(() => import("@/components/marketplace/SellerLeaderboard").then(m => ({ default: m.SellerLeaderboard })));
@@ -322,12 +322,6 @@ export default function MarketplaceHomePage() {
         </Suspense>
       </LazySection>
 
-      {/* ===== FAQ ===== */}
-      <LazySection minHeight="400px">
-        <Suspense fallback={<div className="h-[400px]" />}>
-          <MarketplaceFAQSection />
-        </Suspense>
-      </LazySection>
     </div>
   );
 }
