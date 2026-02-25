@@ -127,17 +127,28 @@ export const SellCTASection = memo(function SellCTASection() {
           transition={{ delay: 0.5, duration: 0.5 }}
           className="text-center"
         >
-          <Button
-            size="lg"
-            className="btn-gold rounded-full h-16 px-12 text-lg font-black gap-3 shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 transition-all"
-            onClick={() => navigate("/app/loja")}
-          >
-            <Users className="h-5 w-5" />
-            Começar a vender agora
-            <ArrowRight className="h-5 w-5" />
-          </Button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button
+              size="lg"
+              className="btn-gold rounded-full h-16 px-12 text-lg font-black gap-3 shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 transition-all"
+              onClick={() => navigate("/app/loja")}
+            >
+              <Users className="h-5 w-5" />
+              Começar a vender agora
+              <ArrowRight className="h-5 w-5" />
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="rounded-full h-16 px-10 text-lg font-bold gap-3 border-primary/25 hover:border-primary/40 transition-all"
+              onClick={() => navigate("/full")}
+            >
+              <Zap className="h-5 w-5 text-primary" />
+              Bravenza Full — 22%
+            </Button>
+          </div>
           <p className="text-xs text-muted-foreground mt-4">
-            Cadastro gratuito · Sem mensalidade · Sem exclusividade
+            Cadastro gratuito · Sem mensalidade · Ou deixe a Bravenza cuidar de tudo com o <strong className="text-foreground">Full</strong>
           </p>
         </motion.div>
       </div>

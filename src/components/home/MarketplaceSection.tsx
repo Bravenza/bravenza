@@ -88,14 +88,22 @@ const MarketplaceSectionComponent = () => {
             transition={{ delay: 0.3 }}
             className="text-center"
           >
-            <Button asChild size="lg" className="btn-gold group">
-              <Link to="/marketplace">
-                Explorar o marketplace
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </Button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Button asChild size="lg" className="btn-gold group">
+                <Link to="/marketplace">
+                  Explorar o marketplace
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="group border-primary/20 hover:border-primary/40">
+                <Link to="/full">
+                  Conheça o Bravenza Full
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </Button>
+            </div>
             <p className="text-xs text-muted-foreground mt-4">
-              Aberto para todos os membros
+              Aberto para todos os membros · Venda sem esforço com o Full
             </p>
           </motion.div>
         </motion.div>
