@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { 
   Camera, Instagram, Facebook, Linkedin, Twitter, 
   Globe, MapPin, Save, Loader2, ArrowLeft, Shield, Crown, Sparkles,
-  User, Check, ShoppingBag, Box
+  User, Check, Settings2, Box, Heart, Star
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,18 +14,32 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useClientSession } from "@/hooks/useClientSession";
 import { supabase } from "@/integrations/supabase/client";
+import { ClosetStatsBar } from "@/components/vault/closet/ClosetStatsBar";
+import { ClosetCollectionTab } from "@/components/vault/closet/ClosetCollectionTab";
+import { ClosetFavoritesTab } from "@/components/vault/closet/ClosetFavoritesTab";
+import { ClosetReviewsTab } from "@/components/vault/closet/ClosetReviewsTab";
 
 interface VaultItem {
   id: string;
+  vault_id: string;
   title: string;
-  brand: string | null;
-  model: string | null;
-  size: string | null;
-  inspection_photos: string[] | null;
-  verified_status: string | null;
+  brand: string;
+  model: string;
+  colorway: string;
+  size: string;
+  verified_status: "VERIFIED" | "PENDING" | "REVOKED";
+  inspection_photos: string[];
+  certificate_pdf_url: string | null;
+  qr_private_url: string | null;
+  purchase_value: number;
+  purchase_date: string;
+  marketplace_product_id?: string | null;
+  purchase_price?: number | null;
+  market_price?: number | null;
 }
 
 interface ProfileData {
@@ -71,6 +85,10 @@ export default function VaultProfilePage() {
   const [isUploading, setIsUploading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
+  const [activeTab, setActiveTab] = useState("colecao");
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [favoritesCount, setFavoritesCount] = useState(0);
+  const [reviewsCount, setReviewsCount] = useState(0);
   
   const [formData, setFormData] = useState({
     display_name: "",
@@ -88,10 +106,23 @@ export default function VaultProfilePage() {
   useEffect(() => {
     if (!isSessionLoading && clientProfile?.cpf) {
       fetchProfile();
+      fetchCounts();
     } else if (!isSessionLoading && !clientProfile) {
       navigate("/minha-conta");
     }
   }, [isSessionLoading, clientProfile]);
+
+  const fetchCounts = async () => {
+    if (!clientProfile?.cpf) return;
+    try {
+      const [watchlistRes, reviewsRes] = await Promise.all([
+        supabase.from("marketplace_watchlist").select("id", { count: "exact", head: true }).eq("user_cpf", clientProfile.cpf).eq("is_active", true),
+        supabase.from("marketplace_product_reviews").select("id", { count: "exact", head: true }).eq("reviewer_cpf", clientProfile.cpf).eq("is_visible", true),
+      ]);
+      setFavoritesCount(watchlistRes.count || 0);
+      setReviewsCount(reviewsRes.count || 0);
+    } catch {}
+  };
 
   const fetchProfile = async () => {
     if (!clientProfile?.cpf) return;
@@ -128,26 +159,23 @@ export default function VaultProfilePage() {
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
-      toast({
-        title: "Erro ao carregar perfil",
-        description: "Tente novamente mais tarde",
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao carregar perfil", description: "Tente novamente mais tarde", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
 
     // Fetch vault items (collection)
+    fetchVaultItems();
+  };
+
+  const fetchVaultItems = async () => {
+    if (!clientProfile?.cpf) return;
     try {
-      const { data: itemsData } = await supabase
-        .from("vault_items" as any)
-        .select("id, title, brand, model, size, inspection_photos, verified_status")
-        .eq("user_id", clientProfile.vault_member_id || "")
-        .order("created_at", { ascending: false })
-        .limit(12);
-      
-      if (itemsData) setVaultItems(itemsData as unknown as VaultItem[]);
-    } catch (_) {}
+      const { data, error } = await supabase.rpc("get_vault_member_items", { p_cpf: clientProfile.cpf });
+      if (!error && data) {
+        setVaultItems(data as unknown as VaultItem[]);
+      }
+    } catch {}
   };
 
   const handleChange = (field: string, value: string | boolean) => {
@@ -158,53 +186,27 @@ export default function VaultProfilePage() {
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !profile) return;
-
     if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Arquivo inválido",
-        description: "Por favor, selecione uma imagem",
-        variant: "destructive",
-      });
+      toast({ title: "Arquivo inválido", description: "Por favor, selecione uma imagem", variant: "destructive" });
       return;
     }
-
     if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "Arquivo muito grande",
-        description: "Máximo 5MB",
-        variant: "destructive",
-      });
+      toast({ title: "Arquivo muito grande", description: "Máximo 5MB", variant: "destructive" });
       return;
     }
-
     setIsUploading(true);
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `${profile.id}-avatar-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("community-media")
-        .upload(filePath, file);
-
+      const { error: uploadError } = await supabase.storage.from("community-media").upload(filePath, file);
       if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("community-media")
-        .getPublicUrl(filePath);
-
+      const { data: { publicUrl } } = supabase.storage.from("community-media").getPublicUrl(filePath);
       handleChange("avatar_url", publicUrl);
-      
-      toast({
-        title: "Foto enviada!",
-        description: "Não esqueça de salvar as alterações",
-      });
+      toast({ title: "Foto enviada!", description: "Não esqueça de salvar as alterações" });
     } catch (error) {
       console.error("Error uploading avatar:", error);
-      toast({
-        title: "Erro ao enviar foto",
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao enviar foto", variant: "destructive" });
     } finally {
       setIsUploading(false);
     }
@@ -212,7 +214,6 @@ export default function VaultProfilePage() {
 
   const handleSave = async () => {
     if (!clientProfile?.cpf) return;
-    
     setIsSaving(true);
     try {
       const { data, error } = await (supabase.rpc as any)("update_member_profile", {
@@ -228,27 +229,19 @@ export default function VaultProfilePage() {
         p_twitter_url: formData.twitter_url || null,
         p_is_profile_public: formData.is_profile_public,
       });
-
       if (error) throw error;
-
       const result = data as any;
       if (result?.success) {
-        toast({
-          title: "Perfil atualizado! ✨",
-          description: "Suas alterações foram salvas",
-        });
+        toast({ title: "Perfil atualizado! ✨", description: "Suas alterações foram salvas" });
         setHasChanges(false);
+        setShowEditProfile(false);
         fetchProfile();
       } else {
         throw new Error(result?.error || "Erro desconhecido");
       }
     } catch (error) {
       console.error("Error saving profile:", error);
-      toast({
-        title: "Erro ao salvar",
-        description: "Tente novamente",
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao salvar", description: "Tente novamente", variant: "destructive" });
     } finally {
       setIsSaving(false);
     }
@@ -276,9 +269,7 @@ export default function VaultProfilePage() {
             <p className="text-muted-foreground mb-4">
               Você precisa ser membro do Vault Club para editar seu perfil da comunidade.
             </p>
-            <Button onClick={() => navigate("/vault")}>
-              Conhecer o Vault Club
-            </Button>
+            <Button onClick={() => navigate("/vault")}>Conhecer o Vault Club</Button>
           </CardContent>
         </Card>
       </div>
@@ -288,6 +279,7 @@ export default function VaultProfilePage() {
   const tier = profile.tier || "member";
   const tierData = tierConfig[tier] || tierConfig.member;
   const TierIcon = tierData.icon;
+  const totalValue = vaultItems.reduce((s, i) => s + (i.purchase_price || i.purchase_value || 0), 0);
 
   return (
     <div className="min-h-screen bg-background theme-light">
@@ -295,304 +287,209 @@ export default function VaultProfilePage() {
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
         <div className="container max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate("/minha-conta", { replace: true });
-            }}
+            variant="ghost" size="sm" 
+            onClick={(e) => { e.stopPropagation(); navigate("/minha-conta", { replace: true }); }}
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
             Voltar
           </Button>
-          
-          <h1 className="font-semibold">Editar Perfil</h1>
-          
+          <h1 className="font-semibold">Meu Closet</h1>
           <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={isSaving || !hasChanges}
-            className="gap-2"
+            variant="ghost" size="sm"
+            onClick={() => setShowEditProfile(!showEditProfile)}
+            className="gap-1.5"
           >
-            {isSaving ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            Salvar
+            <Settings2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      <div className="container max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* Avatar Section */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center">
-              <div className="relative mb-4">
-                <Avatar className="w-28 h-28 border-4 border-border">
-                  {formData.avatar_url ? (
-                    <AvatarImage src={formData.avatar_url} alt="Avatar" />
-                  ) : null}
-                  <AvatarFallback className={`text-2xl font-bold ${tierData.bg}`}>
+      <div className="container max-w-2xl mx-auto px-4 py-5 space-y-5">
+        {/* Profile Card */}
+        <Card className="overflow-hidden">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Avatar className="w-20 h-20 border-2 border-border">
+                  {formData.avatar_url ? <AvatarImage src={formData.avatar_url} alt="Avatar" /> : null}
+                  <AvatarFallback className={`text-lg font-bold ${tierData.bg}`}>
                     {getInitials(formData.display_name || "?")}
                   </AvatarFallback>
                 </Avatar>
-                <label className="absolute bottom-0 right-0 p-2.5 bg-primary text-primary-foreground rounded-full cursor-pointer hover:bg-primary/90 transition-colors shadow-lg">
-                  {isUploading ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <Camera className="h-5 w-5" />
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleAvatarUpload}
-                    disabled={isUploading}
-                  />
-                </label>
+                {showEditProfile && (
+                  <label className="absolute bottom-0 right-0 p-1.5 bg-primary text-primary-foreground rounded-full cursor-pointer hover:bg-primary/90 transition-colors shadow-lg">
+                    {isUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={isUploading} />
+                  </label>
+                )}
               </div>
-              
-              <Badge variant="outline" className={`${tierData.color} border-current gap-1`}>
-                <TierIcon className="h-3 w-3" />
-                {tierData.label}
-              </Badge>
-              
-              <div className="flex gap-4 mt-3 text-sm text-muted-foreground">
-                <span><strong className="text-foreground">{profile.followers_count}</strong> seguidores</span>
-                <span><strong className="text-foreground">{profile.following_count}</strong> seguindo</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="text-lg font-bold truncate">{formData.display_name || "Membro"}</h2>
+                  <Badge variant="outline" className={`${tierData.color} border-current gap-1 shrink-0`}>
+                    <TierIcon className="h-3 w-3" />
+                    {tierData.label}
+                  </Badge>
+                </div>
+                {formData.bio && <p className="text-xs text-muted-foreground line-clamp-2 mb-1.5">{formData.bio}</p>}
+                <div className="flex gap-3 text-xs text-muted-foreground">
+                  <span><strong className="text-foreground">{profile.followers_count}</strong> seguidores</span>
+                  <span><strong className="text-foreground">{profile.following_count}</strong> seguindo</span>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Basic Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <User className="h-5 w-5 text-primary" />
-              Informações Básicas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Nome de exibição</Label>
-              <Input
-                value={formData.display_name}
-                onChange={(e) => handleChange("display_name", e.target.value)}
-                placeholder="Como você quer ser chamado"
-              />
-            </div>
+        {/* Stats Bar */}
+        <ClosetStatsBar
+          collectionCount={vaultItems.length}
+          favoritesCount={favoritesCount}
+          reviewsCount={reviewsCount}
+          totalValue={totalValue}
+        />
 
-            <div className="space-y-2">
-              <Label>Bio</Label>
-              <Textarea
-                value={formData.bio}
-                onChange={(e) => handleChange("bio", e.target.value)}
-                placeholder="Conte um pouco sobre você e sua coleção..."
-                className="resize-none"
-                rows={3}
-                maxLength={200}
-              />
-              <p className="text-xs text-muted-foreground text-right">
-                {formData.bio.length}/200
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full">
+            <TabsTrigger value="colecao" className="flex-1 gap-1.5">
+              <Box className="h-3.5 w-3.5" />
+              Coleção
+            </TabsTrigger>
+            <TabsTrigger value="favoritos" className="flex-1 gap-1.5">
+              <Heart className="h-3.5 w-3.5" />
+              Favoritos
+            </TabsTrigger>
+            <TabsTrigger value="avaliacoes" className="flex-1 gap-1.5">
+              <Star className="h-3.5 w-3.5" />
+              Avaliações
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Location */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-primary" />
-              Localização
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Cidade</Label>
-                <Input
-                  value={formData.city}
-                  onChange={(e) => handleChange("city", e.target.value)}
-                  placeholder="Sua cidade"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Estado</Label>
-                <select
-                  value={formData.state}
-                  onChange={(e) => handleChange("state", e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <option value="">Selecione</option>
-                  {BRAZILIAN_STATES.map((state) => (
-                    <option key={state} value={state}>{state}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <TabsContent value="colecao">
+            <ClosetCollectionTab
+              items={vaultItems}
+              isLoading={false}
+              onItemAdded={fetchVaultItems}
+              cpf={clientProfile?.cpf || ""}
+              memberId={clientProfile?.vault_member_id || ""}
+            />
+          </TabsContent>
 
-        {/* Social Links */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Globe className="h-5 w-5 text-primary" />
-              Redes Sociais
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="relative">
-              <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={formData.instagram_url}
-                onChange={(e) => handleChange("instagram_url", e.target.value)}
-                placeholder="instagram.com/seuperfil"
-                className="pl-10"
-              />
-            </div>
-            
-            <div className="relative">
-              <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={formData.facebook_url}
-                onChange={(e) => handleChange("facebook_url", e.target.value)}
-                placeholder="facebook.com/seuperfil"
-                className="pl-10"
-              />
-            </div>
-            
-            <div className="relative">
-              <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={formData.linkedin_url}
-                onChange={(e) => handleChange("linkedin_url", e.target.value)}
-                placeholder="linkedin.com/in/seuperfil"
-                className="pl-10"
-              />
-            </div>
-            
-            <div className="relative">
-              <Twitter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={formData.twitter_url}
-                onChange={(e) => handleChange("twitter_url", e.target.value)}
-                placeholder="twitter.com/seuperfil"
-                className="pl-10"
-              />
-            </div>
-          </CardContent>
-        </Card>
+          <TabsContent value="favoritos">
+            <ClosetFavoritesTab cpf={clientProfile?.cpf || ""} />
+          </TabsContent>
 
-        {/* Privacy */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              Privacidade
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
-              <div>
-                <p className="font-medium">Perfil público</p>
-                <p className="text-sm text-muted-foreground">
-                  Outros membros podem ver sua coleção e informações
-                </p>
-              </div>
-              <Switch
-                checked={formData.is_profile_public}
-                onCheckedChange={(checked) => handleChange("is_profile_public", checked)}
-              />
-            </div>
-          </CardContent>
-        </Card>
+          <TabsContent value="avaliacoes">
+            <ClosetReviewsTab cpf={clientProfile?.cpf || ""} />
+          </TabsContent>
+        </Tabs>
 
-        {/* My Collection */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Box className="h-5 w-5 text-primary" />
-              Minha Coleção
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {vaultItems.length === 0 ? (
-              <div className="text-center py-8">
-                <ShoppingBag className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">Nenhum sneaker na coleção ainda</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">
-                  Seus sneakers verificados aparecerão aqui
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                {vaultItems.map((item, index) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.04 }}
-                    className="group relative"
-                  >
-                    <div className="aspect-square rounded-xl overflow-hidden bg-secondary/30 border border-border/30">
-                      {item.inspection_photos?.[0] ? (
-                        <img
-                          src={item.inspection_photos[0]}
-                          alt={item.title}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <ShoppingBag className="h-6 w-6 text-muted-foreground/20" />
-                        </div>
-                      )}
-                      {item.verified_status === "VERIFIED" && (
-                        <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-primary/90 flex items-center justify-center shadow-sm">
-                          <Check className="h-3 w-3 text-primary-foreground" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="mt-1.5 px-0.5">
-                      <p className="text-xs font-medium truncate">{item.brand || item.title}</p>
-                      {item.size && (
-                        <p className="text-[10px] text-muted-foreground">Tam. {item.size}</p>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Save Button (Mobile) */}
-        <div className="pb-6">
-          <Button
-            onClick={handleSave}
-            disabled={isSaving || !hasChanges}
-            className="w-full gap-2"
-            size="lg"
+        {/* Edit Profile Panel (collapsible) */}
+        {showEditProfile && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="space-y-4"
           >
-            {isSaving ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                Salvando...
-              </>
-            ) : (
-              <>
-                <Check className="h-5 w-5" />
-                {hasChanges ? "Salvar alterações" : "Perfil salvo"}
-              </>
-            )}
-          </Button>
-        </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <User className="h-5 w-5 text-primary" />
+                  Informações Básicas
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Nome de exibição</Label>
+                  <Input value={formData.display_name} onChange={(e) => handleChange("display_name", e.target.value)} placeholder="Como você quer ser chamado" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Bio</Label>
+                  <Textarea value={formData.bio} onChange={(e) => handleChange("bio", e.target.value)} placeholder="Conte um pouco sobre você e sua coleção..." className="resize-none" rows={3} maxLength={200} />
+                  <p className="text-xs text-muted-foreground text-right">{formData.bio.length}/200</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  Localização
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Cidade</Label>
+                    <Input value={formData.city} onChange={(e) => handleChange("city", e.target.value)} placeholder="Sua cidade" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Estado</Label>
+                    <select value={formData.state} onChange={(e) => handleChange("state", e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                      <option value="">Selecione</option>
+                      {BRAZILIAN_STATES.map((state) => (<option key={state} value={state}>{state}</option>))}
+                    </select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-primary" />
+                  Redes Sociais
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="relative">
+                  <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input value={formData.instagram_url} onChange={(e) => handleChange("instagram_url", e.target.value)} placeholder="instagram.com/seuperfil" className="pl-10" />
+                </div>
+                <div className="relative">
+                  <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input value={formData.facebook_url} onChange={(e) => handleChange("facebook_url", e.target.value)} placeholder="facebook.com/seuperfil" className="pl-10" />
+                </div>
+                <div className="relative">
+                  <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input value={formData.linkedin_url} onChange={(e) => handleChange("linkedin_url", e.target.value)} placeholder="linkedin.com/in/seuperfil" className="pl-10" />
+                </div>
+                <div className="relative">
+                  <Twitter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input value={formData.twitter_url} onChange={(e) => handleChange("twitter_url", e.target.value)} placeholder="twitter.com/seuperfil" className="pl-10" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  Privacidade
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
+                  <div>
+                    <p className="font-medium">Perfil público</p>
+                    <p className="text-sm text-muted-foreground">Outros membros podem ver sua coleção e informações</p>
+                  </div>
+                  <Switch checked={formData.is_profile_public} onCheckedChange={(checked) => handleChange("is_profile_public", checked)} />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Button onClick={handleSave} disabled={isSaving || !hasChanges} className="w-full gap-2 rounded-xl" size="lg">
+              {isSaving ? (<><Loader2 className="h-5 w-5 animate-spin" /> Salvando...</>) : (<><Check className="h-5 w-5" /> {hasChanges ? "Salvar alterações" : "Perfil salvo"}</>)}
+            </Button>
+          </motion.div>
+        )}
+
+        <div className="pb-6" />
       </div>
     </div>
   );
