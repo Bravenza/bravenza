@@ -8,7 +8,7 @@ import {
 import { lazy, Suspense, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/Logo";
 import { useClientSession } from "@/hooks/useClientSession";
 import { CartProvider } from "@/hooks/useMarketplaceCart";
@@ -193,6 +193,7 @@ export default function AppLayout() {
                       <DropdownMenuTrigger asChild>
                         <button className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                           <Avatar className="h-8 w-8 border border-primary/30 cursor-pointer hover:border-primary/60 transition-colors">
+                            <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || "Avatar"} />
                             <AvatarFallback className="bg-primary/15 text-primary text-xs font-bold">{initials}</AvatarFallback>
                           </Avatar>
                         </button>
@@ -271,6 +272,7 @@ export default function AppLayout() {
                     >
                       <div className="flex items-center gap-2.5">
                         <Avatar className="h-9 w-9 border border-sidebar-primary/30">
+                          <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || "Avatar"} />
                           <AvatarFallback className="bg-sidebar-primary/15 text-sidebar-primary text-xs font-bold">{initials}</AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
@@ -288,6 +290,7 @@ export default function AppLayout() {
                 {sidebarCollapsed && (
                   <div className="flex justify-center pb-2 mb-2 border-b border-sidebar-border">
                     <Avatar className="h-8 w-8 border border-sidebar-primary/30">
+                      <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || "Avatar"} />
                       <AvatarFallback className="bg-sidebar-primary/15 text-sidebar-primary text-[10px] font-bold">{initials}</AvatarFallback>
                     </Avatar>
                   </div>

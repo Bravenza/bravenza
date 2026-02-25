@@ -192,6 +192,7 @@ export type Database = {
       }
       client_profiles: {
         Row: {
+          avatar_url: string | null
           cpf: string
           created_at: string | null
           full_name: string
@@ -201,6 +202,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          avatar_url?: string | null
           cpf: string
           created_at?: string | null
           full_name: string
@@ -210,6 +212,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          avatar_url?: string | null
           cpf?: string
           created_at?: string | null
           full_name?: string
@@ -5507,6 +5510,7 @@ export type Database = {
       get_client_profile: {
         Args: never
         Returns: {
+          avatar_url: string
           cpf: string
           full_name: string
           id: string
