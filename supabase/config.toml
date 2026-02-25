@@ -66,34 +66,22 @@ verify_jwt = false
 [functions.mk-hub]
 verify_jwt = false
 
+[functions.mk-offers]
+verify_jwt = false
+
 [functions.mk-catalog]
 verify_jwt = false
 
-[functions.mk-notifications]
+[functions.mk-engage]
 verify_jwt = false
 
-[functions.mk-releases]
-verify_jwt = false
-
-[functions.mk-subscription]
-verify_jwt = false
-
-[functions.mk-subscription-downgrade]
-verify_jwt = false
-
-[functions.verify-captcha]
-verify_jwt = false
-
-[functions.mk-checkout]
-verify_jwt = false
-
-[functions.mk-auto-payout]
-verify_jwt = false
-
-[functions.mk-cron-tasks]
+[functions.mk-discover]
 verify_jwt = false
 
 [functions.mk-orders]
+verify_jwt = false
+
+[functions.mk-order-ops]
 verify_jwt = false
 
 [functions.mk-fulfill]
@@ -102,5 +90,11 @@ verify_jwt = false
 [functions.mk-seller]
 verify_jwt = false
 
+[functions.mk-seller-data]
+verify_jwt = false
+
 [functions.mk-store]
+verify_jwt = false
+
+[functions.mk-social]
 verify_jwt = false
