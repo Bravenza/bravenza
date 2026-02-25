@@ -2,6 +2,8 @@ import { motion } from "framer-motion";
 import {
   Package, Truck, Shield, Camera, Tag, DollarSign,
 } from "lucide-react";
+import inspectionImage from "@/assets/full-inspection.jpg";
+import processImage from "@/assets/full-process.jpg";
 
 const STEPS = [
   {
@@ -38,48 +40,90 @@ const STEPS = [
 
 export function BravenzaFullSteps() {
   return (
-    <section className="py-16 md:py-24 bg-card/30">
+    <section className="py-20 md:py-32">
       <div className="container mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-12 md:mb-16"
+          className="text-center mb-16 md:mb-20"
         >
-          <h2 className="font-display text-3xl md:text-4xl font-bold mb-3">
+          <span className="text-primary text-sm font-semibold tracking-widest uppercase mb-3 block">Processo</span>
+          <h2 className="font-display text-3xl md:text-5xl font-bold mb-4">
             Como <span className="text-gradient-gold">funciona</span>
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
+          <p className="text-muted-foreground max-w-xl mx-auto text-lg">
             Um processo simples e transparente em 6 etapas
           </p>
         </motion.div>
 
-        <div className="max-w-4xl mx-auto grid gap-6 md:gap-8">
-          {STEPS.map((step, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="flex gap-4 md:gap-6 items-start"
-            >
-              <div className="flex-shrink-0 relative">
-                <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                  <step.icon className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+        {/* Split layout: steps + images */}
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* Steps column */}
+          <div className="space-y-6">
+            {STEPS.map((step, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+                className="flex gap-4 md:gap-5 items-start group"
+              >
+                <div className="flex-shrink-0 relative">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center transition-all group-hover:bg-primary/20 group-hover:scale-105">
+                    <step.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <span className="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-lg">
+                    {i + 1}
+                  </span>
+                  {i < STEPS.length - 1 && (
+                    <div className="absolute top-12 left-1/2 -translate-x-1/2 w-px h-6 bg-border/50" />
+                  )}
                 </div>
-                <span className="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
-                  {i + 1}
-                </span>
-              </div>
-              <div className="pt-1">
-                <h3 className="font-semibold text-base md:text-lg mb-1">{step.title}</h3>
-                <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-                  {step.description}
-                </p>
-              </div>
-            </motion.div>
-          ))}
+                <div className="pt-0.5">
+                  <h3 className="font-semibold text-base md:text-lg mb-1">{step.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    {step.description}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Images column */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="relative hidden lg:block"
+          >
+            <div className="relative">
+              <img
+                src={inspectionImage}
+                alt="Inspeção profissional de sneaker"
+                className="rounded-2xl shadow-2xl w-full aspect-square object-cover"
+              />
+              {/* Floating card overlay */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 }}
+                className="absolute -bottom-8 -left-8 bg-card border border-border/50 rounded-xl p-4 shadow-xl backdrop-blur-sm"
+              >
+                <img
+                  src={processImage}
+                  alt="Estúdio fotográfico profissional"
+                  className="w-40 h-28 rounded-lg object-cover mb-2"
+                />
+                <p className="text-xs font-medium">Fotografia profissional</p>
+                <p className="text-xs text-muted-foreground">Padrão editorial de catálogo</p>
+              </motion.div>
+            </div>
+            {/* Decorative glow */}
+            <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] rounded-full bg-primary/5 blur-3xl" />
+          </motion.div>
         </div>
       </div>
     </section>

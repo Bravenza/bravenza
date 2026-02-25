@@ -42,14 +42,20 @@ const FAQS = [
   },
 ];
 
-function FAQItem({ question, answer }: { question: string; answer: string }) {
+function FAQItem({ question, answer, index }: { question: string; answer: string; index: number }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border border-border/40 rounded-xl overflow-hidden">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.03 }}
+      className="border border-border/40 rounded-xl overflow-hidden bg-card/50 backdrop-blur-sm"
+    >
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between p-4 md:p-5 text-left hover:bg-muted/30 transition-colors"
+        className="w-full flex items-center justify-between p-5 text-left hover:bg-muted/30 transition-colors"
       >
         <span className="font-medium text-sm md:text-base pr-4">{question}</span>
         <ChevronDown
@@ -65,43 +71,36 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
           open ? "max-h-60 opacity-100" : "max-h-0 opacity-0"
         )}
       >
-        <p className="px-4 md:px-5 pb-4 md:pb-5 text-sm text-muted-foreground leading-relaxed">
+        <p className="px-5 pb-5 text-sm text-muted-foreground leading-relaxed">
           {answer}
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export function BravenzaFullFAQ() {
   return (
-    <section className="py-16 md:py-24">
+    <section className="py-20 md:py-32 bg-card/30">
       <div className="container mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center mb-16"
         >
-          <h2 className="font-display text-3xl md:text-4xl font-bold mb-3">
+          <span className="text-primary text-sm font-semibold tracking-widest uppercase mb-3 block">Dúvidas</span>
+          <h2 className="font-display text-3xl md:text-5xl font-bold mb-4">
             Perguntas <span className="text-gradient-gold">frequentes</span>
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
+          <p className="text-muted-foreground max-w-xl mx-auto text-lg">
             Tudo o que você precisa saber sobre o Bravenza Full
           </p>
         </motion.div>
 
         <div className="max-w-3xl mx-auto space-y-3">
           {FAQS.map((faq, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.03 }}
-            >
-              <FAQItem {...faq} />
-            </motion.div>
+            <FAQItem key={i} {...faq} index={i} />
           ))}
         </div>
       </div>
