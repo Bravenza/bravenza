@@ -313,7 +313,7 @@ function ProductDetailPageInner() {
       <div className="min-h-screen bg-background theme-light flex items-center justify-center">
         <div className="text-center space-y-4">
           <p className="text-muted-foreground">Produto não encontrado</p>
-          <Button variant="outline" onClick={() => navigate("/marketplace")}>
+          <Button variant="outline" onClick={() => navigate("/app")}>
             <ArrowLeft className="h-4 w-4 mr-2" /> Marketplace
           </Button>
         </div>
@@ -372,7 +372,7 @@ function ProductDetailPageInner() {
 
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-6">
-          <button onClick={() => navigate("/marketplace")} className="hover:text-foreground transition-colors">
+          <button onClick={() => navigate("/app")} className="hover:text-foreground transition-colors">
             Marketplace
           </button>
           <ChevronRight className="h-3 w-3" />

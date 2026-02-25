@@ -272,7 +272,7 @@ export const DropsCountdownSection = memo(function DropsCountdownSection() {
             variant="outline"
             size="sm"
             className="rounded-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive/50"
-            onClick={() => navigate("/vault/intel")}
+            onClick={() => navigate("/app/drops")}
           >
             <Clock className="h-3.5 w-3.5" />
             Ver todos os drops

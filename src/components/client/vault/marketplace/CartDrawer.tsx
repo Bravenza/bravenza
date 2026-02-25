@@ -218,7 +218,7 @@ export function CartDrawer() {
               <Button
                 variant="outline"
                 className="mt-6 rounded-xl gap-2 text-sm h-10"
-                onClick={() => { setOpen(false); navigate("/marketplace"); }}
+                onClick={() => { setOpen(false); navigate("/app"); }}
               >
                 Explorar marketplace
                 <ChevronRight className="h-4 w-4" />

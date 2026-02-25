@@ -113,7 +113,7 @@ function MarketplaceCheckoutPageInner() {
   // Redirect if no group
   useEffect(() => {
     if (!group || group.items.length === 0) {
-      navigate("/marketplace", { replace: true });
+      navigate("/app", { replace: true });
     }
   }, [group, navigate]);
 
@@ -840,7 +840,7 @@ function MarketplaceCheckoutPageInner() {
                       </Button>
                       <Button
                         className="flex-1 btn-gold rounded-xl h-11"
-                        onClick={() => navigate("/marketplace")}
+                        onClick={() => navigate("/app")}
                       >
                         Continuar comprando
                       </Button>
