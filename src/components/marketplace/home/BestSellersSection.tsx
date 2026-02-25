@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { Trophy, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PriceVariationBadge } from "@/components/marketplace/PriceVariationBadge";
+import { OptimizedImage } from "@/components/ui/optimized-image";
+import { optimizeImageUrl } from "@/lib/image-utils";
 import type { CatalogProduct } from "@/hooks/useMarketplaceCatalog";
 
 interface Props {
@@ -52,9 +54,11 @@ export const BestSellersSection = memo(function BestSellersSection({ products }:
               {/* Product image */}
               <div className="w-16 h-16 rounded-xl bg-muted/10 overflow-hidden shrink-0">
                 {product.images?.[0] ? (
-                  <img
-                    src={product.images[0]}
+                  <OptimizedImage
+                    src={optimizeImageUrl(product.images[0], { width: 128, height: 128, quality: 75, resize: "contain" })}
                     alt={product.model}
+                    width={64}
+                    height={64}
                     className="w-full h-full object-contain p-1 group-hover:scale-110 transition-transform duration-500"
                   />
                 ) : (
