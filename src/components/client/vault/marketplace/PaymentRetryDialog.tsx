@@ -62,6 +62,7 @@ export function PaymentRetryDialog({ order, open, onOpenChange, onSuccess, switc
         order_id: order.id,
         payment_method: method,
         payer_email: "cliente@bravenza.com",
+        idempotency_key: `retry-${order.id}-${method}`,
       };
 
       if (method === "card" && cardFormData) {

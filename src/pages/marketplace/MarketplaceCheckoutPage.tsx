@@ -343,11 +343,14 @@ function MarketplaceCheckoutPageInner() {
         createdOrders.push({ id: orderResult.id, order_code: orderResult.order_code, item });
       }
 
-      // Step 2: Single consolidated payment
+      // Step 2: Single consolidated payment with deterministic idempotency key
+      const sortedIds = createdOrders.map(o => o.id).sort();
+      const idempKey = `mkt-${sortedIds.join("-")}-${form.payment_method}`;
       const checkoutBody: Record<string, any> = {
-        order_ids: createdOrders.map(o => o.id),
+        order_ids: sortedIds,
         payment_method: form.payment_method,
         payer_email: form.buyer_email,
+        idempotency_key: idempKey,
       };
 
       if (form.payment_method === "card" && cardFormData) {

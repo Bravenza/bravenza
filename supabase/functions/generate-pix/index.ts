@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { token, payment_type, amount, description }: PixRequest = await req.json();
+    const { token, payment_type, amount, description, idempotency_key }: PixRequest & { idempotency_key?: string } = await req.json();
 
     if (!token || !payment_type || !amount) {
       throw new Error("Parâmetros inválidos");
@@ -77,8 +77,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Generate unique idempotency key
-    const idempotencyKey = `${order.order_id}-${payment_type}-${Date.now()}`;
+    // Deterministic idempotency key — same order+type always maps to same key
+    const idempKey = idempotency_key || `${order.order_id}-${payment_type}-pix`;
 
     // Create Mercado Pago Pix payment
     const mpResponse = await fetch("https://api.mercadopago.com/v1/payments", {
@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${mercadoPagoToken}`,
-        "X-Idempotency-Key": idempotencyKey,
+        "X-Idempotency-Key": idempKey,
       },
       body: JSON.stringify({
         transaction_amount: amount,

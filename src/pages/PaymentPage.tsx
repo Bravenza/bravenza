@@ -248,6 +248,7 @@ export default function PaymentPage() {
           payment_type: actualPaymentType,
           amount,
           description: `${paymentDescription} - ${order.order_id}${applyCashback ? " (com cashback)" : ""}`,
+          idempotency_key: `${order.order_id}-${actualPaymentType}-pix`,
         },
       });
 
@@ -622,6 +623,7 @@ export default function PaymentPage() {
                               type: "CPF",
                               number: cardData.identificationNumber.replace(/\D/g, ""),
                             },
+                            idempotency_key: `${order.order_id}-full-card`,
                           },
                         });
                         if (error) throw error;
