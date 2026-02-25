@@ -21,8 +21,8 @@ export const vaultRoutes = (
     <Route path="/vault/app/match/:matchRoomId" element={
       <ProtectedProviders><VaultMatchRoom /></ProtectedProviders>
     } />
-    {/* Redirect old vault/app routes to unified dashboard */}
-    <Route path="/vault/app" element={<Navigate to="/minha-conta" replace />} />
-    <Route path="/vault/app/*" element={<Navigate to="/minha-conta" replace />} />
+    {/* Redirect old vault/app routes to unified /app */}
+    <Route path="/vault/app" element={<Navigate to="/app/vault" replace />} />
+    <Route path="/vault/app/*" element={<Navigate to="/app/vault" replace />} />
   </>
 );
