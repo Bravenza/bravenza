@@ -487,13 +487,63 @@ export default function MarketplaceMyStorePage() {
           )}
 
           {/* ── Bravenza Full ── */}
-          {sellerSubTab === "full" && isSellerApproved && seller?.id && (
-            <ConsignmentList sellerId={seller.id} />
+          {sellerSubTab === "full" && isSellerApproved && (
+            seller?.id ? (
+              <ConsignmentList sellerId={seller.id} />
+            ) : (
+              <Card className="border-border/20">
+                <CardContent className="py-12 text-center space-y-3">
+                  <PackageCheck className="h-10 w-10 mx-auto text-muted-foreground/30" />
+                  <h3 className="font-bold text-lg">Bravenza Full</h3>
+                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                    Envie seu sneaker e nós cuidamos de tudo: fotos profissionais, autenticação, anúncio e envio ao comprador.
+                  </p>
+                  <Button variant="outline" className="gap-2" onClick={() => navigate("/full")}>
+                    <ArrowRight className="h-4 w-4" /> Saiba mais
+                  </Button>
+                </CardContent>
+              </Card>
+            )
           )}
 
-          {/* ── Como funciona ── */}
+          {/* ── Como funciona / Info ── */}
           {sellerSubTab === "como-funciona" && (
-            <MarketplaceHowItWorks />
+            <div className="space-y-4">
+              {/* Current Plan Card */}
+              {planStatus && (
+                <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+                  <CardContent className="p-5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                          {planId === "elite" ? <Layers className="h-5 w-5 text-primary" /> :
+                           planId === "pro" ? <Zap className="h-5 w-5 text-primary" /> :
+                           <Store className="h-5 w-5 text-muted-foreground" />}
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground font-medium">Seu plano atual</p>
+                          <p className="text-lg font-black tracking-tight capitalize">{planStatus.plan?.name || "Free"}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-black text-primary">{planStatus.plan?.fee_percent ?? 14}%</p>
+                        <p className="text-[10px] text-muted-foreground">comissão</p>
+                      </div>
+                    </div>
+                    {planId !== "elite" && (
+                      <Button
+                        size="sm"
+                        className="w-full mt-4 btn-gold gap-2 rounded-full font-bold"
+                        onClick={() => navigate("/marketplace/planos")}
+                      >
+                        <Rocket className="h-3.5 w-3.5" /> Fazer upgrade
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+              <MarketplaceHowItWorks />
+            </div>
           )}
         </div>
       )}
