@@ -3,7 +3,8 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import {
   Store, Package, Megaphone, BarChart3, Tag, TrendingDown, HelpCircle,
-  Plus, ShoppingBag, Rocket, Layout, Lock, Layers, Palette, PackageCheck
+  Plus, ShoppingBag, Rocket, Layout, Lock, Layers, Palette, PackageCheck,
+  Eye, DollarSign, Star, ArrowRight, Zap, TrendingUp
 } from "lucide-react";
 import { CollectionsManager } from "@/components/marketplace/CollectionsManager";
 import { ConsignmentList } from "@/components/client/vault/marketplace/ConsignmentList";
@@ -28,6 +29,8 @@ import { PlanLimitModal } from "@/components/marketplace/PlanLimitModal";
 import { useSellerPlan } from "@/hooks/marketplace/useSellerPlan";
 import { StoreCustomizationPanel } from "@/components/marketplace/StoreCustomizationPanel";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface VaultItem {
   id: string;
@@ -42,6 +45,7 @@ export default function MarketplaceMyStorePage() {
   const context = useOutletContext<{ cpf?: string; profile?: any }>();
   const navigate = useNavigate();
   const cpf = context?.cpf;
+  const profile = context?.profile;
   const isLoggedIn = !!cpf && cpf !== "visitor";
 
   const {
@@ -61,8 +65,8 @@ export default function MarketplaceMyStorePage() {
   const [selectedListing, setSelectedListing] = useState<MarketplaceListing | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [limitModalOpen, setLimitModalOpen] = useState(false);
+  const [storeData, setStoreData] = useState<any>(null);
 
-  // Plan enforcement
   const { status: planStatus, checkLimits } = useSellerPlan(seller?.id || null);
 
   useEffect(() => {
@@ -84,6 +88,17 @@ export default function MarketplaceMyStorePage() {
     }
   }, [myListings.length]);
 
+  // Fetch store customization data for header
+  useEffect(() => {
+    if (!seller?.id) return;
+    supabase
+      .from("vault_seller_profiles" as any)
+      .select("store_name, store_tagline, store_avatar_url, store_banner_url")
+      .eq("id", seller.id)
+      .maybeSingle()
+      .then(({ data }) => { if (data) setStoreData(data); });
+  }, [seller?.id]);
+
   const fetchVaultItems = async () => {
     if (!cpf) return;
     const { data: member } = await supabase
@@ -101,7 +116,6 @@ export default function MarketplaceMyStorePage() {
   };
 
   const handleCreateOffer = async (data: any) => {
-    // Check limits before creating
     if (planStatus && !planStatus.canPublish) {
       setLimitModalOpen(true);
       return null;
@@ -129,12 +143,16 @@ export default function MarketplaceMyStorePage() {
   if (!isLoggedIn) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-        <Store className="h-16 w-16 mx-auto text-muted-foreground/20 mb-4" />
-        <h2 className="text-xl font-bold mb-2">Faça login para acessar sua loja</h2>
-        <p className="text-sm text-muted-foreground mb-6">Acesse sua conta para gerenciar seus anúncios no marketplace.</p>
-        <Button className="btn-gold" onClick={() => navigate("/entrar")}>
-          Fazer login
-        </Button>
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
+          <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+            <Store className="h-10 w-10 text-primary" />
+          </div>
+          <h2 className="text-2xl font-black tracking-tight">Faça login para acessar sua loja</h2>
+          <p className="text-sm text-muted-foreground max-w-sm mx-auto">Acesse sua conta para gerenciar seus anúncios no marketplace.</p>
+          <Button className="btn-gold gap-2 rounded-full h-12 px-8" onClick={() => navigate("/entrar")}>
+            Fazer login <ArrowRight className="h-4 w-4" />
+          </Button>
+        </motion.div>
       </div>
     );
   }
@@ -145,11 +163,10 @@ export default function MarketplaceMyStorePage() {
   const planId = planStatus?.plan?.id || "free";
   const hasBatchAccess = planId === "pro" || planId === "elite";
   const hasStorefront = planId === "elite";
-
   const hasPaidPlan = planId === "pro" || planId === "elite";
 
   const sellerSubItems = [
-    { id: "anuncios", label: "Meus anúncios", icon: Megaphone },
+    { id: "anuncios", label: "Anúncios", icon: Megaphone },
     ...(isSellerApproved ? [
       { id: "personalizar", label: "Personalizar", icon: Palette },
       ...(hasPaidPlan ? [{ id: "boosts", label: "Boosts", icon: Rocket }] : []),
@@ -157,128 +174,187 @@ export default function MarketplaceMyStorePage() {
       { id: "analytics", label: "Analytics", icon: BarChart3 },
       { id: "cupons", label: "Cupons", icon: Tag },
       { id: "sugestoes", label: "Sugestões", icon: TrendingDown },
-      { id: "full", label: "Bravenza Full", icon: PackageCheck },
+      { id: "full", label: "Full", icon: PackageCheck },
     ] : []),
-    { id: "como-funciona", label: "Como funciona", icon: HelpCircle },
+    { id: "como-funciona", label: "Info", icon: HelpCircle },
   ];
 
+  // Calculate KPIs
+  const activeListings = myListings.filter(l => l.status === "active").length;
+  const soldListings = myListings.filter(l => l.status === "sold").length;
+  const totalViews = myListings.reduce((s, l) => s + (l.views_count || 0), 0);
+  const totalRevenue = myListings.filter(l => l.status === "sold").reduce((s, l) => s + l.price, 0);
+
+  const storeName = (storeData as any)?.store_name || profile?.full_name || "Minha Loja";
+  const storeTagline = (storeData as any)?.store_tagline;
+  const storeAvatar = (storeData as any)?.store_avatar_url || profile?.avatar_url;
+  const initials = (storeName || "").split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase();
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 pb-28 md:pb-12">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Store className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight font-display">Minha Loja</h1>
-            <p className="text-sm text-muted-foreground">Gerencie seus anúncios e vendas</p>
-          </div>
+    <div className="max-w-7xl mx-auto px-4 py-6 pb-28 md:pb-12 space-y-6">
+      {/* ═══ Premium Header ═══ */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-2xl border border-border/30 bg-card"
+      >
+        {/* Banner background */}
+        <div className="h-24 md:h-32 bg-gradient-to-br from-primary/15 via-primary/8 to-background relative">
+          {(storeData as any)?.store_banner_url && (
+            <img src={(storeData as any).store_banner_url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
         </div>
 
-        {isSellerApproved && (
-          <CreateListingDialog onSubmit={handleCreateOffer} searchProducts={searchProducts} createProduct={createProduct} vaultItems={vaultItems} />
-        )}
-        {isSellerPending && (
-          <Badge variant="outline" className="border-warning/50 text-warning py-1.5 px-3">
-            ⏳ Documentos em análise
-          </Badge>
-        )}
-        {sellerOnboarded === false && (
-          <Button className="btn-gold gap-2" onClick={() => setOnboardingOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Começar a vender
-          </Button>
-        )}
-      </div>
+        <div className="px-5 pb-5 -mt-10 relative z-10">
+          <div className="flex items-end gap-4">
+            <Avatar className="h-16 w-16 border-4 border-card shadow-lg">
+              <AvatarImage src={storeAvatar || undefined} alt={storeName} />
+              <AvatarFallback className="bg-primary/10 text-primary text-lg font-black">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0 pb-1">
+              <h1 className="text-xl md:text-2xl font-black tracking-tight truncate">{storeName}</h1>
+              {storeTagline && <p className="text-xs text-muted-foreground truncate mt-0.5">{storeTagline}</p>}
+            </div>
+            {isSellerApproved && (
+              <CreateListingDialog onSubmit={handleCreateOffer} searchProducts={searchProducts} createProduct={createProduct} vaultItems={vaultItems} />
+            )}
+            {isSellerPending && (
+              <Badge variant="outline" className="border-warning/50 text-warning py-1.5 px-3 shrink-0">⏳ Em análise</Badge>
+            )}
+            {sellerOnboarded === false && (
+              <Button className="btn-gold gap-2 rounded-full shrink-0" onClick={() => setOnboardingOpen(true)}>
+                <Plus className="h-4 w-4" /> Vender
+              </Button>
+            )}
+          </div>
+        </div>
+      </motion.div>
 
-      {/* Not onboarded */}
+      {/* ═══ KPI Cards ═══ */}
+      {isSellerApproved && seller && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-3"
+        >
+          {[
+            { label: "Anúncios ativos", value: activeListings, icon: Megaphone, color: "text-primary" },
+            { label: "Vendas totais", value: seller.total_sales_count || soldListings, icon: ShoppingBag, color: "text-primary" },
+            { label: "Views totais", value: totalViews, icon: Eye, color: "text-muted-foreground" },
+            { label: "Avaliação", value: seller.average_rating ? seller.average_rating.toFixed(1) : "—", icon: Star, color: "text-primary" },
+          ].map((kpi, i) => (
+            <motion.div
+              key={kpi.label}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 + i * 0.05 }}
+            >
+              <Card className="border-border/20 hover:border-primary/20 transition-colors">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <kpi.icon className={cn("h-4 w-4", kpi.color)} />
+                    <span className="text-[11px] text-muted-foreground font-medium">{kpi.label}</span>
+                  </div>
+                  <p className="text-2xl font-black tracking-tight">{kpi.value}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
+
+      {/* ═══ Plan Banner ═══ */}
+      {planStatus && isSellerApproved && (
+        <SellerPlanBanner status={planStatus} />
+      )}
+
+      {/* ═══ Not onboarded ═══ */}
       {sellerOnboarded === false && (
-        <Card className="border-primary/10">
-          <CardContent className="py-16 text-center">
-            <Store className="h-14 w-14 mx-auto text-muted-foreground/20 mb-4" />
-            <h3 className="font-semibold text-lg mb-2">Transforme seus sneakers em oportunidade</h3>
-            <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-              Complete o cadastro de vendedor para acessar todas as ferramentas: anúncios, analytics, cupons e sugestões de preço.
-            </p>
-            <Button className="btn-gold" onClick={() => setOnboardingOpen(true)}>
-              Iniciar cadastro de vendedor
-            </Button>
-          </CardContent>
-        </Card>
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
+          <Card className="border-primary/10 overflow-hidden">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/8 to-transparent" />
+              <CardContent className="py-16 text-center relative z-10">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
+                  <Store className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="font-black text-xl mb-2">Transforme seus sneakers em oportunidade</h3>
+                <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+                  Complete o cadastro de vendedor para acessar todas as ferramentas: anúncios, analytics, cupons e sugestões de preço.
+                </p>
+                <Button className="btn-gold rounded-full h-12 px-8 gap-2 font-bold shadow-lg shadow-primary/20" onClick={() => setOnboardingOpen(true)}>
+                  Iniciar cadastro de vendedor <ArrowRight className="h-4 w-4" />
+                </Button>
+              </CardContent>
+            </div>
+          </Card>
+
+          {/* Bravenza Full CTA */}
+          <button
+            onClick={() => navigate("/full")}
+            className="w-full mt-4 flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 hover:border-primary/30 transition-all group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                <Zap className="h-5 w-5 text-primary" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-bold">Bravenza Full — 22%</p>
+                <p className="text-[11px] text-muted-foreground">Envie seu par e a gente cuida de tudo</p>
+              </div>
+            </div>
+            <ArrowRight className="h-5 w-5 text-primary group-hover:translate-x-1 transition-transform" />
+          </button>
+        </motion.div>
       )}
 
-      {/* Pending review */}
+      {/* ═══ Pending review ═══ */}
       {isSellerPending && (
-        <Card className="border-warning/20">
-          <CardContent className="py-12 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-warning border-t-transparent mx-auto mb-4" />
-            <h3 className="font-semibold mb-1">Documentos em análise</h3>
-            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-              Sua documentação está sendo verificada pela nossa equipe. Você será notificado quando for aprovado.
-            </p>
-          </CardContent>
-        </Card>
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
+          <Card className="border-warning/20">
+            <CardContent className="py-12 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-warning border-t-transparent mx-auto mb-4" />
+              <h3 className="font-bold text-lg mb-1">Documentos em análise</h3>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                Sua documentação está sendo verificada pela nossa equipe. Você será notificado quando for aprovado.
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
-      {/* Seller onboarded */}
+      {/* ═══ Seller Hub ═══ */}
       {sellerOnboarded === true && (
         <div className="space-y-6">
-          {/* Sub-navigation */}
-          <div className="flex gap-1 overflow-x-auto scrollbar-hide pb-1">
+          {/* Sub-navigation — pill style */}
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
             {sellerSubItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setSellerSubTab(item.id)}
-                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+                className={cn(
+                  "flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all shrink-0",
                   sellerSubTab === item.id
-                    ? "bg-foreground text-background shadow-sm"
+                    ? "bg-foreground text-background shadow-md"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }`}
+                )}
               >
-                <item.icon className="h-4 w-4" />
+                <item.icon className="h-3.5 w-3.5" />
                 {item.label}
               </button>
             ))}
           </div>
 
-          {/* Stats */}
-          {seller && sellerSubTab === "anuncios" && (
-            <div className="grid grid-cols-3 gap-3">
-              <Card className="border-border/20">
-                <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-black">{seller.total_sales_count}</p>
-                  <p className="text-xs text-muted-foreground">Vendas</p>
-                </CardContent>
-              </Card>
-              <Card className="border-border/20">
-                <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-black text-primary">{seller.current_fee_percent}%</p>
-                  <p className="text-xs text-muted-foreground">Taxa atual</p>
-                </CardContent>
-              </Card>
-              <Card className="border-border/20">
-                <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-black">{seller.average_rating ? seller.average_rating.toFixed(1) : "—"}</p>
-                  <p className="text-xs text-muted-foreground">Avaliação</p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Plan Banner */}
-          {planStatus && sellerSubTab === "anuncios" && (
-            <SellerPlanBanner status={planStatus} />
-          )}
-
-          {/* Anúncios */}
+          {/* ── Anúncios ── */}
           {sellerSubTab === "anuncios" && (
             <>
               {myListings.length === 0 ? (
                 <Card className="border-border/20">
                   <CardContent className="py-16 text-center">
                     <Package className="h-14 w-14 mx-auto text-muted-foreground/20 mb-4" />
-                    <h3 className="font-semibold text-lg mb-2">Nenhum anúncio criado</h3>
+                    <h3 className="font-bold text-lg mb-2">Nenhum anúncio criado</h3>
                     <p className="text-sm text-muted-foreground mb-4">Comece a vender seus sneakers no marketplace</p>
                     {isSellerApproved && (
                       <CreateListingDialog onSubmit={handleCreateOffer} searchProducts={searchProducts} createProduct={createProduct} vaultItems={vaultItems} />
@@ -287,7 +363,6 @@ export default function MarketplaceMyStorePage() {
                 </Card>
               ) : (
                 <div className="space-y-4">
-                  {/* Batch edit tool (Pro/Elite only) */}
                   {hasBatchAccess && myListings.length > 1 && (
                     <div className="flex justify-end">
                       <BatchEditListings
@@ -298,7 +373,6 @@ export default function MarketplaceMyStorePage() {
                       />
                     </div>
                   )}
-
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {myListings.map((listing) => (
                       <div key={listing.id} className="relative space-y-2">
@@ -308,12 +382,13 @@ export default function MarketplaceMyStorePage() {
                           onToggleFavorite={() => toggleFavorite(listing.id)}
                         />
                         <Badge
-                          className={`absolute top-12 right-2 text-[10px] z-10 ${
+                          className={cn(
+                            "absolute top-12 right-2 text-[10px] z-10",
                             listing.status === "active" ? "bg-success/20 text-success"
                             : listing.status === "sold" ? "bg-primary/20 text-primary"
                             : listing.status === "reserved" ? "bg-warning/20 text-warning"
                             : "bg-muted text-muted-foreground"
-                          }`}
+                          )}
                         >
                           {listing.status === "active" ? "Ativo" : listing.status === "sold" ? "Vendido" : listing.status === "reserved" ? "Reservado" : listing.status === "paused" ? "Pausado" : listing.status}
                         </Badge>
@@ -336,19 +411,19 @@ export default function MarketplaceMyStorePage() {
             </>
           )}
 
-          {/* Personalizar */}
+          {/* ── Personalizar ── */}
           {sellerSubTab === "personalizar" && isSellerApproved && cpf && (
             <StoreCustomizationPanel cpf={cpf} />
           )}
 
-          {/* Analytics */}
+          {/* ── Analytics ── */}
           {sellerSubTab === "analytics" && isSellerApproved && cpf && (
             <Suspense fallback={<div className="h-64 animate-pulse bg-muted rounded-xl" />}>
               <SellerAnalyticsDashboard clientCpf={cpf} />
             </Suspense>
           )}
 
-          {/* Boosts (paid plans only) */}
+          {/* ── Boosts ── */}
           {sellerSubTab === "boosts" && isSellerApproved && hasPaidPlan && (
             <Card className="border-border/20">
               <CardContent className="p-6 text-center space-y-4">
@@ -361,18 +436,18 @@ export default function MarketplaceMyStorePage() {
                   </p>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Para ativar um boost, vá em "Meus anúncios", clique no anúncio e selecione "Destacar".
+                  Para ativar um boost, vá em "Anúncios", clique no anúncio e selecione "Destacar".
                 </p>
               </CardContent>
             </Card>
           )}
 
-          {/* Coleções (Elite only) */}
+          {/* ── Coleções ── */}
           {sellerSubTab === "colecoes" && isSellerApproved && hasStorefront && cpf && (
             <CollectionsManager clientCpf={cpf} myListings={myListings} />
           )}
 
-          {/* Cupons - gated by plan */}
+          {/* ── Cupons ── */}
           {sellerSubTab === "cupons" && isSellerApproved && cpf && (
             hasBatchAccess ? (
               <CouponsManager clientCpf={cpf} />
@@ -382,7 +457,7 @@ export default function MarketplaceMyStorePage() {
                   <Lock className="h-10 w-10 mx-auto text-muted-foreground/30" />
                   <h3 className="font-bold">Ferramenta Pro</h3>
                   <p className="text-sm text-muted-foreground">Cupons estão disponíveis nos planos Pro e Elite.</p>
-                   <Button variant="outline" onClick={() => navigate("/app/loja")} className="gap-2">
+                  <Button variant="outline" onClick={() => navigate("/marketplace/planos")} className="gap-2">
                     <Rocket className="h-4 w-4" /> Ver planos
                   </Button>
                 </CardContent>
@@ -390,7 +465,7 @@ export default function MarketplaceMyStorePage() {
             )
           )}
 
-          {/* Sugestões - gated by plan */}
+          {/* ── Sugestões ── */}
           {sellerSubTab === "sugestoes" && isSellerApproved && (
             hasBatchAccess ? (
               <PriceDropSuggestions
@@ -403,7 +478,7 @@ export default function MarketplaceMyStorePage() {
                   <Lock className="h-10 w-10 mx-auto text-muted-foreground/30" />
                   <h3 className="font-bold">Ferramenta Pro</h3>
                   <p className="text-sm text-muted-foreground">Sugestões de preço estão disponíveis nos planos Pro e Elite.</p>
-                  <Button variant="outline" onClick={() => navigate("/app/loja")} className="gap-2">
+                  <Button variant="outline" onClick={() => navigate("/marketplace/planos")} className="gap-2">
                     <Rocket className="h-4 w-4" /> Ver planos
                   </Button>
                 </CardContent>
@@ -411,12 +486,12 @@ export default function MarketplaceMyStorePage() {
             )
           )}
 
-          {/* Bravenza Full */}
+          {/* ── Bravenza Full ── */}
           {sellerSubTab === "full" && isSellerApproved && seller?.id && (
             <ConsignmentList sellerId={seller.id} />
           )}
 
-          {/* Como funciona */}
+          {/* ── Como funciona ── */}
           {sellerSubTab === "como-funciona" && (
             <MarketplaceHowItWorks />
           )}
