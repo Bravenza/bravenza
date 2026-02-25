@@ -108,7 +108,7 @@ export default function VaultProfilePage() {
       fetchProfile();
       fetchCounts();
     } else if (!isSessionLoading && !clientProfile) {
-      navigate("/minha-conta");
+      navigate("/app");
     }
   }, [isSessionLoading, clientProfile]);
 
@@ -288,7 +288,7 @@ export default function VaultProfilePage() {
         <div className="container max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <Button 
             variant="ghost" size="sm" 
-            onClick={(e) => { e.stopPropagation(); navigate("/minha-conta", { replace: true }); }}
+            onClick={(e) => { e.stopPropagation(); navigate("/app", { replace: true }); }}
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />

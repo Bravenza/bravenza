@@ -116,7 +116,7 @@ export default function VaultMatchRoom() {
         description: "Nossa equipe iniciará o processo de compra",
       });
 
-      navigate("/minha-conta?tab=wishlist");
+      navigate("/app/wishlist");
     } catch (error) {
       console.error("Error approving match:", error);
       toast({
@@ -157,7 +157,7 @@ export default function VaultMatchRoom() {
         description: "A busca voltará para curadoria",
       });
 
-      navigate("/minha-conta?tab=wishlist");
+      navigate("/app/wishlist");
     } catch (error) {
       console.error("Error declining match:", error);
       toast({
@@ -205,7 +205,7 @@ export default function VaultMatchRoom() {
         <AlertCircle className="h-12 w-12 text-zinc-600 mx-auto mb-4" />
         <h2 className="text-xl font-bold mb-2">Match room não encontrada</h2>
         <Button asChild variant="outline">
-           <Link to="/minha-conta?tab=wishlist">
+           <Link to="/app/wishlist">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Link>
@@ -222,7 +222,7 @@ export default function VaultMatchRoom() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button asChild variant="ghost" size="icon">
-          <Link to="/minha-conta?tab=wishlist">
+          <Link to="/app/wishlist">
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>

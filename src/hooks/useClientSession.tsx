@@ -90,7 +90,7 @@ export function ClientSessionProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/minha-conta`,
+        emailRedirectTo: `${window.location.origin}/app`,
         data: {
           full_name: fullName,
         }

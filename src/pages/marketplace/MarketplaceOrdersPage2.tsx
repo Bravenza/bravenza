@@ -27,7 +27,7 @@ export default function MarketplaceOrdersPage2() {
         <Package className="h-16 w-16 mx-auto text-muted-foreground/20 mb-4" />
         <h2 className="text-xl font-bold mb-2">Faça login para ver seus pedidos</h2>
         <p className="text-sm text-muted-foreground mb-6">Acesse sua conta para acompanhar suas compras e vendas no marketplace.</p>
-        <Button className="btn-gold" onClick={() => navigate("/minha-conta")}>
+        <Button className="btn-gold" onClick={() => navigate("/entrar")}>
           Fazer login
         </Button>
       </div>

@@ -94,7 +94,7 @@ export default function ClientAuthPage() {
 
   useEffect(() => {
     const isRecovery = showResetPassword || window.location.hash.includes('type=recovery');
-    if (!sessionLoading && user && !isRecovery) navigate("/minha-conta");
+    if (!sessionLoading && user && !isRecovery) navigate("/app");
   }, [user, sessionLoading, navigate, showResetPassword]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -120,7 +120,7 @@ export default function ClientAuthPage() {
     }
     toast({ title: "Bem-vindo de volta!", description: "Login realizado com sucesso." });
     localStorage.removeItem("bvz_dashboard_tab");
-    navigate("/minha-conta");
+    navigate("/app");
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
