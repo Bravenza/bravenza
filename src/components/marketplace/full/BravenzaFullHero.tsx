@@ -32,7 +32,7 @@ export function BravenzaFullHero() {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8 backdrop-blur-sm"
           >
             <Shield className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Nível 3 de verificação</span>
+            <span className="text-sm font-medium text-primary">Menos trabalho. Mais vendas.</span>
           </motion.div>
 
           <h1 className="font-display text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight mb-6 leading-[1.1]">
@@ -70,7 +70,7 @@ export function BravenzaFullHero() {
             className="flex flex-wrap gap-6 mt-12 pt-8 border-t border-border/30"
           >
             {[
-              { value: "6 etapas", label: "de autenticação" },
+              { value: "6 etapas", label: "simples" },
               { value: "22%", label: "comissão fixa" },
               { value: "Zero", label: "taxas antecipadas" },
             ].map((stat, i) => (
