@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-seller`;
+import { marketplaceRequest } from "@/hooks/marketplace/api";
 
 interface StoreCustomizationPanelProps {
   cpf: string;
@@ -36,16 +36,9 @@ export function StoreCustomizationPanel({ cpf }: StoreCustomizationPanelProps) {
     fetchStorefront();
   }, [cpf]);
 
-  const getHeaders = async () => {
-    const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
-    return getMarketplaceHeaders();
-  };
-
   const fetchStorefront = async () => {
     try {
-      const headers = await getHeaders();
-      const res = await fetch(`${FUNCTION_URL}?action=my-storefront`, { headers });
-      const data = await res.json();
+      const data = await marketplaceRequest("", "my-storefront");
       if (data.storefront) {
         setAvatarUrl(data.storefront.avatar_url || "");
         setBannerUrl(data.storefront.banner || "");
@@ -112,19 +105,12 @@ export function StoreCustomizationPanel({ cpf }: StoreCustomizationPanelProps) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const headers = await getHeaders();
-      const res = await fetch(`${FUNCTION_URL}?action=update-storefront`, {
-        method: "PUT",
-        headers: { ...headers, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          avatar_url: avatarUrl || null,
-          banner: bannerUrl || null,
-          tagline: tagline || null,
-          bio: bio || null,
-        }),
+      await marketplaceRequest("", "update-storefront", "PUT", {
+        avatar_url: avatarUrl || null,
+        banner: bannerUrl || null,
+        tagline: tagline || null,
+        bio: bio || null,
       });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
       toast.success("Loja personalizada com sucesso!");
     } catch (err: any) {
       toast.error(err.message || "Erro ao salvar");

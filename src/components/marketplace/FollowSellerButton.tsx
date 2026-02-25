@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-seller`;
+import { marketplaceRequest } from "@/hooks/marketplace/api";
 
 interface FollowSellerButtonProps {
   sellerId: string;
@@ -20,15 +20,7 @@ export function FollowSellerButton({ sellerId, initialFollowing = false, size = 
   const toggle = async () => {
     setLoading(true);
     try {
-      const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
-      const headers = await getMarketplaceHeaders();
-      const res = await fetch(`${FUNCTION_URL}?action=toggle-follow`, {
-        method: "POST",
-        headers: { ...headers, "Content-Type": "application/json" },
-        body: JSON.stringify({ seller_id: sellerId }),
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
+      const data = await marketplaceRequest("", "toggle-follow", "POST", { seller_id: sellerId });
       setFollowing(data.following);
       toast.success(data.following ? "Seguindo vendedor!" : "Deixou de seguir");
     } catch (err: any) {

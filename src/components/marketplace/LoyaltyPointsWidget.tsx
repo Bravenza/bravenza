@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-seller`;
+import { marketplaceRequest } from "@/hooks/marketplace/api";
 
 interface LoyaltyData {
   balance: number;
@@ -32,10 +32,7 @@ function LoyaltyPointsWidgetComponent({ clientCpf, compact = false, className }:
   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
-        const headers = await getMarketplaceHeaders();
-        const res = await fetch(`${FUNCTION_URL}?action=loyalty-balance`, { headers });
-        const json = await res.json();
+        const json = await marketplaceRequest("", "loyalty-balance");
         setData(json);
       } catch {
         // No balance yet

@@ -359,7 +359,7 @@ function ProductDetailPageInner() {
 
       <BreadcrumbSchema items={[
         { name: "Marketplace", url: "https://bravenza.com.br/marketplace" },
-        { name: product.brand, url: `https://bravenza.com.br/marketplace?q=${encodeURIComponent(product.brand)}` },
+        { name: product.brand, url: `https://bravenza.com.br/app?q=${encodeURIComponent(product.brand)}` },
         { name: product.model, url: canonicalUrl },
       ]} />
 
@@ -399,7 +399,7 @@ function ProductDetailPageInner() {
               {/* Brand + Title */}
               <div>
                 <button
-                  onClick={() => navigate(`/marketplace?q=${encodeURIComponent(product.brand)}`)}
+                  onClick={() => navigate(`/app?q=${encodeURIComponent(product.brand)}`)}
                   className="text-[11px] text-muted-foreground uppercase tracking-[0.15em] font-semibold hover:text-primary transition-colors"
                 >
                   {product.brand}
@@ -568,14 +568,14 @@ function ProductDetailPageInner() {
                 icon={<Tag className="h-3.5 w-3.5" />}
                 label="Marca"
                 value={product.brand}
-                onClick={() => navigate(`/marketplace?q=${encodeURIComponent(product.brand)}`)}
+                onClick={() => navigate(`/app?q=${encodeURIComponent(product.brand)}`)}
               />
               <SpecRow
                 icon={<ShoppingBag className="h-3.5 w-3.5" />}
                 label="Modelo"
                 value={product.model}
                 even
-                onClick={() => navigate(`/marketplace?q=${encodeURIComponent(product.model)}`)}
+                onClick={() => navigate(`/app?q=${encodeURIComponent(product.model)}`)}
               />
               <SpecRow icon={<DollarSign className="h-3.5 w-3.5" />} label="Preço de lançamento" value={
                 product.retail_price

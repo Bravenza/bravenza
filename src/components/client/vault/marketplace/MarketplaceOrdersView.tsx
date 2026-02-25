@@ -122,7 +122,8 @@ export function MarketplaceOrdersView({
   useEffect(() => {
     onRefreshOrders();
     if (isVaultMember) onRefreshSales();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVaultMember]);
 
   const handleRate = async () => {
     if (!rateDialog) return;

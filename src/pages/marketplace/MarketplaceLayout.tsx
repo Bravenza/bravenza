@@ -26,7 +26,6 @@ const navItems = [
   { path: "/app/favoritos", label: "Favoritos", mobileLabel: "Favoritos", icon: Heart },
   { path: "/app/feed", label: "Feed", mobileLabel: "Feed", icon: Activity },
   { path: "/app/loja", label: "Minha Loja", mobileLabel: "Loja", icon: Store },
-  { path: "/app/loja", label: "Planos", mobileLabel: "Planos", icon: Crown },
 ];
 
 export default function MarketplaceLayout() {
@@ -45,7 +44,7 @@ export default function MarketplaceLayout() {
     e.preventDefault();
     const q = searchRef.current?.value?.trim();
     if (q) {
-      navigate(`/marketplace?q=${encodeURIComponent(q)}`);
+      navigate(`/app?q=${encodeURIComponent(q)}`);
       setSearchOpen(false);
     }
   };
