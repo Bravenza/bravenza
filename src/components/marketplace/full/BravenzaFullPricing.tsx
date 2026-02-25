@@ -20,7 +20,7 @@ export function BravenzaFullPricing() {
           <h2 className="font-display text-3xl md:text-5xl font-bold mb-4">
             Transparente e <span className="text-gradient-gold">simples</span>
           </h2>
-          <p className="text-muted-foreground max-w-md mx-auto text-lg">
+          <p className="text-foreground/60 max-w-md mx-auto text-lg">
             Você só paga quando seu sneaker é vendido. Sem surpresas.
           </p>
         </motion.div>
@@ -42,13 +42,13 @@ export function BravenzaFullPricing() {
 
             <div className="text-center mb-6 pt-2">
               <p className="text-6xl md:text-7xl font-display font-bold text-primary mb-1">22%</p>
-              <p className="text-muted-foreground text-lg">sobre o valor da venda</p>
+              <p className="text-foreground/60 text-lg">sobre o valor da venda</p>
             </div>
 
             {/* Competitive advantage */}
-            <div className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent/10 border border-accent/20 mb-8">
-              <TrendingDown className="h-4 w-4 text-accent-foreground" />
-              <span className="text-sm font-medium text-accent-foreground">
+            <div className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 border border-primary/20 mb-8">
+              <TrendingDown className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">
                 Até 7% mais barato que concorrentes
               </span>
             </div>

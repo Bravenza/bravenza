@@ -19,7 +19,7 @@ export function BravenzaFullContact() {
           <h2 className="font-display text-3xl md:text-5xl font-bold mb-4">
             Pronto para <span className="text-gradient-gold">começar?</span>
           </h2>
-          <p className="text-muted-foreground mb-10 text-lg max-w-lg mx-auto">
+          <p className="text-foreground/60 mb-10 text-lg max-w-lg mx-auto">
             Solicite o serviço agora e comece a vender seus sneakers sem esforço. Nossa equipe está pronta para ajudar.
           </p>
 
@@ -42,7 +42,7 @@ export function BravenzaFullContact() {
             </a>
           </div>
 
-          <p className="text-muted-foreground/60 text-sm mt-6">
+          <p className="text-foreground/50 text-sm mt-6">
             Sem compromisso. Sem taxas antecipadas. Você só paga quando vende.
           </p>
         </motion.div>

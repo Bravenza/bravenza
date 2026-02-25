@@ -93,7 +93,7 @@ export function BravenzaFullFAQ() {
           <h2 className="font-display text-3xl md:text-5xl font-bold mb-4">
             Perguntas <span className="text-gradient-gold">frequentes</span>
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto text-lg">
+          <p className="text-foreground/60 max-w-xl mx-auto text-lg">
             Tudo o que você precisa saber sobre o Bravenza Full
           </p>
         </motion.div>
