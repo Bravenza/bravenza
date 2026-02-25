@@ -28,6 +28,15 @@ const vaultSubTabs = [
 
 const vaultSections = ["vault", "wishlist", "drops", "clube", "comunidade"];
 
+/**
+ * iOS-style Tab Bar following Apple Human Interface Guidelines:
+ * - 49pt tab bar height (content area) + safe area inset bottom
+ * - Background extends into safe area (home indicator region)
+ * - Filled icons (strokeWidth 2.5) when active, outline (strokeWidth 1.5) when inactive
+ * - 10pt labels, semibold active / regular inactive
+ * - Tint color for active state, no scale animations
+ * - 1px hairline separator at top
+ */
 function BottomTabBarComponent({
   activeSection,
   onSectionChange,
@@ -43,7 +52,7 @@ function BottomTabBarComponent({
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-      {/* Vault sub-navigation — slides up when vault section is active */}
+      {/* Vault sub-navigation — slides up above tab bar */}
       <AnimatePresence>
         {isVaultActive && hasVaultAccess && (
           <motion.div
@@ -51,7 +60,7 @@ function BottomTabBarComponent({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.15 }}
-            className="border-t border-border/20 bg-background"
+            className="border-t border-border/10 bg-background"
           >
             <div className="flex items-center overflow-x-auto scrollbar-hide gap-1 px-3 py-1.5">
               {vaultSubTabs.map((tab) => (
@@ -59,7 +68,7 @@ function BottomTabBarComponent({
                   key={tab.id}
                   onClick={() => onSectionChange(tab.id)}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 shrink-0",
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors duration-150 shrink-0",
                     activeSection === tab.id
                       ? "bg-primary/15 text-primary"
                       : "text-muted-foreground active:text-foreground"
@@ -74,9 +83,21 @@ function BottomTabBarComponent({
         )}
       </AnimatePresence>
 
-      {/* Primary tab bar */}
-      <nav className="border-t border-border/30 bg-background safe-area-bottom" aria-label="Navegação principal">
-        <div className="flex items-stretch justify-around max-w-lg mx-auto">
+      {/* Primary tab bar — Apple HIG: 49pt content + safe area extension */}
+      <nav
+        className="bg-background"
+        aria-label="Navegação principal"
+        style={{
+          /* Hairline separator — Apple uses 0.33pt, we use 0.5px for retina */
+          borderTop: '0.5px solid hsl(var(--border) / 0.4)',
+          /* Safe area: extend background into home indicator region */
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        }}
+      >
+        <div
+          className="flex items-stretch justify-around max-w-lg mx-auto"
+          style={{ height: '49px' }} /* Apple's standard 49pt tab bar height */
+        >
           {visibleTabs.map((tab) => {
             const isActive =
               tab.id === "vault"
@@ -91,7 +112,7 @@ function BottomTabBarComponent({
               } else if (tab.id === "profile") {
                 onSettingsOpen();
               } else if (tab.id === "vault" && isVaultActive) {
-                // Already in vault — cycle isn't needed, stay
+                // Already in vault — stay
               } else {
                 onSectionChange(tab.id);
               }
@@ -102,23 +123,22 @@ function BottomTabBarComponent({
                 key={tab.id}
                 onClick={handleClick}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 py-2 px-3 min-h-[52px] flex-1 transition-colors duration-200",
+                  "flex flex-col items-center justify-center gap-[2px] flex-1 transition-colors duration-150",
                   isActive
                     ? "text-primary"
                     : "text-muted-foreground active:text-foreground"
                 )}
               >
+                {/* Apple HIG: 25×25pt icons, filled active / outline inactive */}
                 <tab.icon
-                  className={cn(
-                    "h-5 w-5 transition-all duration-200",
-                    isActive && "scale-110"
-                  )}
-                  strokeWidth={isActive ? 2.5 : 2}
+                  className="h-[22px] w-[22px]"
+                  strokeWidth={isActive ? 2.5 : 1.5}
                 />
+                {/* Apple HIG: 10pt label */}
                 <span
                   className={cn(
-                    "text-[10px] leading-tight",
-                    isActive ? "font-semibold" : "font-medium"
+                    "text-[10px] leading-none tracking-tight",
+                    isActive ? "font-semibold" : "font-normal"
                   )}
                 >
                   {tab.label}

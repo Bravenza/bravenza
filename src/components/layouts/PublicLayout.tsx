@@ -19,7 +19,7 @@ const PublicLayoutComponent = ({
     <div className="min-h-screen bg-background flex flex-col">
       {showHeader && <Header />}
       
-      <main id="main-content" className={`flex-1 ${className}`} style={showHeader ? { paddingTop: 'calc(4rem + env(safe-area-inset-top, 0px))' } : undefined}>
+      <main id="main-content" className={`flex-1 ${className}`} style={showHeader ? { paddingTop: 'calc(44px + env(safe-area-inset-top, 0px))' } : undefined}>
         {children}
       </main>
 

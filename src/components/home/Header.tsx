@@ -40,11 +40,16 @@ const HeaderComponent = () => {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 bg-background theme-dark" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }} data-header-height>
-        {/* Subtle gradient line at top */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-        
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <header
+          className="fixed top-0 left-0 right-0 z-50 bg-background theme-dark"
+          style={{
+            paddingTop: 'env(safe-area-inset-top, 0px)',
+            /* Apple HIG: hairline separator (0.33pt on retina) */
+            borderBottom: '0.5px solid hsl(var(--border) / 0.3)',
+          }}
+          data-header-height
+        >
+          <div className="container mx-auto px-4 flex items-center justify-between" style={{ height: '44px' }}>
           <Link to="/" className="transition-all duration-300 hover:opacity-80 hover:scale-105">
             <Logo size="md" />
           </Link>
@@ -111,7 +116,7 @@ const HeaderComponent = () => {
           className={`fixed inset-0 z-[55] md:hidden overflow-y-auto bg-background transition-all duration-200 theme-dark ${
             isMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
           }`}
-          style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}
+          style={{ top: 'calc(44px + env(safe-area-inset-top, 0px))' }}
         >
           <div className="absolute inset-0 bg-grid-pattern opacity-30" />
           
