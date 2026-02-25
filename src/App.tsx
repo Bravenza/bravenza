@@ -16,6 +16,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { PageTransition } from "@/components/PageTransition";
 
+const PrivacyConsentBanner = lazy(() => import("@/components/PrivacyConsentBanner").then(m => ({ default: m.PrivacyConsentBanner })));
+
 // Route modules
 import { publicRoutes } from "@/routes/publicRoutes";
 import { marketplaceRoutes } from "@/routes/marketplaceRoutes";
@@ -84,6 +86,9 @@ function App() {
             </PullToRefresh>
             </AppShell>
             <PWAInstallBanner />
+            <Suspense fallback={null}>
+              <PrivacyConsentBanner />
+            </Suspense>
           </BrowserRouter>
         </AuthProvider>
       </TooltipProvider>

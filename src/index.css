@@ -1198,3 +1198,55 @@ img {
     min-height: 100dvh;
   }
 }
+
+/* ── Apple HIG: Dynamic Type / Text Scaling Support ──
+   Respects the user's preferred text size in iOS Settings → Display & Brightness → Text Size.
+   Uses -webkit-text-size-adjust and clamp() for fluid scaling. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Body text scales with user preference via clamp */
+body {
+  font-size: clamp(0.875rem, 1rem, 1.25rem);
+}
+
+/* Headings scale proportionally */
+h1 { font-size: clamp(1.5rem, 2rem, 2.75rem); }
+h2 { font-size: clamp(1.25rem, 1.5rem, 2.25rem); }
+h3 { font-size: clamp(1.1rem, 1.25rem, 1.75rem); }
+
+/* Ensure labels and small text remain readable at larger sizes */
+@media (min-resolution: 2dppx) {
+  .text-\[10px\] {
+    font-size: max(10px, 0.625rem);
+  }
+  .text-xs {
+    font-size: max(12px, 0.75rem);
+  }
+}
+
+/* ── Apple HIG: Accessibility — Large Content support ── */
+@media (prefers-contrast: more) {
+  :root {
+    --border: 0 0% 40%;
+  }
+  button, [role="button"] {
+    border-width: 2px;
+  }
+}
+
+/* ── Apple HIG: Selection and highlight behavior ── */
+::selection {
+  background: hsl(var(--primary) / 0.3);
+  color: hsl(var(--foreground));
+}
+
+/* ── Apple HIG: Smooth momentum scrolling on all scrollable containers ── */
+[data-radix-scroll-area-viewport],
+.overflow-y-auto,
+.overflow-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
