@@ -1,6 +1,6 @@
 // mk-store: Coupons, Boosts, Collections, Social (Follow), Badges, Storefront, KYC Review, Snapshot Prices, Loyalty
 import {
-  corsHeaders, jsonResponse, createSupabaseClient, resolveCpf,
+  corsHeaders, jsonResponse, createSupabaseClient,
   getMember, getSellerProfile, notify, getMemberEmail, sendMarketplaceEmail, sendMarketplaceWhatsApp,
 } from "../_shared/mk-helpers.ts";
 
@@ -24,9 +24,21 @@ Deno.serve(async (req) => {
 
   console.log("mk-store", a, mt);
 
-  const auth = await resolveCpf(req, sb, PUBLIC_ACTIONS, a);
-  if (auth.errorResponse) return auth.errorResponse;
-  const cpf = auth.cpf;
+  // Inline auth resolution
+  let cpf: string | null = "visitor";
+  const isPublic = PUBLIC_ACTIONS.has(a || "");
+  const authHeader = req.headers.get("authorization");
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: authErr } = await sb.auth.getUser(token);
+    if (!authErr && userData?.user) {
+      const { data: prof } = await sb.from("client_profiles").select("cpf").eq("user_id", userData.user.id).single();
+      if (prof?.cpf) cpf = prof.cpf;
+    }
+  }
+  if (!isPublic && cpf === "visitor") {
+    return j({ error: "Autenticação obrigatória" }, 401);
+  }
 
   try {
     // ==================== COUPONS ====================
