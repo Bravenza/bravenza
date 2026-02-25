@@ -834,7 +834,7 @@ function MarketplaceCheckoutPageInner() {
                       <Button
                         variant="outline"
                         className="flex-1 rounded-xl h-11"
-                        onClick={() => navigate("/marketplace/pedidos")}
+                        onClick={() => navigate("/app/pedidos")}
                       >
                         Ver meus pedidos
                       </Button>

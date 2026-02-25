@@ -54,7 +54,7 @@ export function VaultNotificationBell({
       case "search":
         return `/app/wishlist`;
       case "match_room":
-        return `/vault/app/match/${notification.reference_id}`;
+        return `/app/vault`;
       case "vault_item":
         return `/app/vault`;
       default:

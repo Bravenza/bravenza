@@ -143,7 +143,7 @@ export default function MarketplacePlansPage() {
     }
     if (!seller) {
       toast.error("Complete o cadastro de vendedor primeiro.");
-      navigate("/marketplace/loja");
+      navigate("/app/loja");
       return;
     }
     setSelectedPlan(planId);
@@ -573,7 +573,7 @@ export default function MarketplacePlansPage() {
           <Button
             size="lg"
             className="btn-gold text-base gap-2 h-12 px-10 rounded-xl font-bold"
-            onClick={() => navigate("/marketplace/loja")}
+            onClick={() => navigate("/app/loja")}
           >
             <Rocket className="h-5 w-5" />
             Começar agora

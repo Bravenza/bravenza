@@ -699,7 +699,7 @@ function ProductDetailPageInner() {
               </p>
             </div>
             <Button
-              onClick={() => navigate("/marketplace/loja")}
+              onClick={() => navigate("/app/loja")}
               className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-8 py-3 font-bold text-sm shrink-0"
             >
               Quero anunciar

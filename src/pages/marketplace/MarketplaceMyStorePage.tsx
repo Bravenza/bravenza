@@ -131,7 +131,7 @@ export default function MarketplaceMyStorePage() {
         <Store className="h-16 w-16 mx-auto text-muted-foreground/20 mb-4" />
         <h2 className="text-xl font-bold mb-2">Faça login para acessar sua loja</h2>
         <p className="text-sm text-muted-foreground mb-6">Acesse sua conta para gerenciar seus anúncios no marketplace.</p>
-        <Button className="btn-gold" onClick={() => navigate("/minha-conta")}>
+        <Button className="btn-gold" onClick={() => navigate("/entrar")}>
           Fazer login
         </Button>
       </div>
@@ -380,7 +380,7 @@ export default function MarketplaceMyStorePage() {
                   <Lock className="h-10 w-10 mx-auto text-muted-foreground/30" />
                   <h3 className="font-bold">Ferramenta Pro</h3>
                   <p className="text-sm text-muted-foreground">Cupons estão disponíveis nos planos Pro e Elite.</p>
-                  <Button variant="outline" onClick={() => navigate("/marketplace/planos")} className="gap-2">
+                   <Button variant="outline" onClick={() => navigate("/app/loja")} className="gap-2">
                     <Rocket className="h-4 w-4" /> Ver planos
                   </Button>
                 </CardContent>
@@ -401,7 +401,7 @@ export default function MarketplaceMyStorePage() {
                   <Lock className="h-10 w-10 mx-auto text-muted-foreground/30" />
                   <h3 className="font-bold">Ferramenta Pro</h3>
                   <p className="text-sm text-muted-foreground">Sugestões de preço estão disponíveis nos planos Pro e Elite.</p>
-                  <Button variant="outline" onClick={() => navigate("/marketplace/planos")} className="gap-2">
+                  <Button variant="outline" onClick={() => navigate("/app/loja")} className="gap-2">
                     <Rocket className="h-4 w-4" /> Ver planos
                   </Button>
                 </CardContent>

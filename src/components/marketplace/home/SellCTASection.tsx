@@ -130,7 +130,7 @@ export const SellCTASection = memo(function SellCTASection() {
           <Button
             size="lg"
             className="btn-gold rounded-full h-16 px-12 text-lg font-black gap-3 shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 transition-all"
-            onClick={() => navigate("/marketplace/minha-loja")}
+            onClick={() => navigate("/app/loja")}
           >
             <Users className="h-5 w-5" />
             Começar a vender agora

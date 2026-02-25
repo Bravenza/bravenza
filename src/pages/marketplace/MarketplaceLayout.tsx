@@ -21,12 +21,12 @@ const Footer = lazy(() => import("@/components/home/Footer").then(m => ({ defaul
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { path: "/marketplace", label: "Explorar", mobileLabel: "Explorar", exact: true },
-  { path: "/marketplace/pedidos", label: "Pedidos", mobileLabel: "Pedidos", icon: ShoppingBag },
-  { path: "/marketplace/favoritos", label: "Favoritos", mobileLabel: "Favoritos", icon: Heart },
-  { path: "/marketplace/feed", label: "Feed", mobileLabel: "Feed", icon: Activity },
-  { path: "/marketplace/loja", label: "Minha Loja", mobileLabel: "Loja", icon: Store },
-  { path: "/marketplace/planos", label: "Planos", mobileLabel: "Planos", icon: Crown },
+  { path: "/app", label: "Explorar", mobileLabel: "Explorar", exact: true },
+  { path: "/app/pedidos", label: "Pedidos", mobileLabel: "Pedidos", icon: ShoppingBag },
+  { path: "/app/favoritos", label: "Favoritos", mobileLabel: "Favoritos", icon: Heart },
+  { path: "/app/feed", label: "Feed", mobileLabel: "Feed", icon: Activity },
+  { path: "/app/loja", label: "Minha Loja", mobileLabel: "Loja", icon: Store },
+  { path: "/app/loja", label: "Planos", mobileLabel: "Planos", icon: Crown },
 ];
 
 export default function MarketplaceLayout() {
@@ -139,19 +139,19 @@ export default function MarketplaceLayout() {
                       </div>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate("/marketplace/perfil")}>
+                    <DropdownMenuItem onClick={() => navigate("/app/closet")}>
                       <User className="h-4 w-4 mr-2" /> Meu Closet
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/marketplace/pedidos")}>
+                    <DropdownMenuItem onClick={() => navigate("/app/pedidos")}>
                       <Package className="h-4 w-4 mr-2" /> Minhas compras
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/marketplace/favoritos")}>
+                    <DropdownMenuItem onClick={() => navigate("/app/favoritos")}>
                       <Heart className="h-4 w-4 mr-2" /> Favoritos
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/marketplace/loja")}>
+                    <DropdownMenuItem onClick={() => navigate("/app/loja")}>
                       <Store className="h-4 w-4 mr-2" /> Quero vender
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/marketplace/planos")}>
+                    <DropdownMenuItem onClick={() => navigate("/app/loja")}>
                       <Crown className="h-4 w-4 mr-2" /> Planos
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -237,7 +237,7 @@ export default function MarketplaceLayout() {
               })}
               <div className="pt-2 border-t border-border/20">
                 <Link
-                  to="/minha-conta"
+                  to="/app"
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground"
                 >

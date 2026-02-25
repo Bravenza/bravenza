@@ -49,7 +49,7 @@ export function PlanLimitModal({ open, onOpenChange, reason, currentPlan }: Plan
             className="w-full btn-gold gap-2"
             onClick={() => {
               onOpenChange(false);
-              navigate("/marketplace/planos");
+              navigate("/app/loja");
             }}
           >
             <Rocket className="h-4 w-4" />
