@@ -2,7 +2,7 @@ import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   Search, Package, Box, Heart, Star, Store, Crown, 
   Users, Sparkles, Award, Settings, LogOut, Menu,
-  ShoppingBag, MoreHorizontal, X, Activity, ChevronLeft, HelpCircle
+  ShoppingBag, MoreHorizontal, X, Activity, ChevronLeft, HelpCircle, DollarSign
 } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -43,6 +43,7 @@ const navItems: NavItem[] = [
   { path: "/app/vault", label: "Meu Status", mobileLabel: "Status", icon: Award, group: "vault" },
   { path: "/app/drops", label: "Drops & Intel", mobileLabel: "Drops", icon: Sparkles, group: "vault" },
   { path: "/app/comunidade", label: "Comunidade", mobileLabel: "Social", icon: Users, group: "vault" },
+  { path: "/vender", label: "Quero Vender", mobileLabel: "Vender", icon: DollarSign, group: "more" },
   { path: "/app/perfil", label: "Meus Dados", mobileLabel: "Dados", icon: Settings, group: "more" },
   { path: "/faq", label: "Perguntas Frequentes", mobileLabel: "FAQ", icon: HelpCircle, group: "more" },
 ];

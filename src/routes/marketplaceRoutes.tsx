@@ -7,9 +7,12 @@ const ProductDetailPage = lazy(() => import("@/pages/marketplace/ProductDetailPa
 const SellerStorefrontPage = lazy(() => import("@/pages/marketplace/SellerStorefrontPage"));
 const DropsArticlePage = lazy(() => import("@/pages/drops/DropsArticlePage"));
 const BravenzaFullPage = lazy(() => import("@/pages/marketplace/BravenzaFullPage"));
+const SellLandingPage = lazy(() => import("@/pages/marketplace/SellLandingPage"));
 
 export const marketplaceRoutes = (
   <>
+    {/* Sell landing page — public */}
+    <Route path="/vender" element={<SellLandingPage />} />
     {/* Redirect logged-in marketplace routes to unified /app */}
     <Route path="/marketplace" element={<Navigate to="/app" replace />} />
     <Route path="/marketplace/pedidos" element={<Navigate to="/app/pedidos" replace />} />
