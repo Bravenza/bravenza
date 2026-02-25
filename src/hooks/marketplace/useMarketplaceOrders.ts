@@ -9,7 +9,7 @@ export function useMarketplaceOrders(cpf: string | null) {
   const [mySales, setMySales] = useState<MarketplaceOrder[]>([]);
 
   const createOrder = useCallback(
-    async (body: { listing_id: string; buyer_name: string; buyer_email?: string; buyer_phone?: string; buyer_address?: string; payment_method?: string }) => {
+    async (body: { listing_id: string; buyer_name: string; buyer_email?: string; buyer_phone?: string; buyer_address?: string; payment_method?: string; shipping_cost?: number }) => {
       if (!cpf) return null;
       try {
         const data = await marketplaceRequest(cpf, "create-order", "POST", body);

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createHmac } from "https://deno.land/std@0.224.0/crypto/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,122 +19,203 @@ function calcProtectionEnd(): string {
   return d.toISOString();
 }
 
-/** Handle marketplace (MKT-) payments */
+/** Validate MercadoPago webhook signature */
+async function validateSignature(req: Request, body: string): Promise<boolean> {
+  const webhookSecret = Deno.env.get("MERCADO_PAGO_WEBHOOK_SECRET");
+  // If no secret configured, log warning but allow (for backward compatibility)
+  if (!webhookSecret) {
+    console.warn("[webhook] MERCADO_PAGO_WEBHOOK_SECRET not configured — skipping signature validation");
+    return true;
+  }
+
+  const signature = req.headers.get("x-signature");
+  const requestId = req.headers.get("x-request-id");
+
+  if (!signature || !requestId) {
+    console.error("[webhook] Missing x-signature or x-request-id headers");
+    return false;
+  }
+
+  // Parse x-signature header: "ts=...,v1=..."
+  const parts: Record<string, string> = {};
+  signature.split(",").forEach(part => {
+    const [key, val] = part.split("=");
+    if (key && val) parts[key.trim()] = val.trim();
+  });
+
+  const ts = parts["ts"];
+  const v1 = parts["v1"];
+  if (!ts || !v1) {
+    console.error("[webhook] Invalid x-signature format");
+    return false;
+  }
+
+  // Extract data.id from body
+  const parsed = JSON.parse(body);
+  const dataId = parsed?.data?.id;
+
+  // Build template string as per MP docs
+  const template = `id:${dataId};request-id:${requestId};ts:${ts};`;
+
+  // HMAC-SHA256
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(webhookSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(template));
+  const computed = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, "0")).join("");
+
+  if (computed !== v1) {
+    console.error("[webhook] Signature mismatch");
+    return false;
+  }
+
+  return true;
+}
+
+/** Handle marketplace (MKT-) payments — supports consolidated multi-order */
 async function handleMarketplacePayment(
   supabase: any,
   payment: any,
   externalRef: string,
   paymentId: string | number
 ) {
-  // Format: MKT-{order_code}-pix or MKT-{order_code}-card
-  const parts = externalRef.split("-");
-  const method = parts[parts.length - 1]; // "pix" or "card"
-  // order_code is everything between MKT- and -pix/-card
-  const orderCode = parts.slice(1, -1).join("-");
+  // Check metadata for consolidated payment (has order_ids array)
+  const metaOrderIds: string[] | null = payment.metadata?.order_ids || null;
 
-  console.log(`[webhook] Marketplace payment approved: ${orderCode}, method: ${method}`);
+  let orderCodes: string[] = [];
+  let orders: any[] = [];
 
-  // Find order by order_code
-  const { data: order, error: orderErr } = await supabase
-    .from("vault_marketplace_orders")
-    .select("id, order_code, status, seller_id, seller_payout, buyer_cpf, fee_amount")
-    .eq("order_code", orderCode)
-    .single();
+  if (metaOrderIds && metaOrderIds.length > 0) {
+    // Consolidated payment — fetch all orders by ID
+    const { data, error } = await supabase
+      .from("vault_marketplace_orders")
+      .select("id, order_code, status, seller_id, seller_payout, buyer_cpf, fee_amount")
+      .in("id", metaOrderIds);
 
-  if (orderErr || !order) {
-    console.error("[webhook] Marketplace order not found:", orderCode, orderErr);
-    return;
-  }
+    if (error || !data || data.length === 0) {
+      console.error("[webhook] Consolidated orders not found:", metaOrderIds, error);
+      return;
+    }
+    orders = data;
+    orderCodes = data.map((o: any) => o.order_code);
+    console.log(`[webhook] Consolidated marketplace payment approved: ${orderCodes.join("+")}`);
+  } else {
+    // Legacy single-order format: MKT-{order_code}-pix/card
+    const parts = externalRef.split("-");
+    const method = parts[parts.length - 1];
+    const orderCode = parts.slice(1, -1).join("-");
 
-  if (order.status !== "pending_payment") {
-    console.log("[webhook] Order already processed:", order.status);
-    return;
+    console.log(`[webhook] Marketplace payment approved: ${orderCode}, method: ${method}`);
+
+    const { data: order, error: orderErr } = await supabase
+      .from("vault_marketplace_orders")
+      .select("id, order_code, status, seller_id, seller_payout, buyer_cpf, fee_amount")
+      .eq("order_code", orderCode)
+      .single();
+
+    if (orderErr || !order) {
+      console.error("[webhook] Marketplace order not found:", orderCode, orderErr);
+      return;
+    }
+    orders = [order];
+    orderCodes = [order.order_code];
   }
 
   const protEnd = calcProtectionEnd();
+  const baseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-  // Update order to paid
-  const { error: updateErr } = await supabase
-    .from("vault_marketplace_orders")
-    .update({
-      status: "paid",
-      payment_method: method === "pix" ? "pix" : "card",
-      mp_payment_id: paymentId.toString(),
-      paid_at: new Date().toISOString(),
-      protection_ends_at: protEnd,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", order.id);
+  for (const order of orders) {
+    if (order.status !== "pending_payment") {
+      console.log(`[webhook] Order ${order.order_code} already processed: ${order.status}`);
+      continue;
+    }
 
-  if (updateErr) {
-    console.error("[webhook] Failed to update marketplace order:", updateErr);
-    return;
-  }
+    // Update order to paid
+    const { error: updateErr } = await supabase
+      .from("vault_marketplace_orders")
+      .update({
+        status: "paid",
+        payment_method: payment.payment_method_id === "pix" ? "pix" : "card",
+        mp_payment_id: paymentId.toString(),
+        paid_at: new Date().toISOString(),
+        protection_ends_at: protEnd,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", order.id);
 
-  console.log(`[webhook] Marketplace order ${orderCode} marked as paid`);
+    if (updateErr) {
+      console.error(`[webhook] Failed to update order ${order.order_code}:`, updateErr);
+      continue;
+    }
 
-  // Notify seller to ship
-  if (order.seller_id) {
-    const { data: seller } = await supabase
-      .from("vault_seller_profiles")
-      .select("member:vault_members!inner(client_cpf)")
-      .eq("id", order.seller_id)
-      .single();
+    console.log(`[webhook] Order ${order.order_code} marked as paid`);
 
-    if (seller?.member?.client_cpf) {
+    // Notify seller to ship
+    if (order.seller_id) {
+      const { data: seller } = await supabase
+        .from("vault_seller_profiles")
+        .select("member:vault_members!inner(client_cpf)")
+        .eq("id", order.seller_id)
+        .single();
+
+      if (seller?.member?.client_cpf) {
+        await supabase.from("notifications").insert({
+          title: "🎉 Venda confirmada!",
+          message: `Pedido ${order.order_code} foi pago. Envie o produto em até 3 dias úteis.`,
+          target: "client",
+          target_client_cpf: seller.member.client_cpf,
+          type: "info",
+          reference_id: order.id,
+          reference_type: "marketplace_order",
+        });
+      }
+    }
+
+    // Notify buyer
+    if (order.buyer_cpf) {
       await supabase.from("notifications").insert({
-        title: "🎉 Venda confirmada!",
-        message: `Pedido ${orderCode} foi pago. Envie o produto em até 3 dias úteis.`,
+        title: "✅ Pagamento confirmado!",
+        message: `Seu pagamento do pedido ${order.order_code} foi aprovado. O vendedor será notificado para envio.`,
         target: "client",
-        target_client_cpf: seller.member.client_cpf,
+        target_client_cpf: order.buyer_cpf,
         type: "info",
         reference_id: order.id,
         reference_type: "marketplace_order",
       });
     }
-  }
 
-  // Notify buyer
-  if (order.buyer_cpf) {
+    // Notify admin
     await supabase.from("notifications").insert({
-      title: "✅ Pagamento confirmado!",
-      message: `Seu pagamento do pedido ${orderCode} foi aprovado. O vendedor será notificado para envio.`,
-      target: "client",
-      target_client_cpf: order.buyer_cpf,
-      type: "info",
+      title: "💳 Pagamento MKT recebido",
+      message: `Pedido ${order.order_code} — R$ ${(payment.transaction_amount / orders.length || 0).toFixed(2)} (taxa: R$ ${(order.fee_amount || 0).toFixed(2)})`,
+      target: "admin",
+      type: "payment_received",
       reference_id: order.id,
       reference_type: "marketplace_order",
     });
-  }
 
-  // Notify admin
-  await supabase.from("notifications").insert({
-    title: "💳 Pagamento MKT recebido",
-    message: `Pedido ${orderCode} — R$ ${(payment.transaction_amount || 0).toFixed(2)} (taxa: R$ ${(order.fee_amount || 0).toFixed(2)})`,
-    target: "admin",
-    type: "payment_received",
-    reference_id: order.id,
-    reference_type: "marketplace_order",
-  });
-
-  // Send payment confirmation email + WhatsApp (fire-and-forget)
-  const baseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (baseUrl && serviceKey) {
-    const sendFn = (endpoint: string, body: any) => {
-      fetch(`${baseUrl}/functions/v1/${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
-        body: JSON.stringify(body),
-      }).catch((e: any) => console.error(`[webhook] ${endpoint} error:`, e));
-    };
-    // Get buyer info
-    const { data: buyerMember } = await supabase.from("vault_members").select("client_name, client_email, client_phone").eq("client_cpf", order.buyer_cpf).maybeSingle();
-    if (buyerMember?.client_email) {
-      sendFn("send-marketplace-email", { type: "mk_payment_confirmed", recipient_name: buyerMember.client_name, recipient_email: buyerMember.client_email, order_code: orderCode, payment_amount: payment.transaction_amount, payment_method_label: method === "pix" ? "PIX" : "Cartão" });
-    }
-    if (buyerMember?.client_phone) {
-      sendFn("send-whatsapp", { message_type: "mk_payment_confirmed", recipient_phone: buyerMember.client_phone, recipient_name: buyerMember.client_name, order_code: orderCode, payment_amount: payment.transaction_amount });
+    // Send email + WhatsApp (fire-and-forget)
+    if (baseUrl && serviceKey) {
+      const sendFn = (endpoint: string, body: any) => {
+        fetch(`${baseUrl}/functions/v1/${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
+          body: JSON.stringify(body),
+        }).catch((e: any) => console.error(`[webhook] ${endpoint} error:`, e));
+      };
+      const { data: buyerMember } = await supabase.from("vault_members").select("client_name, client_email, client_phone").eq("client_cpf", order.buyer_cpf).maybeSingle();
+      if (buyerMember?.client_email) {
+        sendFn("send-marketplace-email", { type: "mk_payment_confirmed", recipient_name: buyerMember.client_name, recipient_email: buyerMember.client_email, order_code: order.order_code, payment_amount: payment.transaction_amount / orders.length, payment_method_label: payment.payment_method_id === "pix" ? "PIX" : "Cartão" });
+      }
+      if (buyerMember?.client_phone) {
+        sendFn("send-whatsapp", { message_type: "mk_payment_confirmed", recipient_phone: buyerMember.client_phone, recipient_name: buyerMember.client_name, order_code: order.order_code, payment_amount: payment.transaction_amount / orders.length });
+      }
     }
   }
 }
@@ -258,7 +340,7 @@ async function handleOrderPayment(
 
   console.log(`Order ${orderId} status updated to: ${newStatus || "unchanged"}`);
 
-  // ============ NOTIFICATIONS ============
+  // Notifications
   try {
     await supabase.from("notifications").insert({
       type: "payment_received",
@@ -288,7 +370,7 @@ async function handleOrderPayment(
     console.error("Failed to create client notification:", notifError);
   }
 
-  // ============ EMAIL ============
+  // Email
   if (currentOrder.client_email) {
     const emailType = paymentType === "sinal" ? "sinal_confirmed" : "balance_confirmed";
     try {
@@ -310,13 +392,12 @@ async function handleOrderPayment(
           sla_vault_due_date: currentOrder.sla_vault_due_date,
         }),
       });
-      console.log(`Email ${emailType} sent to ${currentOrder.client_email}`);
     } catch (emailError) {
       console.error("Failed to send email:", emailError);
     }
   }
 
-  // ============ WHATSAPP ============
+  // WhatsApp
   if (currentOrder.client_phone) {
     const whatsappType = paymentType === "sinal" ? "sinal_confirmed" : "balance_confirmed";
     try {
@@ -331,13 +412,10 @@ async function handleOrderPayment(
           message_type: whatsappType,
         }),
       });
-      console.log(`WhatsApp ${whatsappType} sent for order ${orderId}`);
     } catch (whatsappError) {
       console.error("Failed to send WhatsApp:", whatsappError);
     }
   }
-
-  console.log(`Order ${orderId} fully processed - payment: ${paymentType}, status: ${newStatus}`);
 }
 
 Deno.serve(async (req) => {
@@ -350,7 +428,16 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const body = await req.json();
+    const bodyText = await req.text();
+
+    // Validate webhook signature
+    const isValid = await validateSignature(req, bodyText);
+    if (!isValid) {
+      console.error("[webhook] Invalid signature — rejecting request");
+      return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+    }
+
+    const body = JSON.parse(bodyText);
     console.log("Mercado Pago webhook received:", JSON.stringify(body));
 
     if (body.action === "payment.updated" || body.action === "payment.created") {
