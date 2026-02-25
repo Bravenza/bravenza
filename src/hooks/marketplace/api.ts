@@ -3,10 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 const FUNCTION_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
 const ACTION_TO_FUNCTION: Record<string, string> = {
-  // mkv2-hub: Listings CRUD, Favorites, Seller Profiles
-  "listings": "mkv2-hub", "listing-detail": "mkv2-hub", "my-listings": "mkv2-hub",
-  "create-listing": "mkv2-hub", "update-listing": "mkv2-hub", "delete-listing": "mkv2-hub",
-  "toggle-favorite": "mkv2-hub", "seller-profile": "mkv2-hub", "seller-public-profile": "mkv2-hub",
+  // mkv2-listings: Listings CRUD, Favorites, Seller Profiles
+  "listings": "mkv2-listings", "listing-detail": "mkv2-listings", "my-listings": "mkv2-listings",
+  "create-listing": "mkv2-listings", "update-listing": "mkv2-listings", "delete-listing": "mkv2-listings",
+  "toggle-favorite": "mkv2-listings", "seller-profile": "mkv2-listings", "seller-public-profile": "mkv2-listings",
 
   // mkv2-offers: Offers, Negotiation, Bundle
   "make-offer": "mkv2-offers", "listing-offers": "mkv2-offers", "my-offers": "mkv2-offers",
@@ -75,7 +75,7 @@ export async function marketplaceRequest(
   body?: any,
   extraParams?: Record<string, string>
 ) {
-  const fnName = ACTION_TO_FUNCTION[action] || "mkv2-hub";
+  const fnName = ACTION_TO_FUNCTION[action] || "mkv2-listings";
   const params = new URLSearchParams({ action, ...extraParams });
   const url = `${FUNCTION_BASE}/${fnName}?${params}`;
 

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   ShieldCheck, Package, Clock, CheckCircle2, XCircle, AlertTriangle,
-  Loader2, Camera, Eye, ChevronRight, Search, FileText,
+  Loader2, Camera, Eye, ChevronRight, Search, FileText, Upload,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-fulfill`;
 
@@ -110,6 +111,8 @@ export default function MarketplaceInspectionPage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [inspectDialogOpen, setInspectDialogOpen] = useState(false);
   const [inspectionPhotos, setInspectionPhotos] = useState<string[]>([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [buyerTrackingCode, setBuyerTrackingCode] = useState("");
 
   const fetchHubOrders = useCallback(async () => {
     setIsLoading(true);
@@ -348,7 +351,9 @@ export default function MarketplaceInspectionPage() {
                   {selectedOrder.hub_tracking_code && <p>📦 Rastreio → Hub: <span className="font-mono">{selectedOrder.hub_tracking_code}</span></p>}
                   {selectedOrder.hub_received_at && <p>✅ Recebido no Hub: {new Date(selectedOrder.hub_received_at).toLocaleString("pt-BR")}</p>}
                   {selectedOrder.inspection_result && (
-                    <p>{selectedOrder.inspection_result === "approved" ? "✅" : "❌"} Inspeção: {selectedOrder.inspection_result === "approved" ? "Autêntico" : "Réplica"}</p>
+                    <p>{selectedOrder.inspection_result === "approved" ? "✅" : "❌"} Inspeção: {selectedOrder.inspection_result === "approved" ? "Autêntico" : "Réplica"}
+                    {(selectedOrder as any).laudo_id && <span className="ml-1 font-mono text-primary">· Laudo: {(selectedOrder as any).laudo_id}</span>}
+                    </p>
                   )}
                   {selectedOrder.hub_tracking_to_buyer && <p>📦 Rastreio → Comprador: <span className="font-mono">{selectedOrder.hub_tracking_to_buyer}</span></p>}
                   {selectedOrder.hub_shipped_at && <p>🚀 Enviado ao comprador: {new Date(selectedOrder.hub_shipped_at).toLocaleString("pt-BR")}</p>}
@@ -389,17 +394,18 @@ export default function MarketplaceInspectionPage() {
                     <div className="space-y-2">
                       <Input
                         placeholder="Código de rastreio → Comprador"
-                        onChange={(e) => {
-                          // Store temporarily
-                          (selectedOrder as any)._buyerTracking = e.target.value;
-                        }}
+                        value={buyerTrackingCode}
+                        onChange={(e) => setBuyerTrackingCode(e.target.value)}
                       />
                       <Button
                         className="w-full gap-2 btn-gold"
-                        disabled={actionLoading}
-                        onClick={() => updateHubStatus(selectedOrder.id, "in_transit_to_buyer", {
-                          hub_tracking_to_buyer: (selectedOrder as any)._buyerTracking || "",
-                        })}
+                        disabled={actionLoading || !buyerTrackingCode.trim()}
+                        onClick={() => {
+                          updateHubStatus(selectedOrder.id, "in_transit_to_buyer", {
+                            hub_tracking_to_buyer: buyerTrackingCode.trim(),
+                          });
+                          setBuyerTrackingCode("");
+                        }}
                       >
                         <Package className="h-4 w-4" /> Enviar ao comprador
                       </Button>
@@ -486,20 +492,44 @@ export default function MarketplaceInspectionPage() {
                 <Camera className="h-3.5 w-3.5" /> Fotos da inspeção
               </Label>
               <div className="mt-1.5 space-y-2">
-                <Input
-                  type="url"
-                  placeholder="Cole a URL da foto e pressione Enter"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      const val = (e.target as HTMLInputElement).value.trim();
-                      if (val) {
-                        setInspectionPhotos(prev => [...prev, val]);
-                        (e.target as HTMLInputElement).value = "";
-                      }
-                      e.preventDefault();
-                    }
-                  }}
-                />
+                <div className="flex gap-2">
+                  <label className="flex-1 cursor-pointer">
+                    <div className="flex items-center justify-center gap-2 px-3 py-2 border border-dashed border-border rounded-lg hover:border-primary/50 transition text-sm text-muted-foreground">
+                      <Upload className="h-4 w-4" />
+                      {uploadingPhoto ? "Enviando..." : "Fazer upload de foto"}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      disabled={uploadingPhoto}
+                      onChange={async (e) => {
+                        const files = e.target.files;
+                        if (!files || files.length === 0) return;
+                        setUploadingPhoto(true);
+                        try {
+                          for (const file of Array.from(files)) {
+                            const ext = file.name.split(".").pop() || "jpg";
+                            const path = `${selectedOrder?.id || "unknown"}/${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`;
+                            const { error: upErr } = await supabase.storage.from("inspection-photos").upload(path, file);
+                            if (upErr) throw upErr;
+                            const { data: pubData } = supabase.storage.from("inspection-photos").getPublicUrl(path);
+                            if (pubData?.publicUrl) {
+                              setInspectionPhotos(prev => [...prev, pubData.publicUrl]);
+                            }
+                          }
+                          toast({ title: "Fotos enviadas!" });
+                        } catch (err: any) {
+                          toast({ title: "Erro no upload", description: err.message, variant: "destructive" });
+                        } finally {
+                          setUploadingPhoto(false);
+                          e.target.value = "";
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
                 {inspectionPhotos.length > 0 && (
                   <div className="flex gap-2 flex-wrap">
                     {inspectionPhotos.map((url, i) => (
