@@ -194,7 +194,7 @@ export default function MarketplaceDropsPage() {
 
         <div className="max-w-4xl mx-auto px-4 relative z-10 text-center">
           <button
-            onClick={() => navigate("/marketplace")}
+            onClick={() => navigate("/app")}
             className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-6"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Marketplace

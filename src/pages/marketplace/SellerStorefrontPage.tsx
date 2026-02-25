@@ -70,7 +70,7 @@ export default function SellerStorefrontPage() {
       <div className="max-w-5xl mx-auto px-4 py-20 text-center">
         <Package className="h-16 w-16 mx-auto text-muted-foreground/20 mb-4" />
         <h2 className="text-xl font-bold mb-2">Vendedor não encontrado</h2>
-        <Button variant="outline" onClick={() => navigate("/marketplace")}>Voltar ao marketplace</Button>
+        <Button variant="outline" onClick={() => navigate("/app")}>Voltar ao marketplace</Button>
       </div>
     );
   }

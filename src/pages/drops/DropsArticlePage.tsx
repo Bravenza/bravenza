@@ -234,7 +234,7 @@ export default function DropsArticlePage() {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 theme-light">
         <p className="text-muted-foreground">Artigo não encontrado</p>
-        <Button variant="outline" onClick={() => navigate("/minha-conta?tab=drops")}>
+        <Button variant="outline" onClick={() => navigate("/app/drops")}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Voltar para Drops
         </Button>
       </div>
@@ -256,7 +256,7 @@ export default function DropsArticlePage() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/40 backdrop-blur-2xl border-b border-border/10">
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-14">
           <button
-            onClick={() => navigate("/minha-conta?tab=drops")}
+            onClick={() => navigate("/app/drops")}
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
           >
             <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
@@ -521,7 +521,7 @@ export default function DropsArticlePage() {
         <div className="mt-14 text-center">
           <Button
             variant="outline"
-            onClick={() => navigate("/minha-conta?tab=drops")}
+            onClick={() => navigate("/app/drops")}
             className="rounded-2xl px-6 border-border/20 hover:border-border/40"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
