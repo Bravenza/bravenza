@@ -128,7 +128,7 @@ export default function FAQPage() {
   );
 
   return (
-    <PublicLayout>
+    <PublicLayout className="theme-light">
       <Helmet>
         <title>Perguntas Frequentes | BRAVENZA</title>
         <meta
@@ -138,7 +138,7 @@ export default function FAQPage() {
         <link rel="canonical" href="https://bravenza.com.br/faq" />
       </Helmet>
 
-      <section className="py-12 md:py-20">
+      <section className="py-12 md:py-20 theme-light">
         <div className="container mx-auto px-4 sm:px-6">
           {/* ===== HEADER ===== */}
           <motion.div
