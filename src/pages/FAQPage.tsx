@@ -4,10 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HelpCircle, Package, CreditCard, Shield, Truck, MessageCircle, Search } from "lucide-react";
+import { HelpCircle, Package, CreditCard, Shield, Truck, MessageCircle, Search, ShoppingBag, Store, Crown, Users } from "lucide-react";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
 import { Helmet } from "react-helmet-async";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface FAQ {
   id: string;
@@ -15,34 +16,42 @@ interface FAQ {
   question: string;
   answer: string;
   order_index: number;
+  persona: string | null;
 }
 
 const CATEGORY_ICONS: Record<string, any> = {
-  importacao: Package,
   curadoria: Package,
-  pagamentos: CreditCard,
+  pagamento: CreditCard,
   prazos: Truck,
   garantia: Shield,
-  pagamento: CreditCard,
-  envio: Truck,
+  marketplace: ShoppingBag,
+  vendedor: Store,
+  "vault-club": Crown,
   geral: HelpCircle,
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
-  importacao: "Curadoria",
   curadoria: "Curadoria",
-  pagamentos: "Pagamentos",
+  pagamento: "Pagamento",
   prazos: "Prazos",
   garantia: "Garantia",
-  pagamento: "Pagamento",
-  envio: "Envio",
+  marketplace: "Marketplace",
+  vendedor: "Vendedor",
+  "vault-club": "Vault Club",
   geral: "Geral",
 };
+
+const PERSONA_TABS = [
+  { value: "all", label: "Todas", icon: HelpCircle },
+  { value: "comprador", label: "Compradores", icon: ShoppingBag },
+  { value: "vendedor", label: "Vendedores", icon: Store },
+];
 
 export default function FAQPage() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("all");
+  const [activePersona, setActivePersona] = useState("all");
   const [search, setSearch] = useState("");
 
   const fetchFAQs = useCallback(async () => {
@@ -65,13 +74,22 @@ export default function FAQPage() {
     fetchFAQs();
   }, [fetchFAQs]);
 
-  const categories = useMemo(() => [...new Set(faqs.map((faq) => faq.category))], [faqs]);
-
   const filteredFaqs = useMemo(() => {
     let result = faqs;
+
+    // Persona filter
+    if (activePersona !== "all") {
+      result = result.filter(
+        (faq) => faq.persona === activePersona || faq.persona === "all"
+      );
+    }
+
+    // Category filter
     if (activeCategory !== "all") {
       result = result.filter((faq) => faq.category === activeCategory);
     }
+
+    // Search filter
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
@@ -80,8 +98,14 @@ export default function FAQPage() {
           faq.answer.toLowerCase().includes(q)
       );
     }
+
     return result;
-  }, [faqs, activeCategory, search]);
+  }, [faqs, activeCategory, activePersona, search]);
+
+  const categories = useMemo(
+    () => [...new Set(filteredFaqs.map((faq) => faq.category))],
+    [filteredFaqs]
+  );
 
   const faqsByCategory = useMemo(
     () =>
@@ -95,13 +119,18 @@ export default function FAQPage() {
 
   const displayCategories = activeCategory === "all" ? categories : [activeCategory];
 
+  // Reset category when persona changes
+  useEffect(() => {
+    setActiveCategory("all");
+  }, [activePersona]);
+
   return (
     <PublicLayout>
       <Helmet>
         <title>Perguntas Frequentes | BRAVENZA</title>
         <meta
           name="description"
-          content="Encontre respostas para as dúvidas mais comuns sobre curadoria, pagamentos, prazos e garantia na BRAVENZA."
+          content="Encontre respostas para as dúvidas mais comuns sobre curadoria, marketplace, pagamentos e garantia na BRAVENZA."
         />
         <link rel="canonical" href="https://bravenza.com.br/faq" />
       </Helmet>
@@ -120,6 +149,25 @@ export default function FAQPage() {
             <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto mb-8">
               Encontre respostas para as dúvidas mais comuns sobre nossos serviços
             </p>
+
+            {/* Persona selector */}
+            <div className="flex items-center justify-center gap-2 mb-6">
+              {PERSONA_TABS.map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => setActivePersona(tab.value)}
+                  className={cn(
+                    "inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all",
+                    activePersona === tab.value
+                      ? "bg-primary text-primary-foreground shadow-md"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  )}
+                >
+                  <tab.icon className="h-4 w-4" />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
             {/* Search */}
             <div className="relative max-w-md mx-auto">
@@ -196,7 +244,7 @@ export default function FAQPage() {
                                   {faq.question}
                                 </span>
                               </AccordionTrigger>
-                              <AccordionContent className="text-muted-foreground pb-3 md:pb-4 text-sm md:text-base">
+                              <AccordionContent className="text-muted-foreground pb-3 md:pb-4 text-sm md:text-base leading-relaxed">
                                 {faq.answer}
                               </AccordionContent>
                             </AccordionItem>
@@ -207,7 +255,7 @@ export default function FAQPage() {
                   ))}
                   {filteredFaqs.length === 0 && (
                     <p className="text-center text-muted-foreground py-12">
-                      Nenhuma pergunta encontrada para "{search}"
+                      Nenhuma pergunta encontrada{search ? ` para "${search}"` : ""}
                     </p>
                   )}
                 </TabsContent>
@@ -232,7 +280,7 @@ export default function FAQPage() {
                                 {faq.question}
                               </span>
                             </AccordionTrigger>
-                            <AccordionContent className="text-muted-foreground pb-3 md:pb-4 text-sm md:text-base">
+                            <AccordionContent className="text-muted-foreground pb-3 md:pb-4 text-sm md:text-base leading-relaxed">
                               {faq.answer}
                             </AccordionContent>
                           </AccordionItem>
@@ -262,7 +310,7 @@ export default function FAQPage() {
                   href="https://wa.me/5551981055425?text=Olá!%20Tenho%20uma%20dúvida%20sobre%20a%20BRAVENZA."
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-[hsl(var(--accent))] hover:opacity-90 text-accent-foreground rounded-lg transition-colors"
                 >
                   <MessageCircle className="h-5 w-5" />
                   Fale conosco no WhatsApp
