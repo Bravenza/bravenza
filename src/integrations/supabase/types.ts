@@ -2946,10 +2946,12 @@ export type Database = {
           created_at: string | null
           id: string
           inspection_photos: string[] | null
+          marketplace_product_id: string | null
           model: string | null
           origin_city: string | null
           origin_country: string | null
           purchase_date: string | null
+          purchase_price: number | null
           purchase_value: number | null
           qr_private_url: string | null
           search_id: string | null
@@ -2970,10 +2972,12 @@ export type Database = {
           created_at?: string | null
           id?: string
           inspection_photos?: string[] | null
+          marketplace_product_id?: string | null
           model?: string | null
           origin_city?: string | null
           origin_country?: string | null
           purchase_date?: string | null
+          purchase_price?: number | null
           purchase_value?: number | null
           qr_private_url?: string | null
           search_id?: string | null
@@ -2994,10 +2998,12 @@ export type Database = {
           created_at?: string | null
           id?: string
           inspection_photos?: string[] | null
+          marketplace_product_id?: string | null
           model?: string | null
           origin_city?: string | null
           origin_country?: string | null
           purchase_date?: string | null
+          purchase_price?: number | null
           purchase_value?: number | null
           qr_private_url?: string | null
           search_id?: string | null
@@ -3012,6 +3018,13 @@ export type Database = {
             | null
         }
         Relationships: [
+          {
+            foreignKeyName: "vault_items_marketplace_product_id_fkey"
+            columns: ["marketplace_product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vault_items_search_id_fkey"
             columns: ["search_id"]
