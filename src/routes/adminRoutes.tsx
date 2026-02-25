@@ -1,6 +1,7 @@
 import { lazy } from "react";
 import { Route } from "react-router-dom";
 import { ProtectedProviders } from "@/components/providers/ProtectedProviders";
+import { RouteWrapper } from "@/components/routing/RouteWrapper";
 
 const Login = lazy(() => import("@/pages/admin/Login"));
 const AdminLayout = lazy(() => import("@/pages/admin/AdminLayout"));
@@ -20,7 +21,6 @@ const InstallmentCalculatorPage = lazy(() => import("@/pages/admin/InstallmentCa
 const FeaturedModelsPage = lazy(() => import("@/pages/admin/FeaturedModelsPage"));
 const VaultMembersPage = lazy(() => import("@/pages/admin/VaultMembersPage"));
 const VaultSearchesPage = lazy(() => import("@/pages/admin/VaultSearchesPage"));
-
 const VaultItemsPage = lazy(() => import("@/pages/admin/VaultItemsPage"));
 const VaultItemFormPage = lazy(() => import("@/pages/admin/VaultItemFormPage"));
 const VaultItemDetailPage = lazy(() => import("@/pages/admin/VaultItemDetailPage"));
@@ -41,7 +41,6 @@ const MarketplaceModerationPage = lazy(() => import("@/pages/admin/MarketplaceMo
 const MarketplaceDisputesPage = lazy(() => import("@/pages/admin/MarketplaceDisputesPage"));
 const MarketplaceCampaignsPage = lazy(() => import("@/pages/admin/MarketplaceCampaignsPage"));
 
-
 export const adminRoutes = (
   <>
     <Route path="/admin/login" element={
@@ -50,45 +49,43 @@ export const adminRoutes = (
     <Route path="/admin" element={
       <ProtectedProviders><AdminLayout /></ProtectedProviders>
     }>
-      <Route index element={<AdminDashboard />} />
-      <Route path="pedidos" element={<OrdersList />} />
-      <Route path="pedidos/novo" element={<NewOrder />} />
-      <Route path="pedidos/:orderId" element={<OrderDetail />} />
-      <Route path="solicitacoes" element={<OrderRequestsPage />} />
-      <Route path="financeiro" element={<FinancePage />} />
-      <Route path="calculadora" element={<InstallmentCalculatorPage />} />
-      <Route path="modelos" element={<FeaturedModelsPage />} />
-      <Route path="fornecedores" element={<SuppliersPage />} />
-      <Route path="fornecedores/novo" element={<SupplierFormPage />} />
-      <Route path="fornecedores/:id/editar" element={<SupplierFormPage />} />
-      <Route path="avaliacoes" element={<ReviewsPage />} />
-      <Route path="indicacoes" element={<ReferralsPage />} />
-      <Route path="usuarios" element={<UsersPage />} />
-      <Route path="configuracoes" element={<SettingsPage />} />
-      
-      <Route path="logs" element={<ActivityLogsPage />} />
-      <Route path="faq" element={<FAQManagerPage />} />
-      <Route path="emails" element={<EmailFlowPage />} />
-      <Route path="whatsapp" element={<WhatsAppFlowPage />} />
+      <Route index element={<RouteWrapper section="Dashboard" skeleton="admin"><AdminDashboard /></RouteWrapper>} />
+      <Route path="pedidos" element={<RouteWrapper section="Pedidos" skeleton="admin"><OrdersList /></RouteWrapper>} />
+      <Route path="pedidos/novo" element={<RouteWrapper section="Novo Pedido" skeleton="admin"><NewOrder /></RouteWrapper>} />
+      <Route path="pedidos/:orderId" element={<RouteWrapper section="Detalhes do Pedido" skeleton="detail"><OrderDetail /></RouteWrapper>} />
+      <Route path="solicitacoes" element={<RouteWrapper section="Solicitações" skeleton="admin"><OrderRequestsPage /></RouteWrapper>} />
+      <Route path="financeiro" element={<RouteWrapper section="Financeiro" skeleton="admin"><FinancePage /></RouteWrapper>} />
+      <Route path="calculadora" element={<RouteWrapper section="Calculadora" skeleton="admin"><InstallmentCalculatorPage /></RouteWrapper>} />
+      <Route path="modelos" element={<RouteWrapper section="Modelos" skeleton="admin"><FeaturedModelsPage /></RouteWrapper>} />
+      <Route path="fornecedores" element={<RouteWrapper section="Fornecedores" skeleton="admin"><SuppliersPage /></RouteWrapper>} />
+      <Route path="fornecedores/novo" element={<RouteWrapper section="Novo Fornecedor" skeleton="admin"><SupplierFormPage /></RouteWrapper>} />
+      <Route path="fornecedores/:id/editar" element={<RouteWrapper section="Editar Fornecedor" skeleton="admin"><SupplierFormPage /></RouteWrapper>} />
+      <Route path="avaliacoes" element={<RouteWrapper section="Avaliações" skeleton="admin"><ReviewsPage /></RouteWrapper>} />
+      <Route path="indicacoes" element={<RouteWrapper section="Indicações" skeleton="admin"><ReferralsPage /></RouteWrapper>} />
+      <Route path="usuarios" element={<RouteWrapper section="Usuários" skeleton="admin"><UsersPage /></RouteWrapper>} />
+      <Route path="configuracoes" element={<RouteWrapper section="Configurações" skeleton="admin"><SettingsPage /></RouteWrapper>} />
+      <Route path="logs" element={<RouteWrapper section="Logs" skeleton="admin"><ActivityLogsPage /></RouteWrapper>} />
+      <Route path="faq" element={<RouteWrapper section="FAQ" skeleton="admin"><FAQManagerPage /></RouteWrapper>} />
+      <Route path="emails" element={<RouteWrapper section="E-mails" skeleton="admin"><EmailFlowPage /></RouteWrapper>} />
+      <Route path="whatsapp" element={<RouteWrapper section="WhatsApp" skeleton="admin"><WhatsAppFlowPage /></RouteWrapper>} />
       {/* Vault Club Admin */}
-      <Route path="vault/membros" element={<VaultMembersPage />} />
-      <Route path="vault/buscas" element={<VaultSearchesPage />} />
-      
-      <Route path="vault/items" element={<VaultItemsPage />} />
-      <Route path="vault/items/novo" element={<VaultItemFormPage />} />
-      <Route path="vault/items/:id" element={<VaultItemDetailPage />} />
-      <Route path="vault/convites" element={<VaultInvitesPage />} />
-      <Route path="vault/drops" element={<VaultIntelAdminPage />} />
-      <Route path="vault/comunidade" element={<VaultCommunityAdminPage />} />
-      <Route path="vault/marketplace" element={<MarketplaceOrdersPage />} />
-      <Route path="vault/marketplace/inspecao" element={<MarketplaceInspectionPage />} />
-      <Route path="vault/marketplace/planos" element={<MarketplacePlansAdminPage />} />
-      <Route path="vault/marketplace/analytics" element={<MarketplaceAnalyticsPage />} />
-      <Route path="vault/marketplace/moderacao" element={<MarketplaceModerationPage />} />
-      <Route path="vault/marketplace/disputas" element={<MarketplaceDisputesPage />} />
-      <Route path="vault/marketplace/campanhas" element={<MarketplaceCampaignsPage />} />
-      <Route path="vault/matchrooms" element={<VaultMatchRoomsPage />} />
-      <Route path="vault/matchrooms/:id" element={<VaultMatchRoomDetailPage />} />
+      <Route path="vault/membros" element={<RouteWrapper section="Vault Membros" skeleton="admin"><VaultMembersPage /></RouteWrapper>} />
+      <Route path="vault/buscas" element={<RouteWrapper section="Vault Buscas" skeleton="admin"><VaultSearchesPage /></RouteWrapper>} />
+      <Route path="vault/items" element={<RouteWrapper section="Vault Items" skeleton="admin"><VaultItemsPage /></RouteWrapper>} />
+      <Route path="vault/items/novo" element={<RouteWrapper section="Novo Item" skeleton="admin"><VaultItemFormPage /></RouteWrapper>} />
+      <Route path="vault/items/:id" element={<RouteWrapper section="Detalhe Item" skeleton="detail"><VaultItemDetailPage /></RouteWrapper>} />
+      <Route path="vault/convites" element={<RouteWrapper section="Convites" skeleton="admin"><VaultInvitesPage /></RouteWrapper>} />
+      <Route path="vault/drops" element={<RouteWrapper section="Drops Intel" skeleton="admin"><VaultIntelAdminPage /></RouteWrapper>} />
+      <Route path="vault/comunidade" element={<RouteWrapper section="Comunidade" skeleton="admin"><VaultCommunityAdminPage /></RouteWrapper>} />
+      <Route path="vault/marketplace" element={<RouteWrapper section="MK Pedidos" skeleton="admin"><MarketplaceOrdersPage /></RouteWrapper>} />
+      <Route path="vault/marketplace/inspecao" element={<RouteWrapper section="Inspeção" skeleton="admin"><MarketplaceInspectionPage /></RouteWrapper>} />
+      <Route path="vault/marketplace/planos" element={<RouteWrapper section="Planos" skeleton="admin"><MarketplacePlansAdminPage /></RouteWrapper>} />
+      <Route path="vault/marketplace/analytics" element={<RouteWrapper section="Analytics" skeleton="admin"><MarketplaceAnalyticsPage /></RouteWrapper>} />
+      <Route path="vault/marketplace/moderacao" element={<RouteWrapper section="Moderação" skeleton="admin"><MarketplaceModerationPage /></RouteWrapper>} />
+      <Route path="vault/marketplace/disputas" element={<RouteWrapper section="Disputas" skeleton="admin"><MarketplaceDisputesPage /></RouteWrapper>} />
+      <Route path="vault/marketplace/campanhas" element={<RouteWrapper section="Campanhas" skeleton="admin"><MarketplaceCampaignsPage /></RouteWrapper>} />
+      <Route path="vault/matchrooms" element={<RouteWrapper section="Match Rooms" skeleton="admin"><VaultMatchRoomsPage /></RouteWrapper>} />
+      <Route path="vault/matchrooms/:id" element={<RouteWrapper section="Match Room" skeleton="detail"><VaultMatchRoomDetailPage /></RouteWrapper>} />
     </Route>
   </>
 );
