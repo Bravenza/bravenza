@@ -82,7 +82,8 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
   payout_released: { label: "Pago", color: "bg-success/20 text-success", icon: CheckCircle2 },
 };
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-orders`;
+const ORDERS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-order-ops`;
+const FULFILL_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-fulfill`;
 
 export default function MarketplaceOrdersPage() {
   const { toast } = useToast();
@@ -110,7 +111,7 @@ export default function MarketplaceOrdersPage() {
       const params = new URLSearchParams({ action: "admin-orders", status: statusFilter });
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const h = await getMarketplaceHeaders();
-      const res = await fetch(`${FUNCTION_URL}?${params}`, { headers: h });
+      const res = await fetch(`${ORDERS_URL}?${params}`, { headers: h });
       const data = await res.json();
       setOrders(data.orders || []);
     } catch (err) {
@@ -127,7 +128,7 @@ export default function MarketplaceOrdersPage() {
     try {
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const h = await getMarketplaceHeaders();
-      const res = await fetch(`${FUNCTION_URL}?action=update-order-status`, {
+      const res = await fetch(`${ORDERS_URL}?action=update-order-status`, {
         method: "PUT",
         headers: h,
         body: JSON.stringify({ order_id: orderId, status, admin_notes: adminNotes, ...extra }),
@@ -149,7 +150,7 @@ export default function MarketplaceOrdersPage() {
     try {
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const h = await getMarketplaceHeaders();
-      const res = await fetch(`${FUNCTION_URL}?action=resolve-dispute`, {
+      const res = await fetch(`${FULFILL_URL}?action=resolve-dispute`, {
         method: "PUT",
         headers: h,
         body: JSON.stringify({
@@ -176,7 +177,7 @@ export default function MarketplaceOrdersPage() {
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const h = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "chat-messages", order_id: orderId });
-      const res = await fetch(`${FUNCTION_URL}?${params}`, { headers: h });
+      const res = await fetch(`${FULFILL_URL}?${params}`, { headers: h });
       const data = await res.json();
       setChatMessages(data.messages || []);
     } catch (err) {
@@ -189,7 +190,7 @@ export default function MarketplaceOrdersPage() {
     try {
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const h = await getMarketplaceHeaders();
-      await fetch(`${FUNCTION_URL}?action=send-message`, {
+      await fetch(`${FULFILL_URL}?action=send-message`, {
         method: "POST",
         headers: h,
         body: JSON.stringify({ order_id: selectedOrder.id, sender_name: "Admin Bravenza", message: chatMsg.trim(), is_admin: true }),

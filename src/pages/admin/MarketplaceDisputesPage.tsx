@@ -15,7 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-orders`;
+const ORDERS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-order-ops`;
+const FULFILL_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-fulfill`;
 
 interface Dispute {
   id: string;
@@ -72,7 +73,7 @@ export default function MarketplaceDisputesPage() {
     try {
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const h = await getMarketplaceHeaders();
-      const res = await fetch(`${FUNCTION_URL}?action=admin-disputes`, { headers: h });
+      const res = await fetch(`${ORDERS_URL}?action=admin-disputes`, { headers: h });
       const data = await res.json();
       let list = data.disputes || [];
       if (filter === "open") list = list.filter((d: Dispute) => d.dispute_status === "open");
@@ -91,7 +92,7 @@ export default function MarketplaceDisputesPage() {
     try {
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const h = await getMarketplaceHeaders();
-      const res = await fetch(`${FUNCTION_URL}?action=chat-messages&order_id=${orderId}`, { headers: h });
+      const res = await fetch(`${FULFILL_URL}?action=chat-messages&order_id=${orderId}`, { headers: h });
       const data = await res.json();
       setChatMessages(data.messages || []);
     } catch (err) { console.error(err); }
@@ -102,7 +103,7 @@ export default function MarketplaceDisputesPage() {
     try {
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const h = await getMarketplaceHeaders();
-      await fetch(`${FUNCTION_URL}?action=send-message`, {
+      await fetch(`${FULFILL_URL}?action=send-message`, {
         method: "POST",
         headers: h,
         body: JSON.stringify({ order_id: selectedDispute.id, sender_name: "Admin Bravenza", message: chatMsg.trim(), is_admin: true }),
@@ -118,7 +119,7 @@ export default function MarketplaceDisputesPage() {
     try {
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const h = await getMarketplaceHeaders();
-      const res = await fetch(`${FUNCTION_URL}?action=resolve-dispute`, {
+      const res = await fetch(`${FULFILL_URL}?action=resolve-dispute`, {
         method: "PUT",
         headers: h,
         body: JSON.stringify({

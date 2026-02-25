@@ -24,7 +24,7 @@ interface ChatMessage {
   read_at: string | null;
 }
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-orders`;
+const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-fulfill`;
 
 interface MarketplaceChatDialogProps {
   orderId?: string;
