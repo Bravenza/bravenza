@@ -52,14 +52,14 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     const {
-      // Support both single order_id and array of order_ids
       order_id,
       order_ids: rawOrderIds,
-      payment_method, // "pix" | "card"
+      payment_method,
       card_token,
       installments,
       payer_email,
       payer_identification,
+      idempotency_key,
     } = body;
 
     // Normalize to array
@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${mpToken}`,
-          "X-Idempotency-Key": `mkt-consolidated-${orderIds.sort().join("-")}-pix-${Date.now()}`,
+          "X-Idempotency-Key": idempotency_key || `mkt-${orderIds.sort().join("-")}-pix`,
         },
         body: JSON.stringify(pixPayload),
       });
@@ -199,7 +199,7 @@ Deno.serve(async (req) => {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${mpToken}`,
-          "X-Idempotency-Key": `mkt-consolidated-${orderIds.sort().join("-")}-card-${Date.now()}`,
+          "X-Idempotency-Key": idempotency_key || `mkt-${orderIds.sort().join("-")}-card`,
         },
         body: JSON.stringify(cardPayload),
       });

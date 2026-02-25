@@ -47,7 +47,8 @@ Deno.serve(async (req) => {
       installments,
       payer_email,
       payer_identification,
-    }: CardPaymentRequest = await req.json();
+      idempotency_key,
+    }: CardPaymentRequest & { idempotency_key?: string } = await req.json();
 
     console.log(`Processing card payment for order ${order_id}, type: ${payment_type}, amount: ${amount}`);
 
@@ -136,7 +137,7 @@ Deno.serve(async (req) => {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${mercadoPagoToken}`,
-        "X-Idempotency-Key": `${order_id}-${payment_type}-${Date.now()}`,
+        "X-Idempotency-Key": idempotency_key || `${order_id}-${payment_type}-card`,
       },
       body: JSON.stringify(paymentPayload),
     });
