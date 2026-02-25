@@ -2,7 +2,8 @@ import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   Search, Package, Box, Heart, Star, Store, Crown, 
   Users, Sparkles, Award, Settings, LogOut, Menu,
-  ShoppingBag, MoreHorizontal, X, Activity, ChevronLeft, HelpCircle, DollarSign
+  ShoppingBag, MoreHorizontal, X, Activity, ChevronLeft, HelpCircle, DollarSign,
+  ArrowRight, FileText, Shield, RefreshCw, ChevronRight
 } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,6 +22,14 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 
 const Footer = lazy(() => import("@/components/home/Footer").then(m => ({ default: m.Footer })));
 
@@ -56,6 +65,71 @@ const bottomTabs = [
   { path: "/app/mais", label: "Mais", icon: MoreHorizontal, isMore: true },
 ];
 
+// ===== Grouped menu items for "Mais opções" page/sheet =====
+interface MenuGroup {
+  label?: string;
+  items: { path: string; label: string; icon: React.ElementType; highlight?: boolean }[];
+}
+
+const getMenuGroups = (isVaultMember: boolean): MenuGroup[] => [
+  {
+    items: [
+      { path: "/app/pedidos", label: "Pedidos", icon: Package },
+      { path: "/app/favoritos", label: "Favoritos", icon: Heart },
+    ],
+  },
+  {
+    label: "Vendedor",
+    items: [
+      { path: "/vender", label: "Quero Vender", icon: DollarSign, highlight: true },
+      { path: "/app/loja", label: "Minha Loja", icon: Store },
+      { path: "/app/feed", label: "Feed", icon: Activity },
+    ],
+  },
+  {
+    label: "Minha conta",
+    items: [
+      { path: "/app/closet", label: "Meu Closet", icon: Box },
+      { path: "/app/perfil", label: "Meus Dados", icon: Settings },
+    ],
+  },
+  ...(isVaultMember
+    ? [
+        {
+          label: "Vault Club",
+          items: [
+            { path: "/app/wishlist", label: "Wishlist", icon: Star },
+            { path: "/app/vault", label: "Meu Status", icon: Award },
+            { path: "/app/drops", label: "Drops & Intel", icon: Sparkles },
+            { path: "/app/comunidade", label: "Comunidade", icon: Users },
+          ],
+        },
+      ]
+    : []),
+  {
+    label: "Informações",
+    items: [
+      { path: "/faq", label: "Perguntas Frequentes", icon: HelpCircle },
+      { path: "/sobre-autenticidade", label: "Autenticidade", icon: Shield },
+      { path: "/trocas-devolucoes", label: "Trocas e Devoluções", icon: RefreshCw },
+      { path: "/termos", label: "Termos de Uso", icon: FileText },
+    ],
+  },
+];
+
+// ===== Quick access items for avatar dropdown =====
+const avatarQuickLinks = [
+  { path: "/app/perfil", label: "Meus Dados", icon: Settings },
+  { path: "/app/pedidos", label: "Pedidos", icon: Package },
+  { path: "/app/favoritos", label: "Favoritos", icon: Heart },
+  { path: "/app/closet", label: "Meu Closet", icon: Box },
+];
+
+const avatarSellerLinks = [
+  { path: "/vender", label: "Quero Vender", icon: DollarSign, hasArrow: true },
+  { path: "/app/loja", label: "Minha Loja", icon: Store },
+];
+
 export default function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -80,6 +154,7 @@ export default function AppLayout() {
   const mainItems = navItems.filter(i => i.group === "main");
   const vaultItems = navItems.filter(i => i.group === "vault");
   const moreItems = navItems.filter(i => i.group === "more");
+  const menuGroups = getMenuGroups(isVaultMember);
 
   return (
     <CartProvider cpf={cpf}>
@@ -112,10 +187,60 @@ export default function AppLayout() {
                 <div className="flex items-center gap-1">
                   <CartDrawer />
                   {profile?.cpf && <ClientNotificationBell clientCpf={profile.cpf} />}
+
+                  {/* ===== AVATAR DROPDOWN (desktop) ===== */}
                   {!isMobile && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive" onClick={handleLogout} title="Sair">
-                      <LogOut className="h-4 w-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                          <Avatar className="h-8 w-8 border border-primary/30 cursor-pointer hover:border-primary/60 transition-colors">
+                            <AvatarFallback className="bg-primary/15 text-primary text-xs font-bold">{initials}</AvatarFallback>
+                          </Avatar>
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-60 z-[100] bg-popover border border-border shadow-xl">
+                        {/* User info */}
+                        <DropdownMenuLabel className="pb-2">
+                          <p className="text-sm font-semibold truncate">{profile?.full_name || "Usuário"}</p>
+                          <p className="text-[11px] text-muted-foreground font-normal">
+                            {cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.$3-**")}
+                          </p>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+
+                        {/* Quick links */}
+                        {avatarQuickLinks.map(link => (
+                          <DropdownMenuItem key={link.path} onClick={() => navigate(link.path)} className="cursor-pointer gap-2.5 py-2">
+                            <link.icon className="h-4 w-4 text-muted-foreground" />
+                            <span>{link.label}</span>
+                          </DropdownMenuItem>
+                        ))}
+
+                        <DropdownMenuSeparator />
+
+                        {/* Seller links */}
+                        {avatarSellerLinks.map(link => (
+                          <DropdownMenuItem key={link.path} onClick={() => navigate(link.path)} className="cursor-pointer gap-2.5 py-2">
+                            <link.icon className="h-4 w-4 text-muted-foreground" />
+                            <span className="flex-1">{link.label}</span>
+                            {link.hasArrow && <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                          </DropdownMenuItem>
+                        ))}
+
+                        <DropdownMenuSeparator />
+
+                        {/* More options + Logout */}
+                        <DropdownMenuItem onClick={() => navigate("/app/mais")} className="cursor-pointer gap-2.5 py-2">
+                          <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                          <span>Mais opções...</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleLogout} className="cursor-pointer gap-2.5 py-2 text-destructive focus:text-destructive">
+                          <LogOut className="h-4 w-4" />
+                          <span>Sair</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                 </div>
               </div>
@@ -257,55 +382,59 @@ export default function AppLayout() {
           </nav>
         )}
 
-        {/* ===== MOBILE "MAIS" SHEET ===== */}
+        {/* ===== MOBILE "MAIS" SHEET (grouped) ===== */}
         <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-          <SheetContent side="bottom" className="rounded-t-[20px] border-t border-border/50 p-0 max-h-[70vh]">
+          <SheetContent side="bottom" className="rounded-t-[20px] border-t border-border/50 p-0 max-h-[80vh]">
             <div className="flex justify-center pt-3 pb-2">
               <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
             </div>
-            <SheetHeader className="px-5 pb-3">
-              <SheetTitle className="text-base">Mais opções</SheetTitle>
-            </SheetHeader>
-            <div className="px-4 pb-6 space-y-1">
-              {moreItems.map(item => (
-                <button
-                  key={item.path}
-                  onClick={() => { navigate(item.path); setMoreOpen(false); }}
-                  className={cn(
-                    "flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-colors",
-                    isActive(item.path) ? "bg-primary/10 text-primary" : "text-foreground hover:bg-secondary"
-                  )}
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.label}
-                </button>
-              ))}
-
-              {isVaultMember && (
-                <>
-                  <p className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-                    Vault Club
+            <SheetHeader className="px-5 pb-2">
+              <SheetTitle className="text-base flex items-center gap-2.5">
+                <Avatar className="h-8 w-8 border border-primary/30">
+                  <AvatarFallback className="bg-primary/15 text-primary text-[10px] font-bold">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="text-left">
+                  <p className="text-sm font-semibold">{profile?.full_name || "Usuário"}</p>
+                  <p className="text-[10px] text-muted-foreground font-normal">
+                    {cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.$3-**")}
                   </p>
-                  {vaultItems.map(item => (
+                </div>
+              </SheetTitle>
+            </SheetHeader>
+            <div className="px-4 pb-6 overflow-y-auto max-h-[calc(80vh-100px)]">
+              {menuGroups.map((group, gi) => (
+                <div key={gi} className="py-2 border-b border-border/20 last:border-b-0">
+                  {group.label && (
+                    <p className="px-3 pt-1 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                      {group.label}
+                    </p>
+                  )}
+                  {group.items.map(item => (
                     <button
                       key={item.path}
                       onClick={() => { navigate(item.path); setMoreOpen(false); }}
                       className={cn(
-                        "flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-colors",
-                        isActive(item.path) ? "bg-primary/10 text-primary" : "text-foreground hover:bg-secondary"
+                        "flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                        isActive(item.path)
+                          ? "bg-primary/10 text-primary"
+                          : item.highlight
+                            ? "text-foreground font-semibold"
+                            : "text-foreground hover:bg-secondary"
                       )}
                     >
-                      <item.icon className="h-5 w-5" />
-                      {item.label}
+                      <item.icon className={cn("h-5 w-5", item.highlight ? "text-primary" : "")} />
+                      <span className="flex-1 text-left">{item.label}</span>
+                      {item.highlight && <ArrowRight className="h-4 w-4 text-primary" />}
                     </button>
                   ))}
-                </>
-              )}
+                </div>
+              ))}
 
-              <div className="pt-3 border-t border-border/30 mt-3">
+              {/* System group */}
+              <div className="pt-3 mt-1">
                 <button
                   onClick={() => { setMoreOpen(false); handleLogout(); }}
-                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                  className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
                 >
                   <LogOut className="h-5 w-5" />
                   Sair da conta
