@@ -7,6 +7,7 @@ import {
   Eye, DollarSign, Star, ArrowRight, Zap, TrendingUp
 } from "lucide-react";
 import { CollectionsManager } from "@/components/marketplace/CollectionsManager";
+import { PillTabs } from "@/components/ui/pill-tabs";
 import { ConsignmentList } from "@/components/client/vault/marketplace/ConsignmentList";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -329,23 +330,11 @@ export default function MarketplaceMyStorePage() {
       {sellerOnboarded === true && (
         <div className="space-y-6">
           {/* Sub-navigation — pill style */}
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
-            {sellerSubItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setSellerSubTab(item.id)}
-                className={cn(
-                  "flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all shrink-0",
-                  sellerSubTab === item.id
-                    ? "bg-foreground text-background shadow-md"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                )}
-              >
-                <item.icon className="h-3.5 w-3.5" />
-                {item.label}
-              </button>
-            ))}
-          </div>
+          <PillTabs
+            items={sellerSubItems}
+            value={sellerSubTab}
+            onValueChange={setSellerSubTab}
+          />
 
           {/* ── Anúncios ── */}
           {sellerSubTab === "anuncios" && (

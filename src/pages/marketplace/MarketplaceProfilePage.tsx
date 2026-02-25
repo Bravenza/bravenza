@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PillTabs } from "@/components/ui/pill-tabs";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -359,29 +359,20 @@ export default function MarketplaceProfilePage() {
       />
 
       {/* Main Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full">
-          <TabsTrigger value="colecao" className="flex-1 gap-1.5">
-            <Box className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Coleção</span>
-            <span className="sm:hidden">Closet</span>
-          </TabsTrigger>
-          <TabsTrigger value="favoritos" className="flex-1 gap-1.5">
-            <Heart className="h-3.5 w-3.5" />
-            Favoritos
-          </TabsTrigger>
-          <TabsTrigger value="avaliacoes" className="flex-1 gap-1.5">
-            <Star className="h-3.5 w-3.5" />
-            Avaliações
-          </TabsTrigger>
-          <TabsTrigger value="dados" className="flex-1 gap-1.5">
-            <Settings2 className="h-3.5 w-3.5" />
-            Dados
-          </TabsTrigger>
-        </TabsList>
+      <div className="space-y-6">
+        <PillTabs
+          items={[
+            { id: "colecao", label: "Coleção", icon: Box },
+            { id: "favoritos", label: "Favoritos", icon: Heart },
+            { id: "avaliacoes", label: "Avaliações", icon: Star },
+            { id: "dados", label: "Dados", icon: Settings2 },
+          ]}
+          value={activeTab}
+          onValueChange={setActiveTab}
+        />
 
         {/* ── Coleção Tab ── */}
-        <TabsContent value="colecao">
+        {activeTab === "colecao" && (
           <ClosetCollectionTab
             items={vaultItems}
             isLoading={vaultLoading}
@@ -389,20 +380,20 @@ export default function MarketplaceProfilePage() {
             cpf={cpf}
             memberId={profile?.vault_member_id || ""}
           />
-        </TabsContent>
+        )}
 
         {/* ── Favoritos Tab ── */}
-        <TabsContent value="favoritos">
+        {activeTab === "favoritos" && (
           <ClosetFavoritesTab cpf={cpf} />
-        </TabsContent>
+        )}
 
         {/* ── Avaliações Tab ── */}
-        <TabsContent value="avaliacoes">
+        {activeTab === "avaliacoes" && (
           <ClosetReviewsTab cpf={cpf} />
-        </TabsContent>
+        )}
 
         {/* ── Meus Dados Tab ── */}
-        <TabsContent value="dados">
+        {activeTab === "dados" && (
           <div className="space-y-6">
             {/* Personal Data */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -561,8 +552,8 @@ export default function MarketplaceProfilePage() {
               </Card>
             </motion.div>
           </div>
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
     </div>
   );
 }
