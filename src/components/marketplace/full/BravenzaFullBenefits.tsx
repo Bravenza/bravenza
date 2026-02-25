@@ -32,7 +32,7 @@ export function BravenzaFullBenefits() {
           <h2 className="font-display text-3xl md:text-5xl font-bold mb-4">
             Por que escolher o <span className="text-gradient-gold">Full?</span>
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto text-lg">
+          <p className="text-foreground/60 max-w-xl mx-auto text-lg">
             Envie seus sneakers para o Hub Bravenza, libere espaço em casa e deixe a venda com a gente.
           </p>
         </motion.div>
@@ -51,7 +51,7 @@ export function BravenzaFullBenefits() {
                 <b.icon className="h-5 w-5 text-primary" />
               </div>
               <h3 className="font-semibold text-sm mb-1">{b.title}</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">{b.description}</p>
+              <p className="text-xs text-foreground/60 leading-relaxed">{b.description}</p>
             </motion.div>
           ))}
         </div>

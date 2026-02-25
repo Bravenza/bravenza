@@ -52,7 +52,7 @@ export function BravenzaFullSteps() {
           <h2 className="font-display text-3xl md:text-5xl font-bold mb-4">
             Como <span className="text-gradient-gold">funciona</span>
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto text-lg">
+          <p className="text-foreground/60 max-w-xl mx-auto text-lg">
             Um processo simples e transparente em 6 etapas
           </p>
         </motion.div>
@@ -83,7 +83,7 @@ export function BravenzaFullSteps() {
                 </div>
                 <div className="pt-0.5">
                   <h3 className="font-semibold text-base md:text-lg mb-1">{step.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
+                  <p className="text-foreground/60 text-sm leading-relaxed">
                     {step.description}
                   </p>
                 </div>

@@ -14,8 +14,8 @@ export function BravenzaFullHero() {
           alt="Sneaker premium em pedestal de autenticação"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/40" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/50" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-background/40" />
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 relative py-24 md:py-36 lg:py-44">
@@ -41,7 +41,7 @@ export function BravenzaFullHero() {
             <span className="text-gradient-gold">Nós fazemos o resto.</span>
           </h1>
 
-          <p className="text-muted-foreground text-lg md:text-xl max-w-xl mb-10 leading-relaxed">
+          <p className="text-foreground/70 text-lg md:text-xl max-w-xl mb-10 leading-relaxed">
             Consignação premium com autenticação, fotografia profissional, anúncio otimizado e envio ao comprador. Você só envia o sneaker.
           </p>
 
@@ -52,7 +52,7 @@ export function BravenzaFullHero() {
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-foreground/70">
               <div className="flex -space-x-1">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <Star key={i} className="h-4 w-4 fill-primary text-primary" />
@@ -76,7 +76,7 @@ export function BravenzaFullHero() {
             ].map((stat, i) => (
               <div key={i} className="text-left">
                 <p className="text-xl md:text-2xl font-display font-bold text-foreground">{stat.value}</p>
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
+                <p className="text-xs text-foreground/60">{stat.label}</p>
               </div>
             ))}
           </motion.div>
