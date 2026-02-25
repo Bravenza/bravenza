@@ -117,17 +117,18 @@ const getMenuGroups = (isVaultMember: boolean): MenuGroup[] => [
   },
 ];
 
-// ===== Quick access items for avatar dropdown =====
+// ===== Avatar dropdown items (matching Droper layout) =====
 const avatarQuickLinks = [
   { path: "/app/perfil", label: "Meus Dados", icon: Settings },
-  { path: "/app/pedidos", label: "Pedidos", icon: Package },
+  { path: "/app/pedidos", label: "Compras", icon: Package },
   { path: "/app/favoritos", label: "Favoritos", icon: Heart },
-  { path: "/app/closet", label: "Meu Closet", icon: Box },
+  { path: "/app/closet", label: "Closet", icon: Box },
 ];
 
 const avatarSellerLinks = [
-  { path: "/vender", label: "Quero Vender", icon: DollarSign, hasArrow: true },
+  { path: "/vender", label: "Quero vender", icon: DollarSign, hasArrow: true },
   { path: "/app/loja", label: "Minha Loja", icon: Store },
+  { path: "/app", label: "Market", icon: Search },
 ];
 
 export default function AppLayout() {
@@ -198,47 +199,49 @@ export default function AppLayout() {
                           </Avatar>
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-60 z-[100] bg-popover border border-border shadow-xl">
+                      <DropdownMenuContent align="end" className="w-56 z-[100] bg-popover border border-border shadow-xl p-0">
                         {/* User info */}
-                        <DropdownMenuLabel className="pb-2">
-                          <p className="text-sm font-semibold truncate">{profile?.full_name || "Usuário"}</p>
-                          <p className="text-[11px] text-muted-foreground font-normal">
-                            {cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.$3-**")}
+                        <div className="px-4 pt-3 pb-2">
+                          <p className="text-xs text-muted-foreground font-mono">
+                            {cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}
                           </p>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
+                          <p className="text-sm text-muted-foreground truncate mt-0.5">
+                            {profile?.full_name || "Usuário"}
+                          </p>
+                        </div>
 
                         {/* Quick links */}
-                        {avatarQuickLinks.map(link => (
-                          <DropdownMenuItem key={link.path} onClick={() => navigate(link.path)} className="cursor-pointer gap-2.5 py-2">
-                            <link.icon className="h-4 w-4 text-muted-foreground" />
-                            <span>{link.label}</span>
-                          </DropdownMenuItem>
-                        ))}
+                        <div className="py-1">
+                          {avatarQuickLinks.map(link => (
+                            <DropdownMenuItem key={link.path} onClick={() => navigate(link.path)} className="cursor-pointer px-4 py-2.5 text-sm">
+                              {link.label}
+                            </DropdownMenuItem>
+                          ))}
+                        </div>
 
-                        <DropdownMenuSeparator />
+                        <DropdownMenuSeparator className="my-0" />
 
                         {/* Seller links */}
-                        {avatarSellerLinks.map(link => (
-                          <DropdownMenuItem key={link.path} onClick={() => navigate(link.path)} className="cursor-pointer gap-2.5 py-2">
-                            <link.icon className="h-4 w-4 text-muted-foreground" />
-                            <span className="flex-1">{link.label}</span>
-                            {link.hasArrow && <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                        <div className="py-1">
+                          {avatarSellerLinks.map(link => (
+                            <DropdownMenuItem key={link.path} onClick={() => navigate(link.path)} className="cursor-pointer px-4 py-2.5 text-sm">
+                              <span className="flex-1">{link.label}</span>
+                              {link.hasArrow && <ArrowRight className="h-4 w-4 text-muted-foreground" />}
+                            </DropdownMenuItem>
+                          ))}
+                        </div>
+
+                        <DropdownMenuSeparator className="my-0" />
+
+                        {/* More options + Dark mode + Logout */}
+                        <div className="py-1">
+                          <DropdownMenuItem onClick={() => navigate("/app/mais")} className="cursor-pointer px-4 py-2.5 text-sm">
+                            Mais opções...
                           </DropdownMenuItem>
-                        ))}
-
-                        <DropdownMenuSeparator />
-
-                        {/* More options + Logout */}
-                        <DropdownMenuItem onClick={() => navigate("/app/mais")} className="cursor-pointer gap-2.5 py-2">
-                          <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                          <span>Mais opções...</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleLogout} className="cursor-pointer gap-2.5 py-2 text-destructive focus:text-destructive">
-                          <LogOut className="h-4 w-4" />
-                          <span>Sair</span>
-                        </DropdownMenuItem>
+                          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer px-4 py-2.5 text-sm text-destructive focus:text-destructive">
+                            Sair
+                          </DropdownMenuItem>
+                        </div>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
