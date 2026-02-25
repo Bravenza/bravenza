@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { OrdersTabSkeleton } from "@/components/skeletons/DashboardSkeleton";
+import { QueryStateHandler } from "@/components/ui/query-state-handler";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -64,6 +65,9 @@ interface OrderData {
 interface OrdersTabProps {
   orders: OrderData[];
   isLoading: boolean;
+  isError?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
   sessionToken: string;
 }
 
@@ -312,7 +316,7 @@ function InternalTrackingWidget({ order }: { order: OrderData }) {
   );
 }
 
-export function OrdersTab({ orders, isLoading, sessionToken }: OrdersTabProps) {
+export function OrdersTab({ orders, isLoading, isError, error, onRetry, sessionToken }: OrdersTabProps) {
   const [reviewOrder, setReviewOrder] = useState<{
     orderId: string;
     productName: string;
@@ -329,8 +333,19 @@ export function OrdersTab({ orders, isLoading, sessionToken }: OrdersTabProps) {
     }).format(value);
   };
 
-  if (isLoading) {
-    return <OrdersTabSkeleton />;
+  if (isLoading || isError) {
+    return (
+      <QueryStateHandler
+        isLoading={isLoading}
+        isError={!!isError}
+        error={error}
+        onRetry={onRetry}
+        skeleton={<OrdersTabSkeleton />}
+        errorMessage="Erro ao carregar seus pedidos"
+      >
+        <></>
+      </QueryStateHandler>
+    );
   }
 
   if (orders.length === 0) {

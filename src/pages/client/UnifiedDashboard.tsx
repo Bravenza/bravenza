@@ -153,6 +153,7 @@ export default function UnifiedDashboard() {
 
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [ordersError, setOrdersError] = useState<Error | null>(null);
   const [vaultMember, setVaultMember] = useState<VaultMemberData | null>(null);
    const [activeSection, setActiveSection] = useState(() => {
     const tabParam = searchParams.get("tab");
@@ -188,30 +189,33 @@ export default function UnifiedDashboard() {
     }
   }, [user, sessionLoading, navigate]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!profile?.cpf) return;
+  const fetchDashboardData = useCallback(async () => {
+    if (!profile?.cpf) return;
+    setIsLoading(true);
+    try {
+      setOrdersError(null);
+      const { data: ordersData, error: ordersErr } = await supabase.rpc("get_client_orders");
+      if (ordersErr) throw ordersErr;
+      if (ordersData) setOrders(ordersData as unknown as OrderData[]);
 
-      try {
-        const { data: ordersData } = await supabase.rpc("get_client_orders");
-        if (ordersData) setOrders(ordersData as unknown as OrderData[]);
-
-        if (profile.vault_member_id || profile.cpf) {
-          const { data: memberData } = await supabase
-            .rpc("ensure_vault_membership", { p_cpf: profile.cpf });
-          if (memberData && memberData.length > 0) {
-            setVaultMember(memberData[0] as unknown as VaultMemberData);
-          }
+      if (profile.vault_member_id || profile.cpf) {
+        const { data: memberData } = await supabase
+          .rpc("ensure_vault_membership", { p_cpf: profile.cpf });
+        if (memberData && memberData.length > 0) {
+          setVaultMember(memberData[0] as unknown as VaultMemberData);
         }
-      } catch (err) {
-        console.error("Error fetching data:", err);
-      } finally {
-        setIsLoading(false);
       }
-    };
-
-    if (profile) fetchData();
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setOrdersError(err instanceof Error ? err : new Error("Erro ao carregar pedidos"));
+    } finally {
+      setIsLoading(false);
+    }
   }, [profile]);
+
+  useEffect(() => {
+    if (profile) fetchDashboardData();
+  }, [profile, fetchDashboardData]);
 
   const refreshVaultMember = async () => {
     if (!profile?.cpf) return;
@@ -409,6 +413,9 @@ export default function UnifiedDashboard() {
                 <OrdersTab
                   orders={orders as any}
                   isLoading={isLoading}
+                  isError={!!ordersError}
+                  error={ordersError}
+                  onRetry={fetchDashboardData}
                   sessionToken=""
                 />
               )}
