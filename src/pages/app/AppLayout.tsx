@@ -118,17 +118,17 @@ const getMenuGroups = (isVaultMember: boolean): MenuGroup[] => [
 ];
 
 // ===== Avatar dropdown items (matching Droper layout) =====
-const avatarQuickLinks = [
-  { path: "/app/perfil", label: "Meus Dados", icon: Settings },
-  { path: "/app/pedidos", label: "Compras", icon: Package },
-  { path: "/app/favoritos", label: "Favoritos", icon: Heart },
-  { path: "/app/closet", label: "Closet", icon: Box },
+const avatarAccountLinks = [
+  { path: "/app/perfil", label: "Meus dados" },
+  { path: "/app/pedidos", label: "Compras" },
+  { path: "/app/favoritos", label: "Favoritos" },
+  { path: "/app/closet", label: "Closet" },
 ];
 
 const avatarSellerLinks = [
-  { path: "/vender", label: "Quero vender", icon: DollarSign, hasArrow: true },
-  { path: "/app/loja", label: "Minha Loja", icon: Store },
-  { path: "/app", label: "Market", icon: Search },
+  { path: "/vender", label: "Quero vender", hasArrow: true },
+  { path: "/app/loja", label: "Minha Loja" },
+  { path: "/app", label: "Market" },
 ];
 
 export default function AppLayout() {
@@ -200,20 +200,20 @@ export default function AppLayout() {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56 z-[100] bg-popover border border-border shadow-xl p-0">
-                        {/* User info */}
-                        <div className="px-4 pt-3 pb-2">
+                        {/* User info: CPF + Email */}
+                        <div className="px-4 pt-3 pb-2 border-b border-border/40">
                           <p className="text-xs text-muted-foreground font-mono">
                             {cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}
                           </p>
-                          <p className="text-sm text-muted-foreground truncate mt-0.5">
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">
                             {profile?.full_name || "Usuário"}
                           </p>
                         </div>
 
-                        {/* Quick links */}
+                        {/* Account links */}
                         <div className="py-1">
-                          {avatarQuickLinks.map(link => (
-                            <DropdownMenuItem key={link.path} onClick={() => navigate(link.path)} className="cursor-pointer px-4 py-2.5 text-sm">
+                          {avatarAccountLinks.map(link => (
+                            <DropdownMenuItem key={link.path} onClick={() => navigate(link.path)} className="cursor-pointer px-4 py-2 text-sm">
                               {link.label}
                             </DropdownMenuItem>
                           ))}
@@ -224,21 +224,21 @@ export default function AppLayout() {
                         {/* Seller links */}
                         <div className="py-1">
                           {avatarSellerLinks.map(link => (
-                            <DropdownMenuItem key={link.path} onClick={() => navigate(link.path)} className="cursor-pointer px-4 py-2.5 text-sm">
+                            <DropdownMenuItem key={link.path} onClick={() => navigate(link.path)} className="cursor-pointer px-4 py-2 text-sm">
                               <span className="flex-1">{link.label}</span>
-                              {link.hasArrow && <ArrowRight className="h-4 w-4 text-muted-foreground" />}
+                              {link.hasArrow && <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />}
                             </DropdownMenuItem>
                           ))}
                         </div>
 
                         <DropdownMenuSeparator className="my-0" />
 
-                        {/* More options + Dark mode + Logout */}
+                        {/* Footer: More + Logout */}
                         <div className="py-1">
-                          <DropdownMenuItem onClick={() => navigate("/app/mais")} className="cursor-pointer px-4 py-2.5 text-sm">
+                          <DropdownMenuItem onClick={() => navigate("/app/mais")} className="cursor-pointer px-4 py-2 text-sm">
                             Mais opções...
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer px-4 py-2.5 text-sm text-destructive focus:text-destructive">
+                          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer px-4 py-2 text-sm text-destructive focus:text-destructive">
                             Sair
                           </DropdownMenuItem>
                         </div>
