@@ -88,9 +88,11 @@ export default function FAQPage() {
 
   const filteredFaqs = useMemo(() => {
     let result = faqs;
-    if (activePersona !== "all") {
+    if (activePersona === "vendedor") {
+      result = result.filter((faq) => faq.persona === "vendedor");
+    } else if (activePersona === "comprador") {
       result = result.filter(
-        (faq) => faq.persona === activePersona || faq.persona === "all"
+        (faq) => faq.persona === "comprador" || faq.persona === "all"
       );
     }
     if (search.trim()) {
