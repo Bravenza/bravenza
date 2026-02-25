@@ -112,7 +112,7 @@ export default function SellerStorefrontPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate(-1)}
+            onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/app")}
             className="gap-1.5 backdrop-blur-xl bg-background/30 border border-white/10 text-foreground hover:bg-background/50 rounded-xl shadow-lg"
           >
             <ArrowLeft className="h-4 w-4" />

@@ -153,7 +153,7 @@ export default function AppAddressesPage() {
     <div className="max-w-lg mx-auto px-4 py-6">
       <Helmet><title>Meus Endereços | BRAVENZA</title></Helmet>
 
-      <Button variant="ghost" size="sm" className="mb-4 gap-1.5 text-muted-foreground" onClick={() => navigate(-1)}>
+      <Button variant="ghost" size="sm" className="mb-4 gap-1.5 text-muted-foreground" onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/app")}>
         <ChevronLeft className="h-4 w-4" /> Voltar
       </Button>
 
