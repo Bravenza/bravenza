@@ -40,7 +40,7 @@ const HeaderComponent = () => {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 bg-background theme-dark" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 bg-background theme-dark" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }} data-header-height>
         {/* Subtle gradient line at top */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         
@@ -108,9 +108,10 @@ const HeaderComponent = () => {
           role="dialog"
           aria-modal="true"
           aria-label="Menu de navegação"
-          className={`fixed inset-0 top-16 z-[55] md:hidden overflow-y-auto bg-background/95 backdrop-blur-xl transition-all duration-200 theme-dark ${
+          className={`fixed inset-0 z-[55] md:hidden overflow-y-auto bg-background transition-all duration-200 theme-dark ${
             isMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
           }`}
+          style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}
         >
           <div className="absolute inset-0 bg-grid-pattern opacity-30" />
           
