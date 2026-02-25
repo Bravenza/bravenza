@@ -4789,6 +4789,57 @@ export type Database = {
       }
     }
     Views: {
+      marketplace_cart_details: {
+        Row: {
+          added_at: string | null
+          id: string | null
+          offer_condition: string | null
+          offer_id: string | null
+          offer_photos: string[] | null
+          offer_price: number | null
+          offer_seller_id: string | null
+          offer_shipping_mode: string | null
+          offer_size: string | null
+          offer_status: string | null
+          product_brand: string | null
+          product_id: string | null
+          product_images: string[] | null
+          product_model: string | null
+          product_slug: string | null
+          seller_name: string | null
+          user_cpf: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_cart_items_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_cart_items_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_offers_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_offers_seller_id_fkey"
+            columns: ["offer_seller_id"]
+            isOneToOne: false
+            referencedRelation: "vault_seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_listings_public: {
         Row: {
           brand: string | null
