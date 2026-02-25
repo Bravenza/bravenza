@@ -4738,6 +4738,68 @@ export type Database = {
           },
         ]
       }
+      reviews_public: {
+        Row: {
+          admin_response: string | null
+          admin_response_at: string | null
+          client_cpf_masked: string | null
+          client_name: string | null
+          comment: string | null
+          created_at: string | null
+          customer_service: number | null
+          delivery_speed: number | null
+          id: string | null
+          is_approved: boolean | null
+          is_featured: boolean | null
+          order_id: string | null
+          product_quality: number | null
+          rating: number | null
+          would_recommend: boolean | null
+        }
+        Insert: {
+          admin_response?: string | null
+          admin_response_at?: string | null
+          client_cpf_masked?: never
+          client_name?: string | null
+          comment?: string | null
+          created_at?: string | null
+          customer_service?: number | null
+          delivery_speed?: number | null
+          id?: string | null
+          is_approved?: boolean | null
+          is_featured?: boolean | null
+          order_id?: string | null
+          product_quality?: number | null
+          rating?: number | null
+          would_recommend?: boolean | null
+        }
+        Update: {
+          admin_response?: string | null
+          admin_response_at?: string | null
+          client_cpf_masked?: never
+          client_name?: string | null
+          comment?: string | null
+          created_at?: string | null
+          customer_service?: number | null
+          delivery_speed?: number | null
+          id?: string | null
+          is_approved?: boolean | null
+          is_featured?: boolean | null
+          order_id?: string | null
+          product_quality?: number | null
+          rating?: number | null
+          would_recommend?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["order_id"]
+          },
+        ]
+      }
       vault_member_rankings: {
         Row: {
           avatar_url: string | null
