@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { marketplaceRequest } from "./api";
 
 export interface FeeTier {
   plan_id: string;
@@ -99,8 +100,8 @@ export function useSellerPlan(sellerId: string | null) {
   const fetchSubscription = useCallback(async () => {
     if (!sellerId) return null;
     try {
-      const { data, error } = await supabase.functions.invoke("mk-subscription", {
-        body: { action: "status", seller_id: sellerId },
+      const data = await marketplaceRequest("", "subscription-status", "POST", {
+        action: "status", seller_id: sellerId,
       });
       if (data?.subscription) {
         setSubscription(data.subscription);
@@ -116,10 +117,9 @@ export function useSellerPlan(sellerId: string | null) {
     if (!sellerId) return null;
     setIsSubscribing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("mk-subscription", {
-        body: { action: "create", seller_id: sellerId, plan_id: planId, payer_email: payerEmail },
+      const data = await marketplaceRequest("", "subscription-create", "POST", {
+        action: "create", seller_id: sellerId, plan_id: planId, payer_email: payerEmail,
       });
-      if (error) throw error;
       if (data?.checkout_url) {
         window.open(data.checkout_url, "_blank");
         return data.checkout_url;
@@ -136,10 +136,9 @@ export function useSellerPlan(sellerId: string | null) {
   const cancelSubscription = useCallback(async () => {
     if (!sellerId) return false;
     try {
-      const { data, error } = await supabase.functions.invoke("mk-subscription", {
-        body: { action: "cancel", seller_id: sellerId },
+      await marketplaceRequest("", "subscription-cancel", "POST", {
+        action: "cancel", seller_id: sellerId,
       });
-      if (error) throw error;
       await fetchSubscription();
       return true;
     } catch (err) {

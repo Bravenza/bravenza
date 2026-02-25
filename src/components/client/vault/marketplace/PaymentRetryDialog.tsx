@@ -81,24 +81,14 @@ export function PaymentRetryDialog({ order, open, onOpenChange, onSuccess, switc
         }
       }
 
-      const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
-      const headers = await getMarketplaceHeaders();
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-checkout`,
-        { method: "POST", headers, body: JSON.stringify(checkoutBody) }
-      );
-      const payData = await res.json();
-
-      if (!res.ok || payData.error) {
-        setResult({ status: "error", error: payData.error || "Erro ao processar pagamento" });
-      } else {
-        setResult(payData);
-        if (method === "card" && payData.status === "approved") {
-          setTimeout(() => {
-            onOpenChange(false);
-            onSuccess();
-          }, 2500);
-        }
+      const { marketplaceRequest } = await import("@/hooks/marketplace/api");
+      const payData = await marketplaceRequest("", "checkout", "POST", checkoutBody);
+      setResult(payData);
+      if (method === "card" && payData.status === "approved") {
+        setTimeout(() => {
+          onOpenChange(false);
+          onSuccess();
+        }, 2500);
       }
     } catch (err: any) {
       setResult({ status: "error", error: err.message || "Erro inesperado" });

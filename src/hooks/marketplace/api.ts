@@ -31,10 +31,15 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
   "admin-flag-listing": "mkv2-discover", "admin-pending-offers": "mkv2-discover", "admin-moderate-offer": "mkv2-discover",
   "product-coupons": "mkv2-discover",
 
-  // mkv2-orders: Create, Payment, My Orders/Sales, Rate, Wallet
+  // mkv2-orders: Create, Payment, My Orders/Sales, Rate, Wallet, Checkout
   "create-order": "mkv2-orders", "confirm-payment": "mkv2-orders", "my-orders": "mkv2-orders",
   "my-sales": "mkv2-orders", "rate-seller": "mkv2-orders",
   "wallet-balance": "mkv2-orders", "wallet-transactions": "mkv2-orders",
+  "checkout": "mk-checkout",
+
+  // mk-subscription: Seller subscription management
+  "subscription-status": "mk-subscription", "subscription-create": "mk-subscription",
+  "subscription-cancel": "mk-subscription",
 
   // mkv2-order-ops: Status Updates, Admin Orders, Disputes, Cancel
   "update-order-status": "mkv2-order-ops", "admin-orders": "mkv2-order-ops",
