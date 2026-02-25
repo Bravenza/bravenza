@@ -27,13 +27,8 @@ export async function resolveAuthCpf(
 
   const token = authHeader.replace("Bearer ", "");
 
-  const anonClient = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
-    { global: { headers: { Authorization: `Bearer ${token}` } } }
-  );
-
-  const { data, error } = await anonClient.auth.getUser(token);
+  // Use service role client to verify the JWT
+  const { data, error } = await sb.auth.getUser(token);
   if (error || !data?.user) {
     return { cpf: null, error: "Token inválido ou expirado" };
   }
@@ -124,21 +119,21 @@ export async function resolveCpf(
   sb: any,
   publicActions: Set<string>,
   action: string | null
-): Promise<{ cpf: string; errorResponse?: never } | { cpf?: never; errorResponse: Response }> {
+): Promise<{ cpf: string | null; errorResponse: Response | null }> {
   const isPublicAction = publicActions.has(action || "");
 
   if (isPublicAction) {
     const authHeader = req.headers.get("authorization");
     if (authHeader?.startsWith("Bearer ")) {
       const authResult = await resolveAuthCpf(req, sb);
-      if (authResult.cpf) return { cpf: authResult.cpf };
+      if (authResult.cpf) return { cpf: authResult.cpf, errorResponse: null };
     }
-    return { cpf: "visitor" };
+    return { cpf: "visitor", errorResponse: null };
   } else {
     const authResult = await resolveAuthCpf(req, sb);
     if (authResult.error || !authResult.cpf) {
-      return { errorResponse: jsonResponse({ error: authResult.error || "Autenticação obrigatória" }, 401) };
+      return { cpf: null, errorResponse: jsonResponse({ error: authResult.error || "Autenticação obrigatória" }, 401) };
     }
-    return { cpf: authResult.cpf };
+    return { cpf: authResult.cpf, errorResponse: null };
   }
 }
