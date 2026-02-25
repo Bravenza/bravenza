@@ -90,6 +90,21 @@ export function OfferForm({ product, onBack, onSubmit, vaultItems = [] }: OfferF
   const priceNum = parseFloat(form.price || "0");
   const isBravenzaRequired = priceNum >= 2000 || product.is_high_risk;
 
+  // Completeness score (0-100%)
+  const completenessScore = (() => {
+    let score = 0;
+    const total = 7;
+    if (form.sizes.length > 0) score++;
+    if (form.condition) score++;
+    if (form.price) score++;
+    if (form.photos.length >= 3) score++;
+    else if (form.photos.length > 0) score += 0.5;
+    if (form.description) score++;
+    if (form.has_receipt || form.proof_photos.length > 0) score++;
+    if (form.original_purchase_price) score++;
+    return Math.round((score / total) * 100);
+  })();
+
   const handleSubmit = async () => {
     if (form.sizes.length === 0 || !form.price) {
       toast({ title: "Adicione pelo menos um tamanho e informe o preço", variant: "destructive" });
@@ -131,6 +146,27 @@ export function OfferForm({ product, onBack, onSubmit, vaultItems = [] }: OfferF
         <ArrowLeft className="h-4 w-4" />
         Trocar produto
       </button>
+
+      {/* Completeness Score */}
+      <div className="p-3 rounded-lg border border-border/30 bg-muted/20">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-xs font-medium">Qualidade do anúncio</span>
+          <span className={`text-xs font-bold ${completenessScore >= 80 ? "text-success" : completenessScore >= 50 ? "text-warning" : "text-destructive"}`}>
+            {completenessScore}%
+          </span>
+        </div>
+        <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${completenessScore >= 80 ? "bg-success" : completenessScore >= 50 ? "bg-warning" : "bg-destructive"}`}
+            style={{ width: `${completenessScore}%` }}
+          />
+        </div>
+        <p className="text-[10px] text-muted-foreground mt-1.5">
+          {completenessScore < 50 ? "Adicione fotos, preço e tamanho para melhorar" :
+           completenessScore < 80 ? "Bom! Adicione comprovantes e descrição para destacar" :
+           "Excelente! Seu anúncio está completo ✨"}
+        </p>
+      </div>
 
       {/* Selected product */}
       <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border/30">

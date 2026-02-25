@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Package, Truck, CheckCircle2, Clock, AlertTriangle, Star, XCircle, MessageCircle, ShieldCheck, CreditCard, QrCode, RefreshCw, PackageCheck } from "lucide-react";
+import { Package, Truck, CheckCircle2, Clock, AlertTriangle, Star, XCircle, MessageCircle, ShieldCheck, CreditCard, QrCode, RefreshCw, PackageCheck, Ban, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,18 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { MarketplaceOrder } from "@/hooks/useMarketplace";
 import { MarketplaceChatDialog } from "./MarketplaceChatDialog";
 import { DisputeDialog } from "./DisputeDialog";
@@ -19,6 +30,7 @@ import { ContestationBanner } from "@/components/marketplace/ContestationBanner"
 import { SharePurchaseButton } from "@/components/marketplace/SharePurchaseButton";
 import { PaymentRetryDialog } from "./PaymentRetryDialog";
 import { DeliveryConfirmationFlow } from "./DeliveryConfirmationFlow";
+import { useToast } from "@/hooks/use-toast";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   pending_payment: { label: "Aguardando pagamento", color: "bg-warning/20 text-warning", icon: Clock },
@@ -63,6 +75,7 @@ export function MarketplaceOrdersView({
   onUpdateOrderStatus,
   onRateSeller,
 }: MarketplaceOrdersViewProps) {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("compras");
   const [rateDialog, setRateDialog] = useState<{ orderId: string } | null>(null);
   const [rating, setRating] = useState(5);
@@ -72,6 +85,39 @@ export function MarketplaceOrdersView({
   const [payRetryOrder, setPayRetryOrder] = useState<MarketplaceOrder | null>(null);
   const [payRetrySwitchMethod, setPayRetrySwitchMethod] = useState(false);
   const [deliveryFlowOrder, setDeliveryFlowOrder] = useState<MarketplaceOrder | null>(null);
+  const [cancelDialog, setCancelDialog] = useState<MarketplaceOrder | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+
+  /** Cancellation within 30-min window */
+  const handleBuyerCancel = useCallback(async () => {
+    if (!cancelDialog) return;
+    setCancelLoading(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-orders?action=cancel-buyer-order`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${(await (await import("@/integrations/supabase/client")).supabase.auth.getSession()).data.session?.access_token}`,
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ order_id: cancelDialog.id, reason: cancelReason || "Cancelado pelo comprador" }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao cancelar");
+      toast({ title: "Pedido cancelado", description: "Seu pedido foi cancelado com sucesso. O estorno será processado." });
+      setCancelDialog(null);
+      setCancelReason("");
+      onRefreshOrders();
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setCancelLoading(false);
+    }
+  }, [cancelDialog, cancelReason, onRefreshOrders, toast]);
 
   useEffect(() => {
     onRefreshOrders();
@@ -181,6 +227,19 @@ export function MarketplaceOrdersView({
 
                 {/* Actions */}
                 <div className="flex flex-wrap gap-2 mt-3">
+                  {/* Cancel button (buyer, paid, within 30-min window) */}
+                  {!isSale && order.status === "paid" && order.cancellation_window_ends_at && new Date(order.cancellation_window_ends_at) > new Date() && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="text-xs gap-1"
+                      onClick={() => setCancelDialog(order)}
+                    >
+                      <Ban className="h-3 w-3" />
+                      Cancelar pedido
+                    </Button>
+                  )}
+
                   {/* Payment retry buttons (buyer, pending_payment) */}
                   {!isSale && order.status === "pending_payment" && (
                     <>
@@ -425,6 +484,41 @@ export function MarketplaceOrdersView({
         onSuccess={onRefreshOrders}
         switchMethod={payRetrySwitchMethod}
       />
+
+      {/* Cancel order confirmation dialog (30-min window) */}
+      <AlertDialog open={!!cancelDialog} onOpenChange={(o) => !o && setCancelDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar pedido?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem até 30 minutos após o pagamento para cancelar sem penalização. O estorno será processado automaticamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium">Motivo (opcional)</label>
+              <Input
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Ex: Comprei o tamanho errado"
+                className="mt-1"
+              />
+            </div>
+            {cancelDialog?.cancellation_window_ends_at && (
+              <p className="text-xs text-muted-foreground">
+                ⏱️ Janela expira em: {new Date(cancelDialog.cancellation_window_ends_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+              </p>
+            )}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelLoading}>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBuyerCancel} disabled={cancelLoading} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {cancelLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Ban className="h-4 w-4 mr-2" />}
+              Confirmar cancelamento
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

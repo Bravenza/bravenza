@@ -488,6 +488,41 @@ Deno.serve(async (req) => {
       return j({ checked: (orders || []).length, eligible: eligible.length });
     }
 
+    // ==================== BUYER CANCEL (30-min window) ====================
+    if (mt === "PUT" && a === "cancel-buyer-order") {
+      const b = await req.json();
+      const { data: od, error: fetchErr } = await sb.from("vault_marketplace_orders")
+        .select("id, status, cancellation_window_ends_at, listing_id, order_code, seller_id, sale_price")
+        .eq("id", b.order_id).eq("buyer_cpf", cpf).single();
+      if (fetchErr || !od) throw new Error("Pedido não encontrado");
+      if (od.status !== "paid") throw new Error("Cancelamento só é possível para pedidos pagos");
+      if (!od.cancellation_window_ends_at || new Date(od.cancellation_window_ends_at) < new Date()) {
+        throw new Error("Janela de cancelamento expirada (30 minutos após pagamento)");
+      }
+      // Cancel the order
+      const { error: upErr } = await sb.from("vault_marketplace_orders").update({
+        status: "cancelled", cancelled_at: new Date().toISOString(),
+        cancellation_reason: b.reason || "Cancelado pelo comprador (janela de 30 min)",
+      }).eq("id", od.id);
+      if (upErr) throw upErr;
+      // Restore listing
+      if (od.listing_id) {
+        await sb.from("vault_marketplace_listings").update({ status: "active" }).eq("id", od.listing_id);
+      }
+      // Notify seller
+      const { data: slInfo } = await sb.from("vault_seller_profiles")
+        .select("member:vault_members!inner(client_cpf, client_name)")
+        .eq("id", od.seller_id).single();
+      if (slInfo?.member?.client_cpf) {
+        await nt(sb, "❌ Compra cancelada", `Pedido ${od.order_code} foi cancelado pelo comprador.`, slInfo.member.client_cpf, od.id, "marketplace_order");
+        const sellerEmail = await ge(sb, slInfo.member.client_cpf);
+        if (sellerEmail) {
+          em("mk_order_cancelled", { recipient_name: sellerEmail.name, recipient_email: sellerEmail.email, order_code: od.order_code, product_name: `Pedido ${od.order_code}`, cancel_reason: b.reason || "Cancelado pelo comprador" });
+        }
+      }
+      return j({ success: true });
+    }
+
     return j({ error: "Ação não encontrada" }, 404);
   } catch (e: any) {
     console.error("mk-orders error:", e);
