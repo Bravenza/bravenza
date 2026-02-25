@@ -51,7 +51,7 @@ function BottomTabBarComponent({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.15 }}
-            className="border-t border-border/20 bg-background/95 backdrop-blur-xl"
+            className="border-t border-border/20 bg-background"
           >
             <div className="flex items-center overflow-x-auto scrollbar-hide gap-1 px-3 py-1.5">
               {vaultSubTabs.map((tab) => (
@@ -75,7 +75,7 @@ function BottomTabBarComponent({
       </AnimatePresence>
 
       {/* Primary tab bar */}
-      <nav className="border-t border-border/30 bg-background/95 backdrop-blur-xl safe-area-bottom" aria-label="Navegação principal">
+      <nav className="border-t border-border/30 bg-background safe-area-bottom" aria-label="Navegação principal">
         <div className="flex items-stretch justify-around max-w-lg mx-auto">
           {visibleTabs.map((tab) => {
             const isActive =

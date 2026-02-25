@@ -40,7 +40,7 @@ const HeaderComponent = () => {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 bg-background/80 backdrop-blur-xl theme-dark" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 bg-background theme-dark" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         {/* Subtle gradient line at top */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         
