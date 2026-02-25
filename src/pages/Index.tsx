@@ -35,7 +35,7 @@ const VaultClubSection = lazy(() => import("@/components/home/VaultClubSection")
 const ReferralSection = lazy(() => import("@/components/home/ReferralSection").then(m => ({ default: m.ReferralSection })));
 const FeaturedReviews = lazy(() => import("@/components/home/FeaturedReviews").then(m => ({ default: m.FeaturedReviews })));
 const TestimonialsSection = lazy(() => import("@/components/home/TestimonialsSection").then(m => ({ default: m.TestimonialsSection })));
-const FAQSection = lazy(() => import("@/components/home/FAQSection").then(m => ({ default: m.FAQSection })));
+
 const CTASection = lazy(() => import("@/components/home/CTASection").then(m => ({ default: m.CTASection })));
 const Footer = lazy(() => import("@/components/home/Footer").then(m => ({ default: m.Footer })));
 const FloatingWhatsApp = lazy(() => import("@/components/FloatingWhatsApp").then(m => ({ default: m.FloatingWhatsApp })));
@@ -154,14 +154,6 @@ const Index = () => {
             </LazySection>
           </SectionErrorBoundary>
           
-          {/* FAQ */}
-          <SectionErrorBoundary section="FAQ">
-            <LazySection minHeight="400px">
-              <Suspense fallback={<SectionSkeleton height="400px" />}>
-                <FAQSection />
-              </Suspense>
-            </LazySection>
-          </SectionErrorBoundary>
           
           {/* Final CTA */}
           <SectionErrorBoundary section="CTA">
