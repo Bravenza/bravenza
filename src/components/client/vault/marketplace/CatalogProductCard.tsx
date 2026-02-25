@@ -1,10 +1,12 @@
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShieldCheck, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatProductName } from "@/lib/text-utils";
 import { PriceVariationBadge } from "@/components/marketplace/PriceVariationBadge";
+import { OptimizedImage } from "@/components/ui/optimized-image";
+import { optimizeImageUrl } from "@/lib/image-utils";
 import type { CatalogProduct } from "@/hooks/useMarketplaceCatalog";
 
 interface CatalogProductCardProps {
@@ -16,7 +18,6 @@ function CatalogProductCardComponent({ product, hidePrice }: CatalogProductCardP
   const navigate = useNavigate();
   const mainImage = product.images?.[0];
   const name = formatProductName(product.brand, product.model);
-  const [imgLoaded, setImgLoaded] = useState(false);
 
   const handleClick = useCallback(() => {
     navigate(`/marketplace/${product.slug}`);
@@ -30,22 +31,13 @@ function CatalogProductCardComponent({ product, hidePrice }: CatalogProductCardP
       {/* Image */}
       <div className="relative aspect-[4/3] bg-white overflow-hidden shrink-0">
         {mainImage ? (
-          <>
-            {!imgLoaded && (
-              <div className="absolute inset-0 bg-muted/30 animate-pulse" />
-            )}
-            <img
-              src={mainImage}
-              alt={name}
-              className={cn(
-                "w-full h-full object-contain p-5 group-hover:scale-110 transition-all duration-700 ease-out",
-                imgLoaded ? "opacity-100" : "opacity-0"
-              )}
-              loading="lazy"
-              decoding="async"
-              onLoad={() => setImgLoaded(true)}
-            />
-          </>
+          <OptimizedImage
+            src={optimizeImageUrl(mainImage, { width: 400, height: 300, quality: 80, resize: "contain" })}
+            alt={name}
+            width={400}
+            height={300}
+            className="w-full h-full object-contain p-5 group-hover:scale-110 transition-all duration-700 ease-out"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted/10">
             <span className="text-4xl opacity-10">👟</span>

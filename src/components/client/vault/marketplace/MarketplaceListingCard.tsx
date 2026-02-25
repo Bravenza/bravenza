@@ -1,6 +1,8 @@
 import { Heart, ShieldCheck, Star, Verified, Rocket, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { OptimizedImage } from "@/components/ui/optimized-image";
+import { optimizeImageUrl } from "@/lib/image-utils";
 import type { MarketplaceListing } from "@/hooks/useMarketplace";
 import { motion } from "framer-motion";
 
@@ -45,11 +47,12 @@ export function MarketplaceListingCard({
       {/* Image Container */}
       <div className="relative aspect-square overflow-hidden bg-muted/5">
         {mainPhoto ? (
-          <img
-            src={mainPhoto}
+          <OptimizedImage
+            src={optimizeImageUrl(mainPhoto, { width: 400, height: 400, quality: 80, resize: "cover" })}
             alt={listing.title}
+            width={400}
+            height={400}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-            loading="lazy"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

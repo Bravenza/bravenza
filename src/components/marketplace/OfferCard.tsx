@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { conditionLabels, conditionColors, proLabels, normalizeShippingMode } from "@/lib/marketplace-constants";
 import { generateInstallmentOptions, formatPriceBR } from "@/lib/budget-calculator";
+import { OptimizedImage } from "@/components/ui/optimized-image";
+import { optimizeImageUrl } from "@/lib/image-utils";
 import type { ProductOffer } from "@/hooks/useMarketplaceCatalog";
 
 interface OfferCardProps {
@@ -36,11 +38,12 @@ export function OfferCard({ offer, isBest, productImages, onBuy, onClick, onAddT
     >
       {/* Offer photo */}
       <div className="relative aspect-[4/3] bg-muted/5 overflow-hidden">
-        <img
-          src={offerImage}
+        <OptimizedImage
+          src={optimizeImageUrl(offerImage, { width: 400, height: 300, quality: 80, resize: "contain" })}
           alt=""
+          width={400}
+          height={300}
           className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
-          loading="lazy"
         />
         {isBest && (
           <div className="absolute top-3 left-3">
