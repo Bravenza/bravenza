@@ -19,8 +19,7 @@ export function usePWAOptimizations() {
       }
     }
 
-    // Scroll to top on route change (PWA behavior)
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    // Scroll restoration is handled by ScrollToTop component — no duplicate scroll here
   }, [location.pathname]);
 
   // Pull-to-refresh is now handled by PullToRefresh component
