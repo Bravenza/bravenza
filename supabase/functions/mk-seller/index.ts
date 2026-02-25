@@ -616,6 +616,39 @@ Deno.serve(async (req) => {
       return j({ success: true, products_snapshotted: count });
     }
 
+    // ==================== MY STRIKES ====================
+    if (mt === "GET" && a === "my-strikes") {
+      const mb = await gm(sb, cpf);
+      if (!mb) return j({ strikes: [], active_count: 0, suspended_until: null });
+      const sl = await gs(sb, mb.id);
+      if (!sl) return j({ strikes: [], active_count: 0, suspended_until: null });
+      const { data: strikes } = await sb.from("seller_strikes").select("*").eq("seller_id", sl.id).order("created_at", { ascending: false });
+      return j({
+        strikes: strikes || [],
+        active_count: sl.active_strikes_count || 0,
+        suspended_until: sl.suspended_until || null,
+      });
+    }
+
+    // ==================== APPEAL STRIKE ====================
+    if (mt === "POST" && a === "appeal-strike") {
+      const b = await req.json();
+      if (!b.strike_id || !b.message) return j({ error: "strike_id e message obrigatórios" }, 400);
+      const mb = await gm(sb, cpf);
+      if (!mb) return j({ error: "Membro não encontrado" }, 404);
+      const sl = await gs(sb, mb.id);
+      if (!sl) return j({ error: "Perfil de vendedor não encontrado" }, 404);
+      // Verify strike belongs to this seller
+      const { data: strike } = await sb.from("seller_strikes").select("id, seller_id, appeal_status").eq("id", b.strike_id).eq("seller_id", sl.id).single();
+      if (!strike) return j({ error: "Aviso não encontrado" }, 404);
+      if (strike.appeal_status) return j({ error: "Já existe um recurso para este aviso" }, 400);
+      const { error: upErr } = await sb.from("seller_strikes").update({
+        appeal_status: "pending", appeal_message: b.message,
+      }).eq("id", b.strike_id);
+      if (upErr) throw upErr;
+      return j({ success: true });
+    }
+
     return j({ error: "Ação não encontrada" }, 404);
   } catch (e: any) {
     console.error("mk-seller error:", e);

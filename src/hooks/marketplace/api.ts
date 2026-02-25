@@ -22,8 +22,9 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
   "product-reviews": "mk-hub", "product-review": "mk-hub",
   "check-purchase": "mk-hub", "product-analytics": "mk-hub", "freight-quote": "mk-hub",
 
-  // mk-orders: Orders, Payments, Disputes, Chat, Hub PRO
+  // mk-orders: Orders, Payments, Disputes, Chat, Hub PRO, Wallet
   "create-order": "mk-orders", "confirm-payment": "mk-orders", "my-orders": "mk-orders",
+  "wallet-balance": "mk-orders", "wallet-transactions": "mk-orders",
   "my-sales": "mk-orders", "update-order-status": "mk-orders", "resolve-dispute": "mk-orders",
   "rate-seller": "mk-orders", "admin-orders": "mk-orders", "open-dispute": "mk-orders",
   "admin-disputes": "mk-orders",
@@ -31,8 +32,9 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
   "hub-orders": "mk-orders", "hub-update-status": "mk-orders", "hub-inspect": "mk-orders",
   "laudo-lookup": "mk-orders", "check-auto-payout": "mk-orders",
 
-  // mk-seller: Seller Onboarding, Analytics, Coupons, Boosts, Collections, Social
+  // mk-seller: Seller Onboarding, Analytics, Coupons, Boosts, Collections, Social, Strikes
   "seller-onboarding": "mk-seller", "seller-onboarding-status": "mk-seller",
+  "my-strikes": "mk-seller", "appeal-strike": "mk-seller",
   "price-drop-suggestions": "mk-seller",
   "seller-analytics": "mk-seller", "my-coupons": "mk-seller", "create-coupon": "mk-seller",
   "update-coupon": "mk-seller", "delete-coupon": "mk-seller", "validate-coupon": "mk-seller",

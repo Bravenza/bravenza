@@ -523,6 +523,19 @@ Deno.serve(async (req) => {
       return j({ success: true });
     }
 
+    // ==================== WALLET BALANCE ====================
+    if (mt === "GET" && a === "wallet-balance") {
+      // Get balance from view
+      const { data: wb } = await sb.from("wallet_balances").select("*").eq("user_cpf", cpf).maybeSingle();
+      // Get recent transactions
+      const { data: txs } = await sb.from("wallet_transactions").select("*").eq("user_cpf", cpf).order("created_at", { ascending: false }).limit(50);
+      return j({
+        balance: wb?.balance || 0,
+        last_transaction_at: wb?.last_transaction_at || null,
+        transactions: txs || [],
+      });
+    }
+
     return j({ error: "Ação não encontrada" }, 404);
   } catch (e: any) {
     console.error("mk-orders error:", e);

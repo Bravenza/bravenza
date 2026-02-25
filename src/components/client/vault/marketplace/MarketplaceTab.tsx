@@ -1,7 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Store, Package, TrendingDown, ShoppingBag, BarChart3, Tag, Activity, Megaphone, HelpCircle, ChevronRight, Bot } from "lucide-react";
+import { Store, Package, TrendingDown, ShoppingBag, BarChart3, Tag, Activity, Megaphone, HelpCircle, ChevronRight, Bot, Wallet, AlertTriangle } from "lucide-react";
 import { MarketplaceHowItWorks } from "./MarketplaceHowItWorks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -29,6 +29,8 @@ import { ActivityFeed } from "./ActivityFeed";
 import { supabase } from "@/integrations/supabase/client";
 import { RecentlyViewedSection } from "@/components/marketplace/home/RecentlyViewedSection";
 import { LoyaltyPointsWidget } from "@/components/marketplace/LoyaltyPointsWidget";
+const WalletPanel = lazy(() => import("./WalletPanel").then(m => ({ default: m.WalletPanel })));
+const SellerStrikesPanel = lazy(() => import("./SellerStrikesPanel").then(m => ({ default: m.SellerStrikesPanel })));
 
 interface MarketplaceTabProps {
   clientCpf: string;
@@ -240,10 +242,12 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
   const sellerSubItems = [
     { id: "anuncios", label: "Meus anúncios", icon: Megaphone },
     ...(isSellerApproved ? [
+      { id: "carteira", label: "Carteira", icon: Wallet },
       { id: "analytics", label: "Analytics", icon: BarChart3 },
       ...(isElitePlan ? [{ id: "autocut", label: "AutoCut", icon: Bot }] : []),
       { id: "cupons", label: "Cupons", icon: Tag },
       { id: "sugestoes", label: "Sugestões", icon: TrendingDown },
+      { id: "avisos", label: "Avisos", icon: AlertTriangle },
     ] : []),
     { id: "como-funciona", label: "Como funciona", icon: HelpCircle },
   ];
@@ -497,6 +501,13 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
                   </>
                 )}
 
+                {/* Carteira sub-tab */}
+                {sellerSubTab === "carteira" && isSellerApproved && (
+                  <Suspense fallback={<div className="h-64 animate-pulse bg-muted rounded-xl" />}>
+                    <WalletPanel clientCpf={clientCpf} />
+                  </Suspense>
+                )}
+
                 {/* Analytics sub-tab */}
                 {sellerSubTab === "analytics" && isSellerApproved && (
                   <Suspense fallback={<div className="h-64 animate-pulse bg-muted rounded-xl" />}>
@@ -520,6 +531,13 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
                     fetchSuggestions={fetchPriceDropSuggestions}
                     onApplyDrop={handleApplyPriceDrop}
                   />
+                )}
+
+                {/* Avisos (Strikes) sub-tab */}
+                {sellerSubTab === "avisos" && isSellerApproved && seller && (
+                  <Suspense fallback={<div className="h-64 animate-pulse bg-muted rounded-xl" />}>
+                    <SellerStrikesPanel clientCpf={clientCpf} sellerId={seller.id} />
+                  </Suspense>
                 )}
 
                 {/* Como funciona sub-tab */}
