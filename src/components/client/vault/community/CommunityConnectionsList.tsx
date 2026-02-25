@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { typedRpc, type MemberConnectionsResult, type ToggleFollowResult } from "@/integrations/supabase/typed-rpc";
 
 interface Connection {
   id: string;
@@ -53,7 +54,7 @@ export function CommunityConnectionsList({
   const fetchConnections = async (connectionType: "followers" | "following") => {
     setIsLoading(true);
     try {
-      const { data, error } = await (supabase.rpc as any)("get_member_connections", {
+      const { data, error } = await typedRpc<MemberConnectionsResult>("get_member_connections", {
         p_cpf: clientCpf,
         p_member_id: memberId,
         p_type: connectionType,
@@ -61,7 +62,7 @@ export function CommunityConnectionsList({
 
       if (error) throw error;
       
-      const result = data as any;
+      const result = data;
       if (result?.success) {
         setConnections(result.connections || []);
       }
@@ -76,14 +77,14 @@ export function CommunityConnectionsList({
     setTogglingIds(prev => new Set(prev).add(targetMemberId));
     
     try {
-      const { data, error } = await (supabase.rpc as any)("toggle_follow", {
+      const { data, error } = await typedRpc<ToggleFollowResult>("toggle_follow", {
         p_cpf: clientCpf,
         p_target_member_id: targetMemberId,
       });
 
       if (error) throw error;
 
-      const result = data as any;
+      const result = data;
       if (result?.success) {
         setConnections(prev => 
           prev.map(c => 

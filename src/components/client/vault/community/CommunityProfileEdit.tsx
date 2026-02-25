@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { typedRpc, type UpdateMemberProfileResult } from "@/integrations/supabase/typed-rpc";
 
 interface ProfileData {
   id: string;
@@ -122,7 +123,7 @@ export function CommunityProfileEdit({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const { data, error } = await (supabase.rpc as any)("update_member_profile", {
+      const { data, error } = await typedRpc<UpdateMemberProfileResult>("update_member_profile", {
         p_cpf: clientCpf,
         p_display_name: formData.display_name || null,
         p_avatar_url: formData.avatar_url || null,
@@ -138,7 +139,7 @@ export function CommunityProfileEdit({
 
       if (error) throw error;
 
-      const result = data as any;
+      const result = data;
       if (result?.success) {
         toast({
           title: "Perfil atualizado!",

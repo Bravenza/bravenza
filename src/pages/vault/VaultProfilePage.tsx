@@ -18,6 +18,7 @@ import { PillTabs } from "@/components/ui/pill-tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useClientSession } from "@/hooks/useClientSession";
 import { supabase } from "@/integrations/supabase/client";
+import { typedRpc, type OwnCommunityProfileResult, type UpdateMemberProfileResult } from "@/integrations/supabase/typed-rpc";
 import { ClosetStatsBar } from "@/components/vault/closet/ClosetStatsBar";
 import { ClosetCollectionTab } from "@/components/vault/closet/ClosetCollectionTab";
 import { ClosetFavoritesTab } from "@/components/vault/closet/ClosetFavoritesTab";
@@ -129,13 +130,13 @@ export default function VaultProfilePage() {
     
     setIsLoading(true);
     try {
-      const { data, error } = await (supabase.rpc as any)("get_own_community_profile", {
+      const { data, error } = await typedRpc<OwnCommunityProfileResult>("get_own_community_profile", {
         p_cpf: clientProfile.cpf,
       });
 
       if (error) throw error;
 
-      const result = data as any;
+      const result = data;
       if (result?.success && result.profile) {
         setProfile(result.profile);
         setFormData({
@@ -216,7 +217,7 @@ export default function VaultProfilePage() {
     if (!clientProfile?.cpf) return;
     setIsSaving(true);
     try {
-      const { data, error } = await (supabase.rpc as any)("update_member_profile", {
+      const { data, error } = await typedRpc<UpdateMemberProfileResult>("update_member_profile", {
         p_cpf: clientProfile.cpf,
         p_display_name: formData.display_name || null,
         p_avatar_url: formData.avatar_url || null,
@@ -230,7 +231,7 @@ export default function VaultProfilePage() {
         p_is_profile_public: formData.is_profile_public,
       });
       if (error) throw error;
-      const result = data as any;
+      const result = data;
       if (result?.success) {
         toast({ title: "Perfil atualizado! ✨", description: "Suas alterações foram salvas" });
         setHasChanges(false);

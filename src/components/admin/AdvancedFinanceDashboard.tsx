@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { typedRpc, type AdminFinanceMonthlyRow } from "@/integrations/supabase/typed-rpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -28,10 +28,10 @@ export function AdvancedFinanceDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data, error } = await supabase.rpc("get_admin_finance_monthly" as any);
+        const { data, error } = await typedRpc<AdminFinanceMonthlyRow[]>("get_admin_finance_monthly");
         if (error) throw error;
 
-        const mapped: MonthlyData[] = ((data || []) as any[]).map((row: any) => ({
+        const mapped: MonthlyData[] = (data || []).map((row) => ({
           month: row.month_key,
           revenue: Number(row.revenue),
           costs: Number(row.costs),

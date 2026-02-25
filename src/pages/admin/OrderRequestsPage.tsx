@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { typedRpc, type AdminOrderRequestsResult } from "@/integrations/supabase/typed-rpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -66,7 +67,7 @@ export default function OrderRequestsPage() {
   const { data: rpcData, isLoading } = useQuery({
     queryKey: ["order-requests", searchTerm, page],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_admin_order_requests" as any, {
+      const { data, error } = await typedRpc<AdminOrderRequestsResult>("get_admin_order_requests", {
         p_search: searchTerm,
         p_offset: page * PAGE_SIZE,
         p_limit: PAGE_SIZE,
