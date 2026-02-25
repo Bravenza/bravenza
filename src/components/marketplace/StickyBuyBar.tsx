@@ -19,7 +19,8 @@ export function StickyBuyBar({ price, size, visible, onBuy }: StickyBuyBarProps)
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed bottom-[52px] left-0 right-0 z-40 lg:hidden border-t border-border/30 bg-background pb-[env(safe-area-inset-bottom)]"
+          className="fixed bottom-[49px] left-0 right-0 z-40 lg:hidden bg-background pb-[env(safe-area-inset-bottom)]"
+          style={{ borderTop: '0.5px solid hsl(var(--border) / 0.3)' }}
         >
           <div className="flex items-center justify-between px-4 py-3 max-w-7xl mx-auto gap-3">
             <div>

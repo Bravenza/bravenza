@@ -60,7 +60,7 @@ const Index = () => {
       <div className="min-h-screen bg-background space-y-0">
         <Header />
         
-        <main id="main-content" style={{ paddingTop: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
+        <main id="main-content" style={{ paddingTop: 'calc(44px + env(safe-area-inset-top, 0px))' }}>
           {/* Above-the-fold — eagerly loaded */}
           <HeroSection />
           <BrandsCarousel />
