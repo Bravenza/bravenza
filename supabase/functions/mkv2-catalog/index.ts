@@ -13,10 +13,15 @@ if(ah?.startsWith("Bearer ")){const{data:u}=await sb.auth.getUser(ah.replace("Be
 if(!PUB.has(a||"")&&cpf==="visitor")return j({error:"Auth required"},401);
 try{
 if(mt==="GET"&&a==="catalog-products"){
-  const pg=+(url.searchParams.get("page")||"1"),lm=20,of2=(pg-1)*lm;const sr=url.searchParams.get("search"),br=url.searchParams.get("brand"),cat=url.searchParams.get("category");
+  const lm=+(url.searchParams.get("limit")||"20");const cursor=url.searchParams.get("cursor");const sr=url.searchParams.get("search"),br=url.searchParams.get("brand"),cat=url.searchParams.get("category");
   let q=sb.from("marketplace_products").select("*",{count:"exact"}).eq("is_active",true);
   if(sr)q=q.or(`brand.ilike.%${sr}%,model.ilike.%${sr}%,colorway.ilike.%${sr}%,sku.ilike.%${sr}%`);if(br)q=q.ilike("brand",`%${br}%`);if(cat)q=q.eq("category",cat);
-  q=q.order("total_offers",{ascending:false}).range(of2,of2+lm-1);const{data,count,error}=await q;if(error)throw error;return j({products:data||[],total:count||0});
+  if(cursor)q=q.lt("created_at",cursor);
+  q=q.order("created_at",{ascending:false}).limit(lm+1);
+  const{data,count,error}=await q;if(error)throw error;
+  const items=data||[];const hasMore=items.length>lm;const page=hasMore?items.slice(0,lm):items;
+  const nextCursor=hasMore?page[page.length-1].created_at:null;
+  return j({products:page,total:count||0,next_cursor:nextCursor,has_more:hasMore});
 }
 if(mt==="GET"&&a==="catalog-product"){
   const id=url.searchParams.get("id"),slug=url.searchParams.get("slug");let q=sb.from("marketplace_products").select("*");
