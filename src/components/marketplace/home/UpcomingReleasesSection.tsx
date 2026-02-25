@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { CalendarDays, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
+import { getMarketplaceHeaders } from "@/hooks/marketplace/api";
 import { cn } from "@/lib/utils";
 
 interface Release {
@@ -49,8 +49,10 @@ export const UpcomingReleasesSection = memo(function UpcomingReleasesSection() {
   const fetchReleases = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("mk-releases");
-      if (!error && data?.releases?.length) {
+      const headers = await getMarketplaceHeaders();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-releases`, { headers });
+      const data = await res.json();
+      if (data?.releases?.length) {
         setReleases(data.releases);
       }
     } catch {

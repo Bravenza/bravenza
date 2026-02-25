@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 /** Full-page skeleton for the ProductDetail page */
 export function ProductDetailSkeleton() {
   return (
-    <div className="min-h-screen bg-[#f5f5f7]">
+    <div className="min-h-screen bg-secondary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 mb-6">

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
+
 import { useNavigate } from "react-router-dom";
 import { useClientSession } from "@/hooks/useClientSession";
 import { getMarketplaceHeaders } from "@/hooks/marketplace/api";
@@ -110,8 +110,10 @@ export default function MarketplaceDropsPage() {
   const fetchReleases = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("mk-releases");
-      if (!error && data?.releases?.length) setReleases(data.releases);
+      const headers = await getMarketplaceHeaders();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-releases`, { headers });
+      const data = await res.json();
+      if (data?.releases?.length) setReleases(data.releases);
     } catch { /* fallback */ }
     finally { setIsLoading(false); }
   }, []);

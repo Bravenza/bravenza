@@ -105,7 +105,7 @@ export default function AppMorePage() {
         variant="ghost"
         size="sm"
         className="mb-4 gap-1.5 text-muted-foreground"
-        onClick={() => navigate(-1)}
+        onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/app")}
       >
         <ChevronLeft className="h-4 w-4" />
         Voltar
