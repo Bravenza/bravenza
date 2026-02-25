@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PillTabs } from "@/components/ui/pill-tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useClientSession } from "@/hooks/useClientSession";
 import { supabase } from "@/integrations/supabase/client";
@@ -351,23 +351,18 @@ export default function VaultProfilePage() {
         />
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full">
-            <TabsTrigger value="colecao" className="flex-1 gap-1.5">
-              <Box className="h-3.5 w-3.5" />
-              Coleção
-            </TabsTrigger>
-            <TabsTrigger value="favoritos" className="flex-1 gap-1.5">
-              <Heart className="h-3.5 w-3.5" />
-              Favoritos
-            </TabsTrigger>
-            <TabsTrigger value="avaliacoes" className="flex-1 gap-1.5">
-              <Star className="h-3.5 w-3.5" />
-              Avaliações
-            </TabsTrigger>
-          </TabsList>
+        <div className="space-y-6">
+          <PillTabs
+            items={[
+              { id: "colecao", label: "Coleção", icon: Box },
+              { id: "favoritos", label: "Favoritos", icon: Heart },
+              { id: "avaliacoes", label: "Avaliações", icon: Star },
+            ]}
+            value={activeTab}
+            onValueChange={setActiveTab}
+          />
 
-          <TabsContent value="colecao">
+          {activeTab === "colecao" && (
             <ClosetCollectionTab
               items={vaultItems}
               isLoading={false}
@@ -375,16 +370,16 @@ export default function VaultProfilePage() {
               cpf={clientProfile?.cpf || ""}
               memberId={clientProfile?.vault_member_id || ""}
             />
-          </TabsContent>
+          )}
 
-          <TabsContent value="favoritos">
+          {activeTab === "favoritos" && (
             <ClosetFavoritesTab cpf={clientProfile?.cpf || ""} />
-          </TabsContent>
+          )}
 
-          <TabsContent value="avaliacoes">
+          {activeTab === "avaliacoes" && (
             <ClosetReviewsTab cpf={clientProfile?.cpf || ""} />
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
 
         {/* Edit Profile Panel (collapsible) */}
         {showEditProfile && (

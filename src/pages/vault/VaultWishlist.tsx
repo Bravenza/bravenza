@@ -8,7 +8,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PillTabs } from "@/components/ui/pill-tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,6 +77,7 @@ export default function VaultWishlist() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [wishlistTab, setWishlistTab] = useState("wishlist");
   
   const [newItem, setNewItem] = useState({
     title: "",
@@ -360,21 +361,20 @@ export default function VaultWishlist() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="wishlist" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="wishlist">
-            Wishlist ({wishlistItems.length})
-          </TabsTrigger>
-          <TabsTrigger value="active">
-            Buscas ativas ({activeSearches.length})
-          </TabsTrigger>
-          <TabsTrigger value="history">
-            Histórico ({closedSearches.length})
-          </TabsTrigger>
-        </TabsList>
+      <div className="space-y-6">
+        <PillTabs
+          items={[
+            { id: "wishlist", label: `Wishlist (${wishlistItems.length})`, icon: Search },
+            { id: "active", label: `Buscas ativas (${activeSearches.length})`, icon: Play },
+            { id: "history", label: `Histórico (${closedSearches.length})`, icon: Clock },
+          ]}
+          value={wishlistTab}
+          onValueChange={setWishlistTab}
+        />
 
         {/* Wishlist Tab */}
-        <TabsContent value="wishlist" className="space-y-4">
+        {wishlistTab === "wishlist" && (
+        <div className="space-y-4">
           {wishlistItems.length === 0 ? (
             <Card className="bg-card border-border">
               <CardContent className="py-12 text-center">
@@ -428,10 +428,12 @@ export default function VaultWishlist() {
               ))}
             </div>
           )}
-        </TabsContent>
+        </div>
+        )}
 
         {/* Active Searches Tab */}
-        <TabsContent value="active" className="space-y-4">
+        {wishlistTab === "active" && (
+        <div className="space-y-4">
           {activeSearches.length === 0 ? (
             <Card className="bg-card border-border">
               <CardContent className="py-12 text-center">
@@ -485,10 +487,12 @@ export default function VaultWishlist() {
               })}
             </div>
           )}
-        </TabsContent>
+        </div>
+        )}
 
         {/* History Tab */}
-        <TabsContent value="history" className="space-y-4">
+        {wishlistTab === "history" && (
+        <div className="space-y-4">
           {closedSearches.length === 0 ? (
             <Card className="bg-card border-border">
               <CardContent className="py-12 text-center">
@@ -530,8 +534,9 @@ export default function VaultWishlist() {
               })}
             </div>
           )}
-        </TabsContent>
-      </Tabs>
+        </div>
+        )}
+      </div>
     </div>
   );
 }

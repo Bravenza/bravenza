@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Newspaper, Radar, BookOpen, AlertTriangle, Calendar, Filter } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PillTabs } from "@/components/ui/pill-tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { useClientSession } from "@/hooks/useClientSession";
@@ -86,29 +86,17 @@ export default function VaultIntel() {
       </div>
 
       {/* Filter */}
-      <Tabs value={filter} onValueChange={setFilter}>
-        <TabsList className="w-full sm:w-auto flex-wrap">
-          <TabsTrigger value="all">
-            Todos
-          </TabsTrigger>
-          <TabsTrigger value="RADAR">
-            <Radar className="h-4 w-4" />
-            Radar
-          </TabsTrigger>
-          <TabsTrigger value="GUIDE">
-            <BookOpen className="h-4 w-4" />
-            Guias
-          </TabsTrigger>
-          <TabsTrigger value="ALERT">
-            <AlertTriangle className="h-4 w-4" />
-            Alertas
-          </TabsTrigger>
-          <TabsTrigger value="EVENT">
-            <Calendar className="h-4 w-4" />
-            Eventos
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <PillTabs
+        items={[
+          { id: "all", label: "Todos" },
+          { id: "RADAR", label: "Radar", icon: Radar },
+          { id: "GUIDE", label: "Guias", icon: BookOpen },
+          { id: "ALERT", label: "Alertas", icon: AlertTriangle },
+          { id: "EVENT", label: "Eventos", icon: Calendar },
+        ]}
+        value={filter}
+        onValueChange={setFilter}
+      />
 
       {/* Posts */}
       {filteredPosts.length === 0 ? (
