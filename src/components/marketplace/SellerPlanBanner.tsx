@@ -44,7 +44,7 @@ export function SellerPlanBanner({ status }: SellerPlanBannerProps) {
             size="sm"
             variant="outline"
             className="text-xs gap-1 border-primary/30 text-primary hover:bg-primary/10"
-            onClick={() => navigate("/marketplace/planos")}
+            onClick={() => navigate("/app/loja")}
           >
             <Rocket className="h-3 w-3" />
             Upgrade

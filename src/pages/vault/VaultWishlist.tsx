@@ -452,7 +452,7 @@ export default function VaultWishlist() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <Link to={`/vault/app/search/${search.search_id}`}>
+                    <Link to={`/app/wishlist`}>
                       <Card className="bg-card border-border hover:border-primary/50 transition cursor-pointer">
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between gap-4">

@@ -122,7 +122,7 @@ export function SearchStatusCard({ search, index }: SearchStatusCardProps) {
                   size="sm"
                   className="bg-amber-500 hover:bg-amber-600 text-black"
                 >
-                  <Link to={`/vault/app/match/${search.match_room_id}`}>
+                  <Link to={`/app/vault`}>
                     <Sparkles className="h-4 w-4 mr-1" />
                     Ver opções
                     <ArrowRight className="h-4 w-4 ml-1" />
