@@ -284,7 +284,7 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
                               placeholder="seu@email.com"
                               value={resetEmail}
                               onChange={(e) => setResetEmail(e.target.value)}
-                              className="bg-secondary/30 border-border/40 focus-visible:border-primary/40"
+                              className="bg-secondary/50 border-border/60 focus-visible:border-primary/40 placeholder:text-muted-foreground/50"
                             />
                           </div>
                           <Button type="submit" className="w-full btn-gold h-11" disabled={isLoading}>
@@ -308,7 +308,7 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
                           placeholder="seu@email.com"
                           value={loginEmail}
                           onChange={(e) => setLoginEmail(e.target.value)}
-                          className="bg-secondary/30 border-border/40 h-11 focus-visible:border-primary/40"
+                          className="bg-secondary/50 border-border/60 h-11 focus-visible:border-primary/40 placeholder:text-muted-foreground/50"
                         />
                       </div>
 
@@ -331,7 +331,7 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
                             placeholder="••••••••"
                             value={loginPassword}
                             onChange={(e) => setLoginPassword(e.target.value)}
-                            className="bg-secondary/30 border-border/40 h-11 pr-10 focus-visible:border-primary/40"
+                            className="bg-secondary/50 border-border/60 h-11 pr-10 focus-visible:border-primary/40 placeholder:text-muted-foreground/50"
                           />
                           <button
                             type="button"

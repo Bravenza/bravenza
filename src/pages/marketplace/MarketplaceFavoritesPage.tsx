@@ -3,6 +3,8 @@ import { Heart, Search, Loader2 } from "lucide-react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
+import { EmptyState } from "@/components/ui/empty-state";
+import { FavoritesGridSkeleton } from "@/components/skeletons/ContentAwareSkeletons";
 import { CatalogProductCard } from "@/components/client/vault/marketplace/CatalogProductCard";
 import { useMarketplaceListings } from "@/hooks/marketplace/useMarketplaceListings";
 import type { MarketplaceListing } from "@/hooks/marketplace/types";
@@ -54,21 +56,16 @@ export default function MarketplaceFavoritesPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+        <FavoritesGridSkeleton />
       ) : filtered.length === 0 ? (
-        <div className="text-center py-20 space-y-3">
-          <Heart className="h-16 w-16 mx-auto text-muted-foreground/30" />
-          <p className="text-lg font-medium">
-            {search ? "Nenhum favorito encontrado" : "Você ainda não tem favoritos"}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {search
-              ? "Tente outra busca"
-              : "Explore o marketplace e favorite os sneakers que mais gostar"}
-          </p>
-        </div>
+        <EmptyState
+          icon={Heart}
+          title={search ? "Nenhum favorito encontrado" : "Você ainda não tem favoritos"}
+          description={search
+            ? "Tente outra busca"
+            : "Explore o marketplace e favorite os sneakers que mais gostar"}
+          action={!search ? { label: "Explorar marketplace", onClick: () => navigate("/app") } : undefined}
+        />
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
           {filtered.map((listing, i) => (

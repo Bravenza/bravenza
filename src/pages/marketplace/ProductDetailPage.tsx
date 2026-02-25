@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef, lazy, Suspense } from "react";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { Helmet } from "react-helmet-async";
 import { saveRecentlyViewed } from "@/components/marketplace/home/RecentlyViewedSection";
 import { useParams, useNavigate } from "react-router-dom";
@@ -370,18 +371,14 @@ function ProductDetailPageInner() {
           <span className="text-xs text-emerald-600/80">Todos os produtos passam por autenticação profissional</span>
         </div>
 
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-6">
-          <button onClick={() => navigate("/app")} className="hover:text-foreground transition-colors">
-            Marketplace
-          </button>
-          <ChevronRight className="h-3 w-3" />
-          <button onClick={() => navigate(`/marketplace?q=${encodeURIComponent(product.brand)}`)} className="hover:text-foreground transition-colors">
-            {product.brand}
-          </button>
-          <ChevronRight className="h-3 w-3" />
-          <span className="text-foreground font-medium truncate max-w-[200px]">{product.model}</span>
-        </div>
+        <Breadcrumbs
+          items={[
+            { label: "Marketplace", href: "/app" },
+            { label: product.brand, href: `/app?q=${encodeURIComponent(product.brand)}` },
+            { label: product.model },
+          ]}
+          className="mb-6 text-xs"
+        />
 
         {/* ===== HERO: Gallery + Purchase Panel ===== */}
         <div ref={heroRef} className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
