@@ -23,7 +23,7 @@ const DeliveryFlowPreview = lazy(() => import("@/pages/DeliveryFlowPreview"));
 
 // Legacy ClientLogin removed — auth migrated to Supabase Auth (ClientAuthPage)
 const ClientAuthPage = lazy(() => import("@/pages/client/ClientAuthPage"));
-const UnifiedDashboard = lazy(() => import("@/pages/client/UnifiedDashboard"));
+
 
 export const publicRoutes = (
   <>
@@ -51,11 +51,9 @@ export const publicRoutes = (
     <Route path="/entrar" element={
       <ProtectedProviders><ClientAuthPage /></ProtectedProviders>
     } />
-    <Route path="/minha-conta" element={
-      <ProtectedProviders><UnifiedDashboard /></ProtectedProviders>
-    } />
-    {/* Legacy redirects */}
+    {/* Redirect legacy dashboard to unified /app */}
+    <Route path="/minha-conta" element={<Navigate to="/app" replace />} />
     <Route path="/cliente/login" element={<Navigate to="/entrar" replace />} />
-    <Route path="/cliente" element={<Navigate to="/minha-conta" replace />} />
+    <Route path="/cliente" element={<Navigate to="/app" replace />} />
   </>
 );

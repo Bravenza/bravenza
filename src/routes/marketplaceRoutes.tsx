@@ -1,35 +1,23 @@
 import { lazy } from "react";
-import { Route } from "react-router-dom";
+import { Route, Navigate } from "react-router-dom";
 import { ProtectedProviders } from "@/components/providers/ProtectedProviders";
 
-const MarketplaceLayout = lazy(() => import("@/pages/marketplace/MarketplaceLayout"));
-const MarketplaceHomePage = lazy(() => import("@/pages/marketplace/MarketplaceHomePage"));
-const MarketplaceDropsPage = lazy(() => import("@/pages/marketplace/MarketplaceDropsPage"));
 const MarketplaceCheckoutPage = lazy(() => import("@/pages/marketplace/MarketplaceCheckoutPage"));
-const MarketplaceOrdersPage2 = lazy(() => import("@/pages/marketplace/MarketplaceOrdersPage2"));
-const MarketplaceFeedPage = lazy(() => import("@/pages/marketplace/MarketplaceFeedPage"));
-const MarketplaceMyStorePage = lazy(() => import("@/pages/marketplace/MarketplaceMyStorePage"));
-const MarketplacePlansPage = lazy(() => import("@/pages/marketplace/MarketplacePlansPage"));
-const MarketplaceFavoritesPage = lazy(() => import("@/pages/marketplace/MarketplaceFavoritesPage"));
-const MarketplaceProfilePage = lazy(() => import("@/pages/marketplace/MarketplaceProfilePage"));
 const ProductDetailPage = lazy(() => import("@/pages/marketplace/ProductDetailPage"));
 const SellerStorefrontPage = lazy(() => import("@/pages/marketplace/SellerStorefrontPage"));
 const DropsArticlePage = lazy(() => import("@/pages/drops/DropsArticlePage"));
 
 export const marketplaceRoutes = (
   <>
-    <Route path="/marketplace" element={
-      <ProtectedProviders><MarketplaceLayout /></ProtectedProviders>
-    }>
-      <Route index element={<MarketplaceHomePage />} />
-      <Route path="pedidos" element={<MarketplaceOrdersPage2 />} />
-      <Route path="feed" element={<MarketplaceFeedPage />} />
-      <Route path="loja" element={<MarketplaceMyStorePage />} />
-      <Route path="planos" element={<MarketplacePlansPage />} />
-      <Route path="drops" element={<MarketplaceDropsPage />} />
-      <Route path="favoritos" element={<MarketplaceFavoritesPage />} />
-      <Route path="perfil" element={<MarketplaceProfilePage />} />
-    </Route>
+    {/* Redirect logged-in marketplace routes to unified /app */}
+    <Route path="/marketplace" element={<Navigate to="/app" replace />} />
+    <Route path="/marketplace/pedidos" element={<Navigate to="/app/pedidos" replace />} />
+    <Route path="/marketplace/feed" element={<Navigate to="/app/feed" replace />} />
+    <Route path="/marketplace/loja" element={<Navigate to="/app/loja" replace />} />
+    <Route path="/marketplace/planos" element={<Navigate to="/app/loja" replace />} />
+    <Route path="/marketplace/drops" element={<Navigate to="/app/drops" replace />} />
+    <Route path="/marketplace/favoritos" element={<Navigate to="/app/favoritos" replace />} />
+    <Route path="/marketplace/perfil" element={<Navigate to="/app/perfil" replace />} />
     <Route path="/marketplace/checkout" element={
       <ProtectedProviders><MarketplaceCheckoutPage /></ProtectedProviders>
     } />
