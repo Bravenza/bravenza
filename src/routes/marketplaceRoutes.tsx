@@ -6,6 +6,7 @@ const MarketplaceCheckoutPage = lazy(() => import("@/pages/marketplace/Marketpla
 const ProductDetailPage = lazy(() => import("@/pages/marketplace/ProductDetailPage"));
 const SellerStorefrontPage = lazy(() => import("@/pages/marketplace/SellerStorefrontPage"));
 const DropsArticlePage = lazy(() => import("@/pages/drops/DropsArticlePage"));
+const BravenzaFullPage = lazy(() => import("@/pages/marketplace/BravenzaFullPage"));
 
 export const marketplaceRoutes = (
   <>
@@ -33,5 +34,6 @@ export const marketplaceRoutes = (
     <Route path="/drops/:postId" element={
       <ProtectedProviders><DropsArticlePage /></ProtectedProviders>
     } />
+    <Route path="/full" element={<BravenzaFullPage />} />
   </>
 );
