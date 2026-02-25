@@ -1,6 +1,7 @@
 import { lazy } from "react";
 import { Route, Navigate } from "react-router-dom";
 import { ProtectedProviders } from "@/components/providers/ProtectedProviders";
+import { RouteWrapper } from "@/components/routing/RouteWrapper";
 
 const MarketplaceCheckoutPage = lazy(() => import("@/pages/marketplace/MarketplaceCheckoutPage"));
 const ProductDetailPage = lazy(() => import("@/pages/marketplace/ProductDetailPage"));
@@ -12,7 +13,9 @@ const SellLandingPage = lazy(() => import("@/pages/marketplace/SellLandingPage")
 export const marketplaceRoutes = (
   <>
     {/* Sell landing page — public */}
-    <Route path="/vender" element={<SellLandingPage />} />
+    <Route path="/vender" element={
+      <RouteWrapper section="Vender"><SellLandingPage /></RouteWrapper>
+    } />
     {/* Redirect logged-in marketplace routes to unified /app */}
     <Route path="/marketplace" element={<Navigate to="/app" replace />} />
     <Route path="/marketplace/pedidos" element={<Navigate to="/app/pedidos" replace />} />
@@ -23,20 +26,32 @@ export const marketplaceRoutes = (
     <Route path="/marketplace/favoritos" element={<Navigate to="/app/favoritos" replace />} />
     <Route path="/marketplace/perfil" element={<Navigate to="/app/perfil" replace />} />
     <Route path="/marketplace/checkout" element={
-      <ProtectedProviders><MarketplaceCheckoutPage /></ProtectedProviders>
+      <ProtectedProviders>
+        <RouteWrapper section="Checkout" skeleton="detail"><MarketplaceCheckoutPage /></RouteWrapper>
+      </ProtectedProviders>
     } />
     <Route path="/marketplace/product/:slug" element={
-      <ProtectedProviders><ProductDetailPage /></ProtectedProviders>
+      <ProtectedProviders>
+        <RouteWrapper section="Produto" skeleton="detail"><ProductDetailPage /></RouteWrapper>
+      </ProtectedProviders>
     } />
     <Route path="/marketplace/:slug" element={
-      <ProtectedProviders><ProductDetailPage /></ProtectedProviders>
+      <ProtectedProviders>
+        <RouteWrapper section="Produto" skeleton="detail"><ProductDetailPage /></RouteWrapper>
+      </ProtectedProviders>
     } />
     <Route path="/marketplace/seller/:sellerId" element={
-      <ProtectedProviders><SellerStorefrontPage /></ProtectedProviders>
+      <ProtectedProviders>
+        <RouteWrapper section="Loja do Vendedor" skeleton="list"><SellerStorefrontPage /></RouteWrapper>
+      </ProtectedProviders>
     } />
     <Route path="/drops/:postId" element={
-      <ProtectedProviders><DropsArticlePage /></ProtectedProviders>
+      <ProtectedProviders>
+        <RouteWrapper section="Artigo" skeleton="detail"><DropsArticlePage /></RouteWrapper>
+      </ProtectedProviders>
     } />
-    <Route path="/full" element={<BravenzaFullPage />} />
+    <Route path="/full" element={
+      <RouteWrapper section="Bravenza"><BravenzaFullPage /></RouteWrapper>
+    } />
   </>
 );

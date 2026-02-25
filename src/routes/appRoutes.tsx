@@ -1,6 +1,7 @@
 import { lazy } from "react";
 import { Route, Navigate } from "react-router-dom";
 import { ProtectedProviders } from "@/components/providers/ProtectedProviders";
+import { RouteWrapper } from "@/components/routing/RouteWrapper";
 
 const AppLayout = lazy(() => import("@/pages/app/AppLayout"));
 
@@ -13,7 +14,7 @@ const MarketplaceFeedPage = lazy(() => import("@/pages/marketplace/MarketplaceFe
 const MarketplaceMyStorePage = lazy(() => import("@/pages/marketplace/MarketplaceMyStorePage"));
 const MarketplaceDropsPage = lazy(() => import("@/pages/marketplace/MarketplaceDropsPage"));
 
-// Wrapper pages for vault sections (reuse existing tabs as standalone)
+// Wrapper pages for vault sections
 const AppVaultPage = lazy(() => import("@/pages/app/AppVaultPage"));
 const AppWishlistPage = lazy(() => import("@/pages/app/AppWishlistPage"));
 const AppDropsPage = lazy(() => import("@/pages/app/AppDropsPage"));
@@ -30,23 +31,23 @@ export const appRoutes = (
     <Route path="/app" element={
       <ProtectedProviders><AppLayout /></ProtectedProviders>
     }>
-      <Route index element={<MarketplaceHomePage />} />
-      <Route path="pedidos" element={<MarketplaceOrdersPage2 />} />
-      <Route path="closet" element={<MarketplaceProfilePage />} />
-      <Route path="loja" element={<MarketplaceMyStorePage />} />
-      <Route path="favoritos" element={<MarketplaceFavoritesPage />} />
-      <Route path="feed" element={<MarketplaceFeedPage />} />
-      <Route path="perfil" element={<MarketplaceProfilePage />} />
-      <Route path="wishlist" element={<AppWishlistPage />} />
-      <Route path="vault" element={<AppVaultPage />} />
-      <Route path="drops" element={<AppDropsPage />} />
-      <Route path="comunidade" element={<AppCommunityPage />} />
-      <Route path="mais" element={<AppMorePage />} />
-      <Route path="notificacoes" element={<AppNotificationsPage />} />
-      <Route path="documentos" element={<AppDocumentsPage />} />
-      <Route path="mensagens" element={<AppMessagesPage />} />
-      <Route path="enderecos" element={<AppAddressesPage />} />
-      <Route path="seguranca" element={<AppSecurityPage />} />
+      <Route index element={<RouteWrapper section="Início" skeleton="dashboard"><MarketplaceHomePage /></RouteWrapper>} />
+      <Route path="pedidos" element={<RouteWrapper section="Pedidos" skeleton="list"><MarketplaceOrdersPage2 /></RouteWrapper>} />
+      <Route path="closet" element={<RouteWrapper section="Closet" skeleton="list"><MarketplaceProfilePage /></RouteWrapper>} />
+      <Route path="loja" element={<RouteWrapper section="Loja" skeleton="list"><MarketplaceMyStorePage /></RouteWrapper>} />
+      <Route path="favoritos" element={<RouteWrapper section="Favoritos" skeleton="list"><MarketplaceFavoritesPage /></RouteWrapper>} />
+      <Route path="feed" element={<RouteWrapper section="Feed" skeleton="feed"><MarketplaceFeedPage /></RouteWrapper>} />
+      <Route path="perfil" element={<RouteWrapper section="Perfil" skeleton="detail"><MarketplaceProfilePage /></RouteWrapper>} />
+      <Route path="wishlist" element={<RouteWrapper section="Wishlist" skeleton="list"><AppWishlistPage /></RouteWrapper>} />
+      <Route path="vault" element={<RouteWrapper section="Vault" skeleton="dashboard"><AppVaultPage /></RouteWrapper>} />
+      <Route path="drops" element={<RouteWrapper section="Drops" skeleton="feed"><AppDropsPage /></RouteWrapper>} />
+      <Route path="comunidade" element={<RouteWrapper section="Comunidade" skeleton="feed"><AppCommunityPage /></RouteWrapper>} />
+      <Route path="mais" element={<RouteWrapper section="Mais"><AppMorePage /></RouteWrapper>} />
+      <Route path="notificacoes" element={<RouteWrapper section="Notificações" skeleton="list"><AppNotificationsPage /></RouteWrapper>} />
+      <Route path="documentos" element={<RouteWrapper section="Documentos" skeleton="list"><AppDocumentsPage /></RouteWrapper>} />
+      <Route path="mensagens" element={<RouteWrapper section="Mensagens" skeleton="list"><AppMessagesPage /></RouteWrapper>} />
+      <Route path="enderecos" element={<RouteWrapper section="Endereços" skeleton="list"><AppAddressesPage /></RouteWrapper>} />
+      <Route path="seguranca" element={<RouteWrapper section="Segurança" skeleton="detail"><AppSecurityPage /></RouteWrapper>} />
     </Route>
   </>
 );
