@@ -59,64 +59,44 @@ export function CartProvider({ cpf, children }: { cpf: string | null; children: 
     if (!cpf) { setItems([]); return; }
     setIsLoading(true);
     try {
+      // Single query using the pre-joined view (replaces 4 sequential queries)
       const { data, error } = await supabase
-        .from("marketplace_cart_items")
-        .select("id, offer_id, product_id, added_at")
+        .from("marketplace_cart_details" as any)
+        .select("*")
         .eq("user_cpf", cpf)
+        .eq("offer_status", "active")
         .order("added_at", { ascending: false });
 
       if (error) throw error;
 
-      if (!data || data.length === 0) {
-        setItems([]);
-        setIsLoading(false);
-        return;
-      }
+      const enriched: CartItem[] = (data || []).map((row: any) => ({
+        id: row.id,
+        offer_id: row.offer_id,
+        product_id: row.product_id,
+        added_at: row.added_at,
+        offer: {
+          id: row.offer_id,
+          price: row.offer_price,
+          size: row.offer_size,
+          condition: row.offer_condition,
+          photos: row.offer_photos,
+          shipping_mode: row.offer_shipping_mode,
+          seller_id: row.offer_seller_id,
+          status: row.offer_status,
+          product: {
+            brand: row.product_brand,
+            model: row.product_model,
+            slug: row.product_slug,
+            images: row.product_images,
+          },
+          seller: {
+            id: row.offer_seller_id,
+            member: row.seller_name ? { client_name: row.seller_name } : undefined,
+          },
+        },
+      }));
 
-      // Fetch offer details
-      const offerIds = data.map(d => d.offer_id);
-      const { data: offers } = await supabase
-        .from("marketplace_offers")
-        .select("id, price, size, condition, photos, shipping_mode, seller_id, status, product_id")
-        .in("id", offerIds);
-
-      // Fetch product details
-      const productIds = [...new Set(data.map(d => d.product_id))];
-      const { data: products } = await supabase
-        .from("marketplace_products")
-        .select("id, brand, model, slug, images")
-        .in("id", productIds);
-
-      // Fetch seller details
-      const sellerIds = [...new Set((offers || []).map(o => o.seller_id))];
-      const { data: sellers } = await supabase
-        .from("vault_seller_profiles")
-        .select("id, member_id")
-        .in("id", sellerIds);
-
-      const memberIds = (sellers || []).map(s => s.member_id);
-      const { data: members } = await supabase
-        .from("vault_members")
-        .select("id, client_name")
-        .in("id", memberIds);
-
-      const enriched: CartItem[] = data.map(item => {
-        const offer = (offers || []).find(o => o.id === item.offer_id);
-        const product = (products || []).find(p => p.id === item.product_id);
-        const seller = (sellers || []).find(s => s.id === offer?.seller_id);
-        const member = (members || []).find(m => m.id === seller?.member_id);
-        return {
-          ...item,
-          offer: offer ? {
-            ...offer,
-            product: product || undefined,
-            seller: seller ? { id: seller.id, member: member ? { client_name: member.client_name } : undefined } : undefined,
-          } : undefined,
-        };
-      });
-
-      // Filter out sold/inactive offers
-      setItems(enriched.filter(i => i.offer?.status === "active"));
+      setItems(enriched);
     } catch (e) {
       console.error("Cart fetch error:", e);
     } finally {
