@@ -17,7 +17,7 @@ export const RelatedProductsSection = memo(function RelatedProductsSection({ cur
 
   const fetchRelated = useCallback(async () => {
     try {
-      const BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub`;
+      const BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-catalog`;
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const headers = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "catalog-products", brand, category });

@@ -167,7 +167,7 @@ function MarketplaceCheckoutPageInner() {
     try {
       const headers = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "freight-quote" });
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub?${params}`, {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-discover?${params}`, {
         method: "POST",
         headers,
         body: JSON.stringify({

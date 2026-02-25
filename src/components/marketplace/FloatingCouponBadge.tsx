@@ -24,7 +24,7 @@ export function FloatingCouponBadge({ productId }: FloatingCouponBadgeProps) {
       try {
         const h = await getMarketplaceHeaders();
         const params = new URLSearchParams({ action: "product-coupons", product_id: productId });
-        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub?${params}`, { headers: h });
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-discover?${params}`, { headers: h });
         const data = await res.json();
         setCoupons(data.coupons || []);
       } catch {
