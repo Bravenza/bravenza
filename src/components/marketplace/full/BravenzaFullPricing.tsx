@@ -1,53 +1,78 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, ArrowRight, TrendingDown } from "lucide-react";
+import { CheckCircle2, ArrowRight, TrendingDown, Sparkles } from "lucide-react";
 
 export function BravenzaFullPricing() {
   return (
-    <section className="py-16 md:py-24 bg-card/30">
-      <div className="container mx-auto px-4 sm:px-6">
+    <section className="py-20 md:py-32 relative overflow-hidden">
+      {/* Decorative */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/5 blur-[100px]" />
+
+      <div className="container mx-auto px-4 sm:px-6 relative">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="max-w-lg mx-auto text-center"
+          className="text-center mb-12"
         >
-          <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">
+          <span className="text-primary text-sm font-semibold tracking-widest uppercase mb-3 block">Preço</span>
+          <h2 className="font-display text-3xl md:text-5xl font-bold mb-4">
             Transparente e <span className="text-gradient-gold">simples</span>
           </h2>
+          <p className="text-muted-foreground max-w-md mx-auto text-lg">
+            Você só paga quando seu sneaker é vendido. Sem surpresas.
+          </p>
+        </motion.div>
 
-          <div className="rounded-2xl border border-primary/20 bg-card p-8 md:p-10">
-            <p className="text-5xl md:text-6xl font-display font-bold text-primary mb-2">22%</p>
-            <p className="text-muted-foreground mb-4">sobre o valor da venda</p>
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-md mx-auto"
+        >
+          <div className="relative rounded-3xl border-2 border-primary/30 bg-card p-8 md:p-10 shadow-xl shadow-primary/5">
+            {/* Top badge */}
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+              <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-lg">
+                <Sparkles className="h-3.5 w-3.5" />
+                Melhor custo do mercado
+              </div>
+            </div>
 
-            {/* Competitive advantage callout */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-6">
+            <div className="text-center mb-6 pt-2">
+              <p className="text-6xl md:text-7xl font-display font-bold text-primary mb-1">22%</p>
+              <p className="text-muted-foreground text-lg">sobre o valor da venda</p>
+            </div>
+
+            {/* Competitive advantage */}
+            <div className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent/10 border border-accent/20 mb-8">
               <TrendingDown className="h-4 w-4 text-accent-foreground" />
-              <span className="text-xs font-medium text-accent-foreground">
+              <span className="text-sm font-medium text-accent-foreground">
                 Até 7% mais barato que concorrentes
               </span>
             </div>
 
-            <ul className="text-sm text-left space-y-3 mb-8">
+            <ul className="space-y-3.5 mb-8">
               {[
                 "Sem taxas antecipadas ou mensalidades",
-                "Inclui autenticação, fotos e anúncio",
-                "Inclui envio ao comprador",
+                "Inclui autenticação com laudo digital",
+                "Fotografia profissional de catálogo",
+                "Anúncio otimizado pela equipe",
+                "Envio ao comprador incluso",
                 "Pagamento liberado automaticamente",
-                "Você só paga quando vende",
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span>{item}</span>
+                <li key={i} className="flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">{item}</span>
                 </li>
               ))}
             </ul>
 
             <Link to="/app/loja">
-              <Button className="w-full btn-gold" size="lg">
+              <Button className="w-full btn-gold text-base" size="xl">
                 Começar agora
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
           </div>
