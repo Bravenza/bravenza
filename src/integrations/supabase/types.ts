@@ -5916,6 +5916,8 @@ export type Database = {
           is_active: boolean
           last_update_at: string
           match_room_id: string
+          progress_message: string
+          progress_percentage: number
           search_id: string
           started_at: string
           status: Database["public"]["Enums"]["search_status"]

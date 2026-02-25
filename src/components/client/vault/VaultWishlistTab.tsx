@@ -4,6 +4,7 @@ import {
   Search, Plus, Play, Clock, CheckCircle2, 
   AlertCircle, ChevronRight, MessageSquare, ArrowLeft
 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { MatchRoomView } from "./MatchRoomView";
+import { CurationProgressTracker } from "@/components/tracking/CurationProgressTracker";
 
 interface WishlistItem {
   id: string;
@@ -43,6 +45,8 @@ interface SearchItem {
   has_match_room: boolean;
   match_room_id: string | null;
   decision_status: string | null;
+  progress_message?: string | null;
+  progress_percentage?: number | null;
 }
 
 interface VaultWishlistTabProps {
@@ -496,41 +500,59 @@ export function VaultWishlistTab({ clientCpf }: VaultWishlistTabProps) {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                     >
-                      <Card 
-                        className={hasMatchRoom ? "cursor-pointer hover:border-primary/50 transition" : ""}
-                        onClick={() => {
-                          if (hasMatchRoom) {
-                            setSelectedMatchRoom({ 
-                              id: search.match_room_id!, 
-                              title: search.wishlist_title 
-                            });
-                          }
-                        }}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-medium truncate">{search.wishlist_title}</h3>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
-                                {hasMatchRoom && (
-                                  <Badge variant="outline" className="border-primary text-primary animate-pulse">
-                                    <MessageSquare className="h-3 w-3 mr-1" />
-                                    Ver opções
-                                  </Badge>
+                      <Collapsible>
+                        <Card 
+                          className={hasMatchRoom ? "cursor-pointer hover:border-primary/50 transition" : ""}
+                        >
+                          <CardContent className="p-4">
+                            <CollapsibleTrigger asChild>
+                              <div 
+                                className="flex items-center justify-between gap-4 cursor-pointer"
+                                onClick={(e) => {
+                                  if (hasMatchRoom) {
+                                    e.stopPropagation();
+                                    setSelectedMatchRoom({ 
+                                      id: search.match_room_id!, 
+                                      title: search.wishlist_title 
+                                    });
+                                  }
+                                }}
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="font-medium truncate">{search.wishlist_title}</h3>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
+                                    {hasMatchRoom && (
+                                      <Badge variant="outline" className="border-primary text-primary animate-pulse">
+                                        <MessageSquare className="h-3 w-3 mr-1" />
+                                        Ver opções
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                {hasMatchRoom ? (
+                                  <Button size="sm" variant="ghost">
+                                    <ChevronRight className="h-5 w-5" />
+                                  </Button>
+                                ) : (
+                                  <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform [[data-state=open]_&]:rotate-90" />
                                 )}
                               </div>
-                            </div>
-                            {hasMatchRoom ? (
-                              <Button size="sm" variant="ghost">
-                                <ChevronRight className="h-5 w-5" />
-                              </Button>
-                            ) : (
-                              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
+                            </CollapsibleTrigger>
+
+                            <CollapsibleContent>
+                              <div className="mt-4 pt-4 border-t border-border/20">
+                                <CurationProgressTracker
+                                  searchId={search.search_id}
+                                  initialStatus={search.status as any}
+                                  initialProgressMessage={search.progress_message}
+                                  initialProgressPercentage={search.progress_percentage}
+                                />
+                              </div>
+                            </CollapsibleContent>
+                          </CardContent>
+                        </Card>
+                      </Collapsible>
                     </motion.div>
                   );
                 })
