@@ -74,45 +74,47 @@ interface MenuGroup {
 const getMenuGroups = (isVaultMember: boolean): MenuGroup[] => [
   {
     items: [
-      { path: "/app/pedidos", label: "Pedidos", icon: Package },
+      { path: "/app/pedidos", label: "Compras", icon: Package },
       { path: "/app/favoritos", label: "Favoritos", icon: Heart },
     ],
   },
   {
-    label: "Vendedor",
     items: [
-      { path: "/vender", label: "Quero Vender", icon: DollarSign, highlight: true },
-      { path: "/app/loja", label: "Minha Loja", icon: Store },
+      { path: "/vender", label: "Quero vender meu item", icon: DollarSign, highlight: true },
+      { path: "/app", label: "Market", icon: Store },
+      { path: "/app/loja", label: "Vendas", icon: Activity },
+    ],
+  },
+  {
+    items: [
+      { path: "/app/closet", label: "Closet", icon: Box },
       { path: "/app/feed", label: "Feed", icon: Activity },
     ],
   },
-  {
-    label: "Minha conta",
-    items: [
-      { path: "/app/closet", label: "Meu Closet", icon: Box },
-      { path: "/app/perfil", label: "Meus Dados", icon: Settings },
-    ],
-  },
   ...(isVaultMember
-    ? [
-        {
-          label: "Vault Club",
-          items: [
-            { path: "/app/wishlist", label: "Wishlist", icon: Star },
-            { path: "/app/vault", label: "Meu Status", icon: Award },
-            { path: "/app/drops", label: "Drops & Intel", icon: Sparkles },
-            { path: "/app/comunidade", label: "Comunidade", icon: Users },
-          ],
-        },
-      ]
+    ? [{
+        items: [
+          { path: "/app/wishlist", label: "Wishlist", icon: Star },
+          { path: "/app/vault", label: "Meu Status", icon: Award },
+          { path: "/app/drops", label: "Drops & Intel", icon: Sparkles },
+          { path: "/app/comunidade", label: "Comunidade", icon: Users },
+        ],
+      }]
     : []),
   {
-    label: "Informações",
     items: [
-      { path: "/faq", label: "Perguntas Frequentes", icon: HelpCircle },
-      { path: "/sobre-autenticidade", label: "Autenticidade", icon: Shield },
-      { path: "/trocas-devolucoes", label: "Trocas e Devoluções", icon: RefreshCw },
+      { path: "/faq", label: "Como a Bravenza funciona?", icon: HelpCircle },
+    ],
+  },
+  {
+    items: [
       { path: "/termos", label: "Termos de Uso", icon: FileText },
+      { path: "/trocas-devolucoes", label: "Trocas e Devoluções", icon: RefreshCw },
+    ],
+  },
+  {
+    items: [
+      { path: "/app/perfil", label: "Configurações", icon: Settings },
     ],
   },
 ];
@@ -392,26 +394,27 @@ export default function AppLayout() {
               <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
             </div>
             <SheetHeader className="px-5 pb-2">
-              <SheetTitle className="text-base flex items-center gap-2.5">
-                <Avatar className="h-8 w-8 border border-primary/30">
-                  <AvatarFallback className="bg-primary/15 text-primary text-[10px] font-bold">{initials}</AvatarFallback>
-                </Avatar>
-                <div className="text-left">
-                  <p className="text-sm font-semibold">{profile?.full_name || "Usuário"}</p>
-                  <p className="text-[10px] text-muted-foreground font-normal">
-                    {cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.$3-**")}
-                  </p>
-                </div>
+              <SheetTitle asChild>
+                <button
+                  onClick={() => { navigate("/app/perfil"); setMoreOpen(false); }}
+                  className="text-base flex items-center gap-2.5 w-full hover:opacity-80 transition-opacity"
+                >
+                  <Avatar className="h-8 w-8 border border-primary/30">
+                    <AvatarFallback className="bg-primary/15 text-primary text-[10px] font-bold">{initials}</AvatarFallback>
+                  </Avatar>
+                  <div className="text-left flex-1">
+                    <p className="text-sm font-semibold">{profile?.full_name || "Usuário"}</p>
+                    <p className="text-[10px] text-muted-foreground font-normal">
+                      {cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.$3-**")}
+                    </p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                </button>
               </SheetTitle>
             </SheetHeader>
             <div className="px-4 pb-6 overflow-y-auto max-h-[calc(80vh-100px)]">
               {menuGroups.map((group, gi) => (
                 <div key={gi} className="py-2 border-b border-border/20 last:border-b-0">
-                  {group.label && (
-                    <p className="px-3 pt-1 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                      {group.label}
-                    </p>
-                  )}
                   {group.items.map(item => (
                     <button
                       key={item.path}
@@ -433,14 +436,14 @@ export default function AppLayout() {
                 </div>
               ))}
 
-              {/* System group */}
-              <div className="pt-3 mt-1">
+              {/* Logout */}
+              <div className="pt-2 mt-1">
                 <button
                   onClick={() => { setMoreOpen(false); handleLogout(); }}
                   className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
                 >
                   <LogOut className="h-5 w-5" />
-                  Sair da conta
+                  Sair
                 </button>
               </div>
             </div>
