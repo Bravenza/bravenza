@@ -63,38 +63,38 @@ verify_jwt = false
 [functions.verify-authenticity]
 verify_jwt = false
 
-[functions.mk-hub]
+[functions.mkv2-hub]
 verify_jwt = false
 
-[functions.mk-offers]
+[functions.mkv2-offers]
 verify_jwt = false
 
-[functions.mk-catalog]
+[functions.mkv2-catalog]
 verify_jwt = false
 
-[functions.mk-engage]
+[functions.mkv2-engage]
 verify_jwt = false
 
-[functions.mk-discover]
+[functions.mkv2-discover]
 verify_jwt = false
 
-[functions.mk-orders]
+[functions.mkv2-orders]
 verify_jwt = false
 
-[functions.mk-order-ops]
+[functions.mkv2-order-ops]
 verify_jwt = false
 
-[functions.mk-fulfill]
+[functions.mkv2-fulfill]
 verify_jwt = false
 
-[functions.mk-seller]
+[functions.mkv2-seller]
 verify_jwt = false
 
-[functions.mk-seller-data]
+[functions.mkv2-seller-data]
 verify_jwt = false
 
-[functions.mk-store]
+[functions.mkv2-store]
 verify_jwt = false
 
-[functions.mk-social]
+[functions.mkv2-social]
 verify_jwt = false
