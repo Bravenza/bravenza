@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, ShieldCheck, Truck, CreditCard, Loader2, MapPin,
   Package, ChevronRight, Clock, AlertCircle, Copy, CheckCircle2,
-  ShoppingCart, Store, Lock,
+  ShoppingCart, Store, Lock, Timer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { MobileSelect } from "@/components/ui/mobile-select";
 import { Logo } from "@/components/Logo";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { cn } from "@/lib/utils";
 import { useClientSession } from "@/hooks/useClientSession";
 import { useMarketplace } from "@/hooks/useMarketplace";
@@ -21,6 +22,7 @@ import { MERCADO_PAGO_RATES } from "@/lib/budget-calculator";
 import { getMarketplaceHeaders } from "@/hooks/marketplace/api";
 import type { CartGroup, CartItem } from "@/hooks/useMarketplaceCart";
 import { CartProvider, useMarketplaceCart } from "@/hooks/useMarketplaceCart";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const BR_STATES = [
@@ -41,10 +43,13 @@ const conditionLabel: Record<string, string> = {
   usado_regular: "Regular",
 };
 
+const fmt = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+
 type Step = "review" | "address" | "freight" | "payment" | "processing" | "success";
 
 // R$20 hub surcharge added to each freight option to cover HUB logistics costs
 const HUB_FREIGHT_SURCHARGE = 20;
+const CHECKOUT_STORAGE_KEY = "bravenza_checkout_state";
 
 const STEPS: { key: Step; label: string; icon: typeof ShoppingCart }[] = [
   { key: "review", label: "Resumo", icon: ShoppingCart },
@@ -61,6 +66,29 @@ interface FreightOption {
   company?: { name: string; picture?: string };
 }
 
+/** Countdown hook for PIX expiration */
+function useCountdown(expiresAt: string | null) {
+  const [remaining, setRemaining] = useState("");
+  const [isExpired, setIsExpired] = useState(false);
+
+  useEffect(() => {
+    if (!expiresAt) return;
+    const target = new Date(expiresAt).getTime();
+    const tick = () => {
+      const diff = target - Date.now();
+      if (diff <= 0) { setIsExpired(true); setRemaining("Expirado"); return; }
+      const m = Math.floor(diff / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setRemaining(`${m}:${s.toString().padStart(2, "0")}`);
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [expiresAt]);
+
+  return { remaining, isExpired };
+}
+
 function MarketplaceCheckoutPageInner() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -68,8 +96,20 @@ function MarketplaceCheckoutPageInner() {
   const cpf = profile?.cpf || null;
   const { createOrder } = useMarketplace(cpf);
   const { removeFromCart } = useMarketplaceCart();
+  const submitLockRef = useRef(false);
 
-  const group: CartGroup | null = location.state?.group || null;
+  // Restore group from location.state or sessionStorage
+  const group: CartGroup | null = (() => {
+    if (location.state?.group) {
+      // Save to session storage for refresh resilience
+      try { sessionStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(location.state.group)); } catch {}
+      return location.state.group;
+    }
+    try {
+      const saved = sessionStorage.getItem(CHECKOUT_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  })();
 
   const [step, setStep] = useState<Step>("review");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,11 +120,13 @@ function MarketplaceCheckoutPageInner() {
   const [freightError, setFreightError] = useState<string | null>(null);
   const [cardFormData, setCardFormData] = useState<UnifiedCardFormData | null>(null);
   const [isCardValid, setIsCardValid] = useState(false);
-  const [processingIndex, setProcessingIndex] = useState(0);
-  const [paymentResults, setPaymentResults] = useState<any[]>([]);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [pixData, setPixData] = useState<{ qr_code?: string; copy_paste?: string } | null>(null);
+  const [pixData, setPixData] = useState<{ qr_code?: string; copy_paste?: string; expiration?: string } | null>(null);
   const [pixCopied, setPixCopied] = useState(false);
+  const [orderCodes, setOrderCodes] = useState<string[]>([]);
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+
+  const { remaining: pixTimer, isExpired: pixExpired } = useCountdown(pixData?.expiration || null);
 
   const [form, setForm] = useState({
     buyer_name: profile?.full_name || "",
@@ -99,6 +141,33 @@ function MarketplaceCheckoutPageInner() {
     address_state: "",
     payment_method: "pix",
   });
+
+  // Load saved addresses
+  useEffect(() => {
+    if (!profile?.user_id) return;
+    supabase
+      .from("client_addresses")
+      .select("*")
+      .eq("user_id", profile.user_id)
+      .order("is_default", { ascending: false })
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setSavedAddresses(data);
+          // Auto-fill with default address
+          const defaultAddr = data.find(a => a.is_default) || data[0];
+          setForm(prev => ({
+            ...prev,
+            address_cep: formatCep(defaultAddr.cep),
+            address_street: defaultAddr.street,
+            address_number: defaultAddr.number,
+            address_complement: defaultAddr.complement || "",
+            address_neighborhood: defaultAddr.neighborhood,
+            address_city: defaultAddr.city,
+            address_state: defaultAddr.state,
+          }));
+        }
+      });
+  }, [profile?.user_id]);
 
   useEffect(() => {
     if (profile) {
@@ -116,6 +185,15 @@ function MarketplaceCheckoutPageInner() {
       navigate("/app", { replace: true });
     }
   }, [group, navigate]);
+
+  // Cleanup session storage on unmount after success
+  useEffect(() => {
+    return () => {
+      if (step === "success") {
+        try { sessionStorage.removeItem(CHECKOUT_STORAGE_KEY); } catch {}
+      }
+    };
+  }, [step]);
 
   const itemsSubtotal = group?.subtotal ?? 0;
   const shippingCost = selectedFreight ? parseFloat(selectedFreight.price) : 0;
@@ -136,6 +214,19 @@ function MarketplaceCheckoutPageInner() {
 
   const updateField = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const applySavedAddress = (addr: any) => {
+    setForm(prev => ({
+      ...prev,
+      address_cep: formatCep(addr.cep),
+      address_street: addr.street,
+      address_number: addr.number,
+      address_complement: addr.complement || "",
+      address_neighborhood: addr.neighborhood,
+      address_city: addr.city,
+      address_state: addr.state,
+    }));
   };
 
   const handleCepChange = async (cep: string) => {
@@ -182,7 +273,6 @@ function MarketplaceCheckoutPageInner() {
       const parsed = await res.json();
       if (parsed.error) throw new Error(parsed.error);
       const opts = (parsed.quotes || []).filter((q: any) => q.price && !q.error);
-      // Filter to only PAC and SEDEX, add hub surcharge
       const pacSedexOnly = opts.filter((q: any) => /pac|sedex/i.test(q.name || q.company?.name || ""));
       const withSurcharge = pacSedexOnly.map((q: any) => ({
         ...q,
@@ -217,23 +307,23 @@ function MarketplaceCheckoutPageInner() {
     fetchFreightQuotes();
   };
 
+  /** Consolidated payment: create all orders first, then one payment */
   const handleSubmitPayment = async () => {
+    // Prevent double-click
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
     setIsSubmitting(true);
     setPaymentError(null);
-    setPaymentResults([]);
     setStep("processing");
-    setProcessingIndex(0);
 
-    const results: any[] = [];
     const address = buildAddressString();
 
-    for (let i = 0; i < group.items.length; i++) {
-      setProcessingIndex(i);
-      const item = group.items[i];
-      if (!item.offer) continue;
+    try {
+      // Step 1: Create all orders
+      const createdOrders: { id: string; order_code: string; item: CartItem }[] = [];
 
-      try {
-        // 1. Create order
+      for (const item of group.items) {
+        if (!item.offer) continue;
         const orderResult = await createOrder({
           listing_id: item.offer.id,
           buyer_name: form.buyer_name,
@@ -241,73 +331,81 @@ function MarketplaceCheckoutPageInner() {
           buyer_phone: form.buyer_phone,
           buyer_address: address,
           payment_method: form.payment_method,
+          shipping_cost: shippingCost / group.items.length, // distribute shipping evenly
         });
 
         if (!orderResult?.id) {
-          results.push({ item, error: "Erro ao criar pedido" });
-          continue;
+          throw new Error(`Erro ao criar pedido para ${item.offer?.product?.brand || "item"}`);
         }
 
-        // 2. Process payment
-        const checkoutBody: Record<string, any> = {
-          order_id: orderResult.id,
-          payment_method: form.payment_method,
-          payer_email: form.buyer_email,
-        };
-
-        if (form.payment_method === "card" && cardFormData) {
-          try {
-            const cardToken = await tokenizeCard(cardFormData);
-            checkoutBody.card_token = cardToken;
-            checkoutBody.installments = cardFormData.installments;
-            checkoutBody.payer_email = cardFormData.email || form.buyer_email;
-            checkoutBody.payer_identification = {
-              type: "CPF",
-              number: cardFormData.identificationNumber.replace(/\D/g, ""),
-            };
-          } catch (tokenErr: any) {
-            results.push({ item, error: tokenErr.message || "Erro no cartão" });
-            continue;
-          }
-        }
-
-        const headers = await getMarketplaceHeaders();
-        const res = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-checkout`,
-          { method: "POST", headers, body: JSON.stringify(checkoutBody) }
-        );
-        const payData = await res.json();
-
-        if (!res.ok || payData.error) {
-          results.push({ item, error: payData.error || "Erro no pagamento" });
-        } else {
-          results.push({ item, ...payData, order: orderResult });
-          // Save first PIX data for display
-          if (form.payment_method === "pix" && payData.pix_copy_paste && !pixData) {
-            setPixData({ qr_code: payData.pix_qr_code, copy_paste: payData.pix_copy_paste });
-          }
-          // Remove from cart on success
-          await removeFromCart(item.offer_id);
-        }
-      } catch (err: any) {
-        results.push({ item, error: err.message || "Erro inesperado" });
+        createdOrders.push({ id: orderResult.id, order_code: orderResult.order_code, item });
       }
-    }
 
-    setPaymentResults(results);
-    const hasError = results.some(r => r.error);
-    if (hasError && results.every(r => r.error)) {
-      setPaymentError("Não foi possível processar nenhum pedido.");
-    } else {
+      // Step 2: Single consolidated payment
+      const checkoutBody: Record<string, any> = {
+        order_ids: createdOrders.map(o => o.id),
+        payment_method: form.payment_method,
+        payer_email: form.buyer_email,
+      };
+
+      if (form.payment_method === "card" && cardFormData) {
+        try {
+          const cardToken = await tokenizeCard(cardFormData);
+          checkoutBody.card_token = cardToken;
+          checkoutBody.installments = cardFormData.installments;
+          checkoutBody.payer_email = cardFormData.email || form.buyer_email;
+          checkoutBody.payer_identification = {
+            type: "CPF",
+            number: cardFormData.identificationNumber.replace(/\D/g, ""),
+          };
+        } catch (tokenErr: any) {
+          throw new Error(tokenErr.message || "Erro ao processar cartão");
+        }
+      }
+
+      const headers = await getMarketplaceHeaders();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-checkout`,
+        { method: "POST", headers, body: JSON.stringify(checkoutBody) }
+      );
+      const payData = await res.json();
+
+      if (!res.ok || payData.error) {
+        throw new Error(payData.error || "Erro no pagamento");
+      }
+
+      // Save PIX data
+      if (form.payment_method === "pix" && payData.pix_copy_paste) {
+        setPixData({
+          qr_code: payData.pix_qr_code,
+          copy_paste: payData.pix_copy_paste,
+          expiration: payData.pix_expiration,
+        });
+      }
+
+      // Save order codes
+      setOrderCodes(payData.order_codes || createdOrders.map(o => o.order_code));
+
+      // Remove items from cart
+      for (const co of createdOrders) {
+        await removeFromCart(co.item.offer_id);
+      }
+
       setStep("success");
+    } catch (err: any) {
+      setPaymentError(err.message || "Erro inesperado no pagamento");
+      // Stay on processing with error - user can retry
+    } finally {
+      setIsSubmitting(false);
+      submitLockRef.current = false;
     }
-    setIsSubmitting(false);
   };
 
   const handleCopyPix = () => {
     if (pixData?.copy_paste) {
       navigator.clipboard.writeText(pixData.copy_paste);
       setPixCopied(true);
+      toast.success("Código PIX copiado!");
       setTimeout(() => setPixCopied(false), 3000);
     }
   };
@@ -410,7 +508,7 @@ function MarketplaceCheckoutPageInner() {
                           <div key={item.id} className="flex gap-3.5 p-3 rounded-xl bg-secondary/30 border border-border/10">
                             <div className="w-[72px] h-[72px] rounded-xl bg-white overflow-hidden shrink-0">
                               {image ? (
-                                <img src={image} alt={name} className="w-full h-full object-contain p-1.5" />
+                                <img src={image} alt={name} className="w-full h-full object-contain p-1.5" loading="lazy" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-2xl opacity-10">👟</div>
                               )}
@@ -428,7 +526,7 @@ function MarketplaceCheckoutPageInner() {
                                 </div>
                               </div>
                               <p className="text-sm font-bold text-primary">
-                                R$ {offer.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                R$ {fmt(offer.price)}
                               </p>
                             </div>
                           </div>
@@ -450,6 +548,30 @@ function MarketplaceCheckoutPageInner() {
                       <MapPin className="h-5 w-5 text-primary" />
                       <h2 className="font-bold text-base">Endereço de entrega</h2>
                     </div>
+
+                    {/* Saved addresses */}
+                    {savedAddresses.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground">Endereços salvos</p>
+                        <div className="flex gap-2 overflow-x-auto pb-1">
+                          {savedAddresses.map(addr => (
+                            <button
+                              key={addr.id}
+                              onClick={() => applySavedAddress(addr)}
+                              className={cn(
+                                "shrink-0 px-3 py-2 rounded-lg border text-left text-xs transition-all",
+                                form.address_cep.replace(/\D/g, "") === addr.cep
+                                  ? "border-primary bg-primary/5"
+                                  : "border-border/30 hover:border-primary/30"
+                              )}
+                            >
+                              <p className="font-medium">{addr.label}</p>
+                              <p className="text-muted-foreground truncate max-w-[180px]">{addr.street}, {addr.number}</p>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="space-y-4">
                       <div>
@@ -591,7 +713,6 @@ function MarketplaceCheckoutPageInner() {
                                     : "border-border/30 hover:border-primary/30"
                                 )}
                               >
-                                {/* Badges */}
                                 <div className="flex items-center gap-2 mb-2">
                                   {isCheapest && (
                                     <Badge className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30 text-[10px] px-2 py-0 h-5">
@@ -607,7 +728,6 @@ function MarketplaceCheckoutPageInner() {
                                     <ShieldCheck className="h-2.5 w-2.5" /> PRO
                                   </Badge>
                                 </div>
-
                                 <div className="flex items-center gap-3">
                                   <Package className="h-5 w-5 text-muted-foreground shrink-0" />
                                   <div className="flex-1 min-w-0">
@@ -629,7 +749,7 @@ function MarketplaceCheckoutPageInner() {
                                     "text-base font-bold whitespace-nowrap",
                                     selectedFreight?.id === opt.id ? "text-primary" : "text-foreground"
                                   )}>
-                                    R$ {parseFloat(opt.price).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                    R$ {fmt(parseFloat(opt.price))}
                                   </p>
                                 </div>
                               </button>
@@ -707,10 +827,12 @@ function MarketplaceCheckoutPageInner() {
                         <MapPin className="h-3.5 w-3.5 text-primary" /> Entrega
                       </p>
                       <p className="text-muted-foreground">{buildAddressString()}</p>
-                      <p className="text-muted-foreground flex items-center gap-1 mt-1">
-                        <Clock className="h-3 w-3" />
-                        Prazo: {selectedFreight?.delivery_time} dia{selectedFreight && selectedFreight.delivery_time !== 1 ? "s" : ""} útei{selectedFreight && selectedFreight.delivery_time !== 1 ? "s" : ""}
-                      </p>
+                      {selectedFreight && (
+                        <p className="text-muted-foreground flex items-center gap-1 mt-1">
+                          <Clock className="h-3 w-3" />
+                          Frete: R$ {fmt(parseFloat(selectedFreight.price))} · {selectedFreight.name || selectedFreight.company?.name}
+                        </p>
+                      )}
                     </div>
 
                     {/* Trust */}
@@ -723,15 +845,17 @@ function MarketplaceCheckoutPageInner() {
                       <Button variant="outline" onClick={() => setStep("freight")} className="gap-1.5 rounded-xl">
                         <ArrowLeft className="h-4 w-4" /> Voltar
                       </Button>
-                      <Button
+                      <LoadingButton
+                        loading={isSubmitting}
                         onClick={handleSubmitPayment}
                         disabled={isSubmitting || (form.payment_method === "card" && !isCardValid)}
                         className="flex-1 btn-gold gap-2 h-12 text-sm font-bold rounded-xl"
                         size="lg"
+                        loadingText="Processando..."
                       >
-                        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
-                        {`Pagar — R$ ${displayTotalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
-                      </Button>
+                        <Lock className="h-4 w-4" />
+                        {`Pagar — R$ ${fmt(displayTotalPrice)}`}
+                      </LoadingButton>
                     </div>
                   </div>
                 )}
@@ -739,18 +863,23 @@ function MarketplaceCheckoutPageInner() {
                 {/* ===== PROCESSING ===== */}
                 {step === "processing" && (
                   <div className="bg-background rounded-2xl border border-border/20 p-8 flex flex-col items-center text-center">
-                    <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-                    <h2 className="font-bold text-lg mb-1">Processando pagamento</h2>
-                    <p className="text-sm text-muted-foreground">
-                      Item {processingIndex + 1} de {group.items.length}
-                    </p>
-                    {paymentError && (
-                      <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-xl text-sm text-destructive">
-                        {paymentError}
-                        <Button variant="outline" size="sm" className="mt-2" onClick={() => setStep("payment")}>
+                    {paymentError ? (
+                      <>
+                        <AlertCircle className="h-12 w-12 text-destructive/60 mb-4" />
+                        <h2 className="font-bold text-lg mb-1">Erro no pagamento</h2>
+                        <p className="text-sm text-muted-foreground mb-4">{paymentError}</p>
+                        <Button variant="outline" onClick={() => { setPaymentError(null); setStep("payment"); }}>
                           Tentar novamente
                         </Button>
-                      </div>
+                      </>
+                    ) : (
+                      <>
+                        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+                        <h2 className="font-bold text-lg mb-1">Processando pagamento</h2>
+                        <p className="text-sm text-muted-foreground">
+                          {group.items.length} {group.items.length === 1 ? "item" : "itens"} sendo processado{group.items.length !== 1 ? "s" : ""}...
+                        </p>
+                      </>
                     )}
                   </div>
                 )}
@@ -771,18 +900,36 @@ function MarketplaceCheckoutPageInner() {
                         {form.payment_method === "pix" ? "PIX gerado!" : "Pagamento aprovado!"}
                       </h2>
                       <p className="text-sm text-muted-foreground">
-                        {paymentResults.filter(r => !r.error).length} pedido{paymentResults.filter(r => !r.error).length !== 1 ? "s" : ""} criado{paymentResults.filter(r => !r.error).length !== 1 ? "s" : ""}
+                        {orderCodes.length} pedido{orderCodes.length !== 1 ? "s" : ""} criado{orderCodes.length !== 1 ? "s" : ""} — pagamento único consolidado
                       </p>
                     </div>
 
-                    {/* PIX data */}
+                    {/* PIX data with timer */}
                     {form.payment_method === "pix" && pixData?.copy_paste && (
                       <div className="space-y-3">
-                        {pixData.qr_code && (
-                          <div className="flex justify-center">
-                            <img src={`data:image/png;base64,${pixData.qr_code}`} alt="QR Code PIX" className="w-48 h-48 rounded-xl border border-border/20" />
+                        {/* Timer */}
+                        {pixData.expiration && (
+                          <div className={cn(
+                            "flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm font-medium border",
+                            pixExpired
+                              ? "bg-destructive/10 text-destructive border-destructive/20"
+                              : "bg-accent/50 text-accent-foreground border-accent/30"
+                          )}>
+                            <Timer className="h-4 w-4" />
+                            {pixExpired ? "PIX expirado — gere um novo" : `Expira em ${pixTimer}`}
                           </div>
                         )}
+
+                        {pixData.qr_code && (
+                          <div className="flex justify-center">
+                            <img
+                              src={`data:image/png;base64,${pixData.qr_code}`}
+                              alt="QR Code PIX"
+                              className="w-48 h-48 rounded-xl border border-border/20"
+                            />
+                          </div>
+                        )}
+
                         <div className="relative">
                           <Input
                             readOnly
@@ -800,32 +947,22 @@ function MarketplaceCheckoutPageInner() {
                           </Button>
                         </div>
                         <p className="text-xs text-center text-muted-foreground">
-                          ⚠️ Pague todos os PIX para confirmar seus pedidos. Cada item gera um pagamento separado.
+                          ✅ Pagamento único para todos os itens. Escaneie o QR Code ou copie o código PIX.
                         </p>
                       </div>
                     )}
 
                     {/* Order codes */}
                     <div className="space-y-2">
-                      {paymentResults.filter(r => !r.error).map((r, i) => (
+                      {orderCodes.map((code, i) => (
                         <div key={i} className="flex items-center justify-between p-3 bg-secondary/30 rounded-xl border border-border/10">
                           <div className="flex items-center gap-2.5">
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
                             <span className="text-sm font-medium">
-                              {r.item?.offer?.product ? `${r.item.offer.product.brand} ${r.item.offer.product.model}` : "Item"}
+                              {group.items[i]?.offer?.product ? `${group.items[i].offer!.product!.brand} ${group.items[i].offer!.product!.model}` : "Item"}
                             </span>
                           </div>
-                          <Badge variant="outline" className="text-[10px]">
-                            {r.order?.order_code || "—"}
-                          </Badge>
-                        </div>
-                      ))}
-                      {paymentResults.filter(r => r.error).map((r, i) => (
-                        <div key={`err-${i}`} className="flex items-center justify-between p-3 bg-destructive/5 rounded-xl border border-destructive/10">
-                          <div className="flex items-center gap-2.5">
-                            <AlertCircle className="h-4 w-4 text-destructive" />
-                            <span className="text-sm text-destructive">{r.error}</span>
-                          </div>
+                          <Badge variant="outline" className="text-[10px]">{code}</Badge>
                         </div>
                       ))}
                     </div>
@@ -869,7 +1006,7 @@ function MarketplaceCheckoutPageInner() {
                       <div key={item.id} className="flex items-center gap-2.5 text-sm">
                         <span className="flex-1 truncate text-muted-foreground">{name} ({offer.size})</span>
                         <span className="font-medium whitespace-nowrap">
-                          R$ {offer.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          R$ {fmt(offer.price)}
                         </span>
                       </div>
                     );
@@ -881,12 +1018,12 @@ function MarketplaceCheckoutPageInner() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-muted-foreground">
                     <span>Subtotal ({group.items.length} {group.items.length === 1 ? "item" : "itens"})</span>
-                    <span>R$ {itemsSubtotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                    <span>R$ {fmt(itemsSubtotal)}</span>
                   </div>
                   {shippingCost > 0 ? (
                     <div className="flex justify-between text-muted-foreground">
                       <span className="flex items-center gap-1"><Truck className="h-3 w-3" /> Frete</span>
-                      <span>R$ {shippingCost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                      <span>R$ {fmt(shippingCost)}</span>
                     </div>
                   ) : step !== "review" && (
                     <div className="flex justify-between text-muted-foreground/50">
@@ -897,7 +1034,7 @@ function MarketplaceCheckoutPageInner() {
                   {cardInterestRate > 0 && (
                     <div className="flex justify-between text-muted-foreground">
                       <span>Juros cartão</span>
-                      <span>R$ {(displayTotalPrice - baseTotalPrice).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                      <span>R$ {fmt(displayTotalPrice - baseTotalPrice)}</span>
                     </div>
                   )}
                 </div>
@@ -907,7 +1044,7 @@ function MarketplaceCheckoutPageInner() {
                 <div className="flex justify-between items-baseline">
                   <span className="font-bold">Total</span>
                   <span className="text-xl font-black text-primary">
-                    R$ {displayTotalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    R$ {fmt(displayTotalPrice)}
                   </span>
                 </div>
 
@@ -933,7 +1070,7 @@ function MarketplaceCheckoutPageInner() {
             <div className="flex justify-between items-baseline">
               <span className="text-sm text-muted-foreground">{group.items.length} {group.items.length === 1 ? "item" : "itens"} · {group.sellerName}</span>
               <span className="text-lg font-black text-primary">
-                R$ {displayTotalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                R$ {fmt(displayTotalPrice)}
               </span>
             </div>
             {shippingCost === 0 && step !== "review" && (

@@ -1,5 +1,5 @@
-// Marketplace Checkout — Processes PIX or Card payments via MercadoPago
-// Calculates platform fee (split) and escrow hold
+// Marketplace Checkout — Consolidated payment for multiple orders
+// Supports PIX or Card via MercadoPago Transparent Checkout
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -33,7 +33,7 @@ const MP_RATES: Record<number, number> = {
   7: 0.1672, 8: 0.1673, 9: 0.1969, 10: 0.2065, 11: 0.2066, 12: 0.2211,
 };
 
-/** Calculate card total with interest: amount / (1 - rate), rounded to 2 decimals */
+/** Calculate card total with interest: amount / (1 - rate) */
 function calcCardTotal(baseAmount: number, installments: number): number {
   const rate = MP_RATES[installments] || 0;
   if (rate === 0) return baseAmount;
@@ -52,34 +52,51 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     const {
+      // Support both single order_id and array of order_ids
       order_id,
+      order_ids: rawOrderIds,
       payment_method, // "pix" | "card"
-      // Card-specific
       card_token,
       installments,
       payer_email,
       payer_identification,
     } = body;
 
-    if (!order_id || !payment_method) {
-      return json({ error: "order_id e payment_method são obrigatórios" }, 400);
+    // Normalize to array
+    const orderIds: string[] = rawOrderIds || (order_id ? [order_id] : []);
+    if (orderIds.length === 0 || !payment_method) {
+      return json({ error: "order_ids e payment_method são obrigatórios" }, 400);
     }
 
-    // Fetch order
-    const { data: order, error: orderErr } = await sb
+    // Fetch all orders
+    const { data: orders, error: ordersErr } = await sb
       .from("vault_marketplace_orders")
       .select("*, listing:vault_marketplace_listings(title)")
-      .eq("id", order_id)
-      .single();
+      .in("id", orderIds);
 
-    if (orderErr || !order) return json({ error: "Pedido não encontrado" }, 404);
-    if (order.status !== "pending_payment") {
-      return json({ error: "Pedido já foi pago ou cancelado" }, 400);
+    if (ordersErr || !orders || orders.length === 0) {
+      return json({ error: "Pedidos não encontrados" }, 404);
     }
 
-    const totalAmount = (order.sale_price || 0) + (order.shipping_cost || 0) + (order.authentication_fee || 0);
-    const productName = order.listing?.title || "Sneaker Marketplace";
-    const description = `Bravenza MKT — ${order.order_code} — ${productName}`;
+    // Validate all are pending_payment
+    const invalidOrders = orders.filter(o => o.status !== "pending_payment");
+    if (invalidOrders.length > 0) {
+      return json({
+        error: `Pedido(s) ${invalidOrders.map(o => o.order_code).join(", ")} já foi/foram pago(s) ou cancelado(s)`,
+      }, 400);
+    }
+
+    // Calculate consolidated total
+    const totalAmount = orders.reduce((sum, o) => {
+      return sum + (o.sale_price || 0) + (o.shipping_cost || 0) + (o.authentication_fee || 0);
+    }, 0);
+
+    const orderCodes = orders.map(o => o.order_code).join("+");
+    const productNames = orders.map(o => o.listing?.title || "Sneaker").join(", ");
+    const description = `Bravenza MKT — ${orderCodes}`;
+
+    // Build consolidated external_reference: MKT-CODE1+CODE2-method
+    const externalRef = `MKT-${orderCodes}-${payment_method === "card" ? "card" : "pix"}`;
 
     let paymentResult: any;
 
@@ -88,30 +105,31 @@ Deno.serve(async (req) => {
       const pixPayload = {
         transaction_amount: totalAmount,
         payment_method_id: "pix",
-        description,
+        description: description.slice(0, 256),
         payer: {
-          email: payer_email || order.buyer_email || "cliente@bravenza.com",
+          email: payer_email || orders[0].buyer_email || "cliente@bravenza.com",
         },
         statement_descriptor: "BRAVENZA MKT",
-        external_reference: `MKT-${order.order_code}-pix`,
+        external_reference: externalRef,
         notification_url: `${supabaseUrl}/functions/v1/mercadopago-webhook`,
         metadata: {
-          order_id: order.id,
-          order_code: order.order_code,
+          order_ids: orderIds,
+          order_codes: orders.map(o => o.order_code),
           source: "marketplace",
-          fee_amount: order.fee_amount,
-          seller_payout: order.seller_payout,
+          consolidated: true,
+          total_fee: orders.reduce((s, o) => s + (o.fee_amount || 0), 0),
+          total_seller_payout: orders.reduce((s, o) => s + (o.seller_payout || 0), 0),
         },
       };
 
-      console.log("[mk-checkout] Creating PIX payment:", order.order_code, totalAmount);
+      console.log("[mk-checkout] Creating consolidated PIX:", orderCodes, totalAmount);
 
       const res = await fetch("https://api.mercadopago.com/v1/payments", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${mpToken}`,
-          "X-Idempotency-Key": `mkt-${order.id}-pix-${Date.now()}`,
+          "X-Idempotency-Key": `mkt-consolidated-${orderIds.sort().join("-")}-pix-${Date.now()}`,
         },
         body: JSON.stringify(pixPayload),
       });
@@ -122,12 +140,14 @@ Deno.serve(async (req) => {
         return json({ error: "Erro ao gerar PIX. Tente novamente." }, 400);
       }
 
-      // Save PIX data on order
-      await sb.from("vault_marketplace_orders").update({
-        mp_payment_id: paymentResult.id?.toString(),
-        payment_method: "pix",
-        pix_transaction_id: paymentResult.id?.toString(),
-      }).eq("id", order.id);
+      // Save PIX payment ID on all orders
+      for (const order of orders) {
+        await sb.from("vault_marketplace_orders").update({
+          mp_payment_id: paymentResult.id?.toString(),
+          payment_method: "pix",
+          pix_transaction_id: paymentResult.id?.toString(),
+        }).eq("id", order.id);
+      }
 
       const pixData = paymentResult.point_of_interaction?.transaction_data;
 
@@ -138,11 +158,8 @@ Deno.serve(async (req) => {
         pix_copy_paste: pixData?.qr_code || null,
         pix_expiration: pixData?.expiration_date || null,
         total_amount: totalAmount,
-        split: {
-          seller_payout: order.seller_payout,
-          platform_fee: order.fee_amount,
-          fee_percent: order.fee_percent,
-        },
+        order_count: orders.length,
+        order_codes: orders.map(o => o.order_code),
       });
 
     } else if (payment_method === "card") {
@@ -150,39 +167,39 @@ Deno.serve(async (req) => {
       if (!card_token) return json({ error: "Token do cartão obrigatório" }, 400);
 
       const validInstallments = Math.min(Math.max(1, installments || 1), 12);
-      // Apply interest for card payments (same rates as Bravenza)
       const cardTotalAmount = calcCardTotal(totalAmount, validInstallments);
 
       const cardPayload = {
         transaction_amount: cardTotalAmount,
         token: card_token,
-        description,
+        description: description.slice(0, 256),
         installments: validInstallments,
         payment_method_id: "credit_card",
         payer: {
-          email: payer_email || order.buyer_email || "cliente@bravenza.com",
+          email: payer_email || orders[0].buyer_email || "cliente@bravenza.com",
           identification: payer_identification,
         },
         statement_descriptor: "BRAVENZA MKT",
-        external_reference: `MKT-${order.order_code}-card`,
+        external_reference: externalRef,
         notification_url: `${supabaseUrl}/functions/v1/mercadopago-webhook`,
         metadata: {
-          order_id: order.id,
-          order_code: order.order_code,
+          order_ids: orderIds,
+          order_codes: orders.map(o => o.order_code),
           source: "marketplace",
-          fee_amount: order.fee_amount,
-          seller_payout: order.seller_payout,
+          consolidated: true,
+          total_fee: orders.reduce((s, o) => s + (o.fee_amount || 0), 0),
+          total_seller_payout: orders.reduce((s, o) => s + (o.seller_payout || 0), 0),
         },
       };
 
-      console.log("[mk-checkout] Creating card payment:", order.order_code, `base=${totalAmount}`, `total=${cardTotalAmount}`, `${validInstallments}x`);
+      console.log("[mk-checkout] Creating consolidated card:", orderCodes, `base=${totalAmount}`, `total=${cardTotalAmount}`, `${validInstallments}x`);
 
       const res = await fetch("https://api.mercadopago.com/v1/payments", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${mpToken}`,
-          "X-Idempotency-Key": `mkt-${order.id}-card-${Date.now()}`,
+          "X-Idempotency-Key": `mkt-consolidated-${orderIds.sort().join("-")}-card-${Date.now()}`,
         },
         body: JSON.stringify(cardPayload),
       });
@@ -197,27 +214,33 @@ Deno.serve(async (req) => {
           cc_rejected_insufficient_amount: "Saldo insuficiente",
           cc_rejected_high_risk: "Pagamento recusado por segurança",
           cc_rejected_other_reason: "Cartão recusado",
+          cc_rejected_duplicated_payment: "Pagamento duplicado",
+          cc_rejected_max_attempts: "Limite de tentativas excedido",
+          cc_rejected_card_disabled: "Cartão desabilitado",
         };
         const cause = paymentResult.cause?.[0]?.code;
         return json({ error: errorMessages[cause] || "Erro ao processar cartão" }, 400);
       }
 
-      // Save card payment data
-      await sb.from("vault_marketplace_orders").update({
-        mp_payment_id: paymentResult.id?.toString(),
-        payment_method: "card",
-      }).eq("id", order.id);
+      // Save card payment data on all orders
+      for (const order of orders) {
+        await sb.from("vault_marketplace_orders").update({
+          mp_payment_id: paymentResult.id?.toString(),
+          payment_method: "card",
+        }).eq("id", order.id);
+      }
 
-      // If approved immediately, mark as paid + set protection
+      // If approved immediately, mark all as paid + set protection
       if (paymentResult.status === "approved") {
         const protEnd = calcProtectionEnd();
-        await sb.from("vault_marketplace_orders").update({
-          status: "paid",
-          paid_at: new Date().toISOString(),
-          protection_ends_at: protEnd,
-        }).eq("id", order.id);
-
-        console.log("[mk-checkout] Card approved, order paid:", order.order_code);
+        for (const order of orders) {
+          await sb.from("vault_marketplace_orders").update({
+            status: "paid",
+            paid_at: new Date().toISOString(),
+            protection_ends_at: protEnd,
+          }).eq("id", order.id);
+        }
+        console.log("[mk-checkout] Card approved, all orders paid:", orderCodes);
       }
 
       return json({
@@ -226,11 +249,8 @@ Deno.serve(async (req) => {
         payment_id: paymentResult.id,
         installments: validInstallments,
         total_amount: cardTotalAmount,
-        split: {
-          seller_payout: order.seller_payout,
-          platform_fee: order.fee_amount,
-          fee_percent: order.fee_percent,
-        },
+        order_count: orders.length,
+        order_codes: orders.map(o => o.order_code),
       });
 
     } else {
