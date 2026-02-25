@@ -309,30 +309,44 @@ export default function MarketplaceProfilePage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 pb-28 md:pb-12 space-y-5">
-      {/* Profile Header Card */}
-      <div className="flex items-center gap-4">
-        <div className="relative group">
-          <Avatar className="h-16 w-16 border-2 border-primary/20 cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
-            <AvatarImage src={avatarUrl || undefined} alt={fullName} />
-            <AvatarFallback className="bg-primary/10 text-primary text-lg font-bold">{initials}</AvatarFallback>
-          </Avatar>
-          <div
-            className="absolute inset-0 rounded-full bg-background/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-            onClick={() => avatarInputRef.current?.click()}
-          >
-            {uploadingAvatar ? (
-              <Loader2 className="h-5 w-5 animate-spin text-foreground" />
-            ) : (
-              <Camera className="h-5 w-5 text-foreground" />
-            )}
+      {/* Profile Cover + Header */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/30 bg-card">
+        {/* Cover gradient with BRAVENZA watermark */}
+        <div className="h-28 md:h-36 bg-gradient-to-br from-primary/20 via-primary/10 to-accent/10 relative overflow-hidden">
+          <div className="absolute inset-0 flex items-center justify-center select-none pointer-events-none">
+            <span className="text-[5rem] md:text-[7rem] font-black tracking-[0.2em] text-primary/[0.06] uppercase whitespace-nowrap">
+              BRAVENZA
+            </span>
           </div>
-          <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
         </div>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-black tracking-tight truncate">{fullName || "Meu Perfil"}</h1>
-          <p className="text-sm text-muted-foreground">
-            {cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.$3-**")}
-          </p>
+
+        <div className="px-5 pb-5 -mt-10 relative z-10">
+          <div className="flex items-end gap-4">
+            <div className="relative group">
+              <Avatar className="h-16 w-16 border-4 border-card shadow-lg cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
+                <AvatarImage src={avatarUrl || undefined} alt={fullName} />
+                <AvatarFallback className="bg-primary/10 text-primary text-lg font-bold">{initials}</AvatarFallback>
+              </Avatar>
+              <div
+                className="absolute inset-0 rounded-full bg-background/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                onClick={() => avatarInputRef.current?.click()}
+              >
+                {uploadingAvatar ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-foreground" />
+                ) : (
+                  <Camera className="h-5 w-5 text-foreground" />
+                )}
+              </div>
+              <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+            </div>
+            <div className="flex-1 min-w-0 pb-1">
+              <h1 className="text-xl font-black tracking-tight truncate">{fullName || "Meu Perfil"}</h1>
+              <p className="text-sm text-muted-foreground">
+                {cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.$3-**")}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
