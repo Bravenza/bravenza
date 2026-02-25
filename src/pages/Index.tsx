@@ -6,6 +6,7 @@ import { Helmet } from "react-helmet-async";
 import { LazySection } from "@/components/home/LazySection";
 import { lazy, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SectionErrorBoundary } from "@/components/ui/section-error-boundary";
 
 /** Lightweight skeleton shown while a lazy section's JS chunk loads */
 function SectionSkeleton({ height = "400px" }: { height?: string }) {
@@ -65,89 +66,111 @@ const Index = () => {
           <BrandsCarousel />
           
           {/* Social Proof Bar */}
-          <LazySection minHeight="150px">
-            <Suspense fallback={<SectionSkeleton height="150px" />}>
-              <SocialProofBar />
-            </Suspense>
-          </LazySection>
+          <SectionErrorBoundary section="Social Proof">
+            <LazySection minHeight="150px">
+              <Suspense fallback={<SectionSkeleton height="150px" />}>
+                <SocialProofBar />
+              </Suspense>
+            </LazySection>
+          </SectionErrorBoundary>
           
           {/* Featured Models */}
-          <LazySection minHeight="400px">
-            <Suspense fallback={<SectionSkeleton height="400px" />}>
-              <FeaturedModelsSection />
-            </Suspense>
-          </LazySection>
+          <SectionErrorBoundary section="Modelos em Destaque">
+            <LazySection minHeight="400px">
+              <Suspense fallback={<SectionSkeleton height="400px" />}>
+                <FeaturedModelsSection />
+              </Suspense>
+            </LazySection>
+          </SectionErrorBoundary>
           
           {/* How It Works */}
-          <LazySection minHeight="500px">
-            <Suspense fallback={<SectionSkeleton height="500px" />}>
-              <div id="como-funciona">
-                <HowItWorksSection />
-              </div>
-            </Suspense>
-          </LazySection>
+          <SectionErrorBoundary section="Como Funciona">
+            <LazySection minHeight="500px">
+              <Suspense fallback={<SectionSkeleton height="500px" />}>
+                <div id="como-funciona">
+                  <HowItWorksSection />
+                </div>
+              </Suspense>
+            </LazySection>
+          </SectionErrorBoundary>
           
           {/* Benefits */}
-          <LazySection minHeight="400px">
-            <Suspense fallback={<SectionSkeleton height="400px" />}>
-              <BenefitsSection />
-            </Suspense>
-          </LazySection>
+          <SectionErrorBoundary section="Benefícios">
+            <LazySection minHeight="400px">
+              <Suspense fallback={<SectionSkeleton height="400px" />}>
+                <BenefitsSection />
+              </Suspense>
+            </LazySection>
+          </SectionErrorBoundary>
 
           {/* Marketplace */}
-          <LazySection minHeight="500px">
-            <Suspense fallback={<SectionSkeleton height="500px" />}>
-              <div id="marketplace">
-                <MarketplaceSection />
-              </div>
-            </Suspense>
-          </LazySection>
+          <SectionErrorBoundary section="Marketplace">
+            <LazySection minHeight="500px">
+              <Suspense fallback={<SectionSkeleton height="500px" />}>
+                <div id="marketplace">
+                  <MarketplaceSection />
+                </div>
+              </Suspense>
+            </LazySection>
+          </SectionErrorBoundary>
 
           {/* Vault Club */}
-          <LazySection minHeight="500px">
-            <Suspense fallback={<SectionSkeleton height="500px" />}>
-              <div id="vault-club">
-                <VaultClubSection />
-              </div>
-            </Suspense>
-          </LazySection>
+          <SectionErrorBoundary section="Vault Club">
+            <LazySection minHeight="500px">
+              <Suspense fallback={<SectionSkeleton height="500px" />}>
+                <div id="vault-club">
+                  <VaultClubSection />
+                </div>
+              </Suspense>
+            </LazySection>
+          </SectionErrorBoundary>
           
           {/* Referral */}
-          <LazySection minHeight="400px">
-            <Suspense fallback={<SectionSkeleton height="400px" />}>
-              <div id="indicacao">
-                <ReferralSection />
-              </div>
-            </Suspense>
-          </LazySection>
+          <SectionErrorBoundary section="Indicação">
+            <LazySection minHeight="400px">
+              <Suspense fallback={<SectionSkeleton height="400px" />}>
+                <div id="indicacao">
+                  <ReferralSection />
+                </div>
+              </Suspense>
+            </LazySection>
+          </SectionErrorBoundary>
           
           {/* Reviews */}
-          <LazySection minHeight="300px">
-            <Suspense fallback={<SectionSkeleton height="300px" />}>
-              <FeaturedReviews />
-            </Suspense>
-          </LazySection>
+          <SectionErrorBoundary section="Avaliações">
+            <LazySection minHeight="300px">
+              <Suspense fallback={<SectionSkeleton height="300px" />}>
+                <FeaturedReviews />
+              </Suspense>
+            </LazySection>
+          </SectionErrorBoundary>
           
           {/* Testimonials */}
-          <LazySection minHeight="300px">
-            <Suspense fallback={<SectionSkeleton height="300px" />}>
-              <TestimonialsSection />
-            </Suspense>
-          </LazySection>
+          <SectionErrorBoundary section="Depoimentos">
+            <LazySection minHeight="300px">
+              <Suspense fallback={<SectionSkeleton height="300px" />}>
+                <TestimonialsSection />
+              </Suspense>
+            </LazySection>
+          </SectionErrorBoundary>
           
           {/* FAQ */}
-          <LazySection minHeight="400px">
-            <Suspense fallback={<SectionSkeleton height="400px" />}>
-              <FAQSection />
-            </Suspense>
-          </LazySection>
+          <SectionErrorBoundary section="FAQ">
+            <LazySection minHeight="400px">
+              <Suspense fallback={<SectionSkeleton height="400px" />}>
+                <FAQSection />
+              </Suspense>
+            </LazySection>
+          </SectionErrorBoundary>
           
           {/* Final CTA */}
-          <LazySection minHeight="300px">
-            <Suspense fallback={<SectionSkeleton height="300px" />}>
-              <CTASection />
-            </Suspense>
-          </LazySection>
+          <SectionErrorBoundary section="CTA">
+            <LazySection minHeight="300px">
+              <Suspense fallback={<SectionSkeleton height="300px" />}>
+                <CTASection />
+              </Suspense>
+            </LazySection>
+          </SectionErrorBoundary>
         </main>
 
         <Suspense fallback={null}>

@@ -2,6 +2,7 @@ import { useOutletContext, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Package, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useMarketplace } from "@/hooks/useMarketplace";
 import { MarketplaceOrdersView } from "@/components/client/vault/marketplace/MarketplaceOrdersView";
 
@@ -23,13 +24,13 @@ export default function MarketplaceOrdersPage2() {
 
   if (!isLoggedIn) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-        <Package className="h-16 w-16 mx-auto text-muted-foreground/20 mb-4" />
-        <h2 className="text-xl font-bold mb-2">Faça login para ver seus pedidos</h2>
-        <p className="text-sm text-muted-foreground mb-6">Acesse sua conta para acompanhar suas compras e vendas no marketplace.</p>
-        <Button className="btn-gold" onClick={() => navigate("/entrar")}>
-          Fazer login
-        </Button>
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <EmptyState
+          icon={Package}
+          title="Faça login para ver seus pedidos"
+          description="Acesse sua conta para acompanhar suas compras e vendas no marketplace."
+          action={{ label: "Fazer login", onClick: () => navigate("/entrar"), variant: "premium" }}
+        />
       </div>
     );
   }

@@ -14,6 +14,7 @@ import { SkipToContent } from "@/components/a11y/SkipToContent";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PullToRefresh } from "@/components/PullToRefresh";
+import { PageTransition } from "@/components/PageTransition";
 
 // Route modules
 import { publicRoutes } from "@/routes/publicRoutes";
@@ -68,14 +69,16 @@ const App = () => (
             <AppShell>
             <PullToRefresh>
             <Suspense fallback={<PageLoader />}>
-              <Routes>
-                {publicRoutes}
-                {appRoutes}
-                {marketplaceRoutes}
-                {vaultRoutes}
-                {adminRoutes}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <PageTransition>
+                <Routes>
+                  {publicRoutes}
+                  {appRoutes}
+                  {marketplaceRoutes}
+                  {vaultRoutes}
+                  {adminRoutes}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </PageTransition>
             </Suspense>
             </PullToRefresh>
             </AppShell>
