@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { 
-  Search, Package, Box, Heart, Star, Store, Crown, Bell,
-  Users, Sparkles, Award, Settings, LogOut, Menu,
+  Search, Package, Box, Heart, Star, Store, Crown, Bell, MessageSquare,
+  Users, Sparkles, Award, Settings, LogOut, Menu, FileText as FileTextIcon,
   ShoppingBag, MoreHorizontal, X, Activity, ChevronLeft, HelpCircle, DollarSign,
   ArrowRight, FileText, Shield, RefreshCw, ChevronRight
 } from "lucide-react";
@@ -81,14 +81,16 @@ const getMenuGroups = (isVaultMember: boolean): MenuGroup[] => [
   },
   {
     items: [
-      { path: "/vender", label: "Quero vender meu item", icon: DollarSign, highlight: true },
+      { path: "/vender", label: "Quero vender meu sneaker", icon: DollarSign, highlight: true },
       { path: "/app", label: "Market", icon: Store },
       { path: "/app/loja", label: "Vendas", icon: Activity },
     ],
   },
   {
     items: [
+      { path: "/app/mensagens", label: "Mensagens", icon: MessageSquare },
       { path: "/app/closet", label: "Closet", icon: Box },
+      { path: "/app/documentos", label: "Documentos", icon: FileTextIcon },
       { path: "/app/feed", label: "Feed", icon: Activity },
     ],
   },
