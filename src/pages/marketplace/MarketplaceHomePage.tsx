@@ -2,13 +2,14 @@ import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useSearchParams, useNavigate, useOutletContext } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
-import { Search, ShieldCheck, ArrowRight, ChevronLeft, ChevronRight, TrendingUp, Package } from "lucide-react";
+import { Search, ShieldCheck, ArrowRight, ChevronLeft, ChevronRight, TrendingUp, Package, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { CatalogGridSkeleton } from "@/components/skeletons/MarketplaceSkeleton";
 
 import { useMarketplaceCatalog, type CatalogProduct } from "@/hooks/useMarketplaceCatalog";
+import { useInfiniteCatalog } from "@/hooks/useInfiniteCatalog";
 import { useMarketplaceSeller } from "@/hooks/marketplace";
 import { CatalogProductCard } from "@/components/client/vault/marketplace/CatalogProductCard";
 import { MarketplaceFilters, type MarketplaceFilterValues } from "@/components/client/vault/marketplace/MarketplaceFilters";
@@ -43,6 +44,13 @@ export default function MarketplaceHomePage() {
   const [filters, setFilters] = useState<MarketplaceFilterValues>({ sort: "recent", search: initialSearch || undefined });
   const [showFullCatalog, setShowFullCatalog] = useState(!!initialSearch);
 
+  // Infinite query for the full catalog view
+  const infiniteQuery = useInfiniteCatalog(
+    showFullCatalog ? { search: filters.search, brand: filters.brand, category: filters.condition } : { search: "__disabled__" }
+  );
+  const infiniteProducts = infiniteQuery.data?.pages.flatMap(p => p.products) ?? [];
+  const infiniteTotal = infiniteQuery.data?.pages[0]?.total ?? 0;
+
   useEffect(() => {
     fetchProducts({ search: initialSearch || undefined });
   }, [initialSearch, fetchProducts]);
@@ -57,24 +65,18 @@ export default function MarketplaceHomePage() {
 
   const handleSearch = () => {
     setShowFullCatalog(true);
-    fetchProducts({
-      search: filters.search,
-      brand: filters.brand,
-      category: filters.condition,
-    });
   };
 
   const handleBrandClick = (brand: string) => {
     setFilters(f => ({ ...f, brand, search: undefined }));
     setShowFullCatalog(true);
-    fetchProducts({ brand });
   };
 
   const scrollBrands = (dir: "left" | "right") => {
     brandsScrollRef.current?.scrollBy({ left: dir === "left" ? -200 : 200, behavior: "smooth" });
   };
 
-  // Full catalog / search results view
+  // Full catalog / search results view (infinite scroll)
   if (showFullCatalog || initialSearch) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-6 pb-28 md:pb-12">
@@ -95,31 +97,53 @@ export default function MarketplaceHomePage() {
             currentFilters={filters}
             onApplySearch={(savedFilters) => {
               setFilters(savedFilters as any);
-              fetchProducts(savedFilters);
             }}
           />
         </div>
 
-        {!isLoading && (
+        {!infiniteQuery.isLoading && (
           <p className="text-xs text-muted-foreground mt-4 mb-2">
-            {totalProducts} modelo{totalProducts !== 1 ? "s" : ""} encontrado{totalProducts !== 1 ? "s" : ""}
+            {infiniteTotal} modelo{infiniteTotal !== 1 ? "s" : ""} encontrado{infiniteTotal !== 1 ? "s" : ""}
           </p>
         )}
 
-        {isLoading ? (
+        {infiniteQuery.isLoading ? (
           <CatalogGridSkeleton count={10} />
-        ) : products.length === 0 ? (
+        ) : infiniteProducts.length === 0 ? (
           <div className="py-20 text-center">
             <Package className="h-16 w-16 mx-auto text-muted-foreground/20 mb-4" />
             <h3 className="font-semibold text-lg mb-1">Nenhum modelo encontrado</h3>
             <p className="text-sm text-muted-foreground">Tente ajustar os filtros</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-2">
-            {products.map((product) => (
-              <CatalogProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-2">
+              {infiniteProducts.map((product) => (
+                <CatalogProductCard key={product.id} product={product} />
+              ))}
+            </div>
+
+            {infiniteQuery.hasNextPage && (
+              <div className="text-center mt-8">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="rounded-full gap-2"
+                  onClick={() => infiniteQuery.fetchNextPage()}
+                  disabled={infiniteQuery.isFetchingNextPage}
+                >
+                  {infiniteQuery.isFetchingNextPage ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Carregando...
+                    </>
+                  ) : (
+                    "Carregar mais"
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     );
