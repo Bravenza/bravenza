@@ -45,7 +45,7 @@ export default function MarketplaceHomePage() {
 
   useEffect(() => {
     fetchProducts({ search: initialSearch || undefined });
-  }, [initialSearch]);
+  }, [initialSearch, fetchProducts]);
 
   useEffect(() => {
     if (cpf && cpf !== "visitor") {

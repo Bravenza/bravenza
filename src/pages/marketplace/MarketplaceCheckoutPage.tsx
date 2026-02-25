@@ -1092,8 +1092,27 @@ function MarketplaceCheckoutPageInner() {
 }
 
 export default function MarketplaceCheckoutPage() {
-  const { profile } = useClientSession();
+  const { profile, isLoading, user } = useClientSession();
+  const navigate = useNavigate();
   const cpf = profile?.cpf || null;
+
+  // Auth guard: redirect unauthenticated users
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate("/app?login=true", { replace: true });
+    }
+  }, [isLoading, user, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-secondary/30">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
   return (
     <CartProvider cpf={cpf}>
       <MarketplaceCheckoutPageInner />

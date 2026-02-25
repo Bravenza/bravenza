@@ -61,7 +61,7 @@ export default function MarketplaceLayout() {
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center h-16 gap-4">
               {/* Logo + Brand */}
-              <Link to="/marketplace" className="flex items-center gap-2.5 shrink-0 hover:opacity-80 transition-opacity">
+              <Link to="/app" className="flex items-center gap-2.5 shrink-0 hover:opacity-80 transition-opacity">
                 <Logo size="sm" />
                 <div className="hidden sm:flex items-baseline gap-1.5">
                   <span className="text-xs font-semibold tracking-[0.2em] uppercase text-muted-foreground">Market</span>
