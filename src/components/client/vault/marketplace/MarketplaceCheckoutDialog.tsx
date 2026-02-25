@@ -177,7 +177,7 @@ export function MarketplaceCheckoutDialog({
       const params = new URLSearchParams({ action: "freight-quote" });
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const mkHeaders = await getMarketplaceHeaders();
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub?${params}`, {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-discover?${params}`, {
         method: "POST",
         headers: mkHeaders,
         body: JSON.stringify({

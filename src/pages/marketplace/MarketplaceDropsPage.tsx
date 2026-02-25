@@ -121,7 +121,7 @@ export default function MarketplaceDropsPage() {
     try {
       const h = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "drop-reminders" });
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub?${params}`, { headers: h });
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-discover?${params}`, { headers: h });
       const data = await res.json();
       setReminders(new Set((data.reminders || []).map((r: any) => r.release_key)));
     } catch { /* ignore */ }
@@ -137,7 +137,7 @@ export default function MarketplaceDropsPage() {
     const key = `${release.brand}|${release.model}|${release.release_date}`;
     try {
       const h = await getMarketplaceHeaders();
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub?action=toggle-drop-reminder`, {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-discover?action=toggle-drop-reminder`, {
         method: "POST",
         headers: h,
         body: JSON.stringify({

@@ -2,7 +2,8 @@ import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { getMarketplaceHeaders } from "@/hooks/marketplace/api";
 
-const BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-hub`;
+const BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-catalog`;
+const BASE_ENGAGE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-engage`;
 
 export interface CatalogProduct {
   id: string;
@@ -89,7 +90,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [clientCpf, toast]);
+  }, [toast]);
 
   const fetchProduct = useCallback(async (slug: string) => {
     setIsLoading(true);
@@ -110,7 +111,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [clientCpf, toast]);
+  }, [toast]);
 
   const fetchOffersBySize = useCallback(async (productId: string, size: string) => {
     try {
@@ -125,7 +126,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
       return [];
     }
-  }, [clientCpf, toast]);
+  }, [toast]);
 
   const createProduct = useCallback(async (productData: {
     brand: string;
@@ -150,7 +151,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
       return null;
     }
-  }, [clientCpf, toast]);
+  }, [toast]);
 
   const createOffer = useCallback(async (offerData: {
     product_id: string;
@@ -181,7 +182,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
       return null;
     }
-  }, [clientCpf, toast]);
+  }, [toast]);
 
   const searchProducts = useCallback(async (query: string) => {
     try {
@@ -193,7 +194,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
     } catch {
       return [];
     }
-  }, [clientCpf]);
+  }, []);
 
   // ===== WATCHLIST =====
   const [watchlistStatus, setWatchlistStatus] = useState<{ active: boolean; max_price: number | null }>({ active: false, max_price: null });
@@ -208,7 +209,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
     } catch {
       setWatchlistStatus({ active: false, max_price: null });
     }
-  }, [clientCpf]);
+  }, []);
 
   const toggleWatchlist = useCallback(async (productId: string, size: string, maxPrice?: number | null) => {
     try {
@@ -224,7 +225,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
-  }, [clientCpf, toast]);
+  }, [toast]);
 
   // ===== COMMENTS =====
   const [comments, setComments] = useState<any[]>([]);
@@ -235,7 +236,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
     try {
       const h = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "product-comments", product_id: productId });
-      const res = await fetch(`${BASE}?${params}`, { headers: h });
+      const res = await fetch(`${BASE_ENGAGE}?${params}`, { headers: h });
       const data = await res.json();
       setComments(data.comments || []);
     } catch {
@@ -243,12 +244,12 @@ export function useMarketplaceCatalog(clientCpf: string) {
     } finally {
       setCommentsLoading(false);
     }
-  }, [clientCpf]);
+  }, []);
 
   const submitComment = useCallback(async (productId: string, content: string, parentId?: string) => {
     try {
       const h = await getMarketplaceHeaders();
-      const res = await fetch(`${BASE}?action=product-comment`, {
+      const res = await fetch(`${BASE_ENGAGE}?action=product-comment`, {
         method: "POST",
         headers: h,
         body: JSON.stringify({ product_id: productId, content, parent_id: parentId }),
@@ -260,7 +261,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
       return false;
     }
-  }, [clientCpf, toast]);
+  }, [toast]);
 
   // ===== REVIEWS =====
   const [reviews, setReviews] = useState<any[]>([]);
@@ -273,7 +274,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
     try {
       const h = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "product-reviews", product_id: productId });
-      const res = await fetch(`${BASE}?${params}`, { headers: h });
+      const res = await fetch(`${BASE_ENGAGE}?${params}`, { headers: h });
       const data = await res.json();
       setReviews(data.reviews || []);
       setReviewsAverage(data.average || 0);
@@ -283,12 +284,12 @@ export function useMarketplaceCatalog(clientCpf: string) {
     } finally {
       setReviewsLoading(false);
     }
-  }, [clientCpf]);
+  }, []);
 
   const submitReview = useCallback(async (productId: string, rating: number, comment?: string, details?: { product_quality?: number; authenticity_score?: number; shipping_speed?: number }) => {
     try {
       const h = await getMarketplaceHeaders();
-      const res = await fetch(`${BASE}?action=product-review`, {
+      const res = await fetch(`${BASE_ENGAGE}?action=product-review`, {
         method: "POST",
         headers: h,
         body: JSON.stringify({ product_id: productId, rating, comment, ...details }),
@@ -300,7 +301,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
       return false;
     }
-  }, [clientCpf, toast]);
+  }, [toast]);
 
   // ===== ANALYTICS =====
   const [analytics, setAnalytics] = useState<any>(null);
@@ -311,7 +312,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
     try {
       const h = await getMarketplaceHeaders();
       const params = new URLSearchParams({ action: "product-analytics", product_id: productId });
-      const res = await fetch(`${BASE}?${params}`, { headers: h });
+      const res = await fetch(`${BASE_ENGAGE}?${params}`, { headers: h });
       const data = await res.json();
       setAnalytics(data.analytics || null);
     } catch {
@@ -319,7 +320,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
     } finally {
       setAnalyticsLoading(false);
     }
-  }, [clientCpf]);
+  }, []);
 
   return {
     products,
