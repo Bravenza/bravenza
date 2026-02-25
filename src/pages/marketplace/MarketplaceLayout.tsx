@@ -140,7 +140,7 @@ export default function MarketplaceLayout() {
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => navigate("/marketplace/perfil")}>
-                      <User className="h-4 w-4 mr-2" /> Meus dados
+                      <User className="h-4 w-4 mr-2" /> Meu Closet
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate("/marketplace/pedidos")}>
                       <Package className="h-4 w-4 mr-2" /> Minhas compras
