@@ -501,6 +501,161 @@ export type Database = {
           },
         ]
       }
+      marketplace_consignments: {
+        Row: {
+          admin_notes: string | null
+          brand: string
+          colorway: string | null
+          condition: string
+          created_at: string
+          description: string | null
+          fee_amount: number | null
+          fee_percent: number
+          final_price: number | null
+          has_receipt: boolean
+          hub_photos: string[] | null
+          id: string
+          inspected_at: string | null
+          inspection_notes: string | null
+          inspection_result: string | null
+          instructions_sent_at: string | null
+          laudo_id: string | null
+          listed_at: string | null
+          model: string
+          offer_id: string | null
+          payout_at: string | null
+          payout_released_at: string | null
+          photographed_at: string | null
+          product_id: string | null
+          received_at: string | null
+          rejection_reason: string | null
+          requested_at: string
+          sale_amount: number | null
+          seller_id: string
+          seller_payout: number | null
+          seller_photos: string[] | null
+          shipped_at: string | null
+          size: string
+          size_system: string
+          sold_at: string | null
+          status: string
+          suggested_price: number
+          tracking_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          brand: string
+          colorway?: string | null
+          condition?: string
+          created_at?: string
+          description?: string | null
+          fee_amount?: number | null
+          fee_percent?: number
+          final_price?: number | null
+          has_receipt?: boolean
+          hub_photos?: string[] | null
+          id?: string
+          inspected_at?: string | null
+          inspection_notes?: string | null
+          inspection_result?: string | null
+          instructions_sent_at?: string | null
+          laudo_id?: string | null
+          listed_at?: string | null
+          model: string
+          offer_id?: string | null
+          payout_at?: string | null
+          payout_released_at?: string | null
+          photographed_at?: string | null
+          product_id?: string | null
+          received_at?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          sale_amount?: number | null
+          seller_id: string
+          seller_payout?: number | null
+          seller_photos?: string[] | null
+          shipped_at?: string | null
+          size: string
+          size_system?: string
+          sold_at?: string | null
+          status?: string
+          suggested_price: number
+          tracking_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          brand?: string
+          colorway?: string | null
+          condition?: string
+          created_at?: string
+          description?: string | null
+          fee_amount?: number | null
+          fee_percent?: number
+          final_price?: number | null
+          has_receipt?: boolean
+          hub_photos?: string[] | null
+          id?: string
+          inspected_at?: string | null
+          inspection_notes?: string | null
+          inspection_result?: string | null
+          instructions_sent_at?: string | null
+          laudo_id?: string | null
+          listed_at?: string | null
+          model?: string
+          offer_id?: string | null
+          payout_at?: string | null
+          payout_released_at?: string | null
+          photographed_at?: string | null
+          product_id?: string | null
+          received_at?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          sale_amount?: number | null
+          seller_id?: string
+          seller_payout?: number | null
+          seller_photos?: string[] | null
+          shipped_at?: string | null
+          size?: string
+          size_system?: string
+          sold_at?: string | null
+          status?: string
+          suggested_price?: number
+          tracking_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_consignments_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_consignments_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_offers_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_consignments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_consignments_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "vault_seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_coupons: {
         Row: {
           code: string

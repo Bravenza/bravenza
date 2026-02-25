@@ -3,9 +3,10 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import {
   Store, Package, Megaphone, BarChart3, Tag, TrendingDown, HelpCircle,
-  Plus, ShoppingBag, Rocket, Layout, Lock, Layers, Palette
+  Plus, ShoppingBag, Rocket, Layout, Lock, Layers, Palette, PackageCheck
 } from "lucide-react";
 import { CollectionsManager } from "@/components/marketplace/CollectionsManager";
+import { ConsignmentList } from "@/components/client/vault/marketplace/ConsignmentList";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -156,6 +157,7 @@ export default function MarketplaceMyStorePage() {
       { id: "analytics", label: "Analytics", icon: BarChart3 },
       { id: "cupons", label: "Cupons", icon: Tag },
       { id: "sugestoes", label: "Sugestões", icon: TrendingDown },
+      { id: "full", label: "Bravenza Full", icon: PackageCheck },
     ] : []),
     { id: "como-funciona", label: "Como funciona", icon: HelpCircle },
   ];
@@ -407,6 +409,11 @@ export default function MarketplaceMyStorePage() {
                 </CardContent>
               </Card>
             )
+          )}
+
+          {/* Bravenza Full */}
+          {sellerSubTab === "full" && isSellerApproved && seller?.id && (
+            <ConsignmentList sellerId={seller.id} />
           )}
 
           {/* Como funciona */}
