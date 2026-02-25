@@ -17,12 +17,6 @@ import { ClientNotificationBell } from "@/components/client/ClientNotificationBe
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -142,7 +136,6 @@ export default function AppLayout() {
   const { profile, signOut, isVaultMember } = useClientSession();
   const isMobile = useIsMobile();
   const cpf = profile?.cpf || null;
-  const [moreOpen, setMoreOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const initials = profile?.full_name
@@ -160,7 +153,7 @@ export default function AppLayout() {
   const mainItems = navItems.filter(i => i.group === "main");
   const vaultItems = navItems.filter(i => i.group === "vault");
   const moreItems = navItems.filter(i => i.group === "more");
-  const menuGroups = getMenuGroups(isVaultMember);
+  
 
   return (
     <CartProvider cpf={cpf}>
@@ -353,7 +346,7 @@ export default function AppLayout() {
             <div className="flex items-stretch justify-around">
               {bottomTabs.map(tab => {
                 const active = tab.isMore
-                  ? moreOpen
+                  ? location.pathname.startsWith("/app/mais")
                   : tab.exact
                     ? location.pathname === tab.path
                     : location.pathname.startsWith(tab.path);
@@ -363,10 +356,9 @@ export default function AppLayout() {
                     key={tab.path}
                     onClick={() => {
                       if (tab.isMore) {
-                        setMoreOpen(true);
+                        navigate("/app/mais");
                       } else {
                         navigate(tab.path);
-                        setMoreOpen(false);
                       }
                     }}
                     className={cn(
@@ -390,68 +382,6 @@ export default function AppLayout() {
           </nav>
         )}
 
-        {/* ===== MOBILE "MAIS" SHEET (grouped) ===== */}
-        <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-          <SheetContent side="bottom" className="rounded-t-[20px] border-t border-border/50 p-0 max-h-[80vh]">
-            <div className="flex justify-center pt-3 pb-2">
-              <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
-            </div>
-            <SheetHeader className="px-5 pb-2">
-              <SheetTitle asChild>
-                <button
-                  onClick={() => { navigate("/app/perfil"); setMoreOpen(false); }}
-                  className="text-base flex items-center gap-2.5 w-full hover:opacity-80 transition-opacity"
-                >
-                  <Avatar className="h-8 w-8 border border-primary/30">
-                    <AvatarFallback className="bg-primary/15 text-primary text-[10px] font-bold">{initials}</AvatarFallback>
-                  </Avatar>
-                  <div className="text-left flex-1">
-                    <p className="text-sm font-semibold">{profile?.full_name || "Usuário"}</p>
-                    <p className="text-[10px] text-muted-foreground font-normal">
-                      {cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.$3-**")}
-                    </p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                </button>
-              </SheetTitle>
-            </SheetHeader>
-            <div className="px-4 pb-6 overflow-y-auto max-h-[calc(80vh-100px)]">
-              {menuGroups.map((group, gi) => (
-                <div key={gi} className="py-2 border-b border-border/20 last:border-b-0">
-                  {group.items.map(item => (
-                    <button
-                      key={item.path}
-                      onClick={() => { navigate(item.path); setMoreOpen(false); }}
-                      className={cn(
-                        "flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
-                        isActive(item.path)
-                          ? "bg-primary/10 text-primary"
-                          : item.highlight
-                            ? "text-foreground font-semibold"
-                            : "text-foreground hover:bg-secondary"
-                      )}
-                    >
-                      <item.icon className={cn("h-5 w-5", item.highlight ? "text-primary" : "")} />
-                      <span className="flex-1 text-left">{item.label}</span>
-                      {item.highlight && <ArrowRight className="h-4 w-4 text-primary" />}
-                    </button>
-                  ))}
-                </div>
-              ))}
-
-              {/* Logout */}
-              <div className="pt-2 mt-1">
-                <button
-                  onClick={() => { setMoreOpen(false); handleLogout(); }}
-                  className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
-                >
-                  <LogOut className="h-5 w-5" />
-                  Sair
-                </button>
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
       </div>
     </CartProvider>
   );
