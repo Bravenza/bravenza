@@ -20,6 +20,7 @@ import { publicRoutes } from "@/routes/publicRoutes";
 import { marketplaceRoutes } from "@/routes/marketplaceRoutes";
 import { vaultRoutes } from "@/routes/vaultRoutes";
 import { adminRoutes } from "@/routes/adminRoutes";
+import { appRoutes } from "@/routes/appRoutes";
 
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -69,6 +70,7 @@ const App = () => (
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 {publicRoutes}
+                {appRoutes}
                 {marketplaceRoutes}
                 {vaultRoutes}
                 {adminRoutes}
