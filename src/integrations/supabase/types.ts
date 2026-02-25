@@ -5114,6 +5114,59 @@ export type Database = {
           },
         ]
       }
+      marketplace_product_reviews_public: {
+        Row: {
+          authenticity_score: number | null
+          comment: string | null
+          created_at: string | null
+          id: string | null
+          is_verified_purchase: boolean | null
+          product_id: string | null
+          product_quality: number | null
+          rating: number | null
+          review_photos: string[] | null
+          reviewer_cpf_masked: string | null
+          reviewer_name: string | null
+          shipping_speed: number | null
+        }
+        Insert: {
+          authenticity_score?: number | null
+          comment?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_verified_purchase?: boolean | null
+          product_id?: string | null
+          product_quality?: number | null
+          rating?: number | null
+          review_photos?: string[] | null
+          reviewer_cpf_masked?: never
+          reviewer_name?: string | null
+          shipping_speed?: number | null
+        }
+        Update: {
+          authenticity_score?: number | null
+          comment?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_verified_purchase?: boolean | null
+          product_id?: string | null
+          product_quality?: number | null
+          rating?: number | null
+          review_photos?: string[] | null
+          reviewer_cpf_masked?: never
+          reviewer_name?: string | null
+          shipping_speed?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews_public: {
         Row: {
           admin_response: string | null
@@ -5977,6 +6030,7 @@ export type Database = {
         | { Args: never; Returns: boolean }
         | { Args: { _user_id: string }; Returns: boolean }
       mask_cpf: { Args: { cpf_value: string }; Returns: string }
+      mask_email: { Args: { email: string }; Returns: string }
       record_vault_login: { Args: { p_cpf: string }; Returns: Json }
       reject_budget: {
         Args: { p_reason?: string; p_token: string }
