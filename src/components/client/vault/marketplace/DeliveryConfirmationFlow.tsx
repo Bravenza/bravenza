@@ -329,40 +329,27 @@ export function DeliveryConfirmationFlow({
                   </div>
 
                   {/* Actions */}
-                  <div className="space-y-3 pt-2">
+                  <div className="flex gap-3 pt-2">
+                    <Button
+                      variant="outline"
+                      className="h-12 rounded-2xl text-xs px-4 shrink-0"
+                      onClick={onContactSupport}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-1.5" />
+                      Suporte
+                    </Button>
                     <Button
                       onClick={handleConfirmDelivery}
                       disabled={!allChecked || isSubmitting}
-                      className="w-full h-12 rounded-2xl text-sm font-semibold btn-gold"
+                      className="flex-1 h-12 rounded-2xl text-sm font-semibold btn-gold"
                     >
                       {isSubmitting ? "Confirmando..." : (
                         <>
-                          Tudo certo, confirmar recebimento
+                          Tudo certo, confirmar
                           <ArrowRight className="h-4 w-4 ml-2" />
                         </>
                       )}
                     </Button>
-
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        className="flex-1 h-11 rounded-xl text-xs"
-                        onClick={onContactSupport}
-                      >
-                        <MessageCircle className="h-3.5 w-3.5 mr-1.5" />
-                        Falar com suporte
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        className="flex-1 h-11 rounded-xl text-xs text-muted-foreground"
-                        onClick={() => {
-                          window.open("https://wa.me/5511999999999?text=Preciso%20de%20ajuda%20com%20meu%20pedido%20" + orderCode, "_blank");
-                        }}
-                      >
-                        <HelpCircle className="h-3.5 w-3.5 mr-1.5" />
-                        Preciso de ajuda
-                      </Button>
-                    </div>
                   </div>
                 </motion.div>
               )}
