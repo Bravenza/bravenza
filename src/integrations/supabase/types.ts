@@ -285,7 +285,10 @@ export type Database = {
           id: string
           is_active: boolean | null
           order_index: number | null
+          persona: string | null
           question: string
+          search_vector: unknown
+          tags: string[] | null
           updated_at: string
         }
         Insert: {
@@ -295,7 +298,10 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           order_index?: number | null
+          persona?: string | null
           question: string
+          search_vector?: unknown
+          tags?: string[] | null
           updated_at?: string
         }
         Update: {
@@ -305,7 +311,10 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           order_index?: number | null
+          persona?: string | null
           question?: string
+          search_vector?: unknown
+          tags?: string[] | null
           updated_at?: string
         }
         Relationships: []
@@ -2041,6 +2050,71 @@ export type Database = {
           },
         ]
       }
+      seller_strikes: {
+        Row: {
+          appeal_message: string | null
+          appeal_reviewed_at: string | null
+          appeal_reviewed_by: string | null
+          appeal_status: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          issued_by: string | null
+          order_id: string | null
+          reason: string
+          seller_id: string
+          severity: string
+          strike_type: string
+          suspension_ends_at: string | null
+          suspension_starts_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          appeal_message?: string | null
+          appeal_reviewed_at?: string | null
+          appeal_reviewed_by?: string | null
+          appeal_status?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          issued_by?: string | null
+          order_id?: string | null
+          reason: string
+          seller_id: string
+          severity?: string
+          strike_type: string
+          suspension_ends_at?: string | null
+          suspension_starts_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          appeal_message?: string | null
+          appeal_reviewed_at?: string | null
+          appeal_reviewed_by?: string | null
+          appeal_status?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          issued_by?: string | null
+          order_id?: string | null
+          reason?: string
+          seller_id?: string
+          severity?: string
+          strike_type?: string
+          suspension_ends_at?: string | null
+          suspension_starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_strikes_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "vault_seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           average_shipping_days: number | null
@@ -3379,6 +3453,7 @@ export type Database = {
           buyer_rating: number | null
           buyer_review: string | null
           cancellation_reason: string | null
+          cancellation_window_ends_at: string | null
           cancelled_at: string | null
           contest_window_ends_at: string | null
           created_at: string
@@ -3437,6 +3512,7 @@ export type Database = {
           buyer_rating?: number | null
           buyer_review?: string | null
           cancellation_reason?: string | null
+          cancellation_window_ends_at?: string | null
           cancelled_at?: string | null
           contest_window_ends_at?: string | null
           created_at?: string
@@ -3495,6 +3571,7 @@ export type Database = {
           buyer_rating?: number | null
           buyer_review?: string | null
           cancellation_reason?: string | null
+          cancellation_window_ends_at?: string | null
           cancelled_at?: string | null
           contest_window_ends_at?: string | null
           created_at?: string
@@ -4074,6 +4151,7 @@ export type Database = {
       vault_seller_profiles: {
         Row: {
           account_type: string | null
+          active_strikes_count: number
           avatar_url: string | null
           average_rating: number | null
           bank_name: string | null
@@ -4119,6 +4197,7 @@ export type Database = {
           storefront_tagline: string | null
           storefront_theme: string | null
           support_priority: number
+          suspended_until: string | null
           terms_accepted_at: string | null
           tier: string
           tier_updated_at: string | null
@@ -4129,6 +4208,7 @@ export type Database = {
         }
         Insert: {
           account_type?: string | null
+          active_strikes_count?: number
           avatar_url?: string | null
           average_rating?: number | null
           bank_name?: string | null
@@ -4174,6 +4254,7 @@ export type Database = {
           storefront_tagline?: string | null
           storefront_theme?: string | null
           support_priority?: number
+          suspended_until?: string | null
           terms_accepted_at?: string | null
           tier?: string
           tier_updated_at?: string | null
@@ -4184,6 +4265,7 @@ export type Database = {
         }
         Update: {
           account_type?: string | null
+          active_strikes_count?: number
           avatar_url?: string | null
           average_rating?: number | null
           bank_name?: string | null
@@ -4229,6 +4311,7 @@ export type Database = {
           storefront_tagline?: string | null
           storefront_theme?: string | null
           support_priority?: number
+          suspended_until?: string | null
           terms_accepted_at?: string | null
           tier?: string
           tier_updated_at?: string | null
@@ -4459,6 +4542,42 @@ export type Database = {
           id?: string
           ip_address?: string
           is_valid?: boolean
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          description: string
+          id: string
+          reference_id: string | null
+          reference_type: string | null
+          type: string
+          user_cpf: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          description: string
+          id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          type: string
+          user_cpf: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          description?: string
+          id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          type?: string
+          user_cpf?: string
         }
         Relationships: []
       }
@@ -4819,6 +4938,15 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_balances: {
+        Row: {
+          balance: number | null
+          last_transaction_at: string | null
+          total_transactions: number | null
+          user_cpf: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_post_comment: {
@@ -4857,6 +4985,10 @@ export type Database = {
       calculate_seller_fee: {
         Args: { p_plan_id: string; p_total_sales: number }
         Returns: number
+      }
+      calculate_strike_severity: {
+        Args: { p_seller_id: string }
+        Returns: string
       }
       calculate_vault_tier: {
         Args: { p_total_purchases: number; p_total_spent: number }
@@ -5242,6 +5374,7 @@ export type Database = {
           status: string
         }[]
       }
+      get_current_seller_id: { Args: never; Returns: string }
       get_following_feed: {
         Args: { p_cpf: string; p_limit?: number; p_offset?: number }
         Returns: {
@@ -5597,6 +5730,17 @@ export type Database = {
           p_reason: string
         }
         Returns: Json
+      }
+      search_faqs: {
+        Args: { p_persona?: string; p_query: string }
+        Returns: {
+          answer: string
+          category: string
+          id: string
+          persona: string
+          question: string
+          rank: number
+        }[]
       }
       start_vault_search: {
         Args: { p_cpf: string; p_wishlist_id: string }

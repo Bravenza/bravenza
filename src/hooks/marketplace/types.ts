@@ -55,6 +55,7 @@ export interface MarketplaceOrder {
   delivered_at: string | null;
   cancelled_at: string | null;
   protection_ends_at: string | null;
+  cancellation_window_ends_at: string | null;
   payout_released_at: string | null;
   payout_method: string | null;
   buyer_rating: number | null;
