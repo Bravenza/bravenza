@@ -328,7 +328,7 @@ function ProductDetailPageInner() {
   const canonicalUrl = `https://bravenza.com.br/marketplace/${product.slug}`;
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] theme-light">
+    <div className="min-h-screen bg-secondary theme-light">
       {/* SEO */}
       <Helmet>
         <title>{`${formattedName} | BRAVENZA Marketplace`}</title>
