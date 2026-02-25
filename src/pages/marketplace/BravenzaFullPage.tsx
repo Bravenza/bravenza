@@ -1,8 +1,5 @@
-import { motion } from "framer-motion";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
 import { Helmet } from "react-helmet-async";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { BravenzaFullHero } from "@/components/marketplace/full/BravenzaFullHero";
 import { BravenzaFullSteps } from "@/components/marketplace/full/BravenzaFullSteps";
 import { BravenzaFullBenefits } from "@/components/marketplace/full/BravenzaFullBenefits";
@@ -12,7 +9,7 @@ import { BravenzaFullContact } from "@/components/marketplace/full/BravenzaFullC
 
 export default function BravenzaFullPage() {
   return (
-    <PublicLayout>
+    <PublicLayout className="theme-light">
       <Helmet>
         <title>Bravenza Full | Venda sem esforço | BRAVENZA</title>
         <meta
@@ -22,12 +19,14 @@ export default function BravenzaFullPage() {
         <link rel="canonical" href="https://bravenza.com.br/full" />
       </Helmet>
 
-      <BravenzaFullHero />
-      <BravenzaFullSteps />
-      <BravenzaFullBenefits />
-      <BravenzaFullPricing />
-      <BravenzaFullFAQ />
-      <BravenzaFullContact />
+      <div className="theme-light">
+        <BravenzaFullHero />
+        <BravenzaFullSteps />
+        <BravenzaFullBenefits />
+        <BravenzaFullPricing />
+        <BravenzaFullFAQ />
+        <BravenzaFullContact />
+      </div>
     </PublicLayout>
   );
 }
