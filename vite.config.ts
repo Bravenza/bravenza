@@ -163,6 +163,37 @@ export default defineConfig(({ mode }) => ({
                 statuses: [0, 200]
               }
             }
+          },
+          {
+            // Supabase Storage images (product photos, avatars)
+            urlPattern: /^https:\/\/snfqxejtmauyspyhqvop\.supabase\.co\/storage\/.*/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "supabase-storage-cache",
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 7
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            // Cache the app shell (HTML pages) for offline support
+            urlPattern: /^https:\/\/.*\/(?:app|marketplace|entrar|rastreio|solicitar)\/?$/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "app-shell-cache",
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              },
+              networkTimeoutSeconds: 5
+            }
           }
         ]
       },
