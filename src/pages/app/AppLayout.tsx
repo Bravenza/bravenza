@@ -160,10 +160,11 @@ export default function AppLayout() {
       <div className="min-h-screen bg-background flex flex-col theme-light">
         {/* ===== TOP HEADER ===== */}
         <header className="sticky top-0 z-50 theme-dark" style={{ top: "var(--safe-area-top, 0px)" }}>
-          <div className="h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
-          <div className="bg-background/95 backdrop-blur-xl border-b border-border/20">
+          <div className="px-3 pt-2">
+          <div className="h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent rounded-full" />
+          <div className="bg-background/90 backdrop-blur-xl border border-border/20 rounded-2xl shadow-lg shadow-black/10">
             <div className="max-w-7xl mx-auto px-4">
-              <div className="flex items-center h-14 gap-3">
+              <div className="flex items-center h-12 gap-3">
                 <Link to="/app" className="shrink-0 hover:opacity-80 transition-opacity">
                   <Logo size="sm" />
                 </Link>
@@ -248,6 +249,7 @@ export default function AppLayout() {
               </div>
             </div>
           </div>
+          </div>
         </header>
 
         <div className="flex flex-1">
@@ -255,7 +257,7 @@ export default function AppLayout() {
           {!isMobile && (
             <aside
               className={cn(
-                "sticky top-[57px] h-[calc(100vh-57px)] shrink-0 transition-all duration-300 overflow-y-auto overflow-x-hidden",
+                "sticky top-[60px] h-[calc(100vh-60px)] shrink-0 transition-all duration-300 overflow-y-auto overflow-x-hidden",
                 "bg-sidebar border-r border-sidebar-border",
                 sidebarCollapsed ? "w-[60px]" : "w-[220px]"
               )}
@@ -345,44 +347,46 @@ export default function AppLayout() {
 
         {/* ===== MOBILE BOTTOM TAB BAR ===== */}
         {isMobile && (
-          <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-card/98 backdrop-blur-xl safe-area-bottom">
-            <div className="flex items-stretch justify-around">
-              {bottomTabs.map(tab => {
-                const active = tab.isMore
-                  ? location.pathname.startsWith("/app/mais")
-                  : tab.exact
-                    ? location.pathname === tab.path
-                    : location.pathname.startsWith(tab.path);
+          <div className="fixed bottom-0 left-0 right-0 z-50 px-3 pb-2 safe-area-bottom">
+            <nav className="rounded-2xl bg-card/95 backdrop-blur-xl border border-border/30 shadow-lg shadow-black/15">
+              <div className="flex items-stretch justify-around">
+                {bottomTabs.map(tab => {
+                  const active = tab.isMore
+                    ? location.pathname.startsWith("/app/mais")
+                    : tab.exact
+                      ? location.pathname === tab.path
+                      : location.pathname.startsWith(tab.path);
 
-                return (
-                  <button
-                    key={tab.path}
-                    onClick={() => {
-                      if (tab.isMore) {
-                        navigate("/app/mais");
-                      } else {
-                        navigate(tab.path);
-                      }
-                    }}
-                    className={cn(
-                      "flex flex-col items-center justify-center gap-0.5 py-2 px-2 min-h-[52px] flex-1 transition-colors relative",
-                      active ? "text-primary" : "text-muted-foreground"
-                    )}
-                  >
-                    {active && (
-                      <motion.div
-                        layoutId="activeTab"
-                        className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-primary"
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                      />
-                    )}
-                    <tab.icon className="h-5 w-5" strokeWidth={active ? 2.5 : 1.8} />
-                    <span className={cn("text-[10px]", active ? "font-semibold" : "font-medium")}>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </nav>
+                  return (
+                    <button
+                      key={tab.path}
+                      onClick={() => {
+                        if (tab.isMore) {
+                          navigate("/app/mais");
+                        } else {
+                          navigate(tab.path);
+                        }
+                      }}
+                      className={cn(
+                        "flex flex-col items-center justify-center gap-0.5 py-2.5 px-2 min-h-[50px] flex-1 transition-colors relative",
+                        active ? "text-primary" : "text-muted-foreground"
+                      )}
+                    >
+                      {active && (
+                        <motion.div
+                          layoutId="activeTab"
+                          className="absolute top-1.5 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-primary"
+                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        />
+                      )}
+                      <tab.icon className="h-5 w-5" strokeWidth={active ? 2.5 : 1.8} />
+                      <span className={cn("text-[10px]", active ? "font-semibold" : "font-medium")}>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </nav>
+          </div>
         )}
 
       </div>

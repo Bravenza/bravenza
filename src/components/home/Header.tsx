@@ -43,14 +43,14 @@ const HeaderComponent = () => {
   return (
     <>
         <header
-          className="fixed top-0 left-0 right-0 z-50 bg-background theme-dark"
+          className="fixed top-0 left-0 right-0 z-50 theme-dark"
           style={{
             paddingTop: 'env(safe-area-inset-top, 0px)',
-            borderBottom: '0.5px solid hsl(var(--border) / 0.3)',
           }}
           data-header-height
         >
-          <div className="container mx-auto px-4 flex items-center justify-between" style={{ height: '44px' }}>
+          <div className="mx-auto px-3 pt-2">
+          <div className="container mx-auto px-4 flex items-center justify-between rounded-2xl bg-background/90 backdrop-blur-xl border border-border/20 shadow-lg shadow-black/10" style={{ height: '48px' }}>
           <Link to="/" className="transition-all duration-300 hover:opacity-80 hover:scale-105">
             <Logo size="md" />
           </Link>
@@ -105,6 +105,7 @@ const HeaderComponent = () => {
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
+        </div>
       </header>
 
       {/* Mobile Menu — CSS animated */}
@@ -117,7 +118,7 @@ const HeaderComponent = () => {
           className={`fixed inset-0 z-[55] md:hidden overflow-y-auto bg-background transition-all duration-200 theme-dark ${
             isMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
           }`}
-          style={{ top: 'calc(44px + env(safe-area-inset-top, 0px))' }}
+          style={{ top: 'calc(58px + env(safe-area-inset-top, 0px))' }}
         >
           <div className="absolute inset-0 bg-grid-pattern opacity-30" />
           
