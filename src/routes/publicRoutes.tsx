@@ -22,6 +22,7 @@ const MarketplaceRulesPage = lazy(() => import("@/pages/MarketplaceRulesPage"));
 const VerificationPolicyPage = lazy(() => import("@/pages/VerificationPolicyPage"));
 const DeliveryFlowPreview = lazy(() => import("@/pages/DeliveryFlowPreview"));
 const FAQPage = lazy(() => import("@/pages/FAQPage"));
+const StatusPage = lazy(() => import("@/pages/StatusPage"));
 const ClientAuthPage = lazy(() => import("@/pages/client/ClientAuthPage"));
 
 export const publicRoutes = (
@@ -46,6 +47,7 @@ export const publicRoutes = (
     <Route path="/verificacao-autenticidade" element={<RouteWrapper section="Verificação"><VerificationPolicyPage /></RouteWrapper>} />
     <Route path="/preview-delivery-flow" element={<RouteWrapper section="Entrega"><DeliveryFlowPreview /></RouteWrapper>} />
     <Route path="/faq" element={<RouteWrapper section="FAQ"><FAQPage /></RouteWrapper>} />
+    <Route path="/status" element={<RouteWrapper section="Status"><StatusPage /></RouteWrapper>} />
 
     {/* Client portal routes */}
     <Route path="/entrar" element={
