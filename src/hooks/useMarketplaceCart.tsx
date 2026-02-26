@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from "react";
+import { useState, useEffect, useCallback, createContext, useContext, forwardRef, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -51,7 +51,7 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | null>(null);
 
-export function CartProvider({ cpf, children }: { cpf: string | null; children: ReactNode }) {
+export const CartProvider = forwardRef<HTMLDivElement, { cpf: string | null; children: ReactNode }>(function CartProvider({ cpf, children }, _ref) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -170,7 +170,7 @@ export function CartProvider({ cpf, children }: { cpf: string | null; children: 
       {children}
     </CartContext.Provider>
   );
-}
+});
 
 export function useMarketplaceCart() {
   const ctx = useContext(CartContext);
