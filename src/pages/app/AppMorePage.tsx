@@ -43,7 +43,7 @@ const getMenuGroups = (isVaultMember: boolean): MenuGroup[] => [
       { path: "/app/closet", label: "Closet", icon: Box },
       { path: "/app/enderecos", label: "Meus Endereços", icon: MapPin },
       { path: "/app/documentos", label: "Documentos", icon: FileText },
-      { path: "/app/feed", label: "Feed", icon: MessageSquare },
+      { path: "/app/feed", label: "Feed", icon: Activity },
     ],
   },
   ...(isVaultMember
@@ -64,7 +64,7 @@ const getMenuGroups = (isVaultMember: boolean): MenuGroup[] => [
   {
     items: [
       { path: "/termos", label: "Termos de Uso", icon: FileText },
-      { path: "/politica-privacidade", label: "Política de Privacidade", icon: Shield },
+      { path: "/politicas", label: "Política de Privacidade", icon: Shield },
       { path: "/trocas-devolucoes", label: "Trocas e Devoluções", icon: RefreshCw },
     ],
   },
@@ -86,7 +86,8 @@ export default function AppMorePage() {
     ? profile.full_name.split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase()
     : "U";
 
-  const isActive = (path: string) => location.pathname.startsWith(path);
+  const isActive = (path: string) =>
+    path === "/app" ? location.pathname === "/app" : location.pathname.startsWith(path);
   const menuGroups = getMenuGroups(isVaultMember);
 
   const handleLogout = async () => {
