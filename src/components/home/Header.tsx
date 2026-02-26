@@ -3,18 +3,20 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ChevronRight } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-
-const navLinks = [
-  { label: "Início", href: "/" },
-  { label: "Autenticidade", href: "/sobre-autenticidade" },
-  { label: "Rastrear Pedido", href: "/rastreio" },
-  { label: "Minha Conta", href: "/entrar" },
-] as const;
+import { useTranslation } from "react-i18next";
 
 const HeaderComponent = () => {
+  const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
   const location = useLocation();
+
+  const navLinks = [
+    { label: t("nav.home"), href: "/" },
+    { label: t("nav.authenticity"), href: "/sobre-autenticidade" },
+    { label: t("nav.trackOrder"), href: "/rastreio" },
+    { label: t("nav.myAccount"), href: "/entrar" },
+  ] as const;
 
   // Animate mount/unmount with CSS
   useEffect(() => {
@@ -44,7 +46,6 @@ const HeaderComponent = () => {
           className="fixed top-0 left-0 right-0 z-50 bg-background theme-dark"
           style={{
             paddingTop: 'env(safe-area-inset-top, 0px)',
-            /* Apple HIG: hairline separator (0.33pt on retina) */
             borderBottom: '0.5px solid hsl(var(--border) / 0.3)',
           }}
           data-header-height
@@ -55,7 +56,7 @@ const HeaderComponent = () => {
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-1" aria-label="Navegação principal">
+          <nav className="hidden md:flex items-center gap-1" aria-label={t("nav.mainNav")}>
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -86,7 +87,7 @@ const HeaderComponent = () => {
             <Link to="/solicitar">
               <Button variant="premium" size="sm" className="group relative overflow-hidden">
                 <span className="relative z-10 flex items-center gap-2">
-                  Solicitar Orçamento
+                  {t("nav.requestQuote")}
                   <ChevronRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </span>
               </Button>
@@ -97,7 +98,7 @@ const HeaderComponent = () => {
           <button
             className="md:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors relative z-[60] active:scale-95"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-label={isMenuOpen ? t("nav.closeMenu") : t("nav.openMenu")}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
           >
@@ -112,7 +113,7 @@ const HeaderComponent = () => {
           id="mobile-menu"
           role="dialog"
           aria-modal="true"
-          aria-label="Menu de navegação"
+          aria-label={t("nav.mobileNav")}
           className={`fixed inset-0 z-[55] md:hidden overflow-y-auto bg-background transition-all duration-200 theme-dark ${
             isMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
           }`}
@@ -120,7 +121,7 @@ const HeaderComponent = () => {
         >
           <div className="absolute inset-0 bg-grid-pattern opacity-30" />
           
-          <nav className="container mx-auto px-4 py-6 flex flex-col gap-2 relative" aria-label="Menu mobile">
+          <nav className="container mx-auto px-4 py-6 flex flex-col gap-2 relative" aria-label={t("nav.mobileMenu")}>
             {navLinks.map((link, index) => (
               <Link
                 key={link.href}
@@ -147,7 +148,7 @@ const HeaderComponent = () => {
               <Link to="/solicitar" onClick={() => setIsMenuOpen(false)}>
                 <Button variant="premium" className="w-full h-12 text-base group">
                   <span className="flex items-center gap-2">
-                    Solicitar Orçamento
+                    {t("nav.requestQuote")}
                     <ChevronRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </span>
                 </Button>

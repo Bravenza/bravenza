@@ -2,24 +2,26 @@ import { memo, forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Instagram, MessageCircle, ArrowUpRight, Shield, Truck, Award } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
 
   const quickLinks = [
-    { label: "Início", href: "/" },
-    { label: "Solicitar Orçamento", href: "/solicitar" },
-    { label: "Rastrear Pedido", href: "/rastreio" },
-    { label: "Autenticidade", href: "/sobre-autenticidade" },
-    { label: "Trocas e devoluções", href: "/trocas-devolucoes" },
-    { label: "Como Vender", href: "/vender" },
-    { label: "Minha Conta", href: "/entrar" },
+    { label: t("nav.home"), href: "/" },
+    { label: t("nav.requestQuote"), href: "/solicitar" },
+    { label: t("nav.trackOrder"), href: "/rastreio" },
+    { label: t("nav.authenticity"), href: "/sobre-autenticidade" },
+    { label: t("footer.returnsLink"), href: "/trocas-devolucoes" },
+    { label: t("footer.howToSell"), href: "/vender" },
+    { label: t("nav.myAccount"), href: "/entrar" },
   ];
 
   const features = [
-    { icon: Shield, label: "Autenticidade verificada" },
-    { icon: Truck, label: "Entrega Segura" },
-    { icon: Award, label: "Garantia Total" },
+    { icon: Shield, label: t("footer.verifiedAuthenticity") },
+    { icon: Truck, label: t("footer.safeDelivery") },
+    { icon: Award, label: t("footer.fullWarranty") },
   ];
 
   return (
@@ -36,10 +38,7 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
         {/* Features strip */}
         <div className="flex flex-wrap justify-center gap-6 md:gap-12 mb-12 pb-12 border-b border-border/30">
           {features.map((feature) => (
-            <div
-              key={feature.label}
-              className="flex items-center gap-2 text-muted-foreground"
-            >
+            <div key={feature.label} className="flex items-center gap-2 text-muted-foreground">
               <feature.icon className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">{feature.label}</span>
             </div>
@@ -51,9 +50,7 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
           <div className="md:col-span-5">
             <Logo size="lg" className="mb-4" />
             <p className="text-sm text-muted-foreground max-w-sm leading-relaxed mb-6">
-              Curadoria sob demanda e autenticação premium de sneakers. 
-              Encontramos, verificamos e entregamos com segurança 
-              e rastreamento completo.
+              {t("footer.description")}
             </p>
             
             {/* Social Links */}
@@ -63,7 +60,7 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="group flex items-center justify-center w-10 h-10 rounded-xl bg-muted/50 border border-border/50 hover:border-primary/50 hover:bg-primary/10 transition-all duration-300"
-                aria-label="Fale conosco no WhatsApp"
+                aria-label={t("common.whatsappLabel")}
               >
                 <MessageCircle className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
               </a>
@@ -72,7 +69,7 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="group flex items-center justify-center w-10 h-10 rounded-xl bg-muted/50 border border-border/50 hover:border-primary/50 hover:bg-primary/10 transition-all duration-300"
-                aria-label="Siga-nos no Instagram"
+                aria-label={t("common.instagramLabel")}
               >
                 <Instagram className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
               </a>
@@ -81,7 +78,7 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
 
           {/* Quick Links */}
           <div className="md:col-span-3">
-            <h4 className="font-display font-semibold text-sm mb-4 text-foreground">Navegação</h4>
+            <h4 className="font-display font-semibold text-sm mb-4 text-foreground">{t("footer.navigation")}</h4>
             <ul className="space-y-2.5">
               {quickLinks.map((link) => (
                 <li key={link.href}>
@@ -99,7 +96,7 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
 
           {/* Contact */}
           <div className="md:col-span-4">
-            <h4 className="font-display font-semibold text-sm mb-4 text-foreground">Contato</h4>
+            <h4 className="font-display font-semibold text-sm mb-4 text-foreground">{t("footer.contact")}</h4>
             <ul className="space-y-3">
               <li>
                 <a 
@@ -141,24 +138,24 @@ const FooterComponent = forwardRef<HTMLElement>((_, ref) => {
         <div className="mt-12 pt-8 border-t border-border/30 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
             <p className="text-muted-foreground text-xs">
-              © 2022-{currentYear} BRAVENZA. Todos os direitos reservados.
+              © 2022-{currentYear} BRAVENZA. {t("common.allRightsReserved")}
             </p>
             <Link 
               to="/admin/login" 
               className="text-muted-foreground/50 hover:text-muted-foreground text-xs transition-colors"
             >
-              Admin
+              {t("common.admin")}
             </Link>
           </div>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs">
             <Link to="/politicas" className="text-muted-foreground hover:text-foreground transition-colors">
-              Privacidade
+              {t("footer.privacy")}
             </Link>
             <Link to="/termos" className="text-muted-foreground hover:text-foreground transition-colors">
-              Termos de uso
+              {t("footer.terms")}
             </Link>
             <Link to="/trocas-devolucoes" className="text-muted-foreground hover:text-foreground transition-colors">
-              Trocas e devoluções
+              {t("footer.returnsLink")}
             </Link>
           </div>
         </div>
