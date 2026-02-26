@@ -1,15 +1,18 @@
 import { memo } from "react";
 import { motion } from "framer-motion";
 import { ShieldCheck, Globe, Users, Package } from "lucide-react";
-
-const metrics = [
-  { icon: ShieldCheck, value: "500+", label: "Sneakers autenticados" },
-  { icon: Globe, value: "15+", label: "Países parceiros" },
-  { icon: Users, value: "100%", label: "Clientes satisfeitos" },
-  { icon: Package, value: "0", label: "Reprovados entregues" },
-];
+import { useTranslation } from "react-i18next";
 
 const SocialProofBarComponent = () => {
+  const { t } = useTranslation();
+
+  const metrics = [
+    { icon: ShieldCheck, value: "500+", label: t("socialProof.authenticated") },
+    { icon: Globe, value: "15+", label: t("socialProof.countries") },
+    { icon: Users, value: "100%", label: t("socialProof.satisfaction") },
+    { icon: Package, value: "0", label: t("socialProof.rejected") },
+  ];
+
   return (
     <section className="py-10 md:py-14 relative">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.02] to-transparent" />
@@ -31,12 +34,8 @@ const SocialProofBarComponent = () => {
               className="text-center p-4 md:p-6 rounded-lg bg-card/30 border border-border/30 backdrop-blur-sm"
             >
               <metric.icon className="h-5 w-5 text-primary mx-auto mb-3" />
-              <p className="font-display text-2xl md:text-3xl font-bold text-gradient-gold mb-1">
-                {metric.value}
-              </p>
-              <p className="text-xs md:text-sm text-muted-foreground">
-                {metric.label}
-              </p>
+              <p className="font-display text-2xl md:text-3xl font-bold text-gradient-gold mb-1">{metric.value}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">{metric.label}</p>
             </motion.div>
           ))}
         </motion.div>
