@@ -130,21 +130,21 @@ export const SellCTASection = memo(function SellCTASection() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button
               size="lg"
-              className="btn-gold rounded-full h-16 px-12 text-lg font-black gap-3 shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 transition-all"
+              className="btn-gold rounded-full h-14 sm:h-16 px-8 sm:px-12 text-base sm:text-lg font-black gap-2 sm:gap-3 shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 transition-all"
               onClick={() => navigate("/app/loja")}
             >
-              <Users className="h-5 w-5" />
-              Começar a vender agora
-              <ArrowRight className="h-5 w-5" />
+              <Users className="h-5 w-5 shrink-0" />
+              <span className="whitespace-nowrap">Começar a vender agora</span>
+              <ArrowRight className="h-5 w-5 shrink-0" />
             </Button>
             <Button
               size="lg"
               variant="outline"
-              className="rounded-full h-16 px-10 text-lg font-bold gap-3 border-primary/25 hover:border-primary/40 transition-all"
+              className="rounded-full h-14 sm:h-16 px-8 sm:px-10 text-base sm:text-lg font-bold gap-2 sm:gap-3 border-primary/25 hover:border-primary/40 transition-all"
               onClick={() => navigate("/full")}
             >
-              <Zap className="h-5 w-5 text-primary" />
-              Bravenza Full — 22%
+              <Zap className="h-5 w-5 text-primary shrink-0" />
+              <span className="whitespace-nowrap">Bravenza Full — 22%</span>
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-4">
