@@ -69,6 +69,7 @@ ErrorBoundary
 - **Tema**: Dark-first com suporte a light mode via `theme-dark` / `theme-light`
 - **Tipografia**: Inter (body) + Space Grotesk (display)
 - **Cores**: Primary (gold), Background (dark), Foreground (cream)
+- **i18n**: react-i18next com dicionário `pt-BR.json` (~400 chaves); todas as páginas públicas internacionalizadas
 
 ---
 
@@ -206,7 +207,26 @@ vendor-pdf       → jsPDF (lazy)
 
 ---
 
-## 7. Testes
+## 7. Internacionalização (i18n)
+
+| Item | Detalhe |
+|------|---------|
+| **Biblioteca** | `i18next` + `react-i18next` |
+| **Locale padrão / fallback** | `pt-BR` |
+| **Dicionário** | `src/locales/pt-BR.json` (~400 chaves) |
+| **Escopo atual** | Todas as páginas públicas (Home, FAQ, Autenticidade, Instalar, Solicitação, Termos, Privacidade, Devoluções, Status, Rastreio) |
+| **Componentes compartilhados** | Header, Footer, HeroSection, CTASection e demais seções da landing |
+| **Expansão futura** | Admin, App logado e Vault Club (incremental) |
+
+### Convenções
+
+- Chaves organizadas por domínio: `header.*`, `hero.*`, `faq.*`, `orderRequest.*`, etc.
+- SEO metadata (títulos e descrições) gerenciado via chaves `*.metaTitle` / `*.metaDescription`
+- Componentes usam `const { t } = useTranslation()` — sem `useSuspense`
+
+---
+
+## 8. Testes
 
 | Tipo | Ferramenta | Cobertura |
 |------|-----------|-----------|
@@ -216,7 +236,7 @@ vendor-pdf       → jsPDF (lazy)
 
 ---
 
-## 8. Monitoramento
+## 9. Monitoramento
 
 - **Logs de Auditoria**: `activity_logs` para ações administrativas
 - **Cron Logs**: `cron_execution_logs` para jobs programados
@@ -225,7 +245,7 @@ vendor-pdf       → jsPDF (lazy)
 
 ---
 
-## 9. Compliance
+## 10. Compliance
 
 | Requisito | Status | Detalhes |
 |-----------|--------|---------|
