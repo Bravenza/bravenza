@@ -302,6 +302,10 @@
     @apply border-border;
   }
 
+  html {
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
@@ -310,6 +314,7 @@
     text-rendering: optimizeLegibility;
     -webkit-tap-highlight-color: transparent;
     scrollbar-gutter: stable;
+    overflow-x: hidden;
   }
 
   /* Typography hierarchy - Tech Modern */
