@@ -79,11 +79,12 @@ function FeaturedReviewsComponent() {
               
               {/* Rating */}
               <div className="flex gap-1 mb-4">
+                <span className="sr-only">{review.rating} de 5 estrelas</span>
                 {Array.from({ length: review.rating }).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                  <Star key={i} aria-hidden="true" className="h-4 w-4 fill-primary text-primary" />
                 ))}
                 {Array.from({ length: 5 - review.rating }).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 text-muted-foreground/30" />
+                  <Star key={i} aria-hidden="true" className="h-4 w-4 text-muted-foreground/30" />
                 ))}
               </div>
 

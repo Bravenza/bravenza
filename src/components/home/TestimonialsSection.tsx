@@ -68,9 +68,10 @@ const TestimonialsSectionComponent = () => {
               
               {/* Rating */}
               <div className="flex gap-1 mb-4">
+                <span className="sr-only">{testimonial.rating} de 5 estrelas</span>
                 {Array.from({
               length: testimonial.rating
-            }).map((_, i) => <Star key={i} className="h-4 w-4 fill-primary text-primary" />)}
+            }).map((_, i) => <Star key={i} aria-hidden="true" className="h-4 w-4 fill-primary text-primary" />)}
               </div>
 
               {/* Quote */}
