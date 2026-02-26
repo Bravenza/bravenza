@@ -44,6 +44,7 @@ A BRAVENZA é uma plataforma B2C/C2C de sneakers que opera em três eixos:
 |--------|-----------|
 | **Frontend** | React 18 + TypeScript + Vite |
 | **Estilização** | Tailwind CSS + shadcn/ui + Framer Motion |
+| **i18n** | react-i18next + i18next (fallback: pt-BR) |
 | **Estado** | TanStack React Query (cache + invalidation) |
 | **Backend** | Supabase (Postgres + Auth + Storage + Edge Functions) |
 | **PWA** | vite-plugin-pwa + Workbox (cache estratificado) |
@@ -59,6 +60,9 @@ A BRAVENZA é uma plataforma B2C/C2C de sneakers que opera em três eixos:
 ```
 src/
 ├── assets/           # Imagens e assets estáticos
+├── i18n.ts           # Configuração react-i18next
+├── locales/
+│   └── pt-BR.json    # Dicionário de traduções (pt-BR)
 ├── components/
 │   ├── a11y/         # Acessibilidade (SkipToContent)
 │   ├── admin/        # Componentes do painel administrativo
@@ -201,6 +205,12 @@ POST /mk-offers?action=create
 - ✅ MFA/TOTP obrigatório para administradores
 - ✅ Views públicas com mascaramento de PII
 - ✅ CSP (Content Security Policy) configurada
+
+### Internacionalização (i18n)
+- ✅ react-i18next configurado com fallback `pt-BR`
+- ✅ Todas as páginas públicas utilizam chaves de tradução (`useTranslation`)
+- ✅ Dicionário centralizado em `src/locales/pt-BR.json` (~400 chaves)
+- ✅ SEO metadata (títulos e descrições) gerenciado via i18n
 
 ### Performance
 - ✅ Code-splitting em todas as rotas (lazy + Suspense)
