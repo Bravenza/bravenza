@@ -48,7 +48,7 @@ const statusConfig: Record<string, { label: string; color: string }> = {
   pending_review: { label: "Pendente", color: "bg-warning/20 text-warning" },
   active: { label: "Ativo", color: "bg-success/20 text-success" },
   rejected: { label: "Rejeitado", color: "bg-destructive/20 text-destructive" },
-  flagged: { label: "Sinalizado", color: "bg-orange-500/20 text-orange-400" },
+  flagged: { label: "Sinalizado", color: "bg-warning/20 text-warning" },
   sold: { label: "Vendido", color: "bg-primary/20 text-primary" },
   draft: { label: "Rascunho", color: "bg-muted text-muted-foreground" },
 };
@@ -134,7 +134,7 @@ export default function MarketplaceModerationPage() {
         </Card>
         <Card className="card-premium">
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-orange-400">{flaggedCount}</p>
+            <p className="text-2xl font-bold text-warning">{flaggedCount}</p>
             <p className="text-xs text-muted-foreground">Sinalizados</p>
           </CardContent>
         </Card>
@@ -293,7 +293,7 @@ export default function MarketplaceModerationPage() {
                 {selectedOffer.status !== "flagged" && (
                   <Button
                     variant="outline"
-                    className="w-full gap-2 border-orange-500/50 text-orange-400 hover:bg-orange-500/10"
+                    className="w-full gap-2 border-warning/50 text-warning hover:bg-warning/10"
                     disabled={actionLoading}
                     onClick={() => moderateOffer(selectedOffer.id, "flag", "Sinalizado para revisão detalhada")}
                   >

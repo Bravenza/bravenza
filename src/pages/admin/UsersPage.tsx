@@ -180,7 +180,8 @@ const UsersPage = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" role="status" aria-live="polite">
+        <span className="sr-only">Carregando usuários…</span>
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-96 w-full" />
       </div>

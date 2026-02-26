@@ -36,7 +36,7 @@ interface VaultItem {
 }
 
 const statusLabels: Record<VerifiedStatus, string> = { VERIFIED: "Verificado", PENDING: "Pendente", REVOKED: "Revogado" };
-const statusColors: Record<VerifiedStatus, string> = { VERIFIED: "bg-emerald-600", PENDING: "bg-amber-500", REVOKED: "bg-red-500" };
+const statusColors: Record<VerifiedStatus, string> = { VERIFIED: "bg-success", PENDING: "bg-warning", REVOKED: "bg-destructive" };
 
 const VaultItemsPage = () => {
   const [items, setItems] = useState<VaultItem[]>([]);
@@ -94,7 +94,8 @@ const VaultItemsPage = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" role="status" aria-live="polite">
+        <span className="sr-only">Carregando vault items…</span>
         <Skeleton className="h-8 w-48" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">{[1,2,3,4].map(i => <Skeleton key={i} className="h-24" />)}</div>
         <Skeleton className="h-96" />
@@ -120,8 +121,8 @@ const VaultItemsPage = () => {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card><CardContent className="p-4"><div className="flex items-center gap-2"><Package className="h-5 w-5 text-muted-foreground" /><div><p className="text-2xl font-bold">{stats.total}</p><p className="text-xs text-muted-foreground">Total</p></div></div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-emerald-500" /><div><p className="text-2xl font-bold">{stats.verified}</p><p className="text-xs text-muted-foreground">Verificados</p></div></div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="flex items-center gap-2"><Clock className="h-5 w-5 text-amber-500" /><div><p className="text-2xl font-bold">{stats.pending}</p><p className="text-xs text-muted-foreground">Pendentes</p></div></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-success" /><div><p className="text-2xl font-bold">{stats.verified}</p><p className="text-xs text-muted-foreground">Verificados</p></div></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="flex items-center gap-2"><Clock className="h-5 w-5 text-warning" /><div><p className="text-2xl font-bold">{stats.pending}</p><p className="text-xs text-muted-foreground">Pendentes</p></div></div></CardContent></Card>
         <Card><CardContent className="p-4"><div className="flex items-center gap-2"><Shield className="h-5 w-5 text-primary" /><div><p className="text-2xl font-bold">{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact" }).format(stats.totalValue)}</p><p className="text-xs text-muted-foreground">Valor total</p></div></div></CardContent></Card>
       </div>
 

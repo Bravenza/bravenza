@@ -421,7 +421,8 @@ const OrderDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" role="status" aria-live="polite">
+        <span className="sr-only">Carregando detalhes do pedido…</span>
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-24" />
         <Skeleton className="h-96" />

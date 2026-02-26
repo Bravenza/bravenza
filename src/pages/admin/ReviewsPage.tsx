@@ -217,12 +217,14 @@ export default function ReviewsPage() {
   const renderStars = (rating: number) => {
     return (
       <div className="flex items-center gap-0.5">
+        <span className="sr-only">{rating} de 5 estrelas</span>
         {[1, 2, 3, 4, 5].map((star) => (
           <Star
             key={star}
+            aria-hidden="true"
             className={`h-4 w-4 ${
               star <= rating
-                ? "fill-yellow-500 text-yellow-500"
+                ? "fill-warning text-warning"
                 : "text-muted-foreground"
             }`}
           />
@@ -233,7 +235,8 @@ export default function ReviewsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" role="status" aria-live="polite">
+        <span className="sr-only">Carregando avaliações…</span>
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-64 w-full" />
@@ -270,11 +273,11 @@ export default function ReviewsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Pendentes</p>
-                <p className="text-2xl font-bold text-yellow-500">
+                <p className="text-2xl font-bold text-warning">
                   {reviews.filter((r) => !r.is_approved).length}
                 </p>
               </div>
-              <Star className="h-8 w-8 text-yellow-500" />
+              <Star className="h-8 w-8 text-warning" />
             </div>
           </CardContent>
         </Card>
@@ -283,11 +286,11 @@ export default function ReviewsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Aprovadas</p>
-                <p className="text-2xl font-bold text-green-500">
+                <p className="text-2xl font-bold text-success">
                   {reviews.filter((r) => r.is_approved).length}
                 </p>
               </div>
-              <Check className="h-8 w-8 text-green-500" />
+              <Check className="h-8 w-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -405,7 +408,7 @@ export default function ReviewsPage() {
                       <div className="flex flex-col gap-1">
                         <Badge
                           variant={review.is_approved ? "default" : "secondary"}
-                          className={review.is_approved ? "bg-green-500/20 text-green-400" : ""}
+                          className={review.is_approved ? "bg-success/20 text-success" : ""}
                         >
                           {review.is_approved ? "Aprovada" : "Pendente"}
                         </Badge>
@@ -421,11 +424,11 @@ export default function ReviewsPage() {
                       <div className="flex justify-end gap-1">
                         {!review.is_approved ? (
                           <Button variant="ghost" size="icon" onClick={() => handleApprove(review.id, true)} title="Aprovar">
-                            <Check className="h-4 w-4 text-green-500" />
+                           <Check className="h-4 w-4 text-success" />
                           </Button>
                         ) : (
                           <Button variant="ghost" size="icon" onClick={() => handleApprove(review.id, false)} title="Reprovar">
-                            <X className="h-4 w-4 text-yellow-500" />
+                             <X className="h-4 w-4 text-warning" />
                           </Button>
                         )}
                         <Button variant="ghost" size="icon" onClick={() => handleToggleFeatured(review.id, review.is_featured)} title={review.is_featured ? "Remover destaque" : "Destacar"}>
@@ -464,9 +467,9 @@ export default function ReviewsPage() {
                     <code className="text-xs bg-secondary px-2 py-0.5 rounded">{review.order_id}</code>
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    <Badge
+                      <Badge
                       variant={review.is_approved ? "default" : "secondary"}
-                      className={review.is_approved ? "bg-green-500/20 text-green-400" : ""}
+                      className={review.is_approved ? "bg-success/20 text-success" : ""}
                     >
                       {review.is_approved ? "Aprovada" : "Pendente"}
                     </Badge>
