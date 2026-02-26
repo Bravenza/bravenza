@@ -159,9 +159,9 @@ export default function AppLayout() {
     <CartProvider cpf={cpf}>
       <div className="min-h-screen bg-background flex flex-col theme-light">
         {/* ===== TOP HEADER ===== */}
-        <header className="sticky top-0 z-50 theme-dark" style={{ top: "var(--safe-area-top, 0px)" }}>
-          <div className="px-3 pt-2">
-          <div className="bg-background/80 backdrop-blur-2xl border border-border/40 rounded-2xl shadow-xl shadow-black/20 ring-1 ring-white/5">
+        <header className="sticky top-0 z-50 pointer-events-none" style={{ top: "var(--safe-area-top, 0px)" }}>
+          <div className="px-3 pt-2 pb-2">
+          <div className="pointer-events-auto theme-dark bg-background/80 backdrop-blur-2xl border border-border/40 rounded-2xl shadow-xl shadow-black/20 ring-1 ring-white/5">
             <div className="max-w-7xl mx-auto px-4">
               <div className="flex items-center h-12 gap-3">
                 <Link to="/app" className="shrink-0 hover:opacity-80 transition-opacity">
