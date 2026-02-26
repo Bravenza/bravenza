@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -24,6 +24,7 @@ import type { CartGroup, CartItem } from "@/hooks/useMarketplaceCart";
 import { CartProvider, useMarketplaceCart } from "@/hooks/useMarketplaceCart";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCartAbandonment } from "@/hooks/useCartAbandonment";
 
 const BR_STATES = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
@@ -101,7 +102,6 @@ function MarketplaceCheckoutPageInner() {
   // Restore group from location.state or sessionStorage
   const group: CartGroup | null = (() => {
     if (location.state?.group) {
-      // Save to session storage for refresh resilience
       try { sessionStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(location.state.group)); } catch {}
       return location.state.group;
     }
@@ -110,6 +110,18 @@ function MarketplaceCheckoutPageInner() {
       return saved ? JSON.parse(saved) : null;
     } catch { return null; }
   })();
+
+  // Cart abandonment detection
+  const cartItemsForAbandonment = useMemo(() => {
+    if (!group) return [];
+    return group.items.map((item: CartItem) => ({
+      product_name: `${item.offer?.product?.brand || ""} ${item.offer?.product?.model || ""}`.trim(),
+      price: item.offer?.price || 0,
+      size: item.offer?.size || "",
+      offer_id: item.offer_id,
+    }));
+  }, [group]);
+  const { markCompleted } = useCartAbandonment(cpf, cartItemsForAbandonment);
 
   const [step, setStep] = useState<Step>("review");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -391,6 +403,9 @@ function MarketplaceCheckoutPageInner() {
       for (const co of createdOrders) {
         await removeFromCart(co.item.offer_id);
       }
+
+      // Mark checkout as completed — clears abandonment record
+      await markCompleted();
 
       setStep("success");
     } catch (err: any) {

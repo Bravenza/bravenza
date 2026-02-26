@@ -37,7 +37,8 @@ type MarketplaceEmailType =
   | "community_new_follower"
   | "community_post_comment"
   | "order_request_received"
-  | "budget_rejected";
+  | "budget_rejected"
+  | "mk_cart_abandoned";
 
 interface MarketplaceEmailRequest {
   type: MarketplaceEmailType;
@@ -92,6 +93,11 @@ interface MarketplaceEmailRequest {
   kyc_rejection_reason?: string;
   payment_amount?: number;
   payment_method_label?: string;
+  // Cart abandonment
+  cart_items?: Array<{ name: string; price: number; size?: string; image?: string }>;
+  cart_total?: number;
+  cart_item_count?: number;
+  recovery_url?: string;
 }
 
 const formatCurrency = (value: number) =>
@@ -129,6 +135,7 @@ const getSubject = (type: MarketplaceEmailType, data: MarketplaceEmailRequest): 
     community_post_comment: `💬 Novo comentário no seu post!`,
     order_request_received: `📋 Solicitação recebida! - ${data.order_id}`,
     budget_rejected: `Orçamento recusado - ${data.order_id}`,
+    mk_cart_abandoned: `🛒 Você esqueceu algo no carrinho!`,
   };
   return subjects[type];
 };
@@ -740,6 +747,33 @@ const getEmailHtml = (type: MarketplaceEmailType, data: MarketplaceEmailRequest)
           Acompanhe o envio pelo código de rastreio acima.
         </p>
         ${ctaButton("Acompanhar Pedido", `${appUrl}/vault/marketplace`)}
+      `,
+    },
+    mk_cart_abandoned: {
+      subtitle: "Seu carrinho está esperando! 🛒",
+      content: `
+        <p style="color: #a0a0a0; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+          Notamos que você deixou ${data.cart_item_count || "alguns"} ${(data.cart_item_count || 0) === 1 ? "item" : "itens"} 
+          no seu carrinho. Seus produtos ainda estão disponíveis!
+        </p>
+        <div style="background-color: #252525; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+          ${(data.cart_items || []).map((item: any) => `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #333;">
+              <span style="color: #ffffff;">${item.name}</span>
+              <span style="color: #d4af37; font-weight: 600;">${formatCurrency(item.price)}</span>
+            </div>
+          `).join("")}
+          <div style="border-top: 1px solid #555; padding-top: 12px; margin-top: 4px;">
+            ${infoCard("Total", formatCurrency(data.cart_total || 0))}
+          </div>
+        </div>
+        <p style="color: #ff9500; font-size: 14px; text-align: center; margin: 0 0 16px;">
+          ⏰ Os sneakers mais desejados podem esgotar rapidamente!
+        </p>
+        ${ctaButton("Retomar Compra", data.recovery_url || `${appUrl}/marketplace`)}
+        <p style="color: #666; font-size: 12px; text-align: center; margin: 24px 0 0;">
+          Se não foi você, ignore este e-mail.
+        </p>
       `,
     },
   };
