@@ -201,10 +201,10 @@ export default function MarketplaceAnalyticsPage() {
       {/* Primary KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { icon: DollarSign, label: "GMV Total", value: formatCurrency(metrics.gmv), color: "text-emerald-500", bg: "bg-emerald-500/10" },
+          { icon: DollarSign, label: "GMV Total", value: formatCurrency(metrics.gmv), color: "text-success", bg: "bg-success/10" },
           { icon: Percent, label: "Receita Plataforma", value: formatCurrency(metrics.platformRevenue), color: "text-primary", bg: "bg-primary/10", sub: `Take rate: ${metrics.takeRate}%` },
-          { icon: ShoppingBag, label: "Pedidos", value: metrics.totalOrders.toString(), color: "text-blue-500", bg: "bg-blue-500/10", sub: `Ticket médio: ${formatCurrency(metrics.avgOrderValue)}` },
-          { icon: AlertTriangle, label: "Disputas Abertas", value: metrics.openDisputes.toString(), color: metrics.openDisputes > 0 ? "text-destructive" : "text-emerald-500", bg: metrics.openDisputes > 0 ? "bg-destructive/10" : "bg-emerald-500/10" },
+          { icon: ShoppingBag, label: "Pedidos", value: metrics.totalOrders.toString(), color: "text-info", bg: "bg-info/10", sub: `Ticket médio: ${formatCurrency(metrics.avgOrderValue)}` },
+          { icon: AlertTriangle, label: "Disputas Abertas", value: metrics.openDisputes.toString(), color: metrics.openDisputes > 0 ? "text-destructive" : "text-success", bg: metrics.openDisputes > 0 ? "bg-destructive/10" : "bg-success/10" },
         ].map((kpi, i) => (
           <motion.div
             key={kpi.label}

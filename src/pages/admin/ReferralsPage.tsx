@@ -63,10 +63,10 @@ interface Referral {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-  converted: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  rewarded: "bg-green-500/20 text-green-400 border-green-500/30",
-  expired: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+  pending: "bg-warning/20 text-warning border-warning/30",
+  converted: "bg-info/20 text-info border-info/30",
+  rewarded: "bg-success/20 text-success border-success/30",
+  expired: "bg-muted text-muted-foreground border-muted",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -233,7 +233,8 @@ export default function ReferralsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" role="status" aria-live="polite">
+        <span className="sr-only">Carregando indicações…</span>
         <Skeleton className="h-8 w-48" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
@@ -285,9 +286,9 @@ export default function ReferralsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Pendentes</p>
-                <p className="text-2xl font-bold text-yellow-500">{stats.pending}</p>
+                <p className="text-2xl font-bold text-warning">{stats.pending}</p>
               </div>
-              <Clock className="h-8 w-8 text-yellow-500" />
+              <Clock className="h-8 w-8 text-warning" />
             </div>
           </CardContent>
         </Card>
@@ -296,9 +297,9 @@ export default function ReferralsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Convertidos</p>
-                <p className="text-2xl font-bold text-blue-500">{stats.converted}</p>
+                <p className="text-2xl font-bold text-info">{stats.converted}</p>
               </div>
-              <Users className="h-8 w-8 text-blue-500" />
+              <Users className="h-8 w-8 text-info" />
             </div>
           </CardContent>
         </Card>
@@ -307,9 +308,9 @@ export default function ReferralsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Recompensados</p>
-                <p className="text-2xl font-bold text-green-500">{stats.rewarded}</p>
+                <p className="text-2xl font-bold text-success">{stats.rewarded}</p>
               </div>
-              <Check className="h-8 w-8 text-green-500" />
+              <Check className="h-8 w-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -380,7 +381,7 @@ export default function ReferralsPage() {
                       <div className="flex items-center gap-2">
                         <code className="bg-secondary px-2 py-1 rounded text-sm font-mono">{referral.referral_code}</code>
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopyCode(referral.referral_code)}>
-                          {copiedCode === referral.referral_code ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                           {copiedCode === referral.referral_code ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
                         </Button>
                       </div>
                     </TableCell>
@@ -439,7 +440,7 @@ export default function ReferralsPage() {
                 <div className="flex items-center gap-2 mb-3">
                   <code className="bg-secondary px-2 py-1 rounded text-sm font-mono">{referral.referral_code}</code>
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopyCode(referral.referral_code)}>
-                    {copiedCode === referral.referral_code ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                    {copiedCode === referral.referral_code ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
                   </Button>
                   <Badge variant="outline" className="gap-1 ml-auto"><Percent className="h-3 w-3" />{referral.discount_percentage}%</Badge>
                 </div>

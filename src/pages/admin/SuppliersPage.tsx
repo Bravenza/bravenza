@@ -86,7 +86,8 @@ export default function SuppliersPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" role="status" aria-live="polite">
+        <span className="sr-only">Carregando fornecedores…</span>
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -166,13 +167,14 @@ export default function SuppliersPage() {
                     <TableCell>
                       {supplier.rating ? (
                         <div className="flex items-center gap-1">
-                          <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                          <Star className="h-4 w-4 fill-warning text-warning" aria-hidden="true" />
                           <span>{supplier.rating.toFixed(1)}</span>
+                          <span className="sr-only">de 5 estrelas</span>
                         </div>
                       ) : <span className="text-muted-foreground">-</span>}
                     </TableCell>
                     <TableCell>
-                      <Switch checked={supplier.is_active} onCheckedChange={() => handleToggleActive(supplier.id, supplier.is_active)} />
+                      <Switch checked={supplier.is_active} onCheckedChange={() => handleToggleActive(supplier.id, supplier.is_active)} aria-label={`${supplier.is_active ? "Desativar" : "Ativar"} fornecedor ${supplier.name}`} />
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
@@ -208,7 +210,7 @@ export default function SuppliersPage() {
                       <Badge variant="outline" className="mt-1">{supplier.country}</Badge>
                     </div>
                   </div>
-                  <Switch checked={supplier.is_active} onCheckedChange={() => handleToggleActive(supplier.id, supplier.is_active)} />
+                  <Switch checked={supplier.is_active} onCheckedChange={() => handleToggleActive(supplier.id, supplier.is_active)} aria-label={`${supplier.is_active ? "Desativar" : "Ativar"} fornecedor ${supplier.name}`} />
                 </div>
                 {supplier.contact_name && <p className="text-sm text-muted-foreground mb-1">{supplier.contact_name}</p>}
                 {supplier.specialties && supplier.specialties.length > 0 && (
@@ -223,7 +225,7 @@ export default function SuppliersPage() {
                     {supplier.average_shipping_days && <span>{supplier.average_shipping_days} dias</span>}
                     {supplier.rating && (
                       <span className="flex items-center gap-1">
-                        <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                        <Star className="h-3 w-3 fill-warning text-warning" aria-hidden="true" />
                         {supplier.rating.toFixed(1)}
                       </span>
                     )}
