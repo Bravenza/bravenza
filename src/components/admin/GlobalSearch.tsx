@@ -160,8 +160,8 @@ export function GlobalSearch() {
 
   const typeIcons = {
     order: <Package className="h-4 w-4 text-primary" />,
-    client: <Users className="h-4 w-4 text-blue-500" />,
-    vault_member: <Crown className="h-4 w-4 text-amber-500" />,
+    client: <Users className="h-4 w-4 text-info" />,
+    vault_member: <Crown className="h-4 w-4 text-warning" />,
   };
 
   const typeLabels = {

@@ -67,6 +67,10 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 12%;
 
+    /* Info blue for informational */
+    --info: 210 100% 52%;
+    --info-foreground: 0 0% 100%;
+
     --border: 0 0% 18%;
     --input: 0 0% 18%;
     --ring: 45 100% 50%;
@@ -185,6 +189,9 @@
 
     --warning: 38 92% 50%;
     --warning-foreground: 224 20% 14%;
+
+    --info: 210 90% 46%;
+    --info-foreground: 0 0% 100%;
 
     --border: 220 13% 87%;
     --input: 220 13% 87%;

@@ -15,14 +15,14 @@ import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 
 const notificationIcons: Record<string, React.ReactNode> = {
-  new_order_request: <Package className="h-4 w-4 text-blue-500" />,
-  order_status_update: <Truck className="h-4 w-4 text-orange-500" />,
-  budget_sent: <FileText className="h-4 w-4 text-purple-500" />,
-  budget_approved: <Check className="h-4 w-4 text-green-500" />,
-  budget_rejected: <AlertCircle className="h-4 w-4 text-red-500" />,
-  payment_received: <CreditCard className="h-4 w-4 text-emerald-500" />,
-  order_delivered: <CheckCheck className="h-4 w-4 text-green-600" />,
-  system_alert: <AlertCircle className="h-4 w-4 text-yellow-500" />,
+  new_order_request: <Package className="h-4 w-4 text-info" />,
+  order_status_update: <Truck className="h-4 w-4 text-warning" />,
+  budget_sent: <FileText className="h-4 w-4 text-accent-foreground" />,
+  budget_approved: <Check className="h-4 w-4 text-success" />,
+  budget_rejected: <AlertCircle className="h-4 w-4 text-destructive" />,
+  payment_received: <CreditCard className="h-4 w-4 text-success" />,
+  order_delivered: <CheckCheck className="h-4 w-4 text-success" />,
+  system_alert: <AlertCircle className="h-4 w-4 text-warning" />,
 };
 
 function NotificationItem({ 
