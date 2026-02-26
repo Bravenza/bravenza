@@ -348,7 +348,7 @@ export default function AppLayout() {
         {isMobile && (
           <div className="fixed bottom-0 left-0 right-0 z-50 px-3 pb-2 safe-area-bottom">
             <nav className="rounded-2xl bg-card/95 backdrop-blur-xl border border-border/30 shadow-lg shadow-black/15">
-              <div className="flex items-stretch justify-around">
+              <div className="flex items-stretch justify-around px-1">
                 {bottomTabs.map(tab => {
                   const active = tab.isMore
                     ? location.pathname.startsWith("/app/mais")
@@ -367,19 +367,20 @@ export default function AppLayout() {
                         }
                       }}
                       className={cn(
-                        "flex flex-col items-center justify-center gap-0.5 py-2.5 px-2 min-h-[50px] flex-1 transition-colors relative",
-                        active ? "text-primary" : "text-muted-foreground"
+                        "flex items-center justify-center py-3 px-3 min-h-[44px] flex-1 rounded-xl transition-all duration-200 relative active:scale-90",
+                        active
+                          ? "text-primary"
+                          : "text-muted-foreground active:text-foreground"
                       )}
                     >
                       {active && (
                         <motion.div
                           layoutId="activeTab"
-                          className="absolute top-1.5 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-primary"
+                          className="absolute inset-1 rounded-xl bg-primary/10"
                           transition={{ type: "spring", stiffness: 400, damping: 30 }}
                         />
                       )}
-                      <tab.icon className="h-5 w-5" strokeWidth={active ? 2.5 : 1.8} />
-                      <span className={cn("text-[10px]", active ? "font-semibold" : "font-medium")}>{tab.label}</span>
+                      <tab.icon className="h-5 w-5 relative z-10" strokeWidth={active ? 2.5 : 1.8} />
                     </button>
                   );
                 })}
