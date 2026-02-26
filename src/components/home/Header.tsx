@@ -43,14 +43,14 @@ const HeaderComponent = () => {
   return (
     <>
         <header
-          className="fixed top-0 left-0 right-0 z-50 theme-dark"
+          className="fixed top-0 left-0 right-0 z-50 pointer-events-none"
           style={{
             paddingTop: 'env(safe-area-inset-top, 0px)',
           }}
           data-header-height
         >
-          <div className="mx-auto px-3 pt-2">
-          <div className="container mx-auto px-4 flex items-center justify-between rounded-2xl bg-background/80 backdrop-blur-2xl border border-border/40 shadow-xl shadow-black/20 ring-1 ring-white/5" style={{ height: '48px' }}>
+          <div className="mx-auto px-3 pt-2 pb-2">
+          <div className="pointer-events-auto theme-dark container mx-auto px-4 flex items-center justify-between rounded-2xl bg-background/80 backdrop-blur-2xl border border-border/40 shadow-xl shadow-black/20 ring-1 ring-white/5" style={{ height: '48px' }}>
           <Link to="/" className="transition-all duration-300 hover:opacity-80 hover:scale-105">
             <Logo size="md" />
           </Link>
