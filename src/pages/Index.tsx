@@ -57,7 +57,7 @@ const Index = () => {
         description="Plataforma premium de curadoria sob demanda e verificação de autenticidade de sneakers, conectando clientes a vendedores com segurança."
       />
 
-      <div className="min-h-screen bg-background space-y-0">
+      <div className="min-h-screen bg-background space-y-0 overflow-x-hidden">
         <Header />
         
         <main id="main-content">
