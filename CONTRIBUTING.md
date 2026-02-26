@@ -89,15 +89,17 @@ export function OrderCard({ order, onSelect }: any) { ... }
 
 Ordem padronizada:
 1. React e bibliotecas externas
-2. Componentes UI (`@/components/ui/`)
-3. Componentes do domínio (`@/components/marketplace/`)
-4. Hooks (`@/hooks/`)
-5. Utilitários (`@/lib/`)
-6. Tipos
+2. i18n (`react-i18next`)
+3. Componentes UI (`@/components/ui/`)
+4. Componentes do domínio (`@/components/marketplace/`)
+5. Hooks (`@/hooks/`)
+6. Utilitários (`@/lib/`)
+7. Tipos
 
 ```typescript
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { OrderCard } from "@/components/client/OrderCard";
@@ -253,11 +255,22 @@ Antes de submeter um Pull Request, verifique:
 - [ ] Componentes pesados com `lazy()` + `Suspense`
 - [ ] Imports organizados na ordem padrão
 
+### Internacionalização (i18n)
+- [ ] Strings de UI em páginas públicas usam `t("chave")` via `useTranslation`
+- [ ] Novas chaves adicionadas em `src/locales/pt-BR.json`
+- [ ] Chaves organizadas por domínio (`modulo.subchave`)
+- [ ] SEO metadata usa chaves i18n (`metaTitle`, `metaDescription`)
+
 ### Segurança
 - [ ] Novas tabelas com RLS habilitado
 - [ ] Dados do usuário protegidos por política owner-only
 - [ ] Inputs sanitizados se renderizam HTML
 - [ ] Sem chaves privadas no código
+- [ ] Formulários sensíveis com reCAPTCHA v3
+
+### Notificações
+- [ ] Ações relevantes disparam notificação (in-app e/ou push)
+- [ ] Toast para feedback imediato ao usuário
 
 ### Acessibilidade
 - [ ] Botões e links com `aria-label` quando sem texto visível
