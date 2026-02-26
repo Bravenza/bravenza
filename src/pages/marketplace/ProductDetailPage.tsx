@@ -572,7 +572,7 @@ function ProductDetailPageInner() {
               />
               <SpecRow
                 icon={<ShoppingBag className="h-3.5 w-3.5" />}
-                label="Modelo"
+                label="Silhueta"
                 value={product.model}
                 even
                 onClick={() => navigate(`/app?q=${encodeURIComponent(product.model)}`)}
