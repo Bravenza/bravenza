@@ -502,10 +502,10 @@ export default function MarketplaceProfilePage() {
                         <Label className="text-sm font-semibold">Tamanhos preferidos</Label>
                         <div className="flex flex-wrap gap-1.5 mt-2">
                           {SHOE_SIZES.map((size) => (
-                            <button key={size} onClick={() => toggleSize(size)} className={cn(
-                              "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border",
-                              preferredSizes.includes(size) ? "bg-primary text-primary-foreground border-primary" : "bg-muted/30 text-muted-foreground border-border/30 hover:border-primary/30"
-                            )}>{size}</button>
+                            <button key={size} onClick={() => toggleSize(size)} aria-pressed={preferredSizes.includes(size)} className={cn(
+                               "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border",
+                               preferredSizes.includes(size) ? "bg-primary text-primary-foreground border-primary" : "bg-muted/30 text-muted-foreground border-border/30 hover:border-primary/30"
+                             )}>{size}</button>
                           ))}
                         </div>
                       </div>
@@ -514,10 +514,10 @@ export default function MarketplaceProfilePage() {
                         <Label className="text-sm font-semibold">Marcas favoritas</Label>
                         <div className="flex flex-wrap gap-1.5 mt-2">
                           {SNEAKER_BRANDS.slice(0, 20).map((brand) => (
-                            <button key={brand.value} onClick={() => toggleBrand(brand.value)} className={cn(
-                              "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border",
-                              favoriteBrands.includes(brand.value) ? "bg-primary text-primary-foreground border-primary" : "bg-muted/30 text-muted-foreground border-border/30 hover:border-primary/30"
-                            )}>{brand.label}</button>
+                            <button key={brand.value} onClick={() => toggleBrand(brand.value)} aria-pressed={favoriteBrands.includes(brand.value)} className={cn(
+                               "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border",
+                               favoriteBrands.includes(brand.value) ? "bg-primary text-primary-foreground border-primary" : "bg-muted/30 text-muted-foreground border-border/30 hover:border-primary/30"
+                             )}>{brand.label}</button>
                           ))}
                         </div>
                       </div>

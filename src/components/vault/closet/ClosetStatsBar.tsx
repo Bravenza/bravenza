@@ -12,7 +12,7 @@ export function ClosetStatsBar({ collectionCount, favoritesCount, reviewsCount, 
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(value);
 
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
       <StatItem icon={Box} label="Coleção" value={String(collectionCount)} />
       <StatItem icon={Heart} label="Favoritos" value={String(favoritesCount)} />
       <StatItem icon={Star} label="Avaliações" value={String(reviewsCount)} />

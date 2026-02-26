@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Heart, ShoppingBag, ExternalLink } from "lucide-react";
+import { Heart, ShoppingBag, ExternalLink, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
@@ -65,8 +65,9 @@ export function ClosetFavoritesTab({ cpf }: ClosetFavoritesTabProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-primary" />
+      <div className="flex items-center justify-center py-16" role="status" aria-live="polite">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <span className="sr-only">Carregando favoritos...</span>
       </div>
     );
   }
