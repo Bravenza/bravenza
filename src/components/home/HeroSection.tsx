@@ -14,7 +14,7 @@ const HeroSectionComponent = () => {
   ];
 
   return (
-    <section className="relative min-h-[85vh] md:min-h-[95vh] flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[85vh] md:min-h-[95vh] flex items-center justify-center overflow-hidden" style={{ paddingTop: 'calc(60px + env(safe-area-inset-top, 0px))' }}>
       <div className="absolute inset-0 bg-grid-pattern opacity-40 hidden md:block" />
       <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-radial-glow" />
