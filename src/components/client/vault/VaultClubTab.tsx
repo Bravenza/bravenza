@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Crown,
@@ -589,10 +590,10 @@ export function VaultClubTab({
       {/* Rules Link */}
       <Card>
         <CardContent className="py-4">
-          <a
-            href="/regras-marketplace"
-            className="flex items-center justify-between p-3 bg-muted/30 border border-border/30 rounded-xl hover:bg-muted/50 transition-colors"
-          >
+          <Link
+             to="/regras-marketplace"
+             className="flex items-center justify-between p-3 bg-muted/30 border border-border/30 rounded-xl hover:bg-muted/50 transition-colors"
+           >
             <div className="flex items-center gap-3">
               <FileText className="h-5 w-5 text-muted-foreground" />
               <div>
@@ -603,7 +604,7 @@ export function VaultClubTab({
               </div>
             </div>
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
-          </a>
+           </Link>
         </CardContent>
       </Card>
     </div>

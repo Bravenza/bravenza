@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, ShoppingBag, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Plus, ShoppingBag, TrendingUp, TrendingDown, Minus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VaultItemCard } from "@/components/vault/VaultItemCard";
 import { AddToClosetModal } from "./AddToClosetModal";
@@ -37,8 +37,9 @@ export function ClosetCollectionTab({ items, isLoading, onItemAdded, cpf, member
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-primary" />
+      <div className="flex items-center justify-center py-16" role="status" aria-live="polite">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <span className="sr-only">Carregando coleção...</span>
       </div>
     );
   }

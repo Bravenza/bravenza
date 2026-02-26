@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Star, MessageSquare } from "lucide-react";
+import { Star, MessageSquare, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Review {
@@ -61,8 +61,9 @@ export function ClosetReviewsTab({ cpf }: ClosetReviewsTabProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-primary" />
+      <div className="flex items-center justify-center py-16" role="status" aria-live="polite">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <span className="sr-only">Carregando avaliações...</span>
       </div>
     );
   }
@@ -117,12 +118,14 @@ export function ClosetReviewsTab({ cpf }: ClosetReviewsTabProps) {
               <span className="text-[10px] text-muted-foreground shrink-0">{formatDate(review.created_at)}</span>
             </div>
             <div className="flex items-center gap-0.5 my-1">
+              <span className="sr-only">{review.rating} de 5 estrelas</span>
               {[1, 2, 3, 4, 5].map((s) => (
-                <Star
-                  key={s}
-                  className={`h-3 w-3 ${s <= review.rating ? "text-primary fill-primary" : "text-muted-foreground/30"}`}
-                />
-              ))}
+                 <Star
+                   key={s}
+                   aria-hidden="true"
+                   className={`h-3 w-3 ${s <= review.rating ? "text-primary fill-primary" : "text-muted-foreground/30"}`}
+                 />
+               ))}
             </div>
             {review.comment && (
               <p className="text-xs text-muted-foreground line-clamp-2">{review.comment}</p>
