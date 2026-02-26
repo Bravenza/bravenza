@@ -272,8 +272,9 @@ export default function OrderRequestsPage() {
 
       {/* Requests List */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-12" role="status" aria-live="polite">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="sr-only">Carregando solicitações…</span>
         </div>
       ) : filteredRequests?.length === 0 ? (
         <Card>

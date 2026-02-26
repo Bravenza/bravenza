@@ -32,11 +32,11 @@ interface MetricsData {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  "Em Processamento": "#3b82f6",
-  "Aguardando Pagamento": "#f59e0b",
-  "Em Trânsito": "#8b5cf6",
-  "Entregue": "#22c55e",
-  "Outros": "#6b7280",
+  "Em Processamento": "hsl(var(--info))",
+  "Aguardando Pagamento": "hsl(var(--warning))",
+  "Em Trânsito": "hsl(var(--accent))",
+  "Entregue": "hsl(var(--success))",
+  "Outros": "hsl(var(--muted-foreground))",
 };
 
 const FUNNEL_COLORS = ["hsl(var(--primary))", "#3b82f6", "#22c55e", "#10b981"];
@@ -118,7 +118,8 @@ export function DashboardMetrics() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" role="status" aria-live="polite">
+        <span className="sr-only">Carregando métricas…</span>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-32" />
@@ -155,16 +156,16 @@ export function DashboardMetrics() {
       title: "Tempo Médio p/ Aprovar",
       value: metrics.avgTimeToApproval > 0 ? `${metrics.avgTimeToApproval.toFixed(0)}h` : "-",
       icon: Timer,
-      color: "text-blue-500",
-      bgColor: "bg-blue-500/10",
+      color: "text-info",
+      bgColor: "bg-info/10",
       description: "Orçamento → Aprovação",
     },
     {
       title: "Tempo Médio p/ Fechar",
       value: metrics.avgTimeToClose > 0 ? `${metrics.avgTimeToClose.toFixed(0)} dias` : "-",
       icon: Clock,
-      color: "text-amber-500",
-      bgColor: "bg-amber-500/10",
+      color: "text-warning",
+      bgColor: "bg-warning/10",
       description: "Criação → Sinal pago",
     },
   ];
