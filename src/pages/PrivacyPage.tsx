@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { useTranslation } from "react-i18next";
 import {
   ShieldCheck, Database, Target, Scale, Share2, Lock, Clock, 
   UserCheck, Cookie, Bell, Globe, Users, RefreshCw, Phone
@@ -15,11 +16,12 @@ const DataCard = ({ title, items }: { title: string; items: string[] }) => (
 );
 
 const PrivacyPage = () => {
+  const { t } = useTranslation();
   return (
     <>
       <Helmet>
-        <title>Política de Privacidade | BRAVENZA</title>
-        <meta name="description" content="Política de Privacidade da BRAVENZA em conformidade com a LGPD. Saiba como coletamos, usamos e protegemos seus dados pessoais." />
+        <title>{t("privacy.pageTitle")}</title>
+        <meta name="description" content={t("privacy.metaDescription")} />
       </Helmet>
 
       <PolicyPageLayout

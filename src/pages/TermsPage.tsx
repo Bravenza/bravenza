@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   FileText, Users, Lock, Key, ShoppingBag, ClipboardList, Handshake,
   Package, CreditCard, Percent, Wallet, Timer, ShieldCheck, Building,
@@ -12,11 +13,12 @@ import {
 } from "@/components/policy/PolicyPageLayout";
 
 const TermsPage = () => {
+  const { t } = useTranslation();
   return (
     <>
       <Helmet>
-        <title>Termos de Uso | BRAVENZA</title>
-        <meta name="description" content="Termos de Uso da plataforma BRAVENZA. Conheça as condições para utilização dos nossos serviços de curadoria, intermediação, verificação técnica de autenticidade, marketplace e Club Vault." />
+        <title>{t("terms.pageTitle")}</title>
+        <meta name="description" content={t("terms.metaDescription")} />
       </Helmet>
 
       <PolicyPageLayout

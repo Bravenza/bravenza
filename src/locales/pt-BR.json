@@ -19,7 +19,9 @@
     "allRightsReserved": "Todos os direitos reservados.",
     "admin": "Admin",
     "whatsappLabel": "Fale conosco no WhatsApp",
-    "instagramLabel": "Siga-nos no Instagram"
+    "instagramLabel": "Siga-nos no Instagram",
+    "continue": "Continuar",
+    "submitting": "Enviando..."
   },
 
   "nav": {
@@ -295,7 +297,20 @@
     "traceabilityDesc": "Origem verificada através de fornecedores autorizados",
     "securityFailed": "Verificação de segurança falhou. Tente novamente.",
     "tooManyAttempts": "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
-    "verificationError": "Erro ao verificar. Tente novamente."
+    "verificationError": "Erro ao verificar. Tente novamente.",
+    "owner": "Proprietário",
+    "acquisitionDate": "Data de aquisição",
+    "certificationCode": "Código de certificação",
+    "checksPerformed": "Verificações realizadas",
+    "allCriteriaPassed": "Todos os critérios foram aprovados",
+    "inspectionRecord": "Registro fotográfico da inspeção",
+    "inspectionRecordDesc": "Fotos capturadas durante a verificação",
+    "bravenzaGuarantee": "Garantia Bravenza",
+    "certifiedTraceable": "Autenticidade certificada e rastreável",
+    "verifyAnother": "Verificar outro produto",
+    "protectedSystem": "Sistema de verificação de autenticidade protegido",
+    "sizeLabel": "Tamanho",
+    "inspectionAlt": "Inspeção"
   },
 
   "authenticityInfo": {
@@ -352,7 +367,31 @@
     "buyerProtection": "Proteção ao comprador",
     "buyerProtectionDesc": "Se o item for classificado como réplica na nossa verificação técnica, o comprador é reembolsado integralmente.",
     "fullTraceability": "Rastreabilidade completa",
-    "fullTraceabilityDesc": "Histórico documentado de cada produto, desde a origem até a entrega em suas mãos."
+    "fullTraceabilityDesc": "Histórico documentado de cada produto, desde a origem até a entrega em suas mãos.",
+    "stepLabel": "Etapa",
+    "digitalCertBadge": "Certificado digital",
+    "uniqueCertTitle": "Certificado único para cada produto",
+    "uniqueCertDesc": "Após a verificação, cada produto recebe um certificado digital exclusivo com código único. Você pode verificar a autenticidade a qualquer momento, compartilhar com compradores em caso de revenda, e ter a tranquilidade de saber que possui um produto original.",
+    "certUniqueCode": "Código único verificável online",
+    "certQrCode": "QR Code para acesso rápido",
+    "certPhotos": "Fotos da inspeção incluídas",
+    "certPdf": "Download em PDF disponível",
+    "certHistory": "Histórico de verificações",
+    "verifyCert": "Verificar certificado",
+    "guaranteeTitle": "Proteção ao comprador",
+    "guaranteeDesc": "Nosso processo de verificação técnica é rigoroso e transparente. Se o item for classificado como réplica durante a inspeção, a transação é cancelada e o comprador é reembolsado integralmente, conforme nossas políticas.",
+    "guaranteeRefund": "Reembolso integral",
+    "guaranteeNoBureaucracy": "Sem burocracia",
+    "guaranteeFast": "Processo rápido",
+    "ctaTitle": "Pronto para encontrar seu próximo sneaker?",
+    "ctaDesc": "Solicite um orçamento e deixe nossa equipe encontrar o sneaker dos seus sonhos com verificação técnica e proteção em cada etapa.",
+    "ctaButton": "Solicitar orçamento",
+    "ctaWhatsapp": "Falar no WhatsApp",
+    "certPreviewProduct": "Produto",
+    "certPreviewCode": "Código",
+    "certPreviewStatus": "Status",
+    "certPreviewVerified": "Verificado",
+    "certPreviewConfirmed": "Autenticidade confirmada"
   },
 
   "orderRequest": {
@@ -366,7 +405,7 @@
     "successTitle": "Solicitação Enviada!",
     "successDesc": "Recebemos sua solicitação e entraremos em contato em breve com o orçamento.",
     "successButton": "Voltar ao Início",
-    "submitButton": "Enviar solicitação",
+    "submitButton": "Enviar Solicitação",
     "validationFillRequired": "Preencha todos os campos obrigatórios",
     "validationCpf": "CPF inválido",
     "validationEmail": "E-mail inválido",
