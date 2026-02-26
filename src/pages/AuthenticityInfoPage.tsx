@@ -79,7 +79,7 @@ function AuthenticityInfoPageComponent() {
         <meta name="description" content={t("authenticityInfo.metaDescription")} />
         <meta property="og:title" content={t("authenticityInfo.pageTitle")} />
         <meta property="og:description" content={t("authenticityInfo.metaDescription")} />
-        <link rel="canonical" href="https://bravenza.lovable.app/sobre-autenticidade" />
+        <link rel="canonical" href="https://bravenza.com.br/sobre-autenticidade" />
       </Helmet>
 
       {/* Hero Section */}
@@ -217,7 +217,7 @@ function AuthenticityInfoPageComponent() {
                         <item.icon className="h-5 w-5 text-muted-foreground" />
                         <span className="text-sm">{item.label}</span>
                       </div>
-                      <CheckCircle className="h-5 w-5 text-emerald-500" />
+                      <CheckCircle className="h-5 w-5 text-success" />
                     </div>
                   ))}
                 </div>
@@ -284,8 +284,8 @@ function AuthenticityInfoPageComponent() {
                       <div className="p-4 rounded-xl bg-background/30 border border-border/30">
                         <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{t("authenticityInfo.certPreviewStatus")}</p>
                         <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                          <span className="text-sm text-emerald-500">{t("authenticityInfo.certPreviewVerified")}</span>
+                          <div className="w-2 h-2 rounded-full bg-success" />
+                           <span className="text-sm text-success">{t("authenticityInfo.certPreviewVerified")}</span>
                         </div>
                       </div>
                     </div>

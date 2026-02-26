@@ -173,6 +173,7 @@ export default function FAQPage() {
               <button
                 key={option.value}
                 onClick={() => setActivePersona(option.value)}
+                aria-pressed={activePersona === option.value}
                 className={cn(
                   "flex flex-col items-center gap-1 px-4 py-4 rounded-xl border text-center transition-all",
                   activePersona === option.value
