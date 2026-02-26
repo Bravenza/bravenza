@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      abandoned_carts: {
+        Row: {
+          cart_snapshot: Json
+          cart_total: number
+          checkout_started_at: string
+          created_at: string
+          id: string
+          item_count: number
+          recovered_at: string | null
+          recovery_email_opened_at: string | null
+          recovery_email_sent_at: string | null
+          status: string
+          updated_at: string
+          user_cpf: string
+        }
+        Insert: {
+          cart_snapshot?: Json
+          cart_total?: number
+          checkout_started_at?: string
+          created_at?: string
+          id?: string
+          item_count?: number
+          recovered_at?: string | null
+          recovery_email_opened_at?: string | null
+          recovery_email_sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_cpf: string
+        }
+        Update: {
+          cart_snapshot?: Json
+          cart_total?: number
+          checkout_started_at?: string
+          created_at?: string
+          id?: string
+          item_count?: number
+          recovered_at?: string | null
+          recovery_email_opened_at?: string | null
+          recovery_email_sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_cpf?: string
+        }
+        Relationships: []
+      }
       activity_logs: {
         Row: {
           action: string
