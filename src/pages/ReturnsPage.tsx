@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   RefreshCw, Package, AlertTriangle, Shield, ShieldCheck,
   Camera, MessageCircle, Scale, Truck, FileText
@@ -19,11 +20,12 @@ const MotiveCard = ({ icon: Icon, title, description }: { icon: React.ElementTyp
 );
 
 const ReturnsPage = () => {
+  const { t } = useTranslation();
   return (
     <>
       <Helmet>
-        <title>Trocas e Devoluções | BRAVENZA</title>
-        <meta name="description" content="Saiba como solicitar sua troca ou devolução na BRAVENZA com total segurança. Conheça os prazos, regras e o passo a passo completo." />
+        <title>{t("returns.pageTitle")}</title>
+        <meta name="description" content={t("returns.metaDescription")} />
       </Helmet>
 
       <PolicyPageLayout

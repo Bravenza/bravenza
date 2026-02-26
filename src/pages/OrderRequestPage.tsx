@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -18,14 +19,8 @@ import { sendMarketplaceEmail } from "@/lib/marketplace-email-notifications";
 import { motion, AnimatePresence } from "framer-motion";
 import { getRecaptchaToken } from "@/lib/recaptcha";
 
-const WIZARD_STEPS = [
-  { id: 1, label: "Dados Pessoais", icon: <User className="h-5 w-5" /> },
-  { id: 2, label: "Endereço", icon: <MapPin className="h-5 w-5" /> },
-  { id: 3, label: "Produto", icon: <Package className="h-5 w-5" /> },
-  { id: 4, label: "Revisão", icon: <ClipboardCheck className="h-5 w-5" /> },
-];
-
 export default function OrderRequestPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,6 +30,13 @@ export default function OrderRequestPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [referralInfo, setReferralInfo] = useState<{ code: string; referrerName: string; discount: number } | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
+
+  const WIZARD_STEPS = [
+    { id: 1, label: t("orderRequest.stepPersonalData"), icon: <User className="h-5 w-5" /> },
+    { id: 2, label: t("orderRequest.stepAddress"), icon: <MapPin className="h-5 w-5" /> },
+    { id: 3, label: t("orderRequest.stepProduct"), icon: <Package className="h-5 w-5" /> },
+    { id: 4, label: t("orderRequest.stepReview"), icon: <ClipboardCheck className="h-5 w-5" /> },
+  ];
   
   // Form state
   const [formData, setFormData] = useState({
@@ -82,7 +84,7 @@ export default function OrderRequestPage() {
 
       if (data) {
         if (data.expires_at && new Date(data.expires_at) < new Date()) {
-          toast.error("Código de indicação expirado");
+          toast.error(t("orderRequest.referralExpired"));
           return;
         }
 
@@ -92,9 +94,9 @@ export default function OrderRequestPage() {
           discount: data.discount_percentage || 5,
         });
         setFormData(prev => ({ ...prev, referral_code: data.referral_code }));
-        toast.success(`Código de indicação válido! Indicado por ${data.referrer_name}`);
+        toast.success(t("orderRequest.referralValid", { name: data.referrer_name }));
       } else {
-        toast.error("Código de indicação inválido ou já utilizado");
+        toast.error(t("orderRequest.referralInvalid"));
       }
     } catch (err) {
       console.error("Error validating referral code:", err);
@@ -105,7 +107,6 @@ export default function OrderRequestPage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Format CPF
   const formatCpf = (value: string) => {
     const numbers = value.replace(/\D/g, "").slice(0, 11);
     return numbers
@@ -114,7 +115,6 @@ export default function OrderRequestPage() {
       .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
   };
 
-  // Format phone
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, "").slice(0, 11);
     if (numbers.length <= 10) {
@@ -127,13 +127,11 @@ export default function OrderRequestPage() {
       .replace(/(\d{5})(\d)/, "$1-$2");
   };
 
-  // Format CEP
   const formatCep = (value: string) => {
     const numbers = value.replace(/\D/g, "").slice(0, 8);
     return numbers.replace(/(\d{5})(\d)/, "$1-$2");
   };
 
-  // Fetch address from CEP
   const fetchAddressFromCep = async (cep: string) => {
     const cleanCep = cep.replace(/\D/g, "");
     if (cleanCep.length !== 8) return;
@@ -144,7 +142,7 @@ export default function OrderRequestPage() {
       const data = await response.json();
       
       if (data.erro) {
-        toast.error("CEP não encontrado");
+        toast.error(t("orderRequest.cepNotFound"));
         return;
       }
 
@@ -156,19 +154,18 @@ export default function OrderRequestPage() {
         address_state: data.uf || "",
       }));
     } catch {
-      toast.error("Erro ao buscar CEP");
+      toast.error(t("orderRequest.cepError"));
     } finally {
       setIsLoadingCep(false);
     }
   };
 
-  // Handle image selection
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Imagem muito grande. Máximo 5MB.");
+      toast.error(t("orderRequest.imageTooLarge"));
       return;
     }
 
@@ -178,28 +175,26 @@ export default function OrderRequestPage() {
     reader.readAsDataURL(file);
   };
 
-  // Handle brand change
   const handleBrandChange = (brand: string) => {
     setSelectedBrand(brand);
     updateField("product_brand", brand);
     updateField("product_model", "");
   };
 
-  // Validate step
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1: {
         if (!formData.client_name || !formData.client_cpf || !formData.client_email || !formData.client_phone) {
-          toast.error("Preencha todos os campos obrigatórios");
+          toast.error(t("orderRequest.validationFillRequired"));
           return false;
         }
         const cpfClean = formData.client_cpf.replace(/\D/g, "");
         if (cpfClean.length !== 11) {
-          toast.error("CPF inválido");
+          toast.error(t("orderRequest.validationCpf"));
           return false;
         }
         if (!formData.client_email.includes("@")) {
-          toast.error("E-mail inválido");
+          toast.error(t("orderRequest.validationEmail"));
           return false;
         }
         return true;
@@ -207,34 +202,32 @@ export default function OrderRequestPage() {
       case 2: {
         if (!formData.address_cep || !formData.address_street || !formData.address_number || 
             !formData.address_neighborhood || !formData.address_city || !formData.address_state) {
-          toast.error("Preencha todos os campos obrigatórios do endereço");
+          toast.error(t("orderRequest.validationAddressRequired"));
           return false;
         }
         return true;
       }
       case 3: {
         if (!formData.shoe_size) {
-          toast.error("Selecione o tamanho do sneaker");
+          toast.error(t("orderRequest.validationSize"));
           return false;
         }
-        // Validate brand - either selected brand or custom brand when "other"
         const hasBrand = selectedBrand === "other" 
           ? formData.product_brand && formData.product_brand !== "other"
           : selectedBrand;
         if (!hasBrand) {
-          toast.error("Selecione a marca do sneaker");
+          toast.error(t("orderRequest.validationBrand"));
           return false;
         }
-        // Validate model - either selected model or custom model when "other"
         const hasModel = formData.product_model === "other" || selectedBrand === "other"
           ? formData.custom_model
           : formData.product_model;
         if (!hasModel) {
-          toast.error("Selecione ou informe o modelo do sneaker");
+          toast.error(t("orderRequest.validationModel"));
           return false;
         }
         if (!formData.product_color) {
-          toast.error("Informe a cor do sneaker");
+          toast.error(t("orderRequest.validationColor"));
           return false;
         }
         return true;
@@ -244,7 +237,6 @@ export default function OrderRequestPage() {
     }
   };
 
-  // Navigate between steps
   const goToNextStep = () => {
     if (validateStep(currentStep)) {
       setCurrentStep(prev => Math.min(prev + 1, WIZARD_STEPS.length));
@@ -261,7 +253,6 @@ export default function OrderRequestPage() {
     }
   };
 
-  // Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -270,20 +261,18 @@ export default function OrderRequestPage() {
     setIsSubmitting(true);
 
     try {
-      // Verify reCAPTCHA
       const captchaToken = await getRecaptchaToken("order_request");
       const { data: captchaResult, error: captchaError } = await supabase.functions.invoke("verify-captcha", {
         body: { token: captchaToken, action: "order_request" },
       });
       if (captchaError || !captchaResult?.success) {
-        toast.error("Verificação de segurança falhou. Tente novamente.");
+        toast.error(t("orderRequest.captchaFailed"));
         setIsSubmitting(false);
         return;
       }
 
       let imageUrl = null;
 
-      // Upload image if provided
       if (imageFile) {
         const fileExt = imageFile.name.split(".").pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
@@ -301,13 +290,11 @@ export default function OrderRequestPage() {
         imageUrl = publicUrl;
       }
 
-      // Prepare form data - use custom_model if "other" was selected
       const finalBrand = selectedBrand === "other" ? formData.product_brand : selectedBrand;
       const finalModel = formData.product_model === "other" || selectedBrand === "other" 
         ? formData.custom_model 
         : formData.product_model;
 
-      // Insert request with referral_code
       const { data: requestData, error } = await supabase
         .from("order_requests")
         .insert({
@@ -336,7 +323,6 @@ export default function OrderRequestPage() {
 
       if (error) throw error;
 
-      // If referral code was used, update the referral status to converted
       if (referralInfo?.code && requestData) {
         await supabase
           .from("referrals")
@@ -349,7 +335,6 @@ export default function OrderRequestPage() {
           .eq("status", "pending");
       }
 
-      // Create notification for admins
       try {
         await supabase.functions.invoke("create-notification", {
           body: {
@@ -364,7 +349,6 @@ export default function OrderRequestPage() {
         console.error("Error creating notification:", notifError);
       }
 
-      // Send confirmation email to client
       try {
         await sendMarketplaceEmail({
           type: "order_request_received",
@@ -381,11 +365,11 @@ export default function OrderRequestPage() {
       }
 
       setIsSuccess(true);
-      toast.success("Solicitação enviada com sucesso!");
+      toast.success(t("orderRequest.submitSuccess"));
 
     } catch (error: any) {
       console.error("Error submitting request:", error);
-      toast.error("Erro ao enviar solicitação. Tente novamente.");
+      toast.error(t("orderRequest.submitError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -394,7 +378,6 @@ export default function OrderRequestPage() {
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
-        {/* Background decorations */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute inset-0 bg-grid-pattern opacity-20" />
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl" />
@@ -415,13 +398,9 @@ export default function OrderRequestPage() {
             >
               <CheckCircle2 className="h-10 w-10 text-success" />
             </motion.div>
-            <h2 className="text-2xl font-display font-bold mb-2">Solicitação Enviada!</h2>
-            <p className="text-muted-foreground mb-6">
-              Recebemos sua solicitação e entraremos em contato em breve com o orçamento.
-            </p>
-            <Button onClick={() => navigate("/")} className="w-full btn-gold">
-              Voltar ao Início
-            </Button>
+            <h2 className="text-2xl font-display font-bold mb-2">{t("orderRequest.successTitle")}</h2>
+            <p className="text-muted-foreground mb-6">{t("orderRequest.successDesc")}</p>
+            <Button onClick={() => navigate("/")} className="w-full btn-gold">{t("orderRequest.successButton")}</Button>
           </div>
         </motion.div>
       </div>
@@ -430,14 +409,12 @@ export default function OrderRequestPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative">
-      {/* Background decorations */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 bg-grid-pattern opacity-20" />
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 left-0 w-[400px] h-[400px] bg-primary/3 rounded-full blur-3xl" />
       </div>
 
-      {/* Header */}
       <header className="relative border-b border-border/30 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -446,21 +423,17 @@ export default function OrderRequestPage() {
           </Link>
           <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t("common.back")}
           </Button>
         </div>
       </header>
 
-      {/* Form */}
       <main className="relative z-10 container mx-auto px-4 sm:px-6 py-8 md:py-12 max-w-2xl flex-1">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-display font-bold mb-2">Solicitar <span className="text-gradient-gold">Orçamento</span></h1>
-          <p className="text-muted-foreground">
-            Preencha o formulário em 4 etapas simples
-          </p>
+          <h1 className="text-3xl font-display font-bold mb-2">{t("orderRequest.title")} <span className="text-gradient-gold">{t("orderRequest.titleHighlight")}</span></h1>
+          <p className="text-muted-foreground">{t("orderRequest.subtitle")}</p>
         </div>
 
-        {/* Stepper */}
         <div className="mb-8">
           <RequestStepper 
             steps={WIZARD_STEPS} 
@@ -469,7 +442,6 @@ export default function OrderRequestPage() {
           />
         </div>
 
-        {/* Form Card */}
         <div className="card-premium overflow-hidden">
           <div className="p-6 sm:p-8">
             <form onSubmit={handleSubmit}>
@@ -482,91 +454,39 @@ export default function OrderRequestPage() {
                   transition={{ duration: 0.2 }}
                 >
                   {currentStep === 1 && (
-                    <PersonalDataStep
-                      formData={formData}
-                      updateField={updateField}
-                      formatCpf={formatCpf}
-                      formatPhone={formatPhone}
-                    />
+                    <PersonalDataStep formData={formData} updateField={updateField} formatCpf={formatCpf} formatPhone={formatPhone} />
                   )}
-                  
                   {currentStep === 2 && (
-                    <AddressStep
-                      formData={formData}
-                      updateField={updateField}
-                      formatCep={formatCep}
-                      onCepChange={fetchAddressFromCep}
-                      isLoadingCep={isLoadingCep}
-                    />
+                    <AddressStep formData={formData} updateField={updateField} formatCep={formatCep} onCepChange={fetchAddressFromCep} isLoadingCep={isLoadingCep} />
                   )}
-                  
                   {currentStep === 3 && (
-                    <ProductStep
-                      formData={formData}
-                      selectedBrand={selectedBrand}
-                      updateField={updateField}
-                      onBrandChange={handleBrandChange}
-                      imagePreview={imagePreview}
-                      onImageChange={handleImageChange}
-                      onRemoveImage={() => {
-                        setImageFile(null);
-                        setImagePreview(null);
-                      }}
-                    />
+                    <ProductStep formData={formData} selectedBrand={selectedBrand} updateField={updateField} onBrandChange={handleBrandChange} imagePreview={imagePreview} onImageChange={handleImageChange} onRemoveImage={() => { setImageFile(null); setImagePreview(null); }} />
                   )}
-                  
                   {currentStep === 4 && (
-                    <ReviewStep
-                      formData={formData}
-                      updateField={updateField}
-                      referralInfo={referralInfo}
-                      validateReferralCode={validateReferralCode}
-                      imagePreview={imagePreview}
-                      onStepClick={goToStep}
-                    />
+                    <ReviewStep formData={formData} updateField={updateField} referralInfo={referralInfo} validateReferralCode={validateReferralCode} imagePreview={imagePreview} onStepClick={goToStep} />
                   )}
                 </motion.div>
               </AnimatePresence>
 
-              {/* Navigation buttons */}
               <div className="flex gap-3 mt-8 pt-6 border-t border-border">
                 {currentStep > 1 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={goToPreviousStep}
-                    className="flex-1"
-                  >
+                  <Button type="button" variant="outline" onClick={goToPreviousStep} className="flex-1">
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Voltar
+                    {t("common.back")}
                   </Button>
                 )}
                 
                 {currentStep < WIZARD_STEPS.length ? (
-                  <Button
-                    type="button"
-                    onClick={goToNextStep}
-                    className="flex-1 btn-gold"
-                  >
-                    Continuar
+                  <Button type="button" onClick={goToNextStep} className="flex-1 btn-gold">
+                    {t("common.continue")}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 ) : (
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 btn-gold"
-                  >
+                  <Button type="submit" disabled={isSubmitting} className="flex-1 btn-gold">
                     {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Enviando...
-                      </>
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t("common.submitting")}</>
                     ) : (
-                      <>
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Enviar Solicitação
-                      </>
+                      <><CheckCircle2 className="h-4 w-4 mr-2" />{t("orderRequest.submitButton")}</>
                     )}
                   </Button>
                 )}

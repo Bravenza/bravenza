@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -29,42 +30,43 @@ const CATEGORY_ICONS: Record<string, any> = {
   geral: HelpCircle,
 };
 
-const CATEGORY_LABELS: Record<string, string> = {
-  curadoria: "Curadoria",
-  pagamento: "Pagamento",
-  prazos: "Prazos e envio",
-  garantia: "Garantia e autenticidade",
-  marketplace: "Marketplace",
-  vendedor: "Para vendedores",
-  "vault-club": "Vault Club",
-  geral: "Geral",
+const CATEGORY_LABEL_KEYS: Record<string, string> = {
+  curadoria: "faq.catCuradoria",
+  pagamento: "faq.catPagamento",
+  prazos: "faq.catPrazos",
+  garantia: "faq.catGarantia",
+  marketplace: "faq.catMarketplace",
+  vendedor: "faq.catVendedor",
+  "vault-club": "faq.catVaultClub",
+  geral: "faq.catGeral",
 };
 
-const CATEGORY_DESCRIPTIONS: Record<string, string> = {
-  curadoria: "Sobre o serviço de busca e curadoria sob demanda",
-  pagamento: "Formas de pagamento, parcelamento e cancelamento",
-  prazos: "Prazos de entrega, rastreamento e logística",
-  garantia: "Autenticidade, inspeção e garantias",
-  marketplace: "Compra e venda entre membros da comunidade",
-  vendedor: "Tudo sobre vender na plataforma",
-  "vault-club": "Programa de fidelidade e benefícios exclusivos",
-  geral: "Informações gerais sobre a BRAVENZA",
+const CATEGORY_DESC_KEYS: Record<string, string> = {
+  curadoria: "faq.catDescCuradoria",
+  pagamento: "faq.catDescPagamento",
+  prazos: "faq.catDescPrazos",
+  garantia: "faq.catDescGarantia",
+  marketplace: "faq.catDescMarketplace",
+  vendedor: "faq.catDescVendedor",
+  "vault-club": "faq.catDescVaultClub",
+  geral: "faq.catDescGeral",
 };
-
-const PERSONA_OPTIONS = [
-  { value: "all", label: "Todas as perguntas", description: "Curadoria, marketplace e mais" },
-  { value: "comprador", label: "Sou comprador", description: "Comprar, rastrear e devolver" },
-  { value: "vendedor", label: "Sou vendedor", description: "Anunciar, vender e receber" },
-];
 
 // Preferred display order for categories
 const CATEGORY_ORDER = ["curadoria", "marketplace", "garantia", "pagamento", "prazos", "vault-club", "vendedor", "geral"];
 
 export default function FAQPage() {
+  const { t } = useTranslation();
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activePersona, setActivePersona] = useState("all");
   const [search, setSearch] = useState("");
+
+  const PERSONA_OPTIONS = useMemo(() => [
+    { value: "all", label: t("faq.allQuestions"), description: t("faq.allQuestionsDesc") },
+    { value: "comprador", label: t("faq.imBuyer"), description: t("faq.imBuyerDesc") },
+    { value: "vendedor", label: t("faq.imSeller"), description: t("faq.imSellerDesc") },
+  ], [t]);
 
   const fetchFAQs = useCallback(async () => {
     try {
@@ -116,7 +118,6 @@ export default function FAQPage() {
     [filteredFaqs]
   );
 
-  // Sort categories by preferred order
   const sortedCategories = useMemo(
     () =>
       Object.keys(faqsByCategory).sort(
@@ -130,11 +131,8 @@ export default function FAQPage() {
   return (
     <PublicLayout className="theme-light">
       <Helmet>
-        <title>Perguntas Frequentes | BRAVENZA</title>
-        <meta
-          name="description"
-          content="Encontre respostas para as dúvidas mais comuns sobre curadoria, marketplace, pagamentos e garantia na BRAVENZA."
-        />
+        <title>{t("faq.pageTitle")}</title>
+        <meta name="description" content={t("faq.metaDescription")} />
         <link rel="canonical" href="https://bravenza.com.br/faq" />
       </Helmet>
 
@@ -147,17 +145,16 @@ export default function FAQPage() {
             className="text-center mb-10 md:mb-14 max-w-2xl mx-auto"
           >
             <h1 className="font-display text-3xl md:text-5xl font-bold mb-3 tracking-tight">
-              Como podemos <span className="text-gradient-gold">ajudar?</span>
+              {t("faq.heroTitle")} <span className="text-gradient-gold">{t("faq.heroTitleHighlight")}</span>
             </h1>
             <p className="text-muted-foreground text-sm md:text-base mb-8">
-              Encontre respostas rápidas sobre curadoria, marketplace e muito mais
+              {t("faq.heroSubtitle")}
             </p>
 
-            {/* Search bar */}
             <div className="relative max-w-lg mx-auto">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
-                placeholder="Buscar por palavras-chave..."
+                placeholder={t("faq.searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-12 h-12 text-base rounded-xl bg-card border-border/60"
@@ -183,19 +180,10 @@ export default function FAQPage() {
                     : "border-border/50 bg-card/50 hover:bg-card hover:border-border"
                 )}
               >
-                <span
-                  className={cn(
-                    "text-sm font-semibold",
-                    activePersona === option.value
-                      ? "text-primary"
-                      : "text-foreground"
-                  )}
-                >
+                <span className={cn("text-sm font-semibold", activePersona === option.value ? "text-primary" : "text-foreground")}>
                   {option.label}
                 </span>
-                <span className="text-xs text-muted-foreground">
-                  {option.description}
-                </span>
+                <span className="text-xs text-muted-foreground">{option.description}</span>
               </button>
             ))}
           </motion.div>
@@ -213,8 +201,7 @@ export default function FAQPage() {
                 <div className="text-center py-16">
                   <HelpCircle className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
                   <p className="text-muted-foreground">
-                    Nenhuma pergunta encontrada
-                    {search ? ` para "${search}"` : ""}
+                    {search ? t("faq.noResultsFor", { search }) : t("faq.noResults")}
                   </p>
                 </div>
               )}
@@ -231,26 +218,24 @@ export default function FAQPage() {
                     transition={{ delay: catIdx * 0.06 }}
                     className="mb-10"
                   >
-                    {/* Category header */}
                     <div className="flex items-start gap-3 mb-4">
                       <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                         <Icon className="h-5 w-5 text-primary" />
                       </div>
                       <div>
                         <h2 className="text-base md:text-lg font-bold text-foreground">
-                          {CATEGORY_LABELS[category] || category}
+                          {t(CATEGORY_LABEL_KEYS[category] || category)}
                         </h2>
-                        {CATEGORY_DESCRIPTIONS[category] && (
+                        {CATEGORY_DESC_KEYS[category] && (
                           <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
-                            {CATEGORY_DESCRIPTIONS[category]}
+                            {t(CATEGORY_DESC_KEYS[category])}
                           </p>
                         )}
                       </div>
                     </div>
 
-                    {/* Questions */}
                     <Accordion type="single" collapsible className="space-y-2">
-                      {items.map((faq, index) => (
+                      {items.map((faq) => (
                         <AccordionItem
                           key={faq.id}
                           value={faq.id}
@@ -279,10 +264,8 @@ export default function FAQPage() {
                 className="mt-16 text-center rounded-2xl border border-border/40 bg-card/60 p-8 md:p-10"
               >
                 <MessageCircle className="h-8 w-8 text-primary mx-auto mb-3" />
-                <h3 className="font-semibold text-lg mb-1">Ainda tem dúvidas?</h3>
-                <p className="text-muted-foreground text-sm mb-5">
-                  Nossa equipe está pronta para te ajudar pelo WhatsApp
-                </p>
+                <h3 className="font-semibold text-lg mb-1">{t("faq.stillHaveQuestions")}</h3>
+                <p className="text-muted-foreground text-sm mb-5">{t("faq.teamReady")}</p>
                 <a
                   href="https://wa.me/5551981055425?text=Olá!%20Tenho%20uma%20dúvida%20sobre%20a%20BRAVENZA."
                   target="_blank"
@@ -290,7 +273,7 @@ export default function FAQPage() {
                   className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-medium transition-colors text-sm"
                 >
                   <MessageCircle className="h-4 w-4" />
-                  Fale conosco
+                  {t("faq.talkToUs")}
                 </a>
               </motion.div>
             </div>
