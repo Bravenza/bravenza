@@ -16,6 +16,8 @@ interface CreateNotificationRequest {
   message: string;
   reference_id?: string;
   reference_type?: string;
+  // Optional: URL to open on click
+  push_url?: string;
 }
 
 Deno.serve(async (req) => {
@@ -35,9 +37,8 @@ Deno.serve(async (req) => {
       throw new Error("Missing required fields: target, type, title, message");
     }
 
-    // For admin notifications, we'll notify all admins
+    // For admin notifications, notify all admins
     if (body.target === "admin") {
-      // Get all admin user IDs
       const { data: adminRoles, error: rolesError } = await supabase
         .from("user_roles")
         .select("user_id")
@@ -48,7 +49,6 @@ Deno.serve(async (req) => {
         throw rolesError;
       }
 
-      // Create notification for each admin
       const notifications = (adminRoles || []).map((role) => ({
         target: "admin" as const,
         target_user_id: role.user_id,
@@ -90,7 +90,26 @@ Deno.serve(async (req) => {
         throw insertError;
       }
 
-      console.log(`Created client notification for CPF: ${body.target_client_cpf}`);
+      console.log(`Created client notification for CPF: ${body.target_client_cpf.slice(0, 3)}***`);
+
+      // 🔔 Also dispatch Web Push notification
+      try {
+        await supabase.functions.invoke("send-push", {
+          body: {
+            target_cpf: body.target_client_cpf,
+            payload: {
+              title: body.title,
+              body: body.message,
+              tag: `${body.type}-${body.reference_id || "general"}`,
+              url: body.push_url || "/app/notificacoes",
+            },
+          },
+        });
+        console.log("Web Push dispatched");
+      } catch (pushErr) {
+        // Push is best-effort, don't fail the whole request
+        console.error("Web Push dispatch failed (non-blocking):", pushErr);
+      }
     }
 
     return new Response(
@@ -101,9 +120,9 @@ Deno.serve(async (req) => {
     console.error("Create notification error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { 
+      {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400
+        status: 400,
       }
     );
   }

@@ -1,10 +1,23 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PushNotificationState {
   isSupported: boolean;
   permission: NotificationPermission | "default";
   isSubscribed: boolean;
+}
+
+// Register custom SW for push events
+async function registerPushServiceWorker(): Promise<ServiceWorkerRegistration | null> {
+  if (!("serviceWorker" in navigator)) return null;
+  try {
+    const reg = await navigator.serviceWorker.register("/sw-push.js", { scope: "/" });
+    console.log("[Push] SW registered:", reg.scope);
+    return reg;
+  } catch (e) {
+    console.error("[Push] SW registration failed:", e);
+    return null;
+  }
 }
 
 export function usePushNotifications() {
@@ -14,180 +27,206 @@ export function usePushNotifications() {
     isSubscribed: false,
   });
   const [isLoading, setIsLoading] = useState(false);
+  const swRegRef = useRef<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
-    const isSupported = "Notification" in window && "serviceWorker" in navigator && "PushManager" in window;
-    
+    const isSupported =
+      "Notification" in window &&
+      "serviceWorker" in navigator &&
+      "PushManager" in window;
+
     setState((prev) => ({
       ...prev,
       isSupported,
       permission: isSupported ? Notification.permission : "default",
     }));
 
-    if (isSupported && Notification.permission === "granted") {
-      checkSubscription();
+    if (isSupported) {
+      registerPushServiceWorker().then((reg) => {
+        swRegRef.current = reg;
+        if (reg && Notification.permission === "granted") {
+          checkSubscription(reg);
+        }
+      });
     }
   }, []);
 
-  const checkSubscription = async () => {
+  const checkSubscription = async (reg: ServiceWorkerRegistration) => {
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await (registration as any).pushManager?.getSubscription();
-      setState((prev) => ({ ...prev, isSubscribed: !!subscription }));
+      const pm = (reg as any).pushManager;
+      const sub = pm ? await pm.getSubscription() : null;
+      setState((prev) => ({ ...prev, isSubscribed: !!sub }));
     } catch (error) {
       console.error("Error checking push subscription:", error);
     }
   };
 
-  const requestPermission = useCallback(async (): Promise<boolean> => {
-    if (!state.isSupported) {
-      console.log("Push notifications not supported");
-      return false;
-    }
+  const saveSubscription = useCallback(
+    async (subscription: PushSubscription, cpf: string) => {
+      const keys = subscription.toJSON().keys!;
+      const { error } = await supabase.functions.invoke("push-subscribe", {
+        body: {
+          cpf,
+          endpoint: subscription.endpoint,
+          p256dh: keys.p256dh,
+          auth: keys.auth,
+          user_agent: navigator.userAgent,
+        },
+      });
+      if (error) console.error("Error saving subscription:", error);
+    },
+    []
+  );
 
-    setIsLoading(true);
+  const requestPermission = useCallback(
+    async (cpf?: string): Promise<boolean> => {
+      if (!state.isSupported) return false;
 
-    try {
-      const permission = await Notification.requestPermission();
-      setState((prev) => ({ ...prev, permission }));
+      setIsLoading(true);
+      try {
+        const permission = await Notification.requestPermission();
+        setState((prev) => ({ ...prev, permission }));
 
-      if (permission === "granted") {
+        if (permission !== "granted") return false;
+
+        // Get or register the SW
+        let reg = swRegRef.current;
+        if (!reg) {
+          reg = await registerPushServiceWorker();
+          swRegRef.current = reg;
+        }
+        if (!reg) return false;
+
+        // Fetch VAPID public key from server
+        let vapidPublicKey: string | null = null;
+        try {
+          const { data } = await supabase.functions.invoke("push-vapid-key", { method: "GET" });
+          vapidPublicKey = data?.vapidPublicKey || null;
+        } catch {
+          console.warn("[Push] Could not fetch VAPID key");
+        }
+
+        if (vapidPublicKey) {
+          try {
+            const pm = (reg as any).pushManager;
+            const subscription = await pm.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+            });
+
+            if (cpf) {
+              await saveSubscription(subscription, cpf);
+            }
+
+            setState((prev) => ({ ...prev, isSubscribed: true }));
+          } catch (pushError) {
+            console.warn("[Push] PushManager.subscribe failed, falling back to local:", pushError);
+            setState((prev) => ({ ...prev, isSubscribed: true }));
+          }
+        } else {
+          setState((prev) => ({ ...prev, isSubscribed: true }));
+        }
+
+        // Show confirmation
         await showLocalNotification(
           "Notificações Ativadas! 🔔",
           "Você receberá atualizações sobre seus pedidos, drops e alertas de preço."
         );
-        setState((prev) => ({ ...prev, isSubscribed: true }));
+
         return true;
+      } catch (error) {
+        console.error("Error requesting notification permission:", error);
+        return false;
+      } finally {
+        setIsLoading(false);
       }
+    },
+    [state.isSupported, saveSubscription]
+  );
 
-      return false;
-    } catch (error) {
-      console.error("Error requesting notification permission:", error);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [state.isSupported]);
-
-  const showLocalNotification = async (title: string, body: string, options?: any) => {
-    if (!state.isSupported || Notification.permission !== "granted") {
-      return;
-    }
+  const showLocalNotification = async (
+    title: string,
+    body: string,
+    options?: Record<string, unknown>
+  ) => {
+    if (!state.isSupported || Notification.permission !== "granted") return;
 
     try {
-      const registration = await navigator.serviceWorker.ready;
-      await registration.showNotification(title, {
+      const reg =
+        swRegRef.current || (await navigator.serviceWorker.ready);
+      await reg.showNotification(title, {
         body,
         icon: "/pwa-192x192.png",
         badge: "/pwa-192x192.png",
-        tag: options?.tag || "bravenza-notification",
+        tag: (options?.tag as string) || "bravenza-notification",
         renotify: true,
         vibrate: [200, 100, 200],
-        actions: options?.actions || [],
         ...options,
       } as NotificationOptions);
-    } catch (error) {
-      // Fallback to regular Notification API
-      new Notification(title, {
-        body,
-        icon: "/pwa-192x192.png",
-        ...options,
-      });
+    } catch {
+      new Notification(title, { body, icon: "/pwa-192x192.png" });
     }
   };
 
-  // Specialized notification senders
-  const notifyDrop = useCallback(async (dropTitle: string, dropId: string) => {
-    await showLocalNotification(
-      "🔥 Novo Drop Disponível!",
-      dropTitle,
-      {
-        tag: `drop-${dropId}`,
-        data: { url: `/drops/${dropId}` },
-        actions: [
-          { action: "view", title: "Ver agora" },
-          { action: "dismiss", title: "Depois" },
-        ],
-      } as any
-    );
-  }, [state.isSupported]);
-
-  const notifyPriceAlert = useCallback(async (productName: string, newPrice: number, productSlug: string) => {
-    await showLocalNotification(
-      "💰 Alerta de Preço!",
-      `${productName} caiu para R$ ${newPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-      {
-        tag: `price-${productSlug}`,
-        data: { url: `/marketplace/produto/${productSlug}` },
-        actions: [
-          { action: "view", title: "Ver oferta" },
-        ],
-      } as any
-    );
-  }, [state.isSupported]);
-
-  const notifyChatMessage = useCallback(async (senderName: string, message: string, orderId: string) => {
-    await showLocalNotification(
-      `💬 Nova mensagem de ${senderName}`,
-      message.length > 80 ? message.slice(0, 80) + "..." : message,
-      {
-        tag: `chat-${orderId}`,
-        data: { url: `/dashboard?tab=marketplace` },
-      } as any
-    );
-  }, [state.isSupported]);
-
-  const notifyOrderUpdate = useCallback(async (status: string, orderId: string) => {
-    const notif = getOrderStatusNotification(status, orderId);
-    await showLocalNotification(notif.title, notif.body, {
-      tag: `order-${orderId}`,
-      data: { url: `/dashboard` },
-    } as any);
-  }, [state.isSupported]);
-
-  // Subscribe to realtime notifications
-  const subscribeToRealtimeNotifications = useCallback((clientCpf: string) => {
-    const channel = supabase
-      .channel("push-notifications")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `target_client_cpf=eq.${clientCpf}`,
-        },
-        (payload) => {
-          const notif = payload.new as any;
-          if (notif && Notification.permission === "granted") {
-            showLocalNotification(notif.title, notif.message, {
-              tag: `notif-${notif.id}`,
-            } as any);
+  // Subscribe to realtime notifications and show push
+  const subscribeToRealtimeNotifications = useCallback(
+    (clientCpf: string) => {
+      const channel = supabase
+        .channel("push-notifications")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "notifications",
+            filter: `target_client_cpf=eq.${clientCpf}`,
+          },
+          (payload) => {
+            const notif = payload.new as Record<string, unknown>;
+            if (notif && Notification.permission === "granted") {
+              showLocalNotification(
+                notif.title as string,
+                notif.message as string,
+                { tag: `notif-${notif.id}` }
+              );
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [state.isSupported]);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    },
+    [state.isSupported]
+  );
 
   return {
     ...state,
     isLoading,
     requestPermission,
     showLocalNotification,
-    notifyDrop,
-    notifyPriceAlert,
-    notifyChatMessage,
-    notifyOrderUpdate,
     subscribeToRealtimeNotifications,
   };
 }
 
-// Utility to show order status notification
-export function getOrderStatusNotification(status: string, orderId: string): { title: string; body: string } {
+// Helper to convert VAPID key
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// Utility for order status notification text
+export function getOrderStatusNotification(
+  status: string,
+  orderId: string
+): { title: string; body: string } {
   const notifications: Record<string, { title: string; body: string }> = {
     BUDGET_SENT: {
       title: "Orçamento Disponível 📋",
@@ -217,7 +256,6 @@ export function getOrderStatusNotification(status: string, orderId: string): { t
       title: "Pedido Entregue! 🎉",
       body: `Seu pedido ${orderId} foi entregue. Aproveite!`,
     },
-    // Marketplace-specific
     paid: {
       title: "Pagamento Confirmado 💳",
       body: `Pagamento do pedido ${orderId} foi confirmado.`,
@@ -240,8 +278,10 @@ export function getOrderStatusNotification(status: string, orderId: string): { t
     },
   };
 
-  return notifications[status] || {
-    title: "Atualização do Pedido",
-    body: `O status do pedido ${orderId} foi atualizado.`,
-  };
+  return (
+    notifications[status] || {
+      title: "Atualização do Pedido",
+      body: `O status do pedido ${orderId} foi atualizado.`,
+    }
+  );
 }

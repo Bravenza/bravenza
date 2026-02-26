@@ -9,12 +9,14 @@ interface PushNotificationPromptProps {
   onDismiss?: () => void;
   variant?: "banner" | "card";
   className?: string;
+  cpf?: string;
 }
 
 export function PushNotificationPrompt({ 
   onDismiss, 
   variant = "card",
-  className 
+  className,
+  cpf,
 }: PushNotificationPromptProps) {
   const { isSupported, permission, isLoading, requestPermission } = usePushNotifications();
   const [isDismissed, setIsDismissed] = useState(false);
@@ -30,7 +32,7 @@ export function PushNotificationPrompt({
   };
 
   const handleEnable = async () => {
-    const granted = await requestPermission();
+    const granted = await requestPermission(cpf);
     if (granted) {
       handleDismiss();
     }
