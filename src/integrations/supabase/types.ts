@@ -128,6 +128,42 @@ export type Database = {
         }
         Relationships: []
       }
+      alerts: {
+        Row: {
+          channels: string
+          cooldown_until: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          owner_id: string
+          product_id: string
+          target_price: number | null
+          target_size: string | null
+        }
+        Insert: {
+          channels?: string
+          cooldown_until?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          owner_id: string
+          product_id: string
+          target_price?: number | null
+          target_size?: string | null
+        }
+        Update: {
+          channels?: string
+          cooldown_until?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          owner_id?: string
+          product_id?: string
+          target_price?: number | null
+          target_size?: string | null
+        }
+        Relationships: []
+      }
       client_addresses: {
         Row: {
           cep: string
@@ -340,6 +376,51 @@ export type Database = {
         }
         Relationships: []
       }
+      closet_items: {
+        Row: {
+          acquired_from: string
+          buy_date: string | null
+          buy_price: number | null
+          condition: string | null
+          created_at: string
+          id: string
+          market_value_current: number | null
+          market_value_last_update_at: string | null
+          owner_id: string
+          product_id: string
+          size: string | null
+          source_order_id: string | null
+        }
+        Insert: {
+          acquired_from?: string
+          buy_date?: string | null
+          buy_price?: number | null
+          condition?: string | null
+          created_at?: string
+          id?: string
+          market_value_current?: number | null
+          market_value_last_update_at?: string | null
+          owner_id: string
+          product_id: string
+          size?: string | null
+          source_order_id?: string | null
+        }
+        Update: {
+          acquired_from?: string
+          buy_date?: string | null
+          buy_price?: number | null
+          condition?: string | null
+          created_at?: string
+          id?: string
+          market_value_current?: number | null
+          market_value_last_update_at?: string | null
+          owner_id?: string
+          product_id?: string
+          size?: string | null
+          source_order_id?: string | null
+        }
+        Relationships: []
+      }
       cron_execution_logs: {
         Row: {
           duration_ms: number | null
@@ -412,6 +493,56 @@ export type Database = {
           search_vector?: unknown
           tags?: string[] | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      favorite_list_items: {
+        Row: {
+          created_at: string
+          id: string
+          list_id: string
+          listing_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          list_id: string
+          listing_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          list_id?: string
+          listing_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorite_list_items_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "favorite_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      favorite_lists: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
         }
         Relationships: []
       }
