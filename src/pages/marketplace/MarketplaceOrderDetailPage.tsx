@@ -580,10 +580,11 @@ export default function MarketplaceOrderDetailPage() {
         transition={{ delay: 0.3 }}
         className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+49px)] left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border/40 px-3 sm:px-4 py-2.5 sm:py-3 md:static md:bg-transparent md:backdrop-blur-none md:border-0 md:px-0 md:py-0 md:mt-2"
       >
-        <div className="max-w-2xl mx-auto grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+        <div className="max-w-2xl mx-auto flex flex-col gap-2">
+          {/* Primary action — always full width */}
           {allowed_actions.includes("pay") && (
             <Button
-              className="col-span-2 gap-2 h-12 sm:h-11 sm:flex-1 sm:min-w-[140px] font-bold text-sm shadow-sm btn-gold"
+              className="w-full gap-2 h-12 font-bold text-sm shadow-sm btn-gold"
               onClick={(e) => {
                 e.stopPropagation();
                 setPayRetrySwitchMethod(false);
@@ -593,52 +594,56 @@ export default function MarketplaceOrderDetailPage() {
               <CreditCard className="h-4 w-4" /> Pagar agora
             </Button>
           )}
-          {allowed_actions.includes("cancel") && (
-            <Button
-              variant="destructive"
-              className="col-span-2 gap-2 h-11 sm:flex-1 sm:min-w-[140px] font-semibold text-sm"
-              onClick={() => {
-                toast({ title: "Cancelamento", description: "Acesse 'Meus Pedidos' para cancelar dentro da janela de 30 minutos." });
-                navigate("/app/pedidos");
-              }}
-            >
-              <AlertTriangle className="h-4 w-4" /> Cancelar pedido
-            </Button>
-          )}
           {allowed_actions.includes("rate") && (
             <Button
-              className="col-span-2 gap-2 h-12 sm:h-11 sm:flex-1 sm:min-w-[140px] font-bold text-sm shadow-sm"
+              className="w-full gap-2 h-12 font-bold text-sm shadow-sm"
               onClick={() => setConfirmOpen(true)}
             >
               <CheckCircle2 className="h-4 w-4" /> Confirmar recebimento
             </Button>
           )}
-          {allowed_actions.includes("open_dispute") && (
-            <Button
-              variant="outline"
-              className="gap-2 h-11 sm:flex-1 sm:min-w-[140px] text-destructive border-destructive/30 hover:bg-destructive/5 font-semibold text-sm"
-            >
-              <AlertTriangle className="h-4 w-4" /> Reportar problema
-            </Button>
-          )}
           {allowed_actions.includes("ship") && (
-            <Button className="col-span-2 gap-2 h-12 sm:h-11 sm:flex-1 sm:min-w-[140px] font-bold text-sm shadow-sm">
+            <Button className="w-full gap-2 h-12 font-bold text-sm shadow-sm">
               <Truck className="h-4 w-4" />
               {order.shipping_mode === "bravenza" ? "Enviar ao Hub" : "Informar envio"}
             </Button>
           )}
-          {allowed_actions.includes("track_hub") && (
-            <Button variant="outline" className="gap-2 h-11 sm:flex-1 sm:min-w-[140px] font-medium text-sm">
-              <MapPin className="h-4 w-4" /> Rastrear Hub
+
+          {/* Secondary actions row */}
+          <div className="flex gap-2">
+            {allowed_actions.includes("cancel") && (
+              <Button
+                variant="destructive"
+                className="flex-1 gap-2 h-10 font-semibold text-xs sm:text-sm"
+                onClick={() => {
+                  toast({ title: "Cancelamento", description: "Acesse 'Meus Pedidos' para cancelar dentro da janela de 30 minutos." });
+                  navigate("/app/pedidos");
+                }}
+              >
+                <AlertTriangle className="h-3.5 w-3.5" /> Cancelar
+              </Button>
+            )}
+            {allowed_actions.includes("open_dispute") && (
+              <Button
+                variant="outline"
+                className="flex-1 gap-2 h-10 text-destructive border-destructive/30 hover:bg-destructive/5 font-semibold text-xs sm:text-sm"
+              >
+                <AlertTriangle className="h-3.5 w-3.5" /> Reportar
+              </Button>
+            )}
+            {allowed_actions.includes("track_hub") && (
+              <Button variant="outline" className="flex-1 gap-2 h-10 font-medium text-xs sm:text-sm">
+                <MapPin className="h-3.5 w-3.5" /> Rastrear Hub
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              className="flex-1 gap-2 h-10 font-medium text-xs sm:text-sm"
+              onClick={() => window.open("https://wa.me/5551999999999", "_blank")}
+            >
+              <MessageCircle className="h-3.5 w-3.5" /> Suporte
             </Button>
-          )}
-          <Button
-            variant="outline"
-            className="gap-2 h-11 sm:flex-1 sm:min-w-[140px] font-medium text-sm"
-            onClick={() => window.open("https://wa.me/5551999999999", "_blank")}
-          >
-            <MessageCircle className="h-4 w-4" /> Suporte
-          </Button>
+          </div>
         </div>
       </motion.div>
 
