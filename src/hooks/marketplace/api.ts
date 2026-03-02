@@ -83,6 +83,7 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
 
   // mkv2-orders (new): Order Detail v2
   "order-detail": "mkv2-orders",
+  "confirm-delivery": "mkv2-orders",
 
   // mkv2-seller-data (new): Seller Dashboard aggregator
   "seller-dashboard": "mkv2-seller-data",
