@@ -19,6 +19,8 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { PaymentRetryDialog } from "@/components/client/vault/marketplace/PaymentRetryDialog";
+import type { MarketplaceOrder } from "@/hooks/marketplace/types";
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -281,7 +283,8 @@ export default function MarketplaceOrderDetailPage() {
   const { data, isLoading, error, fetchDetail, confirmDelivery } = useOrderDetail(cpf);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
-
+  const [payRetryOpen, setPayRetryOpen] = useState(false);
+  const [payRetrySwitchMethod, setPayRetrySwitchMethod] = useState(false);
   const flagEnabled = isEnabled("enable_order_detail_v2");
 
   useEffect(() => {
@@ -581,7 +584,11 @@ export default function MarketplaceOrderDetailPage() {
           {allowed_actions.includes("pay") && (
             <Button
               className="col-span-2 gap-2 h-12 sm:h-11 sm:flex-1 sm:min-w-[140px] font-bold text-sm shadow-sm btn-gold"
-              onClick={() => navigate(`/marketplace/checkout?order=${order.order_code}`)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setPayRetrySwitchMethod(false);
+                setPayRetryOpen(true);
+              }}
             >
               <CreditCard className="h-4 w-4" /> Pagar agora
             </Button>
@@ -662,6 +669,25 @@ export default function MarketplaceOrderDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ── Payment Retry Dialog ── */}
+      <PaymentRetryDialog
+        order={data ? {
+          id: order.id || orderId || "",
+          order_code: order.order_code,
+          sale_price: order.sale_price || 0,
+          shipping_cost: order.shipping_cost || 0,
+          payment_method: order.payment_method || "pix",
+          listing: listing,
+        } as MarketplaceOrder : null}
+        open={payRetryOpen}
+        onOpenChange={setPayRetryOpen}
+        onSuccess={() => {
+          setPayRetryOpen(false);
+          if (orderId) fetchDetail(orderId);
+        }}
+        switchMethod={payRetrySwitchMethod}
+      />
     </div>
   );
 }
