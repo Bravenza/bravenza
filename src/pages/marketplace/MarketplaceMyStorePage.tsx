@@ -94,7 +94,7 @@ export default function MarketplaceMyStorePage() {
     if (!seller?.id) return;
     supabase
       .from("vault_seller_profiles" as any)
-      .select("store_name, store_tagline, store_avatar_url, store_banner_url")
+      .select("full_name, storefront_tagline, avatar_url, storefront_banner")
       .eq("id", seller.id)
       .maybeSingle()
       .then(({ data }) => { if (data) setStoreData(data); });
@@ -186,10 +186,10 @@ export default function MarketplaceMyStorePage() {
   const totalViews = myListings.reduce((s, l) => s + (l.views_count || 0), 0);
   const totalRevenue = myListings.filter(l => l.status === "sold").reduce((s, l) => s + l.price, 0);
 
-  const storeName = (storeData as any)?.store_name || profile?.full_name || "Minha Loja";
-  const storeTagline = (storeData as any)?.store_tagline;
-  const storeAvatar = (storeData as any)?.store_avatar_url || profile?.avatar_url;
-  const initials = (storeName || "").split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase();
+  const storeName = (storeData as any)?.full_name || profile?.full_name || "Minha Loja";
+  const storeTagline = (storeData as any)?.storefront_tagline;
+  const storeAvatar = (storeData as any)?.avatar_url || profile?.avatar_url;
+  const initials = (storeName || "").split(" ").filter((n: string) => n.length > 0).map((n: string) => n[0]).slice(0, 2).join("").toUpperCase();
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 pb-28 md:pb-12 space-y-6">
@@ -201,8 +201,8 @@ export default function MarketplaceMyStorePage() {
       >
         {/* Banner background */}
         <div className="h-24 md:h-32 bg-gradient-to-br from-primary/15 via-primary/8 to-background relative">
-          {(storeData as any)?.store_banner_url && (
-            <img src={(storeData as any).store_banner_url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+          {(storeData as any)?.storefront_banner && (
+            <img src={(storeData as any).storefront_banner} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
         </div>
