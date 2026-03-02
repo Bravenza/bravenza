@@ -5570,10 +5570,42 @@ export type Database = {
           shipping_cost: number
         }[]
       }
-      get_admin_order_requests: {
-        Args: { p_limit?: number; p_offset?: number; p_search?: string }
-        Returns: Json
-      }
+      get_admin_order_requests:
+        | {
+            Args: never
+            Returns: {
+              additional_notes: string
+              address_cep: string
+              address_city: string
+              address_complement: string
+              address_neighborhood: string
+              address_number: string
+              address_state: string
+              address_street: string
+              admin_notes: string
+              client_cpf: string
+              client_email: string
+              client_name: string
+              client_phone: string
+              converted_order_id: string
+              created_at: string
+              id: string
+              product_brand: string
+              product_color: string
+              product_link: string
+              product_model: string
+              reference_image_url: string
+              referral_code: string
+              reviewed_at: string
+              reviewed_by: string
+              shoe_size: string
+              status: string
+            }[]
+          }
+        | {
+            Args: { p_limit?: number; p_offset?: number; p_search?: string }
+            Returns: Json
+          }
       get_admin_orders_by_month: {
         Args: never
         Returns: {
@@ -5589,19 +5621,32 @@ export type Database = {
           status_group: string
         }[]
       }
-      get_admin_orders_csv: {
-        Args: { p_date_from?: string; p_search?: string; p_status?: string }
-        Returns: {
-          client_cpf: string
-          client_name: string
-          created_at: string
-          current_status: string
-          order_id: string
-          product_name: string
-          product_price: number
-          sla_vault_due_date: string
-        }[]
-      }
+      get_admin_orders_csv:
+        | {
+            Args: never
+            Returns: {
+              client_cpf: string
+              client_name: string
+              created_at: string
+              current_status: string
+              order_id: string
+              product_name: string
+              product_price: number
+            }[]
+          }
+        | {
+            Args: { p_date_from?: string; p_search?: string; p_status?: string }
+            Returns: {
+              client_cpf: string
+              client_name: string
+              created_at: string
+              current_status: string
+              order_id: string
+              product_name: string
+              product_price: number
+              sla_vault_due_date: string
+            }[]
+          }
       get_admin_report_pdf_data: {
         Args: {
           p_last_month_end: string
