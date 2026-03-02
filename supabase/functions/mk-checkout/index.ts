@@ -233,11 +233,14 @@ Deno.serve(async (req) => {
       // If approved immediately, mark all as paid + set protection
       if (paymentResult.status === "approved") {
         const protEnd = calcProtectionEnd();
+        const cancelWindow = new Date();
+        cancelWindow.setMinutes(cancelWindow.getMinutes() + 30);
         for (const order of orders) {
           await sb.from("vault_marketplace_orders").update({
             status: "paid",
             paid_at: new Date().toISOString(),
             protection_ends_at: protEnd,
+            cancellation_window_ends_at: cancelWindow.toISOString(),
           }).eq("id", order.id);
         }
         console.log("[mk-checkout] Card approved, all orders paid:", orderCodes);
