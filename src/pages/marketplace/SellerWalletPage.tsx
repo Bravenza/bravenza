@@ -85,7 +85,7 @@ export default function SellerWalletPage() {
   const [pixSubmitting, setPixSubmitting] = useState(false);
 
   const fetchAll = useCallback(async () => {
-    if (!cpf) return;
+    if (!cpf) { setLoading(false); return; }
     setLoading(true);
     try {
       const [balRes, pixRes] = await Promise.all([
