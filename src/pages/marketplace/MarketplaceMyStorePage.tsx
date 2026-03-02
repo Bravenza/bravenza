@@ -21,6 +21,7 @@ import { ListingDetailSheet } from "@/components/client/vault/marketplace/Listin
 import { OffersListDialog } from "@/components/client/vault/marketplace/OffersListDialog";
 import { SellerOnboardingDialog } from "@/components/client/vault/marketplace/SellerOnboardingDialog";
 const SellerAnalyticsDashboard = lazy(() => import("@/components/client/vault/marketplace/SellerAnalyticsDashboard").then(m => ({ default: m.SellerAnalyticsDashboard })));
+import { SellerDashboardV2 } from "@/components/marketplace/SellerDashboardV2";
 import { CouponsManager } from "@/components/client/vault/marketplace/CouponsManager";
 import { PriceDropSuggestions } from "@/components/client/vault/marketplace/PriceDropSuggestions";
 import { MarketplaceHowItWorks } from "@/components/client/vault/marketplace/MarketplaceHowItWorks";
@@ -57,7 +58,8 @@ export default function MarketplaceMyStorePage() {
 
   const { searchProducts, createProduct, createOffer } = useMarketplaceCatalog(cpf || "visitor");
 
-  const [sellerSubTab, setSellerSubTab] = useState("anuncios");
+  const enable_seller_dashboard_v2 = true; // Feature flag
+  const [sellerSubTab, setSellerSubTab] = useState(enable_seller_dashboard_v2 ? "dashboard" : "anuncios");
   const [sellerOnboarded, setSellerOnboarded] = useState<boolean | null>(null);
   const [sellerKycStatus, setSellerKycStatus] = useState<string | null>(null);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
@@ -167,6 +169,7 @@ export default function MarketplaceMyStorePage() {
   const hasPaidPlan = planId === "pro" || planId === "elite";
 
   const sellerSubItems = [
+    ...(enable_seller_dashboard_v2 && isSellerApproved ? [{ id: "dashboard", label: "Visão Geral", icon: BarChart3 }] : []),
     { id: "anuncios", label: "Anúncios", icon: Megaphone },
     ...(isSellerApproved ? [
       { id: "saldo", label: "Saldo", icon: DollarSign },
@@ -339,6 +342,11 @@ export default function MarketplaceMyStorePage() {
               setSellerSubTab(v);
             }}
           />
+
+          {/* ── Dashboard V2 ── */}
+          {sellerSubTab === "dashboard" && isSellerApproved && cpf && (
+            <SellerDashboardV2 cpf={cpf} />
+          )}
 
           {/* ── Anúncios ── */}
           {sellerSubTab === "anuncios" && (
