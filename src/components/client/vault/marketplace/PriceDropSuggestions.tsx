@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { TrendingDown, AlertCircle, ArrowDown, Clock } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { TrendingDown, AlertCircle, ArrowDown, Clock, Eye, Sparkles } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/constants";
@@ -44,7 +44,7 @@ export function PriceDropSuggestions({ fetchSuggestions, onApplyDrop }: PriceDro
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
+      <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
       </div>
     );
@@ -52,10 +52,12 @@ export function PriceDropSuggestions({ fetchSuggestions, onApplyDrop }: PriceDro
 
   if (suggestions.length === 0) {
     return (
-      <Card className="card-premium border-dashed">
-        <CardContent className="py-10 text-center">
-          <TrendingDown className="h-10 w-10 mx-auto text-muted-foreground mb-3 opacity-20" />
-          <h3 className="font-medium text-sm mb-1">Nenhuma sugestão no momento</h3>
+      <Card className="border-border/30 shadow-sm">
+        <CardContent className="py-14 text-center">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
+            <TrendingDown className="h-7 w-7 text-muted-foreground/25" />
+          </div>
+          <h3 className="font-bold text-sm mb-1">Nenhuma sugestão no momento</h3>
           <p className="text-xs text-muted-foreground max-w-xs mx-auto">
             Quando seus anúncios ficarem sem vendas por muitos dias, sugeriremos ajustes de preço.
           </p>
@@ -66,11 +68,17 @@ export function PriceDropSuggestions({ fetchSuggestions, onApplyDrop }: PriceDro
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 px-1">
-        <AlertCircle className="h-4 w-4 text-amber-400" />
-        <p className="text-xs text-muted-foreground">
-          {suggestions.length} anúncio{suggestions.length > 1 ? "s" : ""} com sugestão de redução
-        </p>
+      {/* Header info */}
+      <div className="flex items-center gap-2.5 px-1">
+        <div className="h-8 w-8 rounded-xl bg-warning/10 flex items-center justify-center shrink-0">
+          <Sparkles className="h-4 w-4 text-warning" />
+        </div>
+        <div>
+          <p className="text-sm font-bold">
+            {suggestions.length} sugestão{suggestions.length > 1 ? "ões" : ""}
+          </p>
+          <p className="text-[10px] text-muted-foreground">Ajuste preços para vender mais rápido</p>
+        </div>
       </div>
 
       {suggestions.map((s, i) => {
@@ -81,39 +89,43 @@ export function PriceDropSuggestions({ fetchSuggestions, onApplyDrop }: PriceDro
             key={s.listing_id}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
+            transition={{ delay: i * 0.04 }}
           >
-            <Card className="card-premium">
+            <Card className="border-border/30 shadow-sm hover:border-border/60 transition-colors overflow-hidden">
+              <div className="h-0.5 bg-gradient-to-r from-warning/30 via-warning/15 to-transparent" />
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm truncate">{s.title}</h4>
-                    <div className="flex items-center gap-3 mt-1.5">
+                    <h4 className="font-semibold text-sm truncate">{s.title}</h4>
+                    <div className="flex items-center gap-2.5 mt-2">
                       <span className="text-sm text-muted-foreground line-through">
                         {formatCurrency(s.current_price)}
                       </span>
-                      <ArrowDown className="h-3 w-3 text-emerald-400" />
-                      <span className="text-sm font-bold text-emerald-400">
+                      <ArrowDown className="h-3 w-3 text-emerald-500" />
+                      <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">
                         {formatCurrency(s.suggested_price)}
                       </span>
-                      <Badge variant="outline" className="text-[10px] border-emerald-400/30 text-emerald-400">
+                      <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold">
                         -{dropPercent}%
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
+                    <div className="flex items-center gap-3 mt-1.5 text-[10px] text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {s.days_listed} dias
                       </span>
-                      <span>{s.views} visualizações</span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="h-3 w-3" />
+                        {s.views} views
+                      </span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-1">{s.reason}</p>
+                    <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">{s.reason}</p>
                   </div>
                   <Button
                     size="sm"
                     onClick={() => handleApply(s)}
                     disabled={applying === s.listing_id}
-                    className="flex-shrink-0"
+                    className="flex-shrink-0 rounded-full h-8 px-4 text-xs font-bold"
                   >
                     {applying === s.listing_id ? "..." : "Aplicar"}
                   </Button>

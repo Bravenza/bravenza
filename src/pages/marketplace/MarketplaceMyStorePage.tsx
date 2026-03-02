@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Store, Package, Megaphone, BarChart3, Tag, TrendingDown, HelpCircle,
   Plus, ShoppingBag, Rocket, Layout, Lock, Layers, Palette, PackageCheck,
-  Eye, DollarSign, Star, ArrowRight, Zap, TrendingUp
+  Eye, DollarSign, Star, ArrowRight, Zap, TrendingUp, Sparkles, Crown
 } from "lucide-react";
 import { CollectionsManager } from "@/components/marketplace/CollectionsManager";
 import { PillTabs } from "@/components/ui/pill-tabs";
@@ -42,6 +42,9 @@ interface VaultItem {
   size: string | null;
   colorway: string | null;
 }
+
+const fadeUp = { hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" as const } } };
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
 
 export default function MarketplaceMyStorePage() {
   const context = useOutletContext<{ cpf?: string; profile?: any }>();
@@ -146,7 +149,7 @@ export default function MarketplaceMyStorePage() {
   if (!isLoggedIn) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-5">
           <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
             <Store className="h-10 w-10 text-primary" />
           </div>
@@ -196,75 +199,72 @@ export default function MarketplaceMyStorePage() {
   const initials = (storeName || "").split(" ").filter((n: string) => n.length > 0).map((n: string) => n[0]).slice(0, 2).join("").toUpperCase();
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 pb-28 md:pb-12 space-y-6">
+    <motion.div
+      variants={stagger}
+      initial="hidden"
+      animate="visible"
+      className="max-w-7xl mx-auto px-4 py-6 pb-28 md:pb-12 space-y-5"
+    >
       {/* ═══ Premium Header ═══ */}
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-2xl border border-border/30 bg-card"
-      >
-        {/* Banner background */}
-        <div className="h-24 md:h-32 bg-gradient-to-br from-primary/15 via-primary/8 to-background relative">
-          {(storeData as any)?.storefront_banner && (
-            <img src={(storeData as any).storefront_banner} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
-        </div>
+      <motion.div variants={fadeUp}>
+        <div className="relative overflow-hidden rounded-2xl border border-border/30 bg-card shadow-sm">
+          {/* Banner background */}
+          <div className="h-28 md:h-36 bg-gradient-to-br from-primary/12 via-primary/6 to-background relative">
+            {(storeData as any)?.storefront_banner && (
+              <img src={(storeData as any).storefront_banner} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
+            <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
+          </div>
 
-        <div className="px-5 pb-5 -mt-10 relative z-10">
-          <div className="flex items-end gap-4">
-            <Avatar className="h-16 w-16 border-4 border-card shadow-lg">
-              <AvatarImage src={storeAvatar || undefined} alt={storeName} />
-              <AvatarFallback className="bg-primary/10 text-primary text-lg font-black">{initials}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0 pb-1">
-              <h1 className="text-xl md:text-2xl font-black tracking-tight truncate">{storeName}</h1>
-              {storeTagline && <p className="text-xs text-muted-foreground truncate mt-0.5">{storeTagline}</p>}
+          <div className="px-5 pb-5 -mt-10 relative z-10">
+            <div className="flex items-end gap-4">
+              <Avatar className="h-18 w-18 border-4 border-card shadow-lg ring-2 ring-primary/10" style={{ height: 72, width: 72 }}>
+                <AvatarImage src={storeAvatar || undefined} alt={storeName} />
+                <AvatarFallback className="bg-primary/10 text-primary text-xl font-black">{initials}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0 pb-1">
+                <h1 className="text-xl md:text-2xl font-black tracking-tight truncate">{storeName}</h1>
+                {storeTagline && <p className="text-xs text-muted-foreground truncate mt-0.5">{storeTagline}</p>}
+              </div>
+              {isSellerApproved && (
+                <CreateListingDialog onSubmit={handleCreateOffer} searchProducts={searchProducts} createProduct={createProduct} vaultItems={vaultItems} />
+              )}
+              {isSellerPending && (
+                <Badge variant="outline" className="border-warning/50 text-warning py-1.5 px-3 shrink-0">⏳ Em análise</Badge>
+              )}
+              {sellerOnboarded === false && (
+                <Button className="btn-gold gap-2 rounded-full shrink-0" onClick={() => setOnboardingOpen(true)}>
+                  <Plus className="h-4 w-4" /> Vender
+                </Button>
+              )}
             </div>
-            {isSellerApproved && (
-              <CreateListingDialog onSubmit={handleCreateOffer} searchProducts={searchProducts} createProduct={createProduct} vaultItems={vaultItems} />
-            )}
-            {isSellerPending && (
-              <Badge variant="outline" className="border-warning/50 text-warning py-1.5 px-3 shrink-0">⏳ Em análise</Badge>
-            )}
-            {sellerOnboarded === false && (
-              <Button className="btn-gold gap-2 rounded-full shrink-0" onClick={() => setOnboardingOpen(true)}>
-                <Plus className="h-4 w-4" /> Vender
-              </Button>
-            )}
           </div>
         </div>
       </motion.div>
 
       {/* ═══ KPI Cards ═══ */}
       {isSellerApproved && seller && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-3"
-        >
+        <motion.div variants={fadeUp} className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
           {[
-            { label: "Anúncios ativos", value: activeListings, icon: Megaphone, color: "text-primary" },
-            { label: "Vendas totais", value: seller.total_sales_count || soldListings, icon: ShoppingBag, color: "text-primary" },
-            { label: "Views totais", value: totalViews, icon: Eye, color: "text-muted-foreground" },
-            { label: "Avaliação", value: seller.average_rating ? seller.average_rating.toFixed(1) : "—", icon: Star, color: "text-primary" },
+            { label: "Anúncios", value: activeListings, icon: Megaphone, accent: "bg-primary/10 text-primary" },
+            { label: "Vendas", value: seller.total_sales_count || soldListings, icon: ShoppingBag, accent: "bg-emerald-500/10 text-emerald-600" },
+            { label: "Views", value: totalViews, icon: Eye, accent: "bg-blue-500/10 text-blue-500" },
+            { label: "Avaliação", value: seller.average_rating ? seller.average_rating.toFixed(1) : "—", icon: Star, accent: "bg-primary/10 text-primary" },
           ].map((kpi, i) => (
             <motion.div
               key={kpi.label}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 + i * 0.05 }}
+              variants={fadeUp}
             >
-              <Card className="border-border/20 hover:border-primary/20 transition-colors">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <kpi.icon className={cn("h-4 w-4", kpi.color)} />
-                    <span className="text-[11px] text-muted-foreground font-medium">{kpi.label}</span>
-                  </div>
-                  <p className="text-2xl font-black tracking-tight">{kpi.value}</p>
-                </CardContent>
-              </Card>
+              <div className="flex items-center gap-3 p-3.5 rounded-xl bg-card border border-border/30 hover:border-border/60 transition-colors shadow-sm">
+                <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center shrink-0", kpi.accent)}>
+                  <kpi.icon className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xl font-black tracking-tight leading-none">{kpi.value}</p>
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">{kpi.label}</p>
+                </div>
+              </div>
             </motion.div>
           ))}
         </motion.div>
@@ -272,15 +272,18 @@ export default function MarketplaceMyStorePage() {
 
       {/* ═══ Plan Banner ═══ */}
       {planStatus && isSellerApproved && (
-        <SellerPlanBanner status={planStatus} />
+        <motion.div variants={fadeUp}>
+          <SellerPlanBanner status={planStatus} />
+        </motion.div>
       )}
 
       {/* ═══ Not onboarded ═══ */}
       {sellerOnboarded === false && (
-        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="border-primary/10 overflow-hidden">
+        <motion.div variants={fadeUp} className="space-y-3">
+          <Card className="border-primary/10 overflow-hidden shadow-sm">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/8 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-primary/4 to-transparent" />
+              <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
               <CardContent className="py-16 text-center relative z-10">
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
                   <Store className="h-8 w-8 text-primary" />
@@ -299,7 +302,7 @@ export default function MarketplaceMyStorePage() {
           {/* Bravenza Full CTA */}
           <button
             onClick={() => navigate("/full")}
-            className="w-full mt-4 flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 hover:border-primary/30 transition-all group"
+            className="w-full flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-primary/8 to-primary/4 border border-primary/15 hover:border-primary/30 transition-all group shadow-sm"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
@@ -317,8 +320,9 @@ export default function MarketplaceMyStorePage() {
 
       {/* ═══ Pending review ═══ */}
       {isSellerPending && (
-        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="border-warning/20">
+        <motion.div variants={fadeUp}>
+          <Card className="border-warning/20 shadow-sm overflow-hidden">
+            <div className="h-0.5 bg-gradient-to-r from-warning via-warning/60 to-transparent" />
             <CardContent className="py-12 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-2 border-warning border-t-transparent mx-auto mb-4" />
               <h3 className="font-bold text-lg mb-1">Documentos em análise</h3>
@@ -332,16 +336,18 @@ export default function MarketplaceMyStorePage() {
 
       {/* ═══ Seller Hub ═══ */}
       {sellerOnboarded === true && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Sub-navigation — pill style */}
-          <PillTabs
-            items={sellerSubItems}
-            value={sellerSubTab}
-            onValueChange={(v) => {
-              if (v === "saldo") { navigate("/app/loja/saldo"); return; }
-              setSellerSubTab(v);
-            }}
-          />
+          <motion.div variants={fadeUp}>
+            <PillTabs
+              items={sellerSubItems}
+              value={sellerSubTab}
+              onValueChange={(v) => {
+                if (v === "saldo") { navigate("/app/loja/saldo"); return; }
+                setSellerSubTab(v);
+              }}
+            />
+          </motion.div>
 
           {/* ── Dashboard V2 ── */}
           {sellerSubTab === "dashboard" && isSellerApproved && cpf && (
@@ -350,18 +356,16 @@ export default function MarketplaceMyStorePage() {
 
           {/* ── Anúncios ── */}
           {sellerSubTab === "anuncios" && (
-            <>
+            <motion.div variants={fadeUp}>
               {myListings.length === 0 ? (
-                <Card className="border-border/20">
-                  <CardContent className="py-16 text-center">
-                    <Package className="h-14 w-14 mx-auto text-muted-foreground/20 mb-4" />
-                    <h3 className="font-bold text-lg mb-2">Nenhum anúncio criado</h3>
-                    <p className="text-sm text-muted-foreground mb-4">Comece a vender seus sneakers no marketplace</p>
-                    {isSellerApproved && (
-                      <CreateListingDialog onSubmit={handleCreateOffer} searchProducts={searchProducts} createProduct={createProduct} vaultItems={vaultItems} />
-                    )}
-                  </CardContent>
-                </Card>
+                <EmptySection
+                  icon={Package}
+                  title="Nenhum anúncio criado"
+                  description="Comece a vender seus sneakers no marketplace"
+                  action={isSellerApproved ? (
+                    <CreateListingDialog onSubmit={handleCreateOffer} searchProducts={searchProducts} createProduct={createProduct} vaultItems={vaultItems} />
+                  ) : undefined}
+                />
               ) : (
                 <div className="space-y-4">
                   {hasBatchAccess && myListings.length > 1 && (
@@ -374,7 +378,7 @@ export default function MarketplaceMyStorePage() {
                       />
                     </div>
                   )}
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {myListings.map((listing) => (
                       <div key={listing.id} className="relative space-y-2">
                         <MarketplaceListingCard
@@ -385,7 +389,7 @@ export default function MarketplaceMyStorePage() {
                         <Badge
                           className={cn(
                             "absolute top-12 right-2 text-[10px] z-10",
-                            listing.status === "active" ? "bg-success/20 text-success"
+                            listing.status === "active" ? "bg-emerald-500/20 text-emerald-600"
                             : listing.status === "sold" ? "bg-primary/20 text-primary"
                             : listing.status === "reserved" ? "bg-warning/20 text-warning"
                             : "bg-muted text-muted-foreground"
@@ -409,120 +413,138 @@ export default function MarketplaceMyStorePage() {
                   </div>
                 </div>
               )}
-            </>
+            </motion.div>
           )}
 
           {/* ── Personalizar ── */}
           {sellerSubTab === "personalizar" && isSellerApproved && cpf && (
-            <StoreCustomizationPanel cpf={cpf} />
+            <motion.div variants={fadeUp}>
+              <StoreCustomizationPanel cpf={cpf} />
+            </motion.div>
           )}
 
           {/* ── Analytics ── */}
           {sellerSubTab === "analytics" && isSellerApproved && cpf && (
-            <Suspense fallback={<div className="h-64 animate-pulse bg-muted rounded-xl" />}>
-              <SellerAnalyticsDashboard clientCpf={cpf} />
-            </Suspense>
+            <motion.div variants={fadeUp}>
+              <Suspense fallback={<div className="h-64 animate-pulse bg-muted/40 rounded-2xl" />}>
+                <SellerAnalyticsDashboard clientCpf={cpf} />
+              </Suspense>
+            </motion.div>
           )}
 
           {/* ── Boosts ── */}
           {sellerSubTab === "boosts" && isSellerApproved && hasPaidPlan && (
-            <Card className="border-border/20">
-              <CardContent className="p-6 text-center space-y-4">
-                <Rocket className="h-12 w-12 mx-auto text-primary/30" />
-                <div>
-                  <h3 className="font-bold text-lg">Destaques / Boosts</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Destaque seus anúncios para aparecer no topo das buscas.
-                    Seu plano permite <strong>{planStatus?.plan?.boost_slots || 1}</strong> boost(s) ativos.
-                  </p>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Para ativar um boost, vá em "Anúncios", clique no anúncio e selecione "Destacar".
-                </p>
-              </CardContent>
-            </Card>
+            <motion.div variants={fadeUp}>
+              <Card className="border-border/30 shadow-sm overflow-hidden">
+                <div className="h-0.5 bg-gradient-to-r from-primary/40 via-primary/20 to-transparent" />
+                <CardContent className="p-6 text-center space-y-4">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <Rocket className="h-7 w-7 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-lg">Destaques / Boosts</h3>
+                    <p className="text-sm text-muted-foreground mt-1.5 max-w-sm mx-auto">
+                      Destaque seus anúncios para aparecer no topo das buscas.
+                      Seu plano permite <strong className="text-foreground">{planStatus?.plan?.boost_slots || 1}</strong> boost(s) ativos.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 justify-center p-3 rounded-xl bg-muted/40 border border-border/30 max-w-xs mx-auto">
+                    <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <p className="text-[11px] text-muted-foreground text-left">
+                      Para ativar, vá em <span className="font-semibold text-foreground">Anúncios</span> → clique no anúncio → <span className="font-semibold text-foreground">Destacar</span>
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           )}
 
           {/* ── Coleções ── */}
           {sellerSubTab === "colecoes" && isSellerApproved && hasStorefront && cpf && (
-            <CollectionsManager clientCpf={cpf} myListings={myListings} />
+            <motion.div variants={fadeUp}>
+              <CollectionsManager clientCpf={cpf} myListings={myListings} />
+            </motion.div>
           )}
 
           {/* ── Cupons ── */}
           {sellerSubTab === "cupons" && isSellerApproved && cpf && (
-            hasBatchAccess ? (
-              <CouponsManager clientCpf={cpf} />
-            ) : (
-              <Card className="border-border/20">
-                <CardContent className="p-6 text-center space-y-3">
-                  <Lock className="h-10 w-10 mx-auto text-muted-foreground/30" />
-                  <h3 className="font-bold">Ferramenta Pro</h3>
-                  <p className="text-sm text-muted-foreground">Cupons estão disponíveis nos planos Pro e Elite.</p>
-                  <Button variant="outline" onClick={() => navigate("/marketplace/planos")} className="gap-2">
-                    <Rocket className="h-4 w-4" /> Ver planos
-                  </Button>
-                </CardContent>
-              </Card>
-            )
+            <motion.div variants={fadeUp}>
+              {hasBatchAccess ? (
+                <CouponsManager clientCpf={cpf} />
+              ) : (
+                <LockedFeatureCard
+                  icon={Tag}
+                  title="Cupons de desconto"
+                  description="Crie cupons personalizados para atrair mais compradores e aumentar suas vendas."
+                  planLabel="Pro"
+                  onUpgrade={() => navigate("/marketplace/planos")}
+                />
+              )}
+            </motion.div>
           )}
 
           {/* ── Sugestões ── */}
           {sellerSubTab === "sugestoes" && isSellerApproved && (
-            hasBatchAccess ? (
-              <PriceDropSuggestions
-                fetchSuggestions={fetchPriceDropSuggestions}
-                onApplyDrop={handleApplyPriceDrop}
-              />
-            ) : (
-              <Card className="border-border/20">
-                <CardContent className="p-6 text-center space-y-3">
-                  <Lock className="h-10 w-10 mx-auto text-muted-foreground/30" />
-                  <h3 className="font-bold">Ferramenta Pro</h3>
-                  <p className="text-sm text-muted-foreground">Sugestões de preço estão disponíveis nos planos Pro e Elite.</p>
-                  <Button variant="outline" onClick={() => navigate("/marketplace/planos")} className="gap-2">
-                    <Rocket className="h-4 w-4" /> Ver planos
-                  </Button>
-                </CardContent>
-              </Card>
-            )
+            <motion.div variants={fadeUp}>
+              {hasBatchAccess ? (
+                <PriceDropSuggestions
+                  fetchSuggestions={fetchPriceDropSuggestions}
+                  onApplyDrop={handleApplyPriceDrop}
+                />
+              ) : (
+                <LockedFeatureCard
+                  icon={TrendingDown}
+                  title="Sugestões de preço"
+                  description="Receba recomendações inteligentes para ajustar preços e vender mais rápido."
+                  planLabel="Pro"
+                  onUpgrade={() => navigate("/marketplace/planos")}
+                />
+              )}
+            </motion.div>
           )}
 
           {/* ── Bravenza Full ── */}
           {sellerSubTab === "full" && isSellerApproved && (
-            seller?.id ? (
-              <ConsignmentList sellerId={seller.id} />
-            ) : (
-              <Card className="border-border/20">
-                <CardContent className="py-12 text-center space-y-3">
-                  <PackageCheck className="h-10 w-10 mx-auto text-muted-foreground/30" />
-                  <h3 className="font-bold text-lg">Bravenza Full</h3>
-                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                    Envie seu sneaker e nós cuidamos de tudo: fotos profissionais, autenticação, anúncio e envio ao comprador.
-                  </p>
-                  <Button variant="outline" className="gap-2" onClick={() => navigate("/full")}>
-                    <ArrowRight className="h-4 w-4" /> Saiba mais
-                  </Button>
-                </CardContent>
-              </Card>
-            )
+            <motion.div variants={fadeUp}>
+              {seller?.id ? (
+                <ConsignmentList sellerId={seller.id} />
+              ) : (
+                <EmptySection
+                  icon={PackageCheck}
+                  title="Bravenza Full"
+                  description="Envie seu sneaker e nós cuidamos de tudo: fotos profissionais, autenticação, anúncio e envio ao comprador."
+                  action={
+                    <Button variant="outline" className="gap-2 rounded-full" onClick={() => navigate("/full")}>
+                      Saiba mais <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                  }
+                />
+              )}
+            </motion.div>
           )}
 
           {/* ── Como funciona / Info ── */}
           {sellerSubTab === "como-funciona" && (
-            <div className="space-y-4">
+            <motion.div variants={fadeUp} className="space-y-4">
               {/* Current Plan Card */}
               {planStatus && (
-                <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+                <Card className="border-primary/15 overflow-hidden shadow-sm">
+                  <div className="h-0.5 bg-gradient-to-r from-primary/50 via-primary/25 to-transparent" />
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                          {planId === "elite" ? <Layers className="h-5 w-5 text-primary" /> :
+                        <div className={cn(
+                          "w-11 h-11 rounded-xl flex items-center justify-center",
+                          planId === "elite" ? "bg-primary/15" :
+                          planId === "pro" ? "bg-primary/10" :
+                          "bg-muted/60"
+                        )}>
+                          {planId === "elite" ? <Crown className="h-5 w-5 text-primary" /> :
                            planId === "pro" ? <Zap className="h-5 w-5 text-primary" /> :
                            <Store className="h-5 w-5 text-muted-foreground" />}
                         </div>
                         <div>
-                          <p className="text-xs text-muted-foreground font-medium">Seu plano atual</p>
+                          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Seu plano</p>
                           <p className="text-lg font-black tracking-tight capitalize">{planStatus.plan?.name || "Free"}</p>
                         </div>
                       </div>
@@ -544,7 +566,7 @@ export default function MarketplaceMyStorePage() {
                 </Card>
               )}
               <MarketplaceHowItWorks />
-            </div>
+            </motion.div>
           )}
         </div>
       )}
@@ -582,6 +604,57 @@ export default function MarketplaceMyStorePage() {
         reason={planStatus?.blockReason || null}
         currentPlan={planStatus?.plan?.id}
       />
-    </div>
+    </motion.div>
+  );
+}
+
+/* ─── Reusable Empty State ─── */
+function EmptySection({ icon: Icon, title, description, action }: {
+  icon: typeof Package; title: string; description: string; action?: React.ReactNode;
+}) {
+  return (
+    <Card className="border-border/30 shadow-sm">
+      <CardContent className="py-14 text-center">
+        <div className="w-14 h-14 mx-auto rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
+          <Icon className="h-7 w-7 text-muted-foreground/25" />
+        </div>
+        <h3 className="font-bold text-base mb-1.5">{title}</h3>
+        <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-4">{description}</p>
+        {action}
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ─── Locked Feature Card ─── */
+function LockedFeatureCard({ icon: Icon, title, description, planLabel, onUpgrade }: {
+  icon: typeof Lock; title: string; description: string; planLabel: string; onUpgrade: () => void;
+}) {
+  return (
+    <Card className="border-border/30 shadow-sm overflow-hidden">
+      <div className="h-0.5 bg-gradient-to-r from-muted-foreground/20 via-muted-foreground/10 to-transparent" />
+      <CardContent className="p-6 text-center space-y-4">
+        <div className="relative w-14 h-14 mx-auto">
+          <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center">
+            <Icon className="h-7 w-7 text-muted-foreground/30" />
+          </div>
+          <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-card border-2 border-card flex items-center justify-center">
+            <Lock className="h-3 w-3 text-muted-foreground" />
+          </div>
+        </div>
+        <div>
+          <h3 className="font-black text-base">{title}</h3>
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">{description}</p>
+        </div>
+        <div className="flex items-center gap-2 justify-center">
+          <Badge variant="outline" className="text-[10px] border-primary/30 text-primary font-bold">
+            Plano {planLabel}+
+          </Badge>
+        </div>
+        <Button variant="outline" onClick={onUpgrade} className="gap-2 rounded-full">
+          <Rocket className="h-3.5 w-3.5" /> Ver planos
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

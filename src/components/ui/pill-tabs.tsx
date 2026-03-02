@@ -21,10 +21,10 @@ export function PillTabs({ items, value, onValueChange, className }: PillTabsPro
           key={item.id}
           onClick={() => onValueChange(item.id)}
           className={cn(
-            "flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all shrink-0",
+            "flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all shrink-0",
             value === item.id
               ? "bg-foreground text-background shadow-md"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/60 border border-transparent hover:border-border/30"
           )}
         >
           {item.icon && <item.icon className="h-3.5 w-3.5" />}

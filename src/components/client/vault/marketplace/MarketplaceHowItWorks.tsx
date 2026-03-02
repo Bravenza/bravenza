@@ -1,11 +1,12 @@
-import { TrendingDown, Percent } from "lucide-react";
+import { TrendingDown, Percent, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const feeTable = [
-  { plan: "Free", base: "14%", note: "Taxa fixa" },
-  { plan: "Pro", base: "12%", note: "Reduz até 8% com vendas" },
-  { plan: "Elite", base: "10%", note: "Reduz até 6% com vendas" },
+  { plan: "Free", base: "14%", note: "Taxa fixa", accent: "bg-muted/60 text-muted-foreground" },
+  { plan: "Pro", base: "12%", note: "Reduz até 8% com vendas", accent: "bg-primary/10 text-primary" },
+  { plan: "Elite", base: "10%", note: "Reduz até 6% com vendas", accent: "bg-primary/15 text-primary" },
 ];
 
 const steps = [
@@ -19,28 +20,37 @@ const steps = [
 export function MarketplaceHowItWorks() {
   return (
     <div className="space-y-4">
-      <Card className="card-premium">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Percent className="h-5 w-5 text-primary" />
+      {/* Fee Table */}
+      <Card className="border-border/30 shadow-sm overflow-hidden">
+        <div className="h-0.5 bg-gradient-to-r from-primary/40 via-primary/20 to-transparent" />
+        <CardHeader className="pb-2 px-4 pt-4">
+          <CardTitle className="text-sm font-bold flex items-center gap-2">
+            <div className="h-7 w-7 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Percent className="h-3.5 w-3.5 text-primary" />
+            </div>
             Taxa de serviço progressiva
           </CardTitle>
-          <CardDescription>A taxa depende do seu plano e volume de vendas</CardDescription>
+          <CardDescription className="text-xs ml-9">A taxa depende do seu plano e volume de vendas</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
+        <CardContent className="px-4 pb-4">
+          <div className="space-y-2 mt-2">
             {feeTable.map((row) => (
-              <div key={row.plan} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
-                <div>
-                  <span className="text-sm font-medium">{row.plan}</span>
-                  <span className="text-xs text-muted-foreground ml-2">{row.note}</span>
+              <div key={row.plan} className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/30">
+                <div className="flex items-center gap-2.5">
+                  <div className={cn("h-7 w-7 rounded-lg flex items-center justify-center text-[10px] font-black", row.accent)}>
+                    {row.plan[0]}
+                  </div>
+                  <div>
+                    <span className="text-sm font-semibold">{row.plan}</span>
+                    <p className="text-[10px] text-muted-foreground">{row.note}</p>
+                  </div>
                 </div>
-                <Badge variant="outline" className="text-primary border-primary/30">{row.base}</Badge>
+                <Badge variant="outline" className="text-primary border-primary/30 font-bold text-xs">{row.base}</Badge>
               </div>
             ))}
           </div>
-          <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
-            <p className="text-xs text-muted-foreground">
+          <div className="mt-3 p-3 bg-primary/5 border border-primary/15 rounded-xl">
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
               <TrendingDown className="h-3 w-3 inline mr-1 text-primary" />
               Nos planos Pro e Elite, a comissão diminui automaticamente conforme seu volume de vendas aumenta.
             </p>
@@ -48,19 +58,21 @@ export function MarketplaceHowItWorks() {
         </CardContent>
       </Card>
 
-      <Card className="card-premium">
-        <CardHeader>
-          <CardTitle className="text-lg">Como funciona</CardTitle>
+      {/* Steps */}
+      <Card className="border-border/30 shadow-sm overflow-hidden">
+        <div className="h-0.5 bg-gradient-to-r from-muted-foreground/20 via-muted-foreground/10 to-transparent" />
+        <CardHeader className="pb-2 px-4 pt-4">
+          <CardTitle className="text-sm font-bold">Como funciona</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {steps.map((item) => (
-            <div key={item.step} className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-bold">
+        <CardContent className="px-4 pb-4 space-y-1">
+          {steps.map((item, i) => (
+            <div key={item.step} className="flex gap-3 p-2.5 rounded-xl hover:bg-muted/30 transition-colors">
+              <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-xs font-black">
                 {item.step}
               </div>
-              <div>
-                <p className="font-medium text-sm">{item.title}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
+              <div className="flex-1">
+                <p className="font-semibold text-sm">{item.title}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{item.desc}</p>
               </div>
             </div>
           ))}
