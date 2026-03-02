@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  Wallet, ArrowDownRight, ArrowUpRight, Clock, RefreshCw, DollarSign,
-  TrendingUp, Lock, Unlock, Plus, Trash2, Edit, CreditCard, ArrowLeft,
-  AlertTriangle, CheckCircle, Loader2, Ban, Info
+  ArrowLeft, DollarSign, Lock, Unlock, Plus, Trash2, Edit,
+  CreditCard, Clock, CheckCircle, Loader2, Ban, Info, ArrowDownLeft,
+  Wallet, TrendingUp, ChevronRight
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { marketplaceRequest } from "@/hooks/marketplace/api";
@@ -54,15 +53,18 @@ const PIX_TYPE_LABELS: Record<string, string> = {
   cpf: "CPF", cnpj: "CNPJ", email: "E-mail", phone: "Telefone", random: "Chave aleatória",
 };
 
-const PAYOUT_STATUS: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
-  requested: { label: "Solicitado", color: "text-warning", icon: Clock },
-  processing: { label: "Processando", color: "text-blue-500", icon: Loader2 },
-  completed: { label: "Pago", color: "text-emerald-500", icon: CheckCircle },
-  rejected: { label: "Rejeitado", color: "text-destructive", icon: Ban },
+const PAYOUT_STATUS: Record<string, { label: string; color: string; bgClass: string; icon: typeof CheckCircle }> = {
+  requested: { label: "Solicitado", color: "text-warning", bgClass: "bg-warning/10", icon: Clock },
+  processing: { label: "Processando", color: "text-blue-500", bgClass: "bg-blue-500/10", icon: Loader2 },
+  completed: { label: "Pago", color: "text-emerald-500", bgClass: "bg-emerald-500/10", icon: CheckCircle },
+  rejected: { label: "Rejeitado", color: "text-destructive", bgClass: "bg-destructive/10", icon: Ban },
 };
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const fmtDate = (d: string) => new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
+const fadeUp = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } } };
 
 export default function SellerWalletPage() {
   const navigate = useNavigate();
@@ -73,12 +75,10 @@ export default function SellerWalletPage() {
   const [pixAccounts, setPixAccounts] = useState<PixAccount[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Payout dialog
   const [payoutOpen, setPayoutOpen] = useState(false);
   const [payoutAmount, setPayoutAmount] = useState("");
   const [payoutSubmitting, setPayoutSubmitting] = useState(false);
 
-  // PIX dialog
   const [pixOpen, setPixOpen] = useState(false);
   const [editingPix, setEditingPix] = useState<PixAccount | null>(null);
   const [pixForm, setPixForm] = useState({ pix_key_type: "cpf", pix_key: "", beneficiary_name: "", bank_name: "" });
@@ -103,7 +103,6 @@ export default function SellerWalletPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // ── Payout ──
   const handleRequestPayout = async () => {
     const amount = parseFloat(payoutAmount.replace(",", "."));
     if (!amount || amount <= 0) { toast.error("Valor inválido"); return; }
@@ -122,7 +121,6 @@ export default function SellerWalletPage() {
     }
   };
 
-  // ── PIX ──
   const openPixDialog = (pix?: PixAccount) => {
     if (pix) {
       setEditingPix(pix);
@@ -162,135 +160,162 @@ export default function SellerWalletPage() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
-        <Skeleton className="h-8 w-32" />
-        <Skeleton className="h-40 rounded-xl" />
-        <Skeleton className="h-32 rounded-xl" />
-        <Skeleton className="h-48 rounded-xl" />
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        <Skeleton className="h-6 w-40" />
+        <Skeleton className="h-44 rounded-2xl" />
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton className="h-28 rounded-2xl" />
+          <Skeleton className="h-28 rounded-2xl" />
+        </div>
+        <Skeleton className="h-12 rounded-xl" />
+        <Skeleton className="h-48 rounded-2xl" />
       </div>
     );
   }
 
   const released = balance?.released ?? 0;
   const pending = balance?.pending ?? 0;
+  const totalEarned = balance?.total_earned ?? 0;
   const payouts = balance?.payouts ?? [];
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-5 space-y-4 pb-24">
-      {/* Back */}
-      <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}>
-        <button onClick={() => navigate("/app/loja")} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Voltar para Minha Loja
+    <motion.div
+      className="max-w-2xl mx-auto px-4 py-5 space-y-5 pb-28"
+      variants={stagger}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* Header */}
+      <motion.div variants={fadeUp} className="flex items-center gap-3">
+        <button onClick={() => navigate("/app/loja")} className="h-9 w-9 rounded-xl bg-muted/60 flex items-center justify-center hover:bg-muted transition-colors">
+          <ArrowLeft className="h-4 w-4 text-muted-foreground" />
         </button>
+        <div>
+          <h1 className="text-lg font-black tracking-tight flex items-center gap-2">
+            <Wallet className="h-5 w-5 text-primary" />
+            Carteira
+          </h1>
+          <p className="text-xs text-muted-foreground">Gerencie seus ganhos e recebimentos</p>
+        </div>
       </motion.div>
 
-      {/* Title */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-xl font-black tracking-tight">Saldo & Saques</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Gerencie seus ganhos e contas para recebimento</p>
-      </motion.div>
-
-      {/* Balance Cards */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="grid grid-cols-2 gap-3">
-        {/* Released */}
-        <Card className="card-premium bg-gradient-to-br from-emerald-500/5 to-emerald-500/10 border-emerald-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-8 w-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                <Unlock className="h-4 w-4 text-emerald-500" />
+      {/* Hero Balance Card */}
+      <motion.div variants={fadeUp}>
+        <Card className="overflow-hidden border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-background shadow-lg shadow-primary/5">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Saldo total</p>
+              <div className="h-10 w-10 rounded-2xl bg-primary/15 flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-primary" />
               </div>
-              <p className="text-[11px] text-muted-foreground leading-tight">Saldo liberado</p>
             </div>
-            <p className="text-lg font-black text-emerald-600 dark:text-emerald-400">{fmt(released)}</p>
-          </CardContent>
-        </Card>
+            <p className="text-3xl font-black tracking-tight">{fmt(released + pending)}</p>
+            {totalEarned > 0 && (
+              <p className="text-[11px] text-muted-foreground mt-1">Total acumulado: {fmt(totalEarned)}</p>
+            )}
 
-        {/* Pending */}
-        <Card className="card-premium bg-gradient-to-br from-warning/5 to-warning/10 border-warning/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-8 w-8 rounded-lg bg-warning/20 flex items-center justify-center">
-                <Lock className="h-4 w-4 text-warning" />
+            {/* Mini breakdown */}
+            <div className="grid grid-cols-2 gap-3 mt-5">
+              <div className="bg-background/60 backdrop-blur-sm rounded-xl p-3 border border-border/40">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Unlock className="h-3 w-3 text-emerald-500" />
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Liberado</span>
+                </div>
+                <p className="text-base font-black text-emerald-600 dark:text-emerald-400">{fmt(released)}</p>
               </div>
-              <p className="text-[11px] text-muted-foreground leading-tight">A liberar</p>
-            </div>
-            <p className="text-lg font-black text-warning">{fmt(pending)}</p>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Info card */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-        <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="p-3 flex gap-2">
-            <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-            <div className="text-xs text-muted-foreground space-y-1">
-              <p><strong className="text-foreground">Como funciona a liberação?</strong></p>
-              <p>O saldo é liberado quando o comprador confirma o recebimento do produto ou automaticamente após 7 dias úteis da entrega (proteção ao comprador).</p>
+              <div className="bg-background/60 backdrop-blur-sm rounded-xl p-3 border border-border/40">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Lock className="h-3 w-3 text-warning" />
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">A liberar</span>
+                </div>
+                <p className="text-base font-black text-warning">{fmt(pending)}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
       </motion.div>
 
-      {/* Withdraw button */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+      {/* Info banner */}
+      <motion.div variants={fadeUp}>
+        <div className="flex gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/30">
+          <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+          <div className="text-[11px] text-muted-foreground leading-relaxed">
+            <span className="font-semibold text-foreground">Como funciona?</span> O saldo é liberado quando o comprador confirma o recebimento ou automaticamente após 7 dias úteis da entrega.
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Withdraw CTA */}
+      <motion.div variants={fadeUp}>
         <Button
-          className="w-full h-12 font-bold btn-gold"
+          className="w-full h-12 font-bold text-sm btn-gold rounded-xl gap-2 shadow-md"
           disabled={released <= 0 || pixAccounts.length === 0}
           onClick={() => setPayoutOpen(true)}
         >
-          <DollarSign className="h-4 w-4" /> Solicitar saque
+          <ArrowDownLeft className="h-4 w-4" /> Solicitar saque · {fmt(released)}
         </Button>
         {pixAccounts.length === 0 && released > 0 && (
-          <p className="text-xs text-destructive mt-1 text-center">Cadastre uma conta PIX para solicitar saques</p>
+          <p className="text-[11px] text-destructive mt-1.5 text-center">Cadastre uma conta PIX para solicitar saques</p>
         )}
       </motion.div>
 
       {/* PIX Accounts */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-        <Card className="card-premium">
-          <CardHeader className="pb-2">
+      <motion.div variants={fadeUp}>
+        <Card className="border-border/40 shadow-sm">
+          <CardHeader className="pb-2 px-4 pt-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <CreditCard className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-bold flex items-center gap-2">
+                <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <CreditCard className="h-3.5 w-3.5 text-primary" />
+                </div>
                 Contas PIX
               </CardTitle>
-              <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={() => openPixDialog()}>
+              <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs text-primary hover:text-primary" onClick={() => openPixDialog()}>
                 <Plus className="h-3.5 w-3.5" /> Adicionar
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 pb-4">
             {pixAccounts.length === 0 ? (
-              <div className="text-center py-6">
-                <CreditCard className="h-8 w-8 mx-auto text-muted-foreground/20 mb-2" />
-                <p className="text-sm text-muted-foreground">Nenhuma conta PIX cadastrada</p>
-                <Button variant="outline" size="sm" className="mt-3 gap-1" onClick={() => openPixDialog()}>
+              <div className="text-center py-8">
+                <div className="h-14 w-14 mx-auto rounded-2xl bg-muted/60 flex items-center justify-center mb-3">
+                  <CreditCard className="h-6 w-6 text-muted-foreground/30" />
+                </div>
+                <p className="text-sm font-medium text-muted-foreground">Nenhuma conta cadastrada</p>
+                <p className="text-[11px] text-muted-foreground/60 mt-0.5">Adicione uma chave PIX para receber</p>
+                <Button variant="outline" size="sm" className="mt-4 gap-1.5 rounded-lg" onClick={() => openPixDialog()}>
                   <Plus className="h-3.5 w-3.5" /> Cadastrar conta PIX
                 </Button>
               </div>
             ) : (
-              <div className="space-y-2">
-                {pixAccounts.map((pix) => (
-                  <div key={pix.id} className="flex items-center gap-3 py-2.5 border-b border-border/30 last:border-0">
-                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <div className="space-y-1.5">
+                {pixAccounts.map((pix, i) => (
+                  <motion.div
+                    key={pix.id}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors group"
+                  >
+                    <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                       <CreditCard className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{pix.beneficiary_name}</p>
+                      <p className="text-sm font-semibold truncate">{pix.beneficiary_name}</p>
                       <p className="text-[11px] text-muted-foreground truncate">
-                        {PIX_TYPE_LABELS[pix.pix_key_type] || pix.pix_key_type}: {pix.pix_key} · {pix.bank_name}
+                        {PIX_TYPE_LABELS[pix.pix_key_type] || pix.pix_key_type}: {pix.pix_key}
                       </p>
+                      <p className="text-[10px] text-muted-foreground/60">{pix.bank_name}</p>
                     </div>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openPixDialog(pix)}>
-                        <Edit className="h-3.5 w-3.5" />
+                    <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg" onClick={() => openPixDialog(pix)}>
+                        <Edit className="h-3 w-3" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeletePix(pix.id)}>
-                        <Trash2 className="h-3.5 w-3.5" />
+                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg text-destructive hover:text-destructive" onClick={() => handleDeletePix(pix.id)}>
+                        <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             )}
@@ -299,22 +324,27 @@ export default function SellerWalletPage() {
       </motion.div>
 
       {/* Payout History */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-        <Card className="card-premium">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
+      <motion.div variants={fadeUp}>
+        <Card className="border-border/40 shadow-sm">
+          <CardHeader className="pb-2 px-4 pt-4">
+            <CardTitle className="text-sm font-bold flex items-center gap-2">
+              <div className="h-7 w-7 rounded-lg bg-muted flex items-center justify-center">
+                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
               Histórico de saques
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 pb-4">
             {payouts.length === 0 ? (
-              <div className="text-center py-6">
-                <DollarSign className="h-8 w-8 mx-auto text-muted-foreground/20 mb-2" />
-                <p className="text-sm text-muted-foreground">Nenhum saque solicitado</p>
+              <div className="text-center py-8">
+                <div className="h-14 w-14 mx-auto rounded-2xl bg-muted/60 flex items-center justify-center mb-3">
+                  <DollarSign className="h-6 w-6 text-muted-foreground/30" />
+                </div>
+                <p className="text-sm font-medium text-muted-foreground">Nenhum saque realizado</p>
+                <p className="text-[11px] text-muted-foreground/60 mt-0.5">Seus saques aparecerão aqui</p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {payouts.map((p, i) => {
                   const st = PAYOUT_STATUS[p.status] || PAYOUT_STATUS.requested;
                   const Icon = st.icon;
@@ -323,23 +353,25 @@ export default function SellerWalletPage() {
                       key={p.id}
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.03 }}
-                      className="flex items-center gap-3 py-2.5 border-b border-border/30 last:border-0"
+                      transition={{ delay: i * 0.04 }}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
                     >
-                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${p.status === "completed" ? "bg-emerald-500/10" : p.status === "rejected" ? "bg-destructive/10" : "bg-warning/10"}`}>
-                        <Icon className={`h-4 w-4 ${st.color}`} />
+                      <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${st.bgClass}`}>
+                        <Icon className={`h-4 w-4 ${st.color} ${p.status === "processing" ? "animate-spin" : ""}`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">Saque via PIX</p>
-                        <p className="text-[10px] text-muted-foreground">{fmtDate(p.created_at)}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-semibold">Saque via PIX</p>
+                          <Badge variant="outline" className={`text-[9px] px-1.5 py-0 h-4 ${st.color} border-current/20`}>
+                            {st.label}
+                          </Badge>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">{fmtDate(p.created_at)}</p>
                         {p.rejection_reason && (
-                          <p className="text-[10px] text-destructive mt-0.5">{p.rejection_reason}</p>
+                          <p className="text-[10px] text-destructive mt-0.5 line-clamp-1">{p.rejection_reason}</p>
                         )}
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-destructive">-{fmt(p.amount)}</p>
-                        <Badge variant="outline" className={`text-[10px] ${st.color} border-current/30`}>{st.label}</Badge>
-                      </div>
+                      <p className="text-sm font-bold tabular-nums text-foreground">-{fmt(p.amount)}</p>
                     </motion.div>
                   );
                 })}
@@ -351,18 +383,21 @@ export default function SellerWalletPage() {
 
       {/* ── Payout Dialog ── */}
       <Dialog open={payoutOpen} onOpenChange={setPayoutOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5" /> Solicitar saque
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                <ArrowDownLeft className="h-4 w-4 text-primary" />
+              </div>
+              Solicitar saque
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs">
               Disponível: <strong className="text-emerald-600 dark:text-emerald-400">{fmt(released)}</strong>
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="payoutAmount">Valor do saque *</Label>
+              <Label htmlFor="payoutAmount" className="text-xs">Valor do saque *</Label>
               <Input
                 id="payoutAmount"
                 type="text"
@@ -370,20 +405,20 @@ export default function SellerWalletPage() {
                 placeholder="0,00"
                 value={payoutAmount}
                 onChange={(e) => setPayoutAmount(e.target.value)}
+                className="h-11 text-lg font-bold mt-1"
               />
             </div>
             {pixAccounts.length > 0 && (
-              <Card className="bg-muted/50 border-border/40">
-                <CardContent className="p-3 text-xs">
-                  <p className="font-medium">Conta de destino</p>
-                  <p className="text-muted-foreground mt-1">
-                    {pixAccounts[0].beneficiary_name} · {PIX_TYPE_LABELS[pixAccounts[0].pix_key_type]}: {pixAccounts[0].pix_key} · {pixAccounts[0].bank_name}
-                  </p>
-                </CardContent>
-              </Card>
+              <div className="p-3 rounded-xl bg-muted/40 border border-border/30">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">Conta de destino</p>
+                <p className="text-sm font-semibold">{pixAccounts[0].beneficiary_name}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {PIX_TYPE_LABELS[pixAccounts[0].pix_key_type]}: {pixAccounts[0].pix_key} · {pixAccounts[0].bank_name}
+                </p>
+              </div>
             )}
             <Button
-              className="w-full btn-gold"
+              className="w-full h-11 btn-gold rounded-xl font-bold"
               disabled={payoutSubmitting || !payoutAmount}
               onClick={handleRequestPayout}
             >
@@ -395,15 +430,15 @@ export default function SellerWalletPage() {
 
       {/* ── PIX Dialog ── */}
       <Dialog open={pixOpen} onOpenChange={setPixOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm rounded-2xl">
           <DialogHeader>
-            <DialogTitle>{editingPix ? "Editar conta PIX" : "Nova conta PIX"}</DialogTitle>
+            <DialogTitle className="text-base">{editingPix ? "Editar conta PIX" : "Nova conta PIX"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label>Tipo de chave PIX *</Label>
+              <Label className="text-xs">Tipo de chave PIX *</Label>
               <Select value={pixForm.pix_key_type} onValueChange={(v) => setPixForm(f => ({ ...f, pix_key_type: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="cpf">CPF</SelectItem>
                   <SelectItem value="cnpj">CNPJ</SelectItem>
@@ -414,26 +449,26 @@ export default function SellerWalletPage() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="pixKey">Chave PIX *</Label>
-              <Input id="pixKey" value={pixForm.pix_key} onChange={(e) => setPixForm(f => ({ ...f, pix_key: e.target.value }))} placeholder="Sua chave PIX" />
+              <Label htmlFor="pixKey" className="text-xs">Chave PIX *</Label>
+              <Input id="pixKey" className="mt-1" value={pixForm.pix_key} onChange={(e) => setPixForm(f => ({ ...f, pix_key: e.target.value }))} placeholder="Sua chave PIX" />
             </div>
             <div>
-              <Label htmlFor="pixBenef">Beneficiário *</Label>
-              <Input id="pixBenef" value={pixForm.beneficiary_name} onChange={(e) => setPixForm(f => ({ ...f, beneficiary_name: e.target.value }))} placeholder="Nome do titular" />
+              <Label htmlFor="pixBenef" className="text-xs">Beneficiário *</Label>
+              <Input id="pixBenef" className="mt-1" value={pixForm.beneficiary_name} onChange={(e) => setPixForm(f => ({ ...f, beneficiary_name: e.target.value }))} placeholder="Nome do titular" />
             </div>
             <div>
-              <Label htmlFor="pixBank">Banco *</Label>
-              <Input id="pixBank" value={pixForm.bank_name} onChange={(e) => setPixForm(f => ({ ...f, bank_name: e.target.value }))} placeholder="Ex: Nubank, Itaú..." />
+              <Label htmlFor="pixBank" className="text-xs">Banco *</Label>
+              <Input id="pixBank" className="mt-1" value={pixForm.bank_name} onChange={(e) => setPixForm(f => ({ ...f, bank_name: e.target.value }))} placeholder="Ex: Nubank, Itaú..." />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPixOpen(false)}>Cancelar</Button>
-            <Button className="btn-gold" disabled={pixSubmitting} onClick={handleSavePix}>
+          <DialogFooter className="gap-2 mt-2">
+            <Button variant="outline" onClick={() => setPixOpen(false)} className="rounded-lg">Cancelar</Button>
+            <Button className="btn-gold rounded-lg" disabled={pixSubmitting} onClick={handleSavePix}>
               {pixSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }
