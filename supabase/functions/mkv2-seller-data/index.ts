@@ -53,35 +53,58 @@ if(mt==="GET"&&a==="seller-dashboard"){
   const sl=await gs(sb,mb.id);if(!sl)return j({ok:false,error:"Vendedor não encontrado"},404);
   const now=new Date(),d7=new Date(now.getTime()-7*86400000).toISOString(),d30=new Date(now.getTime()-30*86400000).toISOString(),d90=new Date(now.getTime()-90*86400000).toISOString();
 
-  // Today's tasks (orders needing action)
+  // Today's tasks
   const{data:pendingShip}=await sb.from("vault_marketplace_orders").select("id,order_code,sale_price,created_at").eq("seller_id",sl.id).eq("status","paid").order("created_at");
   const{data:pendingHub}=await sb.from("vault_marketplace_orders").select("id,order_code,sale_price").eq("seller_id",sl.id).eq("status","hub_received");
   const{data:disputes}=await sb.from("vault_marketplace_orders").select("id,order_code").eq("seller_id",sl.id).eq("dispute_status","open");
 
-  // Metrics (7d, 30d, 90d)
+  // Pending offers (received, not responded)
+  const{data:pendingOffers}=await sb.from("marketplace_offers").select("id").eq("seller_id",sl.id).eq("status","pending").limit(50);
+
+  // Metrics
   const{data:allOrders}=await sb.from("vault_marketplace_orders").select("id,status,sale_price,fee_amount,seller_payout,created_at").eq("seller_id",sl.id);
   const cs=["delivered","payout_released","payout_pending","completed"];
   const calc=(since:string)=>{const os=(allOrders||[]).filter((o:any)=>cs.includes(o.status)&&o.created_at>=since);return{sales:os.length,revenue:Math.round(os.reduce((s:number,o:any)=>s+(o.seller_payout||0),0)*100)/100,fees:Math.round(os.reduce((s:number,o:any)=>s+(o.fee_amount||0),0)*100)/100};};
 
-  // Listings summary
-  const{data:ls}=await sb.from("vault_marketplace_listings").select("id,status,price").eq("seller_id",sl.id);
+  // Listings
+  const{data:ls}=await sb.from("vault_marketplace_listings").select("id,status,price,views_count").eq("seller_id",sl.id);
   const active=(ls||[]).filter((l:any)=>l.status==="active");
-  const reserved=(ls||[]).filter((l:any)=>l.status==="reserved");
+  const paused=(ls||[]).filter((l:any)=>l.status==="paused");
   const sold=(ls||[]).filter((l:any)=>l.status==="sold");
+  const totalViews=(ls||[]).reduce((s:number,l:any)=>s+(l.views_count||0),0);
 
-  // Wallet
-  const{data:cpData}=await sb.from("client_profiles").select("cpf").eq("user_id",(await sb.auth.getUser(req.headers.get("authorization")!.replace("Bearer ",""))).data?.user?.id).single();
-  let walletBalance=0;
-  if(cpData?.cpf){const{data:wb}=await sb.from("wallet_balances").select("balance").eq("user_cpf",cpData.cpf).maybeSingle();walletBalance=wb?.balance||0;}
+  // Stale listings for price-drop suggestions count
+  const d7ago=new Date(now.getTime()-7*86400000).toISOString();
+  const staleCount=active.filter((l:any)=>(l.views_count||0)<5).length;
+
+  // Wallet (real escrow calc like mkv2-wallet)
+  const{data:pendingOrders}=await sb.from("vault_marketplace_orders").select("seller_payout").eq("seller_id",sl.id).eq("status","delivered").is("confirmed_at",null).is("dispute_status",null);
+  const walletPending=(pendingOrders||[]).reduce((s:number,o:any)=>s+Number(o.seller_payout),0);
+
+  const{data:releasedOrders}=await sb.from("vault_marketplace_orders").select("seller_payout").eq("seller_id",sl.id).in("status",["completed","payout_pending"]).not("confirmed_at","is",null).is("dispute_status",null);
+  const totalEarned=(releasedOrders||[]).reduce((s:number,o:any)=>s+Number(o.seller_payout),0);
+
+  const{data:payoutsData}=await sb.from("marketplace_seller_payouts").select("amount,status,created_at").eq("seller_id",sl.id).in("status",["requested","processing","completed"]).order("created_at",{ascending:false}).limit(5);
+  const payoutsTotal=(payoutsData||[]).reduce((s:number,p:any)=>s+Number(p.amount),0);
+  const walletReleased=Math.max(0,totalEarned-payoutsTotal);
 
   // Reputation
-  const rep={tier:sl.tier||"bronze",rating:sl.average_rating||0,ratings_count:sl.ratings_count||0,fee_percent:sl.current_fee_percent||14,on_time_rate:sl.on_time_shipping_rate||0};
+  const{data:inspections}=await sb.from("marketplace_inspections").select("result").eq("status","completed");
+  const totalInsp=(inspections||[]).length;
+  const approvedInsp=(inspections||[]).filter((i:any)=>i.result==="approved").length;
+  const authRate=totalInsp>0?Math.round(approvedInsp/totalInsp*100):0;
+
+  const rep={tier:sl.tier||"bronze",rating:sl.average_rating||0,ratings_count:sl.ratings_count||0,fee_percent:sl.current_fee_percent||14,on_time_rate:sl.on_time_shipping_rate||0,auth_approval_rate:authRate};
+
+  // Conversion
+  const d30sales=calc(d30).sales;
+  const conversionRate=totalViews>0?Math.round(d30sales/totalViews*10000)/100:0;
 
   return j({ok:true,data:{
-    today_tasks:{pending_shipments:pendingShip||[],pending_hub_actions:pendingHub||[],open_disputes:disputes||[]},
-    metrics:{d7:calc(d7),d30:calc(d30),d90:calc(d90)},
-    listings_summary:{active:active.length,reserved:reserved.length,sold:sold.length,total_value:Math.round(active.reduce((s:number,l:any)=>s+(l.price||0),0)*100)/100},
-    wallet_summary:{balance:walletBalance},
+    today_tasks:{pending_shipments:pendingShip||[],pending_hub_actions:pendingHub||[],open_disputes:disputes||[],pending_offers_count:(pendingOffers||[]).length},
+    metrics:{d7:calc(d7),d30:calc(d30),d90:calc(d90),total_views:totalViews,conversion_rate:conversionRate},
+    listings_summary:{active:active.length,paused:paused.length,sold:sold.length,total_value:Math.round(active.reduce((s:number,l:any)=>s+(l.price||0),0)*100)/100,stale_count:staleCount},
+    wallet_summary:{released:Math.round(walletReleased*100)/100,pending:Math.round(walletPending*100)/100,recent_payouts:payoutsData||[]},
     reputation_summary:rep
   }});
 }
