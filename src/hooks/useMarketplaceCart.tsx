@@ -17,6 +17,7 @@ export interface CartItem {
     shipping_mode: string;
     seller_id: string;
     status: string;
+    interest_free_installments?: number;
     product?: {
       brand: string;
       model: string;
@@ -83,6 +84,7 @@ export const CartProvider = forwardRef<HTMLDivElement, { cpf: string | null; chi
           shipping_mode: row.offer_shipping_mode,
           seller_id: row.offer_seller_id,
           status: row.offer_status,
+          interest_free_installments: row.offer_interest_free_installments || 0,
           product: {
             brand: row.product_brand,
             model: row.product_model,

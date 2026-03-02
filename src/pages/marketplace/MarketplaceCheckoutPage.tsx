@@ -211,8 +211,20 @@ function MarketplaceCheckoutPageInner() {
   const shippingCost = selectedFreight ? parseFloat(selectedFreight.price) : 0;
   const baseTotalPrice = itemsSubtotal + shippingCost;
 
+  // Determine the minimum interest-free installments across all items in the group
+  const interestFreeMax = useMemo(() => {
+    if (!group?.items?.length) return 0;
+    return group.items.reduce((min, item) => {
+      const ifMax = item.offer?.interest_free_installments || 0;
+      return min === -1 ? ifMax : Math.min(min, ifMax);
+    }, -1 as number);
+  }, [group?.items]);
+  const effectiveInterestFreeMax = interestFreeMax === -1 ? 0 : interestFreeMax;
+
   const cardInterestRate = (form.payment_method === "card" && cardFormData)
-    ? (MERCADO_PAGO_RATES[cardFormData.installments] || 0)
+    ? (effectiveInterestFreeMax > 0 && cardFormData.installments <= effectiveInterestFreeMax
+        ? 0
+        : (MERCADO_PAGO_RATES[cardFormData.installments] || 0))
     : 0;
   const displayTotalPrice = cardInterestRate > 0
     ? Math.round((baseTotalPrice / (1 - cardInterestRate)) * 100) / 100
@@ -814,7 +826,7 @@ function MarketplaceCheckoutPageInner() {
                     <div className="grid grid-cols-2 gap-3">
                       {[
                         { value: "pix", label: "PIX", desc: "Aprovação instantânea", icon: "💚" },
-                        { value: "card", label: "Cartão", desc: "Até 12x com juros", icon: "💳" },
+                        { value: "card", label: "Cartão", desc: effectiveInterestFreeMax > 0 ? `Até ${effectiveInterestFreeMax}x sem juros` : "Até 12x com juros", icon: "💳" },
                       ].map(opt => (
                         <button
                           key={opt.value}
@@ -839,6 +851,7 @@ function MarketplaceCheckoutPageInner() {
                         amount={baseTotalPrice}
                         email={form.buyer_email}
                         interestRates={MERCADO_PAGO_RATES}
+                        interestFreeMax={effectiveInterestFreeMax}
                         compact
                         onDataChange={(data, valid) => {
                           setCardFormData(data);
