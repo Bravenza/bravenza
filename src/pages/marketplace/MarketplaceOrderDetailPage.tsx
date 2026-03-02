@@ -570,54 +570,69 @@ export default function MarketplaceOrderDetailPage() {
       )}
 
       {/* ── Sticky action bar ── */}
-      {allowed_actions.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+56px)] md:bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border/40 px-4 py-3 md:static md:bg-transparent md:backdrop-blur-none md:border-0 md:px-0 md:py-0"
-        >
-          <div className="max-w-2xl mx-auto flex flex-wrap gap-2">
-            {allowed_actions.includes("pay") && (
-              <Button
-                className="flex-1 min-w-[130px] gap-2 h-11 font-semibold shadow-sm"
-                onClick={() => navigate(`/pagamento/${order.order_code}`)}
-              >
-                <CreditCard className="h-4 w-4" /> Pagar agora
-              </Button>
-            )}
-            {allowed_actions.includes("rate") && (
-              <Button
-                className="flex-1 min-w-[130px] gap-2 h-11 font-semibold shadow-sm"
-                onClick={() => setConfirmOpen(true)}
-              >
-                <CheckCircle2 className="h-4 w-4" /> Confirmar recebimento
-              </Button>
-            )}
-            {allowed_actions.includes("open_dispute") && (
-              <Button
-                variant="outline"
-                className="flex-1 min-w-[130px] gap-2 h-11 text-destructive border-destructive/30 hover:bg-destructive/5 font-semibold"
-              >
-                <AlertTriangle className="h-4 w-4" /> Reportar problema
-              </Button>
-            )}
-            {allowed_actions.includes("ship") && (
-              <Button className="flex-1 min-w-[130px] gap-2 h-11 font-semibold shadow-sm">
-                <Truck className="h-4 w-4" />
-                {order.shipping_mode === "bravenza" ? "Enviar ao Hub" : "Informar envio"}
-              </Button>
-            )}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+56px)] md:bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border/40 px-4 py-3 md:static md:bg-transparent md:backdrop-blur-none md:border-0 md:px-0 md:py-0"
+      >
+        <div className="max-w-2xl mx-auto flex flex-wrap gap-2">
+          {allowed_actions.includes("pay") && (
+            <Button
+              className="flex-1 min-w-[130px] gap-2 h-11 font-semibold shadow-sm"
+              onClick={() => navigate(`/pagamento/${order.order_code}`)}
+            >
+              <CreditCard className="h-4 w-4" /> Pagar agora
+            </Button>
+          )}
+          {allowed_actions.includes("cancel") && (
+            <Button
+              variant="destructive"
+              className="flex-1 min-w-[130px] gap-2 h-11 font-semibold"
+              onClick={() => {
+                toast({ title: "Cancelamento", description: "Acesse 'Meus Pedidos' para cancelar dentro da janela de 30 minutos." });
+                navigate("/app/pedidos");
+              }}
+            >
+              <AlertTriangle className="h-4 w-4" /> Cancelar pedido
+            </Button>
+          )}
+          {allowed_actions.includes("rate") && (
+            <Button
+              className="flex-1 min-w-[130px] gap-2 h-11 font-semibold shadow-sm"
+              onClick={() => setConfirmOpen(true)}
+            >
+              <CheckCircle2 className="h-4 w-4" /> Confirmar recebimento
+            </Button>
+          )}
+          {allowed_actions.includes("open_dispute") && (
             <Button
               variant="outline"
-              className="flex-1 min-w-[130px] gap-2 h-11 font-medium"
-              onClick={() => window.open("https://wa.me/5551999999999", "_blank")}
+              className="flex-1 min-w-[130px] gap-2 h-11 text-destructive border-destructive/30 hover:bg-destructive/5 font-semibold"
             >
-              <MessageCircle className="h-4 w-4" /> Suporte
+              <AlertTriangle className="h-4 w-4" /> Reportar problema
             </Button>
-          </div>
-        </motion.div>
-      )}
+          )}
+          {allowed_actions.includes("ship") && (
+            <Button className="flex-1 min-w-[130px] gap-2 h-11 font-semibold shadow-sm">
+              <Truck className="h-4 w-4" />
+              {order.shipping_mode === "bravenza" ? "Enviar ao Hub" : "Informar envio"}
+            </Button>
+          )}
+          {allowed_actions.includes("track_hub") && (
+            <Button variant="outline" className="flex-1 min-w-[130px] gap-2 h-11 font-medium">
+              <MapPin className="h-4 w-4" /> Rastrear Hub
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            className="flex-1 min-w-[130px] gap-2 h-11 font-medium"
+            onClick={() => window.open("https://wa.me/5551999999999", "_blank")}
+          >
+            <MessageCircle className="h-4 w-4" /> Suporte
+          </Button>
+        </div>
+      </motion.div>
 
       {/* ── Confirm Delivery Dialog ── */}
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
