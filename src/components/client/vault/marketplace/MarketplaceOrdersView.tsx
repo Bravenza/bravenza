@@ -167,36 +167,37 @@ export function MarketplaceOrdersView({
     return (
       <motion.div key={order.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <Card className="card-premium">
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex gap-3">
               {order.listing?.photos?.[0] && (
                 <img
                   src={order.listing.photos[0]}
                   alt={order.listing?.title || order.order_code}
-                  className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                  className="w-16 h-16 sm:w-18 sm:h-18 rounded-xl object-cover flex-shrink-0"
                 />
               )}
               <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-medium text-sm line-clamp-1">{order.listing?.title || `Pedido ${order.order_code}`}</p>
-                    <p className="text-xs text-muted-foreground">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-2">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm leading-snug line-clamp-1">{order.listing?.title || `Pedido ${order.order_code}`}</p>
+                    <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
                       {order.order_code} · {new Date(order.created_at).toLocaleDateString("pt-BR")}
                     </p>
                   </div>
-                  <Badge className={`${status.color} text-xs flex-shrink-0 gap-1`}>
+                  <Badge className={`${status.color} text-[10px] sm:text-xs flex-shrink-0 gap-1 h-5 sm:h-auto`}>
                     <StatusIcon className="h-3 w-3" />
-                    {status.label}
+                    <span className="hidden xs:inline">{status.label}</span>
+                    <span className="xs:hidden">{status.label.length > 12 ? status.label.slice(0, 12) + "…" : status.label}</span>
                   </Badge>
                 </div>
 
                 <div className="flex items-center justify-between mt-2">
-                  <p className="font-bold">
+                  <p className="font-bold text-sm sm:text-base">
                     R$ {(isSale ? order.seller_payout : order.sale_price).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </p>
                   {isSale && (
-                    <span className="text-xs text-muted-foreground">
-                      Taxa: {order.fee_percent}% (R$ {order.fee_amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })})
+                    <span className="text-[10px] sm:text-xs text-muted-foreground">
+                      Taxa: {order.fee_percent}%
                     </span>
                   )}
                 </div>
@@ -232,17 +233,17 @@ export function MarketplaceOrdersView({
                 )}
 
                 {/* Actions */}
-                <div className="flex flex-wrap gap-2 mt-3">
+                <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-3">
                   {/* Cancel button (buyer, paid, within 30-min window) */}
                   {!isSale && order.status === "paid" && order.cancellation_window_ends_at && new Date(order.cancellation_window_ends_at) > new Date() && (
                     <Button
                       size="sm"
                       variant="destructive"
-                      className="text-xs gap-1"
+                      className="text-xs gap-1 h-8 sm:h-9 px-2.5 sm:px-3"
                       onClick={() => setCancelDialog(order)}
                     >
                       <Ban className="h-3 w-3" />
-                      Cancelar pedido
+                      Cancelar
                     </Button>
                   )}
 
@@ -251,26 +252,27 @@ export function MarketplaceOrdersView({
                     <>
                       <Button
                         size="sm"
-                        className="text-xs gap-1 btn-gold"
+                        className="text-xs gap-1 btn-gold h-9 sm:h-9 px-3 font-bold"
                         onClick={() => {
                           setPayRetryOrder(order);
                           setPayRetrySwitchMethod(false);
                         }}
                       >
-                        {order.payment_method === "pix" ? <QrCode className="h-3 w-3" /> : <CreditCard className="h-3 w-3" />}
+                        {order.payment_method === "pix" ? <QrCode className="h-3.5 w-3.5" /> : <CreditCard className="h-3.5 w-3.5" />}
                         Pagar agora
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-xs gap-1"
+                        className="text-xs gap-1 h-8 sm:h-9 px-2.5 sm:px-3"
                         onClick={() => {
                           setPayRetryOrder(order);
                           setPayRetrySwitchMethod(true);
                         }}
                       >
                         <RefreshCw className="h-3 w-3" />
-                        {order.payment_method === "card" ? "Tentar outro cartão" : "Mudar forma de pagamento"}
+                        <span className="hidden sm:inline">{order.payment_method === "card" ? "Tentar outro cartão" : "Mudar pagamento"}</span>
+                        <span className="sm:hidden">Alterar</span>
                       </Button>
                     </>
                   )}
@@ -288,11 +290,12 @@ export function MarketplaceOrdersView({
                   {!isSale && order.status === "delivered" && !order.buyer_rating && (
                     <Button
                       size="sm"
-                      className="text-xs gap-1 btn-gold"
+                      className="text-xs gap-1 btn-gold h-8 sm:h-9 px-2.5 sm:px-3"
                       onClick={() => setDeliveryFlowOrder(order)}
                     >
                       <PackageCheck className="h-3 w-3" />
-                      Confirmar recebimento
+                      <span className="hidden sm:inline">Confirmar recebimento</span>
+                      <span className="sm:hidden">Confirmar</span>
                     </Button>
                   )}
 
@@ -310,7 +313,7 @@ export function MarketplaceOrdersView({
                   {isSale && order.status === "paid" && (
                     <Button
                       size="sm"
-                      className="text-xs gap-1 btn-gold"
+                      className="text-xs gap-1 btn-gold h-8 sm:h-9 px-2.5 sm:px-3"
                       onClick={() => setShipDialog({ orderId: order.id })}
                     >
                       <Truck className="h-3 w-3" />
@@ -347,10 +350,10 @@ export function MarketplaceOrdersView({
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-xs gap-1 ml-auto text-muted-foreground hover:text-foreground"
+                      className="text-xs gap-1 ml-auto text-muted-foreground hover:text-foreground h-8 sm:h-9 px-2"
                       onClick={() => navigate(`/app/pedidos/${order.id}`)}
                     >
-                      Ver detalhes <ChevronRight className="h-3 w-3" />
+                      Detalhes <ChevronRight className="h-3 w-3" />
                     </Button>
                   )}
                 </div>

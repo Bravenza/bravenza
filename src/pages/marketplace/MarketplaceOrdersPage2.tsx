@@ -36,7 +36,7 @@ export default function MarketplaceOrdersPage2() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 pb-28 md:pb-12">
+    <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8 pb-32 md:pb-12">
       <div className="flex items-center gap-3 mb-8">
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
           <ShoppingBag className="h-5 w-5 text-primary" />
