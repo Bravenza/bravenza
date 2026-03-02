@@ -194,9 +194,9 @@ export function FavoritesV2({ cpf }: FavoritesV2Props) {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("recent");
   const [hideSold, setHideSold] = useState(false);
-  const [filterBrand, setFilterBrand] = useState("");
-  const [filterSize, setFilterSize] = useState("");
-  const [filterCondition, setFilterCondition] = useState("");
+  const [filterBrand, setFilterBrand] = useState("__all__");
+  const [filterSize, setFilterSize] = useState("__all__");
+  const [filterCondition, setFilterCondition] = useState("__all__");
   const [selectionMode, setSelectionMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [activeListId, setActiveListId] = useState<string | null>(null);
@@ -241,9 +241,9 @@ export function FavoritesV2({ cpf }: FavoritesV2Props) {
     }
 
     // Filters
-    if (filterBrand) items = items.filter(l => l.brand === filterBrand);
-    if (filterSize) items = items.filter(l => l.size === filterSize);
-    if (filterCondition) items = items.filter(l => l.condition === filterCondition);
+    if (filterBrand && filterBrand !== "__all__") items = items.filter(l => l.brand === filterBrand);
+    if (filterSize && filterSize !== "__all__") items = items.filter(l => l.size === filterSize);
+    if (filterCondition && filterCondition !== "__all__") items = items.filter(l => l.condition === filterCondition);
     if (hideSold) items = items.filter(l => l.status !== "sold" && l.status !== "reserved");
 
     // Sort
@@ -322,7 +322,7 @@ export function FavoritesV2({ cpf }: FavoritesV2Props) {
     setSelectionMode(false);
   };
 
-  const hasActiveFilters = !!filterBrand || !!filterSize || !!filterCondition || hideSold;
+  const hasActiveFilters = (filterBrand !== "__all__") || (filterSize !== "__all__") || (filterCondition !== "__all__") || hideSold;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-4">
@@ -382,7 +382,7 @@ export function FavoritesV2({ cpf }: FavoritesV2Props) {
                 <SelectValue placeholder="Marca" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas</SelectItem>
+                <SelectItem value="__all__">Todas</SelectItem>
                 {brands.map(b => <SelectItem key={b} value={b!}>{b}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -395,7 +395,7 @@ export function FavoritesV2({ cpf }: FavoritesV2Props) {
                 <SelectValue placeholder="Tamanho" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="__all__">Todos</SelectItem>
                 {sizes.map(s => <SelectItem key={s} value={s!}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -407,7 +407,7 @@ export function FavoritesV2({ cpf }: FavoritesV2Props) {
               <SelectValue placeholder="Condição" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas</SelectItem>
+              <SelectItem value="__all__">Todas</SelectItem>
               <SelectItem value="deadstock">Deadstock</SelectItem>
               <SelectItem value="novo">Novo</SelectItem>
               <SelectItem value="usado">Usado</SelectItem>
@@ -430,7 +430,7 @@ export function FavoritesV2({ cpf }: FavoritesV2Props) {
               variant="ghost"
               size="sm"
               className="h-9 text-xs text-muted-foreground"
-              onClick={() => { setFilterBrand(""); setFilterSize(""); setFilterCondition(""); setHideSold(false); }}
+              onClick={() => { setFilterBrand("__all__"); setFilterSize("__all__"); setFilterCondition("__all__"); setHideSold(false); }}
             >
               Limpar filtros
             </Button>
