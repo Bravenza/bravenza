@@ -39,6 +39,27 @@ if(mt==="GET"&&a==="my-sales"){const{data:mb}=await sb.from("vault_members").sel
 if(mt==="POST"&&a==="rate-seller"){const b=await req.json();await sb.from("vault_marketplace_orders").update({buyer_rating:b.rating,buyer_review:b.review||null}).eq("id",b.order_id).eq("buyer_cpf",cpf);const{data:od}=await sb.from("vault_marketplace_orders").select("seller_id").eq("id",b.order_id).single();if(od){const{data:ar}=await sb.from("vault_marketplace_orders").select("buyer_rating").eq("seller_id",od.seller_id).not("buyer_rating","is",null);if(ar&&ar.length>0){const avg=ar.reduce((s:number,r:any)=>s+r.buyer_rating,0)/ar.length;await sb.from("vault_seller_profiles").update({average_rating:Math.round(avg*10)/10,ratings_count:ar.length}).eq("id",od.seller_id);}}return j({success:true});}
 if(mt==="GET"&&a==="wallet-balance"){const{data:wb}=await sb.from("wallet_balances").select("*").eq("user_cpf",cpf).maybeSingle();const{data:txs}=await sb.from("wallet_transactions").select("*").eq("user_cpf",cpf).order("created_at",{ascending:false}).limit(50);return j({balance:wb?.balance||0,last_transaction_at:wb?.last_transaction_at||null,transactions:txs||[]});}
 if(mt==="GET"&&a==="wallet-transactions"){const{data}=await sb.from("wallet_transactions").select("*").eq("user_cpf",cpf).order("created_at",{ascending:false}).limit(50);return j({transactions:data||[]});}
+if(mt==="GET"&&a==="order-detail"){
+  const oid=url.searchParams.get("order_id");if(!oid)throw new Error("order_id obrigatório");
+  // Fetch order — buyer OR seller can view
+  const{data:od,error:oe}=await sb.from("vault_marketplace_orders").select(`*,listing:vault_marketplace_listings(title,brand,model,size,photos,condition,colorway,is_vault_certified)`).eq("id",oid).single();
+  if(oe||!od)return j({ok:false,error:"Pedido não encontrado"},404);
+  // RBAC: verify caller is buyer or seller
+  let isBuyer=od.buyer_cpf===cpf;let isSeller=false;
+  if(!isBuyer){const{data:mb2}=await sb.from("vault_members").select("id").eq("client_cpf",cpf).single();if(mb2){const{data:sp2}=await sb.from("vault_seller_profiles").select("id").eq("member_id",mb2.id).maybeSingle();if(sp2&&sp2.id===od.seller_id)isSeller=true;}}
+  if(!isBuyer&&!isSeller)return j({ok:false,error:"Acesso negado"},403);
+  // Timeline
+  const{data:timeline}=await sb.from("vault_marketplace_order_events").select("id,event_type,description,metadata,created_at").eq("order_id",oid).order("created_at",{ascending:true});
+  // Documents
+  const{data:docs}=await sb.from("client_documents").select("id,document_name,document_type,file_url,generated_at").eq("order_id",od.order_code);
+  // Allowed actions
+  const actions:string[]=[];const st=od.status;
+  if(isBuyer){if(st==="pending_payment")actions.push("pay");if(st==="delivered"&&!od.buyer_rating)actions.push("rate");if(st==="paid"&&od.cancellation_window_ends_at&&new Date(od.cancellation_window_ends_at)>new Date())actions.push("cancel");if(!od.dispute_status&&["paid","shipped","delivered"].includes(st))actions.push("open_dispute");}
+  if(isSeller){if(st==="paid")actions.push("ship");if(st==="shipped"&&od.shipping_mode==="bravenza")actions.push("track_hub");}
+  // Mask sensitive data
+  const{buyer_cpf:_bc,buyer_email:_be,buyer_phone:_bp,buyer_address:_ba,admin_notes:_an,...safeOrder}=od;
+  return j({ok:true,data:{order:safeOrder,timeline:timeline||[],documents:docs||[],allowed_actions:actions,role:isBuyer?"buyer":"seller"}});
+}
 return j({error:"Ação não encontrada"},404);
 }catch(e:any){console.error("mkv2-orders error:",e);return j({error:e.message},500);}
 });

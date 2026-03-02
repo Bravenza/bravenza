@@ -113,3 +113,12 @@ verify_jwt = false
 
 [functions.health-check]
 verify_jwt = false
+
+[functions.mkv2-favorites]
+verify_jwt = false
+
+[functions.mkv2-alerts]
+verify_jwt = false
+
+[functions.mk-watchlist-processor]
+verify_jwt = false
