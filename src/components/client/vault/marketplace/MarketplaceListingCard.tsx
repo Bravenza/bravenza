@@ -146,13 +146,13 @@ export function MarketplaceListingCard({
         </div>
 
         {/* Seller trust row */}
-        {listing.seller?.member && (
+        {listing.seller?.member && listing.seller.member.client_name && (
           <div className="flex items-center gap-2 pt-2 border-t border-border/20">
             <div className="h-5 w-5 rounded-full bg-muted/50 flex items-center justify-center text-[9px] font-bold text-muted-foreground uppercase">
-              {listing.seller.member.client_name[0]}
+              {listing.seller.member.client_name?.[0] || "?"}
             </div>
             <span className="text-[11px] font-medium text-muted-foreground">
-              {listing.seller.member.client_name.split(" ")[0]}
+              {(listing.seller.member.client_name || "").split(" ")[0]}
             </span>
             {(listing.seller as any).verified_badge && (
               <span className="inline-flex items-center gap-0.5 text-[9px] text-primary font-semibold">
