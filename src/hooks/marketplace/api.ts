@@ -35,6 +35,8 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
   "create-order": "mkv2-orders", "confirm-payment": "mkv2-orders", "my-orders": "mkv2-orders",
   "my-sales": "mkv2-orders", "rate-seller": "mkv2-orders",
   "wallet-balance": "mkv2-orders", "wallet-transactions": "mkv2-orders",
+  "seller-balance": "mkv2-wallet", "request-payout": "mkv2-wallet",
+  "pix-accounts": "mkv2-wallet", "save-pix": "mkv2-wallet", "delete-pix": "mkv2-wallet",
   "checkout": "mk-checkout",
 
   // mk-subscription: Seller subscription management

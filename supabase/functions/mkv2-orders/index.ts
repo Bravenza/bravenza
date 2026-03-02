@@ -65,7 +65,7 @@ if(mt==="PUT"&&a==="confirm-delivery"){
   const{data:od,error:oe}=await sb.from("vault_marketplace_orders").select("id,status,buyer_cpf").eq("id",oid).eq("buyer_cpf",cpf).single();
   if(oe||!od)return j({ok:false,error:"Pedido não encontrado"},404);
   if(od.status!=="delivered")return j({ok:false,error:"Pedido não está no status 'entregue'"},400);
-  await sb.from("vault_marketplace_orders").update({status:"completed",completed_at:new Date().toISOString()}).eq("id",oid);
+  await sb.from("vault_marketplace_orders").update({status:"completed",completed_at:new Date().toISOString(),confirmed_at:new Date().toISOString()}).eq("id",oid);
   await sb.from("vault_marketplace_order_events").insert({order_id:oid,event_type:"delivery_confirmed",description:"Comprador confirmou o recebimento do produto"});
   return j({ok:true,success:true});
 }
