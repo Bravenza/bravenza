@@ -7,9 +7,23 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FavoritesGridSkeleton } from "@/components/skeletons/ContentAwareSkeletons";
 import { CatalogProductCard } from "@/components/client/vault/marketplace/CatalogProductCard";
 import { useMarketplaceListings } from "@/hooks/marketplace/useMarketplaceListings";
+import { useConfig } from "@/hooks/useConfig";
 import type { MarketplaceListing } from "@/hooks/marketplace/types";
 
+/**
+ * When enable_favorites_lists is ON, this will render FavoritesV2 (lists, folders, etc.)
+ * For now, it always falls back to the current implementation.
+ */
 export default function MarketplaceFavoritesPage() {
+  const { isEnabled } = useConfig();
+
+  // Future: if (isEnabled("enable_favorites_lists")) return <FavoritesV2 />;
+
+  return <MarketplaceFavoritesPageCurrent />;
+}
+
+/** Current (v1) favorites page — preserved as-is */
+function MarketplaceFavoritesPageCurrent() {
   const { cpf } = useOutletContext<{ cpf: string | null }>();
   const { listings, isLoading, fetchListings, toggleFavorite } = useMarketplaceListings(cpf);
   const [search, setSearch] = useState("");
