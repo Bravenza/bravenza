@@ -208,7 +208,7 @@ function Section({ children, icon: Icon, title, delay = 0, collapsible = false, 
       <button
         onClick={() => collapsible && setOpen(!open)}
         className={cn(
-          "w-full flex items-center gap-2.5 px-5 py-3.5 text-left",
+          "w-full flex items-center gap-2.5 px-4 sm:px-5 py-3.5 text-left",
           collapsible && "cursor-pointer hover:bg-muted/30 transition-colors"
         )}
         aria-expanded={open}
@@ -233,7 +233,7 @@ function Section({ children, icon: Icon, title, delay = 0, collapsible = false, 
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            <div className="px-5 pb-5">{children}</div>
+            <div className="px-4 sm:px-5 pb-4 sm:pb-5">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -348,7 +348,7 @@ export default function MarketplaceOrderDetailPage() {
     : null;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-5 pb-32 md:pb-12 space-y-4">
+    <div className="max-w-2xl mx-auto px-4 py-5 pb-40 md:pb-12 space-y-4">
       {/* ── Back button ── */}
       <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}>
         <button
@@ -369,9 +369,9 @@ export default function MarketplaceOrderDetailPage() {
         className="bg-card rounded-2xl border border-border/60 overflow-hidden shadow-sm"
       >
         {/* Product row */}
-        <div className="p-5 flex gap-4">
+        <div className="p-4 sm:p-5 flex gap-3 sm:gap-4">
           {mainPhoto ? (
-            <div className="w-[88px] h-[88px] sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-muted/30 border border-border/30 shrink-0">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-muted/30 border border-border/30 shrink-0">
               <img
                 src={mainPhoto}
                 alt={listing?.title || "Produto"}
@@ -380,42 +380,42 @@ export default function MarketplaceOrderDetailPage() {
               />
             </div>
           ) : (
-            <div className="w-[88px] h-[88px] sm:w-24 sm:h-24 rounded-xl bg-muted/30 border border-border/30 shrink-0 flex items-center justify-center">
-              <PackageCheck className="h-8 w-8 text-muted-foreground/30" />
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-muted/30 border border-border/30 shrink-0 flex items-center justify-center">
+              <PackageCheck className="h-7 w-7 text-muted-foreground/30" />
             </div>
           )}
-          <div className="flex-1 min-w-0 flex flex-col justify-between">
+          <div className="flex-1 min-w-0 flex flex-col justify-between gap-1">
             <div>
-              <h1 className="text-base font-bold leading-snug line-clamp-2">
+              <h1 className="text-sm sm:text-base font-bold leading-snug line-clamp-2">
                 {listing?.title || `Pedido ${order.order_code}`}
               </h1>
-              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+              <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mt-1.5">
                 {listing?.size && (
-                  <Badge variant="secondary" className="text-[10px] h-5 px-2 font-medium">
+                  <Badge variant="secondary" className="text-[10px] h-5 px-1.5 sm:px-2 font-medium">
                     Tam. {listing.size}
                   </Badge>
                 )}
                 {listing?.condition && (
-                  <Badge variant="secondary" className="text-[10px] h-5 px-2 capitalize font-medium">
+                  <Badge variant="secondary" className="text-[10px] h-5 px-1.5 sm:px-2 capitalize font-medium">
                     {listing.condition}
                   </Badge>
                 )}
                 {listing?.is_vault_certified && (
-                  <Badge className="text-[10px] h-5 px-2 bg-primary/10 text-primary border-primary/20 font-semibold gap-0.5">
+                  <Badge className="text-[10px] h-5 px-1.5 sm:px-2 bg-primary/10 text-primary border-primary/20 font-semibold gap-0.5">
                     <ShieldCheck className="h-3 w-3" /> Certificado
                   </Badge>
                 )}
               </div>
             </div>
-            <p className="text-lg font-bold text-foreground mt-1">
+            <p className="text-base sm:text-lg font-bold text-foreground">
               R$ {fmt(total)}
             </p>
           </div>
         </div>
 
         {/* Status + meta bar */}
-        <div className="px-5 pb-4 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
+        <div className="px-4 sm:px-5 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="outline" className={cn("text-[11px] h-6 px-2.5 font-semibold border", statusInfo.color)}>
               {statusInfo.label}
             </Badge>
@@ -425,8 +425,8 @@ export default function MarketplaceOrderDetailPage() {
               </Badge>
             )}
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Calendar className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-muted-foreground">
+            <Calendar className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
             <span className="font-mono">{order.order_code}</span>
             <span className="text-border">·</span>
             <span>{fmtDate(order.created_at)}</span>
@@ -570,17 +570,18 @@ export default function MarketplaceOrderDetailPage() {
       )}
 
       {/* ── Sticky action bar ── */}
+      {/* ── Sticky action bar ── */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+56px)] md:bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border/40 px-4 py-3 md:static md:bg-transparent md:backdrop-blur-none md:border-0 md:px-0 md:py-0"
+        className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+49px)] left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border/40 px-3 sm:px-4 py-2.5 sm:py-3 md:static md:bg-transparent md:backdrop-blur-none md:border-0 md:px-0 md:py-0 md:mt-2"
       >
-        <div className="max-w-2xl mx-auto flex flex-wrap gap-2">
+        <div className="max-w-2xl mx-auto grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
           {allowed_actions.includes("pay") && (
             <Button
-              className="flex-1 min-w-[130px] gap-2 h-11 font-semibold shadow-sm"
-              onClick={() => navigate(`/pagamento/${order.order_code}`)}
+              className="col-span-2 gap-2 h-12 sm:h-11 sm:flex-1 sm:min-w-[140px] font-bold text-sm shadow-sm btn-gold"
+              onClick={() => navigate(`/marketplace/checkout?order=${order.order_code}`)}
             >
               <CreditCard className="h-4 w-4" /> Pagar agora
             </Button>
@@ -588,7 +589,7 @@ export default function MarketplaceOrderDetailPage() {
           {allowed_actions.includes("cancel") && (
             <Button
               variant="destructive"
-              className="flex-1 min-w-[130px] gap-2 h-11 font-semibold"
+              className="col-span-2 gap-2 h-11 sm:flex-1 sm:min-w-[140px] font-semibold text-sm"
               onClick={() => {
                 toast({ title: "Cancelamento", description: "Acesse 'Meus Pedidos' para cancelar dentro da janela de 30 minutos." });
                 navigate("/app/pedidos");
@@ -599,7 +600,7 @@ export default function MarketplaceOrderDetailPage() {
           )}
           {allowed_actions.includes("rate") && (
             <Button
-              className="flex-1 min-w-[130px] gap-2 h-11 font-semibold shadow-sm"
+              className="col-span-2 gap-2 h-12 sm:h-11 sm:flex-1 sm:min-w-[140px] font-bold text-sm shadow-sm"
               onClick={() => setConfirmOpen(true)}
             >
               <CheckCircle2 className="h-4 w-4" /> Confirmar recebimento
@@ -608,25 +609,25 @@ export default function MarketplaceOrderDetailPage() {
           {allowed_actions.includes("open_dispute") && (
             <Button
               variant="outline"
-              className="flex-1 min-w-[130px] gap-2 h-11 text-destructive border-destructive/30 hover:bg-destructive/5 font-semibold"
+              className="gap-2 h-11 sm:flex-1 sm:min-w-[140px] text-destructive border-destructive/30 hover:bg-destructive/5 font-semibold text-sm"
             >
               <AlertTriangle className="h-4 w-4" /> Reportar problema
             </Button>
           )}
           {allowed_actions.includes("ship") && (
-            <Button className="flex-1 min-w-[130px] gap-2 h-11 font-semibold shadow-sm">
+            <Button className="col-span-2 gap-2 h-12 sm:h-11 sm:flex-1 sm:min-w-[140px] font-bold text-sm shadow-sm">
               <Truck className="h-4 w-4" />
               {order.shipping_mode === "bravenza" ? "Enviar ao Hub" : "Informar envio"}
             </Button>
           )}
           {allowed_actions.includes("track_hub") && (
-            <Button variant="outline" className="flex-1 min-w-[130px] gap-2 h-11 font-medium">
+            <Button variant="outline" className="gap-2 h-11 sm:flex-1 sm:min-w-[140px] font-medium text-sm">
               <MapPin className="h-4 w-4" /> Rastrear Hub
             </Button>
           )}
           <Button
             variant="outline"
-            className="flex-1 min-w-[130px] gap-2 h-11 font-medium"
+            className="gap-2 h-11 sm:flex-1 sm:min-w-[140px] font-medium text-sm"
             onClick={() => window.open("https://wa.me/5551999999999", "_blank")}
           >
             <MessageCircle className="h-4 w-4" /> Suporte
