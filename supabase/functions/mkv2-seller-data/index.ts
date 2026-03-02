@@ -48,6 +48,43 @@ if(mt==="GET"&&a==="price-drop-suggestions"){
   const suggestions=stale.map((l:any)=>{const dl=Math.floor((Date.now()-new Date(l.published_at||l.created_at).getTime())/86400000);let dp=5,reason="Sem vendas há 7+ dias";if(dl>30){dp=15;reason="Parado há 30+ dias";}else if(dl>14){dp=10;reason="Sem interesse há 2+ semanas";}if(l.views_count<5){dp+=3;reason+=". Poucas visualizações";}return{listing_id:l.id,title:l.title,current_price:l.price,suggested_price:Math.round(l.price*(1-dp/100)),days_listed:dl,views:l.views_count||0,reason};});
   return j({suggestions});
 }
+if(mt==="GET"&&a==="seller-dashboard"){
+  const mb=await gm(sb,cpf);if(!mb)return j({ok:false,error:"Membro não encontrado"},404);
+  const sl=await gs(sb,mb.id);if(!sl)return j({ok:false,error:"Vendedor não encontrado"},404);
+  const now=new Date(),d7=new Date(now.getTime()-7*86400000).toISOString(),d30=new Date(now.getTime()-30*86400000).toISOString(),d90=new Date(now.getTime()-90*86400000).toISOString();
+
+  // Today's tasks (orders needing action)
+  const{data:pendingShip}=await sb.from("vault_marketplace_orders").select("id,order_code,sale_price,created_at").eq("seller_id",sl.id).eq("status","paid").order("created_at");
+  const{data:pendingHub}=await sb.from("vault_marketplace_orders").select("id,order_code,sale_price").eq("seller_id",sl.id).eq("status","hub_received");
+  const{data:disputes}=await sb.from("vault_marketplace_orders").select("id,order_code").eq("seller_id",sl.id).eq("dispute_status","open");
+
+  // Metrics (7d, 30d, 90d)
+  const{data:allOrders}=await sb.from("vault_marketplace_orders").select("id,status,sale_price,fee_amount,seller_payout,created_at").eq("seller_id",sl.id);
+  const cs=["delivered","payout_released","payout_pending","completed"];
+  const calc=(since:string)=>{const os=(allOrders||[]).filter((o:any)=>cs.includes(o.status)&&o.created_at>=since);return{sales:os.length,revenue:Math.round(os.reduce((s:number,o:any)=>s+(o.seller_payout||0),0)*100)/100,fees:Math.round(os.reduce((s:number,o:any)=>s+(o.fee_amount||0),0)*100)/100};};
+
+  // Listings summary
+  const{data:ls}=await sb.from("vault_marketplace_listings").select("id,status,price").eq("seller_id",sl.id);
+  const active=(ls||[]).filter((l:any)=>l.status==="active");
+  const reserved=(ls||[]).filter((l:any)=>l.status==="reserved");
+  const sold=(ls||[]).filter((l:any)=>l.status==="sold");
+
+  // Wallet
+  const{data:cpData}=await sb.from("client_profiles").select("cpf").eq("user_id",(await sb.auth.getUser(req.headers.get("authorization")!.replace("Bearer ",""))).data?.user?.id).single();
+  let walletBalance=0;
+  if(cpData?.cpf){const{data:wb}=await sb.from("wallet_balances").select("balance").eq("user_cpf",cpData.cpf).maybeSingle();walletBalance=wb?.balance||0;}
+
+  // Reputation
+  const rep={tier:sl.tier||"bronze",rating:sl.average_rating||0,ratings_count:sl.ratings_count||0,fee_percent:sl.current_fee_percent||14,on_time_rate:sl.on_time_shipping_rate||0};
+
+  return j({ok:true,data:{
+    today_tasks:{pending_shipments:pendingShip||[],pending_hub_actions:pendingHub||[],open_disputes:disputes||[]},
+    metrics:{d7:calc(d7),d30:calc(d30),d90:calc(d90)},
+    listings_summary:{active:active.length,reserved:reserved.length,sold:sold.length,total_value:Math.round(active.reduce((s:number,l:any)=>s+(l.price||0),0)*100)/100},
+    wallet_summary:{balance:walletBalance},
+    reputation_summary:rep
+  }});
+}
 return j({error:"Ação não encontrada"},404);
 }catch(e:any){console.error("mkv2-seller-data error:",e);return j({error:e.message},500);}
 });

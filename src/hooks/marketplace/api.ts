@@ -71,6 +71,21 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
   "update-collection": "mkv2-social", "delete-collection": "mkv2-social",
   "toggle-follow": "mkv2-social", "is-following": "mkv2-social", "my-follows": "mkv2-social",
   "loyalty-balance": "mkv2-social", "check-badges": "mkv2-social",
+
+  // mkv2-favorites: Favorite Lists v2
+  "favorite-lists:list": "mkv2-favorites", "favorite-lists:create": "mkv2-favorites",
+  "favorite-lists:rename": "mkv2-favorites", "favorite-lists:delete": "mkv2-favorites",
+  "favorite-lists:add-item": "mkv2-favorites", "favorite-lists:remove-item": "mkv2-favorites",
+  "favorite-lists:move-items": "mkv2-favorites",
+
+  // mkv2-alerts: Alerts v2
+  "alerts:list": "mkv2-alerts", "alerts:upsert": "mkv2-alerts", "alerts:delete": "mkv2-alerts",
+
+  // mkv2-orders (new): Order Detail v2
+  "order-detail": "mkv2-orders",
+
+  // mkv2-seller-data (new): Seller Dashboard aggregator
+  "seller-dashboard": "mkv2-seller-data",
 };
 
 export async function marketplaceRequest(
