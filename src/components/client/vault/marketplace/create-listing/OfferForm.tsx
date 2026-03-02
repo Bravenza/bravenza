@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowLeft, ShieldCheck, Upload, X, Loader2, Package, Plus } from "lucide-react";
+import { useState, useMemo } from "react";
+import { ArrowLeft, ShieldCheck, Upload, X, Loader2, Package, Plus, CreditCard } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,6 +42,7 @@ export function OfferForm({ product, onBack, onSubmit, vaultItems = [] }: OfferF
     has_receipt: false,
     shipping_mode: "direct",
     vault_item_id: "",
+    interest_free_installments: 0,
   });
 
   const addSize = () => {
@@ -90,6 +91,23 @@ export function OfferForm({ product, onBack, onSubmit, vaultItems = [] }: OfferF
   const priceNum = parseFloat(form.price || "0");
   const isBravenzaRequired = priceNum >= 2000 || product.is_high_risk;
 
+  // Surcharge tiers for interest-free installments
+  const INSTALLMENT_TIERS = [
+    { value: 0, label: "Sem parcelamento sem juros", surcharge: 0 },
+    { value: 3, label: "Até 3x sem juros", surcharge: 5 },
+    { value: 6, label: "Até 6x sem juros", surcharge: 10 },
+    { value: 10, label: "Até 10x sem juros", surcharge: 14 },
+    { value: 12, label: "Até 12x sem juros", surcharge: 18 },
+  ];
+
+  const selectedTier = INSTALLMENT_TIERS.find(t => t.value === form.interest_free_installments) || INSTALLMENT_TIERS[0];
+  const effectiveFeeDisplay = useMemo(() => {
+    if (!priceNum || !selectedTier.surcharge) return null;
+    // Base fee is 14% for Free, but we show the surcharge add-on
+    const surchargeAmount = Math.round(priceNum * selectedTier.surcharge / 100 * 100) / 100;
+    return surchargeAmount;
+  }, [priceNum, selectedTier.surcharge]);
+
   // Completeness score (0-100%)
   const completenessScore = (() => {
     let score = 0;
@@ -129,6 +147,7 @@ export function OfferForm({ product, onBack, onSubmit, vaultItems = [] }: OfferF
           has_receipt: form.has_receipt,
           shipping_mode: isBravenzaRequired ? "bravenza" : form.shipping_mode,
           vault_item_id: form.vault_item_id || undefined,
+          interest_free_installments: form.interest_free_installments,
         });
         if (result) lastResult = result;
       }
@@ -295,6 +314,36 @@ export function OfferForm({ product, onBack, onSubmit, vaultItems = [] }: OfferF
               <SelectItem value="bravenza">Via Bravenza (autenticação)</SelectItem>
             </SelectContent>
           </Select>
+        )}
+      </div>
+
+      {/* Interest-free installments */}
+      <div>
+        <Label className="flex items-center gap-1.5">
+          <CreditCard className="h-3.5 w-3.5 text-primary" />
+          Parcelamento sem juros
+        </Label>
+        <Select
+          value={String(form.interest_free_installments)}
+          onValueChange={(v) => setForm((p) => ({ ...p, interest_free_installments: parseInt(v) }))}
+        >
+          <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {INSTALLMENT_TIERS.map((tier) => (
+              <SelectItem key={tier.value} value={String(tier.value)}>
+                {tier.label}{tier.surcharge > 0 ? ` (+${tier.surcharge}% na taxa)` : ""}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {selectedTier.surcharge > 0 && priceNum > 0 && (
+          <div className="mt-1.5 p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs text-amber-700 dark:text-amber-400">
+            <p className="font-medium">💡 Acréscimo de {selectedTier.surcharge}% sobre a taxa de venda</p>
+            <p className="mt-0.5 text-muted-foreground">
+              Custo adicional: R$ {effectiveFeeDisplay?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} — 
+              o comprador parcela sem juros e você absorve o custo.
+            </p>
+          </div>
         )}
       </div>
 
