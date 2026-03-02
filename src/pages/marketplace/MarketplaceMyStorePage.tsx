@@ -208,13 +208,18 @@ export default function MarketplaceMyStorePage() {
       {/* ═══ Premium Header ═══ */}
       <motion.div variants={fadeUp}>
         <div className="relative overflow-hidden rounded-2xl border border-border/30 bg-card shadow-sm">
-          {/* Banner background */}
-          <div className="h-28 md:h-36 bg-gradient-to-br from-primary/12 via-primary/6 to-background relative">
-            {(storeData as any)?.storefront_banner && (
+          {/* Banner background with BRAVENZA watermark */}
+          <div className="h-28 md:h-36 bg-gradient-to-br from-primary/20 via-primary/10 to-accent/10 relative overflow-hidden">
+            {(storeData as any)?.storefront_banner ? (
               <img src={(storeData as any).storefront_banner} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center select-none pointer-events-none">
+                <span className="text-[5rem] md:text-[7rem] font-black tracking-[0.2em] text-primary/[0.06] uppercase whitespace-nowrap">
+                  BRAVENZA
+                </span>
+              </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
-            <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
+            <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
           </div>
 
           <div className="px-5 pb-5 -mt-10 relative z-10">
