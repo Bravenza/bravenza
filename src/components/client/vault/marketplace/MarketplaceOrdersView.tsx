@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Package, Truck, CheckCircle2, Clock, AlertTriangle, Star, XCircle, MessageCircle, ShieldCheck, CreditCard, QrCode, RefreshCw, PackageCheck, Ban, Loader2 } from "lucide-react";
+import { Package, Truck, CheckCircle2, Clock, AlertTriangle, Star, XCircle, MessageCircle, ShieldCheck, CreditCard, QrCode, RefreshCw, PackageCheck, Ban, Loader2, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import { SharePurchaseButton } from "@/components/marketplace/SharePurchaseButto
 import { PaymentRetryDialog } from "./PaymentRetryDialog";
 import { DeliveryConfirmationFlow } from "./DeliveryConfirmationFlow";
 import { useToast } from "@/hooks/use-toast";
+import { useConfig } from "@/hooks/useConfig";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   pending_payment: { label: "Aguardando pagamento", color: "bg-warning/20 text-warning", icon: Clock },
@@ -76,6 +78,9 @@ export function MarketplaceOrdersView({
   onRateSeller,
 }: MarketplaceOrdersViewProps) {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { isEnabled } = useConfig();
+  const orderDetailV2 = isEnabled("enable_order_detail_v2");
   const [activeTab, setActiveTab] = useState("compras");
   const [rateDialog, setRateDialog] = useState<{ orderId: string } | null>(null);
   const [rating, setRating] = useState(5);
@@ -335,6 +340,18 @@ export function MarketplaceOrdersView({
                     <Badge variant="outline" className="text-xs text-destructive border-destructive/30">
                       Disputa: {order.dispute_status === "open" ? "Aberta" : "Resolvida"}
                     </Badge>
+                  )}
+
+                  {/* Ver detalhes v2 */}
+                  {orderDetailV2 && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs gap-1 ml-auto text-muted-foreground hover:text-foreground"
+                      onClick={() => navigate(`/app/pedidos/${order.id}`)}
+                    >
+                      Ver detalhes <ChevronRight className="h-3 w-3" />
+                    </Button>
                   )}
                 </div>
               </div>

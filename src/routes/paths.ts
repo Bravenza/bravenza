@@ -35,6 +35,7 @@ export const PATHS = {
   app: {
     root: "/app",
     pedidos: "/app/pedidos",
+    pedidoDetail: (orderId: string) => `/app/pedidos/${orderId}` as const,
     closet: "/app/closet",
     loja: "/app/loja",
     favoritos: "/app/favoritos",

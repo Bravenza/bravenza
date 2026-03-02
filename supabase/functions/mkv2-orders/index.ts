@@ -60,6 +60,15 @@ if(mt==="GET"&&a==="order-detail"){
   const{buyer_cpf:_bc,buyer_email:_be,buyer_phone:_bp,buyer_address:_ba,admin_notes:_an,...safeOrder}=od;
   return j({ok:true,data:{order:safeOrder,timeline:timeline||[],documents:docs||[],allowed_actions:actions,role:isBuyer?"buyer":"seller"}});
 }
+if(mt==="PUT"&&a==="confirm-delivery"){
+  const b=await req.json();const oid=b.order_id;if(!oid)throw new Error("order_id obrigatório");
+  const{data:od,error:oe}=await sb.from("vault_marketplace_orders").select("id,status,buyer_cpf").eq("id",oid).eq("buyer_cpf",cpf).single();
+  if(oe||!od)return j({ok:false,error:"Pedido não encontrado"},404);
+  if(od.status!=="delivered")return j({ok:false,error:"Pedido não está no status 'entregue'"},400);
+  await sb.from("vault_marketplace_orders").update({status:"completed",completed_at:new Date().toISOString()}).eq("id",oid);
+  await sb.from("vault_marketplace_order_events").insert({order_id:oid,event_type:"delivery_confirmed",description:"Comprador confirmou o recebimento do produto"});
+  return j({ok:true,success:true});
+}
 return j({error:"Ação não encontrada"},404);
 }catch(e:any){console.error("mkv2-orders error:",e);return j({error:e.message},500);}
 });

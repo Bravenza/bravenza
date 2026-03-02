@@ -8,6 +8,7 @@ const AppLayout = lazy(() => import("@/pages/app/AppLayout"));
 // Reuse existing marketplace pages
 const MarketplaceHomePage = lazy(() => import("@/pages/marketplace/MarketplaceHomePage"));
 const MarketplaceOrdersPage2 = lazy(() => import("@/pages/marketplace/MarketplaceOrdersPage2"));
+const MarketplaceOrderDetailPage = lazy(() => import("@/pages/marketplace/MarketplaceOrderDetailPage"));
 const MarketplaceProfilePage = lazy(() => import("@/pages/marketplace/MarketplaceProfilePage"));
 const MarketplaceFavoritesPage = lazy(() => import("@/pages/marketplace/MarketplaceFavoritesPage"));
 const MarketplaceFeedPage = lazy(() => import("@/pages/marketplace/MarketplaceFeedPage"));
@@ -33,6 +34,7 @@ export const appRoutes = (
     }>
       <Route index element={<RouteWrapper section="Início" skeleton="dashboard"><MarketplaceHomePage /></RouteWrapper>} />
       <Route path="pedidos" element={<RouteWrapper section="Pedidos" skeleton="list"><MarketplaceOrdersPage2 /></RouteWrapper>} />
+      <Route path="pedidos/:orderId" element={<RouteWrapper section="Detalhe do Pedido" skeleton="detail"><MarketplaceOrderDetailPage /></RouteWrapper>} />
       <Route path="closet" element={<RouteWrapper section="Closet" skeleton="list"><MarketplaceProfilePage /></RouteWrapper>} />
       <Route path="loja" element={<RouteWrapper section="Loja" skeleton="list"><MarketplaceMyStorePage /></RouteWrapper>} />
       <Route path="favoritos" element={<RouteWrapper section="Favoritos" skeleton="list"><MarketplaceFavoritesPage /></RouteWrapper>} />
