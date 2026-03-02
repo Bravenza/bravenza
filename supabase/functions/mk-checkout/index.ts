@@ -33,8 +33,26 @@ const MP_RATES: Record<number, number> = {
   7: 0.1672, 8: 0.1673, 9: 0.1969, 10: 0.2065, 11: 0.2066, 12: 0.2211,
 };
 
+/** Installment surcharge tiers (seller absorbs this to offer interest-free) */
+const INSTALLMENT_SURCHARGES: Record<number, number> = {
+  3: 5, 6: 10, 10: 14, 12: 18,
+};
+
+/** Get surcharge percent for a given interest_free_installments tier */
+function getSurchargePercent(interestFreeMax: number): number {
+  if (interestFreeMax <= 0) return 0;
+  // Find the matching tier
+  const tiers = [3, 6, 10, 12];
+  for (const t of tiers) {
+    if (interestFreeMax <= t) return INSTALLMENT_SURCHARGES[t];
+  }
+  return INSTALLMENT_SURCHARGES[12];
+}
+
 /** Calculate card total with interest: amount / (1 - rate) */
-function calcCardTotal(baseAmount: number, installments: number): number {
+function calcCardTotal(baseAmount: number, installments: number, interestFreeMax: number = 0): number {
+  // If installments are within the seller's interest-free tier, buyer pays no interest
+  if (interestFreeMax > 0 && installments <= interestFreeMax) return baseAmount;
   const rate = MP_RATES[installments] || 0;
   if (rate === 0) return baseAmount;
   return Math.round((baseAmount / (1 - rate)) * 100) / 100;
@@ -68,10 +86,10 @@ Deno.serve(async (req) => {
       return json({ error: "order_ids e payment_method são obrigatórios" }, 400);
     }
 
-    // Fetch all orders
+    // Fetch all orders with their listing's offer info for interest_free_installments
     const { data: orders, error: ordersErr } = await sb
       .from("vault_marketplace_orders")
-      .select("*, listing:vault_marketplace_listings(title)")
+      .select("*, listing:vault_marketplace_listings(title, interest_free_installments)")
       .in("id", orderIds);
 
     if (ordersErr || !orders || orders.length === 0) {
@@ -85,6 +103,13 @@ Deno.serve(async (req) => {
         error: `Pedido(s) ${invalidOrders.map(o => o.order_code).join(", ")} já foi/foram pago(s) ou cancelado(s)`,
       }, 400);
     }
+
+    // Determine max interest-free installments across all orders
+    const maxInterestFree = orders.reduce((m, o) => {
+      const ifMax = o.listing?.interest_free_installments || 0;
+      return Math.min(m === -1 ? ifMax : m, ifMax); // Use MIN: all orders must support it
+    }, -1);
+    const effectiveInterestFree = maxInterestFree === -1 ? 0 : maxInterestFree;
 
     // Calculate consolidated total
     const totalAmount = orders.reduce((sum, o) => {
@@ -167,7 +192,8 @@ Deno.serve(async (req) => {
       if (!card_token) return json({ error: "Token do cartão obrigatório" }, 400);
 
       const validInstallments = Math.min(Math.max(1, installments || 1), 12);
-      const cardTotalAmount = calcCardTotal(totalAmount, validInstallments);
+      const cardTotalAmount = calcCardTotal(totalAmount, validInstallments, effectiveInterestFree);
+      const isInterestFree = effectiveInterestFree > 0 && validInstallments <= effectiveInterestFree;
 
       const cardPayload = {
         transaction_amount: cardTotalAmount,
@@ -236,14 +262,27 @@ Deno.serve(async (req) => {
         const cancelWindow = new Date();
         cancelWindow.setMinutes(cancelWindow.getMinutes() + 30);
         for (const order of orders) {
-          await sb.from("vault_marketplace_orders").update({
+          const updateData: Record<string, any> = {
             status: "paid",
             paid_at: new Date().toISOString(),
             protection_ends_at: protEnd,
             cancellation_window_ends_at: cancelWindow.toISOString(),
-          }).eq("id", order.id);
+          };
+
+          // If interest-free, adjust seller fee (surcharge absorbed by seller)
+          if (isInterestFree) {
+            const surchargePercent = getSurchargePercent(effectiveInterestFree);
+            const newFeePercent = (order.fee_percent || 14) + surchargePercent;
+            const newFeeAmount = Math.round(order.sale_price * newFeePercent / 100 * 100) / 100;
+            const newSellerPayout = Math.round((order.sale_price - newFeeAmount) * 100) / 100;
+            updateData.fee_percent = newFeePercent;
+            updateData.fee_amount = newFeeAmount;
+            updateData.seller_payout = newSellerPayout;
+          }
+
+          await sb.from("vault_marketplace_orders").update(updateData).eq("id", order.id);
         }
-        console.log("[mk-checkout] Card approved, all orders paid:", orderCodes);
+        console.log("[mk-checkout] Card approved, all orders paid:", orderCodes, isInterestFree ? "(interest-free)" : "");
       }
 
       return json({
@@ -252,6 +291,8 @@ Deno.serve(async (req) => {
         payment_id: paymentResult.id,
         installments: validInstallments,
         total_amount: cardTotalAmount,
+        interest_free: isInterestFree,
+        interest_free_max: effectiveInterestFree,
         order_count: orders.length,
         order_codes: orders.map(o => o.order_code),
       });

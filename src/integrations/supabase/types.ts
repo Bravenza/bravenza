@@ -948,6 +948,30 @@ export type Database = {
           },
         ]
       }
+      marketplace_installment_surcharges: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          max_installments: number
+          surcharge_percent: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          max_installments: number
+          surcharge_percent: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          max_installments?: number
+          surcharge_percent?: number
+        }
+        Relationships: []
+      }
       marketplace_loyalty_points: {
         Row: {
           action: string
@@ -1030,6 +1054,7 @@ export type Database = {
           description: string | null
           has_receipt: boolean
           id: string
+          interest_free_installments: number | null
           listing_id: string | null
           original_purchase_price: number | null
           photos: string[] | null
@@ -1058,6 +1083,7 @@ export type Database = {
           description?: string | null
           has_receipt?: boolean
           id?: string
+          interest_free_installments?: number | null
           listing_id?: string | null
           original_purchase_price?: number | null
           photos?: string[] | null
@@ -1086,6 +1112,7 @@ export type Database = {
           description?: string | null
           has_receipt?: boolean
           id?: string
+          interest_free_installments?: number | null
           listing_id?: string | null
           original_purchase_price?: number | null
           photos?: string[] | null
@@ -3502,6 +3529,7 @@ export type Database = {
           description: string | null
           favorites_count: number
           id: string
+          interest_free_installments: number | null
           is_vault_certified: boolean
           model: string | null
           original_purchase_price: number | null
@@ -3529,6 +3557,7 @@ export type Database = {
           description?: string | null
           favorites_count?: number
           id?: string
+          interest_free_installments?: number | null
           is_vault_certified?: boolean
           model?: string | null
           original_purchase_price?: number | null
@@ -3556,6 +3585,7 @@ export type Database = {
           description?: string | null
           favorites_count?: number
           id?: string
+          interest_free_installments?: number | null
           is_vault_certified?: boolean
           model?: string | null
           original_purchase_price?: number | null

@@ -88,6 +88,11 @@ function CatalogProductCardComponent({ product, hidePrice }: CatalogProductCardP
                     R$ {product.lowest_price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
+                {(product as any).interest_free_installments > 0 && (
+                  <p className="text-[10px] font-semibold text-primary">
+                    até {(product as any).interest_free_installments}x sem juros
+                  </p>
+                )}
                 <PriceVariationBadge
                   currentPrice={product.lowest_price}
                   retailPrice={product.retail_price}
