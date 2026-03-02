@@ -40,6 +40,8 @@ interface UnifiedCardFormProps {
   email?: string;
   /** Interest rate table keyed by installment count (e.g. MERCADO_PAGO_RATES) */
   interestRates?: Record<number, number>;
+  /** Max installments the seller offers interest-free (0 = none) */
+  interestFreeMax?: number;
   /** Called whenever form data or validity changes */
   onDataChange?: (data: UnifiedCardFormData, isValid: boolean) => void;
   /** If provided, form will submit directly (Bravenza mode) */
@@ -86,6 +88,7 @@ export function UnifiedCardForm({
   amount,
   email: initialEmail,
   interestRates,
+  interestFreeMax = 0,
   onDataChange,
   onSubmit,
   submitLabel,
@@ -188,21 +191,21 @@ export function UnifiedCardForm({
 
   // Build installment options using the same formula as calculateCardTotal:
   // total = amount / (1 - rate), which ensures correct interest calculation
+  // If interestFreeMax > 0, installments up to that count are interest-free for the buyer
   const installmentOptions: InstallmentOption[] = Array.from({ length: 12 }, (_, i) => {
     const n = i + 1;
     const rate = interestRates?.[n] ?? 0;
-    const total = rate > 0 ? amount / (1 - rate) : amount;
+    const isInterestFree = n === 1 || (interestFreeMax > 0 && n <= interestFreeMax);
+    const total = isInterestFree ? amount : (rate > 0 ? amount / (1 - rate) : amount);
     const perInstallment = total / n;
     return {
       value: n,
-      label: n === 1
-        ? `1x de ${fmt(total)} (sem juros)`
-        : rate > 0
-          ? `${n}x de ${fmt(perInstallment)} (${fmt(total)})`
-          : `${n}x de ${fmt(perInstallment)}`,
+      label: isInterestFree
+        ? `${n}x de ${fmt(perInstallment)} (sem juros)`
+        : `${n}x de ${fmt(perInstallment)} (${fmt(total)})`,
       total,
-      isInterestFree: rate === 0,
-      interestRate: rate,
+      isInterestFree,
+      interestRate: isInterestFree ? 0 : rate,
     };
   });
 

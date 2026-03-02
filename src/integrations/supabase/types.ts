@@ -4903,6 +4903,7 @@ export type Database = {
           id: string | null
           offer_condition: string | null
           offer_id: string | null
+          offer_interest_free_installments: number | null
           offer_photos: string[] | null
           offer_price: number | null
           offer_seller_id: string | null
