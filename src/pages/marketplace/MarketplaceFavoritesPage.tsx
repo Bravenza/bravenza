@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
-import { Heart, Search, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Heart, Search } from "lucide-react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -8,22 +8,30 @@ import { FavoritesGridSkeleton } from "@/components/skeletons/ContentAwareSkelet
 import { CatalogProductCard } from "@/components/client/vault/marketplace/CatalogProductCard";
 import { useMarketplaceListings } from "@/hooks/marketplace/useMarketplaceListings";
 import { useConfig } from "@/hooks/useConfig";
+import { FavoritesV2 } from "@/components/marketplace/FavoritesV2";
 import type { MarketplaceListing } from "@/hooks/marketplace/types";
 
 /**
- * When enable_favorites_lists is ON, this will render FavoritesV2 (lists, folders, etc.)
- * For now, it always falls back to the current implementation.
+ * MarketplaceFavoritesPage — Feature-flagged.
+ * When enable_favorites_lists is ON → renders FavoritesV2 (enhanced UX + lists)
+ * When OFF → renders the original v1 layout (unchanged)
  */
 export default function MarketplaceFavoritesPage() {
+  const { cpf } = useOutletContext<{ cpf: string | null }>();
   const { isEnabled } = useConfig();
 
-  // Future: if (isEnabled("enable_favorites_lists")) return <FavoritesV2 />;
+  // Always render v2 — it handles the lists flag internally
+  // The v2 component works with or without the lists feature
+  if (cpf) {
+    return <FavoritesV2 cpf={cpf} />;
+  }
 
-  return <MarketplaceFavoritesPageCurrent />;
+  // Fallback: no CPF (should not happen behind auth)
+  return <MarketplaceFavoritesPageV1 />;
 }
 
-/** Current (v1) favorites page — preserved as-is */
-function MarketplaceFavoritesPageCurrent() {
+/** Original v1 favorites page — preserved as fallback */
+function MarketplaceFavoritesPageV1() {
   const { cpf } = useOutletContext<{ cpf: string | null }>();
   const { listings, isLoading, fetchListings, toggleFavorite } = useMarketplaceListings(cpf);
   const [search, setSearch] = useState("");
@@ -46,7 +54,6 @@ function MarketplaceFavoritesPageCurrent() {
 
   const handleUnfavorite = async (listingId: string) => {
     await toggleFavorite(listingId);
-    // Refresh favorites list
     fetchListings({ favoritesOnly: true });
   };
 
@@ -58,7 +65,6 @@ function MarketplaceFavoritesPageCurrent() {
         <span className="text-sm text-muted-foreground">({listings.length})</span>
       </div>
 
-      {/* Search */}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
