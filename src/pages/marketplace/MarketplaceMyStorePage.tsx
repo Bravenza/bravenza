@@ -169,6 +169,7 @@ export default function MarketplaceMyStorePage() {
   const sellerSubItems = [
     { id: "anuncios", label: "Anúncios", icon: Megaphone },
     ...(isSellerApproved ? [
+      { id: "saldo", label: "Saldo", icon: DollarSign },
       { id: "personalizar", label: "Personalizar", icon: Palette },
       ...(hasPaidPlan ? [{ id: "boosts", label: "Boosts", icon: Rocket }] : []),
       ...(hasStorefront ? [{ id: "colecoes", label: "Coleções", icon: Layout }] : []),
@@ -333,7 +334,10 @@ export default function MarketplaceMyStorePage() {
           <PillTabs
             items={sellerSubItems}
             value={sellerSubTab}
-            onValueChange={setSellerSubTab}
+            onValueChange={(v) => {
+              if (v === "saldo") { navigate("/app/loja/saldo"); return; }
+              setSellerSubTab(v);
+            }}
           />
 
           {/* ── Anúncios ── */}

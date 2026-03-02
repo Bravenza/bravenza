@@ -13,6 +13,7 @@ const MarketplaceProfilePage = lazy(() => import("@/pages/marketplace/Marketplac
 const MarketplaceFavoritesPage = lazy(() => import("@/pages/marketplace/MarketplaceFavoritesPage"));
 const MarketplaceFeedPage = lazy(() => import("@/pages/marketplace/MarketplaceFeedPage"));
 const MarketplaceMyStorePage = lazy(() => import("@/pages/marketplace/MarketplaceMyStorePage"));
+const SellerWalletPage = lazy(() => import("@/pages/marketplace/SellerWalletPage"));
 const MarketplaceDropsPage = lazy(() => import("@/pages/marketplace/MarketplaceDropsPage"));
 
 // Wrapper pages for vault sections
@@ -37,6 +38,7 @@ export const appRoutes = (
       <Route path="pedidos/:orderId" element={<RouteWrapper section="Detalhe do Pedido" skeleton="detail"><MarketplaceOrderDetailPage /></RouteWrapper>} />
       <Route path="closet" element={<RouteWrapper section="Closet" skeleton="list"><MarketplaceProfilePage /></RouteWrapper>} />
       <Route path="loja" element={<RouteWrapper section="Loja" skeleton="list"><MarketplaceMyStorePage /></RouteWrapper>} />
+      <Route path="loja/saldo" element={<RouteWrapper section="Saldo" skeleton="detail"><SellerWalletPage /></RouteWrapper>} />
       <Route path="favoritos" element={<RouteWrapper section="Favoritos" skeleton="list"><MarketplaceFavoritesPage /></RouteWrapper>} />
       <Route path="feed" element={<RouteWrapper section="Feed" skeleton="feed"><MarketplaceFeedPage /></RouteWrapper>} />
       <Route path="perfil" element={<RouteWrapper section="Perfil" skeleton="detail"><MarketplaceProfilePage /></RouteWrapper>} />

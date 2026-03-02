@@ -1688,6 +1688,125 @@ export type Database = {
           },
         ]
       }
+      marketplace_seller_payouts: {
+        Row: {
+          admin_notes: string | null
+          amount: number
+          bank_name: string | null
+          beneficiary_name: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          pix_account_id: string | null
+          pix_key: string | null
+          pix_key_type: string | null
+          processed_at: string | null
+          proof_url: string | null
+          rejected_at: string | null
+          rejection_reason: string | null
+          seller_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount: number
+          bank_name?: string | null
+          beneficiary_name?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          pix_account_id?: string | null
+          pix_key?: string | null
+          pix_key_type?: string | null
+          processed_at?: string | null
+          proof_url?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          seller_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          amount?: number
+          bank_name?: string | null
+          beneficiary_name?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          pix_account_id?: string | null
+          pix_key?: string | null
+          pix_key_type?: string | null
+          processed_at?: string | null
+          proof_url?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          seller_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_seller_payouts_pix_account_id_fkey"
+            columns: ["pix_account_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_seller_pix_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_seller_payouts_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "vault_seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_seller_pix_accounts: {
+        Row: {
+          bank_name: string
+          beneficiary_name: string
+          created_at: string
+          id: string
+          is_default: boolean | null
+          pix_key: string
+          pix_key_type: string
+          seller_id: string
+          updated_at: string
+        }
+        Insert: {
+          bank_name: string
+          beneficiary_name: string
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          pix_key: string
+          pix_key_type: string
+          seller_id: string
+          updated_at?: string
+        }
+        Update: {
+          bank_name?: string
+          beneficiary_name?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          pix_key?: string
+          pix_key_type?: string
+          seller_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_seller_pix_accounts_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "vault_seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_subscriptions: {
         Row: {
           cancel_at_period_end: boolean
@@ -3900,6 +4019,7 @@ export type Database = {
           cancellation_reason: string | null
           cancellation_window_ends_at: string | null
           cancelled_at: string | null
+          confirmed_at: string | null
           contest_window_ends_at: string | null
           created_at: string
           delivered_at: string | null
@@ -3959,6 +4079,7 @@ export type Database = {
           cancellation_reason?: string | null
           cancellation_window_ends_at?: string | null
           cancelled_at?: string | null
+          confirmed_at?: string | null
           contest_window_ends_at?: string | null
           created_at?: string
           delivered_at?: string | null
@@ -4018,6 +4139,7 @@ export type Database = {
           cancellation_reason?: string | null
           cancellation_window_ends_at?: string | null
           cancelled_at?: string | null
+          confirmed_at?: string | null
           contest_window_ends_at?: string | null
           created_at?: string
           delivered_at?: string | null
