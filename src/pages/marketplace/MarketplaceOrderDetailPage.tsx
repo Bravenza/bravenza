@@ -351,7 +351,7 @@ export default function MarketplaceOrderDetailPage() {
     : null;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-5 pb-40 md:pb-12 space-y-4">
+    <div className="max-w-2xl mx-auto px-4 py-5 pb-24 md:pb-12 space-y-4">
       {/* ── Back button ── */}
       <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}>
         <button
@@ -572,15 +572,14 @@ export default function MarketplaceOrderDetailPage() {
         </Section>
       )}
 
-      {/* ── Sticky action bar ── */}
-      {/* ── Sticky action bar ── */}
+      {/* ── Action bar ── */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+49px)] left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border/40 px-3 sm:px-4 py-2.5 sm:py-3 md:static md:bg-transparent md:backdrop-blur-none md:border-0 md:px-0 md:py-0 md:mt-2"
+        className="bg-card rounded-2xl border border-border/60 p-4 shadow-sm"
       >
-        <div className="max-w-2xl mx-auto flex flex-col gap-2">
+        <div className="flex flex-col gap-2">
           {/* Primary action — always full width */}
           {allowed_actions.includes("pay") && (
             <Button
