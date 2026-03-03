@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
   });
   const { data: { user }, error: userErr } = await anonSb.auth.getUser();
   if (userErr || !user) return json({ error: "Unauthorized" }, 401);
-  const { data: adm } = await sb.from("admin_profiles").select("id").eq("user_id", user.id).maybeSingle();
+  const { data: adm } = await sb.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
   if (!adm) return json({ error: "Admin only" }, 403);
 
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
