@@ -137,3 +137,6 @@ verify_jwt = false
 
 [functions.mk-catalog]
 verify_jwt = false
+
+[functions.catalog-sync]
+verify_jwt = false
