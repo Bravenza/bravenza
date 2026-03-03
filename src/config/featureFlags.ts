@@ -12,7 +12,7 @@ export const FEATURE_FLAGS = {
   enable_order_detail_v2: true,
   enable_seller_dashboard_v2: false,
   enable_catalog_required_for_new_listings: true,
-  enable_seo_ssr_v2: false,
+  enable_seo_ssr_v2: true,
 } as const;
 
 export type FeatureFlag = keyof typeof FEATURE_FLAGS;

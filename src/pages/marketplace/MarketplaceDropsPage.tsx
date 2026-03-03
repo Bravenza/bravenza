@@ -183,6 +183,12 @@ export default function MarketplaceDropsPage() {
       <Helmet>
         <title>Drops & Lançamentos | BRAVENZA Marketplace</title>
         <meta name="description" content="Fique por dentro dos próximos lançamentos de sneakers. Ative lembretes e não perca nenhum drop exclusivo." />
+        <link rel="canonical" href="https://bravenza.com.br/marketplace/drops" />
+        <meta property="og:title" content="Drops & Lançamentos | BRAVENZA" />
+        <meta property="og:description" content="Fique por dentro dos próximos lançamentos de sneakers. Ative lembretes e não perca nenhum drop." />
+        <meta property="og:url" content="https://bravenza.com.br/marketplace/drops" />
+        <meta property="og:image" content="https://bravenza.com.br/og-image.png" />
+        <meta property="og:type" content="website" />
       </Helmet>
 
       {/* ── HERO COUNTDOWN ── */}

@@ -48,6 +48,11 @@ export default function SellLandingPage() {
         <title>Quero Vender | BRAVENZA — Sneakers Autenticados</title>
         <meta name="description" content="Escolha como vender seus sneakers na Bravenza: anuncie no Marketplace ou use o Bravenza Full e deixe tudo com a gente." />
         <link rel="canonical" href="https://bravenza.com.br/vender" />
+        <meta property="og:title" content="Quero Vender | BRAVENZA" />
+        <meta property="og:description" content="Venda seus sneakers na Bravenza: anuncie no Marketplace ou use o Bravenza Full." />
+        <meta property="og:url" content="https://bravenza.com.br/vender" />
+        <meta property="og:image" content="https://bravenza.com.br/og-image.png" />
+        <meta property="og:type" content="website" />
       </Helmet>
 
       <section className="relative overflow-hidden min-h-[80vh] flex items-center">
