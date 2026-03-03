@@ -134,3 +134,6 @@ verify_jwt = false
 
 [functions.catalog-multisource]
 verify_jwt = false
+
+[functions.mk-catalog]
+verify_jwt = false
