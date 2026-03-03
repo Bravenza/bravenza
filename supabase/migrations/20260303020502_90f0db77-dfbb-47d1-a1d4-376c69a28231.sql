@@ -1,0 +1,1 @@
+ALTER TABLE public.sneaker_images ADD CONSTRAINT sneaker_images_sneaker_source_url_unique UNIQUE (sneaker_id, source, image_url);

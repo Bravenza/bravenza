@@ -342,19 +342,15 @@ Deno.serve(async (req) => {
           stats.inserted++;
         }
 
-        // Manage images
+        // Manage images — reset primary, then upsert
         await sb.from("sneaker_images").update({ is_primary: false }).eq("sneaker_id", sneakerId);
         const imgUrl = item.imageUrl || PLACEHOLDER;
         const imgSource = item.imageUrl ? "tsdb" : "placeholder";
-        await sb.from("sneaker_images").upsert(
+        const { error: imgErr } = await sb.from("sneaker_images").upsert(
           { sneaker_id: sneakerId, image_url: imgUrl, source: imgSource, is_primary: true },
           { onConflict: "sneaker_id,source,image_url" }
-        ).select();
-        // If upsert doesn't match, just insert
-        const { data: imgCheck } = await sb.from("sneaker_images").select("id").eq("sneaker_id", sneakerId).eq("is_primary", true).maybeSingle();
-        if (!imgCheck) {
-          await sb.from("sneaker_images").insert({ sneaker_id: sneakerId, image_url: imgUrl, source: imgSource, is_primary: true });
-        }
+        );
+        if (imgErr) console.warn("Image upsert warn:", imgErr.message);
 
         translateQueue.push({
           sku: item.sku, sneakerId,
