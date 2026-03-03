@@ -62,8 +62,9 @@ function findImage(item: any): string | null {
 
 function extractSku(item: any): string | null {
   const raw = item.styleID || item.styleId || item.style_id || item.sku || item.slug || item.id || item._id || item.spu;
-  if (!raw || typeof raw !== "string") return null;
-  return raw.trim();
+  if (!raw) return null;
+  // Accept both string and numeric IDs
+  return String(raw).trim();
 }
 
 // ─── StadiumGoods ────────────────────────────────────────────────
