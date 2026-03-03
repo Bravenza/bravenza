@@ -29,12 +29,13 @@ async function testEndpoint(name: string, url: string) {
           // Check for SKU-like fields
           const first = json[0];
           const skuFields = ["styleID", "styleId", "style_id", "sku", "slug", "id", "spu", "handle"];
-          const foundSku = skuFields.find(f => first[f]);
-          console.log(`SKU field found: ${foundSku} = ${first[foundSku]}`);
+          const foundSku = skuFields.find(f => first[f as keyof typeof first]);
+          console.log(`SKU field found: ${foundSku ?? "none"} = ${foundSku ? first[foundSku as keyof typeof first] : "N/A"}`);
           // Check image fields
           const imgFields = ["image", "thumbnail", "imageUrl", "main_picture_url", "grid_picture_url"];
-          const foundImg = imgFields.find(f => first[f]);
-          console.log(`Image field found: ${foundImg} = ${typeof first[foundImg] === "string" ? first[foundImg]?.substring(0, 80) : JSON.stringify(first[foundImg])?.substring(0, 80)}`);
+          const foundImg = imgFields.find(f => first[f as keyof typeof first]);
+          const imgVal = foundImg ? first[foundImg as keyof typeof first] : null;
+          console.log(`Image field found: ${foundImg ?? "none"} = ${typeof imgVal === "string" ? imgVal.substring(0, 80) : JSON.stringify(imgVal)?.substring(0, 80)}`);
         } else if (!isArray) {
           // Check nested structures
           for (const k of ["results", "data", "products", "items", "hits", "edges"]) {
