@@ -6508,6 +6508,10 @@ export type Database = {
           used_at: string
         }[]
       }
+      get_vault_item_certificate_url: {
+        Args: { p_item_id: string }
+        Returns: Json
+      }
       get_vault_match_room: {
         Args: { p_cpf: string; p_match_room_id: string }
         Returns: {
