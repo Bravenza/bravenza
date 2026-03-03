@@ -122,3 +122,6 @@ verify_jwt = false
 
 [functions.mk-watchlist-processor]
 verify_jwt = false
+
+[functions.og-renderer]
+verify_jwt = false
