@@ -560,6 +560,123 @@ export default function CatalogSeedPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Multi-Source Import */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            Importação Multi-Source
+          </CardTitle>
+          <CardDescription>
+            Busque novos SKUs e enriqueça modelos existentes via GOAT, FlightClub, StadiumGoods e KicksCrew.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Source selector */}
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium whitespace-nowrap">Fonte:</span>
+            <Select value={msSource} onValueChange={setMsSource}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SOURCES.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={handleMsTest} disabled={msTesting}>
+              {msTesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+              <span className="ml-1">Testar</span>
+            </Button>
+          </div>
+
+          {msTestResult && (
+            <pre className="p-3 bg-muted rounded-lg text-xs overflow-auto max-h-48">
+              {JSON.stringify(msTestResult, null, 2)}
+            </pre>
+          )}
+
+          <Tabs defaultValue="search" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="search" className="flex items-center gap-1">
+                <Search className="h-3.5 w-3.5" />Buscar Novos
+              </TabsTrigger>
+              <TabsTrigger value="enrich" className="flex items-center gap-1">
+                <RefreshCw className="h-3.5 w-3.5" />Enriquecer Existentes
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="search" className="space-y-3 pt-3">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Ex: Jordan 1, Yeezy 350, Nike Dunk..."
+                  value={msQuery}
+                  onChange={(e) => setMsQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleMsSearch()}
+                />
+                <Input
+                  type="number"
+                  className="w-20"
+                  placeholder="Pág"
+                  value={msPage}
+                  onChange={(e) => setMsPage(Number(e.target.value) || 1)}
+                  min={1}
+                />
+                <Button onClick={handleMsSearch} disabled={msSearching || !msQuery.trim()}>
+                  {msSearching ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Search className="h-4 w-4 mr-1" />}
+                  Buscar
+                </Button>
+              </div>
+
+              {msSearchResult && (
+                <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+                  <p className="text-sm font-medium">
+                    Resultado — {msSearchResult.source}
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <StatCard label="Encontrados" value={msSearchResult.fetched || 0} />
+                    <StatCard label="Inseridos" value={msSearchResult.inserted || 0} />
+                    <StatCard label="Já existiam" value={msSearchResult.skipped_existing || 0} />
+                    <StatCard label="Erros" value={msSearchResult.errors || 0} />
+                  </div>
+                  {msSearchResult.error && (
+                    <p className="text-xs text-destructive">{msSearchResult.error}</p>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="enrich" className="space-y-3 pt-3">
+              <p className="text-sm text-muted-foreground">
+                Busca descrições/imagens de modelos que ainda têm placeholder ou sem descrição, usando o endpoint de detalhes da fonte selecionada.
+              </p>
+              <Button onClick={handleMsEnrich} disabled={msEnriching}>
+                {msEnriching ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+                Enriquecer via {SOURCES.find(s => s.id === msSource)?.name}
+              </Button>
+
+              {msEnrichResult && (
+                <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+                  <p className="text-sm font-medium">
+                    Resultado — {msEnrichResult.source}
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <StatCard label="Processados" value={msEnrichResult.processed || 0} />
+                    <StatCard label="Enriquecidos" value={msEnrichResult.enriched || 0} />
+                    <StatCard label="Sem dados" value={msEnrichResult.no_data || 0} />
+                    <StatCard label="Erros" value={msEnrichResult.errors || 0} />
+                  </div>
+                  {msEnrichResult.error && (
+                    <p className="text-xs text-destructive">{msEnrichResult.error}</p>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
