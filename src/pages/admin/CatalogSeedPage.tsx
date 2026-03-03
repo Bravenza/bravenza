@@ -317,9 +317,10 @@ export default function CatalogSeedPage() {
     let totalErrors = 0;
     let totalSkipped = 0;
     let round = 0;
+    const MAX_ROUNDS = 20; // Safety limit to prevent infinite loops
 
     try {
-      while (!cancelRef.current) {
+      while (!cancelRef.current && round < MAX_ROUNDS) {
         round++;
         const data = await callEnrichApi({ mode: "enrich" });
         
@@ -338,13 +339,21 @@ export default function CatalogSeedPage() {
           errors: totalErrors,
           skipped: totalSkipped,
           remaining: data.remaining || 0,
-          message: `${totalEnriched} descrições enriquecidas (rodada ${round})`,
+          message: `${totalEnriched} descrições enriquecidas (rodada ${round}/${MAX_ROUNDS})`,
         });
 
+        // Stop if no more candidates or no progress this round
         if (!data.has_more || data.enriched === 0) {
           toast({ title: `✓ ${totalEnriched} descrições enriquecidas no total` });
           break;
         }
+
+        // Small delay between rounds
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+
+      if (round >= MAX_ROUNDS) {
+        toast({ title: `Limite de ${MAX_ROUNDS} rodadas atingido. ${totalEnriched} descrições enriquecidas.` });
       }
     } catch (e: any) {
       toast({ title: "Erro", description: e.message, variant: "destructive" });
