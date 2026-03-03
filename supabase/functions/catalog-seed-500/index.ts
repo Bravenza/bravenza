@@ -11,6 +11,10 @@ const json = (d: unknown, s = 200) =>
 
 const PLACEHOLDER = "/img/shoe-placeholder-white.png";
 
+// ---- Sneaker Database - StockX (RapidAPI) ----
+const STOCKX_API_HOST = "sneaker-database-stockx.p.rapidapi.com";
+const STOCKX_API_BASE = "https://sneaker-database-stockx.p.rapidapi.com";
+
 const BRAND_QUOTAS: Record<string, number> = {
   Nike: 170, Jordan: 90, adidas: 70, Yeezy: 40, "New Balance": 70,
   ASICS: 30, PUMA: 10, Converse: 10, Vans: 5, Reebok: 5,
@@ -21,7 +25,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function extractArray(payload: any): any[] {
   if (Array.isArray(payload)) return payload;
-  for (const k of ["results", "data", "sneakers", "items", "products"]) {
+  for (const k of ["results", "data", "sneakers", "items", "products", "hits"]) {
     if (payload?.[k] && Array.isArray(payload[k])) return payload[k];
   }
   return [];
@@ -29,17 +33,17 @@ function extractArray(payload: any): any[] {
 
 function findImageUrl(item: any): string | null {
   const candidates = [
+    item?.image,
+    item?.thumbnail,
     item?.media?.imageUrl,
-    item?.media?.imageUrlPrimary,
     item?.media?.smallImageUrl,
     item?.media?.thumbUrl,
     item?.imageUrl,
     item?.image?.original,
     item?.image?.thumbnail,
-    item?.thumbnail,
   ];
   for (const c of candidates) {
-    if (typeof c === "string" && /^https?:\/\/.+\.(jpg|jpeg|png|webp)/i.test(c)) return c;
+    if (typeof c === "string" && c.startsWith("http")) return c;
   }
   // deep scan for any URL-like string ending in image ext
   const flat = JSON.stringify(item);
@@ -48,23 +52,25 @@ function findImageUrl(item: any): string | null {
 }
 
 function normalize(item: any) {
-  const sku = item.sku || item.styleId || item.style_id || item.id;
+  // StockX API returns fields like: title, brand, styleId, color, retailPrice, releaseDate, image, description, urlKey
+  const sku = item.styleId || item.style_id || item.sku || item.id;
   if (!sku || typeof sku !== "string") return null;
-  return {
-    sku: sku.trim(),
-    name: item.name || item.title || item.sneakerName || item.model || null,
-    colorway: item.colorway || null,
-    releaseDate: item.releaseDate || item.release_date || null,
-    msrp: item.retailPrice || item.retail_price || item.msrp || null,
-    description: item.description || null,
-    imageUrl: findImageUrl(item),
-  };
+
+  const name = item.title || item.name || item.shoeName || item.model || null;
+  const brand = item.brand || null;
+  const colorway = item.color || item.colorway || null;
+  const releaseDate = item.releaseDate || item.release_date || null;
+  const msrp = item.retailPrice || item.retail_price || item.msrp || null;
+  const description = item.description || null;
+  const imageUrl = findImageUrl(item);
+
+  return { sku: sku.trim(), name, brand, colorway, releaseDate, msrp, description, imageUrl };
 }
 
 // ---------- throttled fetch ----------
 let lastReqTime = 0;
 async function throttledFetch(url: string, headers: Record<string, string>, retries = 3): Promise<any> {
-  const gap = 210; // ~5 req/s
+  const gap = 250; // ~4 req/s to stay safe
   const now = Date.now();
   const wait = gap - (now - lastReqTime);
   if (wait > 0) await sleep(wait);
@@ -83,7 +89,7 @@ async function throttledFetch(url: string, headers: Record<string, string>, retr
       await sleep(1000 * (attempt + 1));
       continue;
     }
-    throw new Error(`TSDB ${res.status}: ${await res.text().catch(() => "")}`);
+    throw new Error(`StockX API ${res.status}: ${await res.text().catch(() => "")}`);
   }
   throw new Error("Max retries exceeded");
 }
@@ -94,7 +100,7 @@ async function translateBatch(
 ): Promise<Map<string, { name_pt: string; desc_pt: string }>> {
   const result = new Map<string, { name_pt: string; desc_pt: string }>();
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-  
+
   // Generate neutral descriptions for items without english desc
   for (const it of items) {
     if (!it.description) {
@@ -112,11 +118,9 @@ async function translateBatch(
     return result;
   }
 
-  // Only translate items that have english text and weren't already handled
   const toTranslate = items.filter((it) => it.description && !result.has(it.sku));
   if (toTranslate.length === 0) return result;
 
-  // Batch in groups of 10
   for (let i = 0; i < toTranslate.length; i += 10) {
     const batch = toTranslate.slice(i, i + 10);
     const prompt = batch
@@ -187,28 +191,24 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch {}
   const mode = body.mode || "seed"; // "test" | "seed"
 
-  // Check TSDB config
+  // Check RapidAPI key
   const rapidKey = Deno.env.get("RAPIDAPI_KEY");
-  const tsdbHost = Deno.env.get("TSDB_RAPIDAPI_HOST");
-  const tsdbBase = Deno.env.get("TSDB_API_BASE_URL");
-  const missing: string[] = [];
-  if (!rapidKey) missing.push("RAPIDAPI_KEY");
-  if (!tsdbHost) missing.push("TSDB_RAPIDAPI_HOST");
-  if (!tsdbBase) missing.push("TSDB_API_BASE_URL");
-  if (missing.length) return json({ ok: false, error: "TSDB connector not configured", missing });
+  if (!rapidKey) {
+    return json({ ok: false, error: "RAPIDAPI_KEY não configurada. Adicione nas secrets do projeto.", missing: ["RAPIDAPI_KEY"] });
+  }
 
-  const listPath = Deno.env.get("TSDB_LIST_PATH") || "/sneakers";
-  const searchPath = Deno.env.get("TSDB_SEARCH_PATH") || "/search";
-  const pageSize = parseInt(Deno.env.get("TSDB_PAGE_SIZE") || "50");
-  const apiHeaders = { "X-RapidAPI-Key": rapidKey!, "X-RapidAPI-Host": tsdbHost! };
+  const apiHeaders = {
+    "X-RapidAPI-Key": rapidKey,
+    "X-RapidAPI-Host": STOCKX_API_HOST,
+  };
 
-  // Test mode
+  // Test mode — quick connectivity check via /stockx/sneakers
   if (mode === "test") {
     try {
-      const testUrl = `${tsdbBase}${listPath}?limit=1`;
+      const testUrl = `${STOCKX_API_BASE}/stockx/sneakers?query=Jordan+1&limit=1&currency=BRL&country=BR`;
       const data = await throttledFetch(testUrl, apiHeaders);
       const arr = extractArray(data);
-      return json({ ok: true, test: true, sample_count: arr.length, sample: arr[0] || null });
+      return json({ ok: true, test: true, sample_count: arr.length, sample: arr[0] || null, source: "sneaker-database-stockx" });
     } catch (e: any) {
       return json({ ok: false, error: e.message });
     }
@@ -253,19 +253,20 @@ Deno.serve(async (req) => {
 
       let collected: any[] = [];
       let page = 1;
+      const seenSkus = new Set<string>();
 
       while (collected.length < quota && page <= 20) {
         let items: any[] = [];
         try {
-          // Try list endpoint first
-          const listUrl = `${tsdbBase}${listPath}?brand=${encodeURIComponent(brandName)}&limit=${pageSize}&page=${page}`;
-          const data = await throttledFetch(listUrl, apiHeaders);
+          // Primary: /stockx/sneakers endpoint with brand as query, BRL currency, BR country
+          const searchUrl = `${STOCKX_API_BASE}/stockx/sneakers?query=${encodeURIComponent(brandName)}&limit=40&page=${page}&currency=BRL&country=BR`;
+          const data = await throttledFetch(searchUrl, apiHeaders);
           items = extractArray(data);
-        } catch {
+        } catch (e1: any) {
           try {
-            // Fallback to search
-            const searchUrl = `${tsdbBase}${searchPath}?q=${encodeURIComponent(brandName)}&limit=${pageSize}&page=${page}`;
-            const data = await throttledFetch(searchUrl, apiHeaders);
+            // Fallback: /getproducts endpoint
+            const fallbackUrl = `${STOCKX_API_BASE}/getproducts?keywords=${encodeURIComponent(brandName)}&limit=40`;
+            const data = await throttledFetch(fallbackUrl, apiHeaders);
             items = extractArray(data);
           } catch (e2: any) {
             console.error(`Failed both endpoints for ${brandName} page ${page}:`, e2.message);
@@ -279,6 +280,9 @@ Deno.serve(async (req) => {
           if (collected.length >= quota) break;
           const norm = normalize(raw);
           if (!norm) continue;
+          // Deduplicate within this run
+          if (seenSkus.has(norm.sku)) continue;
+          seenSkus.add(norm.sku);
           collected.push({ ...norm, brandName, brandId });
         }
         page++;
@@ -294,7 +298,7 @@ Deno.serve(async (req) => {
           if (stats.sample_missing_sil.length < 10) stats.sample_missing_sil.push({ sku: item.sku, name: item.name });
         }
 
-        const imageStatus = item.imageUrl ? "tsdb" : "placeholder";
+        const imageStatus = item.imageUrl ? "stockx" : "placeholder";
         if (!item.imageUrl) stats.missing_image++;
         if (!item.msrp) stats.missing_msrp++;
         if (!item.releaseDate) stats.missing_release++;
@@ -310,6 +314,7 @@ Deno.serve(async (req) => {
           if (silhouetteId) updates.silhouette_id = silhouetteId;
           updates.image_status = imageStatus;
           updates.placeholder_image_url = PLACEHOLDER;
+          updates.source_primary = "stockx";
 
           if (Object.keys(updates).length) {
             await sb.from("sneaker_models").update(updates).eq("id", existing.id);
@@ -333,13 +338,14 @@ Deno.serve(async (req) => {
             placeholder_image_url: PLACEHOLDER,
             image_status: imageStatus,
             needs_official_image: true,
-            source_primary: "tsdb",
+            source_primary: "stockx",
             translation_status: "pending",
           }).select("id").single();
 
           if (insErr) {
             if (insErr.code === "23505") { stats.skipped++; continue; }
             console.error("Insert error:", insErr);
+            stats.errors++;
             continue;
           }
           sneakerId = ins.id;
@@ -349,7 +355,7 @@ Deno.serve(async (req) => {
         // Manage images — reset primary, then upsert
         await sb.from("sneaker_images").update({ is_primary: false }).eq("sneaker_id", sneakerId);
         const imgUrl = item.imageUrl || PLACEHOLDER;
-        const imgSource = item.imageUrl ? "tsdb" : "placeholder";
+        const imgSource = item.imageUrl ? "stockx" : "placeholder";
         const { error: imgErr } = await sb.from("sneaker_images").upsert(
           { sneaker_id: sneakerId, image_url: imgUrl, source: imgSource, is_primary: true },
           { onConflict: "sneaker_id,source,image_url" }
@@ -387,6 +393,7 @@ Deno.serve(async (req) => {
 
     return json({
       ok: true,
+      source: "sneaker-database-stockx",
       inserted_count: stats.inserted,
       updated_count: stats.updated,
       duplicates_skipped: stats.skipped,

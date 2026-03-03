@@ -56,7 +56,7 @@ export default function CatalogSeedPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Catálogo Oficial — Seed v1</h1>
-        <p className="text-muted-foreground">Gere ~500 modelos de sneakers automaticamente via The Sneaker Database.</p>
+        <p className="text-muted-foreground">Gere ~500 modelos de sneakers automaticamente via Sneaker Database - StockX (RapidAPI).</p>
       </div>
 
       {/* Connector Status */}
@@ -64,9 +64,9 @@ export default function CatalogSeedPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5" />
-            Conector TSDB (RapidAPI)
+            Conector StockX (RapidAPI)
           </CardTitle>
-          <CardDescription>Verifique se as credenciais da API estão configuradas.</CardDescription>
+          <CardDescription>Verifique se a RAPIDAPI_KEY está configurada nas secrets do projeto.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-3">
@@ -77,7 +77,7 @@ export default function CatalogSeedPage() {
           </div>
           <Button onClick={() => callSeed("test")} disabled={testing} variant="outline">
             {testing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Testar conexão TSDB
+            Testar conexão StockX
           </Button>
 
           {testResult && (
