@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Zap, Database, CheckCircle2, AlertTriangle, XCircle, Play, Square, Sparkles, Eye, Globe, Search, RefreshCw } from "lucide-react";
+import { Loader2, Zap, Database, CheckCircle2, AlertTriangle, XCircle, Play, Square, Sparkles, Eye, Globe, Search, RefreshCw, ArrowRightLeft } from "lucide-react";
 
 interface BrandResult {
   brand: string;
