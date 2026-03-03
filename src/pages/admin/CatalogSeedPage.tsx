@@ -124,6 +124,8 @@ export default function CatalogSeedPage() {
       setSyncing(false);
     }
   };
+
+  const callApi = async (body: any) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error("Sessão expirada");
 
