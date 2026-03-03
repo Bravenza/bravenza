@@ -6,8 +6,8 @@
  */
 
 export const FEATURE_FLAGS = {
-  enable_price_history_v2: false,
-  enable_alerts_v2: false,
+  enable_price_history_v2: true,
+  enable_alerts_v2: true,
   enable_favorites_lists: false,
   enable_order_detail_v2: true,
   enable_seller_dashboard_v2: false,
