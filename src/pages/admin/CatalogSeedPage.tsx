@@ -110,24 +110,47 @@ export default function CatalogSeedPage() {
         );
 
         try {
-          const result = await callApi({ mode: "seed_brand", brand: brand.name });
+          let queryIndex = 0;
+          let brandInserted = 0;
+          let brandTranslated = 0;
+          let brandFetched = 0;
 
-          setBrandResults((prev) =>
-            prev.map((r, idx) =>
-              idx === i
-                ? {
-                    ...r,
-                    status: result.ok ? "done" : "error",
-                    fetched: result.fetched,
-                    inserted: result.inserted,
-                    updated: result.updated,
-                    skipped: result.skipped,
-                    translated: result.translated,
-                    error: result.error,
-                  }
-                : r
-            )
-          );
+          // Loop batches for this brand until done or no more
+          while (true) {
+            if (cancelRef.current) break;
+            const result = await callApi({ mode: "seed_brand", brand: brand.name, query_index: queryIndex });
+
+            if (!result.ok) {
+              setBrandResults((prev) =>
+                prev.map((r, idx) => (idx === i ? { ...r, status: "error", error: result.error } : r))
+              );
+              break;
+            }
+
+            brandInserted += result.inserted || 0;
+            brandTranslated += result.translated || 0;
+            brandFetched += result.fetched || 0;
+
+            setBrandResults((prev) =>
+              prev.map((r, idx) =>
+                idx === i
+                  ? { ...r, status: "running", fetched: brandFetched, inserted: brandInserted, translated: brandTranslated, updated: result.updated || 0 }
+                  : r
+              )
+            );
+
+            if (!result.has_more || result.fetched === 0) {
+              setBrandResults((prev) =>
+                prev.map((r, idx) =>
+                  idx === i ? { ...r, status: "done" } : r
+                )
+              );
+              break;
+            }
+
+            queryIndex = result.next_query_index || queryIndex + 1;
+            await new Promise((r) => setTimeout(r, 500));
+          }
         } catch (e: any) {
           setBrandResults((prev) =>
             prev.map((r, idx) => (idx === i ? { ...r, status: "error", error: e.message } : r))
