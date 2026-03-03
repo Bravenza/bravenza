@@ -37,13 +37,19 @@ export function ConsignmentList({ sellerId }: ConsignmentListProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const fetch = async () => {
-    const { data } = await supabase
-      .from("marketplace_consignments" as any)
-      .select("*")
-      .eq("seller_id", sellerId)
-      .order("created_at", { ascending: false });
-    setConsignments(data || []);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from("marketplace_consignments" as any)
+        .select("*")
+        .eq("seller_id", sellerId)
+        .order("created_at", { ascending: false });
+      if (error) console.error("Consignment fetch error:", error);
+      setConsignments(data || []);
+    } catch (err) {
+      console.error("Consignment fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

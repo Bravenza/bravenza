@@ -47,7 +47,6 @@ interface SellerAnalytics {
     top_sizes: { size: string; count: number }[];
     sell_through_rate: number;
     avg_days_to_sell: number;
-    market_top_brands: { brand: string; count: number }[];
   };
 }
 
@@ -461,15 +460,15 @@ export function SellerAnalyticsDashboard({ clientCpf }: SellerAnalyticsDashboard
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-[10px] text-muted-foreground mb-3">Marcas mais vendidas no marketplace inteiro — dados privilegiados.</p>
-                {analytics.insights.market_top_brands.length > 0 ? (
+                <p className="text-[10px] text-muted-foreground mb-3">Marcas mais vendidas na sua loja — dados privilegiados.</p>
+                {analytics.insights.top_selling_brands.length > 0 ? (
                   <ResponsiveContainer width="100%" height={180}>
-                    <BarChart data={analytics.insights.market_top_brands} layout="vertical">
+                    <BarChart data={analytics.insights.top_selling_brands} layout="vertical">
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border/20" horizontal={false} />
                       <XAxis type="number" tick={{ fontSize: 10 }} />
                       <YAxis type="category" dataKey="brand" tick={{ fontSize: 10 }} width={60} />
                       <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", fontSize: 11 }} />
-                      <Bar dataKey="count" fill="hsl(262, 83%, 58%)" radius={[0, 6, 6, 0]} name="Vendas" />
+                      <Bar dataKey="sales" fill="hsl(262, 83%, 58%)" radius={[0, 6, 6, 0]} name="Vendas" />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : <p className="text-xs text-muted-foreground">Sem dados suficientes.</p>}
