@@ -77,7 +77,7 @@ export default function CatalogSeedPage() {
           </div>
           <Button onClick={() => callSeed("test")} disabled={testing} variant="outline">
             {testing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Testar conexão TSDB
+            Testar conexão StockX
           </Button>
 
           {testResult && (
