@@ -23,14 +23,22 @@ interface SourceDef {
   name: string;
   searchPath: (query: string, page: number) => string;
   descriptionPath: (sku: string) => string;
-  /** How to extract items array from search response */
   extractItems: (data: any) => any[];
-  /** How to normalize a single item to our internal format */
   normalize: (item: any) => NormalizedItem | null;
-  /** How to normalize description/detail response */
   normalizeDetail: (data: any) => Partial<NormalizedItem> | null;
   hasSearch: boolean;
   hasDescription: boolean;
+  /** Extra discovery endpoints beyond basic search */
+  extraEndpoints?: ExtraEndpoint[];
+}
+
+interface ExtraEndpoint {
+  id: string;
+  label: string;
+  /** Build the URL path (param is optional context like a brand name or product ID) */
+  buildPath: (param?: string) => string;
+  /** Extract array of items from response */
+  extractItems: (data: any) => any[];
 }
 
 interface NormalizedItem {
