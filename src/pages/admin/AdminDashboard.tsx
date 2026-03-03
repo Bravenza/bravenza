@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import {
   Package,
@@ -10,8 +10,9 @@ import {
   CalendarClock,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
 import { typedRpc } from "@/integrations/supabase/typed-rpc";
+import { useQuery } from "@tanstack/react-query";
+import { STALE } from "@/lib/query-config";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,26 +55,17 @@ interface DashboardData {
 }
 
 const AdminDashboard = () => {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const { data: rpcData, error } = await typedRpc<DashboardData>("get_admin_dashboard_overview");
-        if (error) throw error;
-
-        setData(rpcData);
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, []);
+  const { data, isLoading } = useQuery<DashboardData>({
+    queryKey: ["admin", "dashboard-overview"],
+    queryFn: async () => {
+      const { data: rpcData, error } = await typedRpc<DashboardData>("get_admin_dashboard_overview");
+      if (error) throw error;
+      return rpcData as DashboardData;
+    },
+    staleTime: STALE.SEMI_STATIC,
+  });
 
   if (isLoading) {
     return (

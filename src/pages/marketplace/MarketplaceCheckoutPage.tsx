@@ -246,26 +246,39 @@ function MarketplaceCheckoutPageInner() {
     const address = buildAddressString();
 
     try {
-      const createdOrders: { id: string; order_code: string; item: CartItem }[] = [];
+      const validItems = group.items.filter(item => !!item.offer);
 
-      for (const item of group.items) {
-        if (!item.offer) continue;
-        const orderResult = await createOrder({
-          listing_id: item.offer.id,
-          buyer_name: form.buyer_name,
-          buyer_email: form.buyer_email,
-          buyer_phone: form.buyer_phone,
-          buyer_address: address,
-          payment_method: form.payment_method,
-          shipping_cost: shippingCost / group.items.length,
-        });
+      // Parallel order creation with Promise.allSettled
+      const orderResults = await Promise.allSettled(
+        validItems.map(item =>
+          createOrder({
+            listing_id: item.offer!.id,
+            buyer_name: form.buyer_name,
+            buyer_email: form.buyer_email,
+            buyer_phone: form.buyer_phone,
+            buyer_address: address,
+            payment_method: form.payment_method,
+            shipping_cost: shippingCost / validItems.length,
+          }).then(result => {
+            if (!result?.id) {
+              throw new Error(`Erro ao criar pedido para ${item.offer?.product?.brand || "item"}`);
+            }
+            return { id: result.id, order_code: result.order_code, item };
+          })
+        )
+      );
 
-        if (!orderResult?.id) {
-          throw new Error(`Erro ao criar pedido para ${item.offer?.product?.brand || "item"}`);
-        }
-
-        createdOrders.push({ id: orderResult.id, order_code: orderResult.order_code, item });
+      const failed = orderResults.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+      if (failed.length === validItems.length) {
+        throw new Error(failed[0].reason?.message || "Erro ao criar pedidos");
       }
+      if (failed.length > 0) {
+        console.warn(`${failed.length} pedido(s) falharam, prosseguindo com os restantes`);
+      }
+
+      const createdOrders = orderResults
+        .filter((r): r is PromiseFulfilledResult<{ id: string; order_code: string; item: CartItem }> => r.status === "fulfilled")
+        .map(r => r.value);
 
       const sortedIds = createdOrders.map(o => o.id).sort();
       const idempKey = `mkt-${sortedIds.join("-")}-${form.payment_method}`;
@@ -308,9 +321,7 @@ function MarketplaceCheckoutPageInner() {
 
       setOrderCodes(payData.order_codes || createdOrders.map(o => o.order_code));
 
-      for (const co of createdOrders) {
-        await removeFromCart(co.item.offer_id);
-      }
+      await Promise.allSettled(createdOrders.map(co => removeFromCart(co.item.offer_id)));
 
       await markCompleted();
       setStep("success");
