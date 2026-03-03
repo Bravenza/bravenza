@@ -378,7 +378,23 @@ export default function CatalogSeedPage() {
     try {
       const data = await callMultisourceApi({ mode: "test", source: msSource });
       setMsTestResult(data);
-      toast({ title: data.ok ? `${msSource} OK ✓` : `${msSource} falhou`, variant: data.ok ? "default" : "destructive" });
+      toast({ title: data.ok ? `${msSource} OK ✓` : `${msSource} falhou`, description: data.error || undefined, variant: data.ok ? "default" : "destructive" });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setMsTesting(false);
+    }
+  };
+
+  const handleMsTestAll = async () => {
+    setMsTesting(true);
+    setMsTestResult(null);
+    try {
+      const data = await callMultisourceApi({ mode: "test_all" });
+      setMsTestResult(data);
+      const working = (data.results || []).filter((r: any) => r.ok).length;
+      const total = (data.results || []).length;
+      toast({ title: `${working}/${total} fontes operacionais`, variant: working > 0 ? "default" : "destructive" });
     } catch (e: any) {
       toast({ title: "Erro", description: e.message, variant: "destructive" });
     } finally {
@@ -754,14 +770,36 @@ export default function CatalogSeedPage() {
             </Select>
             <Button variant="outline" size="sm" onClick={handleMsTest} disabled={msTesting}>
               {msTesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-              <span className="ml-1">Testar</span>
+              <span className="ml-1">Testar fonte</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleMsTestAll} disabled={msTesting}>
+              {msTesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
+              <span className="ml-1">Testar todas</span>
             </Button>
           </div>
 
           {msTestResult && (
-            <pre className="p-3 bg-muted rounded-lg text-xs overflow-auto max-h-48">
-              {JSON.stringify(msTestResult, null, 2)}
-            </pre>
+            <div className="space-y-2">
+              {msTestResult.results ? (
+                <div className="grid gap-2">
+                  {msTestResult.results.map((r: any) => (
+                    <div key={r.source} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 text-sm">
+                      <div className="flex items-center gap-2">
+                        {r.ok ? <CheckCircle2 className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-destructive" />}
+                        <span className="font-medium">{r.name}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {r.ok ? `OK (${r.status})` : r.error}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <pre className="p-3 bg-muted rounded-lg text-xs overflow-auto max-h-48">
+                  {JSON.stringify(msTestResult, null, 2)}
+                </pre>
+              )}
+            </div>
           )}
 
           <Tabs defaultValue="search" className="w-full">

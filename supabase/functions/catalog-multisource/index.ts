@@ -308,7 +308,21 @@ async function throttledFetch(url: string, headers: Record<string, string>, retr
 
   for (let attempt = 0; attempt < retries; attempt++) {
     const res = await fetch(url, { headers });
-    if (res.ok) return res.json();
+
+    // Check Content-Type before parsing — HTML responses indicate endpoint issues
+    const contentType = res.headers.get("content-type") || "";
+
+    if (res.ok) {
+      if (!contentType.includes("application/json")) {
+        const text = await res.text();
+        // Some APIs return JSON without proper content-type
+        try { return JSON.parse(text); } catch {
+          throw new Error(`API retornou ${contentType} ao invés de JSON. Resposta: ${text.substring(0, 200)}`);
+        }
+      }
+      return res.json();
+    }
+
     if (res.status === 429) {
       await sleep(Math.pow(2, attempt + 1) * 1000);
       continue;
@@ -317,9 +331,32 @@ async function throttledFetch(url: string, headers: Record<string, string>, retr
       await sleep(1000 * (attempt + 1));
       continue;
     }
-    throw new Error(`API ${res.status}: ${await res.text().catch(() => "")}`);
+
+    // Get error body
+    const errorBody = await res.text().catch(() => "");
+
+    // If HTML response, provide a clearer error
+    if (errorBody.includes("<!DOCTYPE") || errorBody.includes("<html")) {
+      const match = errorBody.match(/<pre>(.*?)<\/pre>/);
+      const detail = match ? match[1] : `HTTP ${res.status}`;
+      throw new Error(`Endpoint indisponível (${detail}). Verifique se seu plano RapidAPI inclui este endpoint.`);
+    }
+
+    throw new Error(`API ${res.status}: ${errorBody.substring(0, 300)}`);
   }
   throw new Error("Max retries exceeded");
+}
+
+// ─── Diagnostic fetch (non-throwing) ─────────────────────────────
+async function diagnosticFetch(url: string, headers: Record<string, string>): Promise<{ ok: boolean; status: number; contentType: string; preview: string }> {
+  try {
+    const res = await fetch(url, { headers });
+    const contentType = res.headers.get("content-type") || "";
+    const text = await res.text();
+    return { ok: res.ok, status: res.status, contentType, preview: text.substring(0, 300) };
+  } catch (e: any) {
+    return { ok: false, status: 0, contentType: "", preview: e.message };
+  }
 }
 
 // ─── Main handler ────────────────────────────────────────────────
@@ -365,15 +402,61 @@ Deno.serve(async (req) => {
     const src = sourceMap.get(sourceId);
     if (!src) return json({ ok: false, error: `Source inválida: ${sourceId}. Use: ${ALL_SOURCES.map(s => s.id).join(", ")}` }, 400);
 
+    const url = `${API_BASE}${src.searchPath("Jordan 1", 1)}`;
+
+    // First do a diagnostic fetch to detect issues before processing
+    const diag = await diagnosticFetch(url, apiHeaders);
+    if (!diag.ok) {
+      return json({
+        ok: false,
+        source: src.name,
+        endpoint: url.replace(rapidKey!, "***"),
+        status: diag.status,
+        content_type: diag.contentType,
+        error: diag.status === 404
+          ? `Endpoint não encontrado (404). Seu plano RapidAPI pode não incluir ${src.name}. Verifique em rapidapi.com.`
+          : diag.status === 403
+          ? `Acesso negado (403). Seu plano RapidAPI pode não incluir ${src.name}.`
+          : `Erro ${diag.status}: ${diag.preview.substring(0, 200)}`,
+      });
+    }
+
     try {
-      const url = `${API_BASE}${src.searchPath("Jordan 1", 1)}`;
-      const data = await throttledFetch(url, apiHeaders);
+      // Parse the diagnostic result as JSON
+      let data: any;
+      try { data = JSON.parse(diag.preview.length > 300 ? (await (await fetch(url, { headers: apiHeaders })).text()) : diag.preview); }
+      catch { data = await throttledFetch(url, apiHeaders); }
+      
       const items = src.extractItems(data);
       const normalized = items.slice(0, 3).map(src.normalize).filter(Boolean);
       return json({ ok: true, source: src.name, raw_count: items.length, normalized_sample: normalized, raw_sample: items[0] || null });
     } catch (e: any) {
       return json({ ok: false, source: src.name, error: e.message });
     }
+  }
+
+  // ─── Test all sources at once ──────────────────────────────────
+  if (mode === "test_all") {
+    const results: any[] = [];
+    for (const src of ALL_SOURCES) {
+      const url = `${API_BASE}${src.searchPath("Jordan 1", 1)}`;
+      const diag = await diagnosticFetch(url, apiHeaders);
+      results.push({
+        source: src.id,
+        name: src.name,
+        ok: diag.ok,
+        status: diag.status,
+        content_type: diag.contentType,
+        is_json: diag.contentType.includes("application/json"),
+        error: !diag.ok
+          ? diag.status === 404 ? "Endpoint não encontrado — plano pode não incluir"
+          : diag.status === 403 ? "Acesso negado — plano pode não incluir"
+          : `HTTP ${diag.status}`
+          : null,
+      });
+      await sleep(300); // Respect rate limits
+    }
+    return json({ ok: true, results });
   }
 
   // ─── Search & import new SKUs from a source ──────────────────
