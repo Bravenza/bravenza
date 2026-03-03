@@ -289,6 +289,72 @@ export default function CatalogSeedPage() {
     cancelRef.current = true;
   };
 
+  // ─── Multi-source helpers ──────────────────────────────────
+  const callMultisourceApi = async (body: any) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("Sessão expirada");
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/catalog-multisource`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }
+    );
+    return res.json();
+  };
+
+  const handleMsTest = async () => {
+    setMsTesting(true);
+    setMsTestResult(null);
+    try {
+      const data = await callMultisourceApi({ mode: "test", source: msSource });
+      setMsTestResult(data);
+      toast({ title: data.ok ? `${msSource} OK ✓` : `${msSource} falhou`, variant: data.ok ? "default" : "destructive" });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setMsTesting(false);
+    }
+  };
+
+  const handleMsSearch = async () => {
+    if (!msQuery.trim()) return;
+    setMsSearching(true);
+    setMsSearchResult(null);
+    try {
+      const data = await callMultisourceApi({ mode: "search", source: msSource, query: msQuery, page: msPage, limit: 30 });
+      setMsSearchResult(data);
+      if (data.ok) {
+        toast({ title: `${data.inserted || 0} novos inseridos de ${data.source}` });
+      } else {
+        toast({ title: "Erro", description: data.error, variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setMsSearching(false);
+    }
+  };
+
+  const handleMsEnrich = async () => {
+    setMsEnriching(true);
+    setMsEnrichResult(null);
+    try {
+      const data = await callMultisourceApi({ mode: "enrich", source: msSource, limit: 20 });
+      setMsEnrichResult(data);
+      if (data.ok) {
+        toast({ title: `${data.enriched || 0} modelos enriquecidos via ${data.source}` });
+      } else {
+        toast({ title: "Erro", description: data.error, variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setMsEnriching(false);
+    }
+  };
+
   const totals = brandResults.reduce(
     (acc, r) => ({
       fetched: acc.fetched + (r.fetched || 0),
