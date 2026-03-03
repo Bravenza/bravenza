@@ -598,7 +598,7 @@ function ProductDetailPageInner() {
                   ? `R$ ${product.retail_price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
                   : "—"
               } />
-              <SpecRow icon={<Palette className="h-3.5 w-3.5" />} label="Cor" value={product.colorway || "—"} even />
+              <SpecRow icon={<Palette className="h-3.5 w-3.5" />} label="Colorway" value={product.colorway || "—"} even />
             </div>
           </div>
 
