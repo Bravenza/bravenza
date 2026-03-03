@@ -785,7 +785,7 @@ export default function CatalogSeedPage() {
                   {msTestResult.results.map((r: any) => (
                     <div key={r.source} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 text-sm">
                       <div className="flex items-center gap-2">
-                        {r.ok ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-destructive" />}
+                        {r.ok ? <CheckCircle2 className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-destructive" />}
                         <span className="font-medium">{r.name}</span>
                       </div>
                       <span className="text-xs text-muted-foreground">
