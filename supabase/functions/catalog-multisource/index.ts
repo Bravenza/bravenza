@@ -240,6 +240,14 @@ const goat: SourceDef = {
       releaseDate: item.release_date || null,
     };
   },
+  extraEndpoints: [
+    {
+      id: "goat_recommended",
+      label: "Produtos similares (por ID)",
+      buildPath: (productId) => `/goat/recommended?productId=${encodeURIComponent(productId || "")}&limit=10`,
+      extractItems: genericExtract,
+    },
+  ],
 };
 
 // ─── KicksCrew ───────────────────────────────────────────────────
