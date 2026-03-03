@@ -143,7 +143,7 @@ const flightClub: SourceDef = {
   name: "FlightClub",
   hasSearch: true,
   hasDescription: true,
-  searchPath: (q) => `/fightclubonly?query=${encodeURIComponent(q)}`,
+  searchPath: (q) => `/fightclubonly?query=${encodeURIComponent(q)}&hitsPerPage=20`,
   descriptionPath: (sku) => `/fightclub-description?sku=${encodeURIComponent(sku.replace(/[\s-]/g, "").toLowerCase())}`,
   extractItems: (data) => {
     if (Array.isArray(data)) return data;
@@ -180,14 +180,14 @@ const flightClub: SourceDef = {
   extraEndpoints: [
     {
       id: "fc_brands",
-      label: "Marcas disponíveis",
-      buildPath: () => `/fightclub-brand`,
+      label: "Buscar por marca",
+      buildPath: (brand) => `/fightclub-brand?brand=${encodeURIComponent(brand || "adidas")}`,
       extractItems: genericExtract,
     },
     {
       id: "fc_releases",
       label: "Novos lançamentos",
-      buildPath: () => `/fightclub-releases`,
+      buildPath: () => `/fightclub-releases?hitsPerPage=20`,
       extractItems: genericExtract,
     },
     {
