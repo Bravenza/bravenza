@@ -366,9 +366,9 @@ Deno.serve(async (req) => {
         inserted: stats.inserted, updated: stats.updated, skipped: stats.skipped,
         skipped_existing: stats.skipped_existing,
         queries_used: stats.queries_used, pages_scanned: stats.pages_scanned,
-        missing_image: stats.missing_image, missing_msrp: stats.missing_msrp,
-        missing_release: stats.missing_release, missing_silhouette: stats.missing_silhouette,
         translated: stats.translated, pending: stats.pending, errors: stats.errors,
+        has_more: hasMore, next_query_index: lastQueryIndex + 1,
+        total_in_db: existingCount + stats.inserted,
       });
     } catch (e: any) {
       console.error(`catalog-seed brand ${brandName} error:`, e);
