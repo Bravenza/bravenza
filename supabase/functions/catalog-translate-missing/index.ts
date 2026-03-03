@@ -25,8 +25,7 @@ Deno.serve(async (req) => {
   const { data: adm } = await sb.from("admin_profiles").select("id").eq("user_id", claims.claims.sub).maybeSingle();
   if (!adm) return json({ error: "Admin only" }, 403);
 
-  const apiKey = Deno.env.get("OPENAI_API_KEY");
-  const provider = Deno.env.get("TRANSLATE_PROVIDER") || "none";
+  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
 
   let body: any = {};
   try { body = await req.json(); } catch {}
@@ -68,19 +67,18 @@ Deno.serve(async (req) => {
       continue;
     }
 
-    // Need OpenAI for translation
-    if (provider === "none" || !apiKey) {
+    // Need Lovable AI for translation
+    if (!lovableKey) {
       // Can't translate, leave as pending
       continue;
     }
 
     try {
-      const model = Deno.env.get("OPENAI_TRANSLATE_MODEL") || "gpt-4.1-mini";
-      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model,
+          model: "google/gemini-2.5-flash",
           temperature: 0.2,
           messages: [
             {
@@ -95,7 +93,9 @@ Deno.serve(async (req) => {
         }),
       });
 
-      if (!res.ok) throw new Error(`OpenAI ${res.status}`);
+      if (res.status === 429) { console.warn("Lovable AI rate limited"); continue; }
+      if (res.status === 402) { console.error("Lovable AI credits exhausted"); break; }
+      if (!res.ok) throw new Error(`Lovable AI ${res.status}`);
       const data = await res.json();
       const content = data.choices?.[0]?.message?.content || "";
       const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -125,8 +125,8 @@ Deno.serve(async (req) => {
     total_processed: pending.length,
     translated,
     errors,
-    still_pending: provider === "none" || !apiKey ? pending.filter((p: any) => p.description_en).length : 0,
-    provider_configured: provider !== "none" && !!apiKey,
+    still_pending: !lovableKey ? pending.filter((p: any) => p.description_en).length : 0,
+    provider_configured: !!lovableKey,
     sample_errors: sampleErrors,
   });
 });

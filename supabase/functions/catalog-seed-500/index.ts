@@ -93,8 +93,7 @@ async function translateBatch(
   items: { sku: string; name: string | null; description: string | null; colorway: string | null; brand: string; silhouette: string | null }[],
 ): Promise<Map<string, { name_pt: string; desc_pt: string }>> {
   const result = new Map<string, { name_pt: string; desc_pt: string }>();
-  const apiKey = Deno.env.get("OPENAI_API_KEY");
-  const provider = Deno.env.get("TRANSLATE_PROVIDER") || "none";
+  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   
   // Generate neutral descriptions for items without english desc
   for (const it of items) {
@@ -108,7 +107,10 @@ async function translateBatch(
     }
   }
 
-  if (provider === "none" || !apiKey) return result;
+  if (!lovableKey) {
+    console.warn("LOVABLE_API_KEY not configured, skipping AI translation");
+    return result;
+  }
 
   // Only translate items that have english text and weren't already handled
   const toTranslate = items.filter((it) => it.description && !result.has(it.sku));
@@ -122,12 +124,11 @@ async function translateBatch(
       .join("\n");
 
     try {
-      const model = Deno.env.get("OPENAI_TRANSLATE_MODEL") || "gpt-4.1-mini";
-      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model,
+          model: "google/gemini-2.5-flash",
           temperature: 0.2,
           messages: [
             {
@@ -140,7 +141,10 @@ async function translateBatch(
         }),
       });
 
-      if (!res.ok) throw new Error(`OpenAI ${res.status}`);
+      if (res.status === 429) { console.warn("Lovable AI rate limited, waiting..."); await sleep(5000); continue; }
+      if (res.status === 402) { console.error("Lovable AI credits exhausted"); break; }
+      if (!res.ok) throw new Error(`Lovable AI ${res.status}: ${await res.text().catch(() => "")}`);
+
       const data = await res.json();
       const content = data.choices?.[0]?.message?.content || "";
       const jsonMatch = content.match(/\[[\s\S]*\]/);
