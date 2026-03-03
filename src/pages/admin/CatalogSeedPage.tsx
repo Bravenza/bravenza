@@ -378,7 +378,23 @@ export default function CatalogSeedPage() {
     try {
       const data = await callMultisourceApi({ mode: "test", source: msSource });
       setMsTestResult(data);
-      toast({ title: data.ok ? `${msSource} OK ✓` : `${msSource} falhou`, variant: data.ok ? "default" : "destructive" });
+      toast({ title: data.ok ? `${msSource} OK ✓` : `${msSource} falhou`, description: data.error || undefined, variant: data.ok ? "default" : "destructive" });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setMsTesting(false);
+    }
+  };
+
+  const handleMsTestAll = async () => {
+    setMsTesting(true);
+    setMsTestResult(null);
+    try {
+      const data = await callMultisourceApi({ mode: "test_all" });
+      setMsTestResult(data);
+      const working = (data.results || []).filter((r: any) => r.ok).length;
+      const total = (data.results || []).length;
+      toast({ title: `${working}/${total} fontes operacionais`, variant: working > 0 ? "default" : "destructive" });
     } catch (e: any) {
       toast({ title: "Erro", description: e.message, variant: "destructive" });
     } finally {
