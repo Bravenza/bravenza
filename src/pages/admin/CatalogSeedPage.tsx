@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Zap, Database, CheckCircle2, AlertTriangle, XCircle, Play, Square, Sparkles, Eye, Globe, Search, RefreshCw } from "lucide-react";
+import { Loader2, Zap, Database, CheckCircle2, AlertTriangle, XCircle, Play, Square, Sparkles, Eye, Globe, Search, RefreshCw, ArrowRightLeft } from "lucide-react";
 
 interface BrandResult {
   brand: string;
@@ -56,6 +56,74 @@ export default function CatalogSeedPage() {
     { id: "stadiumgoods", name: "StadiumGoods" },
     { id: "kickscrew", name: "KicksCrew" },
   ];
+
+  // Sync state
+  const [syncPreview, setSyncPreview] = useState<any>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<any>(null);
+  const [syncProgress, setSyncProgress] = useState(0);
+
+  const callSyncApi = async (body: any) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("Sessão expirada");
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/catalog-sync`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }
+    );
+    return res.json();
+  };
+
+  const handleSyncPreview = async () => {
+    setSyncPreview(null);
+    try {
+      const data = await callSyncApi({ mode: "preview" });
+      setSyncPreview(data);
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    setSyncResult(null);
+    setSyncProgress(0);
+    cancelRef.current = false;
+    let totalSynced = 0;
+    let totalSkipped = 0;
+    let totalErrors = 0;
+    let offset = 0;
+    const batchSize = 100;
+
+    try {
+      while (!cancelRef.current) {
+        const data = await callSyncApi({ mode: "sync", batch_size: batchSize, offset });
+        if (!data.ok) {
+          toast({ title: "Erro no sync", description: data.error, variant: "destructive" });
+          break;
+        }
+        totalSynced += data.synced || 0;
+        totalSkipped += data.skipped || 0;
+        totalErrors += data.errors || 0;
+        offset = data.next_offset;
+        setSyncProgress(Math.round((offset / (syncPreview?.total_sneaker_models || 1011)) * 100));
+        setSyncResult({ synced: totalSynced, skipped: totalSkipped, errors: totalErrors });
+
+        if (!data.has_more) {
+          toast({ title: `✓ Sync completo: ${totalSynced} produtos sincronizados` });
+          break;
+        }
+        await new Promise(r => setTimeout(r, 300));
+      }
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const callApi = async (body: any) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -411,6 +479,66 @@ export default function CatalogSeedPage() {
           Gere ~500 modelos de sneakers automaticamente via Sneaker Database - StockX (RapidAPI).
         </p>
       </div>
+
+      {/* Sync Catalog → Marketplace */}
+      <Card className="border-primary/30 bg-primary/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ArrowRightLeft className="h-5 w-5" />
+            Sincronizar Catálogo → Marketplace
+          </CardTitle>
+          <CardDescription>
+            Publica os modelos do catálogo oficial (sneaker_models) como produtos visíveis no marketplace.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Button onClick={handleSyncPreview} variant="outline" disabled={syncing}>
+              <Eye className="h-4 w-4 mr-2" />
+              Ver pendentes
+            </Button>
+            <Button onClick={handleSync} disabled={syncing || !syncPreview || syncPreview.estimated_to_sync === 0}>
+              {syncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArrowRightLeft className="h-4 w-4 mr-2" />}
+              {syncing ? "Sincronizando..." : "Sincronizar agora"}
+            </Button>
+            {syncing && (
+              <Button onClick={handleCancel} variant="destructive" size="sm">
+                <Square className="h-4 w-4 mr-1" /> Cancelar
+              </Button>
+            )}
+          </div>
+
+          {syncPreview && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <StatCard label="No Catálogo" value={syncPreview.total_sneaker_models} />
+              <StatCard label="No Marketplace" value={syncPreview.total_marketplace_products} />
+              <StatCard label="SKUs já sync" value={syncPreview.existing_skus_in_marketplace} />
+              <StatCard label="A sincronizar" value={syncPreview.estimated_to_sync} />
+            </div>
+          )}
+
+          {syncing && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Progresso</span>
+                <span>{syncProgress}%</span>
+              </div>
+              <Progress value={syncProgress} className="h-3" />
+            </div>
+          )}
+
+          {syncResult && !syncing && (
+            <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+              <p className="text-sm font-medium">✓ Sync concluído</p>
+              <div className="grid grid-cols-3 gap-3">
+                <StatCard label="Sincronizados" value={syncResult.synced} />
+                <StatCard label="Já existiam" value={syncResult.skipped} />
+                <StatCard label="Erros" value={syncResult.errors} />
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Connector Status */}
       <Card>
