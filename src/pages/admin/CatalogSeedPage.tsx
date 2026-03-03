@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Zap, Database, CheckCircle2, AlertTriangle, XCircle, Play, Square } from "lucide-react";
+import { Loader2, Zap, Database, CheckCircle2, AlertTriangle, XCircle, Play, Square, Sparkles, Eye } from "lucide-react";
 
 interface BrandResult {
   brand: string;
@@ -29,6 +29,12 @@ export default function CatalogSeedPage() {
   const [currentBrand, setCurrentBrand] = useState<string | null>(null);
   const [overallProgress, setOverallProgress] = useState(0);
   const cancelRef = useRef(false);
+
+  // Enrichment state
+  const [enriching, setEnriching] = useState(false);
+  const [enrichPreview, setEnrichPreview] = useState<any>(null);
+  const [enrichResult, setEnrichResult] = useState<any>(null);
+  const [previewing, setPreviewing] = useState(false);
 
   const callApi = async (body: any) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -144,6 +150,67 @@ export default function CatalogSeedPage() {
     } finally {
       setSeeding(false);
       setCurrentBrand(null);
+    }
+  };
+
+  const callEnrichApi = async (body: any) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("Sessão expirada");
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120_000);
+
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enrich-descriptions`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        }
+      );
+      clearTimeout(timeoutId);
+      return res.json();
+    } catch (e: any) {
+      clearTimeout(timeoutId);
+      if (e.name === "AbortError") {
+        return { ok: false, error: "Timeout: demorou demais." };
+      }
+      throw e;
+    }
+  };
+
+  const handleEnrichPreview = async () => {
+    setPreviewing(true);
+    setEnrichPreview(null);
+    try {
+      const data = await callEnrichApi({ mode: "preview" });
+      setEnrichPreview(data);
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setPreviewing(false);
+    }
+  };
+
+  const handleEnrich = async () => {
+    setEnriching(true);
+    setEnrichResult(null);
+    try {
+      const data = await callEnrichApi({ mode: "enrich" });
+      setEnrichResult(data);
+      toast({
+        title: data.ok ? `${data.enriched} descrições enriquecidas ✓` : "Erro no enriquecimento",
+        variant: data.ok ? "default" : "destructive",
+      });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setEnriching(false);
     }
   };
 
@@ -297,6 +364,61 @@ export default function CatalogSeedPage() {
                   ))}
                 </div>
               </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Description Enrichment */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5" />
+            Enriquecimento de descrições
+          </CardTitle>
+          <CardDescription>
+            Reescreve descrições fracas ou genéricas com tom editorial usando IA. Processa até 20 modelos por execução.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Button onClick={handleEnrichPreview} disabled={previewing || enriching} variant="outline">
+              {previewing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Eye className="h-4 w-4 mr-2" />}
+              Ver candidatos
+            </Button>
+            <Button onClick={handleEnrich} disabled={enriching || previewing}>
+              {enriching ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+              {enriching ? "Enriquecendo..." : "Enriquecer descrições"}
+            </Button>
+          </div>
+
+          {enrichPreview && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">
+                {enrichPreview.total_weak} modelos com descrições fracas encontrados
+              </p>
+              {enrichPreview.samples?.map((s: any, idx: number) => (
+                <div key={idx} className="p-3 bg-muted/50 rounded-lg text-xs space-y-1">
+                  <p className="font-medium">{s.name} ({s.sku})</p>
+                  <p className="text-muted-foreground italic">
+                    {s.current_desc ? `"${s.current_desc.slice(0, 120)}..."` : "Sem descrição"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {enrichResult && (
+            <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+              <p className="text-sm font-medium">Resultado:</p>
+              <div className="grid grid-cols-3 gap-3">
+                <StatCard label="Enriquecidos" value={enrichResult.enriched} />
+                <StatCard label="Pulados" value={enrichResult.skipped} />
+                <StatCard label="Erros" value={enrichResult.errors} />
+              </div>
+              {enrichResult.message && (
+                <p className="text-xs text-muted-foreground mt-2">{enrichResult.message}</p>
+              )}
             </div>
           )}
         </CardContent>
