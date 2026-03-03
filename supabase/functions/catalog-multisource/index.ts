@@ -177,6 +177,26 @@ const flightClub: SourceDef = {
       releaseDate: item.releaseDate || item.release_date || null,
     };
   },
+  extraEndpoints: [
+    {
+      id: "fc_brands",
+      label: "Marcas disponíveis",
+      buildPath: () => `/fightclub-brand`,
+      extractItems: genericExtract,
+    },
+    {
+      id: "fc_releases",
+      label: "Novos lançamentos",
+      buildPath: () => `/fightclub-releases`,
+      extractItems: genericExtract,
+    },
+    {
+      id: "fc_recommendation",
+      label: "Recomendações (por ID)",
+      buildPath: (id) => `/fightclub-recommendation?id=${encodeURIComponent(id || "")}`,
+      extractItems: genericExtract,
+    },
+  ],
 };
 
 // ─── GOAT ────────────────────────────────────────────────────────
