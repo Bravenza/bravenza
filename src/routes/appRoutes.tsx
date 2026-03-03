@@ -27,6 +27,7 @@ const AppDocumentsPage = lazy(() => import("@/pages/app/AppDocumentsPage"));
 const AppMessagesPage = lazy(() => import("@/pages/app/AppMessagesPage"));
 const AppAddressesPage = lazy(() => import("@/pages/app/AppAddressesPage"));
 const AppSecurityPage = lazy(() => import("@/pages/app/AppSecurityPage"));
+const MyAlertsPage = lazy(() => import("@/pages/marketplace/MyAlertsPage"));
 
 export const appRoutes = (
   <>
@@ -52,6 +53,7 @@ export const appRoutes = (
       <Route path="mensagens" element={<RouteWrapper section="Mensagens" skeleton="list"><AppMessagesPage /></RouteWrapper>} />
       <Route path="enderecos" element={<RouteWrapper section="Endereços" skeleton="list"><AppAddressesPage /></RouteWrapper>} />
       <Route path="seguranca" element={<RouteWrapper section="Segurança" skeleton="detail"><AppSecurityPage /></RouteWrapper>} />
+      <Route path="alertas" element={<RouteWrapper section="Alertas" skeleton="list"><MyAlertsPage /></RouteWrapper>} />
     </Route>
   </>
 );

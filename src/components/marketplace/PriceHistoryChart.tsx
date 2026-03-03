@@ -1,11 +1,13 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
-import { TrendingDown, TrendingUp, Minus, History, Bell } from "lucide-react";
+import { TrendingDown, TrendingUp, Minus, History, Award } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { marketplaceRequest } from "@/hooks/marketplace/api";
+import { useConfig } from "@/hooks/useConfig";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface PricePoint {
   recorded_date: string;
@@ -21,14 +23,31 @@ interface PriceHistoryChartProps {
   className?: string;
 }
 
+const fmt = (v: number) =>
+  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+const PERIODS = [
+  { days: 30, label: "30d" },
+  { days: 90, label: "90d" },
+  { days: 365, label: "1a" },
+] as const;
+
 export function PriceHistoryChart({ productId, cpf, className }: PriceHistoryChartProps) {
+  const { isEnabled } = useConfig();
+  const isV2 = isEnabled("enable_price_history_v2");
+
   const [history, setHistory] = useState<PricePoint[]>([]);
   const [live, setLive] = useState<{ min: number; max: number; avg: number; count: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(90);
 
+  // Tooltip state
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; price: number; date: string; idx: number } | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+
   useEffect(() => {
-    const fetch = async () => {
+    setLoading(true);
+    const fetchData = async () => {
       try {
         const res = await marketplaceRequest(cpf || "visitor", "price-history", "GET", undefined, {
           product_id: productId, days: days.toString(),
@@ -38,9 +57,10 @@ export function PriceHistoryChart({ productId, cpf, className }: PriceHistoryCha
       } catch { /* ignore */ }
       finally { setLoading(false); }
     };
-    fetch();
+    fetchData();
   }, [productId, cpf, days]);
 
+  // Compute chart geometry
   const chartData = useMemo(() => {
     if (history.length < 2) return null;
     const prices = history.map(p => p.min_price);
@@ -48,8 +68,8 @@ export function PriceHistoryChart({ productId, cpf, className }: PriceHistoryCha
     const max = Math.max(...prices);
     const range = max - min || 1;
     const width = 320;
-    const height = 100;
-    const pad = 8;
+    const height = 120;
+    const pad = 12;
 
     const points = prices.map((price, i) => {
       const x = pad + (i / (prices.length - 1)) * (width - pad * 2);
@@ -63,10 +83,13 @@ export function PriceHistoryChart({ productId, cpf, className }: PriceHistoryCha
     const firstPrice = prices[0];
     const lastPrice = prices[prices.length - 1];
     const trendPercent = ((lastPrice - firstPrice) / firstPrice) * 100;
-    const trend = trendPercent < -2 ? "down" : trendPercent > 2 ? "up" : "stable";
+    const trend: "down" | "up" | "stable" = trendPercent < -2 ? "down" : trendPercent > 2 ? "up" : "stable";
 
-    return { points, pathD, fillD, width, height, trend, trendPercent, min, max };
-  }, [history]);
+    // Check if current price is 90-day low
+    const is90DayLow = live && history.length > 7 && live.min <= Math.min(...prices);
+
+    return { points, pathD, fillD, width, height, trend, trendPercent, min, max, is90DayLow };
+  }, [history, live]);
 
   if (loading) {
     return (
@@ -85,59 +108,104 @@ export function PriceHistoryChart({ productId, cpf, className }: PriceHistoryCha
   const TrendIcon = chartData?.trend === "down" ? TrendingDown : chartData?.trend === "up" ? TrendingUp : Minus;
   const trendColor = chartData?.trend === "down" ? "text-emerald-500" : chartData?.trend === "up" ? "text-red-400" : "text-muted-foreground";
 
-  const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const handleSvgMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!chartData || !svgRef.current || !isV2) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const mouseX = ((e.clientX - rect.left) / rect.width) * chartData.width;
+    // Find nearest point
+    let closest = chartData.points[0];
+    let closestIdx = 0;
+    let closestDist = Infinity;
+    chartData.points.forEach((p, i) => {
+      const dist = Math.abs(p.x - mouseX);
+      if (dist < closestDist) { closestDist = dist; closest = p; closestIdx = i; }
+    });
+    if (closestDist < 20) {
+      setTooltip({ x: closest.x, y: closest.y, price: closest.price, date: closest.date, idx: closestIdx });
+    } else {
+      setTooltip(null);
+    }
+  };
+
+  const formatDateStr = (d: string) => {
+    try { return format(parseISO(d), "dd MMM yyyy", { locale: ptBR }); } catch { return d; }
+  };
 
   return (
     <Card className={cn("card-premium overflow-hidden", className)}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <History className="h-4 w-4 text-primary" />
-            Histórico de Preço
-          </CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <History className="h-4 w-4 text-primary" />
+              Histórico de Preço
+            </CardTitle>
+            {isV2 && chartData?.is90DayLow && (
+              <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 gap-1 text-[10px] px-1.5 py-0">
+                <Award className="h-3 w-3" />
+                Menor preço 90d
+              </Badge>
+            )}
+          </div>
           <div className="flex gap-1">
-            {[30, 90].map(d => (
+            {(isV2 ? PERIODS : PERIODS.slice(0, 2)).map(p => (
               <button
-                key={d}
-                onClick={() => setDays(d)}
+                key={p.days}
+                onClick={() => setDays(p.days)}
                 className={cn(
                   "text-[10px] px-2 py-0.5 rounded-full transition-colors",
-                  days === d ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:text-foreground"
+                  days === p.days ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {d}d
+                {p.label}
               </button>
             ))}
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Live stats */}
+        {/* Stats cards */}
         {live && (
           <div className="grid grid-cols-3 gap-2">
-            <div className="text-center p-2 rounded-lg bg-emerald-500/5">
+            <div className="text-center p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
               <p className="text-[10px] text-muted-foreground">Menor</p>
-              <p className="text-sm font-bold text-emerald-600">{fmt(live.min)}</p>
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{fmt(live.min)}</p>
             </div>
-            <div className="text-center p-2 rounded-lg bg-muted/20">
+            <div className="text-center p-2.5 rounded-xl bg-muted/30 border border-border/30">
               <p className="text-[10px] text-muted-foreground">Média</p>
               <p className="text-sm font-bold">{fmt(live.avg)}</p>
             </div>
-            <div className="text-center p-2 rounded-lg bg-red-500/5">
+            <div className="text-center p-2.5 rounded-xl bg-red-500/5 border border-red-500/10">
               <p className="text-[10px] text-muted-foreground">Maior</p>
               <p className="text-sm font-bold text-red-400">{fmt(live.max)}</p>
             </div>
           </div>
         )}
 
-        {/* Chart */}
+        {/* Chart with interactive tooltip */}
         {chartData && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <svg width="100%" viewBox={`0 0 ${chartData.width} ${chartData.height}`} className="rounded-lg">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative">
+            <svg
+              ref={svgRef}
+              width="100%"
+              viewBox={`0 0 ${chartData.width} ${chartData.height}`}
+              className="rounded-lg cursor-crosshair"
+              onMouseMove={handleSvgMouseMove}
+              onMouseLeave={() => setTooltip(null)}
+            >
               <path d={chartData.fillD} fill={fillColor} />
               <path d={chartData.pathD} fill="none" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              {/* Last point dot */}
-              {chartData.points.length > 0 && (
+
+              {/* Tooltip vertical line + dot */}
+              {isV2 && tooltip && (
+                <>
+                  <line x1={tooltip.x} y1={12} x2={tooltip.x} y2={chartData.height - 12} stroke={strokeColor} strokeWidth="1" strokeDasharray="3,3" opacity={0.4} />
+                  <circle cx={tooltip.x} cy={tooltip.y} r="5" fill={strokeColor} stroke="hsl(var(--card))" strokeWidth="2" />
+                </>
+              )}
+
+              {/* Last point (when no tooltip) */}
+              {(!tooltip || !isV2) && chartData.points.length > 0 && (
                 <circle
                   cx={chartData.points[chartData.points.length - 1].x}
                   cy={chartData.points[chartData.points.length - 1].y}
@@ -145,9 +213,24 @@ export function PriceHistoryChart({ productId, cpf, className }: PriceHistoryCha
                 />
               )}
             </svg>
+
+            {/* Floating tooltip */}
+            {isV2 && tooltip && (
+              <div
+                className="absolute pointer-events-none bg-card border border-border/50 rounded-lg px-2.5 py-1.5 shadow-lg z-10 -translate-x-1/2"
+                style={{
+                  left: `${(tooltip.x / chartData.width) * 100}%`,
+                  top: `${Math.max(0, (tooltip.y / chartData.height) * 100 - 30)}%`,
+                }}
+              >
+                <p className="text-[10px] text-muted-foreground">{formatDateStr(tooltip.date)}</p>
+                <p className="text-xs font-bold">{fmt(tooltip.price)}</p>
+              </div>
+            )}
+
             <div className="flex items-center justify-between mt-2">
               <span className="text-[10px] text-muted-foreground">
-                {history[0]?.recorded_date} — {history[history.length - 1]?.recorded_date}
+                {formatDateStr(history[0]?.recorded_date)} — {formatDateStr(history[history.length - 1]?.recorded_date)}
               </span>
               <span className={cn("flex items-center gap-0.5 text-xs font-semibold", trendColor)}>
                 <TrendIcon className="h-3 w-3" />
@@ -160,6 +243,13 @@ export function PriceHistoryChart({ productId, cpf, className }: PriceHistoryCha
         {!chartData && (
           <p className="text-xs text-muted-foreground text-center py-4">
             Dados históricos serão disponibilizados em breve
+          </p>
+        )}
+
+        {/* Offers count */}
+        {live && live.count > 0 && (
+          <p className="text-[10px] text-muted-foreground text-center">
+            {live.count} oferta{live.count !== 1 ? "s" : ""} ativa{live.count !== 1 ? "s" : ""} agora
           </p>
         )}
       </CardContent>

@@ -25,6 +25,8 @@ import { useClientSession } from "@/hooks/useClientSession";
 // Checkout is now a full page
 import { ListingDetailSheet } from "@/components/client/vault/marketplace/ListingDetailSheet";
 import { ProductWatchlistButton } from "@/components/marketplace/ProductWatchlistButton";
+import { AlertConfigModal } from "@/components/marketplace/AlertConfigModal";
+import { useConfig } from "@/hooks/useConfig";
 import { TrustBadges } from "@/components/marketplace/TrustBadges";
 import { SpecRow } from "@/components/marketplace/SpecRow";
 import { OfferCard } from "@/components/marketplace/OfferCard";
@@ -86,6 +88,8 @@ function ProductDetailPageInner() {
   const { product, offers, allOffers, sizes, isLoading, fetchProduct, fetchOffersBySize, watchlistStatus, checkWatchlist, toggleWatchlist, reviews, reviewsLoading, reviewsAverage, reviewsTotal, fetchReviews, submitReview, comments, commentsLoading, fetchComments, submitComment, analytics, analyticsLoading, fetchAnalytics } = catalog;
   const { createOrder } = useMarketplace(cpf || null);
   const isMobile = useIsMobile();
+  const { isEnabled } = useConfig();
+  const alertsV2 = isEnabled("enable_alerts_v2");
   const heroRef = useRef<HTMLDivElement>(null);
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -509,6 +513,15 @@ function ProductDetailPageInner() {
                     onToggle={async (mp) => {
                       await toggleWatchlist(product.id, selectedSize, mp);
                     }}
+                  />
+                )}
+                {alertsV2 && cpf && cpf !== "visitor" && product && (
+                  <AlertConfigModal
+                    productId={product.id}
+                    productName={`${product.brand} ${product.model}`}
+                    cpf={cpf}
+                    sizes={sizes}
+                    currentLowest={product.lowest_price}
                   />
                 )}
                 <Button
