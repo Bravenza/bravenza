@@ -34,18 +34,31 @@ export default function CatalogSeedPage() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error("Sessão expirada");
 
-    const res = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/catalog-seed-500`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120_000); // 2 min timeout
+
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/catalog-seed-500`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        }
+      );
+      clearTimeout(timeoutId);
+      return res.json();
+    } catch (e: any) {
+      clearTimeout(timeoutId);
+      if (e.name === "AbortError") {
+        return { ok: false, error: "Timeout: a marca demorou demais. Tente novamente." };
       }
-    );
-    return res.json();
+      throw e;
+    }
   };
 
   const handleTest = async () => {
