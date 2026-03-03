@@ -81,6 +81,7 @@ const navGroups: NavGroup[] = [
       { icon: Gift, label: "Indicações", path: "/admin/indicacoes" },
       { icon: Users, label: "Usuários", path: "/admin/usuarios" },
       { icon: Package, label: "Catálogo Oficial", path: "/admin/catalog" },
+      { icon: Sparkles, label: "Importar Catálogo", path: "/admin/catalog/seed-500" },
     ],
   },
   {
