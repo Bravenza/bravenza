@@ -480,6 +480,66 @@ export default function CatalogSeedPage() {
         </p>
       </div>
 
+      {/* Sync Catalog → Marketplace */}
+      <Card className="border-primary/30 bg-primary/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ArrowRightLeft className="h-5 w-5" />
+            Sincronizar Catálogo → Marketplace
+          </CardTitle>
+          <CardDescription>
+            Publica os modelos do catálogo oficial (sneaker_models) como produtos visíveis no marketplace.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Button onClick={handleSyncPreview} variant="outline" disabled={syncing}>
+              <Eye className="h-4 w-4 mr-2" />
+              Ver pendentes
+            </Button>
+            <Button onClick={handleSync} disabled={syncing || !syncPreview || syncPreview.estimated_to_sync === 0}>
+              {syncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArrowRightLeft className="h-4 w-4 mr-2" />}
+              {syncing ? "Sincronizando..." : "Sincronizar agora"}
+            </Button>
+            {syncing && (
+              <Button onClick={handleCancel} variant="destructive" size="sm">
+                <Square className="h-4 w-4 mr-1" /> Cancelar
+              </Button>
+            )}
+          </div>
+
+          {syncPreview && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <StatCard label="No Catálogo" value={syncPreview.total_sneaker_models} />
+              <StatCard label="No Marketplace" value={syncPreview.total_marketplace_products} />
+              <StatCard label="SKUs já sync" value={syncPreview.existing_skus_in_marketplace} />
+              <StatCard label="A sincronizar" value={syncPreview.estimated_to_sync} />
+            </div>
+          )}
+
+          {syncing && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Progresso</span>
+                <span>{syncProgress}%</span>
+              </div>
+              <Progress value={syncProgress} className="h-3" />
+            </div>
+          )}
+
+          {syncResult && !syncing && (
+            <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+              <p className="text-sm font-medium">✓ Sync concluído</p>
+              <div className="grid grid-cols-3 gap-3">
+                <StatCard label="Sincronizados" value={syncResult.synced} />
+                <StatCard label="Já existiam" value={syncResult.skipped} />
+                <StatCard label="Erros" value={syncResult.errors} />
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Connector Status */}
       <Card>
         <CardHeader>
