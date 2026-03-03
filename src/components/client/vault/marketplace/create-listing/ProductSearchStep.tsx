@@ -39,7 +39,9 @@ export function ProductSearchStep({ onSelectProduct, onCreateNew, searchProducts
       <div>
         <Label className="text-sm font-semibold">Buscar produto no catálogo</Label>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Pesquise o sneaker que deseja vender ou cadastre um novo
+          {catalogRequired
+            ? "Selecione o sneaker do catálogo para criar seu anúncio"
+            : "Pesquise o sneaker que deseja vender ou cadastre um novo"}
         </p>
       </div>
 
