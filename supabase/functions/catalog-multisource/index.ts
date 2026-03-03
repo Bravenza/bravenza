@@ -77,19 +77,24 @@ function extractSku(item: any): string | null {
 
 // ─── StadiumGoods ────────────────────────────────────────────────
 
+const genericExtract = (data: any): any[] => {
+  if (Array.isArray(data)) return data;
+  for (const k of ["results", "data", "products", "items", "hits", "edges"]) {
+    if (data?.[k] && Array.isArray(data[k])) return data[k];
+  }
+  return [];
+};
+
 const stadiumGoods: SourceDef = {
   id: "stadiumgoods",
   name: "StadiumGoods",
   hasSearch: true,
-  hasDescription: false, // description needs URL, not SKU
+  hasDescription: false,
   searchPath: (q, page) => `/sg/search?query=${encodeURIComponent(q)}&page=${page}`,
   descriptionPath: () => "",
   extractItems: (data) => {
-    if (Array.isArray(data)) return data;
-    for (const k of ["results", "data", "products", "items", "hits", "edges"]) {
-      if (data?.[k] && Array.isArray(data[k])) return data[k];
-    }
-    // StadiumGoods may wrap in edges->node
+    const arr = genericExtract(data);
+    if (arr.length) return arr;
     if (data?.edges) return data.edges.map((e: any) => e.node || e);
     return [];
   },
@@ -109,6 +114,26 @@ const stadiumGoods: SourceDef = {
     };
   },
   normalizeDetail: () => null,
+  extraEndpoints: [
+    {
+      id: "sg_collections",
+      label: "Listar Coleções",
+      buildPath: (page) => `/sg/collections?page=${page || "1"}`,
+      extractItems: genericExtract,
+    },
+    {
+      id: "sg_collection_products",
+      label: "Produtos de uma Coleção",
+      buildPath: (handle) => `/sg/collections/product?collectionsHandle=${encodeURIComponent(handle || "yeezy-380")}&page=1`,
+      extractItems: genericExtract,
+    },
+    {
+      id: "sg_similar",
+      label: "Produtos Similares",
+      buildPath: (productId) => `/sg/similar?productId=${encodeURIComponent(productId || "")}&limit=10`,
+      extractItems: genericExtract,
+    },
+  ],
 };
 
 // ─── FlightClub ──────────────────────────────────────────────────
