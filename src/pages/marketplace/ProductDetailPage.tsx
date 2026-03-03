@@ -116,6 +116,7 @@ function ProductDetailPageInner() {
       id: offer.listing_id || offer.id,
       seller_id: offer.seller_id,
       vault_item_id: null,
+      product_id: offer.product_id || null,
       title: product ? `${product.brand} ${product.model}` : "",
       description: offer.description,
       brand: product?.brand || null,

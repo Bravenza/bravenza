@@ -484,6 +484,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
                                 onUpdate={updateListing}
                                 onDelete={deleteListing}
                                 onRefresh={fetchMyListings}
+                                searchProducts={searchProducts}
                               />
                               <OffersListDialog
                                 listingId={listing.id}
