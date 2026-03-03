@@ -39,6 +39,24 @@ export default function CatalogSeedPage() {
   const [enrichResult, setEnrichResult] = useState<any>(null);
   const [previewing, setPreviewing] = useState(false);
 
+  // Multi-source state
+  const [msSource, setMsSource] = useState("goat");
+  const [msQuery, setMsQuery] = useState("");
+  const [msPage, setMsPage] = useState(1);
+  const [msSearching, setMsSearching] = useState(false);
+  const [msSearchResult, setMsSearchResult] = useState<any>(null);
+  const [msEnriching, setMsEnriching] = useState(false);
+  const [msEnrichResult, setMsEnrichResult] = useState<any>(null);
+  const [msTesting, setMsTesting] = useState(false);
+  const [msTestResult, setMsTestResult] = useState<any>(null);
+
+  const SOURCES = [
+    { id: "goat", name: "GOAT" },
+    { id: "flightclub", name: "FlightClub" },
+    { id: "stadiumgoods", name: "StadiumGoods" },
+    { id: "kickscrew", name: "KicksCrew" },
+  ];
+
   const callApi = async (body: any) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error("Sessão expirada");
