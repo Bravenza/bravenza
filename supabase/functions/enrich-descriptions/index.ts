@@ -15,8 +15,8 @@ const json = (d: unknown, s = 200) =>
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const BATCH_SIZE = 5; // models per AI call
-const MAX_PER_RUN = 20; // max models per invocation to stay within timeout
+const BATCH_SIZE = 3; // models per AI call
+const MAX_PER_RUN = 6; // max models per invocation to stay within timeout
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
@@ -233,9 +233,19 @@ Retorne APENAS o JSON, sem markdown.`,
     }
   }
 
+  // Check if there are more candidates beyond what we processed
+  const { count: remainingCount } = await sb
+    .from("sneaker_models")
+    .select("id", { count: "exact", head: true })
+    .or("description_pt.is.null,description_pt.eq.,description_en.is.null");
+
+  const hasMore = (remainingCount || 0) > 0 && stats.enriched > 0;
+
   return json({
     ok: true,
     ...stats,
+    has_more: hasMore,
+    remaining: remainingCount || 0,
     message: `${stats.enriched} descrições enriquecidas de ${stats.total} candidatos.`,
   });
 });
