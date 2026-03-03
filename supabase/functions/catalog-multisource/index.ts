@@ -206,7 +206,7 @@ const goat: SourceDef = {
   name: "GOAT",
   hasSearch: true,
   hasDescription: true,
-  searchPath: (q) => `/goat-search?query=${encodeURIComponent(q)}`,
+  searchPath: (q) => `/goat-search?query=${encodeURIComponent(q)}&hitsPerPage=20`,
   descriptionPath: (sku) => `/goat-description?sku=${encodeURIComponent(sku)}`,
   extractItems: (data) => {
     if (Array.isArray(data)) return data;
@@ -244,7 +244,7 @@ const goat: SourceDef = {
     {
       id: "goat_recommended",
       label: "Produtos similares (por ID)",
-      buildPath: (productId) => `/goat/recommended?productId=${encodeURIComponent(productId || "")}&limit=10`,
+      buildPath: (productId) => `/goat/recommended?productId=${encodeURIComponent(productId || "")}&limit=8`,
       extractItems: genericExtract,
     },
   ],
