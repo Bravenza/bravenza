@@ -131,3 +131,6 @@ verify_jwt = false
 
 [functions.catalog-translate-missing]
 verify_jwt = false
+
+[functions.catalog-multisource]
+verify_jwt = false
