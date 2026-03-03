@@ -15,8 +15,8 @@ const json = (d: unknown, s = 200) =>
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const BATCH_SIZE = 5; // models per AI call
-const MAX_PER_RUN = 20; // max models per invocation to stay within timeout
+const BATCH_SIZE = 3; // models per AI call
+const MAX_PER_RUN = 6; // max models per invocation to stay within timeout
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
