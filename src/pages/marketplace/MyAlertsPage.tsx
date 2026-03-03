@@ -20,7 +20,7 @@ interface Alert {
   is_active: boolean;
   cooldown_until: string | null;
   created_at: string;
-  product?: { brand: string; model: string; images?: string[] };
+  product?: { brand: string; model: string; images?: string[]; slug?: string | null };
 }
 
 const fadeUp = { hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
@@ -58,7 +58,7 @@ export default function MyAlertsPage() {
       if (productIds.length > 0) {
         const { data: prods } = await supabase
           .from("marketplace_products")
-          .select("id, brand, model, images")
+          .select("id, brand, model, images, slug")
           .in("id", productIds);
         (prods || []).forEach((p: any) => { products[p.id] = p; });
       }
@@ -152,7 +152,7 @@ export default function MyAlertsPage() {
                     <div className="flex items-start gap-3">
                       {/* Product image */}
                       <button
-                        onClick={() => navigate(`/marketplace/produto/${alert.product_id}`)}
+                        onClick={() => navigate(alert.product?.slug ? `/marketplace/${alert.product.slug}` : `/marketplace/product/${alert.product_id}`)}
                         className="shrink-0"
                       >
                         {img ? (
@@ -167,7 +167,7 @@ export default function MyAlertsPage() {
                       {/* Info */}
                       <div className="flex-1 min-w-0">
                         <button
-                          onClick={() => navigate(`/marketplace/produto/${alert.product_id}`)}
+                          onClick={() => navigate(alert.product?.slug ? `/marketplace/${alert.product.slug}` : `/marketplace/product/${alert.product_id}`)}
                           className="text-sm font-semibold line-clamp-1 hover:text-primary transition-colors text-left"
                         >
                           {productName}
