@@ -213,15 +213,23 @@ Deno.serve(async (req) => {
       return null;
     }
 
-    const stats = { inserted: 0, updated: 0, skipped: 0, missing_image: 0, missing_msrp: 0, missing_release: 0, missing_silhouette: 0, translated: 0, pending: 0, errors: 0 };
+    const stats = { inserted: 0, updated: 0, skipped: 0, skipped_existing: 0, missing_image: 0, missing_msrp: 0, missing_release: 0, missing_silhouette: 0, translated: 0, pending: 0, errors: 0 };
 
     try {
+      // Pre-fetch existing SKUs for this brand to skip them
+      const { data: existingRows } = await sb
+        .from("sneaker_models")
+        .select("sku")
+        .eq("brand_id", brandId);
+      const existingSkus = new Set((existingRows || []).map((r: any) => r.sku));
+
       let collected: any[] = [];
       let page = 1;
       const seenSkus = new Set<string>();
-      const MAX_PAGES = 5; // API tends to fail after page 2-3, but try up to 5
+      const MAX_PAGES = 10; // Go deeper to find new models
+      const targetNew = quota; // We want this many NEW models
 
-      while (collected.length < quota && page <= MAX_PAGES) {
+      while (collected.length < targetNew && page <= MAX_PAGES) {
         try {
           const searchUrl = `${STOCKX_API_BASE}/getproducts?keywords=${encodeURIComponent(brandName)}&limit=40&page=${page}`;
           const data = await throttledFetch(searchUrl, apiHeaders);
@@ -229,17 +237,24 @@ Deno.serve(async (req) => {
           if (items.length === 0) break;
 
           for (const raw of items) {
-            if (collected.length >= quota) break;
+            if (collected.length >= targetNew) break;
             const norm = normalize(raw);
             if (!norm) continue;
             if (seenSkus.has(norm.sku)) continue;
             seenSkus.add(norm.sku);
+
+            // Skip models we already have in the DB
+            if (existingSkus.has(norm.sku)) {
+              stats.skipped_existing++;
+              continue;
+            }
+
             collected.push({ ...norm, brandName, brandId });
           }
           page++;
         } catch (e: any) {
           console.error(`Failed /getproducts for ${brandName} page ${page}:`, e.message);
-          break; // Stop pagination for this brand on error
+          break;
         }
       }
 
