@@ -402,9 +402,31 @@ Deno.serve(async (req) => {
     const src = sourceMap.get(sourceId);
     if (!src) return json({ ok: false, error: `Source inválida: ${sourceId}. Use: ${ALL_SOURCES.map(s => s.id).join(", ")}` }, 400);
 
+    const url = `${API_BASE}${src.searchPath("Jordan 1", 1)}`;
+
+    // First do a diagnostic fetch to detect issues before processing
+    const diag = await diagnosticFetch(url, apiHeaders);
+    if (!diag.ok) {
+      return json({
+        ok: false,
+        source: src.name,
+        endpoint: url.replace(rapidKey!, "***"),
+        status: diag.status,
+        content_type: diag.contentType,
+        error: diag.status === 404
+          ? `Endpoint não encontrado (404). Seu plano RapidAPI pode não incluir ${src.name}. Verifique em rapidapi.com.`
+          : diag.status === 403
+          ? `Acesso negado (403). Seu plano RapidAPI pode não incluir ${src.name}.`
+          : `Erro ${diag.status}: ${diag.preview.substring(0, 200)}`,
+      });
+    }
+
     try {
-      const url = `${API_BASE}${src.searchPath("Jordan 1", 1)}`;
-      const data = await throttledFetch(url, apiHeaders);
+      // Parse the diagnostic result as JSON
+      let data: any;
+      try { data = JSON.parse(diag.preview.length > 300 ? (await (await fetch(url, { headers: apiHeaders })).text()) : diag.preview); }
+      catch { data = await throttledFetch(url, apiHeaders); }
+      
       const items = src.extractItems(data);
       const normalized = items.slice(0, 3).map(src.normalize).filter(Boolean);
       return json({ ok: true, source: src.name, raw_count: items.length, normalized_sample: normalized, raw_sample: items[0] || null });
