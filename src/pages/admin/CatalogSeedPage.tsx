@@ -57,7 +57,73 @@ export default function CatalogSeedPage() {
     { id: "kickscrew", name: "KicksCrew" },
   ];
 
-  const callApi = async (body: any) => {
+  // Sync state
+  const [syncPreview, setSyncPreview] = useState<any>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<any>(null);
+  const [syncProgress, setSyncProgress] = useState(0);
+
+  const callSyncApi = async (body: any) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("Sessão expirada");
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/catalog-sync`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }
+    );
+    return res.json();
+  };
+
+  const handleSyncPreview = async () => {
+    setSyncPreview(null);
+    try {
+      const data = await callSyncApi({ mode: "preview" });
+      setSyncPreview(data);
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    setSyncResult(null);
+    setSyncProgress(0);
+    cancelRef.current = false;
+    let totalSynced = 0;
+    let totalSkipped = 0;
+    let totalErrors = 0;
+    let offset = 0;
+    const batchSize = 100;
+
+    try {
+      while (!cancelRef.current) {
+        const data = await callSyncApi({ mode: "sync", batch_size: batchSize, offset });
+        if (!data.ok) {
+          toast({ title: "Erro no sync", description: data.error, variant: "destructive" });
+          break;
+        }
+        totalSynced += data.synced || 0;
+        totalSkipped += data.skipped || 0;
+        totalErrors += data.errors || 0;
+        offset = data.next_offset;
+        setSyncProgress(Math.round((offset / (syncPreview?.total_sneaker_models || 1011)) * 100));
+        setSyncResult({ synced: totalSynced, skipped: totalSkipped, errors: totalErrors });
+
+        if (!data.has_more) {
+          toast({ title: `✓ Sync completo: ${totalSynced} produtos sincronizados` });
+          break;
+        }
+        await new Promise(r => setTimeout(r, 300));
+      }
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setSyncing(false);
+    }
+  };
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error("Sessão expirada");
 
