@@ -179,9 +179,9 @@ Deno.serve(async (req) => {
   const anonSb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
     global: { headers: { Authorization: authHeader } },
   });
-  const { data: claims, error: claimsErr } = await anonSb.auth.getClaims(authHeader.replace("Bearer ", ""));
-  if (claimsErr || !claims?.claims?.sub) return json({ error: "Unauthorized" }, 401);
-  const userId = claims.claims.sub as string;
+  const { data: { user }, error: userErr } = await anonSb.auth.getUser();
+  if (userErr || !user) return json({ error: "Unauthorized" }, 401);
+  const userId = user.id;
 
   const { data: adm } = await sb.from("admin_profiles").select("id").eq("user_id", userId).maybeSingle();
   if (!adm) return json({ error: "Admin only" }, 403);
