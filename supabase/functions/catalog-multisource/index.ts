@@ -308,7 +308,21 @@ async function throttledFetch(url: string, headers: Record<string, string>, retr
 
   for (let attempt = 0; attempt < retries; attempt++) {
     const res = await fetch(url, { headers });
-    if (res.ok) return res.json();
+
+    // Check Content-Type before parsing — HTML responses indicate endpoint issues
+    const contentType = res.headers.get("content-type") || "";
+
+    if (res.ok) {
+      if (!contentType.includes("application/json")) {
+        const text = await res.text();
+        // Some APIs return JSON without proper content-type
+        try { return JSON.parse(text); } catch {
+          throw new Error(`API retornou ${contentType} ao invés de JSON. Resposta: ${text.substring(0, 200)}`);
+        }
+      }
+      return res.json();
+    }
+
     if (res.status === 429) {
       await sleep(Math.pow(2, attempt + 1) * 1000);
       continue;
@@ -317,9 +331,32 @@ async function throttledFetch(url: string, headers: Record<string, string>, retr
       await sleep(1000 * (attempt + 1));
       continue;
     }
-    throw new Error(`API ${res.status}: ${await res.text().catch(() => "")}`);
+
+    // Get error body
+    const errorBody = await res.text().catch(() => "");
+
+    // If HTML response, provide a clearer error
+    if (errorBody.includes("<!DOCTYPE") || errorBody.includes("<html")) {
+      const match = errorBody.match(/<pre>(.*?)<\/pre>/);
+      const detail = match ? match[1] : `HTTP ${res.status}`;
+      throw new Error(`Endpoint indisponível (${detail}). Verifique se seu plano RapidAPI inclui este endpoint.`);
+    }
+
+    throw new Error(`API ${res.status}: ${errorBody.substring(0, 300)}`);
   }
   throw new Error("Max retries exceeded");
+}
+
+// ─── Diagnostic fetch (non-throwing) ─────────────────────────────
+async function diagnosticFetch(url: string, headers: Record<string, string>): Promise<{ ok: boolean; status: number; contentType: string; preview: string }> {
+  try {
+    const res = await fetch(url, { headers });
+    const contentType = res.headers.get("content-type") || "";
+    const text = await res.text();
+    return { ok: res.ok, status: res.status, contentType, preview: text.substring(0, 300) };
+  } catch (e: any) {
+    return { ok: false, status: 0, contentType: "", preview: e.message };
+  }
 }
 
 // ─── Main handler ────────────────────────────────────────────────
