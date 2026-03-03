@@ -153,6 +153,67 @@ export default function CatalogSeedPage() {
     }
   };
 
+  const callEnrichApi = async (body: any) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("Sessão expirada");
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120_000);
+
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enrich-descriptions`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        }
+      );
+      clearTimeout(timeoutId);
+      return res.json();
+    } catch (e: any) {
+      clearTimeout(timeoutId);
+      if (e.name === "AbortError") {
+        return { ok: false, error: "Timeout: demorou demais." };
+      }
+      throw e;
+    }
+  };
+
+  const handleEnrichPreview = async () => {
+    setPreviewing(true);
+    setEnrichPreview(null);
+    try {
+      const data = await callEnrichApi({ mode: "preview" });
+      setEnrichPreview(data);
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setPreviewing(false);
+    }
+  };
+
+  const handleEnrich = async () => {
+    setEnriching(true);
+    setEnrichResult(null);
+    try {
+      const data = await callEnrichApi({ mode: "enrich" });
+      setEnrichResult(data);
+      toast({
+        title: data.ok ? `${data.enriched} descrições enriquecidas ✓` : "Erro no enriquecimento",
+        variant: data.ok ? "default" : "destructive",
+      });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setEnriching(false);
+    }
+  };
+
   const handleCancel = () => {
     cancelRef.current = true;
   };
