@@ -155,6 +155,11 @@ export default function MarketplaceHomePage() {
         <title>Marketplace | BRAVENZA — Sneakers Autenticados</title>
         <meta name="description" content="Compre e venda sneakers autenticados no Marketplace BRAVENZA. Cada par é inspecionado e certificado. De colecionador para colecionador." />
         <link rel="canonical" href="https://bravenza.com.br/marketplace" />
+        <meta property="og:title" content="Marketplace BRAVENZA — Sneakers Autenticados" />
+        <meta property="og:description" content="Compre e venda sneakers autenticados. Cada par é inspecionado e certificado." />
+        <meta property="og:url" content="https://bravenza.com.br/marketplace" />
+        <meta property="og:image" content="https://bravenza.com.br/og-image.png" />
+        <meta property="og:type" content="website" />
       </Helmet>
       <section className="relative overflow-hidden">
         {/* Layered background */}

@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { HelpCircle, Package, CreditCard, Shield, Truck, MessageCircle, Search, ShoppingBag, Store, Crown } from "lucide-react";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
 import { Helmet } from "react-helmet-async";
+import { FAQSchema } from "@/components/seo/StructuredData";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -134,7 +135,14 @@ export default function FAQPage() {
         <title>{t("faq.pageTitle")}</title>
         <meta name="description" content={t("faq.metaDescription")} />
         <link rel="canonical" href="https://bravenza.com.br/faq" />
+        <meta property="og:title" content={t("faq.pageTitle")} />
+        <meta property="og:description" content={t("faq.metaDescription")} />
+        <meta property="og:url" content="https://bravenza.com.br/faq" />
+        <meta property="og:image" content="https://bravenza.com.br/og-image.png" />
+        <meta property="og:type" content="website" />
       </Helmet>
+
+      <FAQSchema faqs={faqs.map(f => ({ question: f.question, answer: f.answer }))} />
 
       <section className="py-12 md:py-20 theme-light">
         <div className="container mx-auto px-4 sm:px-6">
