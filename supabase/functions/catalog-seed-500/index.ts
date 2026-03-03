@@ -339,6 +339,7 @@ Deno.serve(async (req) => {
       return json({
         ok: true, brand: brandName, fetched: collected.length, quota,
         inserted: stats.inserted, updated: stats.updated, skipped: stats.skipped,
+        skipped_existing: stats.skipped_existing, pages_scanned: page - 1,
         missing_image: stats.missing_image, missing_msrp: stats.missing_msrp,
         missing_release: stats.missing_release, missing_silhouette: stats.missing_silhouette,
         translated: stats.translated, pending: stats.pending, errors: stats.errors,
