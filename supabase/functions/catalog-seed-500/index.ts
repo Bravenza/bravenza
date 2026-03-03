@@ -204,14 +204,21 @@ Deno.serve(async (req) => {
 
   // Test mode — quick connectivity check via /stockx/sneakers
   if (mode === "test") {
-    try {
-      const testUrl = `${STOCKX_API_BASE}/stockx/sneakers?query=Jordan+1&limit=1&currency=BRL&country=BR`;
-      const data = await throttledFetch(testUrl, apiHeaders);
-      const arr = extractArray(data);
-      return json({ ok: true, test: true, sample_count: arr.length, sample: arr[0] || null, source: "sneaker-database-stockx" });
-    } catch (e: any) {
-      return json({ ok: false, error: e.message });
+    // Try primary endpoint first, then fallback
+    for (const testUrl of [
+      `${STOCKX_API_BASE}/getproducts?keywords=Jordan+1&limit=1`,
+      `${STOCKX_API_BASE}/stockx/sneakers?query=Jordan+1&limit=1&currency=BRL&country=BR`,
+    ]) {
+      try {
+        const data = await throttledFetch(testUrl, apiHeaders);
+        const arr = extractArray(data);
+        return json({ ok: true, test: true, sample_count: arr.length, sample: arr[0] || null, source: "sneaker-database-stockx", endpoint: testUrl.split("?")[0] });
+      } catch (e: any) {
+        console.warn(`Test endpoint failed: ${testUrl}`, e.message);
+        continue;
+      }
     }
+    return json({ ok: false, error: "Ambos endpoints da API StockX falharam. Tente novamente mais tarde." });
   }
 
   // Load taxonomy
