@@ -28,10 +28,7 @@ const PUBLIC_ACTIONS = new Set([
   "catalog-search",
 ]);
 
-const SELLER_JOIN = `*,seller:vault_seller_profiles!inner(
-  id,plan_id,verified_badge,average_rating,total_sales_count,current_fee_percent,
-  member:vault_members!inner(client_name,tier)
-)`;
+const SELLER_JOIN = "*,seller:vault_seller_profiles!inner(id,plan_id,verified_badge,average_rating,total_sales_count,current_fee_percent,member:vault_members!inner(client_name,tier))";
 
 async function resolveCpf(req: Request, sb: ReturnType<typeof createSB>): Promise<string> {
   const ah = req.headers.get("authorization");
