@@ -553,5 +553,105 @@ Deno.serve(async (req) => {
     return json({ ok: true, source: src.name, ...stats });
   }
 
-  return json({ ok: false, error: "mode inválido. Use: sources_list, test, search, enrich" }, 400);
+  // ─── Discover: call extra endpoints for import ───────────────
+  if (mode === "discover") {
+    const sourceId = body.source as string;
+    const src = sourceMap.get(sourceId);
+    if (!src) return json({ ok: false, error: `Source inválida: ${sourceId}` }, 400);
+
+    const endpointId = body.endpoint as string;
+    const param = body.param as string | undefined;
+    const batchLimit = body.limit ?? 30;
+
+    const ep = (src.extraEndpoints || []).find((e) => e.id === endpointId);
+    if (!ep) {
+      const available = (src.extraEndpoints || []).map((e) => e.id).join(", ");
+      return json({ ok: false, error: `Endpoint "${endpointId}" não encontrado para ${src.name}. Disponíveis: ${available || "nenhum"}` }, 400);
+    }
+
+    // Load DB references
+    const { data: brands } = await sb.from("brands").select("*");
+    const { data: silhouettes } = await sb.from("silhouettes").select("*");
+    const { data: taxonomy } = await sb.from("silhouette_taxonomy").select("*").order("priority");
+    const brandMap = new Map((brands || []).map((b: any) => [b.name.toLowerCase(), b.id]));
+    const silMap = new Map((silhouettes || []).map((s: any) => [`${s.brand_id}|${s.name}`, s.id]));
+
+    function matchBrandId(name: string | null): string | null {
+      if (!name) return null;
+      return brandMap.get(name.toLowerCase()) || null;
+    }
+    function matchSilhouette(brandId: string, productName: string): string | null {
+      const lower = (productName || "").toLowerCase();
+      const rows = (taxonomy || []).filter((t: any) => {
+        const bid = brandMap.get(t.brand_name?.toLowerCase());
+        return bid === brandId;
+      });
+      for (const t of rows) {
+        for (const kw of t.match_keywords || []) {
+          if (lower.includes(kw.toLowerCase())) return silMap.get(`${brandId}|${t.silhouette_name}`) || null;
+        }
+      }
+      return null;
+    }
+
+    const stats = { fetched: 0, inserted: 0, skipped_existing: 0, skipped_no_sku: 0, errors: 0 };
+
+    try {
+      const url = `${API_BASE}${ep.buildPath(param)}`;
+      const data = await throttledFetch(url, apiHeaders);
+      const items = ep.extractItems(data);
+      stats.fetched = items.length;
+
+      // If this is a non-product endpoint (like listing collections), return raw data
+      if (endpointId === "sg_collections" || endpointId === "fc_brands") {
+        return json({ ok: true, source: src.name, endpoint: ep.label, raw_count: items.length, data: items.slice(0, 50) });
+      }
+
+      // For product-like endpoints, normalize and import
+      const toProcess = items.slice(0, batchLimit);
+      for (const raw of toProcess) {
+        const norm = src.normalize(raw);
+        if (!norm || !norm.sku) { stats.skipped_no_sku++; continue; }
+
+        const { data: existing } = await sb.from("sneaker_models").select("id").eq("sku", norm.sku).maybeSingle();
+        if (existing) { stats.skipped_existing++; continue; }
+
+        const brandId = matchBrandId(norm.brand);
+        if (!brandId) { stats.skipped_no_sku++; continue; }
+
+        const silhouetteId = matchSilhouette(brandId, norm.name || "");
+        const parsedDate = norm.releaseDate ? (() => {
+          try { const d = new Date(norm.releaseDate!); return isNaN(d.getTime()) ? null : d.toISOString().split("T")[0]; } catch { return null; }
+        })() : null;
+
+        const { data: ins, error: insErr } = await sb.from("sneaker_models").insert({
+          brand_id: brandId, silhouette_id: silhouetteId, sku: norm.sku,
+          colorway: norm.colorway, release_date: parsedDate, msrp: norm.msrp,
+          model_name_en: norm.name, description_en: norm.description,
+          placeholder_image_url: PLACEHOLDER, image_status: norm.imageUrl ? "external" : "placeholder",
+          needs_official_image: true, source_primary: src.id, translation_status: "pending",
+        }).select("id").single();
+
+        if (insErr) {
+          if (insErr.code === "23505") { stats.skipped_existing++; continue; }
+          stats.errors++; continue;
+        }
+
+        if (ins) {
+          const imgUrl = norm.imageUrl || PLACEHOLDER;
+          await sb.from("sneaker_images").upsert(
+            { sneaker_id: ins.id, image_url: imgUrl, source: src.id, is_primary: true },
+            { onConflict: "sneaker_id,source,image_url" }
+          );
+        }
+        stats.inserted++;
+      }
+
+      return json({ ok: true, source: src.name, endpoint: ep.label, ...stats });
+    } catch (e: any) {
+      return json({ ok: false, source: src.name, endpoint: ep.label, error: e.message }, 500);
+    }
+  }
+
+  return json({ ok: false, error: "mode inválido. Use: sources_list, test, search, enrich, discover" }, 400);
 });
