@@ -164,6 +164,27 @@ export type Database = {
         }
         Relationships: []
       }
+      brands: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       client_addresses: {
         Row: {
           cep: string
@@ -2672,6 +2693,178 @@ export type Database = {
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "vault_seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      silhouette_taxonomy: {
+        Row: {
+          brand_name: string
+          id: string
+          match_keywords: string[]
+          priority: number
+          silhouette_name: string
+        }
+        Insert: {
+          brand_name: string
+          id?: string
+          match_keywords: string[]
+          priority?: number
+          silhouette_name: string
+        }
+        Update: {
+          brand_name?: string
+          id?: string
+          match_keywords?: string[]
+          priority?: number
+          silhouette_name?: string
+        }
+        Relationships: []
+      }
+      silhouettes: {
+        Row: {
+          brand_id: string
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "silhouettes_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sneaker_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          is_primary: boolean
+          sneaker_id: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          is_primary?: boolean
+          sneaker_id: string
+          source: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          is_primary?: boolean
+          sneaker_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sneaker_images_sneaker_id_fkey"
+            columns: ["sneaker_id"]
+            isOneToOne: false
+            referencedRelation: "sneaker_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sneaker_models: {
+        Row: {
+          brand_id: string
+          colorway: string | null
+          created_at: string
+          description_en: string | null
+          description_pt: string | null
+          id: string
+          image_status: string
+          model_name_en: string | null
+          model_name_pt: string | null
+          msrp: number | null
+          needs_official_image: boolean
+          placeholder_image_url: string
+          release_date: string | null
+          silhouette_id: string | null
+          sku: string
+          source_primary: string
+          source_secondary: string[] | null
+          translation_error: string | null
+          translation_status: string
+        }
+        Insert: {
+          brand_id: string
+          colorway?: string | null
+          created_at?: string
+          description_en?: string | null
+          description_pt?: string | null
+          id?: string
+          image_status?: string
+          model_name_en?: string | null
+          model_name_pt?: string | null
+          msrp?: number | null
+          needs_official_image?: boolean
+          placeholder_image_url?: string
+          release_date?: string | null
+          silhouette_id?: string | null
+          sku: string
+          source_primary?: string
+          source_secondary?: string[] | null
+          translation_error?: string | null
+          translation_status?: string
+        }
+        Update: {
+          brand_id?: string
+          colorway?: string | null
+          created_at?: string
+          description_en?: string | null
+          description_pt?: string | null
+          id?: string
+          image_status?: string
+          model_name_en?: string | null
+          model_name_pt?: string | null
+          msrp?: number | null
+          needs_official_image?: boolean
+          placeholder_image_url?: string
+          release_date?: string | null
+          silhouette_id?: string | null
+          sku?: string
+          source_primary?: string
+          source_secondary?: string[] | null
+          translation_error?: string | null
+          translation_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sneaker_models_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sneaker_models_silhouette_id_fkey"
+            columns: ["silhouette_id"]
+            isOneToOne: false
+            referencedRelation: "silhouettes"
             referencedColumns: ["id"]
           },
         ]
