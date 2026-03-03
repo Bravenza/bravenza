@@ -30,6 +30,12 @@ export default function CatalogSeedPage() {
   const [overallProgress, setOverallProgress] = useState(0);
   const cancelRef = useRef(false);
 
+  // Enrichment state
+  const [enriching, setEnriching] = useState(false);
+  const [enrichPreview, setEnrichPreview] = useState<any>(null);
+  const [enrichResult, setEnrichResult] = useState<any>(null);
+  const [previewing, setPreviewing] = useState(false);
+
   const callApi = async (body: any) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error("Sessão expirada");
