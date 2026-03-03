@@ -187,11 +187,13 @@ Deno.serve(async (req) => {
     return json({ ok: true, brands: brandsList, total_quota: Object.values(BRAND_QUOTAS).reduce((a, b) => a + b, 0) });
   }
 
-  // --- Seed one brand mode ---
+  // --- Seed one brand mode (processes one batch per call) ---
   if (mode === "seed_brand") {
     const brandName = body.brand as string;
     const quota = BRAND_QUOTAS[brandName];
     if (!brandName || !quota) return json({ ok: false, error: `Marca inválida: ${brandName}` }, 400);
+    const queryIndex = body.query_index ?? 0; // which silhouette query to start from
+    const BATCH_LIMIT = 30; // max items to process per call
 
     const { data: taxonomy } = await sb.from("silhouette_taxonomy").select("*").order("priority");
     const { data: brands } = await sb.from("brands").select("*");
@@ -202,7 +204,6 @@ Deno.serve(async (req) => {
     const brandId = brandMap.get(brandName);
     if (!brandId) return json({ ok: false, error: `Marca não encontrada no DB: ${brandName}` }, 400);
 
-    // Build search queries: silhouette-specific + generic brand fallback
     const brandSilhouettes = (taxonomy || [])
       .filter((t: any) => t.brand_name === brandName)
       .map((t: any) => t.silhouette_name as string);
@@ -211,7 +212,6 @@ Deno.serve(async (req) => {
     for (const sil of brandSilhouettes) {
       searchQueries.push(`${brandName} ${sil}`);
     }
-    // Add generic brand search as fallback to catch models not in taxonomy
     searchQueries.push(brandName);
 
     function matchSilhouette(name: string): string | null {
@@ -225,28 +225,30 @@ Deno.serve(async (req) => {
       return null;
     }
 
-    const stats = { inserted: 0, updated: 0, skipped: 0, skipped_existing: 0, missing_image: 0, missing_msrp: 0, missing_release: 0, missing_silhouette: 0, translated: 0, pending: 0, errors: 0, queries_used: 0, pages_scanned: 0 };
+    const stats = { inserted: 0, updated: 0, skipped: 0, skipped_existing: 0, translated: 0, pending: 0, errors: 0, queries_used: 0, pages_scanned: 0 };
 
     try {
-      // Pre-fetch existing SKUs for this brand to skip them
       const { data: existingRows } = await sb
         .from("sneaker_models")
         .select("sku")
         .eq("brand_id", brandId);
       const existingSkus = new Set((existingRows || []).map((r: any) => r.sku));
+      const existingCount = existingSkus.size;
 
       let collected: any[] = [];
       const seenSkus = new Set<string>();
-      const targetNew = quota;
-      const PAGES_PER_QUERY = 5;
+      const PAGES_PER_QUERY = 3;
+      let lastQueryIndex = queryIndex;
 
-      // Search by each silhouette, then generic brand
-      for (const query of searchQueries) {
-        if (collected.length >= targetNew) break;
+      // Start from queryIndex, collect up to BATCH_LIMIT new items
+      for (let qi = queryIndex; qi < searchQueries.length; qi++) {
+        if (collected.length >= BATCH_LIMIT) break;
+        lastQueryIndex = qi;
+        const query = searchQueries[qi];
         stats.queries_used++;
 
         for (let page = 1; page <= PAGES_PER_QUERY; page++) {
-          if (collected.length >= targetNew) break;
+          if (collected.length >= BATCH_LIMIT) break;
           try {
             const searchUrl = `${STOCKX_API_BASE}/getproducts?keywords=${encodeURIComponent(query)}&limit=40&page=${page}`;
             const data = await throttledFetch(searchUrl, apiHeaders);
@@ -256,7 +258,7 @@ Deno.serve(async (req) => {
 
             let newInPage = 0;
             for (const raw of items) {
-              if (collected.length >= targetNew) break;
+              if (collected.length >= BATCH_LIMIT) break;
               const norm = normalize(raw);
               if (!norm) continue;
               if (seenSkus.has(norm.sku)) continue;
@@ -271,7 +273,6 @@ Deno.serve(async (req) => {
               newInPage++;
             }
 
-            // If no new models found in this page, skip remaining pages for this query
             if (newInPage === 0) break;
           } catch (e: any) {
             console.error(`Failed /getproducts for "${query}" page ${page}:`, e.message);
@@ -279,6 +280,8 @@ Deno.serve(async (req) => {
           }
         }
       }
+
+      const hasMore = lastQueryIndex + 1 < searchQueries.length && existingCount + collected.length < quota;
 
       const translateQueue: any[] = [];
 
