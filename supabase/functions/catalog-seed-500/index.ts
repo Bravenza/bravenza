@@ -258,20 +258,12 @@ Deno.serve(async (req) => {
       while (collected.length < quota && page <= 20) {
         let items: any[] = [];
         try {
-          // Primary: /stockx/sneakers endpoint with brand as query, BRL currency, BR country
-          const searchUrl = `${STOCKX_API_BASE}/stockx/sneakers?query=${encodeURIComponent(brandName)}&limit=40&page=${page}&currency=BRL&country=BR`;
+          const searchUrl = `${STOCKX_API_BASE}/getproducts?keywords=${encodeURIComponent(brandName)}&limit=40&page=${page}`;
           const data = await throttledFetch(searchUrl, apiHeaders);
           items = extractArray(data);
-        } catch (e1: any) {
-          try {
-            // Fallback: /getproducts endpoint
-            const fallbackUrl = `${STOCKX_API_BASE}/getproducts?keywords=${encodeURIComponent(brandName)}&limit=40`;
-            const data = await throttledFetch(fallbackUrl, apiHeaders);
-            items = extractArray(data);
-          } catch (e2: any) {
-            console.error(`Failed both endpoints for ${brandName} page ${page}:`, e2.message);
-            break;
-          }
+        } catch (e: any) {
+          console.error(`Failed /getproducts for ${brandName} page ${page}:`, e.message);
+          break;
         }
 
         if (items.length === 0) break;
