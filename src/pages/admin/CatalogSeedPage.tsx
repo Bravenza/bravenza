@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Zap, Database, CheckCircle2, AlertTriangle, XCircle, Play, Square } from "lucide-react";
+import { Loader2, Zap, Database, CheckCircle2, AlertTriangle, XCircle, Play, Square, Sparkles, Eye } from "lucide-react";
 
 interface BrandResult {
   brand: string;
