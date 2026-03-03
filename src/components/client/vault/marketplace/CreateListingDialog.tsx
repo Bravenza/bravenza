@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ProductSearchStep } from "./create-listing/ProductSearchStep";
 import { NewProductForm } from "./create-listing/NewProductForm";
 import { OfferForm } from "./create-listing/OfferForm";
+import { useConfig } from "@/hooks/useConfig";
 import type { CatalogProduct } from "@/hooks/useMarketplaceCatalog";
 
 type Step = "search" | "new-product" | "offer";
@@ -23,6 +24,8 @@ interface CreateListingDialogProps {
 }
 
 export function CreateListingDialog({ onSubmit, searchProducts, createProduct, vaultItems = [] }: CreateListingDialogProps) {
+  const { isEnabled } = useConfig();
+  const catalogRequired = isEnabled("enable_catalog_required_for_new_listings");
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("search");
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null);
@@ -91,6 +94,7 @@ export function CreateListingDialog({ onSubmit, searchProducts, createProduct, v
               onCreateNew={() => setStep("new-product")}
               searchProducts={searchProducts}
               vaultItems={vaultItems}
+              catalogRequired={catalogRequired}
             />
           )}
 

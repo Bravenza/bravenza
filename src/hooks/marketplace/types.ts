@@ -2,6 +2,7 @@ export interface MarketplaceListing {
   id: string;
   seller_id: string;
   vault_item_id: string | null;
+  product_id: string | null;
   title: string;
   description: string | null;
   brand: string | null;

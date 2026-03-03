@@ -403,7 +403,7 @@ export default function MarketplaceMyStorePage() {
                           {listing.status === "active" ? "Ativo" : listing.status === "sold" ? "Vendido" : listing.status === "reserved" ? "Reservado" : listing.status === "paused" ? "Pausado" : listing.status}
                         </Badge>
                         <div className="flex gap-1">
-                          <EditListingDialog listing={listing} onUpdate={updateListing} onDelete={deleteListing} onRefresh={fetchMyListings} />
+                          <EditListingDialog listing={listing} onUpdate={updateListing} onDelete={deleteListing} onRefresh={fetchMyListings} searchProducts={searchProducts} />
                           <OffersListDialog
                             listingId={listing.id}
                             listingTitle={listing.title}

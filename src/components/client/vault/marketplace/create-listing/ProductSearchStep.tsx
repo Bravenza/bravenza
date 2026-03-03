@@ -11,9 +11,10 @@ interface ProductSearchStepProps {
   onCreateNew: () => void;
   searchProducts: (query: string) => Promise<CatalogProduct[]>;
   vaultItems?: { id: string; title: string; brand: string | null; model: string | null; size: string | null; colorway: string | null }[];
+  catalogRequired?: boolean;
 }
 
-export function ProductSearchStep({ onSelectProduct, onCreateNew, searchProducts, vaultItems = [] }: ProductSearchStepProps) {
+export function ProductSearchStep({ onSelectProduct, onCreateNew, searchProducts, vaultItems = [], catalogRequired = false }: ProductSearchStepProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<CatalogProduct[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -98,11 +99,13 @@ export function ProductSearchStep({ onSelectProduct, onCreateNew, searchProducts
         )}
       </div>
 
-      {/* Create new product button */}
-      <Button variant="outline" onClick={onCreateNew} className="w-full gap-2">
-        <Plus className="h-4 w-4" />
-        Cadastrar novo produto
-      </Button>
+      {/* Create new product button — hidden when catalog is required */}
+      {!catalogRequired && (
+        <Button variant="outline" onClick={onCreateNew} className="w-full gap-2">
+          <Plus className="h-4 w-4" />
+          Cadastrar novo produto
+        </Button>
+      )}
     </div>
   );
 }
