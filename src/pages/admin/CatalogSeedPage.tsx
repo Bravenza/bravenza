@@ -637,12 +637,15 @@ export default function CatalogSeedPage() {
           )}
 
           <Tabs defaultValue="search" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="search" className="flex items-center gap-1">
                 <Search className="h-3.5 w-3.5" />Buscar Novos
               </TabsTrigger>
               <TabsTrigger value="enrich" className="flex items-center gap-1">
-                <RefreshCw className="h-3.5 w-3.5" />Enriquecer Existentes
+                <RefreshCw className="h-3.5 w-3.5" />Enriquecer
+              </TabsTrigger>
+              <TabsTrigger value="discover" className="flex items-center gap-1">
+                <Globe className="h-3.5 w-3.5" />Descobrir
               </TabsTrigger>
             </TabsList>
 
@@ -670,25 +673,21 @@ export default function CatalogSeedPage() {
 
               {msSearchResult && (
                 <div className="p-4 bg-muted/50 rounded-lg space-y-2">
-                  <p className="text-sm font-medium">
-                    Resultado — {msSearchResult.source}
-                  </p>
+                  <p className="text-sm font-medium">Resultado — {msSearchResult.source}</p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <StatCard label="Encontrados" value={msSearchResult.fetched || 0} />
                     <StatCard label="Inseridos" value={msSearchResult.inserted || 0} />
                     <StatCard label="Já existiam" value={msSearchResult.skipped_existing || 0} />
                     <StatCard label="Erros" value={msSearchResult.errors || 0} />
                   </div>
-                  {msSearchResult.error && (
-                    <p className="text-xs text-destructive">{msSearchResult.error}</p>
-                  )}
+                  {msSearchResult.error && <p className="text-xs text-destructive">{msSearchResult.error}</p>}
                 </div>
               )}
             </TabsContent>
 
             <TabsContent value="enrich" className="space-y-3 pt-3">
               <p className="text-sm text-muted-foreground">
-                Busca descrições/imagens de modelos que ainda têm placeholder ou sem descrição, usando o endpoint de detalhes da fonte selecionada.
+                Busca descrições/imagens de modelos com placeholder ou sem descrição via detalhes da fonte.
               </p>
               <Button onClick={handleMsEnrich} disabled={msEnriching}>
                 {msEnriching ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
@@ -697,19 +696,71 @@ export default function CatalogSeedPage() {
 
               {msEnrichResult && (
                 <div className="p-4 bg-muted/50 rounded-lg space-y-2">
-                  <p className="text-sm font-medium">
-                    Resultado — {msEnrichResult.source}
-                  </p>
+                  <p className="text-sm font-medium">Resultado — {msEnrichResult.source}</p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <StatCard label="Processados" value={msEnrichResult.processed || 0} />
                     <StatCard label="Enriquecidos" value={msEnrichResult.enriched || 0} />
                     <StatCard label="Sem dados" value={msEnrichResult.no_data || 0} />
                     <StatCard label="Erros" value={msEnrichResult.errors || 0} />
                   </div>
-                  {msEnrichResult.error && (
-                    <p className="text-xs text-destructive">{msEnrichResult.error}</p>
-                  )}
+                  {msEnrichResult.error && <p className="text-xs text-destructive">{msEnrichResult.error}</p>}
                 </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="discover" className="space-y-3 pt-3">
+              {(EXTRA_ENDPOINTS[msSource] || []).length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum endpoint extra disponível para {SOURCES.find(s => s.id === msSource)?.name}.</p>
+              ) : (
+                <>
+                  <div className="flex gap-2 flex-wrap">
+                    <Select value={msEndpoint} onValueChange={(v) => { setMsEndpoint(v); setMsDiscoverResult(null); }}>
+                      <SelectTrigger className="w-56">
+                        <SelectValue placeholder="Selecione endpoint" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(EXTRA_ENDPOINTS[msSource] || []).map((ep) => (
+                          <SelectItem key={ep.id} value={ep.id}>{ep.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {(EXTRA_ENDPOINTS[msSource] || []).find(e => e.id === msEndpoint)?.needsParam && (
+                      <Input
+                        className="w-56"
+                        placeholder={(EXTRA_ENDPOINTS[msSource] || []).find(e => e.id === msEndpoint)?.paramLabel || "Parâmetro"}
+                        value={msParam}
+                        onChange={(e) => setMsParam(e.target.value)}
+                      />
+                    )}
+
+                    <Button onClick={handleMsDiscover} disabled={msDiscovering || !msEndpoint}>
+                      {msDiscovering ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Globe className="h-4 w-4 mr-1" />}
+                      Executar
+                    </Button>
+                  </div>
+
+                  {msDiscoverResult && (
+                    <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+                      <p className="text-sm font-medium">
+                        {msDiscoverResult.endpoint} — {msDiscoverResult.source}
+                      </p>
+                      {msDiscoverResult.data ? (
+                        <pre className="p-3 bg-muted rounded-lg text-xs overflow-auto max-h-64">
+                          {JSON.stringify(msDiscoverResult.data?.slice(0, 20), null, 2)}
+                        </pre>
+                      ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <StatCard label="Encontrados" value={msDiscoverResult.fetched || 0} />
+                          <StatCard label="Inseridos" value={msDiscoverResult.inserted || 0} />
+                          <StatCard label="Já existiam" value={msDiscoverResult.skipped_existing || 0} />
+                          <StatCard label="Erros" value={msDiscoverResult.errors || 0} />
+                        </div>
+                      )}
+                      {msDiscoverResult.error && <p className="text-xs text-destructive">{msDiscoverResult.error}</p>}
+                    </div>
+                  )}
+                </>
               )}
             </TabsContent>
           </Tabs>
