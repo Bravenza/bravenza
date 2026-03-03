@@ -16,6 +16,7 @@ import { CartDrawer } from "@/components/client/vault/marketplace/CartDrawer";
 import { ClientNotificationBell } from "@/components/client/ClientNotificationBell";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { useVaultPrefetch } from "@/hooks/useVaultPrefetch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -137,6 +138,9 @@ export default function AppLayout() {
   const isMobile = useIsMobile();
   const cpf = profile?.cpf || null;
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Prefetch vault data for members so navigation feels instant
+  useVaultPrefetch(cpf, isVaultMember);
 
   const initials = profile?.full_name
     ? profile.full_name.split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase()

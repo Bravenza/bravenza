@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo, useRef, lazy, Suspense } from "react";
+import React, { useEffect, useState, useMemo, useRef, lazy, Suspense, useCallback } from "react";
+import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { saveRecentlyViewed } from "@/components/marketplace/home/RecentlyViewedSection";
 import { useParams, useNavigate } from "react-router-dom";
@@ -168,15 +169,22 @@ function ProductDetailPageInner() {
     });
   }, [slug, fetchProduct]);
 
+  const debouncedFetchOffers = useDebouncedCallback(
+    (productId: string, size: string) => {
+      setLoadingOffers(true);
+      fetchOffersBySize(productId, size).finally(() => setLoadingOffers(false));
+    },
+    300
+  );
+
   useEffect(() => {
     if (product && selectedSize) {
-      setLoadingOffers(true);
-      fetchOffersBySize(product.id, selectedSize).finally(() => setLoadingOffers(false));
+      debouncedFetchOffers(product.id, selectedSize);
       if (cpf && cpf !== "visitor") {
         checkWatchlist(product.id, selectedSize);
       }
     }
-  }, [product, selectedSize, fetchOffersBySize, checkWatchlist, cpf]);
+  }, [product, selectedSize, debouncedFetchOffers, checkWatchlist, cpf]);
 
   useEffect(() => {
     if (product) {
