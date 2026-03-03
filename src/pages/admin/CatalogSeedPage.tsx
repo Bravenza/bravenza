@@ -56,7 +56,7 @@ export default function CatalogSeedPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Catálogo Oficial — Seed v1</h1>
-        <p className="text-muted-foreground">Gere ~500 modelos de sneakers automaticamente via The Sneaker Database.</p>
+        <p className="text-muted-foreground">Gere ~500 modelos de sneakers automaticamente via Sneaker Database - StockX (RapidAPI).</p>
       </div>
 
       {/* Connector Status */}
