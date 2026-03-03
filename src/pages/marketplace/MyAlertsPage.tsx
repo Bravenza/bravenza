@@ -190,7 +190,7 @@ export default function MyAlertsPage() {
                             {channelLabel(alert.channels)}
                           </Badge>
                           {isInCooldown && (
-                            <Badge className="text-[10px] px-1.5 py-0 bg-amber-500/10 text-amber-600 border-amber-500/20">
+                            <Badge className="text-[10px] px-1.5 py-0 bg-warning/10 text-warning border-warning/20">
                               Cooldown
                             </Badge>
                           )}
