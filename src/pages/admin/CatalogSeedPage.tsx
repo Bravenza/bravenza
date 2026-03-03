@@ -355,6 +355,44 @@ export default function CatalogSeedPage() {
     }
   };
 
+  // Discover state
+  const [msEndpoint, setMsEndpoint] = useState("");
+  const [msParam, setMsParam] = useState("");
+  const [msDiscovering, setMsDiscovering] = useState(false);
+  const [msDiscoverResult, setMsDiscoverResult] = useState<any>(null);
+
+  const EXTRA_ENDPOINTS: Record<string, { id: string; label: string; needsParam?: boolean; paramLabel?: string }[]> = {
+    stadiumgoods: [
+      { id: "sg_collections", label: "Listar Coleções" },
+      { id: "sg_collection_products", label: "Produtos de Coleção", needsParam: true, paramLabel: "Handle (ex: yeezy-380)" },
+      { id: "sg_similar", label: "Similares", needsParam: true, paramLabel: "Product ID" },
+    ],
+    flightclub: [
+      { id: "fc_brands", label: "Marcas disponíveis" },
+      { id: "fc_releases", label: "Novos lançamentos" },
+      { id: "fc_recommendation", label: "Recomendações", needsParam: true, paramLabel: "ID do produto" },
+    ],
+    goat: [
+      { id: "goat_recommended", label: "Similares", needsParam: true, paramLabel: "Product ID (ex: 1213732)" },
+    ],
+    kickscrew: [],
+  };
+
+  const handleMsDiscover = async () => {
+    if (!msEndpoint) return;
+    setMsDiscovering(true);
+    setMsDiscoverResult(null);
+    try {
+      const data = await callMultisourceApi({ mode: "discover", source: msSource, endpoint: msEndpoint, param: msParam || undefined, limit: 30 });
+      setMsDiscoverResult(data);
+      toast({ title: data.ok ? `${data.inserted ?? data.raw_count ?? 0} itens processados` : "Erro", description: data.error, variant: data.ok ? "default" : "destructive" });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setMsDiscovering(false);
+    }
+  };
+
   const totals = brandResults.reduce(
     (acc, r) => ({
       fetched: acc.fetched + (r.fetched || 0),
