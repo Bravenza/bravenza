@@ -15,8 +15,62 @@ const json = (d: unknown, s = 200) =>
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const BATCH_SIZE = 3; // models per AI call
-const MAX_PER_RUN = 6; // max models per invocation to stay within timeout
+const BATCH_SIZE = 3;
+const MAX_PER_RUN = 6;
+const GENERIC_PATTERN = "Modelo % da %. Ideal para uso casual%";
+
+// Unified query to find weak descriptions — used for both candidates and remaining count
+async function findWeakModels(sb: any, limit: number) {
+  // 1) Models with null/empty description_pt that haven't been enriched yet
+  const { data: nullModels } = await sb
+    .from("sneaker_models")
+    .select(
+      "id, sku, model_name_en, model_name_pt, description_en, description_pt, colorway, brands:brand_id(name), silhouettes:silhouette_id(name), msrp, release_date, translation_status"
+    )
+    .or("description_pt.is.null,description_pt.eq.")
+    .neq("translation_status", "enriched")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  // 2) Models with generic auto-generated descriptions
+  const { data: genericModels } = await sb
+    .from("sneaker_models")
+    .select(
+      "id, sku, model_name_en, model_name_pt, description_en, description_pt, colorway, brands:brand_id(name), silhouettes:silhouette_id(name), msrp, release_date, translation_status"
+    )
+    .not("description_pt", "is", null)
+    .like("description_pt", GENERIC_PATTERN)
+    .neq("translation_status", "enriched")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  // Deduplicate
+  const seen = new Set<string>();
+  const all = [...(nullModels || []), ...(genericModels || [])];
+  return all.filter((m) => {
+    if (seen.has(m.id)) return false;
+    seen.add(m.id);
+    return true;
+  }).slice(0, limit);
+}
+
+async function countWeakModels(sb: any): Promise<number> {
+  const { count: nullCount } = await sb
+    .from("sneaker_models")
+    .select("id", { count: "exact", head: true })
+    .or("description_pt.is.null,description_pt.eq.")
+    .neq("translation_status", "enriched");
+
+  const { count: genericCount } = await sb
+    .from("sneaker_models")
+    .select("id", { count: "exact", head: true })
+    .not("description_pt", "is", null)
+    .like("description_pt", GENERIC_PATTERN)
+    .neq("translation_status", "enriched");
+
+  // This may slightly overcount due to overlap, but it's close enough
+  return (nullCount || 0) + (genericCount || 0);
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
@@ -60,50 +114,33 @@ Deno.serve(async (req) => {
   if (!lovableKey)
     return json({ ok: false, error: "LOVABLE_API_KEY não configurada" });
 
-  // Find models with weak descriptions
-  // Criteria: description_pt is null, too short (<100 chars), or matches the generic pattern
-  const { data: weakModels, error: fetchErr } = await sb
-    .from("sneaker_models")
-    .select(
-      "id, sku, model_name_en, model_name_pt, description_en, description_pt, colorway, brands:brand_id(name), silhouettes:silhouette_id(name), msrp, release_date"
-    )
-    .or(
-      "description_pt.is.null,description_pt.eq.,description_en.is.null"
-    )
-    .order("created_at", { ascending: false })
-    .limit(MAX_PER_RUN);
-
-  // Also get models with very short or generic descriptions
-  const { data: shortModels } = await sb
-    .from("sneaker_models")
-    .select(
-      "id, sku, model_name_en, model_name_pt, description_en, description_pt, colorway, brands:brand_id(name), silhouettes:silhouette_id(name), msrp, release_date"
-    )
-    .not("description_pt", "is", null)
-    .like("description_pt", "Modelo % da %. Ideal para uso casual%")
-    .order("created_at", { ascending: false })
-    .limit(MAX_PER_RUN);
-
-  const allWeak = [...(weakModels || []), ...(shortModels || [])];
-
-  // Deduplicate
-  const seen = new Set<string>();
-  const candidates = allWeak.filter((m) => {
-    if (seen.has(m.id)) return false;
-    seen.add(m.id);
-    return true;
-  }).slice(0, MAX_PER_RUN);
+  // Find weak candidates
+  const candidates = await findWeakModels(sb, MAX_PER_RUN);
 
   if (mode === "preview") {
+    const totalWeak = await countWeakModels(sb);
     return json({
       ok: true,
-      total_weak: candidates.length,
-      samples: candidates.slice(0, 5).map((m) => ({
+      total_weak: totalWeak,
+      samples: candidates.slice(0, 5).map((m: any) => ({
         sku: m.sku,
         name: m.model_name_pt || m.model_name_en,
         current_desc: m.description_pt,
         has_en_desc: !!m.description_en,
       })),
+    });
+  }
+
+  if (candidates.length === 0) {
+    return json({
+      ok: true,
+      enriched: 0,
+      skipped: 0,
+      errors: 0,
+      total: 0,
+      has_more: false,
+      remaining: 0,
+      message: "Nenhum modelo com descrição fraca encontrado.",
     });
   }
 
@@ -114,9 +151,9 @@ Deno.serve(async (req) => {
     const batch = candidates.slice(i, i + BATCH_SIZE);
 
     const prompt = batch
-      .map((m, idx) => {
-        const brand = (m as any).brands?.name || "Desconhecida";
-        const silhouette = (m as any).silhouettes?.name || "";
+      .map((m: any, idx: number) => {
+        const brand = m.brands?.name || "Desconhecida";
+        const silhouette = m.silhouettes?.name || "";
         const name = m.model_name_pt || m.model_name_en || m.sku;
         const colorway = m.colorway || "";
         const msrp = m.msrp ? `R$${m.msrp}` : "";
@@ -227,25 +264,22 @@ Retorne APENAS o JSON, sem markdown.`,
       stats.errors += batch.length;
     }
 
-    // Small delay between batches to avoid rate limits
+    // Small delay between batches
     if (i + BATCH_SIZE < candidates.length) {
       await sleep(1500);
     }
   }
 
-  // Check if there are more candidates beyond what we processed
-  const { count: remainingCount } = await sb
-    .from("sneaker_models")
-    .select("id", { count: "exact", head: true })
-    .or("description_pt.is.null,description_pt.eq.,description_en.is.null");
-
-  const hasMore = (remainingCount || 0) > 0 && stats.enriched > 0;
+  // Count remaining using the SAME criteria
+  const remaining = await countWeakModels(sb);
+  // Only signal has_more if we actually enriched something this round AND there are more
+  const hasMore = remaining > 0 && stats.enriched > 0;
 
   return json({
     ok: true,
     ...stats,
     has_more: hasMore,
-    remaining: remainingCount || 0,
+    remaining,
     message: `${stats.enriched} descrições enriquecidas de ${stats.total} candidatos.`,
   });
 });
