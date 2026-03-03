@@ -202,6 +202,18 @@ Deno.serve(async (req) => {
     const brandId = brandMap.get(brandName);
     if (!brandId) return json({ ok: false, error: `Marca não encontrada no DB: ${brandName}` }, 400);
 
+    // Build search queries: silhouette-specific + generic brand fallback
+    const brandSilhouettes = (taxonomy || [])
+      .filter((t: any) => t.brand_name === brandName)
+      .map((t: any) => t.silhouette_name as string);
+    
+    const searchQueries: string[] = [];
+    for (const sil of brandSilhouettes) {
+      searchQueries.push(`${brandName} ${sil}`);
+    }
+    // Add generic brand search as fallback to catch models not in taxonomy
+    searchQueries.push(brandName);
+
     function matchSilhouette(name: string): string | null {
       const lower = (name || "").toLowerCase();
       const rows = (taxonomy || []).filter((t: any) => t.brand_name === brandName);
@@ -213,7 +225,7 @@ Deno.serve(async (req) => {
       return null;
     }
 
-    const stats = { inserted: 0, updated: 0, skipped: 0, skipped_existing: 0, missing_image: 0, missing_msrp: 0, missing_release: 0, missing_silhouette: 0, translated: 0, pending: 0, errors: 0 };
+    const stats = { inserted: 0, updated: 0, skipped: 0, skipped_existing: 0, missing_image: 0, missing_msrp: 0, missing_release: 0, missing_silhouette: 0, translated: 0, pending: 0, errors: 0, queries_used: 0, pages_scanned: 0 };
 
     try {
       // Pre-fetch existing SKUs for this brand to skip them
@@ -224,37 +236,47 @@ Deno.serve(async (req) => {
       const existingSkus = new Set((existingRows || []).map((r: any) => r.sku));
 
       let collected: any[] = [];
-      let page = 1;
       const seenSkus = new Set<string>();
-      const MAX_PAGES = 10; // Go deeper to find new models
-      const targetNew = quota; // We want this many NEW models
+      const targetNew = quota;
+      const PAGES_PER_QUERY = 5;
 
-      while (collected.length < targetNew && page <= MAX_PAGES) {
-        try {
-          const searchUrl = `${STOCKX_API_BASE}/getproducts?keywords=${encodeURIComponent(brandName)}&limit=40&page=${page}`;
-          const data = await throttledFetch(searchUrl, apiHeaders);
-          const items = extractArray(data);
-          if (items.length === 0) break;
+      // Search by each silhouette, then generic brand
+      for (const query of searchQueries) {
+        if (collected.length >= targetNew) break;
+        stats.queries_used++;
 
-          for (const raw of items) {
-            if (collected.length >= targetNew) break;
-            const norm = normalize(raw);
-            if (!norm) continue;
-            if (seenSkus.has(norm.sku)) continue;
-            seenSkus.add(norm.sku);
+        for (let page = 1; page <= PAGES_PER_QUERY; page++) {
+          if (collected.length >= targetNew) break;
+          try {
+            const searchUrl = `${STOCKX_API_BASE}/getproducts?keywords=${encodeURIComponent(query)}&limit=40&page=${page}`;
+            const data = await throttledFetch(searchUrl, apiHeaders);
+            const items = extractArray(data);
+            if (items.length === 0) break;
+            stats.pages_scanned++;
 
-            // Skip models we already have in the DB
-            if (existingSkus.has(norm.sku)) {
-              stats.skipped_existing++;
-              continue;
+            let newInPage = 0;
+            for (const raw of items) {
+              if (collected.length >= targetNew) break;
+              const norm = normalize(raw);
+              if (!norm) continue;
+              if (seenSkus.has(norm.sku)) continue;
+              seenSkus.add(norm.sku);
+
+              if (existingSkus.has(norm.sku)) {
+                stats.skipped_existing++;
+                continue;
+              }
+
+              collected.push({ ...norm, brandName, brandId });
+              newInPage++;
             }
 
-            collected.push({ ...norm, brandName, brandId });
+            // If no new models found in this page, skip remaining pages for this query
+            if (newInPage === 0) break;
+          } catch (e: any) {
+            console.error(`Failed /getproducts for "${query}" page ${page}:`, e.message);
+            break;
           }
-          page++;
-        } catch (e: any) {
-          console.error(`Failed /getproducts for ${brandName} page ${page}:`, e.message);
-          break;
         }
       }
 
@@ -339,7 +361,8 @@ Deno.serve(async (req) => {
       return json({
         ok: true, brand: brandName, fetched: collected.length, quota,
         inserted: stats.inserted, updated: stats.updated, skipped: stats.skipped,
-        skipped_existing: stats.skipped_existing, pages_scanned: page - 1,
+        skipped_existing: stats.skipped_existing,
+        queries_used: stats.queries_used, pages_scanned: stats.pages_scanned,
         missing_image: stats.missing_image, missing_msrp: stats.missing_msrp,
         missing_release: stats.missing_release, missing_silhouette: stats.missing_silhouette,
         translated: stats.translated, pending: stats.pending, errors: stats.errors,
