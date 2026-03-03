@@ -435,6 +435,30 @@ Deno.serve(async (req) => {
     }
   }
 
+  // ─── Test all sources at once ──────────────────────────────────
+  if (mode === "test_all") {
+    const results: any[] = [];
+    for (const src of ALL_SOURCES) {
+      const url = `${API_BASE}${src.searchPath("Jordan 1", 1)}`;
+      const diag = await diagnosticFetch(url, apiHeaders);
+      results.push({
+        source: src.id,
+        name: src.name,
+        ok: diag.ok,
+        status: diag.status,
+        content_type: diag.contentType,
+        is_json: diag.contentType.includes("application/json"),
+        error: !diag.ok
+          ? diag.status === 404 ? "Endpoint não encontrado — plano pode não incluir"
+          : diag.status === 403 ? "Acesso negado — plano pode não incluir"
+          : `HTTP ${diag.status}`
+          : null,
+      });
+      await sleep(300); // Respect rate limits
+    }
+    return json({ ok: true, results });
+  }
+
   // ─── Search & import new SKUs from a source ──────────────────
   if (mode === "search") {
     const sourceId = body.source as string;
