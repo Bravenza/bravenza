@@ -103,10 +103,10 @@ export function PriceHistoryChart({ productId, cpf, className }: PriceHistoryCha
 
   if (!chartData && !live) return null;
 
-  const strokeColor = chartData?.trend === "down" ? "#10b981" : chartData?.trend === "up" ? "#f87171" : "hsl(var(--primary))";
-  const fillColor = chartData?.trend === "down" ? "rgba(16,185,129,0.08)" : chartData?.trend === "up" ? "rgba(248,113,113,0.08)" : "rgba(var(--primary-rgb),0.06)";
+  const strokeColor = chartData?.trend === "down" ? "hsl(142 76% 36%)" : chartData?.trend === "up" ? "hsl(0 84% 60%)" : "hsl(var(--primary))";
+  const fillColor = chartData?.trend === "down" ? "hsl(142 76% 36% / 0.08)" : chartData?.trend === "up" ? "hsl(0 84% 60% / 0.08)" : "hsl(var(--primary) / 0.06)";
   const TrendIcon = chartData?.trend === "down" ? TrendingDown : chartData?.trend === "up" ? TrendingUp : Minus;
-  const trendColor = chartData?.trend === "down" ? "text-emerald-500" : chartData?.trend === "up" ? "text-red-400" : "text-muted-foreground";
+  const trendColor = chartData?.trend === "down" ? "text-success" : chartData?.trend === "up" ? "text-destructive" : "text-muted-foreground";
 
   const handleSvgMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     if (!chartData || !svgRef.current || !isV2) return;
@@ -141,7 +141,7 @@ export function PriceHistoryChart({ productId, cpf, className }: PriceHistoryCha
               Histórico de Preço
             </CardTitle>
             {isV2 && chartData?.is90DayLow && (
-              <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 gap-1 text-[10px] px-1.5 py-0">
+              <Badge className="bg-success/15 text-success border-success/30 gap-1 text-[10px] px-1.5 py-0">
                 <Award className="h-3 w-3" />
                 Menor preço 90d
               </Badge>
@@ -167,17 +167,17 @@ export function PriceHistoryChart({ productId, cpf, className }: PriceHistoryCha
         {/* Stats cards */}
         {live && (
           <div className="grid grid-cols-3 gap-2">
-            <div className="text-center p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+            <div className="text-center p-2.5 rounded-xl bg-success/5 border border-success/10">
               <p className="text-[10px] text-muted-foreground">Menor</p>
-              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{fmt(live.min)}</p>
+              <p className="text-sm font-bold text-success">{fmt(live.min)}</p>
             </div>
             <div className="text-center p-2.5 rounded-xl bg-muted/30 border border-border/30">
               <p className="text-[10px] text-muted-foreground">Média</p>
               <p className="text-sm font-bold">{fmt(live.avg)}</p>
             </div>
-            <div className="text-center p-2.5 rounded-xl bg-red-500/5 border border-red-500/10">
+            <div className="text-center p-2.5 rounded-xl bg-destructive/5 border border-destructive/10">
               <p className="text-[10px] text-muted-foreground">Maior</p>
-              <p className="text-sm font-bold text-red-400">{fmt(live.max)}</p>
+              <p className="text-sm font-bold text-destructive">{fmt(live.max)}</p>
             </div>
           </div>
         )}

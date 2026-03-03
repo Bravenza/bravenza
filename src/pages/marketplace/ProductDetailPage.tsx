@@ -371,10 +371,10 @@ function ProductDetailPageInner() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24">
         {/* 100% Original Seal */}
-        <div className="mb-6 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
-          <BadgeCheck className="h-5 w-5 text-emerald-600 shrink-0" />
-          <span className="text-sm font-bold text-emerald-700 tracking-tight">100% Original</span>
-          <span className="text-xs text-emerald-600/80">Todos os produtos passam por autenticação profissional</span>
+        <div className="mb-6 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-success/5 border border-success/20">
+          <BadgeCheck className="h-5 w-5 text-success shrink-0" />
+          <span className="text-sm font-bold text-success tracking-tight">100% Original</span>
+          <span className="text-xs text-success/80">Todos os produtos passam por autenticação profissional</span>
         </div>
 
         <Breadcrumbs
