@@ -53,7 +53,7 @@ function findImageUrl(item: any): string | null {
 
 function normalize(item: any) {
   // StockX API returns fields like: title, brand, styleId, color, retailPrice, releaseDate, image, description, urlKey
-  const sku = item.styleId || item.style_id || item.sku || item.id;
+  const sku = item.styleID || item.styleId || item.style_id || item.sku || item.id || item._id;
   if (!sku || typeof sku !== "string") return null;
 
   const name = item.title || item.name || item.shoeName || item.model || null;
