@@ -114,6 +114,13 @@ export default function MarketplaceLayout() {
                   <Search className="h-4 w-4" />
                 </Button>
 
+                {/* Favorites */}
+                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" asChild>
+                  <Link to="/app/favoritos">
+                    <Heart className="h-4 w-4" />
+                  </Link>
+                </Button>
+
                 {/* Cart */}
                 <CartDrawer />
 
