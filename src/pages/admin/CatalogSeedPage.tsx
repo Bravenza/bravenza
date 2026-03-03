@@ -223,13 +223,40 @@ export default function CatalogSeedPage() {
   const handleEnrich = async () => {
     setEnriching(true);
     setEnrichResult(null);
+    cancelRef.current = false;
+    let totalEnriched = 0;
+    let totalErrors = 0;
+    let totalSkipped = 0;
+    let round = 0;
+
     try {
-      const data = await callEnrichApi({ mode: "enrich" });
-      setEnrichResult(data);
-      toast({
-        title: data.ok ? `${data.enriched} descrições enriquecidas ✓` : "Erro no enriquecimento",
-        variant: data.ok ? "default" : "destructive",
-      });
+      while (!cancelRef.current) {
+        round++;
+        const data = await callEnrichApi({ mode: "enrich" });
+        
+        if (!data.ok) {
+          toast({ title: "Erro no enriquecimento", description: data.error, variant: "destructive" });
+          break;
+        }
+
+        totalEnriched += data.enriched || 0;
+        totalErrors += data.errors || 0;
+        totalSkipped += data.skipped || 0;
+
+        setEnrichResult({
+          ok: true,
+          enriched: totalEnriched,
+          errors: totalErrors,
+          skipped: totalSkipped,
+          remaining: data.remaining || 0,
+          message: `${totalEnriched} descrições enriquecidas (rodada ${round})`,
+        });
+
+        if (!data.has_more || data.enriched === 0) {
+          toast({ title: `✓ ${totalEnriched} descrições enriquecidas no total` });
+          break;
+        }
+      }
     } catch (e: any) {
       toast({ title: "Erro", description: e.message, variant: "destructive" });
     } finally {
