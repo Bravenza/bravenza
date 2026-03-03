@@ -143,7 +143,7 @@ const flightClub: SourceDef = {
   name: "FlightClub",
   hasSearch: true,
   hasDescription: true,
-  searchPath: (q) => `/fightclubonly?query=${encodeURIComponent(q)}`,
+  searchPath: (q) => `/fightclubonly?query=${encodeURIComponent(q)}&hitsPerPage=20`,
   descriptionPath: (sku) => `/fightclub-description?sku=${encodeURIComponent(sku.replace(/[\s-]/g, "").toLowerCase())}`,
   extractItems: (data) => {
     if (Array.isArray(data)) return data;
@@ -180,14 +180,14 @@ const flightClub: SourceDef = {
   extraEndpoints: [
     {
       id: "fc_brands",
-      label: "Marcas disponíveis",
-      buildPath: () => `/fightclub-brand`,
+      label: "Buscar por marca",
+      buildPath: (brand) => `/fightclub-brand?brand=${encodeURIComponent(brand || "adidas")}`,
       extractItems: genericExtract,
     },
     {
       id: "fc_releases",
       label: "Novos lançamentos",
-      buildPath: () => `/fightclub-releases`,
+      buildPath: () => `/fightclub-releases?hitsPerPage=20`,
       extractItems: genericExtract,
     },
     {
@@ -206,7 +206,7 @@ const goat: SourceDef = {
   name: "GOAT",
   hasSearch: true,
   hasDescription: true,
-  searchPath: (q) => `/goat-search?query=${encodeURIComponent(q)}`,
+  searchPath: (q) => `/goat-search?query=${encodeURIComponent(q)}&hitsPerPage=20`,
   descriptionPath: (sku) => `/goat-description?sku=${encodeURIComponent(sku)}`,
   extractItems: (data) => {
     if (Array.isArray(data)) return data;
@@ -244,7 +244,7 @@ const goat: SourceDef = {
     {
       id: "goat_recommended",
       label: "Produtos similares (por ID)",
-      buildPath: (productId) => `/goat/recommended?productId=${encodeURIComponent(productId || "")}&limit=10`,
+      buildPath: (productId) => `/goat/recommended?productId=${encodeURIComponent(productId || "")}&limit=8`,
       extractItems: genericExtract,
     },
   ],
@@ -300,8 +300,8 @@ const stockX: SourceDef = {
   name: "StockX",
   hasSearch: true,
   hasDescription: true,
-  searchPath: (q, page) => `/getproducts?keywords=${encodeURIComponent(q)}&limit=40&page=${page}`,
-  descriptionPath: (sku) => `/getproductbyid?id=${encodeURIComponent(sku)}`,
+  searchPath: (q, page) => `/stockx/sneakers?query=${encodeURIComponent(q)}&limit=40&page=${page}&currency=USD&country=US`,
+  descriptionPath: (urlKey) => `/stockx-description?urlKey=${encodeURIComponent(urlKey)}`,
   extractItems: (data) => {
     if (Array.isArray(data)) return data;
     for (const k of ["results", "data", "sneakers", "items", "products", "hits"]) {
@@ -336,16 +336,28 @@ const stockX: SourceDef = {
   },
   extraEndpoints: [
     {
-      id: "stockx_trending",
-      label: "Trending / Mais populares",
-      buildPath: (page) => `/getproducts?keywords=trending&limit=40&page=${page || "1"}`,
+      id: "stockx_popular",
+      label: "Mais populares",
+      buildPath: (limit) => `/mostpopular?limit=${limit || "20"}`,
       extractItems: genericExtract,
     },
     {
-      id: "stockx_brand",
-      label: "Buscar por marca",
-      buildPath: (brand) => `/getproducts?keywords=${encodeURIComponent(brand || "Nike")}&limit=40&page=1`,
+      id: "stockx_sneakers_search",
+      label: "Busca dedicada StockX Sneakers",
+      buildPath: (q) => `/stockx/sneakers?query=${encodeURIComponent(q || "Jordan")}&limit=40&page=1&currency=USD&country=US`,
       extractItems: genericExtract,
+    },
+    {
+      id: "stockx_related",
+      label: "Produtos relacionados (por urlKey)",
+      buildPath: (urlKey) => `/stockx-related?urlKey=${encodeURIComponent(urlKey || "air-jordan-1-high-zoom-air-cmft-2-honeydew")}`,
+      extractItems: genericExtract,
+    },
+    {
+      id: "stockx_prices",
+      label: "Preços por styleId",
+      buildPath: (styleId) => `/productprice?styleId=${encodeURIComponent(styleId || "")}`,
+      extractItems: (data) => data ? [data] : [],
     },
   ],
 };
