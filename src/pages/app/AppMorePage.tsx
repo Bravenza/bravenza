@@ -104,11 +104,11 @@ export default function AppMorePage() {
       {/* Back button */}
       <Button
         variant="ghost"
-        size="sm"
-        className="mb-4 gap-1.5 text-muted-foreground"
+        size="default"
+        className="mb-4 gap-1.5 text-muted-foreground min-h-[44px] px-3 active:scale-95 transition-transform"
         onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/app")}
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="h-5 w-5" />
         Voltar
       </Button>
 
@@ -139,7 +139,7 @@ export default function AppMorePage() {
                 key={item.path}
                 onClick={() => navigate(item.path)}
                 className={cn(
-                  "flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium transition-colors",
+                  "flex items-center gap-3 w-full px-3 py-3.5 min-h-[48px] rounded-xl text-sm font-medium transition-all active:scale-[0.98] active:bg-secondary/80",
                   isActive(item.path)
                     ? "bg-primary/10 text-primary"
                     : item.highlight
@@ -159,7 +159,7 @@ export default function AppMorePage() {
         <div className="pt-2 border-t border-border/20">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+            className="flex items-center gap-3 w-full px-3 py-3.5 min-h-[48px] rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all active:scale-[0.98]"
           >
             <LogOut className="h-5 w-5" />
             Sair
