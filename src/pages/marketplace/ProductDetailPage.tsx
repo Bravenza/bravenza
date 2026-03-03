@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo, useRef, lazy, Suspense } from "rea
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { Helmet } from "react-helmet-async";
 import { saveRecentlyViewed } from "@/components/marketplace/home/RecentlyViewedSection";
+import { getProductShareUrl } from "@/lib/share-url";
 import { useParams, useNavigate } from "react-router-dom";
 import { ProductSchema, BreadcrumbSchema } from "@/components/seo/StructuredData";
 import {
@@ -529,10 +530,11 @@ function ProductDetailPageInner() {
                   size="icon"
                   className="h-10 w-10 rounded-xl border-border/30"
                   onClick={() => {
+                    const shareUrl = product.slug ? getProductShareUrl(product.slug) : window.location.href;
                     if (navigator.share) {
-                      navigator.share({ title: formattedName, url: window.location.href });
+                      navigator.share({ title: formattedName, url: shareUrl });
                     } else {
-                      navigator.clipboard.writeText(window.location.href);
+                      navigator.clipboard.writeText(shareUrl);
                     }
                   }}
                 >
