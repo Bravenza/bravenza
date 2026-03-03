@@ -5,7 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Zap, Database, CheckCircle2, AlertTriangle, XCircle, Play, Square, Sparkles, Eye } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Zap, Database, CheckCircle2, AlertTriangle, XCircle, Play, Square, Sparkles, Eye, Globe, Search, RefreshCw } from "lucide-react";
 
 interface BrandResult {
   brand: string;
@@ -35,6 +38,24 @@ export default function CatalogSeedPage() {
   const [enrichPreview, setEnrichPreview] = useState<any>(null);
   const [enrichResult, setEnrichResult] = useState<any>(null);
   const [previewing, setPreviewing] = useState(false);
+
+  // Multi-source state
+  const [msSource, setMsSource] = useState("goat");
+  const [msQuery, setMsQuery] = useState("");
+  const [msPage, setMsPage] = useState(1);
+  const [msSearching, setMsSearching] = useState(false);
+  const [msSearchResult, setMsSearchResult] = useState<any>(null);
+  const [msEnriching, setMsEnriching] = useState(false);
+  const [msEnrichResult, setMsEnrichResult] = useState<any>(null);
+  const [msTesting, setMsTesting] = useState(false);
+  const [msTestResult, setMsTestResult] = useState<any>(null);
+
+  const SOURCES = [
+    { id: "goat", name: "GOAT" },
+    { id: "flightclub", name: "FlightClub" },
+    { id: "stadiumgoods", name: "StadiumGoods" },
+    { id: "kickscrew", name: "KicksCrew" },
+  ];
 
   const callApi = async (body: any) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -268,6 +289,72 @@ export default function CatalogSeedPage() {
     cancelRef.current = true;
   };
 
+  // ─── Multi-source helpers ──────────────────────────────────
+  const callMultisourceApi = async (body: any) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("Sessão expirada");
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/catalog-multisource`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }
+    );
+    return res.json();
+  };
+
+  const handleMsTest = async () => {
+    setMsTesting(true);
+    setMsTestResult(null);
+    try {
+      const data = await callMultisourceApi({ mode: "test", source: msSource });
+      setMsTestResult(data);
+      toast({ title: data.ok ? `${msSource} OK ✓` : `${msSource} falhou`, variant: data.ok ? "default" : "destructive" });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setMsTesting(false);
+    }
+  };
+
+  const handleMsSearch = async () => {
+    if (!msQuery.trim()) return;
+    setMsSearching(true);
+    setMsSearchResult(null);
+    try {
+      const data = await callMultisourceApi({ mode: "search", source: msSource, query: msQuery, page: msPage, limit: 30 });
+      setMsSearchResult(data);
+      if (data.ok) {
+        toast({ title: `${data.inserted || 0} novos inseridos de ${data.source}` });
+      } else {
+        toast({ title: "Erro", description: data.error, variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setMsSearching(false);
+    }
+  };
+
+  const handleMsEnrich = async () => {
+    setMsEnriching(true);
+    setMsEnrichResult(null);
+    try {
+      const data = await callMultisourceApi({ mode: "enrich", source: msSource, limit: 20 });
+      setMsEnrichResult(data);
+      if (data.ok) {
+        toast({ title: `${data.enriched || 0} modelos enriquecidos via ${data.source}` });
+      } else {
+        toast({ title: "Erro", description: data.error, variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setMsEnriching(false);
+    }
+  };
+
   const totals = brandResults.reduce(
     (acc, r) => ({
       fetched: acc.fetched + (r.fetched || 0),
@@ -471,6 +558,123 @@ export default function CatalogSeedPage() {
               )}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Multi-Source Import */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            Importação Multi-Source
+          </CardTitle>
+          <CardDescription>
+            Busque novos SKUs e enriqueça modelos existentes via GOAT, FlightClub, StadiumGoods e KicksCrew.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Source selector */}
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium whitespace-nowrap">Fonte:</span>
+            <Select value={msSource} onValueChange={setMsSource}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SOURCES.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={handleMsTest} disabled={msTesting}>
+              {msTesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+              <span className="ml-1">Testar</span>
+            </Button>
+          </div>
+
+          {msTestResult && (
+            <pre className="p-3 bg-muted rounded-lg text-xs overflow-auto max-h-48">
+              {JSON.stringify(msTestResult, null, 2)}
+            </pre>
+          )}
+
+          <Tabs defaultValue="search" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="search" className="flex items-center gap-1">
+                <Search className="h-3.5 w-3.5" />Buscar Novos
+              </TabsTrigger>
+              <TabsTrigger value="enrich" className="flex items-center gap-1">
+                <RefreshCw className="h-3.5 w-3.5" />Enriquecer Existentes
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="search" className="space-y-3 pt-3">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Ex: Jordan 1, Yeezy 350, Nike Dunk..."
+                  value={msQuery}
+                  onChange={(e) => setMsQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleMsSearch()}
+                />
+                <Input
+                  type="number"
+                  className="w-20"
+                  placeholder="Pág"
+                  value={msPage}
+                  onChange={(e) => setMsPage(Number(e.target.value) || 1)}
+                  min={1}
+                />
+                <Button onClick={handleMsSearch} disabled={msSearching || !msQuery.trim()}>
+                  {msSearching ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Search className="h-4 w-4 mr-1" />}
+                  Buscar
+                </Button>
+              </div>
+
+              {msSearchResult && (
+                <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+                  <p className="text-sm font-medium">
+                    Resultado — {msSearchResult.source}
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <StatCard label="Encontrados" value={msSearchResult.fetched || 0} />
+                    <StatCard label="Inseridos" value={msSearchResult.inserted || 0} />
+                    <StatCard label="Já existiam" value={msSearchResult.skipped_existing || 0} />
+                    <StatCard label="Erros" value={msSearchResult.errors || 0} />
+                  </div>
+                  {msSearchResult.error && (
+                    <p className="text-xs text-destructive">{msSearchResult.error}</p>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="enrich" className="space-y-3 pt-3">
+              <p className="text-sm text-muted-foreground">
+                Busca descrições/imagens de modelos que ainda têm placeholder ou sem descrição, usando o endpoint de detalhes da fonte selecionada.
+              </p>
+              <Button onClick={handleMsEnrich} disabled={msEnriching}>
+                {msEnriching ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+                Enriquecer via {SOURCES.find(s => s.id === msSource)?.name}
+              </Button>
+
+              {msEnrichResult && (
+                <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+                  <p className="text-sm font-medium">
+                    Resultado — {msEnrichResult.source}
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <StatCard label="Processados" value={msEnrichResult.processed || 0} />
+                    <StatCard label="Enriquecidos" value={msEnrichResult.enriched || 0} />
+                    <StatCard label="Sem dados" value={msEnrichResult.no_data || 0} />
+                    <StatCard label="Erros" value={msEnrichResult.errors || 0} />
+                  </div>
+                  {msEnrichResult.error && (
+                    <p className="text-xs text-destructive">{msEnrichResult.error}</p>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
