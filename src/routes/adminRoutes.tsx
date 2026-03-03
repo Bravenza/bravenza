@@ -40,6 +40,9 @@ const MarketplaceAnalyticsPage = lazy(() => import("@/pages/admin/MarketplaceAna
 const MarketplaceModerationPage = lazy(() => import("@/pages/admin/MarketplaceModerationPage"));
 const MarketplaceDisputesPage = lazy(() => import("@/pages/admin/MarketplaceDisputesPage"));
 const MarketplaceCampaignsPage = lazy(() => import("@/pages/admin/MarketplaceCampaignsPage"));
+const CatalogSeedPage = lazy(() => import("@/pages/admin/CatalogSeedPage"));
+const CatalogListPage = lazy(() => import("@/pages/admin/CatalogListPage"));
+const CatalogDetailPage = lazy(() => import("@/pages/admin/CatalogDetailPage"));
 
 export const adminRoutes = (
   <>
@@ -86,6 +89,10 @@ export const adminRoutes = (
       <Route path="vault/marketplace/campanhas" element={<RouteWrapper section="Campanhas" skeleton="admin"><MarketplaceCampaignsPage /></RouteWrapper>} />
       <Route path="vault/matchrooms" element={<RouteWrapper section="Match Rooms" skeleton="admin"><VaultMatchRoomsPage /></RouteWrapper>} />
       <Route path="vault/matchrooms/:id" element={<RouteWrapper section="Match Room" skeleton="detail"><VaultMatchRoomDetailPage /></RouteWrapper>} />
+      {/* Catálogo Oficial */}
+      <Route path="catalog/seed-500" element={<RouteWrapper section="Catalog Seed" skeleton="admin"><CatalogSeedPage /></RouteWrapper>} />
+      <Route path="catalog" element={<RouteWrapper section="Catálogo" skeleton="admin"><CatalogListPage /></RouteWrapper>} />
+      <Route path="catalog/:sku" element={<RouteWrapper section="Detalhe Sneaker" skeleton="detail"><CatalogDetailPage /></RouteWrapper>} />
     </Route>
   </>
 );
