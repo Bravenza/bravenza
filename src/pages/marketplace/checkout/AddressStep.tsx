@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback } from "react";
 import { MapPin, ArrowLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { MobileSelect } from "@/components/ui/mobile-select";
 import { cn } from "@/lib/utils";
 import { BR_STATES, formatCep, type CheckoutFormData } from "./types";
+import { useViaCep } from "@/hooks/useViaCep";
 
 interface AddressStepProps {
   form: CheckoutFormData;
@@ -18,9 +19,14 @@ interface AddressStepProps {
 }
 
 export function AddressStep({ form, savedAddresses, onUpdateField, onApplySavedAddress, onBack, onNext }: AddressStepProps) {
-  const [isLoadingCep, setIsLoadingCep] = useState(false);
+  const handleCepResult = useCallback((data: any) => {
+    if (data.logradouro) onUpdateField("address_street", data.logradouro);
+    if (data.bairro) onUpdateField("address_neighborhood", data.bairro);
+    if (data.localidade) onUpdateField("address_city", data.localidade);
+    if (data.uf) onUpdateField("address_state", data.uf);
+  }, [onUpdateField]);
 
-  const stateOptions = BR_STATES.map(s => ({ value: s, label: s }));
+  const { lookup: handleCepChange, isLoading: isLoadingCep } = useViaCep(handleCepResult);
 
   const isAddressValid = form.address_cep?.replace(/\D/g, "").length === 8 &&
     form.address_street && form.address_number &&
@@ -28,22 +34,7 @@ export function AddressStep({ form, savedAddresses, onUpdateField, onApplySavedA
 
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.buyer_email);
 
-  const handleCepChange = async (cep: string) => {
-    const digits = cep.replace(/\D/g, "");
-    if (digits.length !== 8) return;
-    setIsLoadingCep(true);
-    try {
-      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
-      const data = await res.json();
-      if (!data.erro) {
-        if (data.logradouro) onUpdateField("address_street", data.logradouro);
-        if (data.bairro) onUpdateField("address_neighborhood", data.bairro);
-        if (data.localidade) onUpdateField("address_city", data.localidade);
-        if (data.uf) onUpdateField("address_state", data.uf);
-      }
-    } catch { /* ignore */ }
-    finally { setIsLoadingCep(false); }
-  };
+  const stateOptions = BR_STATES.map(s => ({ value: s, label: s }));
 
   return (
     <div className="bg-background rounded-2xl border border-border/20 p-5 space-y-5">
