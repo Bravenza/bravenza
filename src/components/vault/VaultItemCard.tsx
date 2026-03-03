@@ -341,7 +341,7 @@ export function VaultItemCard({ item, index }: VaultItemCardProps) {
               <SpecCell icon={Tag} label="Marca" value={item.brand} />
               <SpecCell icon={Package} label="Modelo" value={item.model || "—"} />
               <SpecCell icon={Ruler} label="Tamanho" value={item.size} />
-              <SpecCell icon={Palette} label="Cor" value={item.colorway || "—"} />
+              <SpecCell icon={Palette} label="Colorway" value={item.colorway || "—"} />
               <SpecCell
                 icon={Shield}
                 label="Valor"
