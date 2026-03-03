@@ -354,6 +354,7 @@ Deno.serve(async (req) => {
       ok: true,
       sources: ALL_SOURCES.map((s) => ({
         id: s.id, name: s.name, hasSearch: s.hasSearch, hasDescription: s.hasDescription,
+        extraEndpoints: (s.extraEndpoints || []).map((e) => ({ id: e.id, label: e.label })),
       })),
     });
   }
