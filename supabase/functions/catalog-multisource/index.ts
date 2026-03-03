@@ -293,7 +293,64 @@ const kicksCrew: SourceDef = {
   },
 };
 
-const ALL_SOURCES: SourceDef[] = [stadiumGoods, flightClub, goat, kicksCrew];
+// ─── StockX ──────────────────────────────────────────────────────
+
+const stockX: SourceDef = {
+  id: "stockx",
+  name: "StockX",
+  hasSearch: true,
+  hasDescription: true,
+  searchPath: (q, page) => `/getproducts?keywords=${encodeURIComponent(q)}&limit=40&page=${page}`,
+  descriptionPath: (sku) => `/getproductbyid?id=${encodeURIComponent(sku)}`,
+  extractItems: (data) => {
+    if (Array.isArray(data)) return data;
+    for (const k of ["results", "data", "sneakers", "items", "products", "hits"]) {
+      if (data?.[k] && Array.isArray(data[k])) return data[k];
+    }
+    return [];
+  },
+  normalize: (item) => {
+    const sku = item.styleID || item.styleId || item.style_id || item.sku || item.id || item._id;
+    if (!sku) return null;
+    return {
+      sku: String(sku).trim(),
+      name: item.shoeName || item.title || item.name || item.model || null,
+      brand: item.brand || null,
+      colorway: item.color || item.colorway || null,
+      releaseDate: item.releaseDate || item.release_date || null,
+      msrp: item.retailPrice || item.retail_price || item.msrp || null,
+      description: item.description || null,
+      imageUrl: findImage(item),
+    };
+  },
+  normalizeDetail: (data) => {
+    const item = data?.data || data;
+    if (!item) return null;
+    return {
+      description: item.description || item.story || null,
+      imageUrl: findImage(item),
+      colorway: item.color || item.colorway || null,
+      msrp: item.retailPrice || item.retail_price || item.msrp || null,
+      releaseDate: item.releaseDate || item.release_date || null,
+    };
+  },
+  extraEndpoints: [
+    {
+      id: "stockx_trending",
+      label: "Trending / Mais populares",
+      buildPath: (page) => `/getproducts?keywords=trending&limit=40&page=${page || "1"}`,
+      extractItems: genericExtract,
+    },
+    {
+      id: "stockx_brand",
+      label: "Buscar por marca",
+      buildPath: (brand) => `/getproducts?keywords=${encodeURIComponent(brand || "Nike")}&limit=40&page=1`,
+      extractItems: genericExtract,
+    },
+  ],
+};
+
+const ALL_SOURCES: SourceDef[] = [stockX, stadiumGoods, flightClub, goat, kicksCrew];
 const sourceMap = new Map(ALL_SOURCES.map((s) => [s.id, s]));
 
 // ─── Throttled fetch ─────────────────────────────────────────────
