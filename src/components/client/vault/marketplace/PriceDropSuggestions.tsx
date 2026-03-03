@@ -27,10 +27,10 @@ export function PriceDropSuggestions({ fetchSuggestions, onApplyDrop }: PriceDro
   const [applying, setApplying] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchSuggestions().then((data) => {
-      setSuggestions(data);
-      setIsLoading(false);
-    });
+    fetchSuggestions()
+      .then((data) => { setSuggestions(data); })
+      .catch((err) => { console.error("Fetch price-drop error:", err); })
+      .finally(() => { setIsLoading(false); });
   }, []);
 
   const handleApply = async (s: PriceDropSuggestion) => {
