@@ -15,16 +15,22 @@ Deno.serve(async (req) => {
 
   const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-  // Admin auth
+  // Auth: accept service-role key for internal/cron calls, or admin user session
   const authHeader = req.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) return json({ error: "Auth required" }, 401);
-  const anonSb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const { data: { user }, error: userErr } = await anonSb.auth.getUser();
-  if (userErr || !user) return json({ error: "Unauthorized" }, 401);
-  const { data: adm } = await sb.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
-  if (!adm) return json({ error: "Admin only" }, 403);
+
+  const token = authHeader.replace("Bearer ", "");
+  const isServiceRole = token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!isServiceRole) {
+    const anonSb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: userErr } = await anonSb.auth.getUser();
+    if (userErr || !user) return json({ error: "Unauthorized" }, 401);
+    const { data: adm } = await sb.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+    if (!adm) return json({ error: "Admin only" }, 403);
+  }
 
   let body: any = {};
   try { body = await req.json(); } catch {}

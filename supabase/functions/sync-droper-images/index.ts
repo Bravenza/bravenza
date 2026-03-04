@@ -446,12 +446,52 @@ serve(async (req) => {
       processed++;
     }
 
+    // ── Auto catalog-sync após importação ──────────────────────────────────
+    let catalogSyncResult: unknown = null;
+    if (result.success > 0) {
+      try {
+        console.log("[AutoSync] Disparando catalog-sync...");
+        const syncUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/catalog-sync`;
+        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+        // Run full sync in batches (up to 500 items)
+        let totalSynced = 0;
+        let totalUpdated = 0;
+        let syncOffset = 0;
+        const SYNC_BATCH = 200;
+        let hasMore = true;
+
+        while (hasMore && syncOffset < 2000) {
+          const syncRes = await fetch(syncUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${serviceKey}`,
+            },
+            body: JSON.stringify({ mode: "sync", batch_size: SYNC_BATCH, offset: syncOffset }),
+          });
+          const syncData = await syncRes.json();
+          totalSynced += syncData.synced || 0;
+          totalUpdated += syncData.updated || 0;
+          hasMore = syncData.has_more === true;
+          syncOffset = syncData.next_offset || syncOffset + SYNC_BATCH;
+        }
+
+        catalogSyncResult = { synced: totalSynced, updated: totalUpdated };
+        console.log(`[AutoSync] Concluído: ${totalSynced} novos, ${totalUpdated} atualizados`);
+      } catch (e) {
+        console.error("[AutoSync] Erro:", e);
+        catalogSyncResult = { error: e.message };
+      }
+    }
+
     return new Response(
       JSON.stringify({
         message: `✅ ${result.success} sincronizados | ❌ ${result.failed} falhas`,
         pagesProcessed: processed,
         nextPage: currentPage,
         result,
+        catalogSync: catalogSyncResult,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
