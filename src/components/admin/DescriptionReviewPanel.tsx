@@ -483,34 +483,99 @@ export default function DescriptionReviewPanel() {
                 </div>
 
                 <div className="flex gap-2">
-                  <LoadingButton
-                    loading={saving}
-                    onClick={handleApprove}
-                    size="sm"
-                    className="flex-1"
-                  >
-                    <Check className="h-3.5 w-3.5 mr-1" />
-                    Aprovar
-                  </LoadingButton>
-                  <Button
-                    onClick={handleSave}
-                    disabled={saving}
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                  >
-                    <Save className="h-3.5 w-3.5 mr-1" />
-                    Salvar rascunho
-                  </Button>
-                  <Button
-                    onClick={handleSkip}
-                    disabled={saving}
-                    variant="ghost"
-                    size="sm"
-                  >
-                    <SkipForward className="h-3.5 w-3.5 mr-1" />
-                    Ignorar
-                  </Button>
+                  {/* Ações contextuais conforme status */}
+                  {selected.translation_status === "done" ? (
+                    <>
+                      <Button
+                        onClick={handleSave}
+                        disabled={saving}
+                        size="sm"
+                        className="flex-1"
+                      >
+                        <Save className="h-3.5 w-3.5 mr-1" />
+                        Salvar alterações
+                      </Button>
+                      <Button
+                        onClick={async () => {
+                          if (!selected) return;
+                          setSaving(true);
+                          const { error } = await supabase
+                            .from("sneaker_models")
+                            .update({ translation_status: "pending" })
+                            .eq("id", selected.id);
+                          setSaving(false);
+                          if (error) { showToast(error.message, "error"); return; }
+                          showToast("Enviado para reescrita");
+                          setSelected(null);
+                          loadProducts();
+                          loadCounts();
+                        }}
+                        disabled={saving}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Sparkles className="h-3.5 w-3.5 mr-1" />
+                        Reescrever
+                      </Button>
+                    </>
+                  ) : selected.translation_status === "skipped" ? (
+                    <>
+                      <LoadingButton
+                        loading={saving}
+                        onClick={async () => {
+                          if (!selected) return;
+                          setSaving(true);
+                          const { error } = await supabase
+                            .from("sneaker_models")
+                            .update({ translation_status: "pending" })
+                            .eq("id", selected.id);
+                          setSaving(false);
+                          if (error) { showToast(error.message, "error"); return; }
+                          showToast("Enviado para reescrita");
+                          setSelected(null);
+                          loadProducts();
+                          loadCounts();
+                        }}
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        <Sparkles className="h-3.5 w-3.5 mr-1" />
+                        Reprocessar
+                      </LoadingButton>
+                    </>
+                  ) : (
+                    <>
+                      <LoadingButton
+                        loading={saving}
+                        onClick={handleApprove}
+                        size="sm"
+                        className="flex-1"
+                      >
+                        <Check className="h-3.5 w-3.5 mr-1" />
+                        Aprovar
+                      </LoadingButton>
+                      <Button
+                        onClick={handleSave}
+                        disabled={saving}
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                      >
+                        <Save className="h-3.5 w-3.5 mr-1" />
+                        Salvar rascunho
+                      </Button>
+                      <Button
+                        onClick={handleSkip}
+                        disabled={saving}
+                        variant="ghost"
+                        size="sm"
+                      >
+                        <SkipForward className="h-3.5 w-3.5 mr-1" />
+                        Ignorar
+                      </Button>
+                    </>
+                  )}
                 </div>
               </>
             ) : (
