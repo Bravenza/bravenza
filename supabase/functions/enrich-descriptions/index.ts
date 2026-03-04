@@ -18,9 +18,15 @@ interface SneakerModel {
   id: string;
   sku: string;
   model_name_pt: string;
+  model_name_en: string | null;
   description_pt: string;
+  description_en: string | null;
   colorway: string | null;
   brand_id: string;
+  brands: { name: string } | null;
+  silhouettes: { name: string } | null;
+  msrp: number | null;
+  release_date: string | null;
 }
 
 interface EnrichResult {
