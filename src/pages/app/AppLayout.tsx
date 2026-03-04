@@ -220,71 +220,68 @@ export default function AppLayout() {
                           </Avatar>
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" sideOffset={8} className="w-64 z-[100] bg-popover/95 backdrop-blur-xl border border-border/60 shadow-2xl shadow-black/20 rounded-xl p-0 animate-in fade-in-0 zoom-in-95">
+                      <DropdownMenuContent align="end" sideOffset={8} className="w-64 z-[100] bg-popover/95 backdrop-blur-xl border border-border/50 shadow-2xl shadow-black/15 rounded-xl p-0">
                         {/* User identity header */}
                         <div className="px-4 pt-4 pb-3 flex items-center gap-3">
-                          <Avatar className="h-10 w-10 border-2 border-primary/30 shrink-0">
+                          <Avatar className="h-10 w-10 border border-border/60 shrink-0">
                             <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || "Avatar"} />
-                            <AvatarFallback className="bg-primary/15 text-primary text-sm font-bold">{initials}</AvatarFallback>
+                            <AvatarFallback className="bg-muted text-muted-foreground text-sm font-semibold">{initials}</AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-foreground truncate">
+                            <p className="text-sm font-medium text-foreground truncate">
                               {profile?.full_name || "Usuário"}
                             </p>
-                            <p className="text-[11px] text-muted-foreground font-mono tracking-wide">
+                            <p className="text-[11px] text-muted-foreground/70 font-mono">
                               {cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.•••.$3-••")}
                             </p>
                           </div>
                         </div>
 
-                        <DropdownMenuSeparator className="my-0 bg-border/40" />
+                        <DropdownMenuSeparator className="my-0 bg-border/30" />
 
-                        {/* Account links */}
-                        <div className="p-1.5">
-                          <DropdownMenuItem onClick={() => navigate("/app/perfil")} className="cursor-pointer px-3 py-2.5 rounded-lg text-sm gap-3 focus:bg-accent">
-                            <Settings className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span>Meus dados</span>
+                        <div className="p-1">
+                          <DropdownMenuItem onClick={() => navigate("/app/perfil")} className="cursor-pointer px-3 py-2 rounded-md text-[13px] gap-2.5">
+                            <Settings className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+                            Meus dados
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate("/app/pedidos")} className="cursor-pointer px-3 py-2.5 rounded-lg text-sm gap-3 focus:bg-accent">
-                            <Package className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span>Compras</span>
+                          <DropdownMenuItem onClick={() => navigate("/app/pedidos")} className="cursor-pointer px-3 py-2 rounded-md text-[13px] gap-2.5">
+                            <Package className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+                            Compras
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate("/app/favoritos")} className="cursor-pointer px-3 py-2.5 rounded-lg text-sm gap-3 focus:bg-accent">
-                            <Heart className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span>Favoritos</span>
+                          <DropdownMenuItem onClick={() => navigate("/app/favoritos")} className="cursor-pointer px-3 py-2 rounded-md text-[13px] gap-2.5">
+                            <Heart className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+                            Favoritos
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate("/app/closet")} className="cursor-pointer px-3 py-2.5 rounded-lg text-sm gap-3 focus:bg-accent">
-                            <Box className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span>Closet</span>
+                          <DropdownMenuItem onClick={() => navigate("/app/closet")} className="cursor-pointer px-3 py-2 rounded-md text-[13px] gap-2.5">
+                            <Box className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+                            Closet
                           </DropdownMenuItem>
                         </div>
 
-                        <DropdownMenuSeparator className="my-0 bg-border/40" />
+                        <DropdownMenuSeparator className="my-0 bg-border/30" />
 
-                        {/* Seller links */}
-                        <div className="p-1.5">
-                          <DropdownMenuItem onClick={() => navigate("/vender")} className="cursor-pointer px-3 py-2.5 rounded-lg text-sm gap-3 focus:bg-accent">
-                            <DollarSign className="h-4 w-4 text-primary shrink-0" />
-                            <span className="flex-1 font-medium">Quero vender</span>
-                            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                        <div className="p-1">
+                          <DropdownMenuItem onClick={() => navigate("/vender")} className="cursor-pointer px-3 py-2 rounded-md text-[13px] gap-2.5">
+                            <DollarSign className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+                            <span className="flex-1">Quero vender</span>
+                            <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate("/app/loja")} className="cursor-pointer px-3 py-2.5 rounded-lg text-sm gap-3 focus:bg-accent">
-                            <Store className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span>Minha Loja</span>
+                          <DropdownMenuItem onClick={() => navigate("/app/loja")} className="cursor-pointer px-3 py-2 rounded-md text-[13px] gap-2.5">
+                            <Store className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+                            Minha Loja
                           </DropdownMenuItem>
                         </div>
 
-                        <DropdownMenuSeparator className="my-0 bg-border/40" />
+                        <DropdownMenuSeparator className="my-0 bg-border/30" />
 
-                        {/* Footer */}
-                        <div className="p-1.5">
-                          <DropdownMenuItem onClick={() => navigate("/app/mais")} className="cursor-pointer px-3 py-2.5 rounded-lg text-sm gap-3 focus:bg-accent">
-                            <MoreHorizontal className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span>Mais opções</span>
+                        <div className="p-1">
+                          <DropdownMenuItem onClick={() => navigate("/app/mais")} className="cursor-pointer px-3 py-2 rounded-md text-[13px] gap-2.5">
+                            <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+                            Mais opções
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer px-3 py-2.5 rounded-lg text-sm gap-3 text-destructive focus:text-destructive focus:bg-destructive/10">
-                            <LogOut className="h-4 w-4 shrink-0" />
-                            <span>Sair</span>
+                          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer px-3 py-2 rounded-md text-[13px] gap-2.5 text-destructive/80 focus:text-destructive">
+                            <LogOut className="h-3.5 w-3.5 shrink-0" />
+                            Sair
                           </DropdownMenuItem>
                         </div>
                       </DropdownMenuContent>
