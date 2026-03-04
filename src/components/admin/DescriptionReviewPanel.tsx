@@ -1,0 +1,409 @@
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { LoadingButton } from "@/components/ui/loading-button";
+import {
+  Loader2, CheckCircle2, XCircle, AlertTriangle, Eye, Sparkles,
+  ChevronLeft, ChevronRight, Search, SkipForward, Save, Check
+} from "lucide-react";
+
+// ─── Tipos ────────────────────────────────────────────────────────────────────
+type TranslationStatus = "pending" | "review" | "done" | "error" | "skipped";
+
+interface SneakerModel {
+  id: string;
+  sku: string;
+  model_name_pt: string;
+  description_pt: string;
+  translation_status: TranslationStatus;
+  translation_error: string | null;
+  placeholder_image_url: string;
+}
+
+const STATUS_LABELS: Record<TranslationStatus, { label: string; icon: React.ElementType }> = {
+  pending: { label: "Pendente", icon: AlertTriangle },
+  review:  { label: "Aguard. revisão", icon: Eye },
+  done:    { label: "Aprovado", icon: CheckCircle2 },
+  error:   { label: "Erro", icon: XCircle },
+  skipped: { label: "Ignorado", icon: SkipForward },
+};
+
+const PAGE_SIZE = 20;
+
+export default function DescriptionReviewPanel() {
+  const [products, setProducts] = useState<SneakerModel[]>([]);
+  const [selected, setSelected] = useState<SneakerModel | null>(null);
+  const [filterStatus, setFilterStatus] = useState<TranslationStatus | "all">("review");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [enriching, setEnriching] = useState(false);
+  const [editPt, setEditPt] = useState("");
+  const [editName, setEditName] = useState("");
+  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
+
+  const showToast = (msg: string, type: "success" | "error" = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  // ─── Contadores por status ───────────────────────────────────────────────────
+  const loadCounts = useCallback(async () => {
+    const statuses: TranslationStatus[] = ["pending", "review", "done", "error", "skipped"];
+    const newCounts: Record<string, number> = {};
+    for (const s of statuses) {
+      const { count } = await supabase
+        .from("sneaker_models")
+        .select("id", { count: "exact", head: true })
+        .eq("translation_status", s);
+      newCounts[s] = count || 0;
+    }
+    setCounts(newCounts);
+  }, []);
+
+  // ─── Lista de produtos ──────────────────────────────────────────────────────
+  const loadProducts = useCallback(async () => {
+    setLoading(true);
+    let query = supabase
+      .from("sneaker_models")
+      .select("id, sku, model_name_pt, description_pt, translation_status, translation_error, placeholder_image_url", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+    if (filterStatus !== "all") query = query.eq("translation_status", filterStatus);
+    if (search.trim()) query = query.or(`sku.ilike.%${search}%,model_name_pt.ilike.%${search}%`);
+
+    const { data, count, error } = await query;
+    if (error) { showToast(error.message, "error"); setLoading(false); return; }
+    setProducts((data || []) as SneakerModel[]);
+    setTotal(count || 0);
+    setLoading(false);
+  }, [filterStatus, search, page]);
+
+  useEffect(() => { loadCounts(); }, [loadCounts]);
+  useEffect(() => { loadProducts(); }, [loadProducts]);
+
+  // ─── Selecionar produto ─────────────────────────────────────────────────────
+  const selectProduct = (p: SneakerModel) => {
+    setSelected(p);
+    setEditPt(p.description_pt || "");
+    setEditName(p.model_name_pt || "");
+  };
+
+  // ─── Salvar edição (mantém em review) ───────────────────────────────────────
+  const handleSave = async () => {
+    if (!selected) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("sneaker_models")
+      .update({ description_pt: editPt, model_name_pt: editName })
+      .eq("id", selected.id);
+    setSaving(false);
+    if (error) { showToast(error.message, "error"); return; }
+    showToast("Rascunho salvo");
+    loadProducts();
+    loadCounts();
+  };
+
+  // ─── Aprovar → done ─────────────────────────────────────────────────────────
+  const handleApprove = async () => {
+    if (!selected) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("sneaker_models")
+      .update({ description_pt: editPt, model_name_pt: editName, translation_status: "done" })
+      .eq("id", selected.id);
+    setSaving(false);
+    if (error) { showToast(error.message, "error"); return; }
+    showToast("Aprovado ✓");
+    setSelected(null);
+    loadProducts();
+    loadCounts();
+  };
+
+  // ─── Ignorar → skipped ─────────────────────────────────────────────────────
+  const handleSkip = async () => {
+    if (!selected) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("sneaker_models")
+      .update({ translation_status: "skipped" })
+      .eq("id", selected.id);
+    setSaving(false);
+    if (error) { showToast(error.message, "error"); return; }
+    showToast("Marcado como ignorado");
+    setSelected(null);
+    loadProducts();
+    loadCounts();
+  };
+
+  // ─── Reescrever próximos 10 ────────────────────────────────────────────────
+  const handleEnrich = async () => {
+    setEnriching(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session?.session?.access_token;
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enrich-descriptions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({}),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        showToast(data.error || "Erro ao enriquecer", "error");
+      } else {
+        showToast(`${data.success} reescritas, ${data.failed} falhas`);
+        loadProducts();
+        loadCounts();
+      }
+    } catch (e: any) {
+      showToast(e.message, "error");
+    } finally {
+      setEnriching(false);
+    }
+  };
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Eye className="h-4 w-4 text-primary" />
+          Revisão de Descrições
+        </CardTitle>
+        <CardDescription>
+          Revise e aprove as descrições reescritas pela IA. Fluxo: pending → review → done
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Toast */}
+        {toast && (
+          <div className={`p-3 rounded-lg text-sm font-medium border ${
+            toast.type === "success"
+              ? "bg-emerald-950/50 border-emerald-800 text-emerald-300"
+              : "bg-red-950/50 border-red-800 text-red-300"
+          }`}>
+            {toast.msg}
+          </div>
+        )}
+
+        {/* Status counters */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => { setFilterStatus("all"); setPage(0); }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+              filterStatus === "all"
+                ? "bg-primary/20 border-primary/50 text-primary"
+                : "bg-secondary/50 border-border/50 text-muted-foreground hover:bg-secondary"
+            }`}
+          >
+            Todos
+          </button>
+          {(Object.entries(STATUS_LABELS) as [TranslationStatus, typeof STATUS_LABELS[TranslationStatus]][]).map(
+            ([key, { label, icon: Icon }]) => (
+              <button
+                key={key}
+                onClick={() => { setFilterStatus(key); setPage(0); }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-1.5 ${
+                  filterStatus === key
+                    ? "bg-primary/20 border-primary/50 text-primary"
+                    : "bg-secondary/50 border-border/50 text-muted-foreground hover:bg-secondary"
+                }`}
+              >
+                <Icon className="w-3 h-3" />
+                {label}
+                <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">{counts[key] ?? "…"}</Badge>
+              </button>
+            )
+          )}
+        </div>
+
+        {/* Actions bar */}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por SKU ou nome..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+              className="pl-9 h-9"
+            />
+          </div>
+          <LoadingButton
+            loading={enriching}
+            loadingText="Reescrevendo..."
+            onClick={handleEnrich}
+            size="sm"
+            className="shrink-0"
+          >
+            <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+            Reescrever próximos 10
+          </LoadingButton>
+        </div>
+
+        {/* Content: list + editor */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Product list */}
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">{total} produtos · Pág {page + 1}/{totalPages || 1}</p>
+            <ScrollArea className="h-[420px] pr-2">
+              {loading ? (
+                <div className="flex items-center justify-center h-32">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : products.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">Nenhum produto encontrado.</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {products.map((p) => {
+                    const statusInfo = STATUS_LABELS[p.translation_status] || STATUS_LABELS.pending;
+                    const StatusIcon = statusInfo.icon;
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => selectProduct(p)}
+                        className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                          selected?.id === p.id
+                            ? "bg-primary/10 border-primary/40"
+                            : "bg-secondary/30 border-border/30 hover:bg-secondary/60"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-foreground truncate">{p.model_name_pt || p.sku}</span>
+                          <StatusIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{p.sku}</p>
+                        {p.description_pt && (
+                          <p className="text-xs text-muted-foreground/70 mt-1 line-clamp-2">{p.description_pt}</p>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </ScrollArea>
+            {/* Pagination */}
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page === 0}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </Button>
+              <span className="text-xs text-muted-foreground">{page + 1} / {totalPages || 1}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page + 1 >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Editor */}
+          <div className="space-y-3">
+            {selected ? (
+              <>
+                <div className="flex items-center gap-3">
+                  {selected.placeholder_image_url && (
+                    <img
+                      src={selected.placeholder_image_url}
+                      alt={selected.model_name_pt}
+                      className="w-16 h-16 object-contain rounded-lg bg-secondary/50 border border-border/30"
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground">{selected.sku}</p>
+                    <Badge variant="secondary" className="text-[10px] mt-1">
+                      {STATUS_LABELS[selected.translation_status]?.label || selected.translation_status}
+                    </Badge>
+                  </div>
+                </div>
+
+                {selected.translation_error && (
+                  <div className="p-2 rounded-lg bg-red-950/30 border border-red-800/50 text-xs text-red-300">
+                    Erro: {selected.translation_error}
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Nome PT</label>
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Descrição PT</label>
+                  <Textarea
+                    value={editPt}
+                    onChange={(e) => setEditPt(e.target.value)}
+                    rows={8}
+                    className="text-sm"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <LoadingButton
+                    loading={saving}
+                    onClick={handleApprove}
+                    size="sm"
+                    className="flex-1"
+                  >
+                    <Check className="h-3.5 w-3.5 mr-1" />
+                    Aprovar
+                  </LoadingButton>
+                  <Button
+                    onClick={handleSave}
+                    disabled={saving}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    <Save className="h-3.5 w-3.5 mr-1" />
+                    Salvar rascunho
+                  </Button>
+                  <Button
+                    onClick={handleSkip}
+                    disabled={saving}
+                    variant="ghost"
+                    size="sm"
+                  >
+                    <SkipForward className="h-3.5 w-3.5 mr-1" />
+                    Ignorar
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-64 text-sm text-muted-foreground">
+                Selecione um produto para editar
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

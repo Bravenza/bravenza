@@ -14,6 +14,7 @@ import {
   Sparkles, Eye, Globe, Search, RefreshCw, ArrowRightLeft, ImageIcon
 } from "lucide-react";
 import SyncDroperImages from "@/components/admin/SyncDroperImages";
+import DescriptionReviewPanel from "@/components/admin/DescriptionReviewPanel";
 
 // ─── Types ───────────────────────────────────────────────────────
 interface BrandResult {
@@ -311,7 +312,7 @@ export default function CatalogSeedPage() {
 
       {/* Main Tabs */}
       <Tabs defaultValue="sync" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 h-11">
+        <TabsList className="grid w-full grid-cols-6 h-11">
           <TabsTrigger value="sync" className="gap-1.5 text-xs">
             <ArrowRightLeft className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Sync</span> Marketplace
@@ -327,6 +328,10 @@ export default function CatalogSeedPage() {
           <TabsTrigger value="enrich" className="gap-1.5 text-xs">
             <Sparkles className="w-3.5 h-3.5" />
             Enriquecer
+          </TabsTrigger>
+          <TabsTrigger value="review" className="gap-1.5 text-xs">
+            <Eye className="w-3.5 h-3.5" />
+            Revisão
           </TabsTrigger>
           <TabsTrigger value="droper" className="gap-1.5 text-xs">
             <ImageIcon className="w-3.5 h-3.5" />
@@ -678,7 +683,14 @@ export default function CatalogSeedPage() {
         </TabsContent>
 
         {/* ════════════════════════════════════════════════════════════
-            TAB 5: Droper Images
+            TAB 5: Review Descriptions
+        ════════════════════════════════════════════════════════════ */}
+        <TabsContent value="review" className="mt-4">
+          <DescriptionReviewPanel />
+        </TabsContent>
+
+        {/* ════════════════════════════════════════════════════════════
+            TAB 6: Droper Images
         ════════════════════════════════════════════════════════════ */}
         <TabsContent value="droper" className="mt-4">
           <SyncDroperImages />
