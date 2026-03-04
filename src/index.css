@@ -281,7 +281,7 @@
     --destructive-foreground: 45 29% 97%;
     --border: 0 0% 18%;
     --input: 0 0% 18%;
-    --ring: 45 100% 50%;
+    --ring: 0 0% 45%;
     color: hsl(45 29% 97%);
     background-color: hsl(0 0% 12%);
   }
