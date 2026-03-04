@@ -50,9 +50,9 @@ function buildPrompt(product: SneakerModel): string {
   if (hasOriginal) {
     return `Você é redator editorial de uma plataforma premium de sneakers chamada Bravenza.
 
-Reescreva a descrição abaixo com tom editorial e lifestyle — evocativo, apaixonado, mas conciso. 
-Máximo 3 parágrafos curtos. Preserve todos os fatos técnicos (materiais, tecnologias, colaborações). 
-Escreva em português brasileiro. NÃO adicione emojis. NÃO use bullet points.
+Reescreva a descrição abaixo com tom editorial e lifestyle — evocativo mas muito conciso.
+Máximo 2 parágrafos curtos (3-4 frases no total). Preserve fatos técnicos essenciais (materiais, tecnologias, colaborações).
+Escreva em português brasileiro. NÃO adicione emojis. NÃO use bullet points. Seja direto e breve.
 Retorne APENAS a descrição reescrita, sem prefácio ou explicação.
 
 Produto: ${name}
@@ -71,7 +71,7 @@ ${product.description_pt}`;
 Crie uma descrição editorial e lifestyle em português brasileiro para o sneaker abaixo.
 Use seu conhecimento sobre o modelo, marca e silhueta para escrever algo envolvente e informativo.
 Mencione materiais, tecnologias de amortecimento, história/contexto cultural e detalhes de design quando relevante.
-Tom editorial, apaixonado, mas conciso. Máximo 3 parágrafos curtos.
+Tom editorial, apaixonado, mas muito conciso. Máximo 2 parágrafos curtos (3-4 frases no total). Seja direto e breve.
 NÃO adicione emojis. NÃO use bullet points.
 Retorne APENAS a descrição, sem prefácio ou explicação.
 
@@ -100,7 +100,7 @@ async function rewriteDescription(
       body: JSON.stringify({
         model: AI_MODEL,
         temperature: 0.7,
-        max_tokens: 600,
+        max_tokens: 300,
         messages: [{ role: "user", content: buildPrompt(product) }],
       }),
     });
