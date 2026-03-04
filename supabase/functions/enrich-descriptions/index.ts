@@ -100,7 +100,7 @@ async function rewriteDescription(
       body: JSON.stringify({
         model: AI_MODEL,
         temperature: 0.7,
-        max_tokens: 600,
+        max_tokens: 300,
         messages: [{ role: "user", content: buildPrompt(product) }],
       }),
     });
