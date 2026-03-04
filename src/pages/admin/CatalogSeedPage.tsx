@@ -192,7 +192,7 @@ export default function CatalogSeedPage() {
         await new Promise(r => setTimeout(r, 300));
       }
     } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
-    finally { setSyncing(false); }
+    finally { setSyncing(false); handleSyncPreview(); }
   };
 
   // ─── StockX Seed ───────────────────────────────────────────────
