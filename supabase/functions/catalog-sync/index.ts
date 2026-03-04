@@ -111,8 +111,7 @@ Deno.serve(async (req) => {
           modelName = modelName.substring(brandName.length + 1).trim();
         }
         const description = model.description_pt || model.description_en || `${brandName} ${modelName}`;
-        const imageUrl = imageMap.get(model.id);
-        const imageArray = imageUrl ? [imageUrl] : [];
+        const imageArray = imageMap.get(model.id) || [];
 
         // Generate slug
         const slug = `${brandName}-${modelName}`
