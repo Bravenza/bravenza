@@ -308,55 +308,31 @@ export default function DescriptionReviewPanel() {
               className="pl-9 h-9"
             />
           </div>
-          <LoadingButton
-            loading={enriching}
-            loadingText="Reescrevendo..."
-            onClick={() => handleEnrich("10")}
-            size="sm"
-            variant="outline"
-            disabled={enriching}
-          >
-            <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-            Próximos 10
-          </LoadingButton>
-          <LoadingButton
-            loading={enriching}
-            loadingText="Reescrevendo..."
-            onClick={() => handleEnrich("100")}
-            size="sm"
-            variant="outline"
-            disabled={enriching}
-          >
-            <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-            Próximos 100
-          </LoadingButton>
-          <LoadingButton
-            loading={enriching}
-            loadingText="Reescrevendo..."
-            onClick={() => handleEnrich("all")}
-            size="sm"
-            disabled={enriching}
-          >
-            <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-            Reescrever todos
-          </LoadingButton>
-          {enriching && (
-            <Button onClick={handleCancelEnrich} variant="destructive" size="sm">
-              <XCircle className="h-3.5 w-3.5 mr-1" />
-              Cancelar
-            </Button>
+          {/* Reescrever — só aparece em pending/all/error */}
+          {(filterStatus === "pending" || filterStatus === "all" || filterStatus === "error") && (
+            <>
+              <LoadingButton loading={enriching} loadingText="Reescrevendo..." onClick={() => handleEnrich("10")} size="sm" variant="outline" disabled={enriching}>
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" />Próximos 10
+              </LoadingButton>
+              <LoadingButton loading={enriching} loadingText="Reescrevendo..." onClick={() => handleEnrich("100")} size="sm" variant="outline" disabled={enriching}>
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" />Próximos 100
+              </LoadingButton>
+              <LoadingButton loading={enriching} loadingText="Reescrevendo..." onClick={() => handleEnrich("all")} size="sm" disabled={enriching}>
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" />Reescrever todos
+              </LoadingButton>
+              {enriching && (
+                <Button onClick={handleCancelEnrich} variant="destructive" size="sm">
+                  <XCircle className="h-3.5 w-3.5 mr-1" />Cancelar
+                </Button>
+              )}
+            </>
           )}
-          <LoadingButton
-            loading={approvingAll}
-            loadingText="Aprovando..."
-            onClick={handleApproveAll}
-            size="sm"
-            variant="outline"
-            disabled={enriching || approvingAll || !(counts["review"] > 0)}
-          >
-            <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
-            Aprovar todos ({counts["review"] ?? 0})
-          </LoadingButton>
+          {/* Aprovar todos — só aparece em review/all */}
+          {(filterStatus === "review" || filterStatus === "all") && (counts["review"] ?? 0) > 0 && (
+            <LoadingButton loading={approvingAll} loadingText="Aprovando..." onClick={handleApproveAll} size="sm" variant="outline" disabled={enriching || approvingAll}>
+              <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />Aprovar todos ({counts["review"] ?? 0})
+            </LoadingButton>
+          )}
         </div>
 
         {/* Progress bar */}
