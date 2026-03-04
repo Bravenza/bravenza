@@ -5,7 +5,7 @@ import {
   MoreHorizontal, Activity, HelpCircle, DollarSign,
   ArrowRight, FileText, RefreshCw
 } from "lucide-react";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
