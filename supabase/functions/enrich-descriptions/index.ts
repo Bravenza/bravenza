@@ -1,285 +1,274 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const CORS = {
+// ─── Configurações ─────────────────────────────────────────────────────────────
+const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const AI_MODEL = "google/gemini-2.5-flash";
+const BATCH_SIZE = 10;
+const CONCURRENCY = 3;
+
+const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const json = (d: unknown, s = 200) =>
-  new Response(JSON.stringify(d), {
-    status: s,
-    headers: { ...CORS, "Content-Type": "application/json" },
-  });
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-const BATCH_SIZE = 3;
-const MAX_PER_RUN = 6;
-const GENERIC_PATTERN = "Modelo % da %. Ideal para uso casual%";
-
-// Unified query to find weak descriptions — used for both candidates and remaining count
-async function findWeakModels(sb: any, limit: number) {
-  // 1) Models with null/empty description_pt that haven't been enriched yet
-  const { data: nullModels } = await sb
-    .from("sneaker_models")
-    .select(
-      "id, sku, model_name_en, model_name_pt, description_en, description_pt, colorway, brands:brand_id(name), silhouettes:silhouette_id(name), msrp, release_date, translation_status"
-    )
-    .or("description_pt.is.null,description_pt.eq.")
-    .neq("translation_status", "enriched")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-
-  // 2) Models with generic auto-generated descriptions
-  const { data: genericModels } = await sb
-    .from("sneaker_models")
-    .select(
-      "id, sku, model_name_en, model_name_pt, description_en, description_pt, colorway, brands:brand_id(name), silhouettes:silhouette_id(name), msrp, release_date, translation_status"
-    )
-    .not("description_pt", "is", null)
-    .like("description_pt", GENERIC_PATTERN)
-    .neq("translation_status", "enriched")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-
-  // Deduplicate
-  const seen = new Set<string>();
-  const all = [...(nullModels || []), ...(genericModels || [])];
-  return all.filter((m) => {
-    if (seen.has(m.id)) return false;
-    seen.add(m.id);
-    return true;
-  }).slice(0, limit);
+// ─── Tipos ─────────────────────────────────────────────────────────────────────
+interface SneakerModel {
+  id: string;
+  sku: string;
+  model_name_pt: string;
+  description_pt: string;
+  colorway: string | null;
+  brand_id: string;
 }
 
-async function countWeakModels(sb: any): Promise<number> {
-  const { count: nullCount } = await sb
-    .from("sneaker_models")
-    .select("id", { count: "exact", head: true })
-    .or("description_pt.is.null,description_pt.eq.")
-    .neq("translation_status", "enriched");
-
-  const { count: genericCount } = await sb
-    .from("sneaker_models")
-    .select("id", { count: "exact", head: true })
-    .not("description_pt", "is", null)
-    .like("description_pt", GENERIC_PATTERN)
-    .neq("translation_status", "enriched");
-
-  // This may slightly overcount due to overlap, but it's close enough
-  return (nullCount || 0) + (genericCount || 0);
+interface EnrichResult {
+  success: number;
+  failed: number;
+  errors: string[];
+  processed: { sku: string; preview: string }[];
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
+// ─── Prompt editorial/lifestyle para reescrita ────────────────────────────────
+function buildPrompt(product: SneakerModel): string {
+  return `Você é redator editorial de uma plataforma premium de sneakers chamada Bravenza.
 
-  const sb = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
+Reescreva a descrição abaixo com tom editorial e lifestyle — evocativo, apaixonado, mas conciso. 
+Máximo 3 parágrafos curtos. Preserve todos os fatos técnicos (materiais, tecnologias, colaborações). 
+Escreva em português brasileiro. NÃO adicione emojis. NÃO use bullet points.
+Retorne APENAS a descrição reescrita, sem prefácio ou explicação.
 
-  // Auth check
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer "))
-    return json({ error: "Auth required" }, 401);
+Produto: ${product.model_name_pt}
+Colorway: ${product.colorway ?? "—"}
+Descrição original:
+${product.description_pt}`;
+}
 
-  const anonSb = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
-    { global: { headers: { Authorization: authHeader } } }
-  );
-  const {
-    data: { user },
-    error: userErr,
-  } = await anonSb.auth.getUser();
-  if (userErr || !user) return json({ error: "Unauthorized" }, 401);
-
-  const { data: adm } = await sb
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id)
-    .eq("role", "admin")
-    .maybeSingle();
-  if (!adm) return json({ error: "Admin only" }, 403);
-
-  let body: any = {};
+// ─── Chama a IA via Lovable Gateway ───────────────────────────────────────────
+async function rewriteDescription(
+  product: SneakerModel,
+  apiKey: string
+): Promise<string | null> {
   try {
-    body = await req.json();
-  } catch {}
-
-  const mode = body.mode || "enrich"; // "preview" | "enrich"
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-  if (!lovableKey)
-    return json({ ok: false, error: "LOVABLE_API_KEY não configurada" });
-
-  // Find weak candidates
-  const candidates = await findWeakModels(sb, MAX_PER_RUN);
-
-  if (mode === "preview") {
-    const totalWeak = await countWeakModels(sb);
-    return json({
-      ok: true,
-      total_weak: totalWeak,
-      samples: candidates.slice(0, 5).map((m: any) => ({
-        sku: m.sku,
-        name: m.model_name_pt || m.model_name_en,
-        current_desc: m.description_pt,
-        has_en_desc: !!m.description_en,
-      })),
+    const res = await fetch(AI_GATEWAY, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        temperature: 0.7,
+        max_tokens: 600,
+        messages: [{ role: "user", content: buildPrompt(product) }],
+      }),
     });
+
+    if (res.status === 429) {
+      console.warn("Rate limited — aguardando…");
+      return null;
+    }
+    if (res.status === 402) {
+      console.error("Créditos esgotados");
+      return null;
+    }
+    if (!res.ok) {
+      const t = await res.text();
+      console.error(`AI error ${res.status}: ${t}`);
+      return null;
+    }
+
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content?.trim();
+    return text || null;
+  } catch (e: any) {
+    console.error(`rewriteDescription error for ${product.sku}:`, e.message);
+    return null;
   }
+}
 
-  if (candidates.length === 0) {
-    return json({
-      ok: true,
-      enriched: 0,
-      skipped: 0,
-      errors: 0,
-      total: 0,
-      has_more: false,
-      remaining: 0,
-      message: "Nenhum modelo com descrição fraca encontrado.",
-    });
-  }
+// ─── Processa um batch com concorrência controlada ───────────────────────────
+async function processBatch(
+  products: SneakerModel[],
+  apiKey: string,
+  sb: any
+): Promise<EnrichResult> {
+  const result: EnrichResult = { success: 0, failed: 0, errors: [], processed: [] };
 
-  // Enrich mode
-  const stats = { enriched: 0, skipped: 0, errors: 0, total: candidates.length };
+  // Semáforo simples
+  let running = 0;
+  const queue = [...products];
+  const promises: Promise<void>[] = [];
 
-  for (let i = 0; i < candidates.length; i += BATCH_SIZE) {
-    const batch = candidates.slice(i, i + BATCH_SIZE);
+  const processOne = async (product: SneakerModel) => {
+    // Se não tem descrição original, marcar como skipped
+    if (!product.description_pt || product.description_pt.trim().length < 20) {
+      const { error } = await sb
+        .from("sneaker_models")
+        .update({ translation_status: "skipped" })
+        .eq("id", product.id);
+      if (error) {
+        result.failed++;
+        result.errors.push(`${product.sku}: skip error — ${error.message}`);
+      } else {
+        result.processed.push({ sku: product.sku, preview: "(sem descrição original)" });
+      }
+      return;
+    }
 
-    const prompt = batch
-      .map((m: any, idx: number) => {
-        const brand = m.brands?.name || "Desconhecida";
-        const silhouette = m.silhouettes?.name || "";
-        const name = m.model_name_pt || m.model_name_en || m.sku;
-        const colorway = m.colorway || "";
-        const msrp = m.msrp ? `R$${m.msrp}` : "";
-        const release = m.release_date || "";
-        const enDesc = m.description_en || "Sem descrição em inglês";
+    const newDesc = await rewriteDescription(product, apiKey);
+    if (newDesc) {
+      const { error } = await sb
+        .from("sneaker_models")
+        .update({
+          description_pt: newDesc,
+          translation_status: "review",
+          translation_error: null,
+        })
+        .eq("id", product.id);
+      if (error) {
+        result.failed++;
+        result.errors.push(`${product.sku}: update error — ${error.message}`);
+      } else {
+        result.success++;
+        result.processed.push({ sku: product.sku, preview: newDesc.slice(0, 120) });
+      }
+    } else {
+      const { error } = await sb
+        .from("sneaker_models")
+        .update({
+          translation_status: "error",
+          translation_error: "AI não retornou descrição",
+        })
+        .eq("id", product.id);
+      result.failed++;
+      result.errors.push(`${product.sku}: AI retornou vazio`);
+    }
+  };
 
-        return `[${idx}]
-Nome: ${name}
-Marca: ${brand}
-Silhueta: ${silhouette}
-Colorway: ${colorway}
-MSRP: ${msrp}
-Lançamento: ${release}
-Descrição EN: ${enDesc}`;
-      })
-      .join("\n\n");
+  // Executa com concorrência limitada
+  const runNext = async (): Promise<void> => {
+    while (queue.length > 0) {
+      const item = queue.shift()!;
+      await processOne(item);
+    }
+  };
 
-    try {
-      const res = await fetch(
-        "https://ai.gateway.lovable.dev/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${lovableKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
-            temperature: 0.7,
-            messages: [
-              {
-                role: "system",
-                content: `Você é um copywriter especialista em sneakers e streetwear brasileiro. Escreva descrições em PT-BR para sneakers com as seguintes regras:
+  const workers = Array.from({ length: Math.min(CONCURRENCY, products.length) }, () =>
+    runNext()
+  );
+  await Promise.all(workers);
 
-ESTILO:
-- Tom editorial, envolvente, com personalidade — como se fosse uma revista de sneakers
-- Conte a história do modelo: inspiração, contexto cultural, colaboração, significado da colorway
-- Destaque materiais, tecnologias de amortecimento e detalhes de design
-- Use linguagem que gere desejo e conexão emocional com o sneakerhead
-- Termine com uma frase que posicione o sneaker (uso casual, coleção, performance, etc.)
+  return result;
+}
 
-REGRAS:
-- 3-5 frases por descrição (80-200 palavras)
-- NÃO use travessões (—)
-- Mantenha nomes de marca, silhueta, colorway e SKU em inglês
-- Use "sneaker" (não "tênis" ou "sapato") quando se referir ao produto
-- Sentence case (não Title Case)
-- Se não houver informação suficiente, crie uma descrição baseada na marca e silhueta conhecidas
+// ─── Handler principal ───────────────────────────────────────────────────────
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS")
+    return new Response(null, { headers: corsHeaders });
 
-FORMATO DE RESPOSTA:
-JSON array: [{"i":0,"desc":"descrição aqui"},...]
-Retorne APENAS o JSON, sem markdown.`,
-              },
-              { role: "user", content: prompt },
-            ],
-          }),
-        }
+  try {
+    const sb = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // Auth check
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer "))
+      return new Response(
+        JSON.stringify({ error: "Auth required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
 
-      if (res.status === 429) {
-        console.warn("Rate limited, waiting 5s...");
-        await sleep(5000);
-        stats.skipped += batch.length;
-        continue;
-      }
-      if (res.status === 402) {
-        console.error("Credits exhausted");
-        stats.skipped += batch.length;
-        break;
-      }
-      if (!res.ok) {
-        console.error(`AI error ${res.status}`);
-        stats.errors += batch.length;
-        continue;
-      }
+    const anonSb = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const {
+      data: { user },
+      error: userErr,
+    } = await anonSb.auth.getUser();
+    if (userErr || !user)
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
 
-      const data = await res.json();
-      const content = data.choices?.[0]?.message?.content || "";
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
+    const { data: adm } = await sb
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!adm)
+      return new Response(
+        JSON.stringify({ error: "Admin only" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
 
-      if (jsonMatch) {
-        const arr = JSON.parse(jsonMatch[0]);
-        for (const item of arr) {
-          const model = batch[item.i];
-          if (!model || !item.desc) continue;
+    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!lovableKey)
+      return new Response(
+        JSON.stringify({ ok: false, error: "LOVABLE_API_KEY não configurada" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
 
-          const { error: updateErr } = await sb
-            .from("sneaker_models")
-            .update({
-              description_pt: item.desc,
-              translation_status: "enriched",
-            })
-            .eq("id", model.id);
+    // Busca produtos pendentes
+    const { data: candidates, error: fetchErr } = await sb
+      .from("sneaker_models")
+      .select("id, sku, model_name_pt, description_pt, colorway, brand_id")
+      .eq("translation_status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(BATCH_SIZE);
 
-          if (updateErr) {
-            console.error("Update error:", updateErr);
-            stats.errors++;
-          } else {
-            stats.enriched++;
-          }
-        }
-      } else {
-        console.error("No JSON found in AI response");
-        stats.errors += batch.length;
-      }
-    } catch (e: any) {
-      console.error("Batch error:", e.message);
-      stats.errors += batch.length;
+    if (fetchErr)
+      return new Response(
+        JSON.stringify({ ok: false, error: fetchErr.message }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+
+    if (!candidates || candidates.length === 0) {
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          success: 0,
+          failed: 0,
+          errors: [],
+          processed: [],
+          remaining: 0,
+          message: "Nenhum produto pendente encontrado.",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Small delay between batches
-    if (i + BATCH_SIZE < candidates.length) {
-      await sleep(1500);
-    }
+    // Processa batch
+    const result = await processBatch(candidates as SneakerModel[], lovableKey, sb);
+
+    // Conta restantes
+    const { count: remaining } = await sb
+      .from("sneaker_models")
+      .select("id", { count: "exact", head: true })
+      .eq("translation_status", "pending");
+
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        ...result,
+        remaining: remaining || 0,
+        has_more: (remaining || 0) > 0 && result.success > 0,
+        message: `${result.success} descrições reescritas, ${result.failed} falhas.`,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (e: any) {
+    console.error("enrich-descriptions error:", e);
+    return new Response(
+      JSON.stringify({ ok: false, error: e.message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
-
-  // Count remaining using the SAME criteria
-  const remaining = await countWeakModels(sb);
-  // Only signal has_more if we actually enriched something this round AND there are more
-  const hasMore = remaining > 0 && stats.enriched > 0;
-
-  return json({
-    ok: true,
-    ...stats,
-    has_more: hasMore,
-    remaining,
-    message: `${stats.enriched} descrições enriquecidas de ${stats.total} candidatos.`,
-  });
 });
