@@ -4,7 +4,7 @@ const j=(d:unknown,s=200)=>new Response(JSON.stringify(d),{status:s,headers:{...
 const sc=()=>createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 const gm=async(sb:any,cpf:string)=>{const{data}=await sb.from("vault_members").select("id").eq("client_cpf",cpf).single();return data;};
 const gs=async(sb:any,mid:string)=>{const{data}=await sb.from("vault_seller_profiles").select("*").eq("member_id",mid).maybeSingle();return data;};
-const PUB=new Set(["catalog-products","catalog-product","catalog-offers","catalog-search"]);
+const PUB=new Set(["catalog-products","catalog-product","catalog-offers","catalog-search","catalog-models"]);
 Deno.serve(async(req)=>{
 if(req.method==="OPTIONS")return new Response(null,{headers:H});
 const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;
@@ -13,15 +13,22 @@ if(ah?.startsWith("Bearer ")){const{data:u}=await sb.auth.getUser(ah.replace("Be
 if(!PUB.has(a||"")&&cpf==="visitor")return j({error:"Auth required"},401);
 try{
 if(mt==="GET"&&a==="catalog-products"){
-  const lm=+(url.searchParams.get("limit")||"20");const cursor=url.searchParams.get("cursor");const sr=url.searchParams.get("search"),br=url.searchParams.get("brand"),cat=url.searchParams.get("category");
+  const lm=+(url.searchParams.get("limit")||"20");const cursor=url.searchParams.get("cursor");const sr=url.searchParams.get("search"),br=url.searchParams.get("brand"),cat=url.searchParams.get("category"),mdl=url.searchParams.get("model");
   let q=sb.from("marketplace_products").select("*",{count:"exact"}).eq("is_active",true);
-  if(sr)q=q.or(`brand.ilike.%${sr}%,model.ilike.%${sr}%,colorway.ilike.%${sr}%,sku.ilike.%${sr}%`);if(br)q=q.ilike("brand",`%${br}%`);if(cat)q=q.eq("category",cat);
+  if(sr)q=q.or(`brand.ilike.%${sr}%,model.ilike.%${sr}%,colorway.ilike.%${sr}%,sku.ilike.%${sr}%`);if(br)q=q.ilike("brand",`%${br}%`);if(mdl)q=q.ilike("model",`%${mdl}%`);if(cat)q=q.eq("category",cat);
   if(cursor)q=q.lt("created_at",cursor);
   q=q.order("created_at",{ascending:false}).limit(lm+1);
   const{data,count,error}=await q;if(error)throw error;
   const items=data||[];const hasMore=items.length>lm;const page=hasMore?items.slice(0,lm):items;
   const nextCursor=hasMore?page[page.length-1].created_at:null;
   return j({products:page,total:count||0,next_cursor:nextCursor,has_more:hasMore});
+}
+if(mt==="GET"&&a==="catalog-models"){
+  const br=url.searchParams.get("brand");if(!br)return j({models:[]});
+  const{data,error}=await sb.from("marketplace_products").select("model").eq("is_active",true).ilike("brand",`%${br}%`);
+  if(error)throw error;
+  const unique=[...new Set((data||[]).map((d:any)=>d.model))].sort();
+  return j({models:unique});
 }
 if(mt==="GET"&&a==="catalog-product"){
   const id=url.searchParams.get("id"),slug=url.searchParams.get("slug");let q=sb.from("marketplace_products").select("*");

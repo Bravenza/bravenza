@@ -77,7 +77,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
     fetchPriceDropSuggestions,
   } = useMarketplace(clientCpf);
 
-  const { searchProducts, createProduct, createOffer, products: catalogProducts, totalProducts, isLoading: catalogLoading, fetchProducts: fetchCatalogProducts } = useMarketplaceCatalog(clientCpf);
+  const { searchProducts, createProduct, createOffer, products: catalogProducts, totalProducts, isLoading: catalogLoading, fetchProducts: fetchCatalogProducts, fetchModels } = useMarketplaceCatalog(clientCpf);
 
   const [innerTab, setInnerTab] = useState("explorar");
   const [sellerSubTab, setSellerSubTab] = useState("anuncios");
@@ -86,6 +86,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
   // checkout is now page-based
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
   const [filters, setFilters] = useState<MarketplaceFilterValues>({ sort: "recent", search: initialSearch });
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [sellerProfileOpen, setSellerProfileOpen] = useState(false);
   const [sellerProfileId, setSellerProfileId] = useState<string | null>(null);
   const [listingOffers, setListingOffers] = useState<Record<string, any[]>>({});
@@ -198,6 +199,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
     fetchCatalogProducts({
       search: filters.search,
       brand: filters.brand,
+      model: filters.model,
       category: filters.condition,
     });
     fetchListings({
@@ -212,6 +214,15 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
       modality: filters.modality,
       trustedOnly: filters.trustedOnly,
     });
+  };
+
+  const handleBrandSelected = async (brand: string | undefined) => {
+    if (brand) {
+      const models = await fetchModels(brand);
+      setAvailableModels(models);
+    } else {
+      setAvailableModels([]);
+    }
   };
 
   const handleApplyPriceDrop = async (listingId: string, newPrice: number) => {
@@ -305,6 +316,8 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
             filters={filters}
             onFiltersChange={setFilters}
             onSearch={handleSearch}
+            availableModels={availableModels}
+            onBrandSelected={handleBrandSelected}
           />
 
           {!catalogLoading && (

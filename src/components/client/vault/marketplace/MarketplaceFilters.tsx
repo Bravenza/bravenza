@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, SlidersHorizontal, X, ChevronDown, Heart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 export interface MarketplaceFilterValues {
   search?: string;
   brand?: string;
+  model?: string;
   size?: string;
   condition?: string;
   priceMin?: number;
@@ -47,9 +48,11 @@ interface MarketplaceFiltersProps {
   filters: MarketplaceFilterValues;
   onFiltersChange: (filters: MarketplaceFilterValues) => void;
   onSearch: () => void;
+  availableModels?: string[];
+  onBrandSelected?: (brand: string | undefined) => void;
 }
 
-export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: MarketplaceFiltersProps) {
+export function MarketplaceFilters({ filters, onFiltersChange, onSearch, availableModels = [], onBrandSelected }: MarketplaceFiltersProps) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [priceRange, setPriceRange] = useState([filters.priceMin || 0, filters.priceMax || 5000]);
 
@@ -57,6 +60,7 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
     filters.condition,
     filters.size,
     filters.brand,
+    filters.model,
     filters.priceMin,
     filters.priceMax,
     filters.favoritesOnly,
@@ -119,10 +123,15 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
                   {popularBrands.map((brand) => (
                     <button
                       key={brand}
-                      onClick={() => onFiltersChange({
-                        ...filters,
-                        brand: filters.brand === brand ? undefined : brand,
-                      })}
+                      onClick={() => {
+                        const newBrand = filters.brand === brand ? undefined : brand;
+                        onFiltersChange({
+                          ...filters,
+                          brand: newBrand,
+                          model: newBrand ? filters.model : undefined,
+                        });
+                        onBrandSelected?.(newBrand);
+                      }}
                       className={cn(
                         "px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200",
                         filters.brand === brand
@@ -135,6 +144,35 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
                   ))}
                 </div>
               </div>
+
+              {/* Model — shown when brand is selected */}
+              {filters.brand && availableModels.length > 0 && (
+                <>
+                  <Separator className="bg-border/30" />
+                  <div>
+                    <label className="text-sm font-medium mb-3 block text-foreground">Modelo</label>
+                    <div className="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto">
+                      {availableModels.map((model) => (
+                        <button
+                          key={model}
+                          onClick={() => onFiltersChange({
+                            ...filters,
+                            model: filters.model === model ? undefined : model,
+                          })}
+                          className={cn(
+                            "px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200",
+                            filters.model === model
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-muted text-muted-foreground border-border/50 hover:border-primary/40"
+                          )}
+                        >
+                          {model}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
 
               <Separator className="bg-border/30" />
 
@@ -335,9 +373,19 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: Marke
               <Badge
                 variant="secondary"
                 className="gap-1 text-xs cursor-pointer hover:bg-destructive/20"
-                onClick={() => { onFiltersChange({ ...filters, brand: undefined }); onSearch(); }}
+                onClick={() => { onFiltersChange({ ...filters, brand: undefined, model: undefined }); onBrandSelected?.(undefined); onSearch(); }}
               >
                 {filters.brand}
+                <X className="h-3 w-3" />
+              </Badge>
+            )}
+            {filters.model && (
+              <Badge
+                variant="secondary"
+                className="gap-1 text-xs cursor-pointer hover:bg-destructive/20"
+                onClick={() => { onFiltersChange({ ...filters, model: undefined }); onSearch(); }}
+              >
+                {filters.model}
                 <X className="h-3 w-3" />
               </Badge>
             )}
