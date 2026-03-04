@@ -147,37 +147,73 @@ export default function DescriptionReviewPanel() {
     loadCounts();
   };
 
-  // ─── Reescrever próximos 10 ────────────────────────────────────────────────
-  const handleEnrich = async () => {
+  // ─── Reescrever em batches ──────────────────────────────────────────────────
+  const callEnrichOnce = async (token: string) => {
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enrich-descriptions`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({}),
+      }
+    );
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || "Erro ao enriquecer");
+    return data;
+  };
+
+  const cancelRef = { current: false };
+
+  const handleEnrich = async (mode: "10" | "100" | "all") => {
     setEnriching(true);
+    setCancelEnrich(false);
+    cancelRef.current = false;
+    setEnrichProgress({ current: 0, total: 0, errors: 0 });
+
+    const maxRounds = mode === "10" ? 1 : mode === "100" ? 10 : 999;
+    let totalSuccess = 0;
+    let totalErrors = 0;
+    let round = 0;
+
     try {
       const { data: session } = await supabase.auth.getSession();
       const token = session?.session?.access_token;
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enrich-descriptions`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({}),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
-        showToast(data.error || "Erro ao enriquecer", "error");
-      } else {
-        showToast(`${data.success} reescritas, ${data.failed} falhas`);
-        loadProducts();
-        loadCounts();
+      if (!token) throw new Error("Sessão expirada");
+
+      while (round < maxRounds && !cancelRef.current) {
+        round++;
+        const data = await callEnrichOnce(token);
+        totalSuccess += data.success || 0;
+        totalErrors += data.failed || 0;
+        setEnrichProgress({
+          current: totalSuccess,
+          total: mode === "all" ? totalSuccess + (data.remaining || 0) : (mode === "100" ? 100 : 10),
+          errors: totalErrors,
+        });
+
+        if (!data.has_more || data.success === 0) break;
+
+        // Delay entre batches para evitar rate limit
+        await new Promise((r) => setTimeout(r, 1500));
       }
+
+      showToast(`${totalSuccess} descrições reescritas${totalErrors > 0 ? `, ${totalErrors} falhas` : ""}`);
     } catch (e: any) {
       showToast(e.message, "error");
     } finally {
       setEnriching(false);
+      loadProducts();
+      loadCounts();
     }
+  };
+
+  const handleCancelEnrich = () => {
+    cancelRef.current = true;
+    setCancelEnrich(true);
   };
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
