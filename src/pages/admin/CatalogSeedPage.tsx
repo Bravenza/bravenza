@@ -683,7 +683,14 @@ export default function CatalogSeedPage() {
         </TabsContent>
 
         {/* ════════════════════════════════════════════════════════════
-            TAB 5: Droper Images
+            TAB 5: Review Descriptions
+        ════════════════════════════════════════════════════════════ */}
+        <TabsContent value="review" className="mt-4">
+          <DescriptionReviewPanel />
+        </TabsContent>
+
+        {/* ════════════════════════════════════════════════════════════
+            TAB 6: Droper Images
         ════════════════════════════════════════════════════════════ */}
         <TabsContent value="droper" className="mt-4">
           <SyncDroperImages />
