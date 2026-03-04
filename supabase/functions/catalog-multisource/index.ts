@@ -768,8 +768,17 @@ Deno.serve(async (req) => {
         const { data: existing } = await sb.from("sneaker_models").select("id").eq("sku", norm.sku).maybeSingle();
         if (existing) { stats.skipped_existing++; continue; }
 
-        const brandId = matchBrandId(norm.brand);
-        if (!brandId) { stats.skipped_no_sku++; continue; }
+        let brandId = matchBrandId(norm.brand);
+        if (!brandId && norm.brand) {
+          // Auto-create brand if it doesn't exist
+          const slug = norm.brand.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+          const { data: newBrand } = await sb.from("brands").insert({ name: norm.brand, slug }).select("id").single();
+          if (newBrand) {
+            brandId = newBrand.id;
+            brandMap.set(norm.brand.toLowerCase(), brandId);
+          }
+        }
+        if (!brandId) { stats.skipped_no_brand++; continue; }
 
         const silhouetteId = matchSilhouette(brandId, norm.name || "");
         const parsedDate = norm.releaseDate ? (() => {
