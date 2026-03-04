@@ -143,6 +143,7 @@ async function processBatch(
 
   const processOne = async (product: SneakerModel) => {
     // Chama a IA — tanto para reescrita quanto para criação do zero
+    const newDesc = await rewriteDescription(product, apiKey);
     if (newDesc) {
       const { error } = await sb
         .from("sneaker_models")
