@@ -8,7 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Zap, Database, CheckCircle2, AlertTriangle, XCircle, Play, Square, Sparkles, Eye, Globe, Search, RefreshCw, ArrowRightLeft } from "lucide-react";
+import { Loader2, Zap, Database, CheckCircle2, AlertTriangle, XCircle, Play, Square, Sparkles, Eye, Globe, Search, RefreshCw, ArrowRightLeft, ImageIcon } from "lucide-react";
+import SyncDroperImages from "@/components/admin/SyncDroperImages";
 
 interface BrandResult {
   brand: string;
@@ -819,7 +820,7 @@ export default function CatalogSeedPage() {
           )}
 
           <Tabs defaultValue="search" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="search" className="flex items-center gap-1">
                 <Search className="h-3.5 w-3.5" />Buscar Novos
               </TabsTrigger>
@@ -828,6 +829,9 @@ export default function CatalogSeedPage() {
               </TabsTrigger>
               <TabsTrigger value="discover" className="flex items-center gap-1">
                 <Globe className="h-3.5 w-3.5" />Descobrir
+              </TabsTrigger>
+              <TabsTrigger value="droper" className="flex items-center gap-1">
+                <ImageIcon className="h-3.5 w-3.5" />Droper Imgs
               </TabsTrigger>
             </TabsList>
 
@@ -946,6 +950,9 @@ export default function CatalogSeedPage() {
                   )}
                 </>
               )}
+            </TabsContent>
+            <TabsContent value="droper" className="pt-3">
+              <SyncDroperImages />
             </TabsContent>
           </Tabs>
         </CardContent>
