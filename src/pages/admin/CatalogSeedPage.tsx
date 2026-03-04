@@ -96,6 +96,7 @@ export default function CatalogSeedPage() {
     cancelRef.current = false;
     let totalSynced = 0;
     let totalSkipped = 0;
+    let totalUpdated = 0;
     let totalErrors = 0;
     let offset = 0;
     const batchSize = 100;
@@ -109,13 +110,14 @@ export default function CatalogSeedPage() {
         }
         totalSynced += data.synced || 0;
         totalSkipped += data.skipped || 0;
+        totalUpdated += data.updated || 0;
         totalErrors += data.errors || 0;
         offset = data.next_offset;
         setSyncProgress(Math.round((offset / (syncPreview?.total_sneaker_models || 1011)) * 100));
-        setSyncResult({ synced: totalSynced, skipped: totalSkipped, errors: totalErrors });
+        setSyncResult({ synced: totalSynced, skipped: totalSkipped, updated: totalUpdated, errors: totalErrors });
 
         if (!data.has_more) {
-          toast({ title: `✓ Sync completo: ${totalSynced} produtos sincronizados` });
+          toast({ title: `✓ Sync completo: ${totalSynced} novos, ${totalUpdated} imagens atualizadas` });
           break;
         }
         await new Promise(r => setTimeout(r, 300));
@@ -530,7 +532,7 @@ export default function CatalogSeedPage() {
               <Eye className="h-4 w-4 mr-2" />
               Ver pendentes
             </Button>
-            <Button onClick={handleSync} disabled={syncing || !syncPreview || syncPreview.estimated_to_sync === 0}>
+            <Button onClick={handleSync} disabled={syncing || !syncPreview}>
               {syncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArrowRightLeft className="h-4 w-4 mr-2" />}
               {syncing ? "Sincronizando..." : "Sincronizar agora"}
             </Button>
@@ -542,11 +544,12 @@ export default function CatalogSeedPage() {
           </div>
 
           {syncPreview && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               <StatCard label="No Catálogo" value={syncPreview.total_sneaker_models} />
               <StatCard label="No Marketplace" value={syncPreview.total_marketplace_products} />
               <StatCard label="SKUs já sync" value={syncPreview.existing_skus_in_marketplace} />
-              <StatCard label="A sincronizar" value={syncPreview.estimated_to_sync} />
+              <StatCard label="Novos a sync" value={syncPreview.estimated_to_sync} />
+              <StatCard label="Imagens a atualizar" value={syncPreview.outdated_images ?? "—"} />
             </div>
           )}
 
@@ -563,8 +566,9 @@ export default function CatalogSeedPage() {
           {syncResult && !syncing && (
             <div className="p-4 bg-muted/50 rounded-lg space-y-2">
               <p className="text-sm font-medium">✓ Sync concluído</p>
-              <div className="grid grid-cols-3 gap-3">
-                <StatCard label="Sincronizados" value={syncResult.synced} />
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <StatCard label="Novos" value={syncResult.synced} />
+                <StatCard label="Imagens atualizadas" value={syncResult.updated || 0} />
                 <StatCard label="Já existiam" value={syncResult.skipped} />
                 <StatCard label="Erros" value={syncResult.errors} />
               </div>
