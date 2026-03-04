@@ -14,6 +14,7 @@ import {
   Sparkles, Eye, Globe, Search, RefreshCw, ArrowRightLeft, ImageIcon
 } from "lucide-react";
 import SyncDroperImages from "@/components/admin/SyncDroperImages";
+import DescriptionReviewPanel from "@/components/admin/DescriptionReviewPanel";
 
 // ─── Types ───────────────────────────────────────────────────────
 interface BrandResult {
