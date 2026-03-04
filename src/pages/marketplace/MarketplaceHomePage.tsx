@@ -52,9 +52,12 @@ export default function MarketplaceHomePage() {
   const infiniteProducts = infiniteQuery.data?.pages.flatMap(p => p.products) ?? [];
   const infiniteTotal = infiniteQuery.data?.pages[0]?.total ?? 0;
 
+  // Only fetch trending products when NOT in full catalog mode
   useEffect(() => {
-    fetchProducts({ search: initialSearch || undefined });
-  }, [initialSearch, fetchProducts]);
+    if (!showFullCatalog) {
+      fetchProducts({ search: initialSearch || undefined });
+    }
+  }, [initialSearch, fetchProducts, showFullCatalog]);
 
   useEffect(() => {
     if (cpf && cpf !== "visitor") {
