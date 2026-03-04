@@ -1,5 +1,12 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Play, Pause, RotateCcw, CheckCircle2, AlertTriangle, XCircle, ImageIcon, Loader2, Package, Info } from "lucide-react";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 interface SyncResult {
@@ -31,31 +38,30 @@ interface Totals {
   batches: number;
 }
 
-// ─── O que é sincronizado por produto ────────────────────────────────────────
 const SYNC_FIELDS = [
-  { icon: "◈", label: "Nome do produto (PT/EN)" },
-  { icon: "◈", label: "Descrição completa" },
-  { icon: "◈", label: "SKU e colorway" },
-  { icon: "◈", label: "Data de lançamento" },
-  { icon: "◈", label: "Preço MSRP (BRL)" },
-  { icon: "◈", label: "Marca (brands)" },
-  { icon: "◈", label: "Silhueta (silhouettes)" },
-  { icon: "◈", label: "Até 6 imagens .webp" },
+  "Nome do produto (PT/EN)",
+  "Descrição completa",
+  "SKU e colorway",
+  "Data de lançamento",
+  "Preço MSRP (BRL)",
+  "Marca (brands)",
+  "Silhueta (silhouettes)",
+  "Até 6 imagens .webp",
 ];
 
 export default function SyncCatalogoDroper() {
-  const [running, setRunning]         = useState(false);
-  const [paused, setPaused]           = useState(false);
-  const [done, setDone]               = useState(false);
+  const [running, setRunning] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [done, setDone] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [pagesPerBatch, setPagesPerBatch] = useState(1);
-  const [totalBatches, setTotalBatches]   = useState(5);
-  const [totals, setTotals]           = useState<Totals>({ success: 0, failed: 0, notFound: 0, batches: 0 });
-  const [logs, setLogs]               = useState<LogEntry[]>([]);
-  const [errors, setErrors]           = useState<string[]>([]);
-  const [lastSynced, setLastSynced]   = useState<{ sku: string; images: number }[]>([]);
-  const shouldStop                    = useRef(false);
-  const logsEndRef                    = useRef<HTMLDivElement>(null);
+  const [totalBatches, setTotalBatches] = useState(5);
+  const [totals, setTotals] = useState<Totals>({ success: 0, failed: 0, notFound: 0, batches: 0 });
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [lastSynced, setLastSynced] = useState<{ sku: string; images: number }[]>([]);
+  const shouldStop = useRef(false);
+  const logsEndRef = useRef<HTMLDivElement>(null);
 
   const addLog = (type: LogEntry["type"], message: string) => {
     setLogs((prev) => [...prev.slice(-299), { time: new Date().toLocaleTimeString("pt-BR"), type, message }]);
@@ -108,10 +114,10 @@ export default function SyncCatalogoDroper() {
       batchCount++;
 
       setTotals((prev) => ({
-        success:  prev.success  + r.success,
-        failed:   prev.failed   + r.failed,
+        success: prev.success + r.success,
+        failed: prev.failed + r.failed,
         notFound: prev.notFound + r.notFound,
-        batches:  prev.batches  + 1,
+        batches: prev.batches + 1,
       }));
 
       if (r.details?.length > 0) {
@@ -142,238 +148,248 @@ export default function SyncCatalogoDroper() {
     addLog("warning", "Pausado pelo usuário.");
   };
 
-  const logColor = (type: LogEntry["type"]) => ({
-    success: "text-emerald-400",
-    warning: "text-amber-400",
-    error:   "text-red-400",
-    info:    "text-slate-300",
-  }[type]);
+  const logIcon = (type: LogEntry["type"]) => {
+    switch (type) {
+      case "success": return <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />;
+      case "warning": return <AlertTriangle className="w-3 h-3 text-primary shrink-0 mt-0.5" />;
+      case "error": return <XCircle className="w-3 h-3 text-destructive shrink-0 mt-0.5" />;
+      default: return <Info className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />;
+    }
+  };
 
   const progressPct = Math.min(Math.round((totals.batches / totalBatches) * 100), 100);
   const estimatedProducts = pagesPerBatch * totalBatches * 60;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6" style={{ fontFamily: "'DM Mono', 'Courier New', monospace" }}>
-      <div className="max-w-5xl mx-auto space-y-6">
-
-        {/* ── Header ── */}
-        <div className="flex items-start justify-between border-b border-zinc-800 pb-5">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-              <span className="text-xs text-zinc-500 uppercase tracking-widest">Bravenza Admin</span>
+    <div className="space-y-6">
+      {/* Header */}
+      <Card className="border-primary/20 bg-card">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <ImageIcon className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Sync Catálogo — Droper.app</CardTitle>
+                <CardDescription>
+                  Importa produtos completos com imagens, descrições e ficha técnica
+                </CardDescription>
+              </div>
             </div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">
-              Sync Catálogo
-            </h1>
-            <p className="text-zinc-400 text-sm mt-1">
-              Importa produtos completos da <span className="text-orange-400">droper.app</span> para o seu catálogo
-            </p>
+            {(running || paused) && (
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Página atual</p>
+                <p className="text-2xl font-bold text-primary">{currentPage}</p>
+              </div>
+            )}
           </div>
-          {(running || paused) && (
-            <div className="text-right">
-              <p className="text-xs text-zinc-500">Página atual</p>
-              <p className="text-2xl font-bold text-orange-400">{currentPage}</p>
-            </div>
-          )}
-        </div>
+        </CardHeader>
+      </Card>
 
-        {/* ── Grid principal ── */}
-        <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-          {/* Coluna esquerda — o que é sincronizado */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
-            <p className="text-xs text-zinc-500 uppercase tracking-widest mb-3">Dados importados</p>
-            {SYNC_FIELDS.map((f) => (
-              <div key={f.label} className="flex items-center gap-2 text-sm">
-                <span className="text-orange-500 text-xs">{f.icon}</span>
-                <span className="text-zinc-300">{f.label}</span>
+        {/* Col 1 — Dados importados */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Dados importados</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2.5">
+            {SYNC_FIELDS.map((label) => (
+              <div key={label} className="flex items-center gap-2.5 text-sm">
+                <Package className="w-3.5 h-3.5 text-primary/70" />
+                <span className="text-foreground/80">{label}</span>
               </div>
             ))}
-            <div className="pt-2 border-t border-zinc-800 text-xs text-zinc-500">
-              Fonte: <span className="text-orange-400">service.cataloko.com/api/search/v4</span>
+            <div className="pt-3 mt-3 border-t border-border text-xs text-muted-foreground">
+              Fonte: <span className="text-primary/80">cataloko.com/api</span>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Col 2 — Config + Métricas */}
+        <div className="space-y-4">
+          {/* Config — só quando parado */}
+          {!running && !paused && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Configuração</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1.5">Página inicial</label>
+                  <Input type="number" min={0} value={currentPage}
+                    onChange={(e) => setCurrentPage(parseInt(e.target.value) || 0)} />
+                  <p className="text-xs text-muted-foreground/60 mt-1">0 = início do catálogo</p>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1.5">Páginas por batch</label>
+                  <Input type="number" min={1} max={3} value={pagesPerBatch}
+                    onChange={(e) => setPagesPerBatch(parseInt(e.target.value) || 1)} />
+                  <p className="text-xs text-muted-foreground/60 mt-1">{pagesPerBatch * 60} produtos/batch · máx 3</p>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1.5">Total de batches</label>
+                  <Input type="number" min={1} value={totalBatches}
+                    onChange={(e) => setTotalBatches(parseInt(e.target.value) || 5)} />
+                  <p className="text-xs text-muted-foreground/60 mt-1">~{estimatedProducts.toLocaleString()} produtos nesta sessão</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Métricas */}
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: "Criados", value: totals.success, icon: CheckCircle2, variant: "default" as const },
+              { label: "Não encontrados", value: totals.notFound, icon: AlertTriangle, variant: "secondary" as const },
+              { label: "Falhas", value: totals.failed, icon: XCircle, variant: "destructive" as const },
+              { label: "Batches", value: totals.batches, icon: Package, variant: "outline" as const },
+            ].map((s) => (
+              <Card key={s.label} className="p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <s.icon className="w-3.5 h-3.5 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground leading-tight">{s.label}</p>
+                </div>
+                <p className="text-2xl font-bold text-foreground">{s.value}</p>
+              </Card>
+            ))}
           </div>
 
-          {/* Coluna centro — configurações + métricas */}
-          <div className="space-y-4">
+          {/* Progress */}
+          {totals.batches > 0 && (
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Progresso</span>
+                <span>{progressPct}%</span>
+              </div>
+              <Progress value={progressPct} className="h-2" />
+            </div>
+          )}
 
-            {/* Configurações — só quando parado */}
+          {/* Botões */}
+          <div className="flex flex-col gap-2">
             {!running && !paused && (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
-                <p className="text-xs text-zinc-500 uppercase tracking-widest">Configuração</p>
-
-                <div>
-                  <label className="text-xs text-zinc-400 block mb-1">Página inicial</label>
-                  <input type="number" min={0} value={currentPage}
-                    onChange={(e) => setCurrentPage(parseInt(e.target.value) || 0)}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-orange-500 transition"
-                  />
-                  <p className="text-xs text-zinc-600 mt-1">0 = início do catálogo</p>
-                </div>
-
-                <div>
-                  <label className="text-xs text-zinc-400 block mb-1">Páginas por batch</label>
-                  <input type="number" min={1} max={3} value={pagesPerBatch}
-                    onChange={(e) => setPagesPerBatch(parseInt(e.target.value) || 1)}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-orange-500 transition"
-                  />
-                  <p className="text-xs text-zinc-600 mt-1">{pagesPerBatch * 60} produtos/batch · máx 3</p>
-                </div>
-
-                <div>
-                  <label className="text-xs text-zinc-400 block mb-1">Total de batches</label>
-                  <input type="number" min={1} value={totalBatches}
-                    onChange={(e) => setTotalBatches(parseInt(e.target.value) || 5)}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-orange-500 transition"
-                  />
-                  <p className="text-xs text-zinc-600 mt-1">~{estimatedProducts.toLocaleString()} produtos nesta sessão</p>
-                </div>
+              <Button onClick={startSync} className="w-full gap-2" size="lg">
+                <Play className="w-4 h-4" />
+                {done ? "Reiniciar" : "Iniciar Sincronização"}
+              </Button>
+            )}
+            {running && (
+              <Button onClick={handlePause} variant="secondary" className="w-full gap-2" size="lg">
+                <Pause className="w-4 h-4" />
+                Pausar
+              </Button>
+            )}
+            {paused && (
+              <Button onClick={() => { setPaused(false); startSync(); }} className="w-full gap-2 bg-emerald-600 hover:bg-emerald-500" size="lg">
+                <Play className="w-4 h-4" />
+                Retomar (p. {currentPage})
+              </Button>
+            )}
+            {(totals.batches > 0 || paused) && !running && (
+              <Button onClick={reset} variant="outline" className="w-full gap-2">
+                <RotateCcw className="w-4 h-4" />
+                Resetar
+              </Button>
+            )}
+            {running && (
+              <div className="flex items-center justify-center gap-2 text-primary text-xs py-1">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                <span>Sincronizando produtos...</span>
               </div>
             )}
-
-            {/* Métricas */}
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: "Criados / Atualizados", value: totals.success,  color: "text-emerald-400", bg: "bg-emerald-950 border-emerald-900" },
-                { label: "Não encontrados",        value: totals.notFound, color: "text-amber-400",   bg: "bg-amber-950 border-amber-900" },
-                { label: "Falhas",                 value: totals.failed,   color: "text-red-400",     bg: "bg-red-950 border-red-900" },
-                { label: "Batches",                value: totals.batches,  color: "text-blue-400",    bg: "bg-blue-950 border-blue-900" },
-              ].map((s) => (
-                <div key={s.label} className={`${s.bg} border rounded-xl p-3`}>
-                  <p className="text-xs text-zinc-500 mb-1 leading-tight">{s.label}</p>
-                  <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Progress bar */}
-            {totals.batches > 0 && (
-              <div>
-                <div className="flex justify-between text-xs text-zinc-500 mb-1">
-                  <span>Progresso da sessão</span>
-                  <span>{progressPct}%</span>
-                </div>
-                <div className="w-full bg-zinc-800 rounded-full h-1.5">
-                  <div className="bg-orange-500 h-1.5 rounded-full transition-all duration-700"
-                    style={{ width: `${progressPct}%` }} />
-                </div>
-              </div>
-            )}
-
-            {/* Botões */}
-            <div className="flex flex-col gap-2">
-              {!running && !paused && (
-                <button onClick={startSync}
-                  className="w-full bg-orange-500 hover:bg-orange-400 active:bg-orange-600 text-black font-bold py-3 rounded-xl transition text-sm tracking-wide">
-                  {done ? "↺ Reiniciar" : "▶ Iniciar Sincronização"}
-                </button>
-              )}
-              {running && (
-                <button onClick={handlePause}
-                  className="w-full bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-3 rounded-xl transition text-sm">
-                  ⏸ Pausar
-                </button>
-              )}
-              {paused && (
-                <button onClick={() => { setPaused(false); startSync(); }}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition text-sm">
-                  ▶ Retomar (p. {currentPage})
-                </button>
-              )}
-              {(totals.batches > 0 || paused) && !running && (
-                <button onClick={reset}
-                  className="w-full border border-zinc-700 hover:border-zinc-500 text-zinc-400 hover:text-white py-2 rounded-xl transition text-sm">
-                  ↺ Resetar
-                </button>
-              )}
-              {running && (
-                <div className="flex items-center justify-center gap-2 text-orange-400 text-xs py-1">
-                  <span className="animate-pulse">●</span>
-                  <span>Sincronizando produtos...</span>
-                </div>
-              )}
-            </div>
           </div>
+        </div>
 
-          {/* Coluna direita — log + últimos sincronizados */}
-          <div className="space-y-4">
+        {/* Col 3 — Log + últimos sync */}
+        <div className="space-y-4">
+          {/* Últimos produtos */}
+          {lastSynced.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Últimos salvos</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {lastSynced.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs">
+                    <span className="text-foreground/80 font-mono truncate max-w-[140px]">{item.sku}</span>
+                    <Badge variant="outline" className="text-[10px] shrink-0">{item.images} imgs</Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
 
-            {/* Últimos produtos sincronizados */}
-            {lastSynced.length > 0 && (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-                <p className="text-xs text-zinc-500 uppercase tracking-widest mb-3">Últimos salvos</p>
-                <div className="space-y-2">
-                  {lastSynced.map((item, i) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <span className="text-xs text-zinc-300 font-mono truncate max-w-[120px]">{item.sku}</span>
-                      <span className="text-xs text-zinc-500">{item.images} imgs</span>
-                      <span className="text-xs text-emerald-500">✓</span>
-                    </div>
-                  ))}
-                </div>
+          {/* Terminal log */}
+          {logs.length > 0 && (
+            <Card className="overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+                <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Log</span>
+                <Badge variant="secondary" className="text-[10px]">{logs.length}</Badge>
               </div>
-            )}
-
-            {/* Terminal de log */}
-            {logs.length > 0 && (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden flex-1">
-                <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-800">
-                  <span className="text-xs text-zinc-500 uppercase tracking-widest">Log</span>
-                  <span className="text-xs text-zinc-600">{logs.length} entradas</span>
-                </div>
-                <div className="h-64 overflow-y-auto p-3 space-y-1 text-xs">
+              <ScrollArea className="h-64 p-3">
+                <div className="space-y-1.5 text-xs">
                   {logs.map((log, i) => (
-                    <div key={i} className="flex gap-2">
-                      <span className="text-zinc-600 shrink-0">{log.time}</span>
-                      <span className={logColor(log.type)}>{log.message}</span>
+                    <div key={i} className="flex gap-2 items-start">
+                      {logIcon(log.type)}
+                      <span className="text-muted-foreground/60 shrink-0 font-mono">{log.time}</span>
+                      <span className="text-foreground/80">{log.message}</span>
                     </div>
                   ))}
                   <div ref={logsEndRef} />
                 </div>
-              </div>
-            )}
+              </ScrollArea>
+            </Card>
+          )}
 
-            {/* Dica inicial */}
-            {logs.length === 0 && !running && (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-2 text-xs text-zinc-500">
-                <p className="text-zinc-300 font-semibold text-sm">Como usar</p>
-                <p>1. Configure a <span className="text-zinc-300">página inicial</span> (0 = começo)</p>
-                <p>2. Use <span className="text-zinc-300">1 página/batch</span> para testar</p>
-                <p>3. Aumente gradualmente para <span className="text-zinc-300">2–3 páginas</span></p>
+          {/* Dica inicial */}
+          {logs.length === 0 && !running && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Como usar</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-1.5 text-xs text-muted-foreground">
+                <p>1. Configure a <span className="text-foreground">página inicial</span> (0 = começo)</p>
+                <p>2. Use <span className="text-foreground">1 página/batch</span> para testar</p>
+                <p>3. Aumente gradualmente para <span className="text-foreground">2–3 páginas</span></p>
                 <p>4. Pause e retome a qualquer momento</p>
-                <p className="pt-1 text-zinc-600">Catálogo droper: ~64.000 produtos</p>
-              </div>
-            )}
-          </div>
+                <p className="pt-2 text-muted-foreground/50">Catálogo droper: ~64.000 produtos</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
-
-        {/* Erros detalhados */}
-        {errors.length > 0 && (
-          <details className="bg-zinc-900 border border-red-900 rounded-xl overflow-hidden">
-            <summary className="px-5 py-3 text-xs text-red-400 cursor-pointer hover:text-red-300 select-none">
-              ❌ {errors.length} erros — clique para expandir
-            </summary>
-            <div className="px-5 pb-4 space-y-1 text-xs text-red-400 max-h-48 overflow-y-auto">
-              {errors.map((e, i) => (
-                <div key={i} className="border-t border-red-900/50 pt-1">• {e}</div>
-              ))}
-            </div>
-          </details>
-        )}
-
-        {/* Banner de sucesso */}
-        {done && (
-          <div className="bg-emerald-950 border border-emerald-800 rounded-xl p-4 flex items-center gap-3">
-            <span className="text-2xl">🎉</span>
-            <div>
-              <p className="text-emerald-300 font-semibold">Sincronização completa!</p>
-              <p className="text-emerald-500 text-sm">{totals.success} produtos importados da droper.app com imagens, descrições e ficha técnica.</p>
-            </div>
-          </div>
-        )}
-
       </div>
+
+      {/* Erros */}
+      {errors.length > 0 && (
+        <Card className="border-destructive/30">
+          <details>
+            <summary className="px-5 py-3 text-xs text-destructive cursor-pointer hover:text-destructive/80 select-none flex items-center gap-2">
+              <XCircle className="w-3.5 h-3.5" />
+              {errors.length} erros — clique para expandir
+            </summary>
+            <CardContent className="pt-0 space-y-1 text-xs text-destructive/80 max-h-48 overflow-y-auto">
+              {errors.map((e, i) => (
+                <div key={i} className="border-t border-destructive/10 pt-1">• {e}</div>
+              ))}
+            </CardContent>
+          </details>
+        </Card>
+      )}
+
+      {/* Sucesso */}
+      {done && (
+        <Card className="border-emerald-500/30 bg-emerald-950/20">
+          <CardContent className="flex items-center gap-3 py-4">
+            <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
+            <div>
+              <p className="text-foreground font-semibold">Sincronização completa!</p>
+              <p className="text-sm text-muted-foreground">{totals.success} produtos importados da droper.app</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
