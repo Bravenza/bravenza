@@ -52,7 +52,7 @@ export function ProductGallery({ images, selectedImage, onSelectImage, productNa
       <div
         ref={containerRef}
         className={cn(
-          "relative aspect-[4/3] rounded-2xl overflow-hidden bg-white border border-border/20 touch-pan-y group",
+          "relative aspect-square rounded-2xl overflow-hidden bg-white border border-border/20 touch-pan-y group",
           !isMobile && zoomEnabled && "cursor-crosshair",
           !isMobile && !zoomEnabled && "cursor-default"
         )}
