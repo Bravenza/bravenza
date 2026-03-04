@@ -84,7 +84,7 @@ export function ProductGallery({ images, selectedImage, onSelectImage, productNa
               transition={{ duration: 0.25 }}
               src={images[selectedImage]}
               alt={productName}
-              className="w-full h-full object-contain p-6 md:p-10"
+              className="w-full h-full object-contain p-2 md:p-4"
               loading="eager"
               draggable={false}
             />
