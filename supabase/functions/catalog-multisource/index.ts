@@ -697,7 +697,12 @@ Deno.serve(async (req) => {
         const updates: any = {};
         if (!model.description_en && detail.description) updates.description_en = detail.description;
         if (detail.colorway && !updates.colorway) updates.colorway = detail.colorway;
-        if (detail.msrp) updates.msrp = detail.msrp;
+        if (detail.msrp) {
+          const rate = await getUsdToBrl();
+          updates.msrp_usd = detail.msrp;
+          updates.msrp = convertMsrp(detail.msrp, rate);
+          updates.msrp_exchange_rate = rate;
+        }
         if (detail.releaseDate) {
           try {
             const d = new Date(detail.releaseDate);
