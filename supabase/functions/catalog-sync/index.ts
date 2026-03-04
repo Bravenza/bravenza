@@ -98,7 +98,11 @@ Deno.serve(async (req) => {
         }
 
         const brandName = (model as any).brand?.name || "Unknown";
-        const modelName = model.model_name_pt || model.model_name_en || model.sku;
+        let modelName = model.model_name_pt || model.model_name_en || model.sku;
+        // Strip leading brand name to avoid duplication (e.g. "Nike Air Max 1" → "Air Max 1")
+        if (modelName.toLowerCase().startsWith(brandName.toLowerCase() + " ")) {
+          modelName = modelName.substring(brandName.length + 1).trim();
+        }
         const description = model.description_pt || model.description_en || `${brandName} ${modelName}`;
         const imageUrl = imageMap.get(model.id);
         const imageArray = imageUrl ? [imageUrl] : [];
