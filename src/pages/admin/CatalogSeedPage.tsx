@@ -144,11 +144,37 @@ export default function CatalogSeedPage() {
   const handleCancel = () => { cancelRef.current = true; };
 
   // ─── Sync Catalog → Marketplace ────────────────────────────────
-  const handleSyncPreview = async () => {
-    setSyncPreview(null);
-    try { setSyncPreview(await callApi("catalog-sync", { mode: "preview" })); }
-    catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
-  };
+  const fetchLastSyncTime = useCallback(async () => {
+    try {
+      const { data } = await supabase.from("cron_execution_logs")
+        .select("finished_at")
+        .eq("job_name", "catalog-sync")
+        .eq("status", "completed")
+        .order("finished_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setLastSyncAt(data?.finished_at || null);
+    } catch {}
+  }, []);
+
+  const handleSyncPreview = useCallback(async () => {
+    setSyncPreviewLoading(true); setSyncPreview(null);
+    try {
+      const [preview] = await Promise.all([
+        callApi("catalog-sync", { mode: "preview" }),
+        fetchLastSyncTime(),
+      ]);
+      setSyncPreview(preview);
+    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    finally { setSyncPreviewLoading(false); }
+  }, [fetchLastSyncTime]);
+
+  // Auto-load preview when sync tab is opened
+  useEffect(() => {
+    if (activeTab === "sync" && !syncPreview && !syncPreviewLoading) {
+      handleSyncPreview();
+    }
+  }, [activeTab]);
 
   const handleSync = async () => {
     setSyncing(true); setSyncResult(null); setSyncProgress(0); cancelRef.current = false;
