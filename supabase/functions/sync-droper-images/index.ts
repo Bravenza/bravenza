@@ -12,7 +12,7 @@ const CONCURRENCY    = 5;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────────
@@ -136,26 +136,35 @@ async function getOrCreateBrand(
 ): Promise<string | null> {
   if (brandCache[name]) return brandCache[name];
 
-  // Tenta buscar primeiro
+  // Busca case-insensitive para evitar duplicatas (Nike vs nike vs NIKE)
   const { data: existing } = await supabase
-    .from("brands").select("id").eq("name", name).maybeSingle();
+    .from("brands").select("id").ilike("name", name).maybeSingle();
 
   if (existing?.id) {
     brandCache[name] = existing.id;
     return existing.id;
   }
 
-  // Cria se não existir
-  const { data: created, error } = await supabase
-    .from("brands").insert({ name, slug: toSlug(name) }).select("id").single();
+  // Upsert para evitar conflito se já existir com mesmo slug
+  const { data: upserted, error } = await supabase
+    .from("brands")
+    .upsert({ name, slug: toSlug(name) }, { onConflict: "slug" })
+    .select("id").single();
 
-  if (error || !created) {
+  if (error || !upserted) {
+    // Última tentativa: busca pelo slug
+    const { data: bySlug } = await supabase
+      .from("brands").select("id").eq("slug", toSlug(name)).maybeSingle();
+    if (bySlug?.id) {
+      brandCache[name] = bySlug.id;
+      return bySlug.id;
+    }
     console.error(`[Brand] Erro ao criar "${name}":`, error);
     return null;
   }
 
-  brandCache[name] = created.id;
-  return created.id;
+  brandCache[name] = upserted.id;
+  return upserted.id;
 }
 
 // ─── 4. Lookup ou criação de silhouette ────────────────────────────────────────
