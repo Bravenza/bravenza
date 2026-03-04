@@ -199,6 +199,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
     fetchCatalogProducts({
       search: filters.search,
       brand: filters.brand,
+      model: filters.model,
       category: filters.condition,
     });
     fetchListings({
@@ -213,6 +214,15 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
       modality: filters.modality,
       trustedOnly: filters.trustedOnly,
     });
+  };
+
+  const handleBrandSelected = async (brand: string | undefined) => {
+    if (brand) {
+      const models = await fetchModels(brand);
+      setAvailableModels(models);
+    } else {
+      setAvailableModels([]);
+    }
   };
 
   const handleApplyPriceDrop = async (listingId: string, newPrice: number) => {
