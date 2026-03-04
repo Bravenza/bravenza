@@ -34,7 +34,6 @@ Deno.serve(async (req) => {
 
   try {
     if (mode === "preview") {
-      // Count how many sneaker_models don't have a corresponding marketplace_products entry
       const { count: totalModels } = await sb.from("sneaker_models").select("id", { count: "exact", head: true });
       const { count: totalProducts } = await sb.from("marketplace_products").select("id", { count: "exact", head: true });
 
@@ -42,11 +41,8 @@ Deno.serve(async (req) => {
       const { data: existingSkus } = await sb.from("marketplace_products").select("sku").not("sku", "is", null);
       const skuSet = new Set((existingSkus || []).map((p: any) => p.sku).filter(Boolean));
 
-      // Count models not yet synced (sampling to avoid timeout)
-      const { data: sampleModels, count: pendingCount } = await sb
-        .from("sneaker_models")
-        .select("id, sku", { count: "exact" })
-        .limit(1);
+      // Count products with outdated images (1 or fewer images in marketplace but more in sneaker_images)
+      const { count: outdatedImages } = await sb.rpc("count_outdated_images").maybeSingle() || { count: 0 };
 
       return json({
         ok: true,
@@ -54,11 +50,12 @@ Deno.serve(async (req) => {
         total_marketplace_products: totalProducts || 0,
         existing_skus_in_marketplace: skuSet.size,
         estimated_to_sync: (totalModels || 0) - skuSet.size,
+        outdated_images: outdatedImages || 0,
       });
     }
 
     if (mode === "sync") {
-      // Fetch a batch of sneaker_models with brand info and primary image
+      // Fetch a batch of sneaker_models with brand info
       const { data: models, error: modelsErr } = await sb
         .from("sneaker_models")
         .select("id, sku, model_name_en, model_name_pt, description_en, description_pt, colorway, release_date, msrp, image_status, brand:brands!inner(name)")
@@ -66,82 +63,79 @@ Deno.serve(async (req) => {
         .range(offset, offset + batchSize - 1);
 
       if (modelsErr) throw modelsErr;
-      if (!models || models.length === 0) return json({ ok: true, synced: 0, skipped: 0, has_more: false });
+      if (!models || models.length === 0) return json({ ok: true, synced: 0, updated: 0, skipped: 0, has_more: false });
 
-      // Get all existing SKUs in marketplace_products to skip
       const skus = models.map((m: any) => m.sku).filter(Boolean);
+      
+      // Get existing products WITH their current image count
       const { data: existingProducts } = await sb
         .from("marketplace_products")
-        .select("sku")
+        .select("id, sku, images")
         .in("sku", skus);
-      const existingSkuSet = new Set((existingProducts || []).map((p: any) => p.sku));
+      const existingMap = new Map((existingProducts || []).map((p: any) => [p.sku, p]));
 
-      // Get ALL images for these models (primary first, then by index)
+      // Get ALL images for these models
       const modelIds = models.map((m: any) => m.id);
-      const { data: images } = await sb
+      const { data: imgData } = await sb
         .from("sneaker_images")
         .select("sneaker_id, image_url, is_primary")
         .in("sneaker_id", modelIds)
         .order("is_primary", { ascending: false })
         .order("created_at", { ascending: true });
-      // Build a map: sneaker_id → array of image URLs (primary first)
       const imageMap = new Map<string, string[]>();
-      for (const img of (images || [])) {
+      for (const img of (imgData || [])) {
         const list = imageMap.get(img.sneaker_id) || [];
         list.push(img.image_url);
         imageMap.set(img.sneaker_id, list);
       }
 
       let synced = 0;
+      let updated = 0;
       let skipped = 0;
       const errors: string[] = [];
 
-      // Batch insert - prepare rows
       const toInsert: any[] = [];
+      const toUpdate: { id: string; images: string[] }[] = [];
+
       for (const model of models) {
-        if (!model.sku || existingSkuSet.has(model.sku)) {
-          skipped++;
-          continue;
-        }
+        if (!model.sku) { skipped++; continue; }
 
         const brandName = (model as any).brand?.name || "Unknown";
         let modelName = model.model_name_pt || model.model_name_en || model.sku;
-        // Strip leading brand name to avoid duplication (e.g. "Nike Air Max 1" → "Air Max 1")
         if (modelName.toLowerCase().startsWith(brandName.toLowerCase() + " ")) {
           modelName = modelName.substring(brandName.length + 1).trim();
         }
         const description = model.description_pt || model.description_en || `${brandName} ${modelName}`;
         const imageArray = imageMap.get(model.id) || [];
 
-        // Generate slug
-        const slug = `${brandName}-${modelName}`
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-|-$/g, "")
-          .substring(0, 120);
+        const existing = existingMap.get(model.sku);
 
-        // Check slug uniqueness
+        if (existing) {
+          // Already exists — check if images need updating
+          const currentImgCount = existing.images?.length || 0;
+          if (imageArray.length > currentImgCount) {
+            toUpdate.push({ id: existing.id, images: imageArray });
+          } else {
+            skipped++;
+          }
+          continue;
+        }
+
+        // New product — insert
+        const slug = `${brandName}-${modelName}`
+          .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 120);
         const uniqueSlug = `${slug}-${model.sku.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().substring(0, 10)}`;
 
         toInsert.push({
-          brand: brandName,
-          model: modelName,
-          colorway: model.colorway || null,
-          sku: model.sku,
-          release_date: model.release_date || null,
-          retail_price: model.msrp || null,
-          description,
-          category: "sneakers",
-          images: imageArray,
-          is_active: true,
-          is_high_risk: false,
-          total_offers: 0,
-          lowest_price: null,
-          slug: uniqueSlug,
+          brand: brandName, model: modelName, colorway: model.colorway || null,
+          sku: model.sku, release_date: model.release_date || null,
+          retail_price: model.msrp || null, description, category: "sneakers",
+          images: imageArray, is_active: true, is_high_risk: false,
+          total_offers: 0, lowest_price: null, slug: uniqueSlug,
         });
       }
 
-      // Insert in chunks of 50 to avoid payload limits
+      // Insert new products in chunks
       const CHUNK = 50;
       for (let i = 0; i < toInsert.length; i += CHUNK) {
         const chunk = toInsert.slice(i, i + CHUNK);
@@ -153,20 +147,27 @@ Deno.serve(async (req) => {
         if (insertErr) {
           console.error("Batch insert error:", insertErr);
           errors.push(insertErr.message);
-          // Try individual inserts for this chunk
           for (const row of chunk) {
             const { error: singleErr } = await sb
               .from("marketplace_products")
               .upsert(row, { onConflict: "sku", ignoreDuplicates: true });
-            if (singleErr) {
-              console.error(`Insert error for SKU ${row.sku}:`, singleErr.message);
-              skipped++;
-            } else {
-              synced++;
-            }
+            if (singleErr) { skipped++; } else { synced++; }
           }
         } else {
           synced += inserted?.length || chunk.length;
+        }
+      }
+
+      // Update images for existing products
+      for (const upd of toUpdate) {
+        const { error: updErr } = await sb
+          .from("marketplace_products")
+          .update({ images: upd.images })
+          .eq("id", upd.id);
+        if (updErr) {
+          errors.push(`Image update failed: ${updErr.message}`);
+        } else {
+          updated++;
         }
       }
 
@@ -175,6 +176,7 @@ Deno.serve(async (req) => {
       return json({
         ok: true,
         synced,
+        updated,
         skipped,
         errors: errors.length,
         error_details: errors.slice(0, 5),
@@ -182,6 +184,63 @@ Deno.serve(async (req) => {
         next_offset: offset + batchSize,
         has_more: hasMore,
         batch_size: batchSize,
+      });
+    }
+
+    // Mode: update-images — bulk update images for all marketplace products from sneaker_images
+    if (mode === "update-images") {
+      const { data: products, error: pErr } = await sb
+        .from("marketplace_products")
+        .select("id, sku")
+        .not("sku", "is", null)
+        .order("created_at", { ascending: true })
+        .range(offset, offset + batchSize - 1);
+
+      if (pErr) throw pErr;
+      if (!products || products.length === 0) return json({ ok: true, updated: 0, has_more: false });
+
+      // Get sneaker_model IDs for these SKUs
+      const skus = products.map((p: any) => p.sku);
+      const { data: models } = await sb
+        .from("sneaker_models")
+        .select("id, sku")
+        .in("sku", skus);
+      const skuToModelId = new Map((models || []).map((m: any) => [m.sku, m.id]));
+
+      // Get all images
+      const modelIds = [...new Set((models || []).map((m: any) => m.id))];
+      const { data: imgData } = await sb
+        .from("sneaker_images")
+        .select("sneaker_id, image_url, is_primary")
+        .in("sneaker_id", modelIds)
+        .order("is_primary", { ascending: false })
+        .order("created_at", { ascending: true });
+      const imageMap = new Map<string, string[]>();
+      for (const img of (imgData || [])) {
+        const list = imageMap.get(img.sneaker_id) || [];
+        list.push(img.image_url);
+        imageMap.set(img.sneaker_id, list);
+      }
+
+      let updated = 0;
+      for (const prod of products) {
+        const modelId = skuToModelId.get(prod.sku);
+        if (!modelId) continue;
+        const imgs = imageMap.get(modelId);
+        if (!imgs || imgs.length === 0) continue;
+        const { error } = await sb
+          .from("marketplace_products")
+          .update({ images: imgs })
+          .eq("id", prod.id);
+        if (!error) updated++;
+      }
+
+      return json({
+        ok: true,
+        updated,
+        offset,
+        next_offset: offset + batchSize,
+        has_more: products.length === batchSize,
       });
     }
 
