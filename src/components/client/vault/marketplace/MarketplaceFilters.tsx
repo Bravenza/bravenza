@@ -48,6 +48,8 @@ interface MarketplaceFiltersProps {
   filters: MarketplaceFilterValues;
   onFiltersChange: (filters: MarketplaceFilterValues) => void;
   onSearch: () => void;
+  availableModels?: string[];
+  onBrandSelected?: (brand: string | undefined) => void;
 }
 
 export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: MarketplaceFiltersProps) {
