@@ -195,7 +195,7 @@
 
     --border: 220 13% 87%;
     --input: 220 13% 87%;
-    --ring: 42 90% 42%;
+    --ring: 220 13% 60%;
 
     /* Explicitly set color and background to ensure legibility */
     color: hsl(224 20% 14%);
