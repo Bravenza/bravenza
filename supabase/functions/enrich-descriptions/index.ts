@@ -246,7 +246,7 @@ Deno.serve(async (req) => {
     const { data: candidates, error: fetchErr } = await sb
       .from("sneaker_models")
       .select("id, sku, model_name_pt, model_name_en, description_pt, description_en, colorway, brand_id, msrp, release_date, brands:brand_id(name), silhouettes:silhouette_id(name)")
-      .in("translation_status", ["pending", "skipped"])
+      .in("translation_status", ["pending", "skipped", "translated"])
       .order("created_at", { ascending: false })
       .limit(BATCH_SIZE);
 
