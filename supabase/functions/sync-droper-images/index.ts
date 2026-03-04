@@ -202,10 +202,16 @@ serve(async (req) => {
   }
 
   try {
-    // Permite passar ?page=N na URL para processar páginas específicas
-    const url        = new URL(req.url);
-    const startPage  = parseInt(url.searchParams.get("page") ?? "0");
-    const maxPages   = parseInt(url.searchParams.get("maxPages") ?? String(MAX_PAGES));
+    // Lê parâmetros do body enviado pelo supabase.functions.invoke()
+    let startPage = 0;
+    let maxPages  = MAX_PAGES;
+    try {
+      const body = await req.json();
+      if (body?.page     !== undefined) startPage = parseInt(body.page);
+      if (body?.maxPages !== undefined) maxPages  = parseInt(body.maxPages);
+    } catch {
+      // body vazio ou inválido — usa defaults
+    }
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
