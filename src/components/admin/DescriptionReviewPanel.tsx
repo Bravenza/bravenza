@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Loader2, CheckCircle2, XCircle, AlertTriangle, Eye, Sparkles,
-  ChevronLeft, ChevronRight, Search, SkipForward, Save, Check
+  ChevronLeft, ChevronRight, Search, SkipForward, Save, Check, Trash2
 } from "lucide-react";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
