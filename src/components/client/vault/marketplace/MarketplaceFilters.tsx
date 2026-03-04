@@ -122,10 +122,15 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch, availab
                   {popularBrands.map((brand) => (
                     <button
                       key={brand}
-                      onClick={() => onFiltersChange({
-                        ...filters,
-                        brand: filters.brand === brand ? undefined : brand,
-                      })}
+                      onClick={() => {
+                        const newBrand = filters.brand === brand ? undefined : brand;
+                        onFiltersChange({
+                          ...filters,
+                          brand: newBrand,
+                          model: newBrand ? filters.model : undefined,
+                        });
+                        onBrandSelected?.(newBrand);
+                      }}
                       className={cn(
                         "px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200",
                         filters.brand === brand
@@ -138,6 +143,35 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch, availab
                   ))}
                 </div>
               </div>
+
+              {/* Model — shown when brand is selected */}
+              {filters.brand && availableModels.length > 0 && (
+                <>
+                  <Separator className="bg-border/30" />
+                  <div>
+                    <label className="text-sm font-medium mb-3 block text-foreground">Modelo</label>
+                    <div className="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto">
+                      {availableModels.map((model) => (
+                        <button
+                          key={model}
+                          onClick={() => onFiltersChange({
+                            ...filters,
+                            model: filters.model === model ? undefined : model,
+                          })}
+                          className={cn(
+                            "px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200",
+                            filters.model === model
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-muted text-muted-foreground border-border/50 hover:border-primary/40"
+                          )}
+                        >
+                          {model}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
 
               <Separator className="bg-border/30" />
 
