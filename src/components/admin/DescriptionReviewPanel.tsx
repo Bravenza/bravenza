@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
-type TranslationStatus = "pending" | "review" | "done" | "error" | "skipped";
+type TranslationStatus = "pending" | "review" | "done" | "error" | "skipped" | "translated" | "enriched";
 
 interface SneakerModel {
   id: string;
@@ -30,11 +30,13 @@ interface SneakerModel {
 }
 
 const STATUS_LABELS: Record<TranslationStatus, { label: string; icon: React.ElementType }> = {
-  pending: { label: "Pendente", icon: AlertTriangle },
-  review:  { label: "Aguard. revisão", icon: Eye },
-  done:    { label: "Aprovado", icon: CheckCircle2 },
-  error:   { label: "Erro", icon: XCircle },
-  skipped: { label: "Ignorado", icon: SkipForward },
+  pending:    { label: "Pendente", icon: AlertTriangle },
+  translated: { label: "Traduzido", icon: AlertTriangle },
+  enriched:  { label: "Enriquecido", icon: Sparkles },
+  review:    { label: "Aguard. revisão", icon: Eye },
+  done:      { label: "Aprovado", icon: CheckCircle2 },
+  error:     { label: "Erro", icon: XCircle },
+  skipped:   { label: "Ignorado", icon: SkipForward },
 };
 
 const PAGE_SIZE = 20;
@@ -67,7 +69,7 @@ export default function DescriptionReviewPanel() {
 
   // ─── Contadores por status ───────────────────────────────────────────────────
   const loadCounts = useCallback(async () => {
-    const statuses: TranslationStatus[] = ["pending", "review", "done", "error", "skipped"];
+    const statuses: TranslationStatus[] = ["pending", "translated", "enriched", "review", "done", "error", "skipped"];
     const newCounts: Record<string, number> = {};
     for (const s of statuses) {
       const { count } = await supabase
@@ -322,7 +324,7 @@ export default function DescriptionReviewPanel() {
             />
           </div>
           {/* Reescrever — só aparece em pending/all/error */}
-          {(filterStatus === "pending" || filterStatus === "all" || filterStatus === "error" || filterStatus === "skipped") && (
+          {(filterStatus === "pending" || filterStatus === "all" || filterStatus === "error" || filterStatus === "skipped" || filterStatus === "translated") && (
             <>
               <LoadingButton loading={enriching} loadingText="Reescrevendo..." onClick={() => handleEnrich("10")} size="sm" variant="outline" disabled={enriching}>
                 <Sparkles className="h-3.5 w-3.5 mr-1.5" />Próximos 10
