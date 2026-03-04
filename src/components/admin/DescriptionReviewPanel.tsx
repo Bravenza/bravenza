@@ -225,15 +225,15 @@ export default function DescriptionReviewPanel() {
 
     setApprovingAll(true);
     try {
-      const { error, count } = await supabase
+      const { error, count: updated } = await supabase
         .from("sneaker_models")
-        .update({ translation_status: "done" })
+        .update({ translation_status: "done" }, { count: "exact" })
         .eq("translation_status", "review");
       if (error) throw error;
-      showToast(`${count ?? reviewCount} descrições aprovadas ✓`);
+      showToast(`${updated ?? reviewCount} descrições aprovadas ✓`);
       setSelected(null);
-      loadProducts();
-      loadCounts();
+      await loadCounts();
+      await loadProducts();
     } catch (e: any) {
       showToast(e.message, "error");
     } finally {
