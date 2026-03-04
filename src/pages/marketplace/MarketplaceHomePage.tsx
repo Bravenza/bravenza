@@ -92,7 +92,20 @@ export default function MarketplaceHomePage() {
         )}
 
         <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
-          <MarketplaceFilters filters={filters} onFiltersChange={setFilters} onSearch={handleSearch} />
+          <MarketplaceFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            onSearch={handleSearch}
+            availableModels={availableModels}
+            onBrandSelected={async (brand) => {
+              if (brand) {
+                const models = await fetchModels(brand);
+                setAvailableModels(models);
+              } else {
+                setAvailableModels([]);
+              }
+            }}
+          />
           <SavedSearchesWidget
             cpf={cpf}
             currentFilters={filters}
