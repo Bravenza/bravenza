@@ -155,7 +155,7 @@
     --sidebar-accent: 0 0% 16%;
     --sidebar-accent-foreground: 45 29% 97%;
     --sidebar-border: 0 0% 16%;
-    --sidebar-ring: 45 100% 50%;
+    --sidebar-ring: 0 0% 45%;
   }
 
   /* Light theme for internal/logged-in areas */
