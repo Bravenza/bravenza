@@ -1,22 +1,13 @@
-import { motion } from "framer-motion";
-import { useLocation } from "react-router-dom";
 import { type ReactNode } from "react";
 
 /**
- * Wraps page content with a subtle fade+slide transition.
- * Premium feel without performance overhead.
+ * Lightweight page wrapper — no longer re-mounts the entire tree on navigation.
+ * Previously used framer-motion with key={pathname} which destroyed and recreated
+ * the full component tree on every route change, causing unnecessary re-renders,
+ * state loss, and redundant data fetches.
+ *
+ * CSS handles the subtle fade-in via the route skeleton → content transition.
  */
 export function PageTransition({ children }: { children: ReactNode }) {
-  const location = useLocation();
-
-  return (
-    <motion.div
-      key={location.pathname}
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-    >
-      {children}
-    </motion.div>
-  );
+  return <>{children}</>;
 }

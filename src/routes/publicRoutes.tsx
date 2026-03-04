@@ -2,8 +2,8 @@ import { lazy } from "react";
 import { Route, Navigate } from "react-router-dom";
 import { ProtectedProviders } from "@/components/providers/ProtectedProviders";
 import { RouteWrapper } from "@/components/routing/RouteWrapper";
-import Index from "@/pages/Index";
 
+const Index = lazy(() => import("@/pages/Index"));
 const TrackingPortalPage = lazy(() => import("@/pages/TrackingPortalPage"));
 const TrackingPage = lazy(() => import("@/pages/TrackingPage"));
 const BudgetApprovalPage = lazy(() => import("@/pages/BudgetApprovalPage"));
