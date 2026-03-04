@@ -77,7 +77,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
     fetchPriceDropSuggestions,
   } = useMarketplace(clientCpf);
 
-  const { searchProducts, createProduct, createOffer, products: catalogProducts, totalProducts, isLoading: catalogLoading, fetchProducts: fetchCatalogProducts } = useMarketplaceCatalog(clientCpf);
+  const { searchProducts, createProduct, createOffer, products: catalogProducts, totalProducts, isLoading: catalogLoading, fetchProducts: fetchCatalogProducts, fetchModels } = useMarketplaceCatalog(clientCpf);
 
   const [innerTab, setInnerTab] = useState("explorar");
   const [sellerSubTab, setSellerSubTab] = useState("anuncios");
