@@ -69,7 +69,7 @@ export default function DescriptionReviewPanel() {
 
   // ─── Contadores por status ───────────────────────────────────────────────────
   const loadCounts = useCallback(async () => {
-    const statuses: TranslationStatus[] = ["pending", "review", "done", "error", "skipped"];
+    const statuses: TranslationStatus[] = ["pending", "translated", "enriched", "review", "done", "error", "skipped"];
     const newCounts: Record<string, number> = {};
     for (const s of statuses) {
       const { count } = await supabase
