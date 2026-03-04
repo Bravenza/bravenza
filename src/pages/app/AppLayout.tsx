@@ -1,11 +1,11 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { 
-  Search, Package, Box, Heart, Star, Store, Crown, Bell, MessageSquare,
-  Users, Sparkles, Award, Settings, LogOut, Menu, FileText as FileTextIcon,
-  ShoppingBag, MoreHorizontal, X, Activity, ChevronLeft, HelpCircle, DollarSign,
-  ArrowRight, FileText, Shield, RefreshCw, ChevronRight
+  Search, Package, Box, Heart, Star, Store, Bell, MessageSquare,
+  Users, Sparkles, Award, Settings, LogOut, FileText as FileTextIcon,
+  MoreHorizontal, Activity, HelpCircle, DollarSign,
+  ArrowRight, FileText, RefreshCw
 } from "lucide-react";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -137,7 +137,7 @@ export default function AppLayout() {
   const { profile, signOut, isVaultMember } = useClientSession();
   const isMobile = useIsMobile();
   const cpf = profile?.cpf || null;
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  
 
   // Prefetch vault data for members so navigation feels instant
   useVaultPrefetch(cpf, isVaultMember);
@@ -154,10 +154,6 @@ export default function AppLayout() {
     navigate("/entrar");
   };
 
-  const mainItems = navItems.filter(i => i.group === "main");
-  const vaultItems = navItems.filter(i => i.group === "vault");
-  const moreItems = navItems.filter(i => i.group === "more");
-  
 
   return (
     <CartProvider cpf={cpf}>
@@ -172,17 +168,6 @@ export default function AppLayout() {
                   <Logo size="sm" />
                 </Link>
 
-                {/* Desktop: Toggle sidebar */}
-                {!isMobile && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
-                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                  >
-                    {sidebarCollapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-                  </Button>
-                )}
 
                 <div className="flex-1" />
 
@@ -260,91 +245,10 @@ export default function AppLayout() {
           </div>
         </header>
 
-        <div className="flex flex-1">
-          {/* ===== DESKTOP SIDEBAR ===== */}
-          {!isMobile && (
-            <aside
-              className={cn(
-                "sticky top-[60px] h-[calc(100vh-60px)] shrink-0 transition-all duration-300 overflow-y-auto overflow-x-hidden",
-                "bg-sidebar border-r border-sidebar-border",
-                sidebarCollapsed ? "w-[60px]" : "w-[220px]"
-              )}
-            >
-              <nav className="py-4 px-2 space-y-1">
-                {/* User card */}
-                <AnimatePresence>
-                  {!sidebarCollapsed && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="px-2 pb-3 mb-3 border-b border-sidebar-border"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Avatar className="h-9 w-9 border border-sidebar-primary/30">
-                          <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || "Avatar"} />
-                          <AvatarFallback className="bg-sidebar-primary/15 text-sidebar-primary text-xs font-bold">{initials}</AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold truncate text-sidebar-foreground">{profile?.full_name || "Usuário"}</p>
-                          <p className="text-[10px] text-sidebar-foreground/50">
-                            {cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.$3-**")}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Collapsed: show avatar only */}
-                {sidebarCollapsed && (
-                  <div className="flex justify-center pb-2 mb-2 border-b border-sidebar-border">
-                    <Avatar className="h-8 w-8 border border-sidebar-primary/30">
-                      <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || "Avatar"} />
-                      <AvatarFallback className="bg-sidebar-primary/15 text-sidebar-primary text-[10px] font-bold">{initials}</AvatarFallback>
-                    </Avatar>
-                  </div>
-                )}
-
-                {/* Main nav */}
-                {mainItems.map(item => (
-                  <SidebarLink key={item.path} item={item} collapsed={sidebarCollapsed} active={isActive(item.path, item.path === "/app")} />
-                ))}
-
-                {/* Vault section */}
-                {isVaultMember && (
-                  <>
-                    {!sidebarCollapsed && (
-                      <p className="px-3 pt-5 pb-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-primary/60">
-                        Vault Club
-                      </p>
-                    )}
-                    {sidebarCollapsed && <div className="my-3 mx-2 h-px bg-sidebar-border" />}
-                    {vaultItems.map(item => (
-                      <SidebarLink key={item.path} item={item} collapsed={sidebarCollapsed} active={isActive(item.path)} />
-                    ))}
-                  </>
-                )}
-
-                {/* More section */}
-                {!sidebarCollapsed && (
-                  <p className="px-3 pt-5 pb-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
-                    Mais
-                  </p>
-                )}
-                {sidebarCollapsed && <div className="my-3 mx-2 h-px bg-sidebar-border" />}
-                {moreItems.map(item => (
-                  <SidebarLink key={item.path} item={item} collapsed={sidebarCollapsed} active={isActive(item.path)} />
-                ))}
-              </nav>
-            </aside>
-          )}
-
-          {/* ===== MAIN CONTENT ===== */}
-          <main className="flex-1 min-w-0">
-            <Outlet context={{ cpf: profile?.cpf, profile }} />
-          </main>
-        </div>
+        {/* ===== MAIN CONTENT ===== */}
+        <main className="flex-1 min-w-0">
+          <Outlet context={{ cpf: profile?.cpf, profile }} />
+        </main>
 
         {/* Footer - desktop only */}
         {!isMobile && (
@@ -400,31 +304,5 @@ export default function AppLayout() {
 
       </div>
     </CartProvider>
-  );
-}
-
-function SidebarLink({ item, collapsed, active }: { item: NavItem; collapsed: boolean; active: boolean }) {
-  return (
-    <Link
-      to={item.path}
-      title={collapsed ? item.label : undefined}
-      className={cn(
-        "flex items-center gap-2.5 rounded-lg transition-all duration-200 group relative",
-        collapsed ? "justify-center px-0 py-2.5 mx-1" : "px-3 py-2",
-        active
-          ? "bg-sidebar-primary/15 text-sidebar-primary font-medium"
-          : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-      )}
-    >
-      {active && !collapsed && (
-        <motion.div
-          layoutId="sidebarActive"
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-sidebar-primary"
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-        />
-      )}
-      <item.icon className={cn("h-4 w-4 shrink-0", active ? "text-sidebar-primary" : "group-hover:text-sidebar-foreground")} />
-      {!collapsed && <span className="text-sm truncate">{item.label}</span>}
-    </Link>
   );
 }
