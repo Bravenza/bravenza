@@ -8,6 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingButton } from "@/components/ui/loading-button";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Loader2, CheckCircle2, XCircle, AlertTriangle, Eye, Sparkles,
   ChevronLeft, ChevronRight, Search, SkipForward, Save, Check
 } from "lucide-react";
