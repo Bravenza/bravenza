@@ -820,7 +820,7 @@ export default function CatalogSeedPage() {
           )}
 
           <Tabs defaultValue="search" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="search" className="flex items-center gap-1">
                 <Search className="h-3.5 w-3.5" />Buscar Novos
               </TabsTrigger>
@@ -829,6 +829,9 @@ export default function CatalogSeedPage() {
               </TabsTrigger>
               <TabsTrigger value="discover" className="flex items-center gap-1">
                 <Globe className="h-3.5 w-3.5" />Descobrir
+              </TabsTrigger>
+              <TabsTrigger value="droper" className="flex items-center gap-1">
+                <ImageIcon className="h-3.5 w-3.5" />Droper Imgs
               </TabsTrigger>
             </TabsList>
 
