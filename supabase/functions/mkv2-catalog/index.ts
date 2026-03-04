@@ -4,7 +4,7 @@ const j=(d:unknown,s=200)=>new Response(JSON.stringify(d),{status:s,headers:{...
 const sc=()=>createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 const gm=async(sb:any,cpf:string)=>{const{data}=await sb.from("vault_members").select("id").eq("client_cpf",cpf).single();return data;};
 const gs=async(sb:any,mid:string)=>{const{data}=await sb.from("vault_seller_profiles").select("*").eq("member_id",mid).maybeSingle();return data;};
-const PUB=new Set(["catalog-products","catalog-product","catalog-offers","catalog-search"]);
+const PUB=new Set(["catalog-products","catalog-product","catalog-offers","catalog-search","catalog-models"]);
 Deno.serve(async(req)=>{
 if(req.method==="OPTIONS")return new Response(null,{headers:H});
 const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;
