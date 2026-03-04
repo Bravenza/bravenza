@@ -18,9 +18,15 @@ interface SneakerModel {
   id: string;
   sku: string;
   model_name_pt: string;
+  model_name_en: string | null;
   description_pt: string;
+  description_en: string | null;
   colorway: string | null;
   brand_id: string;
+  brands: { name: string } | null;
+  silhouettes: { name: string } | null;
+  msrp: number | null;
+  release_date: string | null;
 }
 
 interface EnrichResult {
@@ -32,17 +38,51 @@ interface EnrichResult {
 
 // ─── Prompt editorial/lifestyle para reescrita ────────────────────────────────
 function buildPrompt(product: SneakerModel): string {
-  return `Você é redator editorial de uma plataforma premium de sneakers chamada Bravenza.
+  const hasOriginal = product.description_pt && product.description_pt.trim().length >= 20;
+  const brand = product.brands?.name || "Desconhecida";
+  const silhouette = product.silhouettes?.name || "";
+  const name = product.model_name_pt || product.model_name_en || product.sku;
+  const colorway = product.colorway || "—";
+  const msrp = product.msrp ? `R$${product.msrp}` : "";
+  const release = product.release_date || "";
+  const enDesc = product.description_en || "";
+
+  if (hasOriginal) {
+    return `Você é redator editorial de uma plataforma premium de sneakers chamada Bravenza.
 
 Reescreva a descrição abaixo com tom editorial e lifestyle — evocativo, apaixonado, mas conciso. 
 Máximo 3 parágrafos curtos. Preserve todos os fatos técnicos (materiais, tecnologias, colaborações). 
 Escreva em português brasileiro. NÃO adicione emojis. NÃO use bullet points.
 Retorne APENAS a descrição reescrita, sem prefácio ou explicação.
 
-Produto: ${product.model_name_pt}
-Colorway: ${product.colorway ?? "—"}
+Produto: ${name}
+Marca: ${brand}
+Silhueta: ${silhouette}
+Colorway: ${colorway}
+MSRP: ${msrp}
+Lançamento: ${release}
 Descrição original:
 ${product.description_pt}`;
+  }
+
+  // Sem descrição original → criar do zero
+  return `Você é redator editorial de uma plataforma premium de sneakers chamada Bravenza.
+
+Crie uma descrição editorial e lifestyle em português brasileiro para o sneaker abaixo.
+Use seu conhecimento sobre o modelo, marca e silhueta para escrever algo envolvente e informativo.
+Mencione materiais, tecnologias de amortecimento, história/contexto cultural e detalhes de design quando relevante.
+Tom editorial, apaixonado, mas conciso. Máximo 3 parágrafos curtos.
+NÃO adicione emojis. NÃO use bullet points.
+Retorne APENAS a descrição, sem prefácio ou explicação.
+
+Produto: ${name}
+Marca: ${brand}
+Silhueta: ${silhouette}
+Colorway: ${colorway}
+SKU: ${product.sku}
+MSRP: ${msrp}
+Lançamento: ${release}
+${enDesc ? `Descrição EN (referência): ${enDesc}` : ""}`;
 }
 
 // ─── Chama a IA via Lovable Gateway ───────────────────────────────────────────
@@ -102,21 +142,7 @@ async function processBatch(
   const promises: Promise<void>[] = [];
 
   const processOne = async (product: SneakerModel) => {
-    // Se não tem descrição original, marcar como skipped
-    if (!product.description_pt || product.description_pt.trim().length < 20) {
-      const { error } = await sb
-        .from("sneaker_models")
-        .update({ translation_status: "skipped" })
-        .eq("id", product.id);
-      if (error) {
-        result.failed++;
-        result.errors.push(`${product.sku}: skip error — ${error.message}`);
-      } else {
-        result.processed.push({ sku: product.sku, preview: "(sem descrição original)" });
-      }
-      return;
-    }
-
+    // Chama a IA — tanto para reescrita quanto para criação do zero
     const newDesc = await rewriteDescription(product, apiKey);
     if (newDesc) {
       const { error } = await sb
@@ -219,7 +245,7 @@ Deno.serve(async (req) => {
     // Busca produtos pendentes
     const { data: candidates, error: fetchErr } = await sb
       .from("sneaker_models")
-      .select("id, sku, model_name_pt, description_pt, colorway, brand_id")
+      .select("id, sku, model_name_pt, model_name_en, description_pt, description_en, colorway, brand_id, msrp, release_date, brands:brand_id(name), silhouettes:silhouette_id(name)")
       .eq("translation_status", "pending")
       .order("created_at", { ascending: false })
       .limit(BATCH_SIZE);
