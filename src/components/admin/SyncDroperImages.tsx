@@ -6,7 +6,18 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Play, Pause, RotateCcw, CheckCircle2, AlertTriangle, XCircle, ImageIcon, Loader2, Package, Info } from "lucide-react";
+import {
+  Play,
+  Pause,
+  RotateCcw,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  ImageIcon,
+  Loader2,
+  Package,
+  Info,
+} from "lucide-react";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 interface SyncResult {
@@ -69,29 +80,49 @@ export default function SyncCatalogoDroper() {
   };
 
   const reset = () => {
-    setRunning(false); setPaused(false); setDone(false);
-    setCurrentPage(0); setTotals({ success: 0, failed: 0, notFound: 0, batches: 0 });
-    setLogs([]); setErrors([]); setLastSynced([]);
+    setRunning(false);
+    setPaused(false);
+    setDone(false);
+    setCurrentPage(0);
+    setTotals({ success: 0, failed: 0, notFound: 0, batches: 0 });
+    setLogs([]);
+    setErrors([]);
+    setLastSynced([]);
     shouldStop.current = false;
   };
 
   const runBatch = async (page: number): Promise<BatchResult | null> => {
     try {
+      const controller = new AbortController();
+      // 4 minutos de timeout — suficiente para processar 1-2 páginas
+      const timeout = setTimeout(() => controller.abort(), 4 * 60 * 1000);
+
       const { data, error } = await supabase.functions.invoke("sync-droper-images", {
         body: { page, maxPages: pagesPerBatch },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeout);
       if (error) throw new Error(error.message);
       return data as BatchResult;
     } catch (err: unknown) {
-      addLog("error", `Batch p.${page} falhou: ${err instanceof Error ? err.message : "erro desconhecido"}`);
+      if (err instanceof Error && err.name === "AbortError") {
+        addLog("error", `Batch p.${page} excedeu o tempo limite (4min)`);
+      } else {
+        addLog("error", `Batch p.${page} falhou: ${err instanceof Error ? err.message : "erro desconhecido"}`);
+      }
       return null;
     }
   };
 
   const startSync = async () => {
     shouldStop.current = false;
-    setRunning(true); setPaused(false); setDone(false);
-    setLogs([]); setErrors([]); setLastSynced([]);
+    setRunning(true);
+    setPaused(false);
+    setDone(false);
+    setLogs([]);
+    setErrors([]);
+    setLastSynced([]);
     setTotals({ success: 0, failed: 0, notFound: 0, batches: 0 });
 
     let page = currentPage;
@@ -106,7 +137,11 @@ export default function SyncCatalogoDroper() {
       addLog("info", `Batch ${batchCount + 1}/${totalBatches} — buscando página ${page}...`);
       const result = await runBatch(page);
 
-      if (!result) { page += pagesPerBatch; batchCount++; continue; }
+      if (!result) {
+        page += pagesPerBatch;
+        batchCount++;
+        continue;
+      }
 
       const r = result.result;
       setCurrentPage(result.nextPage);
@@ -126,13 +161,15 @@ export default function SyncCatalogoDroper() {
 
       if (r.errors?.length > 0) setErrors((prev) => [...prev, ...r.errors.slice(0, 10)]);
 
-      addLog(r.success > 0 ? "success" : "warning",
-        `${r.success} criados/atualizados · ${r.notFound} não encontrados · ${r.failed} falhas`
+      addLog(
+        r.success > 0 ? "success" : "warning",
+        `${r.success} criados/atualizados · ${r.notFound} não encontrados · ${r.failed} falhas`,
       );
 
       if (result.pagesProcessed < pagesPerBatch) {
         addLog("success", "Catálogo completo processado!");
-        setDone(true); break;
+        setDone(true);
+        break;
       }
 
       if (shouldStop.current) break;
@@ -144,16 +181,22 @@ export default function SyncCatalogoDroper() {
   };
 
   const handlePause = () => {
-    shouldStop.current = true; setPaused(true); setRunning(false);
+    shouldStop.current = true;
+    setPaused(true);
+    setRunning(false);
     addLog("warning", "Pausado pelo usuário.");
   };
 
   const logIcon = (type: LogEntry["type"]) => {
     switch (type) {
-      case "success": return <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />;
-      case "warning": return <AlertTriangle className="w-3 h-3 text-primary shrink-0 mt-0.5" />;
-      case "error": return <XCircle className="w-3 h-3 text-destructive shrink-0 mt-0.5" />;
-      default: return <Info className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />;
+      case "success":
+        return <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />;
+      case "warning":
+        return <AlertTriangle className="w-3 h-3 text-primary shrink-0 mt-0.5" />;
+      case "error":
+        return <XCircle className="w-3 h-3 text-destructive shrink-0 mt-0.5" />;
+      default:
+        return <Info className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />;
     }
   };
 
@@ -172,9 +215,7 @@ export default function SyncCatalogoDroper() {
               </div>
               <div>
                 <CardTitle className="text-lg">Sync Catálogo — Droper.app</CardTitle>
-                <CardDescription>
-                  Importa produtos completos com imagens, descrições e ficha técnica
-                </CardDescription>
+                <CardDescription>Importa produtos completos com imagens, descrições e ficha técnica</CardDescription>
               </div>
             </div>
             {(running || paused) && (
@@ -188,11 +229,12 @@ export default function SyncCatalogoDroper() {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
         {/* Col 1 — Dados importados */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Dados importados</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+              Dados importados
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2.5">
             {SYNC_FIELDS.map((label) => (
@@ -213,26 +255,43 @@ export default function SyncCatalogoDroper() {
           {!running && !paused && (
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Configuração</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                  Configuração
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1.5">Página inicial</label>
-                  <Input type="number" min={0} value={currentPage}
-                    onChange={(e) => setCurrentPage(parseInt(e.target.value) || 0)} />
+                  <Input
+                    type="number"
+                    min={0}
+                    value={currentPage}
+                    onChange={(e) => setCurrentPage(parseInt(e.target.value) || 0)}
+                  />
                   <p className="text-xs text-muted-foreground/60 mt-1">0 = início do catálogo</p>
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1.5">Páginas por batch</label>
-                  <Input type="number" min={1} max={3} value={pagesPerBatch}
-                    onChange={(e) => setPagesPerBatch(parseInt(e.target.value) || 1)} />
+                  <Input
+                    type="number"
+                    min={1}
+                    max={3}
+                    value={pagesPerBatch}
+                    onChange={(e) => setPagesPerBatch(parseInt(e.target.value) || 1)}
+                  />
                   <p className="text-xs text-muted-foreground/60 mt-1">{pagesPerBatch * 60} produtos/batch · máx 3</p>
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1.5">Total de batches</label>
-                  <Input type="number" min={1} value={totalBatches}
-                    onChange={(e) => setTotalBatches(parseInt(e.target.value) || 5)} />
-                  <p className="text-xs text-muted-foreground/60 mt-1">~{estimatedProducts.toLocaleString()} produtos nesta sessão</p>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={totalBatches}
+                    onChange={(e) => setTotalBatches(parseInt(e.target.value) || 5)}
+                  />
+                  <p className="text-xs text-muted-foreground/60 mt-1">
+                    ~{estimatedProducts.toLocaleString()} produtos nesta sessão
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -282,7 +341,14 @@ export default function SyncCatalogoDroper() {
               </Button>
             )}
             {paused && (
-              <Button onClick={() => { setPaused(false); startSync(); }} className="w-full gap-2 bg-emerald-600 hover:bg-emerald-500" size="lg">
+              <Button
+                onClick={() => {
+                  setPaused(false);
+                  startSync();
+                }}
+                className="w-full gap-2 bg-emerald-600 hover:bg-emerald-500"
+                size="lg"
+              >
                 <Play className="w-4 h-4" />
                 Retomar (p. {currentPage})
               </Button>
@@ -308,13 +374,17 @@ export default function SyncCatalogoDroper() {
           {lastSynced.length > 0 && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Últimos salvos</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                  Últimos salvos
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {lastSynced.map((item, i) => (
                   <div key={i} className="flex items-center justify-between text-xs">
                     <span className="text-foreground/80 font-mono truncate max-w-[140px]">{item.sku}</span>
-                    <Badge variant="outline" className="text-[10px] shrink-0">{item.images} imgs</Badge>
+                    <Badge variant="outline" className="text-[10px] shrink-0">
+                      {item.images} imgs
+                    </Badge>
                   </div>
                 ))}
               </CardContent>
@@ -326,7 +396,9 @@ export default function SyncCatalogoDroper() {
             <Card className="overflow-hidden">
               <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
                 <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Log</span>
-                <Badge variant="secondary" className="text-[10px]">{logs.length}</Badge>
+                <Badge variant="secondary" className="text-[10px]">
+                  {logs.length}
+                </Badge>
               </div>
               <ScrollArea className="h-64 p-3">
                 <div className="space-y-1.5 text-xs">
@@ -350,9 +422,15 @@ export default function SyncCatalogoDroper() {
                 <CardTitle className="text-sm">Como usar</CardTitle>
               </CardHeader>
               <CardContent className="space-y-1.5 text-xs text-muted-foreground">
-                <p>1. Configure a <span className="text-foreground">página inicial</span> (0 = começo)</p>
-                <p>2. Use <span className="text-foreground">1 página/batch</span> para testar</p>
-                <p>3. Aumente gradualmente para <span className="text-foreground">2–3 páginas</span></p>
+                <p>
+                  1. Configure a <span className="text-foreground">página inicial</span> (0 = começo)
+                </p>
+                <p>
+                  2. Use <span className="text-foreground">1 página/batch</span> para testar
+                </p>
+                <p>
+                  3. Aumente gradualmente para <span className="text-foreground">2–3 páginas</span>
+                </p>
                 <p>4. Pause e retome a qualquer momento</p>
                 <p className="pt-2 text-muted-foreground/50">Catálogo droper: ~64.000 produtos</p>
               </CardContent>
@@ -371,7 +449,9 @@ export default function SyncCatalogoDroper() {
             </summary>
             <CardContent className="pt-0 space-y-1 text-xs text-destructive/80 max-h-48 overflow-y-auto">
               {errors.map((e, i) => (
-                <div key={i} className="border-t border-destructive/10 pt-1">• {e}</div>
+                <div key={i} className="border-t border-destructive/10 pt-1">
+                  • {e}
+                </div>
               ))}
             </CardContent>
           </details>
