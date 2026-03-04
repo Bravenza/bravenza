@@ -343,7 +343,13 @@ export default function DescriptionReviewPanel() {
           {/* Aprovar todos — só aparece em review/all */}
           {(filterStatus === "review" || filterStatus === "all") && (counts["review"] ?? 0) > 0 && (
             <LoadingButton loading={approvingAll} loadingText="Aprovando..." onClick={handleApproveAll} size="sm" variant="outline" disabled={enriching || approvingAll}>
-              <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />Aprovar todos ({counts["review"] ?? 0})
+            <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />Aprovar todos ({counts["review"] ?? 0})
+            </LoadingButton>
+          )}
+          {/* Excluir ignorados — só aparece em skipped */}
+          {filterStatus === "skipped" && (counts["skipped"] ?? 0) > 0 && (
+            <LoadingButton loading={deletingSkipped} loadingText="Excluindo..." onClick={() => setShowDeleteSkippedDialog(true)} size="sm" variant="destructive" disabled={enriching || deletingSkipped}>
+              <Trash2 className="h-3.5 w-3.5 mr-1.5" />Excluir ignorados ({counts["skipped"] ?? 0})
             </LoadingButton>
           )}
         </div>
