@@ -54,6 +54,8 @@ export default function DescriptionReviewPanel() {
   const [cancelEnrich, setCancelEnrich] = useState(false);
   const [approvingAll, setApprovingAll] = useState(false);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
+  const [deletingSkipped, setDeletingSkipped] = useState(false);
+  const [showDeleteSkippedDialog, setShowDeleteSkippedDialog] = useState(false);
   const [editPt, setEditPt] = useState("");
   const [editName, setEditName] = useState("");
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
