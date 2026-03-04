@@ -1,9 +1,9 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { 
-  Search, Package, Box, Heart, Star, Store, Crown, Bell, MessageSquare,
-  Users, Sparkles, Award, Settings, LogOut, Menu, FileText as FileTextIcon,
-  ShoppingBag, MoreHorizontal, X, Activity, ChevronLeft, HelpCircle, DollarSign,
-  ArrowRight, FileText, Shield, RefreshCw, ChevronRight
+  Search, Package, Box, Heart, Star, Store, Bell, MessageSquare,
+  Users, Sparkles, Award, Settings, LogOut, FileText as FileTextIcon,
+  MoreHorizontal, Activity, HelpCircle, DollarSign,
+  ArrowRight, FileText, RefreshCw
 } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
