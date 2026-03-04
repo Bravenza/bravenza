@@ -346,6 +346,17 @@ export default function DescriptionReviewPanel() {
               Cancelar
             </Button>
           )}
+          <LoadingButton
+            loading={approvingAll}
+            loadingText="Aprovando..."
+            onClick={handleApproveAll}
+            size="sm"
+            variant="outline"
+            disabled={enriching || approvingAll || !(counts["review"] > 0)}
+          >
+            <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+            Aprovar todos ({counts["review"] ?? 0})
+          </LoadingButton>
         </div>
 
         {/* Progress bar */}
