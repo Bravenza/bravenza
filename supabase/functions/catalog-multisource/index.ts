@@ -344,7 +344,13 @@ const stockX: SourceDef = {
     {
       id: "stockx_sneakers_search",
       label: "Busca dedicada StockX Sneakers",
-      buildPath: (q) => `/getproducts?keywords=${encodeURIComponent(q || "Jordan")}&limit=40`,
+      buildPath: (q) => {
+        // Support "query|page" format for pagination
+        const parts = (q || "Jordan").split("|");
+        const keywords = parts[0] || "Jordan";
+        const page = parseInt(parts[1] || "1") || 1;
+        return `/getproducts?keywords=${encodeURIComponent(keywords)}&limit=40&page=${page}`;
+      },
       extractItems: genericExtract,
     },
     {
@@ -749,8 +755,9 @@ Deno.serve(async (req) => {
     if (!src) return json({ ok: false, error: `Source inválida: ${sourceId}` }, 400);
 
     const endpointId = body.endpoint as string;
-    const param = body.param as string | undefined;
+    let param = body.param as string | undefined;
     const batchLimit = body.limit ?? 30;
+    const maxPages = body.max_pages ?? 3; // Auto-paginate up to N pages
 
     const ep = (src.extraEndpoints || []).find((e) => e.id === endpointId);
     if (!ep) {
@@ -786,71 +793,104 @@ Deno.serve(async (req) => {
       return null;
     }
 
-    const stats = { fetched: 0, inserted: 0, skipped_existing: 0, skipped_no_sku: 0, skipped_no_brand: 0, errors: 0 };
+    const stats = { fetched: 0, inserted: 0, skipped_existing: 0, skipped_no_sku: 0, skipped_no_brand: 0, errors: 0, pages_scanned: 0 };
 
     try {
-      const url = `${API_BASE}${ep.buildPath(param)}`;
-      const data = await throttledFetch(url, apiHeaders);
-      const items = ep.extractItems(data);
-      stats.fetched = items.length;
+      // For paginatable endpoints like stockx_sneakers_search, auto-paginate
+      const isPaginatable = endpointId === "stockx_sneakers_search";
+      const startPage = body.page ?? 1;
+      
+      for (let page = startPage; page < startPage + maxPages; page++) {
+        if (stats.inserted >= batchLimit) break;
 
-      // If this is a non-product endpoint (like listing collections), return raw data
-      if (endpointId === "sg_collections" || endpointId === "fc_brands") {
-        return json({ ok: true, source: src.name, endpoint: ep.label, raw_count: items.length, data: items.slice(0, 50) });
-      }
+        let currentParam = param;
+        if (isPaginatable && currentParam) {
+          // Replace or add page to param: "Jordan 4" → "Jordan 4|2"
+          const baseTerm = currentParam.split("|")[0];
+          currentParam = `${baseTerm}|${page}`;
+        } else if (isPaginatable && !currentParam) {
+          currentParam = `Jordan|${page}`;
+        }
 
-      // For product-like endpoints, normalize and import
-      const toProcess = items.slice(0, batchLimit);
-      for (const raw of toProcess) {
-        const norm = src.normalize(raw);
-        if (!norm || !norm.sku) { stats.skipped_no_sku++; continue; }
+        const url = `${API_BASE}${ep.buildPath(currentParam)}`;
+        const data = await throttledFetch(url, apiHeaders);
+        const items = ep.extractItems(data);
+        stats.fetched += items.length;
+        stats.pages_scanned++;
 
-        const { data: existing } = await sb.from("sneaker_models").select("id").eq("sku", norm.sku).maybeSingle();
-        if (existing) { stats.skipped_existing++; continue; }
+        if (items.length === 0) break; // No more results
 
-        let brandId = matchBrandId(norm.brand);
-        if (!brandId && norm.brand) {
-          // Auto-create brand if it doesn't exist
-          const slug = norm.brand.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-          const { data: newBrand } = await sb.from("brands").insert({ name: norm.brand, slug }).select("id").single();
-          if (newBrand) {
-            brandId = newBrand.id;
-            brandMap.set(norm.brand.toLowerCase(), brandId);
+        // If this is a non-product endpoint, return raw data
+        if (endpointId === "sg_collections" || endpointId === "fc_brands") {
+          return json({ ok: true, source: src.name, endpoint: ep.label, raw_count: items.length, data: items.slice(0, 50) });
+        }
+
+        let pageInserted = 0;
+        const toProcess = items.slice(0, batchLimit - stats.inserted);
+        for (const raw of toProcess) {
+          const norm = src.normalize(raw);
+          if (!norm || !norm.sku) { stats.skipped_no_sku++; continue; }
+
+          const { data: existing } = await sb.from("sneaker_models").select("id").eq("sku", norm.sku).maybeSingle();
+          if (existing) { stats.skipped_existing++; continue; }
+
+          let brandId = matchBrandId(norm.brand);
+          if (!brandId && norm.brand) {
+            const slug = norm.brand.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+            const { data: newBrand } = await sb.from("brands").insert({ name: norm.brand, slug }).select("id").single();
+            if (newBrand) {
+              brandId = newBrand.id;
+              brandMap.set(norm.brand.toLowerCase(), brandId);
+            }
           }
+          if (!brandId) { stats.skipped_no_brand++; continue; }
+
+          const silhouetteId = matchSilhouette(brandId, norm.name || "");
+          const parsedDate = norm.releaseDate ? (() => {
+            try { const d = new Date(norm.releaseDate!); return isNaN(d.getTime()) ? null : d.toISOString().split("T")[0]; } catch { return null; }
+          })() : null;
+
+          const { data: ins, error: insErr } = await sb.from("sneaker_models").insert({
+            brand_id: brandId, silhouette_id: silhouetteId, sku: norm.sku,
+            colorway: norm.colorway, release_date: parsedDate,
+            msrp_usd: norm.msrp, msrp: convertMsrp(norm.msrp, exchangeRate),
+            msrp_exchange_rate: norm.msrp ? exchangeRate : null,
+            model_name_en: norm.name, description_en: norm.description,
+            placeholder_image_url: PLACEHOLDER, image_status: norm.imageUrl ? "external" : "placeholder",
+            needs_official_image: true, source_primary: src.id, translation_status: "pending",
+          }).select("id").single();
+
+          if (insErr) {
+            if (insErr.code === "23505") { stats.skipped_existing++; continue; }
+            stats.errors++; continue;
+          }
+
+          if (ins) {
+            const imgUrl = norm.imageUrl || PLACEHOLDER;
+            await sb.from("sneaker_images").upsert(
+              { sneaker_id: ins.id, image_url: imgUrl, source: src.id, is_primary: true },
+              { onConflict: "sneaker_id,source,image_url" }
+            );
+          }
+          stats.inserted++;
+          pageInserted++;
         }
-        if (!brandId) { stats.skipped_no_brand++; continue; }
 
-        const silhouetteId = matchSilhouette(brandId, norm.name || "");
-        const parsedDate = norm.releaseDate ? (() => {
-          try { const d = new Date(norm.releaseDate!); return isNaN(d.getTime()) ? null : d.toISOString().split("T")[0]; } catch { return null; }
-        })() : null;
-
-        const { data: ins, error: insErr } = await sb.from("sneaker_models").insert({
-          brand_id: brandId, silhouette_id: silhouetteId, sku: norm.sku,
-          colorway: norm.colorway, release_date: parsedDate,
-          msrp_usd: norm.msrp, msrp: convertMsrp(norm.msrp, exchangeRate),
-          msrp_exchange_rate: norm.msrp ? exchangeRate : null,
-          model_name_en: norm.name, description_en: norm.description,
-          placeholder_image_url: PLACEHOLDER, image_status: norm.imageUrl ? "external" : "placeholder",
-          needs_official_image: true, source_primary: src.id, translation_status: "pending",
-        }).select("id").single();
-
-        if (insErr) {
-          if (insErr.code === "23505") { stats.skipped_existing++; continue; }
-          stats.errors++; continue;
-        }
-
-        if (ins) {
-          const imgUrl = norm.imageUrl || PLACEHOLDER;
-          await sb.from("sneaker_images").upsert(
-            { sneaker_id: ins.id, image_url: imgUrl, source: src.id, is_primary: true },
-            { onConflict: "sneaker_id,source,image_url" }
-          );
-        }
-        stats.inserted++;
+        // If nothing new was inserted in this page but there are more pages, continue
+        if (!isPaginatable) break; // Non-paginatable endpoints: one page only
+        if (pageInserted === 0 && items.length < 10) break; // Likely exhausted results
       }
 
-      return json({ ok: true, source: src.name, endpoint: ep.label, ...stats });
+      const hasMore = isPaginatable && stats.fetched > 0 && stats.inserted < batchLimit;
+
+      return json({ 
+        ok: true, source: src.name, endpoint: ep.label, ...stats, 
+        has_more: hasMore,
+        next_page: hasMore ? startPage + stats.pages_scanned : null,
+        hint: stats.inserted === 0 && stats.skipped_existing > 0 
+          ? "Todos os itens encontrados já existem no catálogo. Tente uma busca diferente ou avance para páginas seguintes."
+          : undefined,
+      });
     } catch (e: any) {
       console.error(`Discover error [${src.id}] ${ep.id}:`, e.message);
       return json({ ok: false, source: src.name, endpoint: ep.label, error: e.message, hint: "Este endpoint pode estar indisponível na API. Tente outro endpoint ou source." });
