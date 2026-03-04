@@ -37,9 +37,17 @@ Deno.serve(async (req) => {
       const { count: totalModels } = await sb.from("sneaker_models").select("id", { count: "exact", head: true });
       const { count: totalProducts } = await sb.from("marketplace_products").select("id", { count: "exact", head: true });
 
-      // Find models that already have a matching SKU in marketplace_products
-      const { data: existingSkus } = await sb.from("marketplace_products").select("sku").not("sku", "is", null);
-      const skuSet = new Set((existingSkus || []).map((p: any) => p.sku).filter(Boolean));
+      // Find models that already have a matching SKU in marketplace_products (paginate to avoid 1000 row limit)
+      const skuSet = new Set<string>();
+      let skuOffset = 0;
+      const SKU_PAGE = 1000;
+      while (true) {
+        const { data: skuPage } = await sb.from("marketplace_products").select("sku").not("sku", "is", null).range(skuOffset, skuOffset + SKU_PAGE - 1);
+        if (!skuPage || skuPage.length === 0) break;
+        for (const p of skuPage) if (p.sku) skuSet.add(p.sku);
+        if (skuPage.length < SKU_PAGE) break;
+        skuOffset += SKU_PAGE;
+      }
 
       // Count products with outdated images (1 or fewer images in marketplace but more in sneaker_images)
       const { count: outdatedImages } = await sb.rpc("count_outdated_images").maybeSingle() || { count: 0 };
