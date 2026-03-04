@@ -76,14 +76,21 @@ Deno.serve(async (req) => {
         .in("sku", skus);
       const existingSkuSet = new Set((existingProducts || []).map((p: any) => p.sku));
 
-      // Get primary images for these models
+      // Get ALL images for these models (primary first, then by index)
       const modelIds = models.map((m: any) => m.id);
       const { data: images } = await sb
         .from("sneaker_images")
-        .select("sneaker_id, image_url")
+        .select("sneaker_id, image_url, is_primary")
         .in("sneaker_id", modelIds)
-        .eq("is_primary", true);
-      const imageMap = new Map((images || []).map((i: any) => [i.sneaker_id, i.image_url]));
+        .order("is_primary", { ascending: false })
+        .order("created_at", { ascending: true });
+      // Build a map: sneaker_id → array of image URLs (primary first)
+      const imageMap = new Map<string, string[]>();
+      for (const img of (images || [])) {
+        const list = imageMap.get(img.sneaker_id) || [];
+        list.push(img.image_url);
+        imageMap.set(img.sneaker_id, list);
+      }
 
       let synced = 0;
       let skipped = 0;
@@ -104,8 +111,7 @@ Deno.serve(async (req) => {
           modelName = modelName.substring(brandName.length + 1).trim();
         }
         const description = model.description_pt || model.description_en || `${brandName} ${modelName}`;
-        const imageUrl = imageMap.get(model.id);
-        const imageArray = imageUrl ? [imageUrl] : [];
+        const imageArray = imageMap.get(model.id) || [];
 
         // Generate slug
         const slug = `${brandName}-${modelName}`
