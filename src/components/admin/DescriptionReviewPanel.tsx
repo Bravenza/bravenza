@@ -53,6 +53,7 @@ export default function DescriptionReviewPanel() {
   const [enrichProgress, setEnrichProgress] = useState<{ current: number; total: number; errors: number } | null>(null);
   const [cancelEnrich, setCancelEnrich] = useState(false);
   const [approvingAll, setApprovingAll] = useState(false);
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [editPt, setEditPt] = useState("");
   const [editName, setEditName] = useState("");
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
