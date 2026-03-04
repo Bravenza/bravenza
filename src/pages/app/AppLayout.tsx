@@ -245,91 +245,10 @@ export default function AppLayout() {
           </div>
         </header>
 
-        <div className="flex flex-1">
-          {/* ===== DESKTOP SIDEBAR ===== */}
-          {!isMobile && (
-            <aside
-              className={cn(
-                "sticky top-[60px] h-[calc(100vh-60px)] shrink-0 transition-all duration-300 overflow-y-auto overflow-x-hidden",
-                "bg-sidebar border-r border-sidebar-border",
-                sidebarCollapsed ? "w-[60px]" : "w-[220px]"
-              )}
-            >
-              <nav className="py-4 px-2 space-y-1">
-                {/* User card */}
-                <AnimatePresence>
-                  {!sidebarCollapsed && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="px-2 pb-3 mb-3 border-b border-sidebar-border"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Avatar className="h-9 w-9 border border-sidebar-primary/30">
-                          <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || "Avatar"} />
-                          <AvatarFallback className="bg-sidebar-primary/15 text-sidebar-primary text-xs font-bold">{initials}</AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold truncate text-sidebar-foreground">{profile?.full_name || "Usuário"}</p>
-                          <p className="text-[10px] text-sidebar-foreground/50">
-                            {cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.$3-**")}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Collapsed: show avatar only */}
-                {sidebarCollapsed && (
-                  <div className="flex justify-center pb-2 mb-2 border-b border-sidebar-border">
-                    <Avatar className="h-8 w-8 border border-sidebar-primary/30">
-                      <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || "Avatar"} />
-                      <AvatarFallback className="bg-sidebar-primary/15 text-sidebar-primary text-[10px] font-bold">{initials}</AvatarFallback>
-                    </Avatar>
-                  </div>
-                )}
-
-                {/* Main nav */}
-                {mainItems.map(item => (
-                  <SidebarLink key={item.path} item={item} collapsed={sidebarCollapsed} active={isActive(item.path, item.path === "/app")} />
-                ))}
-
-                {/* Vault section */}
-                {isVaultMember && (
-                  <>
-                    {!sidebarCollapsed && (
-                      <p className="px-3 pt-5 pb-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-primary/60">
-                        Vault Club
-                      </p>
-                    )}
-                    {sidebarCollapsed && <div className="my-3 mx-2 h-px bg-sidebar-border" />}
-                    {vaultItems.map(item => (
-                      <SidebarLink key={item.path} item={item} collapsed={sidebarCollapsed} active={isActive(item.path)} />
-                    ))}
-                  </>
-                )}
-
-                {/* More section */}
-                {!sidebarCollapsed && (
-                  <p className="px-3 pt-5 pb-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
-                    Mais
-                  </p>
-                )}
-                {sidebarCollapsed && <div className="my-3 mx-2 h-px bg-sidebar-border" />}
-                {moreItems.map(item => (
-                  <SidebarLink key={item.path} item={item} collapsed={sidebarCollapsed} active={isActive(item.path)} />
-                ))}
-              </nav>
-            </aside>
-          )}
-
-          {/* ===== MAIN CONTENT ===== */}
-          <main className="flex-1 min-w-0">
-            <Outlet context={{ cpf: profile?.cpf, profile }} />
-          </main>
-        </div>
+        {/* ===== MAIN CONTENT ===== */}
+        <main className="flex-1 min-w-0">
+          <Outlet context={{ cpf: profile?.cpf, profile }} />
+        </main>
 
         {/* Footer - desktop only */}
         {!isMobile && (
