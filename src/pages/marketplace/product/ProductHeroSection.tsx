@@ -103,8 +103,8 @@ export function ProductHeroSection({
         />
       </div>
 
-      {/* Purchase panel — 2/5 width, sticky */}
-      <div className="lg:col-span-2">
+      {/* Purchase panel */}
+      <div>
         <div className="lg:sticky lg:top-24 space-y-6">
           {/* Brand + Title */}
           <div>
