@@ -746,7 +746,7 @@ Deno.serve(async (req) => {
       return null;
     }
 
-    const stats = { fetched: 0, inserted: 0, skipped_existing: 0, skipped_no_sku: 0, errors: 0 };
+    const stats = { fetched: 0, inserted: 0, skipped_existing: 0, skipped_no_sku: 0, skipped_no_brand: 0, errors: 0 };
 
     try {
       const url = `${API_BASE}${ep.buildPath(param)}`;
