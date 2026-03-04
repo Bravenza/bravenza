@@ -110,6 +110,9 @@ export default function CatalogSeedPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<any>(null);
   const [syncProgress, setSyncProgress] = useState(0);
+  const [syncPreviewLoading, setSyncPreviewLoading] = useState(false);
+  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("sync");
 
   // ─── API helpers ───────────────────────────────────────────────
   const getSession = async () => {
