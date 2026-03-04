@@ -226,7 +226,12 @@ export default function DescriptionReviewPanel() {
   const handleApproveAll = async () => {
     const reviewCount = counts["review"] || 0;
     if (reviewCount === 0) { showToast("Nenhum produto em revisão", "error"); return; }
-    if (!confirm(`Aprovar ${reviewCount} descrições em revisão?`)) return;
+    setShowApproveDialog(true);
+  };
+
+  const confirmApproveAll = async () => {
+    setShowApproveDialog(false);
+    const reviewCount = counts["review"] || 0;
 
     setApprovingAll(true);
     try {
