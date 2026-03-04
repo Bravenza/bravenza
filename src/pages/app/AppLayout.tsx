@@ -168,6 +168,34 @@ export default function AppLayout() {
                   <Logo size="sm" />
                 </Link>
 
+                {/* Desktop inline nav */}
+                {!isMobile && (
+                  <nav className="hidden md:flex items-center gap-1 ml-4">
+                    {[
+                      { path: "/app", label: "Explorar", icon: Search, exact: true },
+                      { path: "/app/pedidos", label: "Pedidos", icon: Package },
+                      { path: "/app/closet", label: "Closet", icon: Box },
+                      { path: "/app/loja", label: "Loja", icon: Store },
+                    ].map(item => {
+                      const active = item.exact ? location.pathname === item.path : location.pathname.startsWith(item.path);
+                      return (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          className={cn(
+                            "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-200",
+                            active
+                              ? "text-primary bg-primary/10"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                          )}
+                        >
+                          <item.icon className="h-3.5 w-3.5" />
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                  </nav>
+                )}
 
                 <div className="flex-1" />
 
