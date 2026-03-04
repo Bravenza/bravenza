@@ -1,11 +1,15 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client"; // ajuste o path se necessário
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Loader2, ImageIcon, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 
 interface SyncResult {
   success: number;
   failed: number;
-  notFound: number;
+  skipped: number;
   errors: string[];
+  details: { sku: string; imageUrl: string }[];
+  remaining: number;
 }
 
 interface SyncResponse {
@@ -29,7 +33,6 @@ export default function SyncDroperImages() {
       );
 
       if (fnError) throw new Error(fnError.message);
-
       setResponse(data as SyncResponse);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erro desconhecido");
@@ -39,38 +42,62 @@ export default function SyncDroperImages() {
   };
 
   return (
-    <div className="p-6 max-w-lg mx-auto">
-      <h2 className="text-xl font-bold mb-4">Sincronizar Imagens — Droper.app</h2>
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <Button onClick={handleSync} disabled={loading} size="sm">
+          {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <ImageIcon className="h-4 w-4 mr-1" />}
+          {loading ? "Sincronizando..." : "Sincronizar Imagens (10 SKUs)"}
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          Busca imagens via StockX API e salva no storage. Processa 10 SKUs por vez.
+        </p>
+      </div>
 
-      <button
-        onClick={handleSync}
-        disabled={loading}
-        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-      >
-        {loading ? "Sincronizando..." : "🔄 Sincronizar Imagens"}
-      </button>
-
-      {/* Loading */}
       {loading && (
-        <div className="mt-4 text-gray-500 text-sm animate-pulse">
-          Buscando imagens na Droper e salvando no catálogo...
-        </div>
+        <p className="text-sm text-muted-foreground animate-pulse">
+          Buscando imagens e fazendo upload...
+        </p>
       )}
 
-      {/* Resultado */}
       {response && (
-        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="font-semibold text-green-800 mb-2">✅ {response.message}</p>
-          <div className="text-sm text-green-700 space-y-1">
-            <p>✔️ Atualizados: <strong>{response.result.success}</strong></p>
-            <p>⚠️ SKUs não encontrados: <strong>{response.result.notFound}</strong></p>
-            <p>❌ Falhas: <strong>{response.result.failed}</strong></p>
+        <div className="space-y-2 p-4 bg-muted/50 rounded-lg">
+          <p className="font-medium text-sm">{response.message}</p>
+          <div className="grid grid-cols-4 gap-2 text-sm">
+            <div className="flex items-center gap-1">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <span>{response.result.success} sincronizados</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <XCircle className="h-4 w-4 text-destructive" />
+              <span>{response.result.failed} falhas</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <span>{response.result.skipped} pulados</span>
+            </div>
+            <div className="text-muted-foreground">
+              📦 {response.result.remaining} restantes
+            </div>
           </div>
 
+          {response.result.details.length > 0 && (
+            <details className="mt-2">
+              <summary className="text-xs text-muted-foreground cursor-pointer">Ver detalhes</summary>
+              <ul className="mt-1 text-xs space-y-1">
+                {response.result.details.map((d, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <span className="font-mono">{d.sku}</span>
+                    <a href={d.imageUrl} target="_blank" rel="noopener" className="text-primary underline truncate max-w-xs">ver imagem</a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+
           {response.result.errors.length > 0 && (
-            <details className="mt-3">
-              <summary className="text-xs text-red-600 cursor-pointer">Ver erros detalhados</summary>
-              <ul className="mt-1 text-xs text-red-500 space-y-1">
+            <details className="mt-2">
+              <summary className="text-xs text-destructive cursor-pointer">Ver erros ({response.result.errors.length})</summary>
+              <ul className="mt-1 text-xs text-destructive space-y-1">
                 {response.result.errors.map((e, i) => (
                   <li key={i}>• {e}</li>
                 ))}
@@ -80,9 +107,8 @@ export default function SyncDroperImages() {
         </div>
       )}
 
-      {/* Erro geral */}
       {error && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+        <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
           ❌ Erro: {error}
         </div>
       )}
