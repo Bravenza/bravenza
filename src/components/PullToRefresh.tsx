@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { RefreshCw } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const THRESHOLD = 80;
 const MAX_PULL = 130;
@@ -10,6 +12,8 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
   const startY = useRef(0);
   const isPulling = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   const canPull = useCallback(() => {
     return window.scrollY <= 0 && !isRefreshing;
@@ -34,6 +38,9 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Only register touch listeners on mobile
+    if (!isMobile) return;
+
     const handleTouchStart = (e: TouchEvent) => {
       if (!canPull()) return;
       if (isInsideScrollable(e.target)) return;
@@ -53,7 +60,6 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
       const diff = currentY - startY.current;
 
       if (diff > 0 && window.scrollY <= 0) {
-        // Apply resistance curve
         const distance = Math.min(diff * 0.5, MAX_PULL);
         setPullDistance(distance);
         if (distance > 10 && e.cancelable) {
@@ -73,10 +79,13 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
         setIsRefreshing(true);
         setPullDistance(THRESHOLD);
 
-        // Perform the refresh
-        setTimeout(() => {
-          window.location.reload();
-        }, 400);
+        // Invalidate all queries instead of full page reload
+        queryClient.invalidateQueries().then(() => {
+          setTimeout(() => {
+            setIsRefreshing(false);
+            setPullDistance(0);
+          }, 300);
+        });
       } else {
         setPullDistance(0);
       }
@@ -91,7 +100,12 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
       document.removeEventListener("touchmove", handleTouchMove);
       document.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [canPull, isInsideScrollable, pullDistance]);
+  }, [canPull, isInsideScrollable, pullDistance, isMobile, queryClient]);
+
+  // On desktop, just render children without pull-to-refresh overhead
+  if (!isMobile) {
+    return <>{children}</>;
+  }
 
   const progress = Math.min(pullDistance / THRESHOLD, 1);
   const rotation = progress * 360;
