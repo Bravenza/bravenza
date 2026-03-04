@@ -51,6 +51,7 @@ export default function CatalogSeedPage() {
   const [msTestResult, setMsTestResult] = useState<any>(null);
 
   const SOURCES = [
+    { id: "stockx", name: "StockX" },
     { id: "goat", name: "GOAT" },
     { id: "flightclub", name: "FlightClub" },
     { id: "stadiumgoods", name: "StadiumGoods" },
