@@ -86,6 +86,7 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
   // checkout is now page-based
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
   const [filters, setFilters] = useState<MarketplaceFilterValues>({ sort: "recent", search: initialSearch });
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [sellerProfileOpen, setSellerProfileOpen] = useState(false);
   const [sellerProfileId, setSellerProfileId] = useState<string | null>(null);
   const [listingOffers, setListingOffers] = useState<Record<string, any[]>>({});
