@@ -35,10 +35,11 @@ export default function MarketplaceHomePage() {
   const context = useOutletContext<{ cpf?: string; profile?: any }>();
   const cpf = context?.cpf || "visitor";
 
-  const { products, totalProducts, isLoading, fetchProducts } = useMarketplaceCatalog(cpf);
+  const { products, totalProducts, isLoading, fetchProducts, fetchModels } = useMarketplaceCatalog(cpf);
   const { checkOnboardingStatus } = useMarketplaceSeller(cpf !== "visitor" ? cpf : null);
   const [isSeller, setIsSeller] = useState(false);
   const brandsScrollRef = useRef<HTMLDivElement>(null);
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
 
   const initialSearch = searchParams.get("q") || "";
   const [filters, setFilters] = useState<MarketplaceFilterValues>({ sort: "recent", search: initialSearch || undefined });
