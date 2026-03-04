@@ -15,14 +15,17 @@ Deno.serve(async (req) => {
 
   const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-  // Auth: accept service-role key for internal/cron calls, or admin user session
+  // Auth: accept service-role key, cron key, or admin user session
   const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) return json({ error: "Auth required" }, 401);
+  const cronKey = req.headers.get("x-cron-key");
+  const internalCronKey = Deno.env.get("CATALOG_SYNC_CRON_KEY");
 
-  const token = authHeader.replace("Bearer ", "");
-  const isServiceRole = token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const isServiceRole = authHeader?.startsWith("Bearer ") &&
+    authHeader.replace("Bearer ", "") === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const isCronCall = !!(internalCronKey && cronKey && cronKey === internalCronKey);
 
-  if (!isServiceRole) {
+  if (!isServiceRole && !isCronCall) {
+    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Auth required" }, 401);
     const anonSb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
