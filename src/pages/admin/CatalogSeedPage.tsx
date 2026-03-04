@@ -340,7 +340,7 @@ export default function CatalogSeedPage() {
       </div>
 
       {/* Main Tabs */}
-      <Tabs defaultValue="sync" className="w-full">
+      <Tabs defaultValue="sync" className="w-full" onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-6 h-11">
           <TabsTrigger value="sync" className="gap-1.5 text-xs">
             <ArrowRightLeft className="w-3.5 h-3.5" />
