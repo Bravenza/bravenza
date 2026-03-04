@@ -168,17 +168,6 @@ export default function AppLayout() {
                   <Logo size="sm" />
                 </Link>
 
-                {/* Desktop: Toggle sidebar */}
-                {!isMobile && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
-                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                  >
-                    {sidebarCollapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-                  </Button>
-                )}
 
                 <div className="flex-1" />
 
