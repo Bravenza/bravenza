@@ -38,17 +38,51 @@ interface EnrichResult {
 
 // ─── Prompt editorial/lifestyle para reescrita ────────────────────────────────
 function buildPrompt(product: SneakerModel): string {
-  return `Você é redator editorial de uma plataforma premium de sneakers chamada Bravenza.
+  const hasOriginal = product.description_pt && product.description_pt.trim().length >= 20;
+  const brand = product.brands?.name || "Desconhecida";
+  const silhouette = product.silhouettes?.name || "";
+  const name = product.model_name_pt || product.model_name_en || product.sku;
+  const colorway = product.colorway || "—";
+  const msrp = product.msrp ? `R$${product.msrp}` : "";
+  const release = product.release_date || "";
+  const enDesc = product.description_en || "";
+
+  if (hasOriginal) {
+    return `Você é redator editorial de uma plataforma premium de sneakers chamada Bravenza.
 
 Reescreva a descrição abaixo com tom editorial e lifestyle — evocativo, apaixonado, mas conciso. 
 Máximo 3 parágrafos curtos. Preserve todos os fatos técnicos (materiais, tecnologias, colaborações). 
 Escreva em português brasileiro. NÃO adicione emojis. NÃO use bullet points.
 Retorne APENAS a descrição reescrita, sem prefácio ou explicação.
 
-Produto: ${product.model_name_pt}
-Colorway: ${product.colorway ?? "—"}
+Produto: ${name}
+Marca: ${brand}
+Silhueta: ${silhouette}
+Colorway: ${colorway}
+MSRP: ${msrp}
+Lançamento: ${release}
 Descrição original:
 ${product.description_pt}`;
+  }
+
+  // Sem descrição original → criar do zero
+  return `Você é redator editorial de uma plataforma premium de sneakers chamada Bravenza.
+
+Crie uma descrição editorial e lifestyle em português brasileiro para o sneaker abaixo.
+Use seu conhecimento sobre o modelo, marca e silhueta para escrever algo envolvente e informativo.
+Mencione materiais, tecnologias de amortecimento, história/contexto cultural e detalhes de design quando relevante.
+Tom editorial, apaixonado, mas conciso. Máximo 3 parágrafos curtos.
+NÃO adicione emojis. NÃO use bullet points.
+Retorne APENAS a descrição, sem prefácio ou explicação.
+
+Produto: ${name}
+Marca: ${brand}
+Silhueta: ${silhouette}
+Colorway: ${colorway}
+SKU: ${product.sku}
+MSRP: ${msrp}
+Lançamento: ${release}
+${enDesc ? `Descrição EN (referência): ${enDesc}` : ""}`;
 }
 
 // ─── Chama a IA via Lovable Gateway ───────────────────────────────────────────
