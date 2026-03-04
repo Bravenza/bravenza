@@ -18,7 +18,12 @@ Deno.serve(async (req) => {
   // Auth: accept service-role key, cron key, or admin user session
   const authHeader = req.headers.get("authorization");
   const cronKey = req.headers.get("x-cron-key");
-  const internalCronKey = Deno.env.get("CATALOG_SYNC_CRON_KEY");
+  // Read cron key from app_config table (no secret dependency)
+  let internalCronKey: string | null = null;
+  if (cronKey) {
+    const { data: ck } = await sb.from("app_config").select("value").eq("key", "catalog_sync_cron_key").maybeSingle();
+    internalCronKey = ck?.value || null;
+  }
 
   const isServiceRole = authHeader?.startsWith("Bearer ") &&
     authHeader.replace("Bearer ", "") === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
