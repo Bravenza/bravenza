@@ -350,6 +350,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
     createProduct,
     createOffer,
     searchProducts,
+    fetchModels,
     watchlistStatus,
     checkWatchlist,
     toggleWatchlist,

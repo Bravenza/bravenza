@@ -60,6 +60,7 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch, availab
     filters.condition,
     filters.size,
     filters.brand,
+    filters.model,
     filters.priceMin,
     filters.priceMax,
     filters.favoritesOnly,
