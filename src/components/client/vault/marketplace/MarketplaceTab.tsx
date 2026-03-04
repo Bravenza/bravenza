@@ -316,6 +316,8 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
             filters={filters}
             onFiltersChange={setFilters}
             onSearch={handleSearch}
+            availableModels={availableModels}
+            onBrandSelected={handleBrandSelected}
           />
 
           {!catalogLoading && (
