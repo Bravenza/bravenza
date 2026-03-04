@@ -68,9 +68,11 @@ export default function MarketplaceHomePage() {
     setShowFullCatalog(true);
   };
 
-  const handleBrandClick = (brand: string) => {
+  const handleBrandClick = async (brand: string) => {
     setFilters(f => ({ ...f, brand, search: undefined }));
     setShowFullCatalog(true);
+    const models = await fetchModels(brand);
+    setAvailableModels(models);
   };
 
   const scrollBrands = (dir: "left" | "right") => {
