@@ -367,6 +367,33 @@ const sourceMap = new Map(ALL_SOURCES.map((s) => [s.id, s]));
 
 // ─── Throttled fetch ─────────────────────────────────────────────
 
+// ─── Exchange rate cache ─────────────────────────────────────────
+let cachedRate: { rate: number; fetchedAt: number } | null = null;
+const FALLBACK_RATE = 5.50;
+
+async function getUsdToBrl(): Promise<number> {
+  if (cachedRate && Date.now() - cachedRate.fetchedAt < 3600_000) return cachedRate.rate;
+  try {
+    const res = await fetch("https://open.er-api.com/v6/latest/USD");
+    if (res.ok) {
+      const data = await res.json();
+      const rate = data?.rates?.BRL;
+      if (typeof rate === "number" && rate > 0) {
+        cachedRate = { rate, fetchedAt: Date.now() };
+        return rate;
+      }
+    }
+  } catch (e) {
+    console.error("Exchange rate fetch failed, using fallback:", e);
+  }
+  return cachedRate?.rate || FALLBACK_RATE;
+}
+
+function convertMsrp(msrpUsd: number | null, rate: number): number | null {
+  if (!msrpUsd || msrpUsd <= 0) return null;
+  return Math.ceil(msrpUsd * rate * 100) / 100; // round up to nearest cent
+}
+
 let lastReqTime = 0;
 async function throttledFetch(url: string, headers: Record<string, string>, retries = 3): Promise<any> {
   const gap = 400;
