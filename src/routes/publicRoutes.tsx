@@ -27,7 +27,7 @@ const ClientAuthPage = lazy(() => import("@/pages/client/ClientAuthPage"));
 
 export const publicRoutes = (
   <>
-    <Route path="/" element={<Index />} />
+    <Route path="/" element={<RouteWrapper section="Home"><Index /></RouteWrapper>} />
     <Route path="/solicitar" element={<RouteWrapper section="Solicitar"><OrderRequestPage /></RouteWrapper>} />
     <Route path="/rastreio" element={<RouteWrapper section="Rastreio"><TrackingPortalPage /></RouteWrapper>} />
     <Route path="/rastreio/:orderId" element={<RouteWrapper section="Rastreio" skeleton="detail"><TrackingPage /></RouteWrapper>} />
