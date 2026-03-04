@@ -539,6 +539,46 @@ export default function DescriptionReviewPanel() {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    <AlertDialog open={showDeleteSkippedDialog} onOpenChange={setShowDeleteSkippedDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir todos os ignorados?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Essa ação vai <strong>remover permanentemente {counts["skipped"] ?? 0} produtos</strong> marcados como ignorados do catálogo.
+            Essa ação não pode ser desfeita.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={async () => {
+              setShowDeleteSkippedDialog(false);
+              setDeletingSkipped(true);
+              try {
+                const { error, count: deleted } = await supabase
+                  .from("sneaker_models")
+                  .delete({ count: "exact" })
+                  .eq("translation_status", "skipped");
+                if (error) throw error;
+                showToast(`${deleted ?? 0} produtos excluídos`);
+                setSelected(null);
+                await loadCounts();
+                await loadProducts();
+              } catch (e: any) {
+                showToast(e.message, "error");
+              } finally {
+                setDeletingSkipped(false);
+              }
+            }}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            <Trash2 className="h-4 w-4 mr-1.5" />
+            Excluir todos
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 }
