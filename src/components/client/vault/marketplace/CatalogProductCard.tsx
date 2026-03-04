@@ -36,7 +36,7 @@ function CatalogProductCardComponent({ product, hidePrice }: CatalogProductCardP
             alt={name}
             width={400}
             height={300}
-            className="w-full h-full object-contain p-5 group-hover:scale-110 transition-all duration-700 ease-out"
+            className="w-full h-full object-contain p-2 group-hover:scale-110 transition-all duration-700 ease-out"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted/10">
