@@ -456,6 +456,12 @@ export default function CatalogSeedPage() {
   const [msDiscoverResult, setMsDiscoverResult] = useState<any>(null);
 
   const EXTRA_ENDPOINTS: Record<string, { id: string; label: string; needsParam?: boolean; paramLabel?: string }[]> = {
+    stockx: [
+      { id: "stockx_popular", label: "Mais populares" },
+      { id: "stockx_sneakers_search", label: "Busca dedicada Sneakers", needsParam: true, paramLabel: "Termo (ex: Jordan 1)" },
+      { id: "stockx_related", label: "Produtos relacionados", needsParam: true, paramLabel: "urlKey (ex: air-jordan-1-high-zoom-air-cmft-2-honeydew)" },
+      { id: "stockx_prices", label: "Preços por styleId", needsParam: true, paramLabel: "styleId" },
+    ],
     stadiumgoods: [
       { id: "sg_collections", label: "Listar Coleções" },
       { id: "sg_collection_products", label: "Produtos de Coleção", needsParam: true, paramLabel: "Handle (ex: yeezy-380)" },
