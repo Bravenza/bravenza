@@ -820,7 +820,7 @@ export default function CatalogSeedPage() {
           )}
 
           <Tabs defaultValue="search" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="search" className="flex items-center gap-1">
                 <Search className="h-3.5 w-3.5" />Buscar Novos
               </TabsTrigger>
@@ -829,9 +829,6 @@ export default function CatalogSeedPage() {
               </TabsTrigger>
               <TabsTrigger value="discover" className="flex items-center gap-1">
                 <Globe className="h-3.5 w-3.5" />Descobrir
-              </TabsTrigger>
-              <TabsTrigger value="droper" className="flex items-center gap-1">
-                <ImageIcon className="h-3.5 w-3.5" />Droper Imgs
               </TabsTrigger>
             </TabsList>
 
@@ -951,10 +948,23 @@ export default function CatalogSeedPage() {
                 </>
               )}
             </TabsContent>
-            <TabsContent value="droper" className="pt-3">
-              <SyncDroperImages />
-            </TabsContent>
           </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* ── Sync Droper Images ── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ImageIcon className="h-5 w-5" />
+            Sincronizar Imagens — Droper.app
+          </CardTitle>
+          <CardDescription>
+            Busca imagens de produtos na Droper e salva no catálogo automaticamente.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SyncDroperImages />
         </CardContent>
       </Card>
     </div>
