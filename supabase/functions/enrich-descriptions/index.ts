@@ -50,9 +50,9 @@ function buildPrompt(product: SneakerModel): string {
   if (hasOriginal) {
     return `Você é redator editorial de uma plataforma premium de sneakers chamada Bravenza.
 
-Reescreva a descrição abaixo com tom editorial e lifestyle — evocativo, apaixonado, mas conciso. 
-Máximo 3 parágrafos curtos. Preserve todos os fatos técnicos (materiais, tecnologias, colaborações). 
-Escreva em português brasileiro. NÃO adicione emojis. NÃO use bullet points.
+Reescreva a descrição abaixo com tom editorial e lifestyle — evocativo mas muito conciso.
+Máximo 2 parágrafos curtos (3-4 frases no total). Preserve fatos técnicos essenciais (materiais, tecnologias, colaborações).
+Escreva em português brasileiro. NÃO adicione emojis. NÃO use bullet points. Seja direto e breve.
 Retorne APENAS a descrição reescrita, sem prefácio ou explicação.
 
 Produto: ${name}
