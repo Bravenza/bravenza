@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Loader2, CheckCircle2, XCircle, AlertTriangle, Eye, Sparkles,
-  ChevronLeft, ChevronRight, Search, SkipForward, Save, Check
+  ChevronLeft, ChevronRight, Search, SkipForward, Save, Check, Trash2
 } from "lucide-react";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -54,6 +54,8 @@ export default function DescriptionReviewPanel() {
   const [cancelEnrich, setCancelEnrich] = useState(false);
   const [approvingAll, setApprovingAll] = useState(false);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
+  const [deletingSkipped, setDeletingSkipped] = useState(false);
+  const [showDeleteSkippedDialog, setShowDeleteSkippedDialog] = useState(false);
   const [editPt, setEditPt] = useState("");
   const [editName, setEditName] = useState("");
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
@@ -341,7 +343,13 @@ export default function DescriptionReviewPanel() {
           {/* Aprovar todos — só aparece em review/all */}
           {(filterStatus === "review" || filterStatus === "all") && (counts["review"] ?? 0) > 0 && (
             <LoadingButton loading={approvingAll} loadingText="Aprovando..." onClick={handleApproveAll} size="sm" variant="outline" disabled={enriching || approvingAll}>
-              <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />Aprovar todos ({counts["review"] ?? 0})
+            <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />Aprovar todos ({counts["review"] ?? 0})
+            </LoadingButton>
+          )}
+          {/* Excluir ignorados — só aparece em skipped */}
+          {filterStatus === "skipped" && (counts["skipped"] ?? 0) > 0 && (
+            <LoadingButton loading={deletingSkipped} loadingText="Excluindo..." onClick={() => setShowDeleteSkippedDialog(true)} size="sm" variant="destructive" disabled={enriching || deletingSkipped}>
+              <Trash2 className="h-3.5 w-3.5 mr-1.5" />Excluir ignorados ({counts["skipped"] ?? 0})
             </LoadingButton>
           )}
         </div>
@@ -527,6 +535,46 @@ export default function DescriptionReviewPanel() {
           <AlertDialogAction onClick={confirmApproveAll}>
             <CheckCircle2 className="h-4 w-4 mr-1.5" />
             Aprovar todas
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <AlertDialog open={showDeleteSkippedDialog} onOpenChange={setShowDeleteSkippedDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir todos os ignorados?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Essa ação vai <strong>remover permanentemente {counts["skipped"] ?? 0} produtos</strong> marcados como ignorados do catálogo.
+            Essa ação não pode ser desfeita.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={async () => {
+              setShowDeleteSkippedDialog(false);
+              setDeletingSkipped(true);
+              try {
+                const { error, count: deleted } = await supabase
+                  .from("sneaker_models")
+                  .delete({ count: "exact" })
+                  .eq("translation_status", "skipped");
+                if (error) throw error;
+                showToast(`${deleted ?? 0} produtos excluídos`);
+                setSelected(null);
+                await loadCounts();
+                await loadProducts();
+              } catch (e: any) {
+                showToast(e.message, "error");
+              } finally {
+                setDeletingSkipped(false);
+              }
+            }}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            <Trash2 className="h-4 w-4 mr-1.5" />
+            Excluir todos
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
