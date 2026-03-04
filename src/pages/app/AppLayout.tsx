@@ -137,7 +137,7 @@ export default function AppLayout() {
   const { profile, signOut, isVaultMember } = useClientSession();
   const isMobile = useIsMobile();
   const cpf = profile?.cpf || null;
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  
 
   // Prefetch vault data for members so navigation feels instant
   useVaultPrefetch(cpf, isVaultMember);
