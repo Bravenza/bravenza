@@ -373,9 +373,19 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch, availab
               <Badge
                 variant="secondary"
                 className="gap-1 text-xs cursor-pointer hover:bg-destructive/20"
-                onClick={() => { onFiltersChange({ ...filters, brand: undefined }); onSearch(); }}
+                onClick={() => { onFiltersChange({ ...filters, brand: undefined, model: undefined }); onBrandSelected?.(undefined); onSearch(); }}
               >
                 {filters.brand}
+                <X className="h-3 w-3" />
+              </Badge>
+            )}
+            {filters.model && (
+              <Badge
+                variant="secondary"
+                className="gap-1 text-xs cursor-pointer hover:bg-destructive/20"
+                onClick={() => { onFiltersChange({ ...filters, model: undefined }); onSearch(); }}
+              >
+                {filters.model}
                 <X className="h-3 w-3" />
               </Badge>
             )}
