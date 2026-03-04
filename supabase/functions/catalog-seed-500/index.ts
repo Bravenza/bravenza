@@ -337,9 +337,12 @@ Deno.serve(async (req) => {
             try { const d = new Date(item.releaseDate); return isNaN(d.getTime()) ? null : d.toISOString().split("T")[0]; } catch { return null; }
           })() : null;
 
+          const exchangeRate = await getUsdToBrl();
           const { data: ins, error: insErr } = await sb.from("sneaker_models").insert({
             brand_id: item.brandId, silhouette_id: silhouetteId, sku: item.sku,
-            colorway: item.colorway, release_date: parsedDate, msrp: item.msrp,
+            colorway: item.colorway, release_date: parsedDate,
+            msrp_usd: item.msrp, msrp: convertMsrp(item.msrp, exchangeRate),
+            msrp_exchange_rate: item.msrp ? exchangeRate : null,
             model_name_en: item.name, description_en: item.description,
             placeholder_image_url: PLACEHOLDER, image_status: imageStatus,
             needs_official_image: true, source_primary: "stockx", translation_status: "pending",
