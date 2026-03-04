@@ -753,10 +753,13 @@ Deno.serve(async (req) => {
       return json({ ok: false, error: `Endpoint "${endpointId}" não encontrado para ${src.name}. Disponíveis: ${available || "nenhum"}` }, 400);
     }
 
-    // Load DB references
-    const { data: brands } = await sb.from("brands").select("*");
-    const { data: silhouettes } = await sb.from("silhouettes").select("*");
-    const { data: taxonomy } = await sb.from("silhouette_taxonomy").select("*").order("priority");
+    // Load DB references + exchange rate
+    const [{ data: brands }, { data: silhouettes }, { data: taxonomy }, exchangeRate] = await Promise.all([
+      sb.from("brands").select("*"),
+      sb.from("silhouettes").select("*"),
+      sb.from("silhouette_taxonomy").select("*").order("priority"),
+      getUsdToBrl(),
+    ]);
     const brandMap = new Map((brands || []).map((b: any) => [b.name.toLowerCase(), b.id]));
     const silMap = new Map((silhouettes || []).map((s: any) => [`${s.brand_id}|${s.name}`, s.id]));
 
