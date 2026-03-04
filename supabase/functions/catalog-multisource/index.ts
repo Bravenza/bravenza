@@ -344,7 +344,7 @@ const stockX: SourceDef = {
     {
       id: "stockx_sneakers_search",
       label: "Busca dedicada StockX Sneakers",
-      buildPath: (q) => `/stockx/sneakers?query=${encodeURIComponent(q || "Jordan")}&limit=40&page=1&currency=USD&country=US`,
+      buildPath: (q) => `/getproducts?keywords=${encodeURIComponent(q || "Jordan")}&limit=40`,
       extractItems: genericExtract,
     },
     {
