@@ -932,10 +932,12 @@ export default function CatalogSeedPage() {
                           {JSON.stringify(msDiscoverResult.data?.slice(0, 20), null, 2)}
                         </pre>
                       ) : (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                           <StatCard label="Encontrados" value={msDiscoverResult.fetched || 0} />
                           <StatCard label="Inseridos" value={msDiscoverResult.inserted || 0} />
                           <StatCard label="Já existiam" value={msDiscoverResult.skipped_existing || 0} />
+                          <StatCard label="Sem SKU" value={msDiscoverResult.skipped_no_sku || 0} />
+                          <StatCard label="Sem marca" value={msDiscoverResult.skipped_no_brand || 0} />
                           <StatCard label="Erros" value={msDiscoverResult.errors || 0} />
                         </div>
                       )}
