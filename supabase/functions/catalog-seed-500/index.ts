@@ -58,6 +58,31 @@ function normalize(item: any) {
   };
 }
 
+// ─── Exchange rate ─────────────────────────────────────────
+let cachedRate: { rate: number; fetchedAt: number } | null = null;
+const FALLBACK_RATE = 5.50;
+
+async function getUsdToBrl(): Promise<number> {
+  if (cachedRate && Date.now() - cachedRate.fetchedAt < 3600_000) return cachedRate.rate;
+  try {
+    const res = await fetch("https://open.er-api.com/v6/latest/USD");
+    if (res.ok) {
+      const data = await res.json();
+      const rate = data?.rates?.BRL;
+      if (typeof rate === "number" && rate > 0) {
+        cachedRate = { rate, fetchedAt: Date.now() };
+        return rate;
+      }
+    }
+  } catch (e) { console.error("Exchange rate fetch failed:", e); }
+  return cachedRate?.rate || FALLBACK_RATE;
+}
+
+function convertMsrp(msrpUsd: number | null, rate: number): number | null {
+  if (!msrpUsd || msrpUsd <= 0) return null;
+  return Math.ceil(msrpUsd * rate * 100) / 100;
+}
+
 let lastReqTime = 0;
 async function throttledFetch(url: string, headers: Record<string, string>, retries = 3): Promise<any> {
   const gap = 350;
@@ -312,9 +337,12 @@ Deno.serve(async (req) => {
             try { const d = new Date(item.releaseDate); return isNaN(d.getTime()) ? null : d.toISOString().split("T")[0]; } catch { return null; }
           })() : null;
 
+          const exchangeRate = await getUsdToBrl();
           const { data: ins, error: insErr } = await sb.from("sneaker_models").insert({
             brand_id: item.brandId, silhouette_id: silhouetteId, sku: item.sku,
-            colorway: item.colorway, release_date: parsedDate, msrp: item.msrp,
+            colorway: item.colorway, release_date: parsedDate,
+            msrp_usd: item.msrp, msrp: convertMsrp(item.msrp, exchangeRate),
+            msrp_exchange_rate: item.msrp ? exchangeRate : null,
             model_name_en: item.name, description_en: item.description,
             placeholder_image_url: PLACEHOLDER, image_status: imageStatus,
             needs_official_image: true, source_primary: "stockx", translation_status: "pending",

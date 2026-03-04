@@ -188,7 +188,8 @@ export default function CatalogDetailPage() {
                 <DataRow label="Silhueta" value={(sneaker as any).silhouette?.name || "—"} />
                 <DataRow label="Colorway" value={sneaker.colorway || "—"} />
                 <DataRow label="Data lançamento" value={sneaker.release_date || "—"} />
-                <DataRow label="MSRP" value={sneaker.msrp ? `$${sneaker.msrp}` : "—"} />
+                <DataRow label="MSRP (BRL)" value={sneaker.msrp ? `R$ ${Number(sneaker.msrp).toFixed(2)}` : "—"} />
+                <DataRow label="MSRP (USD)" value={(sneaker as any).msrp_usd ? `US$ ${Number((sneaker as any).msrp_usd).toFixed(2)}` : "—"} />
                 <DataRow label="Fonte" value={sneaker.source_primary} />
               </dl>
             </CardContent>

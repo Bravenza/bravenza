@@ -367,6 +367,33 @@ const sourceMap = new Map(ALL_SOURCES.map((s) => [s.id, s]));
 
 // ─── Throttled fetch ─────────────────────────────────────────────
 
+// ─── Exchange rate cache ─────────────────────────────────────────
+let cachedRate: { rate: number; fetchedAt: number } | null = null;
+const FALLBACK_RATE = 5.50;
+
+async function getUsdToBrl(): Promise<number> {
+  if (cachedRate && Date.now() - cachedRate.fetchedAt < 3600_000) return cachedRate.rate;
+  try {
+    const res = await fetch("https://open.er-api.com/v6/latest/USD");
+    if (res.ok) {
+      const data = await res.json();
+      const rate = data?.rates?.BRL;
+      if (typeof rate === "number" && rate > 0) {
+        cachedRate = { rate, fetchedAt: Date.now() };
+        return rate;
+      }
+    }
+  } catch (e) {
+    console.error("Exchange rate fetch failed, using fallback:", e);
+  }
+  return cachedRate?.rate || FALLBACK_RATE;
+}
+
+function convertMsrp(msrpUsd: number | null, rate: number): number | null {
+  if (!msrpUsd || msrpUsd <= 0) return null;
+  return Math.ceil(msrpUsd * rate * 100) / 100; // round up to nearest cent
+}
+
 let lastReqTime = 0;
 async function throttledFetch(url: string, headers: Record<string, string>, retries = 3): Promise<any> {
   const gap = 400;
@@ -539,10 +566,13 @@ Deno.serve(async (req) => {
     const batchLimit = body.limit ?? 30;
     if (!query) return json({ ok: false, error: "query obrigatória" }, 400);
 
-    // Load DB references
-    const { data: brands } = await sb.from("brands").select("*");
-    const { data: silhouettes } = await sb.from("silhouettes").select("*");
-    const { data: taxonomy } = await sb.from("silhouette_taxonomy").select("*").order("priority");
+    // Load DB references + exchange rate
+    const [{ data: brands }, { data: silhouettes }, { data: taxonomy }, exchangeRate] = await Promise.all([
+      sb.from("brands").select("*"),
+      sb.from("silhouettes").select("*"),
+      sb.from("silhouette_taxonomy").select("*").order("priority"),
+      getUsdToBrl(),
+    ]);
     const brandMap = new Map((brands || []).map((b: any) => [b.name.toLowerCase(), b.id]));
     const silMap = new Map((silhouettes || []).map((s: any) => [`${s.brand_id}|${s.name}`, s.id]));
 
@@ -598,7 +628,9 @@ Deno.serve(async (req) => {
           sku: norm.sku,
           colorway: norm.colorway,
           release_date: parsedDate,
-          msrp: norm.msrp,
+          msrp_usd: norm.msrp,
+          msrp: convertMsrp(norm.msrp, exchangeRate),
+          msrp_exchange_rate: norm.msrp ? exchangeRate : null,
           model_name_en: norm.name,
           description_en: norm.description,
           placeholder_image_url: PLACEHOLDER,
@@ -665,7 +697,12 @@ Deno.serve(async (req) => {
         const updates: any = {};
         if (!model.description_en && detail.description) updates.description_en = detail.description;
         if (detail.colorway && !updates.colorway) updates.colorway = detail.colorway;
-        if (detail.msrp) updates.msrp = detail.msrp;
+        if (detail.msrp) {
+          const rate = await getUsdToBrl();
+          updates.msrp_usd = detail.msrp;
+          updates.msrp = convertMsrp(detail.msrp, rate);
+          updates.msrp_exchange_rate = rate;
+        }
         if (detail.releaseDate) {
           try {
             const d = new Date(detail.releaseDate);
@@ -721,10 +758,13 @@ Deno.serve(async (req) => {
       return json({ ok: false, error: `Endpoint "${endpointId}" não encontrado para ${src.name}. Disponíveis: ${available || "nenhum"}` }, 400);
     }
 
-    // Load DB references
-    const { data: brands } = await sb.from("brands").select("*");
-    const { data: silhouettes } = await sb.from("silhouettes").select("*");
-    const { data: taxonomy } = await sb.from("silhouette_taxonomy").select("*").order("priority");
+    // Load DB references + exchange rate
+    const [{ data: brands }, { data: silhouettes }, { data: taxonomy }, exchangeRate] = await Promise.all([
+      sb.from("brands").select("*"),
+      sb.from("silhouettes").select("*"),
+      sb.from("silhouette_taxonomy").select("*").order("priority"),
+      getUsdToBrl(),
+    ]);
     const brandMap = new Map((brands || []).map((b: any) => [b.name.toLowerCase(), b.id]));
     const silMap = new Map((silhouettes || []).map((s: any) => [`${s.brand_id}|${s.name}`, s.id]));
 
@@ -787,7 +827,9 @@ Deno.serve(async (req) => {
 
         const { data: ins, error: insErr } = await sb.from("sneaker_models").insert({
           brand_id: brandId, silhouette_id: silhouetteId, sku: norm.sku,
-          colorway: norm.colorway, release_date: parsedDate, msrp: norm.msrp,
+          colorway: norm.colorway, release_date: parsedDate,
+          msrp_usd: norm.msrp, msrp: convertMsrp(norm.msrp, exchangeRate),
+          msrp_exchange_rate: norm.msrp ? exchangeRate : null,
           model_name_en: norm.name, description_en: norm.description,
           placeholder_image_url: PLACEHOLDER, image_status: norm.imageUrl ? "external" : "placeholder",
           needs_official_image: true, source_primary: src.id, translation_status: "pending",

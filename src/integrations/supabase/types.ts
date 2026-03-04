@@ -2800,6 +2800,8 @@ export type Database = {
           model_name_en: string | null
           model_name_pt: string | null
           msrp: number | null
+          msrp_exchange_rate: number | null
+          msrp_usd: number | null
           needs_official_image: boolean
           placeholder_image_url: string
           release_date: string | null
@@ -2821,6 +2823,8 @@ export type Database = {
           model_name_en?: string | null
           model_name_pt?: string | null
           msrp?: number | null
+          msrp_exchange_rate?: number | null
+          msrp_usd?: number | null
           needs_official_image?: boolean
           placeholder_image_url?: string
           release_date?: string | null
@@ -2842,6 +2846,8 @@ export type Database = {
           model_name_en?: string | null
           model_name_pt?: string | null
           msrp?: number | null
+          msrp_exchange_rate?: number | null
+          msrp_usd?: number | null
           needs_official_image?: boolean
           placeholder_image_url?: string
           release_date?: string | null
