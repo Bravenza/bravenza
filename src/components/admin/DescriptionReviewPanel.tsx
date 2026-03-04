@@ -511,5 +511,25 @@ export default function DescriptionReviewPanel() {
         </div>
       </CardContent>
     </Card>
+
+    <AlertDialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Aprovar todas as descrições?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Essa ação vai marcar <strong>{counts["review"] ?? 0} descrições</strong> em revisão como aprovadas.
+            Essa ação não pode ser desfeita facilmente.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmApproveAll}>
+            <CheckCircle2 className="h-4 w-4 mr-1.5" />
+            Aprovar todas
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
