@@ -8,6 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingButton } from "@/components/ui/loading-button";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Loader2, CheckCircle2, XCircle, AlertTriangle, Eye, Sparkles,
   ChevronLeft, ChevronRight, Search, SkipForward, Save, Check
 } from "lucide-react";
@@ -49,6 +53,7 @@ export default function DescriptionReviewPanel() {
   const [enrichProgress, setEnrichProgress] = useState<{ current: number; total: number; errors: number } | null>(null);
   const [cancelEnrich, setCancelEnrich] = useState(false);
   const [approvingAll, setApprovingAll] = useState(false);
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [editPt, setEditPt] = useState("");
   const [editName, setEditName] = useState("");
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
@@ -221,7 +226,12 @@ export default function DescriptionReviewPanel() {
   const handleApproveAll = async () => {
     const reviewCount = counts["review"] || 0;
     if (reviewCount === 0) { showToast("Nenhum produto em revisão", "error"); return; }
-    if (!confirm(`Aprovar ${reviewCount} descrições em revisão?`)) return;
+    setShowApproveDialog(true);
+  };
+
+  const confirmApproveAll = async () => {
+    setShowApproveDialog(false);
+    const reviewCount = counts["review"] || 0;
 
     setApprovingAll(true);
     try {
@@ -244,6 +254,7 @@ export default function DescriptionReviewPanel() {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
@@ -501,5 +512,25 @@ export default function DescriptionReviewPanel() {
         </div>
       </CardContent>
     </Card>
+
+    <AlertDialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Aprovar todas as descrições?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Essa ação vai marcar <strong>{counts["review"] ?? 0} descrições</strong> em revisão como aprovadas.
+            Essa ação não pode ser desfeita facilmente.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmApproveAll}>
+            <CheckCircle2 className="h-4 w-4 mr-1.5" />
+            Aprovar todas
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
