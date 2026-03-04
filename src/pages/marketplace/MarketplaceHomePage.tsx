@@ -35,10 +35,11 @@ export default function MarketplaceHomePage() {
   const context = useOutletContext<{ cpf?: string; profile?: any }>();
   const cpf = context?.cpf || "visitor";
 
-  const { products, totalProducts, isLoading, fetchProducts } = useMarketplaceCatalog(cpf);
+  const { products, totalProducts, isLoading, fetchProducts, fetchModels } = useMarketplaceCatalog(cpf);
   const { checkOnboardingStatus } = useMarketplaceSeller(cpf !== "visitor" ? cpf : null);
   const [isSeller, setIsSeller] = useState(false);
   const brandsScrollRef = useRef<HTMLDivElement>(null);
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
 
   const initialSearch = searchParams.get("q") || "";
   const [filters, setFilters] = useState<MarketplaceFilterValues>({ sort: "recent", search: initialSearch || undefined });
@@ -67,9 +68,11 @@ export default function MarketplaceHomePage() {
     setShowFullCatalog(true);
   };
 
-  const handleBrandClick = (brand: string) => {
+  const handleBrandClick = async (brand: string) => {
     setFilters(f => ({ ...f, brand, search: undefined }));
     setShowFullCatalog(true);
+    const models = await fetchModels(brand);
+    setAvailableModels(models);
   };
 
   const scrollBrands = (dir: "left" | "right") => {
@@ -91,7 +94,20 @@ export default function MarketplaceHomePage() {
         )}
 
         <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
-          <MarketplaceFilters filters={filters} onFiltersChange={setFilters} onSearch={handleSearch} />
+          <MarketplaceFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            onSearch={handleSearch}
+            availableModels={availableModels}
+            onBrandSelected={async (brand) => {
+              if (brand) {
+                const models = await fetchModels(brand);
+                setAvailableModels(models);
+              } else {
+                setAvailableModels([]);
+              }
+            }}
+          />
           <SavedSearchesWidget
             cpf={cpf}
             currentFilters={filters}
