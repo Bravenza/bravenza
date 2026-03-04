@@ -217,6 +217,30 @@ export default function DescriptionReviewPanel() {
     setCancelEnrich(true);
   };
 
+  // ─── Aprovar todos em review ────────────────────────────────────────────────
+  const handleApproveAll = async () => {
+    const reviewCount = counts["review"] || 0;
+    if (reviewCount === 0) { showToast("Nenhum produto em revisão", "error"); return; }
+    if (!confirm(`Aprovar ${reviewCount} descrições em revisão?`)) return;
+
+    setApprovingAll(true);
+    try {
+      const { error, count } = await supabase
+        .from("sneaker_models")
+        .update({ translation_status: "done" })
+        .eq("translation_status", "review");
+      if (error) throw error;
+      showToast(`${count ?? reviewCount} descrições aprovadas ✓`);
+      setSelected(null);
+      loadProducts();
+      loadCounts();
+    } catch (e: any) {
+      showToast(e.message, "error");
+    } finally {
+      setApprovingAll(false);
+    }
+  };
+
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
