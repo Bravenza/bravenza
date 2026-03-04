@@ -948,10 +948,23 @@ export default function CatalogSeedPage() {
                 </>
               )}
             </TabsContent>
-            <TabsContent value="droper" className="pt-3">
-              <SyncDroperImages />
-            </TabsContent>
           </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* ── Sync Droper Images ── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ImageIcon className="h-5 w-5" />
+            Sincronizar Imagens — Droper.app
+          </CardTitle>
+          <CardDescription>
+            Busca imagens de produtos na Droper e salva no catálogo automaticamente.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SyncDroperImages />
         </CardContent>
       </Card>
     </div>
