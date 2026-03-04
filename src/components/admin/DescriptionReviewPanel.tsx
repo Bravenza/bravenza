@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
-type TranslationStatus = "pending" | "review" | "done" | "error" | "skipped";
+type TranslationStatus = "pending" | "review" | "done" | "error" | "skipped" | "translated" | "enriched";
 
 interface SneakerModel {
   id: string;
@@ -30,11 +30,13 @@ interface SneakerModel {
 }
 
 const STATUS_LABELS: Record<TranslationStatus, { label: string; icon: React.ElementType }> = {
-  pending: { label: "Pendente", icon: AlertTriangle },
-  review:  { label: "Aguard. revisão", icon: Eye },
-  done:    { label: "Aprovado", icon: CheckCircle2 },
-  error:   { label: "Erro", icon: XCircle },
-  skipped: { label: "Ignorado", icon: SkipForward },
+  pending:    { label: "Pendente", icon: AlertTriangle },
+  translated: { label: "Traduzido", icon: AlertTriangle },
+  enriched:  { label: "Enriquecido", icon: Sparkles },
+  review:    { label: "Aguard. revisão", icon: Eye },
+  done:      { label: "Aprovado", icon: CheckCircle2 },
+  error:     { label: "Erro", icon: XCircle },
+  skipped:   { label: "Ignorado", icon: SkipForward },
 };
 
 const PAGE_SIZE = 20;
