@@ -344,7 +344,13 @@ const stockX: SourceDef = {
     {
       id: "stockx_sneakers_search",
       label: "Busca dedicada StockX Sneakers",
-      buildPath: (q) => `/getproducts?keywords=${encodeURIComponent(q || "Jordan")}&limit=40`,
+      buildPath: (q) => {
+        // Support "query|page" format for pagination
+        const parts = (q || "Jordan").split("|");
+        const keywords = parts[0] || "Jordan";
+        const page = parseInt(parts[1] || "1") || 1;
+        return `/getproducts?keywords=${encodeURIComponent(keywords)}&limit=40&page=${page}`;
+      },
       extractItems: genericExtract,
     },
     {
