@@ -810,7 +810,8 @@ Deno.serve(async (req) => {
 
       return json({ ok: true, source: src.name, endpoint: ep.label, ...stats });
     } catch (e: any) {
-      return json({ ok: false, source: src.name, endpoint: ep.label, error: e.message }, 500);
+      console.error(`Discover error [${src.id}] ${ep.id}:`, e.message);
+      return json({ ok: false, source: src.name, endpoint: ep.label, error: e.message, hint: "Este endpoint pode estar indisponível na API. Tente outro endpoint ou source." });
     }
   }
 
