@@ -273,8 +273,8 @@ export default function DescriptionReviewPanel() {
         </div>
 
         {/* Actions bar */}
-        <div className="flex gap-2">
-          <div className="relative flex-1">
+        <div className="flex flex-wrap gap-2">
+          <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por SKU ou nome..."
@@ -286,14 +286,60 @@ export default function DescriptionReviewPanel() {
           <LoadingButton
             loading={enriching}
             loadingText="Reescrevendo..."
-            onClick={handleEnrich}
+            onClick={() => handleEnrich("10")}
             size="sm"
-            className="shrink-0"
+            variant="outline"
+            disabled={enriching}
           >
             <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-            Reescrever próximos 10
+            Próximos 10
           </LoadingButton>
+          <LoadingButton
+            loading={enriching}
+            loadingText="Reescrevendo..."
+            onClick={() => handleEnrich("100")}
+            size="sm"
+            variant="outline"
+            disabled={enriching}
+          >
+            <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+            Próximos 100
+          </LoadingButton>
+          <LoadingButton
+            loading={enriching}
+            loadingText="Reescrevendo..."
+            onClick={() => handleEnrich("all")}
+            size="sm"
+            disabled={enriching}
+          >
+            <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+            Reescrever todos
+          </LoadingButton>
+          {enriching && (
+            <Button onClick={handleCancelEnrich} variant="destructive" size="sm">
+              <XCircle className="h-3.5 w-3.5 mr-1" />
+              Cancelar
+            </Button>
+          )}
         </div>
+
+        {/* Progress bar */}
+        {enriching && enrichProgress && (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{enrichProgress.current} reescritas{enrichProgress.errors > 0 ? ` · ${enrichProgress.errors} erros` : ""}</span>
+              {enrichProgress.total > 0 && (
+                <span>{Math.round((enrichProgress.current / enrichProgress.total) * 100)}%</span>
+              )}
+            </div>
+            <div className="w-full h-2 rounded-full bg-secondary/50 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-300"
+                style={{ width: enrichProgress.total > 0 ? `${Math.min(100, (enrichProgress.current / enrichProgress.total) * 100)}%` : "0%" }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Content: list + editor */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
