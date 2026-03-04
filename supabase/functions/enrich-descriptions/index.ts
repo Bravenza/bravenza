@@ -142,22 +142,7 @@ async function processBatch(
   const promises: Promise<void>[] = [];
 
   const processOne = async (product: SneakerModel) => {
-    // Se não tem descrição original, marcar como skipped
-    if (!product.description_pt || product.description_pt.trim().length < 20) {
-      const { error } = await sb
-        .from("sneaker_models")
-        .update({ translation_status: "skipped" })
-        .eq("id", product.id);
-      if (error) {
-        result.failed++;
-        result.errors.push(`${product.sku}: skip error — ${error.message}`);
-      } else {
-        result.processed.push({ sku: product.sku, preview: "(sem descrição original)" });
-      }
-      return;
-    }
-
-    const newDesc = await rewriteDescription(product, apiKey);
+    // Chama a IA — tanto para reescrita quanto para criação do zero
     if (newDesc) {
       const { error } = await sb
         .from("sneaker_models")
