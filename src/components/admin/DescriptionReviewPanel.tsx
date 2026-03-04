@@ -166,7 +166,7 @@ export default function DescriptionReviewPanel() {
     return data;
   };
 
-  const cancelRef = { current: false };
+  const cancelRef = useRef(false);
 
   const handleEnrich = async (mode: "10" | "100" | "all") => {
     setEnriching(true);
