@@ -21,6 +21,7 @@ const corsHeaders = {
 interface DropItem {
   id: number;
   url: string;
+  linkfoto: string | null; // imagem do card na página de busca
 }
 
 interface DroperProduct {
@@ -34,7 +35,8 @@ interface DroperProduct {
   cor: string;
   dataLancamento: string | null;
   retail: number | null;
-  images: string[];
+  images: string[]; // colecaoImagens — até 6 fotos da página do produto
+  cardImage: string | null; // linkfoto — imagem exibida no card da busca
   droperUrl: string;
 }
 
@@ -46,11 +48,11 @@ interface SyncResult {
   details: { sku: string; images: number }[];
 }
 
-// ─── Cache de brands e silhouettes (evita lookups repetidos) ───────────────────
-const brandCache: Record<string, string> = {}; // name → uuid
-const silhouetteCache: Record<string, string> = {}; // "brand_id:name" → uuid
+// ─── Cache de brands e silhouettes ────────────────────────────────────────────
+const brandCache: Record<string, string> = {};
+const silhouetteCache: Record<string, string> = {};
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function toSlug(text: string): string {
   return text
     .toLowerCase()
@@ -61,7 +63,7 @@ function toSlug(text: string): string {
     .replace(/^-|-$/g, "");
 }
 
-// ─── 1. Busca drops via API da droper ──────────────────────────────────────────
+// ─── 1. Busca drops via API (captura linkfoto do card) ─────────────────────────
 async function fetchDropsPage(page: number): Promise<{ drops: DropItem[]; temMais: boolean }> {
   const body = {
     tipoProduto: 1,
@@ -96,14 +98,20 @@ async function fetchDropsPage(page: number): Promise<{ drops: DropItem[]; temMai
   });
   if (!res.ok) throw new Error(`API erro ${res.status}`);
   const json = await res.json();
+
   const drops: DropItem[] = (json.drops ?? [])
-    .map((d: Record<string, unknown>) => ({ id: d.id, url: d.url as string }))
+    .map((d: Record<string, unknown>) => ({
+      id: d.id,
+      url: d.url as string,
+      linkfoto: (d.linkfoto as string) ?? null, // imagem do card
+    }))
     .filter((d: DropItem) => d.url);
+
   return { drops, temMais: json.temMaisDrops === true };
 }
 
-// ─── 2. Scraping da página do produto (extrai CkPreloadModel) ──────────────────
-function extractPreloadModel(html: string): DroperProduct | null {
+// ─── 2. Scraping da página do produto ─────────────────────────────────────────
+function extractPreloadModel(html: string): Omit<DroperProduct, "cardImage" | "droperUrl"> | null {
   try {
     const match = html.match(/window\.CkPreloadModel\s*=\s*(\{[\s\S]*?\});\s*<\/script>/);
     if (!match) return null;
@@ -115,7 +123,6 @@ function extractPreloadModel(html: string): DroperProduct | null {
     const images: string[] = drop.colecaoImagens ?? [];
     if (!sku || images.length === 0) return null;
 
-    // Extrai nome do modelo a partir de urlModelo ("marca/nike/modelo/air max 95" → "Air Max 95")
     const urlModeloRaw: string = drop.urlModelo ?? "";
     const modeloParts = urlModeloRaw.split("/modelo/");
     const nomeModelo = modeloParts[1]
@@ -137,96 +144,32 @@ function extractPreloadModel(html: string): DroperProduct | null {
       dataLancamento: drop.dataLancamento ?? null,
       retail: drop.retail ?? null,
       images,
-      droperUrl: `${DROPER_BASE}${drop.url}`,
     };
   } catch {
     return null;
   }
 }
 
-async function scrapeProduct(dropUrl: string): Promise<DroperProduct | null> {
+async function scrapeProduct(drop: DropItem): Promise<DroperProduct | null> {
   try {
-    const res = await fetch(`${DROPER_BASE}${dropUrl}`, {
+    const fullUrl = `${DROPER_BASE}${drop.url}`;
+    const res = await fetch(fullUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; BravenzaBot/1.0)" },
     });
     if (!res.ok) return null;
-    return extractPreloadModel(await res.text());
+    const data = extractPreloadModel(await res.text());
+    if (!data) return null;
+    return {
+      ...data,
+      cardImage: drop.linkfoto, // imagem do card vinda da API de busca
+      droperUrl: fullUrl,
+    };
   } catch {
     return null;
   }
 }
 
-// ─── 3. Lookup ou criação de brand ─────────────────────────────────────────────
-async function getOrCreateBrand(supabase: ReturnType<typeof createClient>, name: string): Promise<string | null> {
-  if (brandCache[name]) return brandCache[name];
-
-  // Busca case-insensitive para evitar duplicatas (Nike vs nike vs NIKE)
-  const { data: existing } = await supabase.from("brands").select("id").ilike("name", name).maybeSingle();
-
-  if (existing?.id) {
-    brandCache[name] = existing.id;
-    return existing.id;
-  }
-
-  // Upsert para evitar conflito se já existir com mesmo slug
-  const { data: upserted, error } = await supabase
-    .from("brands")
-    .upsert({ name, slug: toSlug(name) }, { onConflict: "slug" })
-    .select("id")
-    .single();
-
-  if (error || !upserted) {
-    // Última tentativa: busca pelo slug
-    const { data: bySlug } = await supabase.from("brands").select("id").eq("slug", toSlug(name)).maybeSingle();
-    if (bySlug?.id) {
-      brandCache[name] = bySlug.id;
-      return bySlug.id;
-    }
-    console.error(`[Brand] Erro ao criar "${name}":`, error);
-    return null;
-  }
-
-  brandCache[name] = upserted.id;
-  return upserted.id;
-}
-
-// ─── 4. Lookup ou criação de silhouette ────────────────────────────────────────
-async function getOrCreateSilhouette(
-  supabase: ReturnType<typeof createClient>,
-  name: string,
-  brandId: string,
-): Promise<string | null> {
-  const cacheKey = `${brandId}:${name}`;
-  if (silhouetteCache[cacheKey]) return silhouetteCache[cacheKey];
-
-  const { data: existing } = await supabase
-    .from("silhouettes")
-    .select("id")
-    .eq("name", name)
-    .eq("brand_id", brandId)
-    .maybeSingle();
-
-  if (existing?.id) {
-    silhouetteCache[cacheKey] = existing.id;
-    return existing.id;
-  }
-
-  const { data: created, error } = await supabase
-    .from("silhouettes")
-    .insert({ name, slug: toSlug(name), brand_id: brandId })
-    .select("id")
-    .single();
-
-  if (error || !created) {
-    console.error(`[Silhouette] Erro ao criar "${name}":`, error);
-    return null;
-  }
-
-  silhouetteCache[cacheKey] = created.id;
-  return created.id;
-}
-
-// ─── 5. Upload de imagem para Supabase Storage ─────────────────────────────────
+// ─── 3. Upload de imagem para Supabase Storage ─────────────────────────────────
 async function uploadImage(
   supabase: ReturnType<typeof createClient>,
   imageUrl: string,
@@ -254,13 +197,70 @@ async function uploadImage(
   }
 }
 
-// ─── 6. Upsert em sneaker_models (update + insert separados para debug) ────────
+// ─── 4. Lookup ou criação de brand ────────────────────────────────────────────
+async function getOrCreateBrand(supabase: ReturnType<typeof createClient>, name: string): Promise<string | null> {
+  if (brandCache[name]) return brandCache[name];
+  const { data: existing } = await supabase.from("brands").select("id").ilike("name", name).maybeSingle();
+  if (existing?.id) {
+    brandCache[name] = existing.id;
+    return existing.id;
+  }
+  const { data: upserted, error } = await supabase
+    .from("brands")
+    .upsert({ name, slug: toSlug(name) }, { onConflict: "slug" })
+    .select("id")
+    .single();
+  if (error || !upserted) {
+    const { data: bySlug } = await supabase.from("brands").select("id").eq("slug", toSlug(name)).maybeSingle();
+    if (bySlug?.id) {
+      brandCache[name] = bySlug.id;
+      return bySlug.id;
+    }
+    console.error(`[Brand] Erro ao criar "${name}":`, error);
+    return null;
+  }
+  brandCache[name] = upserted.id;
+  return upserted.id;
+}
+
+// ─── 5. Lookup ou criação de silhouette ───────────────────────────────────────
+async function getOrCreateSilhouette(
+  supabase: ReturnType<typeof createClient>,
+  name: string,
+  brandId: string,
+): Promise<string | null> {
+  const cacheKey = `${brandId}:${name}`;
+  if (silhouetteCache[cacheKey]) return silhouetteCache[cacheKey];
+  const { data: existing } = await supabase
+    .from("silhouettes")
+    .select("id")
+    .eq("name", name)
+    .eq("brand_id", brandId)
+    .maybeSingle();
+  if (existing?.id) {
+    silhouetteCache[cacheKey] = existing.id;
+    return existing.id;
+  }
+  const { data: created, error } = await supabase
+    .from("silhouettes")
+    .insert({ name, slug: toSlug(name), brand_id: brandId })
+    .select("id")
+    .single();
+  if (error || !created) {
+    console.error(`[Silhouette] Erro ao criar "${name}":`, error);
+    return null;
+  }
+  silhouetteCache[cacheKey] = created.id;
+  return created.id;
+}
+
+// ─── 6. Upsert em sneaker_models ──────────────────────────────────────────────
 async function upsertSneakerModel(
   supabase: ReturnType<typeof createClient>,
   product: DroperProduct,
   brandId: string,
   silhouetteId: string | null,
-  imageUrls: string[],
+  imageUrls: string[], // URLs das imagens da página (já uploadadas no Storage)
 ): Promise<string | null> {
   const releaseDate = product.dataLancamento ? product.dataLancamento.split("T")[0] : null;
 
@@ -275,7 +275,7 @@ async function upsertSneakerModel(
     colorway: product.cor || "",
     release_date: releaseDate,
     msrp: product.retail,
-    placeholder_image_url: imageUrls[0] ?? "",
+    placeholder_image_url: imageUrls[0] ?? "", // imagem principal da página
     source_primary: product.droperUrl,
     source_secondary: imageUrls.slice(1),
     image_status: "synced",
@@ -284,7 +284,6 @@ async function upsertSneakerModel(
     translation_error: null,
   };
 
-  // Tenta UPDATE primeiro
   const { data: updated, error: updateError } = await supabase
     .from("sneaker_models")
     .update(payload)
@@ -296,14 +295,11 @@ async function upsertSneakerModel(
     console.error(`[Model UPDATE] SKU ${product.sku}:`, JSON.stringify(updateError));
     return null;
   }
-
-  // Se encontrou e atualizou, retorna o id
   if (updated?.id) {
     console.log(`[Model] UPDATED ${product.sku}`);
     return updated.id;
   }
 
-  // Produto não existia — faz INSERT
   const { data: inserted, error: insertError } = await supabase
     .from("sneaker_models")
     .insert(payload)
@@ -314,18 +310,17 @@ async function upsertSneakerModel(
     console.error(`[Model INSERT] SKU ${product.sku}:`, JSON.stringify(insertError));
     return null;
   }
-
   console.log(`[Model] INSERTED ${product.sku}`);
   return inserted?.id ?? null;
 }
 
-// ─── 7. Salva imagens em sneaker_images ────────────────────────────────────────
+// ─── 7. Salva imagens em sneaker_images ───────────────────────────────────────
 async function saveSneakerImages(
   supabase: ReturnType<typeof createClient>,
   sneakerId: string,
-  imageUrls: string[],
+  imageUrls: string[], // imagens da página do produto (uploadadas no Storage)
+  cardImageUrl: string | null, // linkfoto original da droper (URL externa)
 ): Promise<void> {
-  // Remove imagens antigas do produto antes de inserir as novas
   await supabase.from("sneaker_images").delete().eq("sneaker_id", sneakerId);
 
   const rows = imageUrls.map((url, i) => ({
@@ -335,17 +330,27 @@ async function saveSneakerImages(
     is_primary: i === 0,
   }));
 
+  // Adiciona a imagem do card como entrada extra se for diferente das demais
+  if (cardImageUrl && !imageUrls.includes(cardImageUrl)) {
+    rows.push({
+      sneaker_id: sneakerId,
+      image_url: cardImageUrl,
+      source: "droper_card", // identifica como imagem de card
+      is_primary: false,
+    });
+  }
+
   const { error } = await supabase.from("sneaker_images").insert(rows);
   if (error) console.error(`[Images] sneaker_id ${sneakerId}:`, error);
 }
 
-// ─── 8. Processa um produto completo ───────────────────────────────────────────
+// ─── 8. Processa um produto completo ──────────────────────────────────────────
 async function processProduct(
   supabase: ReturnType<typeof createClient>,
   drop: DropItem,
   result: SyncResult,
 ): Promise<void> {
-  const product = await scrapeProduct(drop.url);
+  const product = await scrapeProduct(drop);
   if (!product) {
     result.failed++;
     result.errors.push(`Falha ao extrair: ${DROPER_BASE}${drop.url}`);
@@ -354,7 +359,6 @@ async function processProduct(
 
   console.log(`[Sync] ${product.sku} — ${product.titulo}`);
 
-  // Resolve brand_id
   const brandId = await getOrCreateBrand(supabase, product.nomeMarca);
   if (!brandId) {
     result.failed++;
@@ -362,10 +366,9 @@ async function processProduct(
     return;
   }
 
-  // Resolve silhouette_id (opcional — não bloqueia se falhar)
   const silhouetteId = product.nomeModelo ? await getOrCreateSilhouette(supabase, product.nomeModelo, brandId) : null;
 
-  // Upload de todas as imagens em paralelo
+  // Upload das imagens da página do produto
   const uploadedUrls = (
     await Promise.all(product.images.map((img, i) => uploadImage(supabase, img, product.sku, i)))
   ).filter(Boolean) as string[];
@@ -376,7 +379,6 @@ async function processProduct(
     return;
   }
 
-  // Upsert em sneaker_models
   const sneakerId = await upsertSneakerModel(supabase, product, brandId, silhouetteId, uploadedUrls);
   if (!sneakerId) {
     result.failed++;
@@ -384,14 +386,14 @@ async function processProduct(
     return;
   }
 
-  // Salva imagens em sneaker_images
-  await saveSneakerImages(supabase, sneakerId, uploadedUrls);
+  // Salva imagens da página + imagem do card (linkfoto)
+  await saveSneakerImages(supabase, sneakerId, uploadedUrls, product.cardImage);
 
   result.success++;
-  result.details.push({ sku: product.sku, images: uploadedUrls.length });
+  result.details.push({ sku: product.sku, images: uploadedUrls.length + (product.cardImage ? 1 : 0) });
 }
 
-// ─── Concorrência controlada ───────────────────────────────────────────────────
+// ─── Concorrência controlada ──────────────────────────────────────────────────
 async function runConcurrent(
   supabase: ReturnType<typeof createClient>,
   drops: DropItem[],
@@ -404,7 +406,7 @@ async function runConcurrent(
   }
 }
 
-// ─── Handler principal ─────────────────────────────────────────────────────────
+// ─── Handler principal ────────────────────────────────────────────────────────
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -438,9 +440,7 @@ serve(async (req) => {
       console.log(`[API] Página ${currentPage}...`);
       const { drops, temMais } = await fetchDropsPage(currentPage);
       if (drops.length === 0) break;
-
       await runConcurrent(supabase, drops, result);
-
       if (!temMais) break;
       currentPage++;
       processed++;
