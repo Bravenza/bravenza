@@ -254,6 +254,7 @@ export default function DescriptionReviewPanel() {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
