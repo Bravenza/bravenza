@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -110,6 +110,9 @@ export default function CatalogSeedPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<any>(null);
   const [syncProgress, setSyncProgress] = useState(0);
+  const [syncPreviewLoading, setSyncPreviewLoading] = useState(false);
+  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("sync");
 
   // ─── API helpers ───────────────────────────────────────────────
   const getSession = async () => {
@@ -141,11 +144,37 @@ export default function CatalogSeedPage() {
   const handleCancel = () => { cancelRef.current = true; };
 
   // ─── Sync Catalog → Marketplace ────────────────────────────────
-  const handleSyncPreview = async () => {
-    setSyncPreview(null);
-    try { setSyncPreview(await callApi("catalog-sync", { mode: "preview" })); }
-    catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
-  };
+  const fetchLastSyncTime = useCallback(async () => {
+    try {
+      const { data } = await supabase.from("cron_execution_logs")
+        .select("finished_at")
+        .eq("job_name", "catalog-sync")
+        .eq("status", "completed")
+        .order("finished_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setLastSyncAt(data?.finished_at || null);
+    } catch {}
+  }, []);
+
+  const handleSyncPreview = useCallback(async () => {
+    setSyncPreviewLoading(true); setSyncPreview(null);
+    try {
+      const [preview] = await Promise.all([
+        callApi("catalog-sync", { mode: "preview" }),
+        fetchLastSyncTime(),
+      ]);
+      setSyncPreview(preview);
+    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    finally { setSyncPreviewLoading(false); }
+  }, [fetchLastSyncTime]);
+
+  // Auto-load preview when sync tab is opened
+  useEffect(() => {
+    if (activeTab === "sync" && !syncPreview && !syncPreviewLoading) {
+      handleSyncPreview();
+    }
+  }, [activeTab]);
 
   const handleSync = async () => {
     setSyncing(true); setSyncResult(null); setSyncProgress(0); cancelRef.current = false;
@@ -163,7 +192,7 @@ export default function CatalogSeedPage() {
         await new Promise(r => setTimeout(r, 300));
       }
     } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
-    finally { setSyncing(false); }
+    finally { setSyncing(false); handleSyncPreview(); }
   };
 
   // ─── StockX Seed ───────────────────────────────────────────────
@@ -311,7 +340,7 @@ export default function CatalogSeedPage() {
       </div>
 
       {/* Main Tabs */}
-      <Tabs defaultValue="sync" className="w-full">
+      <Tabs defaultValue="sync" className="w-full" onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-6 h-11">
           <TabsTrigger value="sync" className="gap-1.5 text-xs">
             <ArrowRightLeft className="w-3.5 h-3.5" />
@@ -352,9 +381,10 @@ export default function CatalogSeedPage() {
               <CardDescription>Publica modelos do catálogo como produtos visíveis no marketplace.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                <Button onClick={handleSyncPreview} variant="outline" disabled={syncing} size="sm">
-                  <Eye className="h-3.5 w-3.5 mr-1.5" />Ver pendentes
+              <div className="flex flex-wrap gap-2 items-center">
+                <Button onClick={handleSyncPreview} variant="outline" disabled={syncing || syncPreviewLoading} size="sm">
+                  {syncPreviewLoading ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 mr-1.5" />}
+                  Atualizar dados
                 </Button>
                 <Button onClick={handleSync} disabled={syncing || !syncPreview} size="sm">
                   {syncing ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <ArrowRightLeft className="h-3.5 w-3.5 mr-1.5" />}
@@ -365,7 +395,18 @@ export default function CatalogSeedPage() {
                     <Square className="h-3.5 w-3.5 mr-1" />Cancelar
                   </Button>
                 )}
+                {lastSyncAt && (
+                  <span className="text-xs text-muted-foreground ml-2">
+                    Última sync automática: {new Date(lastSyncAt).toLocaleString("pt-BR")}
+                  </span>
+                )}
               </div>
+
+              {syncPreviewLoading && !syncPreview && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Carregando dados...
+                </div>
+              )}
 
               {syncPreview && (
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
