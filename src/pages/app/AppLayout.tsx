@@ -154,10 +154,6 @@ export default function AppLayout() {
     navigate("/entrar");
   };
 
-  const mainItems = navItems.filter(i => i.group === "main");
-  const vaultItems = navItems.filter(i => i.group === "vault");
-  const moreItems = navItems.filter(i => i.group === "more");
-  
 
   return (
     <CartProvider cpf={cpf}>
