@@ -381,9 +381,10 @@ export default function CatalogSeedPage() {
               <CardDescription>Publica modelos do catálogo como produtos visíveis no marketplace.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                <Button onClick={handleSyncPreview} variant="outline" disabled={syncing} size="sm">
-                  <Eye className="h-3.5 w-3.5 mr-1.5" />Ver pendentes
+              <div className="flex flex-wrap gap-2 items-center">
+                <Button onClick={handleSyncPreview} variant="outline" disabled={syncing || syncPreviewLoading} size="sm">
+                  {syncPreviewLoading ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 mr-1.5" />}
+                  Atualizar dados
                 </Button>
                 <Button onClick={handleSync} disabled={syncing || !syncPreview} size="sm">
                   {syncing ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <ArrowRightLeft className="h-3.5 w-3.5 mr-1.5" />}
@@ -394,7 +395,18 @@ export default function CatalogSeedPage() {
                     <Square className="h-3.5 w-3.5 mr-1" />Cancelar
                   </Button>
                 )}
+                {lastSyncAt && (
+                  <span className="text-xs text-muted-foreground ml-2">
+                    Última sync automática: {new Date(lastSyncAt).toLocaleString("pt-BR")}
+                  </span>
+                )}
               </div>
+
+              {syncPreviewLoading && !syncPreview && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Carregando dados...
+                </div>
+              )}
 
               {syncPreview && (
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
