@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 export interface MarketplaceFilterValues {
   search?: string;
   brand?: string;
+  model?: string;
   size?: string;
   condition?: string;
   priceMin?: number;
