@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,6 +46,8 @@ export default function DescriptionReviewPanel() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [enriching, setEnriching] = useState(false);
+  const [enrichProgress, setEnrichProgress] = useState<{ current: number; total: number; errors: number } | null>(null);
+  const [cancelEnrich, setCancelEnrich] = useState(false);
   const [editPt, setEditPt] = useState("");
   const [editName, setEditName] = useState("");
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
@@ -145,37 +147,73 @@ export default function DescriptionReviewPanel() {
     loadCounts();
   };
 
-  // ─── Reescrever próximos 10 ────────────────────────────────────────────────
-  const handleEnrich = async () => {
+  // ─── Reescrever em batches ──────────────────────────────────────────────────
+  const callEnrichOnce = async (token: string) => {
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enrich-descriptions`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({}),
+      }
+    );
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || "Erro ao enriquecer");
+    return data;
+  };
+
+  const cancelRef = useRef(false);
+
+  const handleEnrich = async (mode: "10" | "100" | "all") => {
     setEnriching(true);
+    setCancelEnrich(false);
+    cancelRef.current = false;
+    setEnrichProgress({ current: 0, total: 0, errors: 0 });
+
+    const maxRounds = mode === "10" ? 1 : mode === "100" ? 10 : 999;
+    let totalSuccess = 0;
+    let totalErrors = 0;
+    let round = 0;
+
     try {
       const { data: session } = await supabase.auth.getSession();
       const token = session?.session?.access_token;
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enrich-descriptions`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({}),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
-        showToast(data.error || "Erro ao enriquecer", "error");
-      } else {
-        showToast(`${data.success} reescritas, ${data.failed} falhas`);
-        loadProducts();
-        loadCounts();
+      if (!token) throw new Error("Sessão expirada");
+
+      while (round < maxRounds && !cancelRef.current) {
+        round++;
+        const data = await callEnrichOnce(token);
+        totalSuccess += data.success || 0;
+        totalErrors += data.failed || 0;
+        setEnrichProgress({
+          current: totalSuccess,
+          total: mode === "all" ? totalSuccess + (data.remaining || 0) : (mode === "100" ? 100 : 10),
+          errors: totalErrors,
+        });
+
+        if (!data.has_more || data.success === 0) break;
+
+        // Delay entre batches para evitar rate limit
+        await new Promise((r) => setTimeout(r, 1500));
       }
+
+      showToast(`${totalSuccess} descrições reescritas${totalErrors > 0 ? `, ${totalErrors} falhas` : ""}`);
     } catch (e: any) {
       showToast(e.message, "error");
     } finally {
       setEnriching(false);
+      loadProducts();
+      loadCounts();
     }
+  };
+
+  const handleCancelEnrich = () => {
+    cancelRef.current = true;
+    setCancelEnrich(true);
   };
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -235,8 +273,8 @@ export default function DescriptionReviewPanel() {
         </div>
 
         {/* Actions bar */}
-        <div className="flex gap-2">
-          <div className="relative flex-1">
+        <div className="flex flex-wrap gap-2">
+          <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por SKU ou nome..."
@@ -248,14 +286,60 @@ export default function DescriptionReviewPanel() {
           <LoadingButton
             loading={enriching}
             loadingText="Reescrevendo..."
-            onClick={handleEnrich}
+            onClick={() => handleEnrich("10")}
             size="sm"
-            className="shrink-0"
+            variant="outline"
+            disabled={enriching}
           >
             <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-            Reescrever próximos 10
+            Próximos 10
           </LoadingButton>
+          <LoadingButton
+            loading={enriching}
+            loadingText="Reescrevendo..."
+            onClick={() => handleEnrich("100")}
+            size="sm"
+            variant="outline"
+            disabled={enriching}
+          >
+            <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+            Próximos 100
+          </LoadingButton>
+          <LoadingButton
+            loading={enriching}
+            loadingText="Reescrevendo..."
+            onClick={() => handleEnrich("all")}
+            size="sm"
+            disabled={enriching}
+          >
+            <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+            Reescrever todos
+          </LoadingButton>
+          {enriching && (
+            <Button onClick={handleCancelEnrich} variant="destructive" size="sm">
+              <XCircle className="h-3.5 w-3.5 mr-1" />
+              Cancelar
+            </Button>
+          )}
         </div>
+
+        {/* Progress bar */}
+        {enriching && enrichProgress && (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{enrichProgress.current} reescritas{enrichProgress.errors > 0 ? ` · ${enrichProgress.errors} erros` : ""}</span>
+              {enrichProgress.total > 0 && (
+                <span>{Math.round((enrichProgress.current / enrichProgress.total) * 100)}%</span>
+              )}
+            </div>
+            <div className="w-full h-2 rounded-full bg-secondary/50 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-300"
+                style={{ width: enrichProgress.total > 0 ? `${Math.min(100, (enrichProgress.current / enrichProgress.total) * 100)}%` : "0%" }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Content: list + editor */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
