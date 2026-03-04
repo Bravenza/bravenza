@@ -951,6 +951,9 @@ export default function CatalogSeedPage() {
                 </>
               )}
             </TabsContent>
+            <TabsContent value="droper" className="pt-3">
+              <SyncDroperImages />
+            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
