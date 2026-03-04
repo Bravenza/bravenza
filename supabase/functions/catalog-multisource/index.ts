@@ -300,7 +300,7 @@ const stockX: SourceDef = {
   name: "StockX",
   hasSearch: true,
   hasDescription: true,
-  searchPath: (q, page) => `/stockx/sneakers?query=${encodeURIComponent(q)}&limit=40&page=${page}&currency=USD&country=US`,
+  searchPath: (q, page) => `/getproducts?keywords=${encodeURIComponent(q)}&limit=40&page=${page}`,
   descriptionPath: (urlKey) => `/stockx-description?urlKey=${encodeURIComponent(urlKey)}`,
   extractItems: (data) => {
     if (Array.isArray(data)) return data;
