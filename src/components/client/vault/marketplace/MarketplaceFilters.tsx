@@ -52,7 +52,7 @@ interface MarketplaceFiltersProps {
   onBrandSelected?: (brand: string | undefined) => void;
 }
 
-export function MarketplaceFilters({ filters, onFiltersChange, onSearch }: MarketplaceFiltersProps) {
+export function MarketplaceFilters({ filters, onFiltersChange, onSearch, availableModels = [], onBrandSelected }: MarketplaceFiltersProps) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [priceRange, setPriceRange] = useState([filters.priceMin || 0, filters.priceMax || 5000]);
 
