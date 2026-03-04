@@ -69,6 +69,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
   const fetchProducts = useCallback(async (filters?: {
     search?: string;
     brand?: string;
+    model?: string;
     category?: string;
     page?: number;
   }) => {
@@ -78,6 +79,7 @@ export function useMarketplaceCatalog(clientCpf: string) {
       const params = new URLSearchParams({ action: "catalog-products" });
       if (filters?.search) params.set("search", filters.search);
       if (filters?.brand) params.set("brand", filters.brand);
+      if (filters?.model) params.set("model", filters.model);
       if (filters?.category) params.set("category", filters.category);
       if (filters?.page) params.set("page", String(filters.page));
       const res = await fetch(`${BASE}?${params}`, { headers: h });
@@ -91,6 +93,18 @@ export function useMarketplaceCatalog(clientCpf: string) {
       setIsLoading(false);
     }
   }, [toast]);
+
+  const fetchModels = useCallback(async (brand: string): Promise<string[]> => {
+    try {
+      const h = await getMarketplaceHeaders();
+      const params = new URLSearchParams({ action: "catalog-models", brand });
+      const res = await fetch(`${BASE}?${params}`, { headers: h });
+      const data = await res.json();
+      return data.models || [];
+    } catch {
+      return [];
+    }
+  }, []);
 
   const fetchProduct = useCallback(async (slug: string) => {
     setIsLoading(true);
