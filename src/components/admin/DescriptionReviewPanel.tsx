@@ -324,7 +324,7 @@ export default function DescriptionReviewPanel() {
             />
           </div>
           {/* Reescrever — só aparece em pending/all/error */}
-          {(filterStatus === "pending" || filterStatus === "all" || filterStatus === "error" || filterStatus === "skipped") && (
+          {(filterStatus === "pending" || filterStatus === "all" || filterStatus === "error" || filterStatus === "skipped" || filterStatus === "translated") && (
             <>
               <LoadingButton loading={enriching} loadingText="Reescrevendo..." onClick={() => handleEnrich("10")} size="sm" variant="outline" disabled={enriching}>
                 <Sparkles className="h-3.5 w-3.5 mr-1.5" />Próximos 10
