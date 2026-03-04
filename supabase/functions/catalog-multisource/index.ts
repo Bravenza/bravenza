@@ -822,7 +822,9 @@ Deno.serve(async (req) => {
 
         const { data: ins, error: insErr } = await sb.from("sneaker_models").insert({
           brand_id: brandId, silhouette_id: silhouetteId, sku: norm.sku,
-          colorway: norm.colorway, release_date: parsedDate, msrp: norm.msrp,
+          colorway: norm.colorway, release_date: parsedDate,
+          msrp_usd: norm.msrp, msrp: convertMsrp(norm.msrp, exchangeRate),
+          msrp_exchange_rate: norm.msrp ? exchangeRate : null,
           model_name_en: norm.name, description_en: norm.description,
           placeholder_image_url: PLACEHOLDER, image_status: norm.imageUrl ? "external" : "placeholder",
           needs_official_image: true, source_primary: src.id, translation_status: "pending",
