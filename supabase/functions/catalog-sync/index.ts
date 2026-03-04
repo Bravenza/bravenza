@@ -37,27 +37,40 @@ Deno.serve(async (req) => {
       const { count: totalModels } = await sb.from("sneaker_models").select("id", { count: "exact", head: true });
       const { count: totalProducts } = await sb.from("marketplace_products").select("id", { count: "exact", head: true });
 
-      // Find models that already have a matching SKU in marketplace_products (paginate to avoid 1000 row limit)
-      const skuSet = new Set<string>();
-      let skuOffset = 0;
-      const SKU_PAGE = 1000;
+      const PAGE = 1000;
+      // Get ALL model SKUs (paginated)
+      const modelSkus = new Set<string>();
+      let mOff = 0;
       while (true) {
-        const { data: skuPage } = await sb.from("marketplace_products").select("sku").not("sku", "is", null).range(skuOffset, skuOffset + SKU_PAGE - 1);
-        if (!skuPage || skuPage.length === 0) break;
-        for (const p of skuPage) if (p.sku) skuSet.add(p.sku);
-        if (skuPage.length < SKU_PAGE) break;
-        skuOffset += SKU_PAGE;
+        const { data: pg } = await sb.from("sneaker_models").select("sku").not("sku", "is", null).range(mOff, mOff + PAGE - 1);
+        if (!pg || pg.length === 0) break;
+        for (const m of pg) if (m.sku) modelSkus.add(m.sku);
+        if (pg.length < PAGE) break;
+        mOff += PAGE;
+      }
+      // Get ALL marketplace SKUs (paginated)
+      const mpSkus = new Set<string>();
+      let pOff = 0;
+      while (true) {
+        const { data: pg } = await sb.from("marketplace_products").select("sku").not("sku", "is", null).range(pOff, pOff + PAGE - 1);
+        if (!pg || pg.length === 0) break;
+        for (const p of pg) if (p.sku) mpSkus.add(p.sku);
+        if (pg.length < PAGE) break;
+        pOff += PAGE;
+      }
+      let alreadySynced = 0, pendingSync = 0;
+      for (const sku of modelSkus) {
+        if (mpSkus.has(sku)) alreadySynced++; else pendingSync++;
       }
 
-      // Count products with outdated images (1 or fewer images in marketplace but more in sneaker_images)
       const { count: outdatedImages } = await sb.rpc("count_outdated_images").maybeSingle() || { count: 0 };
 
       return json({
         ok: true,
         total_sneaker_models: totalModels || 0,
         total_marketplace_products: totalProducts || 0,
-        existing_skus_in_marketplace: skuSet.size,
-        estimated_to_sync: (totalModels || 0) - skuSet.size,
+        existing_skus_in_marketplace: alreadySynced,
+        estimated_to_sync: pendingSync,
         outdated_images: outdatedImages || 0,
       });
     }
