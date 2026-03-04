@@ -96,6 +96,7 @@ export default function CatalogSeedPage() {
     cancelRef.current = false;
     let totalSynced = 0;
     let totalSkipped = 0;
+    let totalUpdated = 0;
     let totalErrors = 0;
     let offset = 0;
     const batchSize = 100;
@@ -109,13 +110,14 @@ export default function CatalogSeedPage() {
         }
         totalSynced += data.synced || 0;
         totalSkipped += data.skipped || 0;
+        totalUpdated += data.updated || 0;
         totalErrors += data.errors || 0;
         offset = data.next_offset;
         setSyncProgress(Math.round((offset / (syncPreview?.total_sneaker_models || 1011)) * 100));
-        setSyncResult({ synced: totalSynced, skipped: totalSkipped, errors: totalErrors });
+        setSyncResult({ synced: totalSynced, skipped: totalSkipped, updated: totalUpdated, errors: totalErrors });
 
         if (!data.has_more) {
-          toast({ title: `✓ Sync completo: ${totalSynced} produtos sincronizados` });
+          toast({ title: `✓ Sync completo: ${totalSynced} novos, ${totalUpdated} imagens atualizadas` });
           break;
         }
         await new Promise(r => setTimeout(r, 300));
