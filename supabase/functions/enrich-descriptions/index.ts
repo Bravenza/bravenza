@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
     const { count: remaining } = await sb
       .from("sneaker_models")
       .select("id", { count: "exact", head: true })
-      .eq("translation_status", "pending");
+      .in("translation_status", ["pending", "skipped"]);
 
     return new Response(
       JSON.stringify({
