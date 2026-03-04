@@ -532,7 +532,7 @@ export default function CatalogSeedPage() {
               <Eye className="h-4 w-4 mr-2" />
               Ver pendentes
             </Button>
-            <Button onClick={handleSync} disabled={syncing || !syncPreview || syncPreview.estimated_to_sync === 0}>
+            <Button onClick={handleSync} disabled={syncing || !syncPreview}>
               {syncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArrowRightLeft className="h-4 w-4 mr-2" />}
               {syncing ? "Sincronizando..." : "Sincronizar agora"}
             </Button>
@@ -544,11 +544,12 @@ export default function CatalogSeedPage() {
           </div>
 
           {syncPreview && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               <StatCard label="No Catálogo" value={syncPreview.total_sneaker_models} />
               <StatCard label="No Marketplace" value={syncPreview.total_marketplace_products} />
               <StatCard label="SKUs já sync" value={syncPreview.existing_skus_in_marketplace} />
-              <StatCard label="A sincronizar" value={syncPreview.estimated_to_sync} />
+              <StatCard label="Novos a sync" value={syncPreview.estimated_to_sync} />
+              <StatCard label="Imagens a atualizar" value={syncPreview.outdated_images ?? "—"} />
             </div>
           )}
 
@@ -565,8 +566,9 @@ export default function CatalogSeedPage() {
           {syncResult && !syncing && (
             <div className="p-4 bg-muted/50 rounded-lg space-y-2">
               <p className="text-sm font-medium">✓ Sync concluído</p>
-              <div className="grid grid-cols-3 gap-3">
-                <StatCard label="Sincronizados" value={syncResult.synced} />
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <StatCard label="Novos" value={syncResult.synced} />
+                <StatCard label="Imagens atualizadas" value={syncResult.updated || 0} />
                 <StatCard label="Já existiam" value={syncResult.skipped} />
                 <StatCard label="Erros" value={syncResult.errors} />
               </div>
