@@ -274,7 +274,7 @@ export default function AppLayout() {
         </header>
 
         {/* ===== MAIN CONTENT ===== */}
-        <main className="flex-1 min-w-0">
+        <main className="flex-1 min-w-0" style={{ paddingTop: "calc(64px + env(safe-area-inset-top, 0px))" }}>
           <Outlet context={{ cpf: profile?.cpf, profile }} />
         </main>
 
