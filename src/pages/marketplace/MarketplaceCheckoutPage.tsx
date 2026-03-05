@@ -332,6 +332,7 @@ function MarketplaceCheckoutPageInner() {
       }
 
       setOrderCodes(payData.order_codes || createdOrders.map(o => o.order_code));
+      setPaymentStatus(payData.status);
 
       await Promise.allSettled(createdOrders.map(co => removeFromCart(co.item.offer_id)));
 
