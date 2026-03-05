@@ -156,7 +156,7 @@ export function useMarketplaceListings(cpf: string | null) {
       try {
         const data = await marketplaceRequest(cpf, "listing-offers", "GET", undefined, { listing_id: listingId });
         return data.offers || [];
-      } catch (err: any) {
+      } catch (err) {
         console.error("Fetch offers error:", err);
         return [];
       }
