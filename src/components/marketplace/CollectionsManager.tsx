@@ -208,7 +208,7 @@ export function CollectionsManager({ clientCpf, myListings }: CollectionsManager
                             {previewListings.map(l => (
                               <div key={l.id} className="w-8 h-8 rounded-md bg-muted/50 overflow-hidden">
                                 {l.photos?.[0] ? (
-                                  <img src={l.photos[0]} alt="" className="w-full h-full object-cover" />
+                                  <img src={l.photos[0]} alt="" className="w-full h-full object-cover" loading="lazy" />
                                 ) : (
                                   <span className="text-xs flex items-center justify-center h-full">👟</span>
                                 )}
