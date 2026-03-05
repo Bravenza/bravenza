@@ -6,6 +6,7 @@ import {
   ArrowRight, FileText, RefreshCw, TrendingUp
 } from "lucide-react";
 import { lazy, Suspense } from "react";
+import { usePrefetch } from "@/hooks/useLazySection";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -137,7 +138,13 @@ export default function AppLayout() {
   const { profile, signOut, isVaultMember } = useClientSession();
   const isMobile = useIsMobile();
   const cpf = profile?.cpf || null;
-  
+  const { prefetch } = usePrefetch();
+
+  const prefetchableRoutes = new Set(["/app", "/app/pedidos", "/app/loja", "/app/closet"]);
+  const handleTabPrefetch = (path: string) => {
+    if (prefetchableRoutes.has(path)) prefetch(path);
+  };
+
 
   // Prefetch vault data for members so navigation feels instant
   useVaultPrefetch(cpf, isVaultMember);
@@ -320,6 +327,8 @@ export default function AppLayout() {
 
                   return (
                     <button
+                      onMouseEnter={() => handleTabPrefetch(tab.path)}
+                      onTouchStart={() => handleTabPrefetch(tab.path)}
                       key={tab.path}
                       onClick={() => {
                         if (tab.isMore) {
