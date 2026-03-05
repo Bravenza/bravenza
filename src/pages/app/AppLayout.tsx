@@ -38,7 +38,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { path: "/app", label: "Explorar", mobileLabel: "Explorar", icon: Compass, group: "main" },
-  { path: "/app/pedidos", label: "Pedidos", mobileLabel: "Pedidos", icon: Package, group: "main" },
+  { path: "/app/pedidos", label: "Pedidos", mobileLabel: "Pedidos", icon: ShoppingBag, group: "main" },
   { path: "/app/closet", label: "Meu Closet", mobileLabel: "Closet", icon: Box, group: "main" },
   { path: "/app/loja", label: "Minha Loja", mobileLabel: "Loja", icon: Store, group: "main" },
   { path: "/app/favoritos", label: "Favoritos", mobileLabel: "Favoritos", icon: Heart, group: "more" },
