@@ -109,7 +109,7 @@ export default function SyncCatalogoDroper() {
     shouldStop.current = false;
     setRunning(true); setPaused(false); setDone(false);
     setLogs([]); setErrors([]); setLastSynced([]);
-    setTotals({ success: 0, failed: 0, notFound: 0, batches: 0 });
+    setTotals({ inserted: 0, updated: 0, duplicates: 0, failed: 0, notFound: 0, batches: 0 });
 
     let page = currentPage;
     let batchCount = 0;
