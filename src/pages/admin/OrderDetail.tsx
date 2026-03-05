@@ -175,10 +175,10 @@ const OrderDetail = () => {
         title: "Salvo!",
         description: "Pedido atualizado com sucesso.",
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível salvar.",
+        description: error instanceof Error ? error.message : "Não foi possível salvar.",
         variant: "destructive",
       });
     } finally {
