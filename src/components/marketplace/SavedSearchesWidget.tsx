@@ -54,8 +54,8 @@ export function SavedSearchesWidget({ cpf, currentFilters, onApplySearch, classN
       setSaveName("");
       setOpen(false);
       fetchSearches();
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao salvar busca");
     }
   };
 
