@@ -63,9 +63,6 @@ verify_jwt = false
 [functions.verify-authenticity]
 verify_jwt = false
 
-[functions.mkv2-hub]
-verify_jwt = false
-
 [functions.mkv2-offers]
 verify_jwt = false
 
