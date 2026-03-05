@@ -37,11 +37,11 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
   "wallet-balance": "mkv2-orders", "wallet-transactions": "mkv2-orders",
   "seller-balance": "mkv2-wallet", "request-payout": "mkv2-wallet",
   "pix-accounts": "mkv2-wallet", "save-pix": "mkv2-wallet", "delete-pix": "mkv2-wallet",
-  "checkout": "mk-checkout",
+  "checkout": "mkv2-checkout",
 
-  // mk-subscription: Seller subscription management
-  "subscription-status": "mk-subscription", "subscription-create": "mk-subscription",
-  "subscription-cancel": "mk-subscription",
+  // mkv2-subscription: Seller subscription management
+  "subscription-status": "mkv2-subscription", "subscription-create": "mkv2-subscription",
+  "subscription-cancel": "mkv2-subscription",
 
   // mkv2-order-ops: Status Updates, Admin Orders, Disputes, Cancel
   "update-order-status": "mkv2-order-ops", "admin-orders": "mkv2-order-ops",
