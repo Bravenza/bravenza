@@ -41,11 +41,13 @@ interface DroperProduct {
 }
 
 interface SyncResult {
-  success: number;
+  inserted: number;
+  updated: number;
   failed: number;
   notFound: number;
+  skippedDuplicates: number;
   errors: string[];
-  details: { sku: string; images: number }[];
+  details: { sku: string; images: number; action: "inserted" | "updated" | "duplicate" }[];
 }
 
 // ─── Cache de brands e silhouettes ────────────────────────────────────────────
