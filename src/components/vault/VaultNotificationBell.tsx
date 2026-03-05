@@ -65,15 +65,15 @@ export function VaultNotificationBell({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative text-zinc-400 hover:text-white">
-          <Bell className="h-5 w-5" />
+        <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full hover:bg-secondary/60 transition-colors active:scale-95">
+          <Bell className="h-4 w-4" />
           <AnimatePresence>
             {unreadCount > 0 && (
               <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 exit={{ scale: 0 }}
-                className="absolute -top-0.5 -right-0.5 h-5 w-5 flex items-center justify-center rounded-full bg-amber-500 text-black text-xs font-bold"
+                className="absolute -top-0.5 -right-0.5 h-[18px] min-w-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shadow-[0_0_8px_hsl(var(--primary)/0.5)]"
               >
                 {unreadCount > 9 ? "9+" : unreadCount}
               </motion.span>
@@ -82,17 +82,17 @@ export function VaultNotificationBell({
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-80 p-0 bg-zinc-900 border-zinc-800" 
+        className="w-80 p-0 bg-popover/95 backdrop-blur-xl border border-border/50 shadow-2xl shadow-black/15 rounded-xl" 
         align="end"
         sideOffset={8}
       >
-        <div className="flex items-center justify-between p-4 border-b border-zinc-800">
-          <h3 className="font-semibold text-white">Notificações</h3>
+        <div className="flex items-center justify-between p-4 border-b border-border/30">
+          <h3 className="font-semibold text-foreground">Notificações</h3>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs text-zinc-400 hover:text-white h-auto py-1"
+              className="text-xs text-muted-foreground hover:text-foreground h-auto py-1"
               onClick={() => onMarkAllAsRead()}
             >
               <Check className="h-3 w-3 mr-1" />
@@ -103,12 +103,12 @@ export function VaultNotificationBell({
 
         <ScrollArea className="h-[300px]">
           {notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-zinc-500">
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Bell className="h-8 w-8 mb-2 opacity-50" />
               <p className="text-sm">Nenhuma notificação</p>
             </div>
           ) : (
-            <div className="divide-y divide-zinc-800">
+            <div className="divide-y divide-border/30">
               {notifications.map((notification) => {
                 const Icon = notificationIcons[notification.type];
                 const colorClass = notificationColors[notification.type];
@@ -116,8 +116,8 @@ export function VaultNotificationBell({
 
                 const content = (
                   <div
-                    className={`p-4 hover:bg-zinc-800/50 transition cursor-pointer ${
-                      !notification.read ? "bg-zinc-800/30" : ""
+                    className={`p-4 hover:bg-secondary/60 transition cursor-pointer ${
+                      !notification.read ? "bg-secondary/30" : ""
                     }`}
                     onClick={() => {
                       if (!notification.read) {
@@ -134,17 +134,17 @@ export function VaultNotificationBell({
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <p className={`text-sm font-medium ${!notification.read ? "text-white" : "text-zinc-300"}`}>
+                          <p className={`text-sm font-medium ${!notification.read ? "text-foreground" : "text-muted-foreground"}`}>
                             {notification.title}
                           </p>
                           {!notification.read && (
-                            <div className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0 mt-1.5" />
+                            <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5" />
                           )}
                         </div>
-                        <p className="text-xs text-zinc-500 mt-0.5 line-clamp-2">
+                        <p className="text-xs text-muted-foreground/70 mt-0.5 line-clamp-2">
                           {notification.message}
                         </p>
-                        <p className="text-xs text-zinc-600 mt-1">
+                        <p className="text-xs text-muted-foreground/50 mt-1">
                           {formatDistanceToNow(new Date(notification.created_at), {
                             addSuffix: true,
                             locale: ptBR,
