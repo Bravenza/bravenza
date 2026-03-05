@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
 import { Search, SlidersHorizontal, X, ChevronDown, Heart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -54,7 +55,18 @@ interface MarketplaceFiltersProps {
 
 export function MarketplaceFilters({ filters, onFiltersChange, onSearch, availableModels = [], onBrandSelected }: MarketplaceFiltersProps) {
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [searchText, setSearchText] = useState(filters.search || "");
   const [priceRange, setPriceRange] = useState([filters.priceMin || 0, filters.priceMax || 5000]);
+
+  const debouncedSetSearch = useDebouncedCallback(
+    (value: string) => onFiltersChange({ ...filters, search: value || undefined }),
+    350
+  );
+
+  // Sync local searchText when filters.search changes externally
+  useEffect(() => {
+    setSearchText(filters.search || "");
+  }, [filters.search]);
 
   const activeFilterCount = [
     filters.condition,
@@ -91,8 +103,11 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch, availab
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por marca, modelo, cor..."
-            value={filters.search || ""}
-            onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
+            value={searchText}
+            onChange={(e) => {
+              setSearchText(e.target.value);
+              debouncedSetSearch(e.target.value);
+            }}
             onKeyDown={(e) => e.key === "Enter" && onSearch()}
             className="pl-9 bg-secondary/50 border-border/50 h-10"
           />
