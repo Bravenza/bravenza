@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from "react";
+import * as Sentry from "@sentry/react";
 import { AlertTriangle, RefreshCw, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
