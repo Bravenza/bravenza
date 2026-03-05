@@ -263,7 +263,7 @@ export default function CatalogSeedPage() {
         if (!data.has_more || data.enriched === 0) { toast({ title: `✓ ${totalEnriched} descrições enriquecidas` }); break; }
         await new Promise(r => setTimeout(r, 1000));
       }
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setEnriching(false); }
   };
 
