@@ -47,7 +47,7 @@ export function useMarketplaceListings(cpf: string | null) {
     if (!cpf) return;
     setIsLoading(true);
     try {
-      const data = await marketplaceRequest(cpf, "my-listings");
+      const data = await fetchWithRetry(() => marketplaceRequest(cpf, "my-listings"));
       setMyListings(data.listings || []);
       setSeller(data.seller || null);
     } catch (err) {
