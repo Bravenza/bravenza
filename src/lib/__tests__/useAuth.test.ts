@@ -85,10 +85,9 @@ describe("buildSignUpRedirectUrl", () => {
     );
   });
 
-  it("does not double-slash", () => {
+  it("does not produce double trailing slash", () => {
     const url = buildSignUpRedirectUrl("https://example.com");
-    expect(url).not.toContain("//");
-    // Actually origin never ends with / so this is fine
-    expect(url.endsWith("/")).toBe(true);
+    expect(url).toBe("https://example.com/");
+    expect(url.endsWith("//")).toBe(false);
   });
 });
