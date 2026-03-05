@@ -187,7 +187,7 @@ export function CollectionsManager({ clientCpf, myListings }: CollectionsManager
                         {/* Cover image or placeholder */}
                         <div className="w-16 h-16 rounded-xl bg-muted/30 flex items-center justify-center shrink-0 overflow-hidden">
                           {col.cover_image ? (
-                            <img src={col.cover_image} alt="" className="w-full h-full object-cover" />
+                            <img src={col.cover_image} alt="" className="w-full h-full object-cover" loading="lazy" />
                           ) : (
                             <Layout className="h-6 w-6 text-muted-foreground/30" />
                           )}
