@@ -97,10 +97,10 @@ export function MarketplaceHeader({ profile, signOut }: MarketplaceHeaderProps) 
 
                 {/* Right actions */}
                 <div className="flex items-center gap-2 ml-auto md:ml-0 shrink-0">
-                  <Button variant="ghost" size="icon" className="md:hidden h-9 w-9 rounded-full" onClick={() => setSearchOpen(!searchOpen)} aria-label="Buscar">
+                  <Button variant="ghost" size="icon" className="md:hidden h-9 w-9 rounded-full hover:bg-secondary/60 transition-colors active:scale-95" onClick={() => setSearchOpen(!searchOpen)} aria-label="Buscar">
                     <Search className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-secondary/60 transition-colors active:scale-95" asChild>
                     <Link to="/app/favoritos" aria-label="Favoritos">
                       <Heart className="h-4 w-4" />
                     </Link>
