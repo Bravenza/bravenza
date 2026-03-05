@@ -11,9 +11,6 @@ if (import.meta.env.PROD && sentryDsn) {
     dsn: sentryDsn,
     integrations: [
       Sentry.browserTracingIntegration(),
-      Sentry.reactRouterV6BrowserTracingIntegration({
-        useEffect: undefined as any, // will use built-in
-      }),
     ],
     tracesSampleRate: 0.2,
     environment: "production",
