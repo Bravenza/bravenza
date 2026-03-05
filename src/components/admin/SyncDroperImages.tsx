@@ -465,7 +465,7 @@ export default function SyncCatalogoDroper() {
             <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
             <div>
               <p className="text-emerald-800 font-semibold">Sincronização completa!</p>
-              <p className="text-emerald-600 text-sm">{totals.success} produtos importados da droper.app com imagens, descrições e ficha técnica.</p>
+              <p className="text-emerald-600 text-sm">{totals.inserted} novos · {totals.updated} atualizados · {totals.duplicates} duplicados ignorados</p>
             </div>
           </CardContent>
         </Card>
