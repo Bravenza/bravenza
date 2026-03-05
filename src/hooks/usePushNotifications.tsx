@@ -12,7 +12,7 @@ async function registerPushServiceWorker(): Promise<ServiceWorkerRegistration | 
   if (!("serviceWorker" in navigator)) return null;
   try {
     const reg = await navigator.serviceWorker.register("/sw-push.js", { scope: "/" });
-    console.log("[Push] SW registered:", reg.scope);
+    logger.log("[Push] SW registered:", reg.scope);
     return reg;
   } catch (e) {
     console.error("[Push] SW registration failed:", e);

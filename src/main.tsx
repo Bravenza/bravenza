@@ -8,7 +8,7 @@ const VERSION_KEY = "bravenza-app-version";
 // Version-gated cleanup — only runs when the app version changes
 const storedVersion = localStorage.getItem(VERSION_KEY);
 if (storedVersion !== APP_VERSION) {
-  console.log(`[BRAVENZA] Upgrading ${storedVersion} → ${APP_VERSION}`);
+  logger.log(`[BRAVENZA] Upgrading ${storedVersion} → ${APP_VERSION}`);
   localStorage.setItem(VERSION_KEY, APP_VERSION);
 
   // Unregister stale service workers on upgrade

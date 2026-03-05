@@ -68,7 +68,7 @@ export function useSuccessSound() {
       createSuccessSound(audioContext);
     } catch (error) {
       // Silently fail if audio is not supported
-      console.log("Audio not supported:", error);
+      logger.log("Audio not supported:", error);
     }
   }, []);
 

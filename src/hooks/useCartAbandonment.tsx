@@ -57,7 +57,7 @@ export function useCartAbandonment(cpf: string | null, cartItems: CartItem[]) {
       await supabase.functions.invoke("cart-recovery", {
         body: { action: "clear", cpf },
       });
-      console.log("[CartAbandonment] Cleared abandonment record");
+      logger.log("[CartAbandonment] Cleared abandonment record");
     } catch (err) {
       console.error("[CartAbandonment] Failed to clear:", err);
     }
