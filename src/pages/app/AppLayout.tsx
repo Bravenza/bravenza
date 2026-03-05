@@ -6,6 +6,7 @@ import {
   ArrowRight, FileText, RefreshCw, TrendingUp
 } from "lucide-react";
 import { lazy, Suspense } from "react";
+import { usePrefetch } from "@/hooks/useLazySection";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
