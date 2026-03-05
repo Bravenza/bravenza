@@ -120,8 +120,8 @@ export function useMarketplaceCatalog(clientCpf: string) {
       setOffers(data.offers || []);
       setAllOffers(data.offers || []);
       return data;
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
       return null;
     } finally {
       setIsLoading(false);
