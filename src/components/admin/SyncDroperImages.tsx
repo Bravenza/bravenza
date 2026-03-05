@@ -39,7 +39,9 @@ interface LogEntry {
 }
 
 interface Totals {
-  success: number;
+  inserted: number;
+  updated: number;
+  duplicates: number;
   failed: number;
   notFound: number;
   batches: number;
