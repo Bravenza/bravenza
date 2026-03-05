@@ -245,7 +245,7 @@ export default function AppLayout() {
                             Meus dados
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigate("/app/pedidos")} className="cursor-pointer px-3 py-2 rounded-md text-[13px] gap-2.5">
-                            <Package className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+                            <ShoppingBag className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
                             Compras
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigate("/app/favoritos")} className="cursor-pointer px-3 py-2 rounded-md text-[13px] gap-2.5">
