@@ -1,4 +1,6 @@
-import { memo, useState, useCallback, useEffect } from "react";
+import { memo, useState, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { STALE, GC_TIME } from "@/lib/query-config";
 import { motion } from "framer-motion";
 import { HelpCircle, Search, Users, ShoppingBag, Store } from "lucide-react";
 import {
