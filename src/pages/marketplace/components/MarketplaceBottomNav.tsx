@@ -21,11 +21,13 @@ export function MarketplaceBottomNav() {
               aria-current={isActive ? "page" : undefined}
               aria-label={item.label}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 py-2.5 px-2 min-h-[52px] min-w-[52px] text-[10px] font-medium transition-colors active:scale-95",
-                isActive ? "text-primary" : "text-muted-foreground active:text-foreground"
+                "flex flex-col items-center justify-center gap-0.5 py-2 px-3 min-h-[52px] min-w-[52px] rounded-xl text-[10px] font-medium transition-all duration-200 active:scale-95",
+                isActive
+                  ? "text-primary bg-primary/10"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/60 active:bg-secondary/80"
               )}
             >
-              <Icon className={cn("h-5 w-5 mb-0.5", isActive && "drop-shadow-[0_0_6px_hsl(var(--primary)/0.4)]")} />
+              <Icon className={cn("h-5 w-5 mb-0.5 transition-all duration-200", isActive && "drop-shadow-[0_0_6px_hsl(var(--primary)/0.4)]")} />
               <span>{item.mobileLabel}</span>
             </Link>
           );
