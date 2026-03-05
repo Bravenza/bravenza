@@ -192,7 +192,7 @@ export default function CatalogSeedPage() {
         if (!data.has_more) { toast({ title: `✓ ${totalSynced} novos, ${totalUpdated} atualizados` }); break; }
         await new Promise(r => setTimeout(r, 300));
       }
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setSyncing(false); handleSyncPreview(); }
   };
 
