@@ -203,7 +203,7 @@ export default function CatalogSeedPage() {
       const data = await callApi("catalog-seed-500", { mode: "test" });
       setTestResult(data); setConnectorStatus(data.ok ? "on" : "off");
       toast({ title: data.ok ? "Conexão OK ✓" : "Conexão falhou", variant: data.ok ? "default" : "destructive" });
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setTesting(false); }
   };
 
