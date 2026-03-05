@@ -75,7 +75,7 @@ async function fetchDropsPage(
     page: 0,
     pageDrops: page,
     precoMinimo: 10,
-    marcas: marca ? [marca] : [],
+    marcas: [],
     tamanhos: [],
     cores: [],
     marca: marca ?? null,
