@@ -16,14 +16,20 @@ if(cpf==="visitor")return j({error:"Auth required"},401);
 try{
 if(mt==="POST"&&a==="create-order"){
   const b=await req.json();let li:any=null;
-  const{data:dl}=await sb.from("vault_marketplace_listings").select(`*,seller:vault_seller_profiles!inner(id,current_fee_percent,member:vault_members!inner(client_cpf,client_name))`).eq("id",b.listing_id).eq("status","active").maybeSingle();
-  if(dl)li=dl;else{const{data:of2}=await sb.from("marketplace_offers").select(`*,seller:vault_seller_profiles!inner(id,current_fee_percent,member:vault_members!inner(client_cpf,client_name))`).eq("id",b.listing_id).eq("status","active").maybeSingle();if(of2){if(of2.listing_id){const{data:lk}=await sb.from("vault_marketplace_listings").select(`*,seller:vault_seller_profiles!inner(id,current_fee_percent,member:vault_members!inner(client_cpf,client_name))`).eq("id",of2.listing_id).maybeSingle();if(lk)li=lk;}if(!li){const nm=of2.shipping_mode==="seller_ships"?"direct":of2.shipping_mode==="hub"?"bravenza":of2.shipping_mode||"direct";li={id:of2.id,title:of2.description||"Sneaker",price:of2.price,shipping_mode:nm,shipping_cost_estimate:of2.shipping_cost_estimate||0,seller:of2.seller,_is_offer:true};}}}
+  // Atomic reserve for vault_marketplace_listings
+  const{data:dl}=await sb.from("vault_marketplace_listings").update({status:"reserved"}).eq("id",b.listing_id).eq("status","active").select(`*,seller:vault_seller_profiles!inner(id,current_fee_percent,member:vault_members!inner(client_cpf,client_name))`).maybeSingle();
+  if(dl)li=dl;else{
+    // Atomic reserve for marketplace_offers
+    const{data:of2}=await sb.from("marketplace_offers").update({status:"reserved"}).eq("id",b.listing_id).eq("status","active").select(`*,seller:vault_seller_profiles!inner(id,current_fee_percent,member:vault_members!inner(client_cpf,client_name))`).maybeSingle();
+    if(of2){if(of2.listing_id){const{data:lk}=await sb.from("vault_marketplace_listings").select(`*,seller:vault_seller_profiles!inner(id,current_fee_percent,member:vault_members!inner(client_cpf,client_name))`).eq("id",of2.listing_id).maybeSingle();if(lk)li=lk;}if(!li){const nm=of2.shipping_mode==="seller_ships"?"direct":of2.shipping_mode==="hub"?"bravenza":of2.shipping_mode||"direct";li={id:of2.id,title:of2.description||"Sneaker",price:of2.price,shipping_mode:nm,shipping_cost_estimate:of2.shipping_cost_estimate||0,seller:of2.seller,_is_offer:true};}}}
   if(!li)throw new Error("Anúncio não encontrado ou já vendido");if(li.seller?.member?.client_cpf===cpf)throw new Error("Não pode comprar próprio anúncio");
   const fp=li.seller?.current_fee_percent||14,fa=Math.round(li.price*fp/100*100)/100,sp=Math.round((li.price-fa)*100)/100;
   const oc=gc(),sc2=b.shipping_cost||li.shipping_cost_estimate||0,ra=li.price>=2000||b.requires_authentication===true,af=ra&&li.price<2000?(b.authentication_fee||49.90):0;
-  const{data:od,error}=await sb.from("vault_marketplace_orders").insert({order_code:oc,listing_id:li._is_offer?null:li.id,buyer_cpf:cpf,buyer_name:b.buyer_name,seller_id:li.seller.id,sale_price:li.price,fee_percent:fp,fee_amount:fa,seller_payout:sp,shipping_mode:ra?"bravenza":(li.shipping_mode||"direct"),shipping_cost:sc2,status:"pending_payment",requires_authentication:ra,authentication_requested:b.requires_authentication||false,authentication_fee:af}).select().single();if(error)throw error;
-  if(!li._is_offer)await sb.from("vault_marketplace_listings").update({status:"reserved"}).eq("id",li.id);
-  if(li._is_offer)await sb.from("marketplace_offers").update({status:"reserved"}).eq("id",b.listing_id);
+  const{data:od,error}=await sb.from("vault_marketplace_orders").insert({order_code:oc,listing_id:li._is_offer?null:li.id,buyer_cpf:cpf,buyer_name:b.buyer_name,seller_id:li.seller.id,sale_price:li.price,fee_percent:fp,fee_amount:fa,seller_payout:sp,shipping_mode:ra?"bravenza":(li.shipping_mode||"direct"),shipping_cost:sc2,status:"pending_payment",requires_authentication:ra,authentication_requested:b.requires_authentication||false,authentication_fee:af}).select().single();if(error){
+    // Rollback reservation on insert failure
+    if(!li._is_offer)await sb.from("vault_marketplace_listings").update({status:"active"}).eq("id",li.id);
+    else await sb.from("marketplace_offers").update({status:"active"}).eq("id",b.listing_id);
+    throw error;}
   const tn=li.title||"Sneaker";await nt(sb,"🛒 Nova venda!",`${b.buyer_name} comprou "${tn}".`,li.seller.member.client_cpf,od.id,"marketplace_order");
   await sb.from("marketplace_activity_feed").insert({event_type:"sale",title:`Venda: ${tn}`,description:`R$ ${li.price}`,listing_id:li._is_offer?null:li.id,seller_id:li.seller.id}).then(()=>{});
   const bi=await ge(sb,cpf);if(bi){em("mk_purchase_confirmed",{recipient_name:bi.name,recipient_email:bi.email,order_code:oc,product_name:tn,price:li.price,size:li.size||b.size,condition:li.condition,shipping_mode:li.shipping_mode||"direct"});if(bi.phone)wa("mk_purchase_confirmed",{recipient_phone:bi.phone,recipient_name:bi.name,order_code:oc,product_name:tn,price:li.price});}
