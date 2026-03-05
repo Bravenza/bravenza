@@ -107,8 +107,8 @@ export function CollectionsManager({ clientCpf, myListings }: CollectionsManager
         listing_ids: col.listing_ids, is_active: !col.is_active,
       });
       fetchCollections();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao atualizar");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar");
     }
   };
 

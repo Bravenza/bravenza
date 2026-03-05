@@ -167,7 +167,7 @@ const UsersPage = () => {
 
       setDeleteUserId(null);
       fetchUsers();
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erro",
         description: error.message || "Não foi possível remover admin.",

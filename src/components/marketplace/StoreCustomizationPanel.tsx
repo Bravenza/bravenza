@@ -113,8 +113,8 @@ export function StoreCustomizationPanel({ cpf }: StoreCustomizationPanelProps) {
         bio: bio || null,
       });
       toast.success("Loja personalizada com sucesso!");
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao salvar");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar");
     } finally {
       setSaving(false);
     }

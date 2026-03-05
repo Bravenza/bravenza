@@ -165,8 +165,8 @@ export default function MarketplaceOrdersPage() {
       setResolveOpen(false);
       fetchOrders();
       setDetailOpen(false);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: err instanceof Error ? err.message : "Erro desconhecido", variant: "destructive" });
     } finally {
       setActionLoading(false);
     }
