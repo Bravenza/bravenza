@@ -1,0 +1,467 @@
+// Marketplace Automated Notifications - Cron Job
+// Handles: watchlist alerts, shipping reminders, protection expiry, auto-payout
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+async function notify(sb: any, title: string, message: string, cpf: string, refId?: string, refType?: string) {
+  try {
+    await sb.from("notifications").insert({
+      title, message, target: "client", target_client_cpf: cpf,
+      type: "info", reference_id: refId || null, reference_type: refType || "marketplace",
+    });
+  } catch (e) { console.error("Notify error:", e); }
+}
+
+// Fire-and-forget email via send-marketplace-email edge function
+function sendEmail(type: string, data: Record<string, any>) {
+  try {
+    const baseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!baseUrl || !serviceKey) return;
+    fetch(`${baseUrl}/functions/v1/send-marketplace-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
+      body: JSON.stringify({ type, ...data }),
+    }).catch((e: any) => console.error("[mkv2-notifications] email error:", e));
+  } catch (_) {}
+}
+
+// Fire-and-forget WhatsApp via send-whatsapp edge function
+function sendWhatsApp(type: string, data: Record<string, any>) {
+  try {
+    const baseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!baseUrl || !serviceKey) return;
+    fetch(`${baseUrl}/functions/v1/send-whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
+      body: JSON.stringify({ message_type: type, ...data }),
+    }).catch((e: any) => console.error("[mkv2-notifications] whatsapp error:", e));
+  } catch (_) {}
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const sb = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  const cronStartedAt = new Date().toISOString();
+  let cronLogId: string | null = null;
+
+  try {
+    // Log execution start
+    const { data: logEntry } = await sb
+      .from("cron_execution_logs")
+      .insert({ job_name: "mkv2-notifications", started_at: cronStartedAt, status: "running" })
+      .select("id")
+      .single();
+    cronLogId = logEntry?.id || null;
+
+    const results: Record<string, unknown> = {};
+
+    // ===== 1. WATCHLIST ALERTS =====
+    // Check new offers matching watchlist entries
+    console.log("[mkv2-notifications] Checking watchlist alerts...");
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    
+    const { data: recentOffers } = await sb.from("marketplace_offers")
+      .select("id, product_id, size, price, created_at")
+      .eq("status", "active")
+      .gte("created_at", oneDayAgo);
+
+    let watchlistAlerts = 0;
+    for (const offer of (recentOffers || [])) {
+      // Find matching watchlist entries
+      const { data: watchers } = await sb.from("marketplace_watchlist")
+        .select("user_cpf, max_price, size")
+        .eq("product_id", offer.product_id)
+        .eq("is_active", true);
+
+      for (const w of (watchers || [])) {
+        // Check size match (empty = any size)
+        if (w.size && w.size !== offer.size) continue;
+        // Check price threshold
+        if (w.max_price && offer.price > w.max_price) continue;
+        
+        await notify(sb, "🔔 Novo anúncio na sua watchlist!",
+          `Uma oferta de R$ ${offer.price.toFixed(2)} foi publicada para um produto que você acompanha.`,
+          w.user_cpf, offer.product_id, "marketplace_watchlist");
+
+        // Send watchlist match email
+        const { data: product } = await sb.from("marketplace_products").select("brand, model").eq("id", offer.product_id).maybeSingle();
+        const { data: member } = await sb.from("vault_members").select("client_name, client_email").eq("client_cpf", w.user_cpf).maybeSingle();
+        if (member?.client_email) {
+          sendEmail("mk_watchlist_match", {
+            recipient_name: member.client_name,
+            recipient_email: member.client_email,
+            watchlist_product_name: product ? `${product.brand} ${product.model}` : "Produto desejado",
+            watchlist_price: offer.price,
+            watchlist_size: offer.size,
+          });
+        }
+        if (member?.client_phone) {
+          sendWhatsApp("mk_watchlist_match", {
+            recipient_phone: member.client_phone,
+            recipient_name: member.client_name,
+            watchlist_product_name: product ? `${product.brand} ${product.model}` : "Produto desejado",
+            watchlist_price: offer.price,
+            watchlist_size: offer.size,
+          });
+        }
+
+        watchlistAlerts++;
+      }
+    }
+    results.watchlist_alerts = watchlistAlerts;
+
+    // ===== 2. SHIPPING REMINDERS =====
+    // Remind sellers to ship within 3 days of payment
+    console.log("[mkv2-notifications] Checking shipping reminders...");
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    
+    const { data: lateShipments } = await sb.from("vault_marketplace_orders")
+      .select("id, order_code, seller_id, paid_at, shipping_mode")
+      .eq("status", "paid")
+      .lte("paid_at", threeDaysAgo);
+
+    let shippingReminders = 0;
+    for (const order of (lateShipments || [])) {
+      const { data: sl } = await sb.from("vault_seller_profiles")
+        .select("member:vault_members!inner(client_cpf)")
+        .eq("id", order.seller_id).single();
+      
+      if (sl?.member?.client_cpf) {
+        const dest = order.shipping_mode === "bravenza" ? "ao Hub Bravenza" : "ao comprador";
+        await notify(sb, "⚠️ Envio pendente!",
+          `Pedido ${order.order_code}: já se passaram 3+ dias desde o pagamento. Envie ${dest} o mais rápido possível.`,
+          sl.member.client_cpf, order.id, "marketplace_shipping");
+        // Email: shipping reminder
+        const { data: sellerMember } = await sb.from("vault_members").select("client_name, client_email, client_phone").eq("client_cpf", sl.member.client_cpf).maybeSingle();
+        if (sellerMember?.client_email) {
+          const daysDiff = Math.floor((Date.now() - new Date(order.paid_at).getTime()) / (1000 * 60 * 60 * 24));
+          sendEmail("mk_shipping_reminder", {
+            recipient_name: sellerMember.client_name,
+            recipient_email: sellerMember.client_email,
+            order_code: order.order_code,
+            shipping_mode: order.shipping_mode,
+            days_pending: daysDiff,
+          });
+          if (sellerMember.client_phone) {
+            sendWhatsApp("mk_shipping_reminder", {
+              recipient_phone: sellerMember.client_phone,
+              recipient_name: sellerMember.client_name,
+              order_code: order.order_code,
+              shipping_mode: order.shipping_mode,
+              days_pending: daysDiff,
+            });
+          }
+        }
+        shippingReminders++;
+      }
+    }
+    results.shipping_reminders = shippingReminders;
+
+    // ===== 3. PROTECTION EXPIRY → AUTO PAYOUT =====
+    // Mark delivered orders as payout_pending after protection expires
+    console.log("[mkv2-notifications] Checking protection expiry...");
+    const now = new Date();
+    
+    const { data: expiredProtection } = await sb.from("vault_marketplace_orders")
+      .select("id, order_code, seller_id, seller_payout, protection_ends_at, buyer_cpf")
+      .eq("status", "delivered")
+      .is("payout_released_at", null)
+      .is("dispute_status", null)
+      .not("protection_ends_at", "is", null);
+
+    let payoutEligible = 0;
+    for (const order of (expiredProtection || [])) {
+      if (!order.protection_ends_at || new Date(order.protection_ends_at) >= now) continue;
+      
+      // Mark as payout_pending
+      await sb.from("vault_marketplace_orders").update({
+        status: "payout_pending",
+      }).eq("id", order.id);
+
+      // Notify seller
+      const { data: sl } = await sb.from("vault_seller_profiles")
+        .select("member:vault_members!inner(client_cpf)")
+        .eq("id", order.seller_id).single();
+      
+      if (sl?.member?.client_cpf) {
+        await notify(sb, "💰 Pagamento liberado!",
+          `Pedido ${order.order_code} — R$ ${order.seller_payout.toFixed(2)} será transferido em breve.`,
+          sl.member.client_cpf, order.id, "marketplace_payout");
+      }
+
+      // Notify buyer that transaction is finalized
+      await notify(sb, "✅ Transação concluída",
+        `Pedido ${order.order_code} finalizado com sucesso. Obrigado pela compra!`,
+        order.buyer_cpf, order.id, "marketplace_order");
+
+      payoutEligible++;
+    }
+    results.payout_eligible = payoutEligible;
+
+    // ===== 4. PROTECTION EXPIRY WARNING =====
+    // Warn buyers 2 days before protection expires
+    console.log("[mkv2-notifications] Checking protection expiry warnings...");
+    const twoDaysFromNow = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+    const oneDayFromNow = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
+
+    const { data: expiringProtection } = await sb.from("vault_marketplace_orders")
+      .select("id, order_code, buyer_cpf, protection_ends_at")
+      .eq("status", "delivered")
+      .is("dispute_status", null);
+
+    let expiryWarnings = 0;
+    for (const order of (expiringProtection || [])) {
+      if (!order.protection_ends_at) continue;
+      const expDate = new Date(order.protection_ends_at);
+      // Notify if expiring within 1-2 days
+      if (expDate > oneDayFromNow && expDate <= twoDaysFromNow) {
+        await notify(sb, "🛡️ Proteção expirando",
+          `Pedido ${order.order_code}: sua janela de proteção expira em ${expDate.toLocaleDateString("pt-BR")}. Abra uma disputa se houver problemas.`,
+          order.buyer_cpf, order.id, "marketplace_protection");
+        // Email: protection expiring
+        const { data: buyerMember } = await sb.from("vault_members").select("client_name, client_email").eq("client_cpf", order.buyer_cpf).maybeSingle();
+        if (buyerMember?.client_email) {
+          sendEmail("mk_protection_expiring", {
+            recipient_name: buyerMember.client_name,
+            recipient_email: buyerMember.client_email,
+            order_code: order.order_code,
+            protection_expires_at: expDate.toLocaleDateString("pt-BR"),
+          });
+        }
+        if (buyerMember?.client_phone) {
+          sendWhatsApp("mk_protection_expiring", {
+            recipient_phone: buyerMember.client_phone,
+            recipient_name: buyerMember.client_name,
+            order_code: order.order_code,
+            protection_expires_at: expDate.toLocaleDateString("pt-BR"),
+          });
+        }
+        expiryWarnings++;
+      }
+    }
+    results.expiry_warnings = expiryWarnings;
+
+    // ===== 5. STALE LISTING REMINDERS =====
+    // Remind sellers with listings active for 14+ days with no views
+    console.log("[mkv2-notifications] Checking stale listings...");
+    const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+    
+    const { data: staleListings } = await sb.from("marketplace_offers")
+      .select("id, product_id, seller_id, price, size, created_at, views_count")
+      .eq("status", "active")
+      .lte("created_at", fourteenDaysAgo)
+      .lt("views_count", 5);
+
+    let staleReminders = 0;
+    for (const listing of (staleListings || [])) {
+      const { data: sl } = await sb.from("vault_seller_profiles")
+        .select("member_id")
+        .eq("id", listing.seller_id).maybeSingle();
+      if (!sl?.member_id) continue;
+      
+      const { data: member } = await sb.from("vault_members")
+        .select("client_cpf, client_name, client_email, client_phone")
+        .eq("id", sl.member_id).maybeSingle();
+      if (!member) continue;
+
+      await notify(sb, "📉 Anúncio com poucas visualizações",
+        `Seu anúncio de R$ ${listing.price.toFixed(2)} está ativo há 14+ dias com poucas views. Considere reduzir o preço.`,
+        member.client_cpf, listing.id, "marketplace_stale_listing");
+
+      const daysActive = Math.floor((Date.now() - new Date(listing.created_at).getTime()) / (1000 * 60 * 60 * 24));
+      if (member.client_email) {
+        sendEmail("mk_stale_listing", {
+          recipient_name: member.client_name,
+          recipient_email: member.client_email,
+          listing_price: listing.price,
+          listing_views: listing.views_count,
+          days_active: daysActive,
+        });
+      }
+      if (member.client_phone) {
+        sendWhatsApp("mk_stale_listing", {
+          recipient_phone: member.client_phone,
+          recipient_name: member.client_name,
+          listing_price: listing.price,
+          listing_views: listing.views_count,
+          days_active: daysActive,
+        });
+      }
+      staleReminders++;
+    }
+    results.stale_reminders = staleReminders;
+
+    // ===== 6. SUBSCRIPTION EXPIRY ALERTS =====
+    // Warn sellers 3 days before subscription expires
+    console.log("[mkv2-notifications] Checking subscription expiry...");
+    const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+    
+    const { data: expiringSubs } = await sb.from("marketplace_subscriptions")
+      .select("id, seller_id, plan_id, current_period_end, status")
+      .eq("status", "active")
+      .not("current_period_end", "is", null)
+      .lte("current_period_end", threeDaysFromNow);
+
+    let subAlerts = 0;
+    for (const sub of (expiringSubs || [])) {
+      if (!sub.current_period_end || new Date(sub.current_period_end) <= now) continue;
+      
+      const { data: sl } = await sb.from("vault_seller_profiles")
+        .select("member_id")
+        .eq("id", sub.seller_id).maybeSingle();
+      if (!sl?.member_id) continue;
+      
+      const { data: member } = await sb.from("vault_members")
+        .select("client_cpf, client_name, client_email, client_phone")
+        .eq("id", sl.member_id).maybeSingle();
+      if (!member) continue;
+
+      const expDate = new Date(sub.current_period_end).toLocaleDateString("pt-BR");
+      await notify(sb, "⏰ Plano expirando em breve",
+        `Seu plano ${sub.plan_id} expira em ${expDate}. Renove para manter seus benefícios!`,
+        member.client_cpf, sub.id, "marketplace_subscription");
+
+      if (member.client_email) {
+        sendEmail("mk_subscription_expiring", {
+          recipient_name: member.client_name,
+          recipient_email: member.client_email,
+          plan_name: sub.plan_id,
+          expires_at: expDate,
+        });
+      }
+      if (member.client_phone) {
+        sendWhatsApp("mk_subscription_expiring", {
+          recipient_phone: member.client_phone,
+          recipient_name: member.client_name,
+          plan_name: sub.plan_id,
+          expires_at: expDate,
+        });
+      }
+      subAlerts++;
+    }
+    results.subscription_alerts = subAlerts;
+
+    // ===== 7. RECORD SALE PRICES FOR ANALYTICS =====
+    console.log("[mkv2-notifications] Syncing completed sales for analytics...");
+    const { data: completedOrders } = await sb.from("vault_marketplace_orders")
+      .select("id, listing_id, sale_price, status")
+      .in("status", ["completed", "payout_released"])
+      .is("payout_released_at", null);
+
+    let salesRecorded = 0;
+    const productIds = new Set<string>();
+    
+    for (const order of (completedOrders || [])) {
+      if (!order.listing_id) continue;
+      const { data: listing } = await sb.from("vault_marketplace_listings")
+        .select("product_id").eq("id", order.listing_id).maybeSingle();
+      if (listing?.product_id) {
+        productIds.add(listing.product_id);
+      }
+    }
+
+    for (const pid of productIds) {
+      const { data: activeOffers } = await sb.from("marketplace_offers")
+        .select("price").eq("product_id", pid).eq("status", "active");
+      
+      if (activeOffers && activeOffers.length > 0) {
+        const lowest = Math.min(...activeOffers.map((o: any) => o.price));
+        await sb.from("marketplace_products").update({
+          lowest_price: lowest,
+          total_offers: activeOffers.length,
+        }).eq("id", pid);
+      } else {
+        await sb.from("marketplace_products").update({
+          lowest_price: null,
+          total_offers: 0,
+        }).eq("id", pid);
+      }
+      salesRecorded++;
+    }
+    results.products_updated = salesRecorded;
+
+    // ===== 8. AUTO REVIEW REQUEST (3 days after delivery) =====
+    console.log("[mkv2-notifications] Checking review requests...");
+    const threeDaysAgoReview = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    const fourDaysAgoReview = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: reviewOrders } = await sb.from("vault_marketplace_orders")
+      .select("id, order_code, buyer_cpf, delivered_at")
+      .eq("status", "delivered")
+      .is("buyer_rating", null)
+      .lte("delivered_at", threeDaysAgoReview)
+      .gte("delivered_at", fourDaysAgoReview);
+
+    let reviewRequests = 0;
+    for (const order of (reviewOrders || [])) {
+      const { data: buyerMember } = await sb.from("vault_members")
+        .select("client_name, client_email, client_phone")
+        .eq("client_cpf", order.buyer_cpf).maybeSingle();
+      if (!buyerMember) continue;
+
+      await notify(sb, "⭐ Avalie sua compra!",
+        `Pedido ${order.order_code} entregue! Como foi sua experiência?`,
+        order.buyer_cpf, order.id, "marketplace_review");
+
+      if (buyerMember.client_email) {
+        sendEmail("mk_review_request", {
+          recipient_name: buyerMember.client_name,
+          recipient_email: buyerMember.client_email,
+          order_code: order.order_code,
+        });
+      }
+      if (buyerMember.client_phone) {
+        sendWhatsApp("mk_review_request", {
+          recipient_phone: buyerMember.client_phone,
+          recipient_name: buyerMember.client_name,
+          order_code: order.order_code,
+        });
+      }
+      reviewRequests++;
+    }
+    results.review_requests = reviewRequests;
+
+    console.log("[mkv2-notifications] Done:", JSON.stringify(results));
+
+    if (cronLogId) {
+      await sb.from("cron_execution_logs").update({
+        status: "success",
+        finished_at: new Date().toISOString(),
+        duration_ms: Date.now() - new Date(cronStartedAt).getTime(),
+        result: results,
+      }).eq("id", cronLogId);
+    }
+
+    return new Response(JSON.stringify({ success: true, ...results }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (err: any) {
+    console.error("[mkv2-notifications] Error:", err);
+
+    if (cronLogId) {
+      await sb.from("cron_execution_logs").update({
+        status: "error",
+        finished_at: new Date().toISOString(),
+        duration_ms: Date.now() - new Date(cronStartedAt).getTime(),
+        error_message: err.message,
+      }).eq("id", cronLogId);
+    }
+
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
