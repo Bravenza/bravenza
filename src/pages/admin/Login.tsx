@@ -128,8 +128,8 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
       if (error) throw error;
       setResetSent(true);
       toast({ title: "Email enviado!", description: "Verifique sua caixa de entrada para redefinir a senha." });
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message || "Erro ao enviar email de recuperação.", variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: err instanceof Error ? err.message : "Erro ao enviar email de recuperação.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }

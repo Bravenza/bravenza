@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { getMarketplaceHeaders } from "@/hooks/marketplace/api";
+import { getErrorMessage } from "@/lib/error-utils";
 
 const BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-catalog`;
 const BASE_ENGAGE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-engage`;

@@ -63,8 +63,9 @@ export function MFAEnroll({ onEnrolled, onCancelled }: MFAEnrollProps) {
 
       toast.success("MFA ativado com sucesso!");
       onEnrolled();
-    } catch (err: any) {
-      setError(err.message === "Invalid TOTP code" ? "Código inválido. Tente novamente." : err.message);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro desconhecido";
+      setError(msg === "Invalid TOTP code" ? "Código inválido. Tente novamente." : msg);
     } finally {
       setIsVerifying(false);
     }
