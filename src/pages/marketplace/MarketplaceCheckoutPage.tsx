@@ -337,7 +337,7 @@ function MarketplaceCheckoutPageInner() {
     <div className="min-h-screen bg-secondary/30 flex flex-col">
       <CheckoutHeader />
 
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-6 pb-32">
+      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-6 pb-32 md:pb-8">
         <CheckoutStepper currentStep={step} />
 
         <div className="grid gap-6 lg:grid-cols-[1fr,340px]">
