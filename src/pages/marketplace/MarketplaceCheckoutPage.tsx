@@ -216,8 +216,8 @@ function MarketplaceCheckoutPageInner() {
         );
         setSelectedFreight(cheapest);
       }
-    } catch (err: any) {
-      setFreightError(err.message || "Erro ao calcular frete.");
+    } catch (err) {
+      setFreightError(err instanceof Error ? err.message : "Erro ao calcular frete.");
     } finally {
       setIsLoadingFreight(false);
     }
