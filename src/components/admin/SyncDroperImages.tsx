@@ -125,7 +125,7 @@ export default function SyncCatalogoDroper() {
         `${r.success} criados/atualizados · ${r.notFound} não encontrados · ${r.failed} falhas`
       );
 
-      if (data.reachedLimit) {
+      if (result.reachedLimit) {
         addLog("warning", `Limite de 100 páginas atingido para "${marcaFiltro || "sem filtro"}". Troque a marca e continue.`);
         setRunning(false);
         return;
