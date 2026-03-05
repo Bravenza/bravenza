@@ -324,11 +324,11 @@ export default function PaymentPage() {
         title: "Contrato assinado!",
         description: "Agora você pode prosseguir com o pagamento.",
       });
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error accepting contract:", err);
       toast({
         title: "Erro ao assinar contrato",
-        description: err.message || "Tente novamente.",
+        description: err instanceof Error ? err.message : "Tente novamente.",
         variant: "destructive",
       });
     } finally {

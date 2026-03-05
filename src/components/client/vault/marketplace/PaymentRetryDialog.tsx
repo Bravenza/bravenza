@@ -91,8 +91,8 @@ export function PaymentRetryDialog({ order, open, onOpenChange, onSuccess, switc
           onSuccess();
         }, 2500);
       }
-    } catch (err: any) {
-      setResult({ status: "error", error: err.message || "Erro inesperado" });
+    } catch (err) {
+      setResult({ status: "error", error: err instanceof Error ? err.message : "Erro inesperado" });
     } finally {
       setIsSubmitting(false);
     }

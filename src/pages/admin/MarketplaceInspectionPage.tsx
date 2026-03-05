@@ -520,8 +520,8 @@ export default function MarketplaceInspectionPage() {
                             }
                           }
                           toast({ title: "Fotos enviadas!" });
-                        } catch (err: any) {
-                          toast({ title: "Erro no upload", description: err.message, variant: "destructive" });
+                        } catch (err) {
+                          toast({ title: "Erro no upload", description: err instanceof Error ? err.message : "Erro ao enviar fotos", variant: "destructive" });
                         } finally {
                           setUploadingPhoto(false);
                           e.target.value = "";

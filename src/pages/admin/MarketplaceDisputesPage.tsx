@@ -134,8 +134,8 @@ export default function MarketplaceDisputesPage() {
       setResolveOpen(false);
       setDetailOpen(false);
       fetchDisputes();
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: err instanceof Error ? err.message : "Erro ao resolver disputa", variant: "destructive" });
     } finally {
       setActionLoading(false);
     }

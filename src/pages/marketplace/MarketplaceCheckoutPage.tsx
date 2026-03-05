@@ -325,8 +325,8 @@ function MarketplaceCheckoutPageInner() {
 
       await markCompleted();
       setStep("success");
-    } catch (err: any) {
-      setPaymentError(err.message || "Erro inesperado no pagamento");
+    } catch (err) {
+      setPaymentError(err instanceof Error ? err.message : "Erro inesperado no pagamento");
     } finally {
       setIsSubmitting(false);
       submitLockRef.current = false;

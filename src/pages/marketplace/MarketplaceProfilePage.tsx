@@ -285,8 +285,8 @@ export default function MarketplaceProfilePage() {
       if (updateError) throw updateError;
       setAvatarUrl(publicUrl);
       toast.success("Foto de perfil atualizada!");
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao enviar imagem");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao enviar imagem");
     } finally {
       setUploadingAvatar(false);
     }

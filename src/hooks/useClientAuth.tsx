@@ -107,8 +107,8 @@ export function ClientAuthProvider({ children }: { children: ReactNode }) {
       setSession(newSession);
 
       return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message || "Erro ao verificar código" };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : "Erro ao verificar código" };
     }
   };
 

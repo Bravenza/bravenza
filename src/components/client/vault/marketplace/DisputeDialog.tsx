@@ -102,7 +102,7 @@ export function DisputeDialog({ orderId, clientCpf, protectionEndsAt, onSuccess 
         resetForm();
         onSuccess();
       }, 2500);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Dispute error:", err);
     } finally {
       setLoading(false);

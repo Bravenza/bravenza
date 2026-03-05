@@ -125,7 +125,7 @@ export function useSellerPlan(sellerId: string | null) {
         return data.checkout_url;
       }
       throw new Error(data?.error || "Erro ao criar assinatura");
-    } catch (err: any) {
+    } catch (err) {
       console.error("subscribe error:", err);
       throw err;
     } finally {

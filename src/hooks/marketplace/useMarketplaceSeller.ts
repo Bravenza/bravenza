@@ -47,8 +47,8 @@ export function useMarketplaceSeller(cpf: string | null) {
           description: "Seus documentos serão analisados pela equipe Bravenza. Você será notificado quando for aprovado.",
         });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro no cadastro", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro no cadastro", description: err instanceof Error ? err.message : "Erro inesperado", variant: "destructive" });
         return false;
       }
     },

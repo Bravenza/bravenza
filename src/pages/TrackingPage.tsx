@@ -104,7 +104,7 @@ const TrackingPage = () => {
         if (!historyError && historyData) {
           setHistory(historyData as HistoryItem[]);
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error fetching order:", err);
         setError("Erro ao carregar pedido");
       } finally {

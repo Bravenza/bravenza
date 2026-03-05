@@ -228,8 +228,8 @@ export function UnifiedCardForm({
       const token = await tokenizeCard(form);
       await onSubmit(token, form);
       setSubmitStatus("success");
-    } catch (err: any) {
-      setSubmitError(err.message || "Erro ao processar pagamento");
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Erro ao processar pagamento");
       setSubmitStatus("error");
     } finally {
       setIsSubmitting(false);

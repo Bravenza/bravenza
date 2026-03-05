@@ -209,9 +209,9 @@ export function CommunityPostCard({
         await navigator.clipboard.writeText(shareUrl);
         toast({ title: "Link copiado! 🔗" });
       }
-    } catch (err: any) {
+    } catch (err) {
       // User cancelled share dialog — not an error
-      if (err?.name !== "AbortError") {
+      if (!(err instanceof Error && err.name === "AbortError")) {
         await navigator.clipboard.writeText(shareUrl);
         toast({ title: "Link copiado! 🔗" });
       }
