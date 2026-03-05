@@ -40,7 +40,7 @@ export default function DeliveryFlowPreview() {
             return true;
           }}
           onSubmitReview={async (data) => {
-            console.log("Review submitted:", data);
+            logger.log("Review submitted:", data);
             await new Promise((r) => setTimeout(r, 800));
             return true;
           }}
