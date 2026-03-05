@@ -45,7 +45,7 @@ export default function DeliveryFlowPreview() {
             return true;
           }}
           onReportProblem={async (data) => {
-            console.log("Problem reported:", data);
+            logger.log("Problem reported:", data);
             await new Promise((r) => setTimeout(r, 800));
             return true;
           }}
