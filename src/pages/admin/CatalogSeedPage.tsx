@@ -233,7 +233,7 @@ export default function CatalogSeedPage() {
             queryIndex = result.next_query_index || queryIndex + 1;
             await new Promise(r => setTimeout(r, 500));
           }
-        } catch (e: any) { setBrandResults(prev => prev.map((r, idx) => idx === i ? { ...r, status: "error", error: e.message } : r)); }
+        } catch (e) { setBrandResults(prev => prev.map((r, idx) => idx === i ? { ...r, status: "error", error: getErrorMessage(e) } : r)); }
         setOverallProgress(Math.round(((i + 1) / brands.length) * 100));
         if (i < brands.length - 1 && !cancelRef.current) await new Promise(r => setTimeout(r, 1000));
       }
