@@ -62,8 +62,8 @@ export default function AdminManagementPage() {
     e.preventDefault();
     try {
       createAdminSchema.parse({ fullName, email, tempPassword });
-    } catch (err: any) {
-      const errors = JSON.parse(err.message);
+    } catch (err) {
+      const errors = JSON.parse(err instanceof Error ? err.message : "[]");
       toast.error(errors[0].message);
       return;
     }
