@@ -255,7 +255,7 @@ export default function MarketplaceProfilePage() {
       });
       if (error) throw error;
       toast.success("Preferências salvas!");
-    } catch (err: any) { toast.error(err.message || "Erro ao salvar preferências"); }
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Erro ao salvar preferências"); }
     setSavingPrefs(false);
   };
 
