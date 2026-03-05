@@ -3,15 +3,16 @@ import {
   Compass, ShoppingBag, Box, Heart, Star, Store, Bell, MessageSquare,
   Users, Sparkles, Award, Settings, LogOut, FileText as FileTextIcon,
   MoreHorizontal, Newspaper, HelpCircle, DollarSign,
-  ArrowRight, FileText, RefreshCw, TrendingUp
+  ArrowRight, FileText, RefreshCw, TrendingUp, Search, X
 } from "lucide-react";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useRef, useState } from "react";
 import { usePrefetch } from "@/hooks/useLazySection";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/Logo";
 import { useClientSession } from "@/hooks/useClientSession";
+import { Input } from "@/components/ui/input";
 import { CartProvider } from "@/hooks/useMarketplaceCart";
 import { CartDrawer } from "@/components/client/vault/marketplace/CartDrawer";
 import { ClientNotificationBell } from "@/components/client/ClientNotificationBell";
@@ -139,6 +140,17 @@ export default function AppLayout() {
   const isMobile = useIsMobile();
   const cpf = profile?.cpf || null;
   const { prefetch } = usePrefetch();
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const q = searchRef.current?.value?.trim();
+    if (q) {
+      navigate(`/app?q=${encodeURIComponent(q)}`);
+      setMobileSearchOpen(false);
+    }
+  };
 
   const prefetchableRoutes = new Set(["/app", "/app/pedidos", "/app/loja", "/app/closet"]);
   const handleTabPrefetch = (path: string) => {
@@ -204,10 +216,30 @@ export default function AppLayout() {
                   </nav>
                 )}
 
-                <div className="flex-1" />
+                {/* Desktop Search */}
+                <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-sm mx-auto" role="search">
+                  <div className="relative w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+                    <Input
+                      ref={searchRef}
+                      placeholder="Buscar marca, modelo ou SKU..."
+                      defaultValue={new URLSearchParams(location.search).get("q") || ""}
+                      className="pl-9 pr-4 h-8 bg-secondary/50 border-border/30 rounded-full text-xs focus:ring-primary/30 focus:border-primary/40 placeholder:text-muted-foreground/60"
+                      aria-label="Buscar produtos"
+                    />
+                  </div>
+                </form>
+
+                {/* Mobile spacer */}
+                <div className="flex-1 md:hidden" />
 
                 {/* Right actions */}
                 <div className="flex items-center gap-1">
+                  {/* Mobile search toggle */}
+                  <Button variant="ghost" size="icon" className="md:hidden h-9 w-9 rounded-full hover:bg-secondary/60 transition-colors active:scale-95" onClick={() => setMobileSearchOpen(!mobileSearchOpen)} aria-label="Buscar">
+                    {mobileSearchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+                  </Button>
+
                   <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" asChild>
                     <Link to="/app/favoritos">
                       <Heart className="h-4 w-4" />
@@ -297,6 +329,20 @@ export default function AppLayout() {
                 </div>
               </div>
             </div>
+
+            {/* Mobile Search Expandable */}
+            <AnimatePresence>
+              {mobileSearchOpen && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="md:hidden border-t border-border/20 overflow-hidden">
+                  <form onSubmit={handleSearch} className="px-4 py-3" role="search">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                      <Input ref={searchRef} autoFocus placeholder="Buscar sneakers..." defaultValue={new URLSearchParams(location.search).get("q") || ""} className="pl-10 h-10 bg-secondary/50 border-border/30 rounded-full text-sm" aria-label="Buscar produtos" />
+                    </div>
+                  </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
           </div>
         </header>
