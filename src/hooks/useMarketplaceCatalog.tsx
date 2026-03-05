@@ -237,8 +237,8 @@ export function useMarketplaceCatalog(clientCpf: string) {
       const data = await res.json();
       setWatchlistStatus({ active: data.active, max_price: data.max_price || null });
       toast({ title: data.active ? "🔔 Alerta ativado!" : "Alerta removido" });
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
     }
   }, [toast]);
 
