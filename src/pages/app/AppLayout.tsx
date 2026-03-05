@@ -77,8 +77,8 @@ const getMenuGroups = (isVaultMember: boolean): MenuGroup[] => [
   {
     items: [
       { path: "/vender", label: "Quero vender meu sneaker", icon: DollarSign, highlight: true },
-      { path: "/app", label: "Market", icon: Store },
-      { path: "/app/loja", label: "Vendas", icon: Activity },
+      { path: "/app", label: "Market", icon: Compass },
+      { path: "/app/loja", label: "Vendas", icon: TrendingUp },
     ],
   },
   {
@@ -86,7 +86,7 @@ const getMenuGroups = (isVaultMember: boolean): MenuGroup[] => [
       { path: "/app/mensagens", label: "Mensagens", icon: MessageSquare },
       { path: "/app/closet", label: "Closet", icon: Box },
       { path: "/app/documentos", label: "Documentos", icon: FileTextIcon },
-      { path: "/app/feed", label: "Feed", icon: Activity },
+      { path: "/app/feed", label: "Feed", icon: Newspaper },
     ],
   },
   ...(isVaultMember
