@@ -220,6 +220,7 @@ export default defineConfig(({ mode }) => ({
           "vendor-supabase": ["@supabase/supabase-js"],
           "vendor-charts": ["recharts"],
           "vendor-pdf": ["jspdf", "jspdf-autotable"],
+          "vendor-forms": ["react-hook-form", "zod", "@hookform/resolvers"],
         },
       },
     },
