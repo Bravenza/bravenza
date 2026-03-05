@@ -42,7 +42,7 @@ export function useCartAbandonment(cpf: string | null, cartItems: CartItem[]) {
         },
       });
 
-      console.log("[CartAbandonment] Recorded abandonment");
+      logger.log("[CartAbandonment] Recorded abandonment");
     } catch (err) {
       console.error("[CartAbandonment] Failed to record:", err);
     }
