@@ -249,7 +249,7 @@ const FinancePage = () => {
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground">Lucro Bruto</p>
-                <p className={`text-base md:text-xl font-bold whitespace-nowrap mt-1 ${m.gross_profit >= 0 ? "text-success" : "text-destructive"}`}>
+                <p className={`text-base md:text-xl font-bold tabular-nums mt-1 ${m.gross_profit >= 0 ? "text-success" : "text-destructive"}`}>
                   {formatCurrency(m.gross_profit)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">Margem: {m.profit_margin.toFixed(1)}%</p>
