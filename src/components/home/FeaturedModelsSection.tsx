@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Flame, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { STALE, GC_TIME } from "@/lib/query-config";
 import { Button } from "@/components/ui/button";
 
 interface FeaturedModel {
