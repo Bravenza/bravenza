@@ -138,7 +138,9 @@ export default function MarketplaceHomePage() {
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-2">
               {infiniteProducts.map((product) => (
-                <CatalogProductCard key={product.id} product={product} />
+                <div key={product.id} style={{ contentVisibility: "auto", containIntrinsicSize: "0 320px" }}>
+                  <CatalogProductCard product={product} />
+                </div>
               ))}
             </div>
 
