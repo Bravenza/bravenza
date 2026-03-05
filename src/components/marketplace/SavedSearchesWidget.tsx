@@ -64,8 +64,8 @@ export function SavedSearchesWidget({ cpf, currentFilters, onApplySearch, classN
       await marketplaceRequest(cpf, "delete-saved-search", "DELETE", undefined, { id });
       setSearches(s => s.filter(ss => ss.id !== id));
       toast.success("Busca removida");
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao remover busca");
     }
   };
 

@@ -70,8 +70,8 @@ export default function CatalogDetailPage() {
       setNewImageUrl("");
       qc.invalidateQueries({ queryKey: ["catalog-detail", sku] });
       qc.invalidateQueries({ queryKey: ["catalog-images", sneaker.id] });
-    } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } catch (e) {
+      toast({ title: "Erro", description: e instanceof Error ? e.message : "Erro desconhecido", variant: "destructive" });
     } finally {
       setSaving(false);
     }

@@ -211,11 +211,11 @@ export default function VaultWishlist() {
       });
 
       fetchData();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error starting search:", error);
       toast({
         title: "Erro ao iniciar busca",
-        description: error.message || "Tente novamente",
+        description: error instanceof Error ? error.message : "Tente novamente",
         variant: "destructive",
       });
     }
