@@ -58,6 +58,13 @@ export default function SyncCatalogoDroper() {
   const [lastSynced, setLastSynced]   = useState<{ sku: string; images: number }[]>([]);
   const shouldStop                    = useRef(false);
   const logsEndRef                    = useRef<HTMLDivElement>(null);
+  const [brands, setBrands]           = useState<string[]>([]);
+
+  useEffect(() => {
+    supabase.from("brands").select("name").order("name").then(({ data }) => {
+      if (data) setBrands(data.map((b) => b.name));
+    });
+  }, []);
 
   const addLog = (type: LogEntry["type"], message: string) => {
     setLogs((prev) => [...prev.slice(-299), { time: new Date().toLocaleTimeString("pt-BR"), type, message }]);
