@@ -395,9 +395,11 @@ export default function SyncCatalogoDroper() {
               <CardContent className="space-y-2">
                 {lastSynced.map((item, i) => (
                   <div key={i} className="flex items-center justify-between text-xs">
-                    <span className="font-mono text-foreground truncate max-w-[140px]">{item.sku}</span>
+                    <span className="font-mono text-foreground truncate max-w-[100px]">{item.sku}</span>
+                    <Badge variant={item.action === "inserted" ? "default" : item.action === "duplicate" ? "outline" : "secondary"} className="text-[10px] font-normal">
+                      {item.action === "inserted" ? "novo" : item.action === "duplicate" ? "duplicado" : "atualizado"}
+                    </Badge>
                     <Badge variant="secondary" className="text-[10px] font-normal">{item.images} imgs</Badge>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                   </div>
                 ))}
               </CardContent>
