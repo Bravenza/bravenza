@@ -181,8 +181,8 @@ export default function MarketplaceInspectionPage() {
       setInspectDialogOpen(false);
       fetchHubOrders();
       setDetailOpen(false);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: err instanceof Error ? err.message : "Erro na inspeção", variant: "destructive" });
     } finally {
       setActionLoading(false);
     }
