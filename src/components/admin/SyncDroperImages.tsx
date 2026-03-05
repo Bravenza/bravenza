@@ -164,7 +164,7 @@ export default function SyncCatalogoDroper() {
     }
 
     // Após sync Droper, disparar catalog-sync para copiar sneaker_models → marketplace_products
-    if (totals.success > 0 || done) {
+    if (totals.inserted > 0 || totals.updated > 0 || done) {
       addLog("info", "Sincronizando catálogo (sneaker_models → marketplace_products)...");
       try {
         let syncOffset = 0;
