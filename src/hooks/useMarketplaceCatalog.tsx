@@ -162,8 +162,8 @@ export function useMarketplaceCatalog(clientCpf: string) {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       return data.product;
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
       return null;
     }
   }, [toast]);
