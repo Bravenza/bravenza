@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Compass } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navItems } from "./marketplace-nav";
 
@@ -13,7 +13,7 @@ export function MarketplaceBottomNav() {
           const isActive = item.exact
             ? location.pathname === item.path
             : location.pathname.startsWith(item.path);
-          const Icon = item.icon || Search;
+          const Icon = item.icon || Compass;
           return (
             <Link
               key={item.path}

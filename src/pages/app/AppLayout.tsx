@@ -1,9 +1,9 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { 
-  Search, Package, Box, Heart, Star, Store, Bell, MessageSquare,
+  Compass, Package, Box, Heart, Star, Store, Bell, MessageSquare,
   Users, Sparkles, Award, Settings, LogOut, FileText as FileTextIcon,
-  MoreHorizontal, Activity, HelpCircle, DollarSign,
-  ArrowRight, FileText, RefreshCw
+  MoreHorizontal, Newspaper, HelpCircle, DollarSign,
+  ArrowRight, FileText, RefreshCw, TrendingUp
 } from "lucide-react";
 import { lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,12 +37,12 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { path: "/app", label: "Explorar", mobileLabel: "Explorar", icon: Search, group: "main" },
+  { path: "/app", label: "Explorar", mobileLabel: "Explorar", icon: Compass, group: "main" },
   { path: "/app/pedidos", label: "Pedidos", mobileLabel: "Pedidos", icon: Package, group: "main" },
   { path: "/app/closet", label: "Meu Closet", mobileLabel: "Closet", icon: Box, group: "main" },
   { path: "/app/loja", label: "Minha Loja", mobileLabel: "Loja", icon: Store, group: "main" },
   { path: "/app/favoritos", label: "Favoritos", mobileLabel: "Favoritos", icon: Heart, group: "more" },
-  { path: "/app/feed", label: "Feed", mobileLabel: "Feed", icon: Activity, group: "more" },
+  { path: "/app/feed", label: "Feed", mobileLabel: "Feed", icon: Newspaper, group: "more" },
   { path: "/app/wishlist", label: "Wishlist", mobileLabel: "Wishlist", icon: Star, group: "vault" },
   { path: "/app/vault", label: "Meu Status", mobileLabel: "Status", icon: Award, group: "vault" },
   { path: "/app/drops", label: "Drops & Intel", mobileLabel: "Drops", icon: Sparkles, group: "vault" },
@@ -53,7 +53,7 @@ const navItems: NavItem[] = [
 ];
 
 const bottomTabs = [
-  { path: "/app", label: "Explorar", icon: Search, exact: true },
+  { path: "/app", label: "Explorar", icon: Compass, exact: true },
   { path: "/app/pedidos", label: "Pedidos", icon: Package },
   { path: "/app/closet", label: "Closet", icon: Box },
   { path: "/app/loja", label: "Loja", icon: Store },
@@ -77,8 +77,8 @@ const getMenuGroups = (isVaultMember: boolean): MenuGroup[] => [
   {
     items: [
       { path: "/vender", label: "Quero vender meu sneaker", icon: DollarSign, highlight: true },
-      { path: "/app", label: "Market", icon: Store },
-      { path: "/app/loja", label: "Vendas", icon: Activity },
+      { path: "/app", label: "Market", icon: Compass },
+      { path: "/app/loja", label: "Vendas", icon: TrendingUp },
     ],
   },
   {
@@ -86,7 +86,7 @@ const getMenuGroups = (isVaultMember: boolean): MenuGroup[] => [
       { path: "/app/mensagens", label: "Mensagens", icon: MessageSquare },
       { path: "/app/closet", label: "Closet", icon: Box },
       { path: "/app/documentos", label: "Documentos", icon: FileTextIcon },
-      { path: "/app/feed", label: "Feed", icon: Activity },
+      { path: "/app/feed", label: "Feed", icon: Newspaper },
     ],
   },
   ...(isVaultMember
@@ -172,7 +172,7 @@ export default function AppLayout() {
                 {!isMobile && (
                   <nav className="hidden md:flex items-center gap-1 ml-4">
                     {[
-                      { path: "/app", label: "Explorar", icon: Search, exact: true },
+                      { path: "/app", label: "Explorar", icon: Compass, exact: true },
                       { path: "/app/pedidos", label: "Pedidos", icon: Package },
                       { path: "/app/closet", label: "Closet", icon: Box },
                       { path: "/app/loja", label: "Loja", icon: Store },
