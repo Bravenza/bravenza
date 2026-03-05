@@ -133,7 +133,31 @@ verify_jwt = false
 [functions.catalog-multisource]
 verify_jwt = false
 
-[functions.mk-catalog]
+[functions.mkv2-checkout]
+verify_jwt = false
+
+[functions.mkv2-subscription]
+verify_jwt = false
+
+[functions.mkv2-releases]
+verify_jwt = false
+
+[functions.mkv2-notifications]
+verify_jwt = false
+
+[functions.mkv2-listings]
+verify_jwt = false
+
+[functions.mkv2-wallet]
+verify_jwt = false
+
+[functions.create-admin]
+verify_jwt = false
+
+[functions.enrich-descriptions]
+verify_jwt = false
+
+[functions.verify-captcha]
 verify_jwt = false
 
 [functions.catalog-sync]
