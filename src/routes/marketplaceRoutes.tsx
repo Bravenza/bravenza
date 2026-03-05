@@ -32,10 +32,10 @@ export const marketplaceRoutes = (
       </ProtectedProviders>
     } />
 
-    {/* Product & Seller routes wrapped in MarketplaceLayout for header/footer/bottom nav */}
+    {/* Product & Seller routes wrapped in AppLayout for consistent header/footer/bottom nav */}
     <Route element={
       <ProtectedProviders>
-        <MarketplaceLayout />
+        <AppLayout />
       </ProtectedProviders>
     }>
       <Route path="/marketplace/product/:slug" element={
