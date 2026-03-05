@@ -64,7 +64,7 @@ export function useMarketplaceListings(cpf: string | null) {
         const data = await marketplaceRequest(cpf, "listing-detail", "GET", undefined, { id });
         setCurrentListing(data);
         return data;
-      } catch (err: any) {
+      } catch (err) {
         console.error("Fetch detail error:", err);
         return null;
       } finally {
