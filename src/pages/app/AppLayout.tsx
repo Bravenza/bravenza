@@ -138,7 +138,13 @@ export default function AppLayout() {
   const { profile, signOut, isVaultMember } = useClientSession();
   const isMobile = useIsMobile();
   const cpf = profile?.cpf || null;
-  
+  const { prefetch } = usePrefetch();
+
+  const prefetchableRoutes = new Set(["/app", "/app/pedidos", "/app/loja", "/app/closet"]);
+  const handleTabPrefetch = (path: string) => {
+    if (prefetchableRoutes.has(path)) prefetch(path);
+  };
+
 
   // Prefetch vault data for members so navigation feels instant
   useVaultPrefetch(cpf, isVaultMember);
