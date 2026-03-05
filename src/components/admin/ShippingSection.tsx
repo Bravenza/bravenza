@@ -174,9 +174,9 @@ export function ShippingSection({
       } else if (data?.error) {
         throw new Error(data.error);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error quoting freight:", error);
-      toast.error(error.message || "Erro ao calcular frete");
+      toast.error(error instanceof Error ? error.message : "Erro ao calcular frete");
     } finally {
       setIsQuoting(false);
     }
