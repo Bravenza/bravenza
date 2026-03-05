@@ -465,7 +465,7 @@ serve(async (req) => {
       console.log(`[API] Página ${currentPage}...`);
       const { drops, temMais } = await fetchDropsPage(currentPage, marcaFiltro);
       if (drops.length === 0) break;
-      await runConcurrent(supabase, drops, result);
+      await runConcurrent(supabase, drops, result, seenSkus);
       if (!temMais) break;
       currentPage++;
       processed++;
