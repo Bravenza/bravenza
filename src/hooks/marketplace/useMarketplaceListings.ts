@@ -227,8 +227,8 @@ export function useMarketplaceListings(cpf: string | null) {
         await marketplaceRequest(cpf, "bundle-offer", "POST", body);
         toast({ title: "Bundle enviado!", description: `Oferta para ${body.listing_ids.length} itens enviada.` });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro ao enviar bundle", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro ao enviar bundle", description: getErrorMessage(err), variant: "destructive" });
         return false;
       }
     },
