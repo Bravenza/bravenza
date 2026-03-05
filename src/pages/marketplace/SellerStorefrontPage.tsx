@@ -94,7 +94,7 @@ export default function SellerStorefrontPage() {
           className="absolute inset-0"
         >
           {seller.storefront_banner ? (
-            <img src={seller.storefront_banner} alt="Banner" className="w-full h-full object-cover" />
+            <img src={seller.storefront_banner} alt="Banner da loja" className="w-full h-full object-cover" fetchPriority="high" />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary/20 via-card to-background">
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_hsl(var(--primary)/0.15),_transparent_60%)]" />
