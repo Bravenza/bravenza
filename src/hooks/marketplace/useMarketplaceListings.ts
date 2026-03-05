@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { marketplaceRequest } from "./api";
 import { getErrorMessage } from "@/lib/error-utils";
+import { fetchWithRetry } from "@/lib/retry";
 import type { MarketplaceListing, SellerProfile } from "./types";
 
 export function useMarketplaceListings(cpf: string | null) {
@@ -30,7 +31,7 @@ export function useMarketplaceListings(cpf: string | null) {
         if (filters?.favoritesOnly) params.favorites_only = "true";
         if (filters?.modality) params.modality = filters.modality;
         if (filters?.trustedOnly) params.trusted_only = "true";
-        const data = await marketplaceRequest(cpf, "listings", "GET", undefined, params);
+        const data = await fetchWithRetry(() => marketplaceRequest(cpf, "listings", "GET", undefined, params));
         setListings(data.listings || []);
         setTotal(data.total || 0);
       } catch (err) {
@@ -46,7 +47,7 @@ export function useMarketplaceListings(cpf: string | null) {
     if (!cpf) return;
     setIsLoading(true);
     try {
-      const data = await marketplaceRequest(cpf, "my-listings");
+      const data = await fetchWithRetry(() => marketplaceRequest(cpf, "my-listings"));
       setMyListings(data.listings || []);
       setSeller(data.seller || null);
     } catch (err) {
@@ -61,7 +62,7 @@ export function useMarketplaceListings(cpf: string | null) {
       if (!cpf) return null;
       setIsLoading(true);
       try {
-        const data = await marketplaceRequest(cpf, "listing-detail", "GET", undefined, { id });
+        const data = await fetchWithRetry(() => marketplaceRequest(cpf, "listing-detail", "GET", undefined, { id }));
         setCurrentListing(data);
         return data;
       } catch (err) {
@@ -154,7 +155,7 @@ export function useMarketplaceListings(cpf: string | null) {
     async (listingId: string) => {
       if (!cpf) return [];
       try {
-        const data = await marketplaceRequest(cpf, "listing-offers", "GET", undefined, { listing_id: listingId });
+        const data = await fetchWithRetry(() => marketplaceRequest(cpf, "listing-offers", "GET", undefined, { listing_id: listingId }));
         return data.offers || [];
       } catch (err) {
         console.error("Fetch offers error:", err);
@@ -182,7 +183,7 @@ export function useMarketplaceListings(cpf: string | null) {
   const fetchPriceDropSuggestions = useCallback(async () => {
     if (!cpf) return [];
     try {
-      const data = await marketplaceRequest(cpf, "price-drop-suggestions");
+      const data = await fetchWithRetry(() => marketplaceRequest(cpf, "price-drop-suggestions"));
       return data.suggestions || [];
     } catch (err) {
       console.error("Fetch price drop suggestions error:", err);

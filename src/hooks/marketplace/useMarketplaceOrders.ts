@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { marketplaceRequest } from "./api";
 import { getErrorMessage } from "@/lib/error-utils";
+import { fetchWithRetry } from "@/lib/retry";
 import type { MarketplaceOrder } from "./types";
 
 export function useMarketplaceOrders(cpf: string | null) {
@@ -42,7 +43,7 @@ export function useMarketplaceOrders(cpf: string | null) {
   const fetchMyOrders = useCallback(async () => {
     if (!cpf) return;
     try {
-      const data = await marketplaceRequest(cpf, "my-orders");
+      const data = await fetchWithRetry(() => marketplaceRequest(cpf, "my-orders"));
       setMyOrders(data.orders || []);
     } catch (err) {
       console.error("Fetch my orders error:", err);
@@ -52,7 +53,7 @@ export function useMarketplaceOrders(cpf: string | null) {
   const fetchMySales = useCallback(async () => {
     if (!cpf) return;
     try {
-      const data = await marketplaceRequest(cpf, "my-sales");
+      const data = await fetchWithRetry(() => marketplaceRequest(cpf, "my-sales"));
       setMySales(data.orders || []);
     } catch (err) {
       console.error("Fetch my sales error:", err);
