@@ -212,8 +212,8 @@ export function useMarketplaceListings(cpf: string | null) {
         await marketplaceRequest(cpf, "reject-counter", "PUT", { offer_id: offerId });
         toast({ title: "Contra-proposta recusada" });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
         return false;
       }
     },
