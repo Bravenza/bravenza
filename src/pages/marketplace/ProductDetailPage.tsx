@@ -456,11 +456,6 @@ function ProductDetailPageInner() {
         }}
       />
 
-      <div className="pb-20 md:pb-0">
-        <Suspense fallback={null}>
-          <Footer />
-        </Suspense>
-      </div>
     </div>
   );
 }
