@@ -142,8 +142,8 @@ export function useMarketplaceListings(cpf: string | null) {
         await marketplaceRequest(cpf, "make-offer", "POST", body);
         toast({ title: "Oferta enviada!", description: "O vendedor tem 48h para responder." });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro ao enviar oferta", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro ao enviar oferta", description: getErrorMessage(err), variant: "destructive" });
         return false;
       }
     },
