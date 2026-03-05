@@ -128,7 +128,7 @@ export function useMarketplaceListings(cpf: string | null) {
         if (currentListing?.id === listingId) {
           setCurrentListing((prev) => prev ? { ...prev, is_favorited: data.favorited } : prev);
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error("Toggle fav error:", err);
       }
     },
