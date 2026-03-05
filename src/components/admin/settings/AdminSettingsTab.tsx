@@ -139,8 +139,8 @@ export function AdminSettingsTab() {
       toast.success("Administrador atualizado!");
       setEditingId(null);
       fetchAdmins();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao atualizar");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar");
     } finally {
       setIsSavingEdit(false);
     }
