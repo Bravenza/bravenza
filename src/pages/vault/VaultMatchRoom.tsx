@@ -221,7 +221,7 @@ export default function VaultMatchRoom() {
     <div className="space-y-6 pb-20 md:pb-0">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button asChild variant="ghost" size="icon">
+        <Button asChild variant="ghost" size="icon" aria-label="Voltar para wishlist">
           <Link to="/app/wishlist">
             <ArrowLeft className="h-5 w-5" />
           </Link>
@@ -346,6 +346,7 @@ export default function VaultMatchRoom() {
                     <div className="flex gap-2 overflow-x-auto pb-2">
                       {option.evidence_urls.map((url, i) => (
                         <button
+                          aria-label={`Ver evidência ${i + 1}`}
                           key={i}
                           onClick={(e) => {
                             e.stopPropagation();

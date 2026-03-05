@@ -59,6 +59,7 @@ function CartItemRow({ item, onRemove, index }: { item: CartItem; onRemove: (off
 
       {/* Remove */}
       <button
+        aria-label="Remover item do carrinho"
         onClick={() => onRemove(item.offer_id)}
         className="absolute top-2 right-2 h-6 w-6 rounded-full bg-destructive/10 text-destructive/60 hover:bg-destructive/20 hover:text-destructive flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
       >
@@ -130,7 +131,7 @@ export function CartDrawer() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full hover:bg-secondary/60 transition-colors active:scale-95">
+        <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full hover:bg-secondary/60 transition-colors active:scale-95" aria-label="Abrir carrinho">
           <ShoppingCart className="h-4 w-4" />
           <AnimatePresence>
             {count > 0 && (
