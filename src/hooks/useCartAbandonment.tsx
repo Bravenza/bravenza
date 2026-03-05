@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 
 interface CartItem {
   product_name?: string;
@@ -42,7 +43,7 @@ export function useCartAbandonment(cpf: string | null, cartItems: CartItem[]) {
         },
       });
 
-      console.log("[CartAbandonment] Recorded abandonment");
+      logger.log("[CartAbandonment] Recorded abandonment");
     } catch (err) {
       console.error("[CartAbandonment] Failed to record:", err);
     }
@@ -57,7 +58,7 @@ export function useCartAbandonment(cpf: string | null, cartItems: CartItem[]) {
       await supabase.functions.invoke("cart-recovery", {
         body: { action: "clear", cpf },
       });
-      console.log("[CartAbandonment] Cleared abandonment record");
+      logger.log("[CartAbandonment] Cleared abandonment record");
     } catch (err) {
       console.error("[CartAbandonment] Failed to clear:", err);
     }

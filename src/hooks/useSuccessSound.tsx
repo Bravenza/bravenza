@@ -1,4 +1,5 @@
 import { useCallback, useRef } from "react";
+import { logger } from "@/lib/logger";
 
 // Create a success sound using Web Audio API
 function createSuccessSound(audioContext: AudioContext): void {
@@ -68,7 +69,7 @@ export function useSuccessSound() {
       createSuccessSound(audioContext);
     } catch (error) {
       // Silently fail if audio is not supported
-      console.log("Audio not supported:", error);
+      logger.log("Audio not supported:", error);
     }
   }, []);
 
