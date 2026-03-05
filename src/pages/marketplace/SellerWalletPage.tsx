@@ -140,8 +140,8 @@ export default function SellerWalletPage() {
       toast.success(editingPix ? "Conta atualizada!" : "Conta PIX cadastrada!");
       setPixOpen(false);
       fetchAll();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao salvar conta PIX");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar conta PIX");
     } finally {
       setPixSubmitting(false);
     }
