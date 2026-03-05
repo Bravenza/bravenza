@@ -75,8 +75,8 @@ export function ClientAuthProvider({ children }: { children: ReactNode }) {
       }
 
       return { success: true, message: data.message };
-    } catch (err: any) {
-      return { success: false, error: err.message || "Erro ao enviar código" };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : "Erro ao enviar código" };
     }
   };
 
