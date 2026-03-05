@@ -216,7 +216,22 @@ export default function AppLayout() {
                   </nav>
                 )}
 
-                <div className="flex-1" />
+                {/* Desktop Search */}
+                <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-sm mx-auto" role="search">
+                  <div className="relative w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+                    <Input
+                      ref={searchRef}
+                      placeholder="Buscar marca, modelo ou SKU..."
+                      defaultValue={new URLSearchParams(location.search).get("q") || ""}
+                      className="pl-9 pr-4 h-8 bg-secondary/50 border-border/30 rounded-full text-xs focus:ring-primary/30 focus:border-primary/40 placeholder:text-muted-foreground/60"
+                      aria-label="Buscar produtos"
+                    />
+                  </div>
+                </form>
+
+                {/* Mobile spacer */}
+                <div className="flex-1 md:hidden" />
 
                 {/* Right actions */}
                 <div className="flex items-center gap-1">
