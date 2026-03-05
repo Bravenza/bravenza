@@ -131,7 +131,9 @@ export default function SyncCatalogoDroper() {
       batchCount++;
 
       setTotals((prev) => ({
-        success: prev.success + r.success,
+        inserted: prev.inserted + (r.inserted || 0),
+        updated: prev.updated + (r.updated || 0),
+        duplicates: prev.duplicates + (r.skippedDuplicates || 0),
         failed: prev.failed + r.failed,
         notFound: prev.notFound + r.notFound,
         batches: prev.batches + 1,
