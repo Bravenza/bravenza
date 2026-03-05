@@ -193,8 +193,8 @@ export function useMarketplaceCatalog(clientCpf: string) {
       if (data.error) throw new Error(data.error);
       toast({ title: "Oferta criada!", description: "Sua oferta foi publicada no marketplace." });
       return data.offer;
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
       return null;
     }
   }, [toast]);
