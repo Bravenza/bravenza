@@ -140,6 +140,17 @@ export default function AppLayout() {
   const isMobile = useIsMobile();
   const cpf = profile?.cpf || null;
   const { prefetch } = usePrefetch();
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const q = searchRef.current?.value?.trim();
+    if (q) {
+      navigate(`/app?q=${encodeURIComponent(q)}`);
+      setMobileSearchOpen(false);
+    }
+  };
 
   const prefetchableRoutes = new Set(["/app", "/app/pedidos", "/app/loja", "/app/closet"]);
   const handleTabPrefetch = (path: string) => {
