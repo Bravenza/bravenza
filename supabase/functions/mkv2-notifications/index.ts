@@ -26,7 +26,7 @@ function sendEmail(type: string, data: Record<string, any>) {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
       body: JSON.stringify({ type, ...data }),
-    }).catch((e: any) => console.error("[mk-notifications] email error:", e));
+    }).catch((e: any) => console.error("[mkv2-notifications] email error:", e));
   } catch (_) {}
 }
 
@@ -40,7 +40,7 @@ function sendWhatsApp(type: string, data: Record<string, any>) {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
       body: JSON.stringify({ message_type: type, ...data }),
-    }).catch((e: any) => console.error("[mk-notifications] whatsapp error:", e));
+    }).catch((e: any) => console.error("[mkv2-notifications] whatsapp error:", e));
   } catch (_) {}
 }
 
@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     // Log execution start
     const { data: logEntry } = await sb
       .from("cron_execution_logs")
-      .insert({ job_name: "mk-notifications", started_at: cronStartedAt, status: "running" })
+      .insert({ job_name: "mkv2-notifications", started_at: cronStartedAt, status: "running" })
       .select("id")
       .single();
     cronLogId = logEntry?.id || null;
@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
 
     // ===== 1. WATCHLIST ALERTS =====
     // Check new offers matching watchlist entries
-    console.log("[mk-notifications] Checking watchlist alerts...");
+    console.log("[mkv2-notifications] Checking watchlist alerts...");
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     
     const { data: recentOffers } = await sb.from("marketplace_offers")
@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
 
     // ===== 2. SHIPPING REMINDERS =====
     // Remind sellers to ship within 3 days of payment
-    console.log("[mk-notifications] Checking shipping reminders...");
+    console.log("[mkv2-notifications] Checking shipping reminders...");
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
     const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
     
@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
 
     // ===== 3. PROTECTION EXPIRY → AUTO PAYOUT =====
     // Mark delivered orders as payout_pending after protection expires
-    console.log("[mk-notifications] Checking protection expiry...");
+    console.log("[mkv2-notifications] Checking protection expiry...");
     const now = new Date();
     
     const { data: expiredProtection } = await sb.from("vault_marketplace_orders")
@@ -212,7 +212,7 @@ Deno.serve(async (req) => {
 
     // ===== 4. PROTECTION EXPIRY WARNING =====
     // Warn buyers 2 days before protection expires
-    console.log("[mk-notifications] Checking protection expiry warnings...");
+    console.log("[mkv2-notifications] Checking protection expiry warnings...");
     const twoDaysFromNow = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
     const oneDayFromNow = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
 
@@ -255,7 +255,7 @@ Deno.serve(async (req) => {
 
     // ===== 5. STALE LISTING REMINDERS =====
     // Remind sellers with listings active for 14+ days with no views
-    console.log("[mk-notifications] Checking stale listings...");
+    console.log("[mkv2-notifications] Checking stale listings...");
     const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
     
     const { data: staleListings } = await sb.from("marketplace_offers")
@@ -305,7 +305,7 @@ Deno.serve(async (req) => {
 
     // ===== 6. SUBSCRIPTION EXPIRY ALERTS =====
     // Warn sellers 3 days before subscription expires
-    console.log("[mk-notifications] Checking subscription expiry...");
+    console.log("[mkv2-notifications] Checking subscription expiry...");
     const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
     
     const { data: expiringSubs } = await sb.from("marketplace_subscriptions")
@@ -354,7 +354,7 @@ Deno.serve(async (req) => {
     results.subscription_alerts = subAlerts;
 
     // ===== 7. RECORD SALE PRICES FOR ANALYTICS =====
-    console.log("[mk-notifications] Syncing completed sales for analytics...");
+    console.log("[mkv2-notifications] Syncing completed sales for analytics...");
     const { data: completedOrders } = await sb.from("vault_marketplace_orders")
       .select("id, listing_id, sale_price, status")
       .in("status", ["completed", "payout_released"])
@@ -393,7 +393,7 @@ Deno.serve(async (req) => {
     results.products_updated = salesRecorded;
 
     // ===== 8. AUTO REVIEW REQUEST (3 days after delivery) =====
-    console.log("[mk-notifications] Checking review requests...");
+    console.log("[mkv2-notifications] Checking review requests...");
     const threeDaysAgoReview = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
     const fourDaysAgoReview = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -433,7 +433,7 @@ Deno.serve(async (req) => {
     }
     results.review_requests = reviewRequests;
 
-    console.log("[mk-notifications] Done:", JSON.stringify(results));
+    console.log("[mkv2-notifications] Done:", JSON.stringify(results));
 
     if (cronLogId) {
       await sb.from("cron_execution_logs").update({
@@ -448,7 +448,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
-    console.error("[mk-notifications] Error:", err);
+    console.error("[mkv2-notifications] Error:", err);
 
     if (cronLogId) {
       await sb.from("cron_execution_logs").update({

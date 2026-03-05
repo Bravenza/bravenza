@@ -36,7 +36,7 @@ interface JobHealth {
 }
 
 const JOB_CONFIG: Record<string, { display: string; schedule: string }> = {
-  "mk-notifications": { display: "Notificações Marketplace", schedule: "A cada hora" },
+  "mkv2-notifications": { display: "Notificações Marketplace", schedule: "A cada hora" },
   "mk-auto-payout": { display: "Auto-Payout", schedule: "A cada hora" },
   "mk-cron-tasks": { display: "Manutenção (Expirar/Preços)", schedule: "A cada 6 horas" },
   "mkv2-releases": { display: "Releases de Sneakers", schedule: "Diário (6h)" },
