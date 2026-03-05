@@ -1,8 +1,22 @@
 import { createRoot } from "react-dom/client";
 import * as Sentry from "@sentry/react";
+import posthog from "posthog-js";
 import App from "./App.tsx";
 import "./index.css";
 import { logger } from "@/lib/logger";
+
+// Initialize PostHog in production only
+const posthogKey = import.meta.env.VITE_POSTHOG_KEY;
+const posthogHost = import.meta.env.VITE_POSTHOG_HOST;
+if (import.meta.env.PROD && posthogKey) {
+  posthog.init(posthogKey, {
+    api_host: posthogHost || "https://app.posthog.com",
+    loaded: (ph) => {
+      logger.log("[BRAVENZA] PostHog initialized");
+      ph.reloadFeatureFlags();
+    },
+  });
+}
 
 // Initialize Sentry in production only
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;

@@ -1,8 +1,9 @@
 /**
  * Bravenza Feature Flags
  * 
- * All flags default to false (safe for production).
- * Flip to true to enable new functionality incrementally.
+ * Static defaults / fallbacks.
+ * When PostHog is available, useFeatureFlag() will override these
+ * with remote values. Otherwise these values are used as-is.
  */
 
 export const FEATURE_FLAGS = {
