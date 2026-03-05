@@ -88,8 +88,8 @@ export function useMarketplaceCatalog(clientCpf: string) {
       if (data.error) throw new Error(data.error);
       setProducts(data.products || []);
       setTotalProducts(data.total || 0);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
