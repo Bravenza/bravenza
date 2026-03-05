@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from "@/lib/logger";
 import { DeliveryConfirmationFlow } from "@/components/client/vault/marketplace/DeliveryConfirmationFlow";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -39,12 +40,12 @@ export default function DeliveryFlowPreview() {
             return true;
           }}
           onSubmitReview={async (data) => {
-            console.log("Review submitted:", data);
+            logger.log("Review submitted:", data);
             await new Promise((r) => setTimeout(r, 800));
             return true;
           }}
           onReportProblem={async (data) => {
-            console.log("Problem reported:", data);
+            logger.log("Problem reported:", data);
             await new Promise((r) => setTimeout(r, 800));
             return true;
           }}
