@@ -3,7 +3,7 @@ import { Route, Navigate } from "react-router-dom";
 import { ProtectedProviders } from "@/components/providers/ProtectedProviders";
 import { RouteWrapper } from "@/components/routing/RouteWrapper";
 
-const MarketplaceLayout = lazy(() => import("@/pages/marketplace/MarketplaceLayout"));
+const AppLayout = lazy(() => import("@/pages/app/AppLayout"));
 const MarketplaceCheckoutPage = lazy(() => import("@/pages/marketplace/MarketplaceCheckoutPage"));
 const ProductDetailPage = lazy(() => import("@/pages/marketplace/ProductDetailPage"));
 const SellerStorefrontPage = lazy(() => import("@/pages/marketplace/SellerStorefrontPage"));
@@ -32,10 +32,10 @@ export const marketplaceRoutes = (
       </ProtectedProviders>
     } />
 
-    {/* Product & Seller routes wrapped in MarketplaceLayout for header/footer/bottom nav */}
+    {/* Product & Seller routes wrapped in AppLayout for consistent header/footer/bottom nav */}
     <Route element={
       <ProtectedProviders>
-        <MarketplaceLayout />
+        <AppLayout />
       </ProtectedProviders>
     }>
       <Route path="/marketplace/product/:slug" element={
