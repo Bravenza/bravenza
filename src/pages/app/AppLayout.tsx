@@ -329,6 +329,20 @@ export default function AppLayout() {
                 </div>
               </div>
             </div>
+
+            {/* Mobile Search Expandable */}
+            <AnimatePresence>
+              {mobileSearchOpen && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="md:hidden border-t border-border/20 overflow-hidden">
+                  <form onSubmit={handleSearch} className="px-4 py-3" role="search">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                      <Input ref={searchRef} autoFocus placeholder="Buscar sneakers..." defaultValue={new URLSearchParams(location.search).get("q") || ""} className="pl-10 h-10 bg-secondary/50 border-border/30 rounded-full text-sm" aria-label="Buscar produtos" />
+                    </div>
+                  </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
           </div>
         </header>
