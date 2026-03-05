@@ -31,7 +31,7 @@ export function useMarketplaceListings(cpf: string | null) {
         if (filters?.favoritesOnly) params.favorites_only = "true";
         if (filters?.modality) params.modality = filters.modality;
         if (filters?.trustedOnly) params.trusted_only = "true";
-        const data = await marketplaceRequest(cpf, "listings", "GET", undefined, params);
+        const data = await fetchWithRetry(() => marketplaceRequest(cpf, "listings", "GET", undefined, params));
         setListings(data.listings || []);
         setTotal(data.total || 0);
       } catch (err) {
