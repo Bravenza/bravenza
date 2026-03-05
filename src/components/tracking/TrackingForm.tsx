@@ -69,7 +69,7 @@ export const TrackingForm = () => {
       navigate(`/rastreio/${orderId.trim().toUpperCase()}`, {
         state: { cpf: cleanedCPF },
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error tracking order:", error);
       toast({
         title: "Erro ao buscar pedido",

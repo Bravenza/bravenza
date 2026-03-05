@@ -282,10 +282,10 @@ export default function BudgetApprovalPage() {
         title: "Orçamento recusado",
         description: "Agradecemos seu interesse. Esperamos atendê-lo em breve!",
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível recusar o orçamento.",
+        description: error instanceof Error ? error.message : "Não foi possível recusar o orçamento.",
         variant: "destructive",
       });
     } finally {
