@@ -107,7 +107,7 @@ export function ClientNotificationBell({ clientCpf }: ClientNotificationBellProp
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-11 w-11 min-h-[44px] min-w-[44px] rounded-full active:scale-90 transition-transform">
+        <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full hover:bg-secondary/60 transition-all active:scale-95">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <Badge 
