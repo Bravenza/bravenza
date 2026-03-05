@@ -461,7 +461,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        message: `✅ ${result.success} sincronizados | ❌ ${result.failed} falhas`,
+        message: `✅ ${result.inserted} novos · 🔄 ${result.updated} atualizados · ⏭️ ${result.skippedDuplicates} duplicados | ❌ ${result.failed} falhas`,
         pagesProcessed: processed,
         nextPage: currentPage,
         marca: marcaFiltro,
