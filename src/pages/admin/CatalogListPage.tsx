@@ -72,8 +72,8 @@ export default function CatalogListPage() {
       const result = await res.json();
       toast({ title: result.ok ? `${result.translated} traduzidos!` : "Erro", variant: result.ok ? "default" : "destructive" });
       qc.invalidateQueries({ queryKey: ["catalog-sneakers"] });
-    } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } catch (e) {
+      toast({ title: "Erro", description: e instanceof Error ? e.message : "Erro inesperado", variant: "destructive" });
     } finally {
       setTranslating(false);
     }

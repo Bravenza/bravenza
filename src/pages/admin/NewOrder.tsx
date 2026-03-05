@@ -89,8 +89,8 @@ const NewOrder = () => {
         sinal_value: formData.sinal_value ? parseFloat(formData.sinal_value) : undefined,
         balance_value: formData.balance_value ? parseFloat(formData.balance_value) : undefined,
       });
-    } catch (err: any) {
-      const errors = JSON.parse(err.message);
+    } catch (err) {
+      const errors = JSON.parse(err instanceof Error ? err.message : "[]");
       toast({ title: "Erro de validação", description: errors[0].message, variant: "destructive" });
       return;
     }

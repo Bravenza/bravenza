@@ -160,8 +160,8 @@ export function AdminSettingsTab() {
 
       toast.success(`Admin ${admin.full_name} removido.`);
       fetchAdmins();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao remover administrador");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao remover administrador");
     }
   };
 
