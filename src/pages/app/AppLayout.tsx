@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { 
-  Compass, Package, Box, Heart, Star, Store, Bell, MessageSquare,
+  Compass, ShoppingBag, Box, Heart, Star, Store, Bell, MessageSquare,
   Users, Sparkles, Award, Settings, LogOut, FileText as FileTextIcon,
   MoreHorizontal, Newspaper, HelpCircle, DollarSign,
   ArrowRight, FileText, RefreshCw, TrendingUp
@@ -38,7 +38,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { path: "/app", label: "Explorar", mobileLabel: "Explorar", icon: Compass, group: "main" },
-  { path: "/app/pedidos", label: "Pedidos", mobileLabel: "Pedidos", icon: Package, group: "main" },
+  { path: "/app/pedidos", label: "Pedidos", mobileLabel: "Pedidos", icon: ShoppingBag, group: "main" },
   { path: "/app/closet", label: "Meu Closet", mobileLabel: "Closet", icon: Box, group: "main" },
   { path: "/app/loja", label: "Minha Loja", mobileLabel: "Loja", icon: Store, group: "main" },
   { path: "/app/favoritos", label: "Favoritos", mobileLabel: "Favoritos", icon: Heart, group: "more" },
@@ -54,7 +54,7 @@ const navItems: NavItem[] = [
 
 const bottomTabs = [
   { path: "/app", label: "Explorar", icon: Compass, exact: true },
-  { path: "/app/pedidos", label: "Pedidos", icon: Package },
+  { path: "/app/pedidos", label: "Pedidos", icon: ShoppingBag },
   { path: "/app/closet", label: "Closet", icon: Box },
   { path: "/app/loja", label: "Loja", icon: Store },
   { path: "/app/mais", label: "Mais", icon: MoreHorizontal, isMore: true },
@@ -70,7 +70,7 @@ const getMenuGroups = (isVaultMember: boolean): MenuGroup[] => [
   {
     items: [
       { path: "/app/notificacoes", label: "Notificações", icon: Bell },
-      { path: "/app/pedidos", label: "Compras", icon: Package },
+      { path: "/app/pedidos", label: "Compras", icon: ShoppingBag },
       { path: "/app/favoritos", label: "Favoritos", icon: Heart },
     ],
   },
@@ -173,7 +173,7 @@ export default function AppLayout() {
                   <nav className="hidden md:flex items-center gap-1 ml-4">
                     {[
                       { path: "/app", label: "Explorar", icon: Compass, exact: true },
-                      { path: "/app/pedidos", label: "Pedidos", icon: Package },
+                      { path: "/app/pedidos", label: "Pedidos", icon: ShoppingBag },
                       { path: "/app/closet", label: "Closet", icon: Box },
                       { path: "/app/loja", label: "Loja", icon: Store },
                     ].map(item => {
@@ -245,7 +245,7 @@ export default function AppLayout() {
                             Meus dados
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigate("/app/pedidos")} className="cursor-pointer px-3 py-2 rounded-md text-[13px] gap-2.5">
-                            <Package className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+                            <ShoppingBag className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
                             Compras
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigate("/app/favoritos")} className="cursor-pointer px-3 py-2 rounded-md text-[13px] gap-2.5">
