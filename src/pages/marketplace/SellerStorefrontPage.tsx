@@ -256,7 +256,7 @@ export default function SellerStorefrontPage() {
                   <Card className="overflow-hidden border-border/20 bg-card/80 backdrop-blur-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 cursor-pointer group">
                     {col.cover_image && (
                       <div className="h-36 bg-muted relative overflow-hidden">
-                        <img src={col.cover_image} alt={col.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                        <img src={col.cover_image} alt={col.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
                         <div className="absolute inset-0 bg-gradient-to-t from-card/60 to-transparent" />
                       </div>
                     )}
