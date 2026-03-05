@@ -1,9 +1,7 @@
 import { Suspense, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { RouteErrorBoundary } from "./RouteErrorBoundary";
-import { RouteSkeleton } from "./RouteSkeleton";
-
-type SkeletonVariant = "default" | "dashboard" | "list" | "detail" | "feed" | "admin" | "form";
+import { RouteSkeleton, type SkeletonVariant } from "./RouteSkeleton";
 
 interface RouteWrapperProps {
   children: ReactNode;
