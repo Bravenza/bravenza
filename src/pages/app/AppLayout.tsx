@@ -172,7 +172,7 @@ export default function AppLayout() {
                 {!isMobile && (
                   <nav className="hidden md:flex items-center gap-1 ml-4">
                     {[
-                      { path: "/app", label: "Explorar", icon: Search, exact: true },
+                      { path: "/app", label: "Explorar", icon: Compass, exact: true },
                       { path: "/app/pedidos", label: "Pedidos", icon: Package },
                       { path: "/app/closet", label: "Closet", icon: Box },
                       { path: "/app/loja", label: "Loja", icon: Store },
