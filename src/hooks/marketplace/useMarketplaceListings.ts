@@ -96,8 +96,8 @@ export function useMarketplaceListings(cpf: string | null) {
         await marketplaceRequest(cpf, "update-listing", "PUT", body);
         toast({ title: "Anúncio atualizado!" });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro ao atualizar", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro ao atualizar", description: getErrorMessage(err), variant: "destructive" });
         return false;
       }
     },
