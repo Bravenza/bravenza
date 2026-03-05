@@ -141,3 +141,12 @@ verify_jwt = false
 
 [functions.sync-droper-images]
 verify_jwt = false
+
+[functions.mkv2-auto-payout]
+verify_jwt = false
+
+[functions.mkv2-cron-tasks]
+verify_jwt = false
+
+[functions.mkv2-subscription-downgrade]
+verify_jwt = false
