@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { 
-  Compass, Package, Box, Heart, Star, Store, Bell, MessageSquare,
+  Compass, ShoppingBag, Box, Heart, Star, Store, Bell, MessageSquare,
   Users, Sparkles, Award, Settings, LogOut, FileText as FileTextIcon,
   MoreHorizontal, Newspaper, HelpCircle, DollarSign,
   ArrowRight, FileText, RefreshCw, TrendingUp
