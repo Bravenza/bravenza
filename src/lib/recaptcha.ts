@@ -1,4 +1,10 @@
-const RECAPTCHA_SITE_KEY = "6Lf5XHAsAAAAALn0LSJfM1EeKQ3UhDM58u1B4wrk";
+const RECAPTCHA_SITE_KEY =
+  (import.meta.env.VITE_RECAPTCHA_SITE_KEY as string) ||
+  "6Lf5XHAsAAAAALn0LSJfM1EeKQ3UhDM58u1B4wrk";
+
+if (!RECAPTCHA_SITE_KEY) {
+  throw new Error("VITE_RECAPTCHA_SITE_KEY não está definida. Configure a variável de ambiente.");
+}
 
 let scriptLoaded = false;
 
