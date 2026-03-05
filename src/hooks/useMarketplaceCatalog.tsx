@@ -137,8 +137,8 @@ export function useMarketplaceCatalog(clientCpf: string) {
       if (data.error) throw new Error(data.error);
       setOffers(data.offers || []);
       return data.offers || [];
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
       return [];
     }
   }, [toast]);
