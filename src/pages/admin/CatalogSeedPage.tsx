@@ -296,7 +296,7 @@ export default function CatalogSeedPage() {
       const data = await callApi("catalog-multisource", { mode: "search", source: msSource, query: msQuery, page: msPage, limit: 30 });
       setMsSearchResult(data);
       toast({ title: data.ok ? `${data.inserted || 0} novos inseridos` : "Erro", variant: data.ok ? "default" : "destructive" });
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setMsSearching(false); }
   };
 
