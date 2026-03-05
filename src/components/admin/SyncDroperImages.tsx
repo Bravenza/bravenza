@@ -87,7 +87,7 @@ export default function SyncCatalogoDroper() {
 
   const reset = () => {
     setRunning(false); setPaused(false); setDone(false);
-    setCurrentPage(0); setTotals({ success: 0, failed: 0, notFound: 0, batches: 0 });
+    setCurrentPage(0); setTotals({ inserted: 0, updated: 0, duplicates: 0, failed: 0, notFound: 0, batches: 0 });
     setLogs([]); setErrors([]); setLastSynced([]);
     shouldStop.current = false;
   };
