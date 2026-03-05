@@ -144,8 +144,8 @@ export default function MarketplaceInspectionPage() {
       toast({ title: "Status atualizado!" });
       fetchHubOrders();
       setDetailOpen(false);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: err instanceof Error ? err.message : "Erro ao atualizar", variant: "destructive" });
     } finally {
       setActionLoading(false);
     }
