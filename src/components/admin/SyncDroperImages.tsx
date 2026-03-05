@@ -69,7 +69,7 @@ export default function SyncCatalogoDroper() {
   const [totals, setTotals] = useState<Totals>({ inserted: 0, updated: 0, duplicates: 0, failed: 0, notFound: 0, batches: 0 });
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
-  const [lastSynced, setLastSynced] = useState<{ sku: string; images: number }[]>([]);
+  const [lastSynced, setLastSynced] = useState<{ sku: string; images: number; action?: string }[]>([]);
   const shouldStop = useRef(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
   const [brands, setBrands] = useState<string[]>([]);
