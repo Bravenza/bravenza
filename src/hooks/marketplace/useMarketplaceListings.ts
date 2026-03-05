@@ -111,8 +111,8 @@ export function useMarketplaceListings(cpf: string | null) {
         await marketplaceRequest(cpf, "delete-listing", "DELETE", undefined, { id });
         toast({ title: "Anúncio removido" });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro ao remover", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro ao remover", description: getErrorMessage(err), variant: "destructive" });
         return false;
       }
     },
