@@ -187,7 +187,7 @@ export function CollectionsManager({ clientCpf, myListings }: CollectionsManager
                         {/* Cover image or placeholder */}
                         <div className="w-16 h-16 rounded-xl bg-muted/30 flex items-center justify-center shrink-0 overflow-hidden">
                           {col.cover_image ? (
-                            <img src={col.cover_image} alt="" className="w-full h-full object-cover" />
+                            <img src={col.cover_image} alt="" className="w-full h-full object-cover" loading="lazy" />
                           ) : (
                             <Layout className="h-6 w-6 text-muted-foreground/30" />
                           )}
@@ -208,7 +208,7 @@ export function CollectionsManager({ clientCpf, myListings }: CollectionsManager
                             {previewListings.map(l => (
                               <div key={l.id} className="w-8 h-8 rounded-md bg-muted/50 overflow-hidden">
                                 {l.photos?.[0] ? (
-                                  <img src={l.photos[0]} alt="" className="w-full h-full object-cover" />
+                                  <img src={l.photos[0]} alt="" className="w-full h-full object-cover" loading="lazy" />
                                 ) : (
                                   <span className="text-xs flex items-center justify-center h-full">👟</span>
                                 )}
@@ -298,7 +298,7 @@ export function CollectionsManager({ clientCpf, myListings }: CollectionsManager
                       >
                         <div className="aspect-square bg-muted/30">
                           {listing.photos?.[0] ? (
-                            <img src={listing.photos[0]} alt="" className="w-full h-full object-cover" />
+                            <img src={listing.photos[0]} alt="" className="w-full h-full object-cover" loading="lazy" />
                           ) : (
                             <span className="flex items-center justify-center h-full text-2xl opacity-20">👟</span>
                           )}

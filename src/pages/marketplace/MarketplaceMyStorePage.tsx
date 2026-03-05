@@ -211,7 +211,7 @@ export default function MarketplaceMyStorePage() {
           {/* Banner background with BRAVENZA watermark */}
           <div className="h-28 md:h-36 bg-gradient-to-br from-primary/20 via-primary/10 to-accent/10 relative overflow-hidden">
             {(storeData as any)?.storefront_banner ? (
-              <img src={(storeData as any).storefront_banner} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+              <img src={(storeData as any).storefront_banner} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" loading="lazy" />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center select-none pointer-events-none">
                 <span className="text-[5rem] md:text-[7rem] font-black tracking-[0.2em] text-primary/[0.06] uppercase whitespace-nowrap">

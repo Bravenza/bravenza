@@ -94,7 +94,7 @@ export default function SellerStorefrontPage() {
           className="absolute inset-0"
         >
           {seller.storefront_banner ? (
-            <img src={seller.storefront_banner} alt="Banner" className="w-full h-full object-cover" />
+            <img src={seller.storefront_banner} alt="Banner da loja" className="w-full h-full object-cover" fetchPriority="high" />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary/20 via-card to-background">
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_hsl(var(--primary)/0.15),_transparent_60%)]" />
@@ -144,7 +144,7 @@ export default function SellerStorefrontPage() {
             <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-primary/40 to-primary/10 blur-sm" />
             <div className="relative w-28 h-28 rounded-2xl bg-card border-4 border-background shadow-2xl flex items-center justify-center text-3xl font-black text-primary overflow-hidden">
               {seller.avatar_url ? (
-                <img src={seller.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                <img src={seller.avatar_url} alt="Avatar do vendedor" className="w-full h-full object-cover" fetchPriority="high" />
               ) : (
                 <span className="bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">{initials}</span>
               )}
@@ -256,7 +256,7 @@ export default function SellerStorefrontPage() {
                   <Card className="overflow-hidden border-border/20 bg-card/80 backdrop-blur-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 cursor-pointer group">
                     {col.cover_image && (
                       <div className="h-36 bg-muted relative overflow-hidden">
-                        <img src={col.cover_image} alt={col.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                        <img src={col.cover_image} alt={col.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
                         <div className="absolute inset-0 bg-gradient-to-t from-card/60 to-transparent" />
                       </div>
                     )}
@@ -297,7 +297,7 @@ export default function SellerStorefrontPage() {
                 >
                   <div className="aspect-[4/3] bg-white relative overflow-hidden">
                     {listing.photos?.[0] ? (
-                      <img src={listing.photos[0]} alt={listing.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" />
+                      <img src={listing.photos[0]} alt={listing.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" loading="lazy" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <ShoppingBag className="h-8 w-8 text-muted-foreground/20" />

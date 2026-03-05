@@ -281,7 +281,7 @@ export function BatchEditListings({ listings, onUpdate, onDelete, onRefresh }: B
                   />
                   <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                     {listing.photos?.[0] ? (
-                      <img src={listing.photos[0]} alt="" className="w-full h-full object-cover" />
+                      <img src={listing.photos[0]} alt="" className="w-full h-full object-cover" loading="lazy" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
                         <Tag className="h-6 w-6" />

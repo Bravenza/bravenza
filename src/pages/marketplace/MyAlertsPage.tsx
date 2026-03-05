@@ -156,7 +156,7 @@ export default function MyAlertsPage() {
                         className="shrink-0"
                       >
                         {img ? (
-                          <img src={img} alt="" className="w-14 h-14 rounded-xl object-cover border border-border/20" />
+                          <img src={img} alt="" className="w-14 h-14 rounded-xl object-cover border border-border/20" loading="lazy" />
                         ) : (
                           <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center">
                             <Package className="h-5 w-5 text-muted-foreground" />
