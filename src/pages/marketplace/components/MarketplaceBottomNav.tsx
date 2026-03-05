@@ -13,7 +13,7 @@ export function MarketplaceBottomNav() {
           const isActive = item.exact
             ? location.pathname === item.path
             : location.pathname.startsWith(item.path);
-          const Icon = item.icon || Search;
+          const Icon = item.icon || Compass;
           return (
             <Link
               key={item.path}
