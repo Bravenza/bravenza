@@ -67,17 +67,7 @@ export const MarketplaceFAQSection = memo(function MarketplaceFAQSection() {
   const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query);
     if (!query.trim()) {
-      // Reset to loaded FAQs
-      if (hasLoadedDb) {
-        const { data } = await supabase
-          .from("faqs")
-          .select("id, question, answer, category, persona, tags")
-          .eq("is_active", true)
-          .order("order_index");
-        if (data) setFaqs(data as FAQ[]);
-      } else {
-        setFaqs(STATIC_FAQS);
-      }
+      setSearchResults(null);
       return;
     }
 
@@ -88,7 +78,7 @@ export const MarketplaceFAQSection = memo(function MarketplaceFAQSection() {
         ...(activePersona !== "all" ? { p_persona: activePersona } : {}),
       });
       if (!error && data && (data as any[]).length > 0) {
-        setFaqs((data as any[]).map((d: any) => ({
+        setSearchResults((data as any[]).map((d: any) => ({
           id: d.id,
           question: d.question,
           answer: d.answer,
@@ -98,7 +88,7 @@ export const MarketplaceFAQSection = memo(function MarketplaceFAQSection() {
           rank: d.rank,
         })));
       } else if (!error) {
-        setFaqs([]);
+        setSearchResults([]);
       }
     } catch {
       // Keep current
