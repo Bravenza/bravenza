@@ -81,8 +81,8 @@ export function useMarketplaceListings(cpf: string | null) {
         const data = await marketplaceRequest(cpf, "create-listing", "POST", body);
         toast({ title: "Anúncio criado!", description: "Seu anúncio já está ativo no marketplace." });
         return data.listing;
-      } catch (err: any) {
-        toast({ title: "Erro ao criar anúncio", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro ao criar anúncio", description: getErrorMessage(err), variant: "destructive" });
         return null;
       }
     },
