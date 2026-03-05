@@ -52,8 +52,8 @@ export function SecuritySettingsTab() {
       setMfaEnabled(false);
       setFactorId(null);
       toast.success("MFA desativado. Você precisará configurá-lo novamente no próximo login.");
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao desativar MFA");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao desativar MFA");
     } finally {
       setIsRemoving(false);
     }

@@ -70,8 +70,8 @@ export function CouponsManager({ clientCpf }: CouponsManagerProps) {
       setCreateOpen(false);
       setForm({ code: "", discount_type: "percent", discount_value: "", min_purchase: "", max_uses: "", valid_until: "" });
       fetchCoupons();
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: err instanceof Error ? err.message : "Erro inesperado", variant: "destructive" });
     }
   };
 

@@ -192,8 +192,8 @@ export default function MarketplaceCampaignsPage() {
       setShowCreate(false);
       setNewCampaign({ title: "", message: "", channel: "in_app", segment: "all", selectedTiers: [] });
       fetchCampaigns();
-    } catch (err: any) {
-      toast.error("Erro ao enviar campanha: " + err.message);
+    } catch (err) {
+      toast.error("Erro ao enviar campanha: " + (err instanceof Error ? err.message : "Erro inesperado"));
     }
   };
 

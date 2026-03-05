@@ -61,10 +61,10 @@ export function ReviewForm({ orderId, productName, sessionToken, onClose, onSubm
 
       onSubmitted();
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       toast({
         title: "Erro ao enviar",
-        description: err.message || "Não foi possível enviar sua avaliação.",
+        description: err instanceof Error ? err.message : "Não foi possível enviar sua avaliação.",
         variant: "destructive",
       });
     } finally {

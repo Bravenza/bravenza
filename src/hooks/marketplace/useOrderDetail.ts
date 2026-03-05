@@ -38,8 +38,8 @@ export function useOrderDetail(cpf: string | null) {
       const res = await marketplaceRequest(cpf, "order-detail", "GET", undefined, { order_id: orderId });
       if (!res.ok) throw new Error(res.error || "Erro ao carregar pedido");
       setData(res.data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao carregar pedido");
     } finally {
       setIsLoading(false);
     }

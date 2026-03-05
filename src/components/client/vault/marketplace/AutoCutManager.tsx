@@ -97,8 +97,8 @@ export function AutoCutManager({ sellerId, listings }: AutoCutManagerProps) {
       setCreateOpen(false);
       resetForm();
       fetchRules();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao criar regra");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao criar regra");
     }
     setSaving(false);
   };

@@ -77,8 +77,8 @@ export function AdminSettingsTab() {
     e.preventDefault();
     try {
       createAdminSchema.parse({ fullName, email, tempPassword });
-    } catch (err: any) {
-      const errors = JSON.parse(err.message);
+    } catch (err) {
+      const errors = JSON.parse(err instanceof Error ? err.message : "[]");
       toast.error(errors[0].message);
       return;
     }
@@ -98,8 +98,8 @@ export function AdminSettingsTab() {
       setEmail("");
       setTempPassword("");
       fetchAdmins();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao criar administrador");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao criar administrador");
     } finally {
       setIsCreating(false);
     }
@@ -139,8 +139,8 @@ export function AdminSettingsTab() {
       toast.success("Administrador atualizado!");
       setEditingId(null);
       fetchAdmins();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao atualizar");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar");
     } finally {
       setIsSavingEdit(false);
     }
@@ -160,8 +160,8 @@ export function AdminSettingsTab() {
 
       toast.success(`Admin ${admin.full_name} removido.`);
       fetchAdmins();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao remover administrador");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao remover administrador");
     }
   };
 

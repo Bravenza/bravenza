@@ -117,7 +117,7 @@ function useSystemSetting(key: string, defaultValue: string = "") {
       if (error) throw error;
       setValue(newValue);
       return true;
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error saving setting:", err);
       throw err;
     } finally {

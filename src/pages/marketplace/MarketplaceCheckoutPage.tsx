@@ -216,8 +216,8 @@ function MarketplaceCheckoutPageInner() {
         );
         setSelectedFreight(cheapest);
       }
-    } catch (err: any) {
-      setFreightError(err.message || "Erro ao calcular frete.");
+    } catch (err) {
+      setFreightError(err instanceof Error ? err.message : "Erro ao calcular frete.");
     } finally {
       setIsLoadingFreight(false);
     }
@@ -299,8 +299,8 @@ function MarketplaceCheckoutPageInner() {
             type: "CPF",
             number: cardFormData.identificationNumber.replace(/\D/g, ""),
           };
-        } catch (tokenErr: any) {
-          throw new Error(tokenErr.message || "Erro ao processar cartão");
+        } catch (tokenErr) {
+          throw new Error(tokenErr instanceof Error ? tokenErr.message : "Erro ao processar cartão");
         }
       }
 
@@ -325,8 +325,8 @@ function MarketplaceCheckoutPageInner() {
 
       await markCompleted();
       setStep("success");
-    } catch (err: any) {
-      setPaymentError(err.message || "Erro inesperado no pagamento");
+    } catch (err) {
+      setPaymentError(err instanceof Error ? err.message : "Erro inesperado no pagamento");
     } finally {
       setIsSubmitting(false);
       submitLockRef.current = false;

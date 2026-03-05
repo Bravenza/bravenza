@@ -23,8 +23,8 @@ export function FollowSellerButton({ sellerId, initialFollowing = false, size = 
       const data = await marketplaceRequest("", "toggle-follow", "POST", { seller_id: sellerId });
       setFollowing(data.following);
       toast.success(data.following ? "Seguindo vendedor!" : "Deixou de seguir");
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao seguir");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao seguir");
     } finally {
       setLoading(false);
     }

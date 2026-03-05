@@ -75,9 +75,9 @@ export function ConsignmentRequestDialog({
       // Reset
       setBrand(""); setModel(""); setColorway(""); setSize("");
       setSuggestedPrice(""); setDescription(""); setHasReceipt(false);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      toast({ title: "Erro ao enviar solicitação", description: err.message, variant: "destructive" });
+      toast({ title: "Erro ao enviar solicitação", description: err instanceof Error ? err.message : "Erro inesperado", variant: "destructive" });
     } finally {
       setLoading(false);
     }

@@ -98,8 +98,8 @@ export default function MarketplaceModerationPage() {
       fetchOffers();
       setDetailOpen(false);
       setRejectOpen(false);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: err instanceof Error ? err.message : "Erro ao moderar", variant: "destructive" });
     } finally {
       setActionLoading(false);
     }

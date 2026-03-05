@@ -114,8 +114,8 @@ export default function SellerWalletPage() {
       setPayoutOpen(false);
       setPayoutAmount("");
       fetchAll();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao solicitar saque");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao solicitar saque");
     } finally {
       setPayoutSubmitting(false);
     }
@@ -140,8 +140,8 @@ export default function SellerWalletPage() {
       toast.success(editingPix ? "Conta atualizada!" : "Conta PIX cadastrada!");
       setPixOpen(false);
       fetchAll();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao salvar conta PIX");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar conta PIX");
     } finally {
       setPixSubmitting(false);
     }
@@ -153,8 +153,8 @@ export default function SellerWalletPage() {
       await marketplaceRequest(cpf, "delete-pix", "DELETE", undefined, { pix_id: pixId });
       toast.success("Conta PIX removida");
       fetchAll();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao remover");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao remover");
     }
   };
 

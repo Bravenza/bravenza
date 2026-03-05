@@ -75,8 +75,8 @@ export function PaymentRetryDialog({ order, open, onOpenChange, onSuccess, switc
             type: "CPF",
             number: cardFormData.identificationNumber.replace(/\D/g, ""),
           };
-        } catch (tokenErr: any) {
-          setResult({ status: "error", error: tokenErr.message || "Erro ao processar cartão" });
+        } catch (tokenErr) {
+          setResult({ status: "error", error: tokenErr instanceof Error ? tokenErr.message : "Erro ao processar cartão" });
           setIsSubmitting(false);
           return;
         }
@@ -91,8 +91,8 @@ export function PaymentRetryDialog({ order, open, onOpenChange, onSuccess, switc
           onSuccess();
         }, 2500);
       }
-    } catch (err: any) {
-      setResult({ status: "error", error: err.message || "Erro inesperado" });
+    } catch (err) {
+      setResult({ status: "error", error: err instanceof Error ? err.message : "Erro inesperado" });
     } finally {
       setIsSubmitting(false);
     }

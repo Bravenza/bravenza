@@ -42,11 +42,12 @@ export function MFAVerify({ onVerified, onSignOut }: MFAVerifyProps) {
       if (verifyError) throw verifyError;
 
       onVerified();
-    } catch (err: any) {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
       setError(
-        err.message === "Invalid TOTP code"
+        msg === "Invalid TOTP code"
           ? "Código inválido. Tente novamente."
-          : err.message || "Erro na verificação"
+          : msg || "Erro na verificação"
       );
     } finally {
       setIsVerifying(false);

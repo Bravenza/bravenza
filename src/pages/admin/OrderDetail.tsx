@@ -360,10 +360,10 @@ const OrderDetail = () => {
         title: "Pedido marcado como perdido",
         description: "O pedido foi arquivado como negociação perdida.",
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível atualizar o status.",
+        description: error instanceof Error ? error.message : "Não foi possível atualizar o status.",
         variant: "destructive",
       });
     } finally {

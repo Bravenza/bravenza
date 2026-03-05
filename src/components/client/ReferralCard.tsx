@@ -137,7 +137,7 @@ export function ReferralCard({ clientCpf, clientName, clientEmail }: ReferralCar
 
       toast.success("Código de indicação criado com sucesso!");
       fetchReferrals();
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error creating referral:", err);
       toast.error("Erro ao criar código de indicação");
     } finally {

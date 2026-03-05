@@ -101,7 +101,7 @@ export default function AuthenticityPage() {
       setCertificate(data.certificate);
       setShowConfetti(true);
       playSuccessSound();
-    } catch (err: any) {
+    } catch (err) {
       console.error("Verification error:", err);
       setError(t("authenticity.verificationError"));
     } finally {

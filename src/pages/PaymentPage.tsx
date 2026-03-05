@@ -211,11 +211,11 @@ export default function PaymentPage() {
       });
       
       return true;
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error applying cashback:", err);
       toast({
         title: "Erro ao aplicar cashback",
-        description: err.message || "Não foi possível aplicar o desconto.",
+        description: err instanceof Error ? err.message : "Não foi possível aplicar o desconto.",
         variant: "destructive",
       });
       return false;
@@ -324,11 +324,11 @@ export default function PaymentPage() {
         title: "Contrato assinado!",
         description: "Agora você pode prosseguir com o pagamento.",
       });
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error accepting contract:", err);
       toast({
         title: "Erro ao assinar contrato",
-        description: err.message || "Tente novamente.",
+        description: err instanceof Error ? err.message : "Tente novamente.",
         variant: "destructive",
       });
     } finally {

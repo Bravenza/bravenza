@@ -156,8 +156,8 @@ export default function MarketplacePlansPage() {
       await subscribe(selectedPlan, email);
       toast.success("Redirecionando para o checkout do Mercado Pago...");
       setCheckoutOpen(false);
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao iniciar assinatura");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao iniciar assinatura");
     }
   };
 

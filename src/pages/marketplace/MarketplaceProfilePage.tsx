@@ -240,7 +240,7 @@ export default function MarketplaceProfilePage() {
       const { error } = await supabase.from("client_profiles").update({ full_name: fullName, phone }).eq("cpf", cpf);
       if (error) throw error;
       toast.success("Dados atualizados!");
-    } catch (err: any) { toast.error(err.message || "Erro ao salvar"); }
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Erro ao salvar"); }
     setSavingProfile(false);
   };
 
@@ -255,7 +255,7 @@ export default function MarketplaceProfilePage() {
       });
       if (error) throw error;
       toast.success("Preferências salvas!");
-    } catch (err: any) { toast.error(err.message || "Erro ao salvar preferências"); }
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Erro ao salvar preferências"); }
     setSavingPrefs(false);
   };
 
@@ -285,8 +285,8 @@ export default function MarketplaceProfilePage() {
       if (updateError) throw updateError;
       setAvatarUrl(publicUrl);
       toast.success("Foto de perfil atualizada!");
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao enviar imagem");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao enviar imagem");
     } finally {
       setUploadingAvatar(false);
     }

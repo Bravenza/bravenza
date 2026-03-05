@@ -48,8 +48,8 @@ export function AlertConfigModal({ productId, productName, cpf, sizes = [], curr
       } else {
         toast({ title: "Erro", description: res.error || "Não foi possível criar o alerta.", variant: "destructive" });
       }
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: err instanceof Error ? err.message : "Erro inesperado", variant: "destructive" });
     } finally {
       setSaving(false);
     }

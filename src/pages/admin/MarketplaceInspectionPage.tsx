@@ -144,8 +144,8 @@ export default function MarketplaceInspectionPage() {
       toast({ title: "Status atualizado!" });
       fetchHubOrders();
       setDetailOpen(false);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: err instanceof Error ? err.message : "Erro ao atualizar", variant: "destructive" });
     } finally {
       setActionLoading(false);
     }
@@ -181,8 +181,8 @@ export default function MarketplaceInspectionPage() {
       setInspectDialogOpen(false);
       fetchHubOrders();
       setDetailOpen(false);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: err instanceof Error ? err.message : "Erro na inspeção", variant: "destructive" });
     } finally {
       setActionLoading(false);
     }
@@ -520,8 +520,8 @@ export default function MarketplaceInspectionPage() {
                             }
                           }
                           toast({ title: "Fotos enviadas!" });
-                        } catch (err: any) {
-                          toast({ title: "Erro no upload", description: err.message, variant: "destructive" });
+                        } catch (err) {
+                          toast({ title: "Erro no upload", description: err instanceof Error ? err.message : "Erro ao enviar fotos", variant: "destructive" });
                         } finally {
                           setUploadingPhoto(false);
                           e.target.value = "";
