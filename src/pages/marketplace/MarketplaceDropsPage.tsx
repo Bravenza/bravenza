@@ -111,7 +111,7 @@ export default function MarketplaceDropsPage() {
     setIsLoading(true);
     try {
       const headers = await getMarketplaceHeaders();
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mk-releases`, { headers });
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-releases`, { headers });
       const data = await res.json();
       if (data?.releases?.length) setReleases(data.releases);
     } catch { /* fallback */ }

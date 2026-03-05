@@ -14,7 +14,7 @@ serve(async (req) => {
   try {
     const { data: logEntry } = await sb
       .from("cron_execution_logs")
-      .insert({ job_name: "mk-releases", started_at: cronStartedAt, status: "running" })
+      .insert({ job_name: "mkv2-releases", started_at: cronStartedAt, status: "running" })
       .select("id")
       .single();
     cronLogId = logEntry?.id || null;
