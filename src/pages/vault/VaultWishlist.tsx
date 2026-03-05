@@ -182,11 +182,11 @@ export default function VaultWishlist() {
         min_price: "", max_price: "", notes: "",
       });
       fetchData();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error adding item:", error);
       toast({
         title: "Erro ao adicionar",
-        description: error.message || "Tente novamente",
+        description: error instanceof Error ? error.message : "Tente novamente",
         variant: "destructive",
       });
     } finally {
