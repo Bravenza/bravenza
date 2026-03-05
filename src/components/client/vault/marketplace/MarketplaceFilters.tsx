@@ -55,7 +55,18 @@ interface MarketplaceFiltersProps {
 
 export function MarketplaceFilters({ filters, onFiltersChange, onSearch, availableModels = [], onBrandSelected }: MarketplaceFiltersProps) {
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [searchText, setSearchText] = useState(filters.search || "");
   const [priceRange, setPriceRange] = useState([filters.priceMin || 0, filters.priceMax || 5000]);
+
+  const debouncedSetSearch = useDebouncedCallback(
+    (value: string) => onFiltersChange({ ...filters, search: value || undefined }),
+    350
+  );
+
+  // Sync local searchText when filters.search changes externally
+  useEffect(() => {
+    setSearchText(filters.search || "");
+  }, [filters.search]);
 
   const activeFilterCount = [
     filters.condition,
