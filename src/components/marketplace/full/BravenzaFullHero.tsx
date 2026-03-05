@@ -13,6 +13,7 @@ export function BravenzaFullHero() {
           src={heroImage}
           alt="Sneaker premium em pedestal de autenticação"
           className="w-full h-full object-cover"
+          fetchPriority="high"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/50" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-background/40" />

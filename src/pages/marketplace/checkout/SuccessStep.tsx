@@ -69,6 +69,7 @@ export function SuccessStep({ paymentMethod, orderCodes, group, pixData }: Succe
               <img
                 src={`data:image/png;base64,${pixData.qr_code}`}
                 alt="QR Code PIX"
+                loading="lazy"
                 className="w-48 h-48 rounded-xl border border-border/20"
               />
             </div>

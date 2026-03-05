@@ -298,7 +298,7 @@ export function CollectionsManager({ clientCpf, myListings }: CollectionsManager
                       >
                         <div className="aspect-square bg-muted/30">
                           {listing.photos?.[0] ? (
-                            <img src={listing.photos[0]} alt="" className="w-full h-full object-cover" />
+                            <img src={listing.photos[0]} alt="" className="w-full h-full object-cover" loading="lazy" />
                           ) : (
                             <span className="flex items-center justify-center h-full text-2xl opacity-20">👟</span>
                           )}

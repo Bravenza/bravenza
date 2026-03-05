@@ -297,7 +297,7 @@ export default function SellerStorefrontPage() {
                 >
                   <div className="aspect-[4/3] bg-white relative overflow-hidden">
                     {listing.photos?.[0] ? (
-                      <img src={listing.photos[0]} alt={listing.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" />
+                      <img src={listing.photos[0]} alt={listing.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" loading="lazy" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <ShoppingBag className="h-8 w-8 text-muted-foreground/20" />

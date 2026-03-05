@@ -117,6 +117,7 @@ export function BravenzaFullSteps() {
                   src={processImage}
                   alt="Estúdio fotográfico profissional"
                   className="w-40 h-28 rounded-lg object-cover mb-2"
+                  loading="lazy"
                 />
                 <p className="text-xs font-medium">Fotografia profissional</p>
                 <p className="text-xs text-muted-foreground">Padrão editorial de catálogo</p>

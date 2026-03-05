@@ -220,6 +220,7 @@ export default function MarketplacePlansPage() {
               src={plansHeroMockup}
               alt="Bravenza Marketplace - Vitrine do vendedor"
               className="w-full rounded-2xl shadow-2xl"
+              loading="lazy"
             />
           </motion.div>
         </div>

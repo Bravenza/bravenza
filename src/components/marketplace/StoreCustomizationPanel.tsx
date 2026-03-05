@@ -168,7 +168,7 @@ export function StoreCustomizationPanel({ cpf }: StoreCustomizationPanelProps) {
                 className="w-24 h-24 rounded-2xl bg-card border-4 border-card shadow-lg flex items-center justify-center overflow-hidden group relative ring-2 ring-primary/10"
               >
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" loading="lazy" />
                 ) : (
                   <User className="h-10 w-10 text-muted-foreground/20" />
                 )}
