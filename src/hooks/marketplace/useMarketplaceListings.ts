@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { marketplaceRequest } from "./api";
+import { getErrorMessage } from "@/lib/error-utils";
 import type { MarketplaceListing, SellerProfile } from "./types";
 
 export function useMarketplaceListings(cpf: string | null) {
