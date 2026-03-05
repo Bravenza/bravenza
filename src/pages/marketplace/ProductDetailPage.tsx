@@ -23,7 +23,7 @@ import { ProductSEO } from "./product/ProductSEO";
 import { ProductHeroSection, OffersSection } from "./product/ProductHeroSection";
 import { ProductSpecsSection } from "./product/ProductSpecsSection";
 
-const Footer = lazy(() => import("@/components/home/Footer").then(m => ({ default: m.Footer })));
+
 const ProductAnalyticsChart = lazy(() => import("@/components/marketplace/ProductAnalyticsChart").then(m => ({ default: m.ProductAnalyticsChart })));
 const ProductReviews = lazy(() => import("@/components/marketplace/ProductReviews").then(m => ({ default: m.ProductReviews })));
 const PriceHistoryChart = lazy(() => import("@/components/marketplace/PriceHistoryChart").then(m => ({ default: m.PriceHistoryChart })));
@@ -456,11 +456,6 @@ function ProductDetailPageInner() {
         }}
       />
 
-      <div className="pb-20 md:pb-0">
-        <Suspense fallback={null}>
-          <Footer />
-        </Suspense>
-      </div>
     </div>
   );
 }
