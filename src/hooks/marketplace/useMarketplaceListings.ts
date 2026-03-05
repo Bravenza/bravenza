@@ -33,7 +33,7 @@ export function useMarketplaceListings(cpf: string | null) {
         const data = await marketplaceRequest(cpf, "listings", "GET", undefined, params);
         setListings(data.listings || []);
         setTotal(data.total || 0);
-      } catch (err: any) {
+      } catch (err) {
         console.error("Fetch listings error:", err);
       } finally {
         setIsLoading(false);
