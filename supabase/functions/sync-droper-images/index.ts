@@ -268,8 +268,8 @@ async function upsertSneakerModel(
   product: DroperProduct,
   brandId: string,
   silhouetteId: string | null,
-  imageUrls: string[], // URLs das imagens da página (já uploadadas no Storage)
-): Promise<string | null> {
+  imageUrls: string[],
+): Promise<{ id: string; action: "inserted" | "updated" } | null> {
   const releaseDate = product.dataLancamento ? product.dataLancamento.split("T")[0] : null;
 
   const payload: Record<string, unknown> = {
@@ -283,7 +283,7 @@ async function upsertSneakerModel(
     colorway: product.cor || "",
     release_date: releaseDate,
     msrp: product.retail,
-    placeholder_image_url: imageUrls[0] ?? "", // imagem principal da página
+    placeholder_image_url: imageUrls[0] ?? "",
     source_primary: product.droperUrl,
     source_secondary: imageUrls.slice(1),
     image_status: "synced",
@@ -305,7 +305,7 @@ async function upsertSneakerModel(
   }
   if (updated?.id) {
     console.log(`[Model] UPDATED ${product.sku}`);
-    return updated.id;
+    return { id: updated.id, action: "updated" };
   }
 
   const { data: inserted, error: insertError } = await supabase
@@ -319,7 +319,7 @@ async function upsertSneakerModel(
     return null;
   }
   console.log(`[Model] INSERTED ${product.sku}`);
-  return inserted?.id ?? null;
+  return inserted ? { id: inserted.id, action: "inserted" } : null;
 }
 
 // ─── 7. Salva imagens em sneaker_images ───────────────────────────────────────
