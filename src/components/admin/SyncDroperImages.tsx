@@ -66,7 +66,7 @@ export default function SyncCatalogoDroper() {
   const [pagesPerBatch, setPagesPerBatch] = useState(1);
   const [totalBatches, setTotalBatches] = useState(5);
   const [marcaFiltro, setMarcaFiltro] = useState("");
-  const [totals, setTotals] = useState<Totals>({ success: 0, failed: 0, notFound: 0, batches: 0 });
+  const [totals, setTotals] = useState<Totals>({ inserted: 0, updated: 0, duplicates: 0, failed: 0, notFound: 0, batches: 0 });
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [lastSynced, setLastSynced] = useState<{ sku: string; images: number }[]>([]);
