@@ -235,6 +235,11 @@ export default function AppLayout() {
 
                 {/* Right actions */}
                 <div className="flex items-center gap-1">
+                  {/* Mobile search toggle */}
+                  <Button variant="ghost" size="icon" className="md:hidden h-9 w-9 rounded-full hover:bg-secondary/60 transition-colors active:scale-95" onClick={() => setMobileSearchOpen(!mobileSearchOpen)} aria-label="Buscar">
+                    {mobileSearchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+                  </Button>
+
                   <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" asChild>
                     <Link to="/app/favoritos">
                       <Heart className="h-4 w-4" />
