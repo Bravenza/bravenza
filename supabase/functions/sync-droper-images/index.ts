@@ -417,10 +417,11 @@ async function runConcurrent(
   supabase: ReturnType<typeof createClient>,
   drops: DropItem[],
   result: SyncResult,
+  seenSkus: Set<string>,
 ): Promise<void> {
   for (let i = 0; i < drops.length; i += CONCURRENCY) {
     const chunk = drops.slice(i, i + CONCURRENCY);
-    await Promise.all(chunk.map((drop) => processProduct(supabase, drop, result)));
+    await Promise.all(chunk.map((drop) => processProduct(supabase, drop, result, seenSkus)));
     console.log(`[Progress] ${Math.min(i + CONCURRENCY, drops.length)}/${drops.length}`);
   }
 }
