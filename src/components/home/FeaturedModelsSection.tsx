@@ -33,8 +33,8 @@ const itemVariants = {
 const FeaturedModelsSection = () => {
   const { data: models, isLoading } = useQuery({
     queryKey: ["featured-models"],
-    staleTime: 0,
-    gcTime: 1000 * 60 * 5,
+    staleTime: STALE.STATIC,
+    gcTime: GC_TIME.LONG,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("featured_models")
