@@ -221,6 +221,7 @@ export default defineConfig(({ mode }) => ({
           "vendor-charts": ["recharts"],
           "vendor-pdf": ["jspdf", "jspdf-autotable"],
           "vendor-forms": ["react-hook-form", "zod", "@hookform/resolvers"],
+          "vendor-icons": ["lucide-react"],
         },
       },
     },
