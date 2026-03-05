@@ -386,9 +386,9 @@ export function ShippingSection({
 
       setTrackingInfo(data);
       setShowTrackingModal(true);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error tracking:", error);
-      toast.error(error.message || "Erro ao rastrear pacote");
+      toast.error(error instanceof Error ? error.message : "Erro ao rastrear pacote");
     } finally {
       setIsTracking(false);
     }

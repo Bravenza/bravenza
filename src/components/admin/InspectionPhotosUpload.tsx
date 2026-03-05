@@ -125,7 +125,7 @@ export const InspectionPhotosUpload = ({
           });
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Upload error:", error);
       toast({
         title: "Erro",

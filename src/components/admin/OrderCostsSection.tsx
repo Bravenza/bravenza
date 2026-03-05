@@ -155,10 +155,10 @@ export const OrderCostsSection = ({
         title: "Custo removido",
         description: "O custo foi excluído com sucesso.",
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível remover o custo.",
+        description: error instanceof Error ? error.message : "Não foi possível remover o custo.",
         variant: "destructive",
       });
     } finally {

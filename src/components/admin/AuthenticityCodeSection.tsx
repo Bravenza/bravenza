@@ -43,9 +43,9 @@ export function AuthenticityCodeSection({
 
       onCodeGenerated(newCode);
       toast.success("Código de autenticidade gerado com sucesso!");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error generating code:", error);
-      toast.error("Erro ao gerar código: " + error.message);
+      toast.error("Erro ao gerar código: " + (error instanceof Error ? error.message : "Erro desconhecido"));
     } finally {
       setIsGenerating(false);
     }

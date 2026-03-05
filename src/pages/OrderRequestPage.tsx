@@ -367,7 +367,7 @@ export default function OrderRequestPage() {
       setIsSuccess(true);
       toast.success(t("orderRequest.submitSuccess"));
 
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error submitting request:", error);
       toast.error(t("orderRequest.submitError"));
     } finally {

@@ -146,10 +146,10 @@ export function BudgetActions({
 
       setShowSendDialog(false);
       onUpdate();
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível enviar o orçamento.",
+        description: error instanceof Error ? error.message : "Não foi possível enviar o orçamento.",
         variant: "destructive",
       });
     } finally {
