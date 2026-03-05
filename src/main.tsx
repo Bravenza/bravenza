@@ -2,7 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-const APP_VERSION = "3.5.9";
+const APP_VERSION = "3.6.0";
 const VERSION_KEY = "bravenza-app-version";
 
 // Version-gated cleanup — only runs when the app version changes
