@@ -3,9 +3,9 @@ import {
   Compass, ShoppingBag, Box, Heart, Star, Store, Bell, MessageSquare,
   Users, Sparkles, Award, Settings, LogOut, FileText as FileTextIcon,
   MoreHorizontal, Newspaper, HelpCircle, DollarSign,
-  ArrowRight, FileText, RefreshCw, TrendingUp
+  ArrowRight, FileText, RefreshCw, TrendingUp, Search, X
 } from "lucide-react";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useRef, useState } from "react";
 import { usePrefetch } from "@/hooks/useLazySection";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
