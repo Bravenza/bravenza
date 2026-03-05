@@ -478,7 +478,7 @@ export default function VaultMatchRoom() {
 
       {/* Image Preview Dialog */}
       <Dialog open={!!imagePreview} onOpenChange={() => setImagePreview(null)}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 max-w-3xl p-0">
+        <DialogContent className="bg-zinc-900 border-zinc-800 w-[95vw] max-w-3xl p-0 rounded-2xl">
           {imagePreview && (
             <img src={imagePreview} alt="" className="w-full h-auto rounded-lg" />
           )}
