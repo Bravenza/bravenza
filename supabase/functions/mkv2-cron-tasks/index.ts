@@ -147,6 +147,46 @@ Deno.serve(async (req) => {
     }
     results.autocut_applied = autocutApplied;
 
+    // ── 4. Cancel stale pending_payment orders (older than 2h) ──
+    const cutoff2h = new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString();
+    const { data: staleOrders, error: staleErr } = await sb
+      .from("vault_marketplace_orders")
+      .select("id, listing_id")
+      .eq("status", "pending_payment")
+      .lt("created_at", cutoff2h);
+
+    if (staleErr) console.error("[mkv2-cron-tasks] Stale orders fetch error:", staleErr);
+
+    let cancelledOrders = 0;
+    for (const order of staleOrders || []) {
+      await sb.from("vault_marketplace_orders").update({
+        status: "cancelled",
+        cancelled_at: now.toISOString(),
+        cancellation_reason: "payment_timeout",
+        updated_at: now.toISOString(),
+      }).eq("id", order.id);
+
+      // Revert listing back to active
+      if (order.listing_id) {
+        await sb.from("vault_marketplace_listings")
+          .update({ status: "active" })
+          .eq("id", order.listing_id)
+          .eq("status", "reserved");
+      }
+
+      // Also revert marketplace_offers if the order was from an offer
+      // (listing_id is null for offer-based orders, but the offer_id matches the original b.listing_id)
+      // We check offers reserved around the same time
+      await sb.from("marketplace_offers")
+        .update({ status: "active" })
+        .eq("status", "reserved")
+        .eq("id", order.id); // offer-based orders use offer.id as listing reference
+
+      cancelledOrders++;
+      console.log(`[mkv2-cron-tasks] Cancelled stale order ${order.id} (payment_timeout)`);
+    }
+    results.cancelled_stale_orders = cancelledOrders;
+
     // ── Finalize log ──
     const finishedAt = new Date();
     const durationMs = finishedAt.getTime() - new Date(startedAt).getTime();
