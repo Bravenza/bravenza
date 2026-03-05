@@ -217,7 +217,7 @@ const FinancePage = () => {
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground">Receita Total</p>
-                <p className="text-base md:text-xl font-bold text-primary whitespace-nowrap mt-1">{formatCurrency(m.total_revenue)}</p>
+                <p className="text-base md:text-xl font-bold text-primary tabular-nums mt-1">{formatCurrency(m.total_revenue)}</p>
                 <p className="text-xs text-muted-foreground mt-1">{m.paid_orders} pedidos pagos</p>
               </div>
               <div className="p-2.5 md:p-3 rounded-lg bg-primary/10 shrink-0">
