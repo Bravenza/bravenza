@@ -49,7 +49,7 @@ export function useMarketplaceListings(cpf: string | null) {
       const data = await marketplaceRequest(cpf, "my-listings");
       setMyListings(data.listings || []);
       setSeller(data.seller || null);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Fetch my listings error:", err);
     } finally {
       setIsLoading(false);
