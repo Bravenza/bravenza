@@ -15,6 +15,7 @@ interface BatchResult {
   message: string;
   nextPage: number;
   pagesProcessed: number;
+  reachedLimit?: boolean;
   result: SyncResult;
 }
 
