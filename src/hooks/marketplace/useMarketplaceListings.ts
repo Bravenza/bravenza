@@ -184,7 +184,7 @@ export function useMarketplaceListings(cpf: string | null) {
     try {
       const data = await marketplaceRequest(cpf, "price-drop-suggestions");
       return data.suggestions || [];
-    } catch (err: any) {
+    } catch (err) {
       console.error("Fetch price drop suggestions error:", err);
       return [];
     }
