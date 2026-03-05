@@ -70,7 +70,7 @@ const getMenuGroups = (isVaultMember: boolean): MenuGroup[] => [
   {
     items: [
       { path: "/app/notificacoes", label: "Notificações", icon: Bell },
-      { path: "/app/pedidos", label: "Compras", icon: Package },
+      { path: "/app/pedidos", label: "Compras", icon: ShoppingBag },
       { path: "/app/favoritos", label: "Favoritos", icon: Heart },
     ],
   },
