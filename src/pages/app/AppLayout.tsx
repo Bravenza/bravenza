@@ -37,12 +37,12 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { path: "/app", label: "Explorar", mobileLabel: "Explorar", icon: Search, group: "main" },
+  { path: "/app", label: "Explorar", mobileLabel: "Explorar", icon: Compass, group: "main" },
   { path: "/app/pedidos", label: "Pedidos", mobileLabel: "Pedidos", icon: Package, group: "main" },
   { path: "/app/closet", label: "Meu Closet", mobileLabel: "Closet", icon: Box, group: "main" },
   { path: "/app/loja", label: "Minha Loja", mobileLabel: "Loja", icon: Store, group: "main" },
   { path: "/app/favoritos", label: "Favoritos", mobileLabel: "Favoritos", icon: Heart, group: "more" },
-  { path: "/app/feed", label: "Feed", mobileLabel: "Feed", icon: Activity, group: "more" },
+  { path: "/app/feed", label: "Feed", mobileLabel: "Feed", icon: Newspaper, group: "more" },
   { path: "/app/wishlist", label: "Wishlist", mobileLabel: "Wishlist", icon: Star, group: "vault" },
   { path: "/app/vault", label: "Meu Status", mobileLabel: "Status", icon: Award, group: "vault" },
   { path: "/app/drops", label: "Drops & Intel", mobileLabel: "Drops", icon: Sparkles, group: "vault" },
