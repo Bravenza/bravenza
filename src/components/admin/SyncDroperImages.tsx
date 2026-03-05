@@ -314,11 +314,13 @@ export default function SyncCatalogoDroper() {
           )}
 
           {/* Métricas */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {[
-              { label: "Sincronizados", value: totals.success, icon: CheckCircle2, variant: "default" as const },
-              { label: "Não encontrados", value: totals.notFound, icon: AlertTriangle, variant: "secondary" as const },
+              { label: "Novos", value: totals.inserted, icon: CheckCircle2, variant: "default" as const },
+              { label: "Atualizados", value: totals.updated, icon: Layers, variant: "secondary" as const },
+              { label: "Duplicados", value: totals.duplicates, icon: AlertTriangle, variant: "outline" as const },
               { label: "Falhas", value: totals.failed, icon: XCircle, variant: "destructive" as const },
+              { label: "Não encontrados", value: totals.notFound, icon: AlertTriangle, variant: "secondary" as const },
               { label: "Batches", value: totals.batches, icon: Layers, variant: "outline" as const },
             ].map((s) => (
               <Card key={s.label} className="bg-card/50">
