@@ -341,11 +341,11 @@ export function ShippingSection({
 
       setShowLabelModal(false);
       setSelectedQuote(null);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error creating label:", error);
       
       // Check for wallet balance error in catch block too
-      const errorMsg = error.message || "";
+      const errorMsg = error instanceof Error ? error.message : "";
       if (errorMsg.includes("saldo na carteira") || errorMsg.includes("Sem saldo")) {
         toast.warning(
           "Etiqueta criada no SuperFrete, mas sem saldo na carteira. Acesse o app para pagar a etiqueta.",
