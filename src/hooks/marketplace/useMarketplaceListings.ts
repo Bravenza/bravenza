@@ -171,8 +171,8 @@ export function useMarketplaceListings(cpf: string | null) {
         await marketplaceRequest(cpf, "respond-offer", "PUT", { offer_id: offerId, response, ...extra });
         toast({ title: response === "accept" ? "Oferta aceita!" : response === "reject" ? "Oferta recusada" : "Contra-proposta enviada!" });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
         return false;
       }
     },
