@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { RouteErrorBoundary } from "./RouteErrorBoundary";
 import { RouteSkeleton } from "./RouteSkeleton";
 
-type SkeletonVariant = "default" | "form" | "dashboard" | "detail";
+type SkeletonVariant = "default" | "dashboard" | "list" | "detail" | "feed" | "admin" | "form";
 
 interface RouteWrapperProps {
   children: ReactNode;
