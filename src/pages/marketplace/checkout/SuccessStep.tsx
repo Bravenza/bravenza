@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CheckCircle2, Copy, Timer } from "lucide-react";
+import { CheckCircle2, Clock, Copy, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -12,12 +12,13 @@ import type { CartGroup } from "@/hooks/useMarketplaceCart";
 
 interface SuccessStepProps {
   paymentMethod: string;
+  paymentStatus?: string;
   orderCodes: string[];
   group: CartGroup;
   pixData: { qr_code?: string; copy_paste?: string; expiration?: string } | null;
 }
 
-export function SuccessStep({ paymentMethod, orderCodes, group, pixData }: SuccessStepProps) {
+export function SuccessStep({ paymentMethod, paymentStatus, orderCodes, group, pixData }: SuccessStepProps) {
   const navigate = useNavigate();
   const [pixCopied, setPixCopied] = useState(false);
   const { remaining: pixTimer, isExpired: pixExpired } = useCountdown(pixData?.expiration || null);
@@ -31,6 +32,8 @@ export function SuccessStep({ paymentMethod, orderCodes, group, pixData }: Succe
     }
   };
 
+  const isInProcess = paymentStatus === "in_process";
+
   return (
     <div className="bg-background rounded-2xl border border-border/20 p-8 space-y-6">
       <div className="text-center">
@@ -38,15 +41,25 @@ export function SuccessStep({ paymentMethod, orderCodes, group, pixData }: Succe
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-green-500/10 mb-4"
+          className={cn(
+            "inline-flex items-center justify-center h-16 w-16 rounded-2xl mb-4",
+            isInProcess ? "bg-yellow-500/10" : "bg-green-500/10"
+          )}
         >
-          <CheckCircle2 className="h-8 w-8 text-green-500" />
+          {isInProcess
+            ? <Clock className="h-8 w-8 text-yellow-500" />
+            : <CheckCircle2 className="h-8 w-8 text-green-500" />
+          }
         </motion.div>
         <h2 className="font-bold text-xl mb-1">
-          {paymentMethod === "pix" ? "PIX gerado!" : "Pagamento aprovado!"}
+          {isInProcess
+            ? "Pagamento em análise"
+            : paymentMethod === "pix" ? "PIX gerado!" : "Pagamento aprovado!"}
         </h2>
         <p className="text-sm text-muted-foreground">
-          {orderCodes.length} pedido{orderCodes.length !== 1 ? "s" : ""} criado{orderCodes.length !== 1 ? "s" : ""} — pagamento único consolidado
+          {isInProcess
+            ? "Seu pagamento está sendo analisado. Você receberá uma notificação assim que for aprovado (geralmente em até 2 horas)."
+            : `${orderCodes.length} pedido${orderCodes.length !== 1 ? "s" : ""} criado${orderCodes.length !== 1 ? "s" : ""} — pagamento único consolidado`}
         </p>
       </div>
 

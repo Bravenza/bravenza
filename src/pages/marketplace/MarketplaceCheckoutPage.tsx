@@ -71,6 +71,7 @@ function MarketplaceCheckoutPageInner() {
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [pixData, setPixData] = useState<{ qr_code?: string; copy_paste?: string; expiration?: string } | null>(null);
   const [orderCodes, setOrderCodes] = useState<string[]>([]);
+  const [paymentStatus, setPaymentStatus] = useState<string | undefined>();
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
 
   const [form, setForm] = useState<CheckoutFormData>({
@@ -331,6 +332,7 @@ function MarketplaceCheckoutPageInner() {
       }
 
       setOrderCodes(payData.order_codes || createdOrders.map(o => o.order_code));
+      setPaymentStatus(payData.status);
 
       await Promise.allSettled(createdOrders.map(co => removeFromCart(co.item.offer_id)));
 
@@ -417,6 +419,7 @@ function MarketplaceCheckoutPageInner() {
                 {step === "success" && (
                   <SuccessStep
                     paymentMethod={form.payment_method}
+                    paymentStatus={paymentStatus}
                     orderCodes={orderCodes}
                     group={group}
                     pixData={pixData}
