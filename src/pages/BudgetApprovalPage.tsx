@@ -222,10 +222,10 @@ export default function BudgetApprovalPage() {
       setTimeout(() => {
         navigate(`/pagamento/${token}`);
       }, 2000);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível aprovar o orçamento.",
+        description: error instanceof Error ? error.message : "Não foi possível aprovar o orçamento.",
         variant: "destructive",
       });
     } finally {
