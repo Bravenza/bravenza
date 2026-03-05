@@ -126,10 +126,10 @@ export const OrderCostsSection = ({
         title: "Custo adicionado",
         description: "O custo foi registrado com sucesso.",
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível adicionar o custo.",
+        description: error instanceof Error ? error.message : "Não foi possível adicionar o custo.",
         variant: "destructive",
       });
     } finally {
