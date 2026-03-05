@@ -419,6 +419,7 @@ function MarketplaceCheckoutPageInner() {
                 {step === "success" && (
                   <SuccessStep
                     paymentMethod={form.payment_method}
+                    paymentStatus={paymentStatus}
                     orderCodes={orderCodes}
                     group={group}
                     pixData={pixData}
