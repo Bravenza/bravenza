@@ -1,7 +1,21 @@
 import { createRoot } from "react-dom/client";
+import * as Sentry from "@sentry/react";
 import App from "./App.tsx";
 import "./index.css";
 import { logger } from "@/lib/logger";
+
+// Initialize Sentry in production only
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
+if (import.meta.env.PROD && sentryDsn) {
+  Sentry.init({
+    dsn: sentryDsn,
+    integrations: [
+      Sentry.browserTracingIntegration(),
+    ],
+    tracesSampleRate: 0.2,
+    environment: "production",
+  });
+}
 
 const APP_VERSION = "3.6.0";
 const VERSION_KEY = "bravenza-app-version";
