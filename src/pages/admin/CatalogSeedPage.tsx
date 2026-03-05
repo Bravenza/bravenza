@@ -238,7 +238,7 @@ export default function CatalogSeedPage() {
         if (i < brands.length - 1 && !cancelRef.current) await new Promise(r => setTimeout(r, 1000));
       }
       if (!cancelRef.current) toast({ title: "Seed concluído! ✓" });
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setSeeding(false); setCurrentBrand(null); }
   };
 
