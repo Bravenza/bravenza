@@ -166,7 +166,7 @@ export default function CatalogSeedPage() {
         fetchLastSyncTime(),
       ]);
       setSyncPreview(preview);
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setSyncPreviewLoading(false); }
   }, [fetchLastSyncTime]);
 
