@@ -155,7 +155,7 @@ export function useMarketplaceListings(cpf: string | null) {
     async (listingId: string) => {
       if (!cpf) return [];
       try {
-        const data = await marketplaceRequest(cpf, "listing-offers", "GET", undefined, { listing_id: listingId });
+        const data = await fetchWithRetry(() => marketplaceRequest(cpf, "listing-offers", "GET", undefined, { listing_id: listingId }));
         return data.offers || [];
       } catch (err) {
         console.error("Fetch offers error:", err);
