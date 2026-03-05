@@ -274,7 +274,7 @@ export default function UnifiedDashboard() {
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
               >
-                <ShoppingBag className="h-4 w-4" />
+                <Package className="h-4 w-4" />
                 Meus Pedidos
                 {orders.length > 0 && (
                   <span className={cn(
