@@ -240,7 +240,7 @@ export default function MarketplaceProfilePage() {
       const { error } = await supabase.from("client_profiles").update({ full_name: fullName, phone }).eq("cpf", cpf);
       if (error) throw error;
       toast.success("Dados atualizados!");
-    } catch (err: any) { toast.error(err.message || "Erro ao salvar"); }
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Erro ao salvar"); }
     setSavingProfile(false);
   };
 
