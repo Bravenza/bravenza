@@ -54,7 +54,7 @@ const navItems: NavItem[] = [
 
 const bottomTabs = [
   { path: "/app", label: "Explorar", icon: Compass, exact: true },
-  { path: "/app/pedidos", label: "Pedidos", icon: Package },
+  { path: "/app/pedidos", label: "Pedidos", icon: ShoppingBag },
   { path: "/app/closet", label: "Closet", icon: Box },
   { path: "/app/loja", label: "Loja", icon: Store },
   { path: "/app/mais", label: "Mais", icon: MoreHorizontal, isMore: true },
