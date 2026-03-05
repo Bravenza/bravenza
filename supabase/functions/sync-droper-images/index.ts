@@ -64,7 +64,10 @@ function toSlug(text: string): string {
 }
 
 // ─── 1. Busca drops via API (captura linkfoto do card) ─────────────────────────
-async function fetchDropsPage(page: number): Promise<{ drops: DropItem[]; temMais: boolean }> {
+async function fetchDropsPage(
+  page: number,
+  marca: string | null = null,
+): Promise<{ drops: DropItem[]; temMais: boolean }> {
   const body = {
     tipoProduto: 1,
     amount: PAGE_SIZE,
@@ -72,10 +75,10 @@ async function fetchDropsPage(page: number): Promise<{ drops: DropItem[]; temMai
     page: 0,
     pageDrops: page,
     precoMinimo: 10,
-    marcas: [],
+    marcas: marca ? [marca] : [],
     tamanhos: [],
     cores: [],
-    marca: null,
+    marca: marca ?? null,
     termo: null,
     condicao: null,
     ordenacao: null,
@@ -418,10 +421,12 @@ serve(async (req) => {
   try {
     let startPage = 0;
     let maxPages = MAX_PAGES;
+    let marcaFiltro: string | null = null;
     try {
       const body = await req.json();
       if (body?.page !== undefined) startPage = parseInt(body.page);
       if (body?.maxPages !== undefined) maxPages = parseInt(body.maxPages);
+      if (body?.marca !== undefined) marcaFiltro = body.marca ?? null;
     } catch {
       /* usa defaults */
     }
@@ -441,7 +446,7 @@ serve(async (req) => {
 
     while (processed < maxPages) {
       console.log(`[API] Página ${currentPage}...`);
-      const { drops, temMais } = await fetchDropsPage(currentPage);
+      const { drops, temMais } = await fetchDropsPage(currentPage, marcaFiltro);
       if (drops.length === 0) break;
       await runConcurrent(supabase, drops, result);
       if (!temMais) break;
@@ -454,6 +459,8 @@ serve(async (req) => {
         message: `✅ ${result.success} sincronizados | ❌ ${result.failed} falhas`,
         pagesProcessed: processed,
         nextPage: currentPage,
+        marca: marcaFiltro,
+        reachedLimit: currentPage >= 99,
         result,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
