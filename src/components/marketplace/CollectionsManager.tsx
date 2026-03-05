@@ -83,8 +83,8 @@ export function CollectionsManager({ clientCpf, myListings }: CollectionsManager
       }
       setDialogOpen(false);
       fetchCollections();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao salvar");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar");
     } finally {
       setIsSaving(false);
     }
