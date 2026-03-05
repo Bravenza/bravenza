@@ -357,6 +357,7 @@ async function processProduct(
   supabase: ReturnType<typeof createClient>,
   drop: DropItem,
   result: SyncResult,
+  seenSkus: Set<string>,
 ): Promise<void> {
   const product = await scrapeProduct(drop);
   if (!product) {
@@ -364,6 +365,14 @@ async function processProduct(
     result.errors.push(`Falha ao extrair: ${DROPER_BASE}${drop.url}`);
     return;
   }
+
+  // Deduplicar dentro da mesma sessão
+  if (seenSkus.has(product.sku)) {
+    result.skippedDuplicates++;
+    result.details.push({ sku: product.sku, images: 0, action: "duplicate" });
+    return;
+  }
+  seenSkus.add(product.sku);
 
   console.log(`[Sync] ${product.sku} — ${product.titulo}`);
 
@@ -376,7 +385,6 @@ async function processProduct(
 
   const silhouetteId = product.nomeModelo ? await getOrCreateSilhouette(supabase, product.nomeModelo, brandId) : null;
 
-  // Upload das imagens da página do produto
   const uploadedUrls = (
     await Promise.all(product.images.map((img, i) => uploadImage(supabase, img, product.sku, i)))
   ).filter(Boolean) as string[];
@@ -387,18 +395,21 @@ async function processProduct(
     return;
   }
 
-  const sneakerId = await upsertSneakerModel(supabase, product, brandId, silhouetteId, uploadedUrls);
-  if (!sneakerId) {
+  const upsertResult = await upsertSneakerModel(supabase, product, brandId, silhouetteId, uploadedUrls);
+  if (!upsertResult) {
     result.failed++;
     result.errors.push(`Erro ao salvar modelo: SKU ${product.sku}`);
     return;
   }
 
-  // Salva imagens da página + imagem do card (linkfoto)
-  await saveSneakerImages(supabase, sneakerId, uploadedUrls, product.cardImage);
+  await saveSneakerImages(supabase, upsertResult.id, uploadedUrls, product.cardImage);
 
-  result.success++;
-  result.details.push({ sku: product.sku, images: uploadedUrls.length + (product.cardImage ? 1 : 0) });
+  if (upsertResult.action === "inserted") {
+    result.inserted++;
+  } else {
+    result.updated++;
+  }
+  result.details.push({ sku: product.sku, images: uploadedUrls.length + (product.cardImage ? 1 : 0), action: upsertResult.action });
 }
 
 // ─── Concorrência controlada ──────────────────────────────────────────────────
