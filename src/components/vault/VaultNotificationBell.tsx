@@ -33,10 +33,10 @@ const notificationIcons: Record<VaultNotification["type"], React.ElementType> = 
 const notificationColors: Record<VaultNotification["type"], string> = {
   search_update: "text-blue-400 bg-blue-500/10",
   match_room: "text-emerald-400 bg-emerald-500/10",
-  tier_upgrade: "text-amber-400 bg-amber-500/10",
-  sla_alert: "text-red-400 bg-red-500/10",
+  tier_upgrade: "text-primary bg-primary/10",
+  sla_alert: "text-destructive bg-destructive/10",
   invite_used: "text-purple-400 bg-purple-500/10",
-  general: "text-zinc-400 bg-zinc-500/10",
+  general: "text-muted-foreground bg-muted",
 };
 
 export function VaultNotificationBell({
