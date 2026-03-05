@@ -246,7 +246,7 @@ export default function CatalogSeedPage() {
   const handleEnrichPreview = async () => {
     setPreviewing(true); setEnrichPreview(null);
     try { setEnrichPreview(await callApi("enrich-descriptions", { mode: "preview" })); }
-    catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setPreviewing(false); }
   };
 
