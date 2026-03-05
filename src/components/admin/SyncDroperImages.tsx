@@ -15,12 +15,13 @@ import {
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 interface SyncResult {
-  success: number;
+  inserted: number;
+  updated: number;
   failed: number;
   notFound: number;
-  skipped: number;
+  skippedDuplicates: number;
   errors: string[];
-  details: { sku: string; images: number }[];
+  details: { sku: string; images: number; action: "inserted" | "updated" | "duplicate" }[];
 }
 
 interface BatchResult {
@@ -38,7 +39,9 @@ interface LogEntry {
 }
 
 interface Totals {
-  success: number;
+  inserted: number;
+  updated: number;
+  duplicates: number;
   failed: number;
   notFound: number;
   batches: number;
@@ -63,10 +66,10 @@ export default function SyncCatalogoDroper() {
   const [pagesPerBatch, setPagesPerBatch] = useState(1);
   const [totalBatches, setTotalBatches] = useState(5);
   const [marcaFiltro, setMarcaFiltro] = useState("");
-  const [totals, setTotals] = useState<Totals>({ success: 0, failed: 0, notFound: 0, batches: 0 });
+  const [totals, setTotals] = useState<Totals>({ inserted: 0, updated: 0, duplicates: 0, failed: 0, notFound: 0, batches: 0 });
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
-  const [lastSynced, setLastSynced] = useState<{ sku: string; images: number }[]>([]);
+  const [lastSynced, setLastSynced] = useState<{ sku: string; images: number; action?: string }[]>([]);
   const shouldStop = useRef(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
   const [brands, setBrands] = useState<string[]>([]);
@@ -84,7 +87,7 @@ export default function SyncCatalogoDroper() {
 
   const reset = () => {
     setRunning(false); setPaused(false); setDone(false);
-    setCurrentPage(0); setTotals({ success: 0, failed: 0, notFound: 0, batches: 0 });
+    setCurrentPage(0); setTotals({ inserted: 0, updated: 0, duplicates: 0, failed: 0, notFound: 0, batches: 0 });
     setLogs([]); setErrors([]); setLastSynced([]);
     shouldStop.current = false;
   };
@@ -106,7 +109,7 @@ export default function SyncCatalogoDroper() {
     shouldStop.current = false;
     setRunning(true); setPaused(false); setDone(false);
     setLogs([]); setErrors([]); setLastSynced([]);
-    setTotals({ success: 0, failed: 0, notFound: 0, batches: 0 });
+    setTotals({ inserted: 0, updated: 0, duplicates: 0, failed: 0, notFound: 0, batches: 0 });
 
     let page = currentPage;
     let batchCount = 0;
@@ -128,7 +131,9 @@ export default function SyncCatalogoDroper() {
       batchCount++;
 
       setTotals((prev) => ({
-        success: prev.success + r.success,
+        inserted: prev.inserted + (r.inserted || 0),
+        updated: prev.updated + (r.updated || 0),
+        duplicates: prev.duplicates + (r.skippedDuplicates || 0),
         failed: prev.failed + r.failed,
         notFound: prev.notFound + r.notFound,
         batches: prev.batches + 1,
@@ -140,8 +145,8 @@ export default function SyncCatalogoDroper() {
 
       if (r.errors?.length > 0) setErrors((prev) => [...prev, ...r.errors.slice(0, 10)]);
 
-      addLog(r.success > 0 ? "success" : "warning",
-        `${r.success} criados/atualizados · ${r.notFound} não encontrados · ${r.failed} falhas`
+      addLog(r.inserted > 0 || r.updated > 0 ? "success" : "warning",
+        `${r.inserted || 0} novos · ${r.updated || 0} atualizados · ${r.skippedDuplicates || 0} duplicados · ${r.failed} falhas`
       );
 
       if (result.reachedLimit) {
@@ -159,7 +164,7 @@ export default function SyncCatalogoDroper() {
     }
 
     // Após sync Droper, disparar catalog-sync para copiar sneaker_models → marketplace_products
-    if (totals.success > 0 || done) {
+    if (totals.inserted > 0 || totals.updated > 0 || done) {
       addLog("info", "Sincronizando catálogo (sneaker_models → marketplace_products)...");
       try {
         let syncOffset = 0;
@@ -309,11 +314,13 @@ export default function SyncCatalogoDroper() {
           )}
 
           {/* Métricas */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {[
-              { label: "Sincronizados", value: totals.success, icon: CheckCircle2, variant: "default" as const },
-              { label: "Não encontrados", value: totals.notFound, icon: AlertTriangle, variant: "secondary" as const },
+              { label: "Novos", value: totals.inserted, icon: CheckCircle2, variant: "default" as const },
+              { label: "Atualizados", value: totals.updated, icon: Layers, variant: "secondary" as const },
+              { label: "Duplicados", value: totals.duplicates, icon: AlertTriangle, variant: "outline" as const },
               { label: "Falhas", value: totals.failed, icon: XCircle, variant: "destructive" as const },
+              { label: "Não encontrados", value: totals.notFound, icon: AlertTriangle, variant: "secondary" as const },
               { label: "Batches", value: totals.batches, icon: Layers, variant: "outline" as const },
             ].map((s) => (
               <Card key={s.label} className="bg-card/50">
@@ -388,9 +395,11 @@ export default function SyncCatalogoDroper() {
               <CardContent className="space-y-2">
                 {lastSynced.map((item, i) => (
                   <div key={i} className="flex items-center justify-between text-xs">
-                    <span className="font-mono text-foreground truncate max-w-[140px]">{item.sku}</span>
+                    <span className="font-mono text-foreground truncate max-w-[100px]">{item.sku}</span>
+                    <Badge variant={item.action === "inserted" ? "default" : item.action === "duplicate" ? "outline" : "secondary"} className="text-[10px] font-normal">
+                      {item.action === "inserted" ? "novo" : item.action === "duplicate" ? "duplicado" : "atualizado"}
+                    </Badge>
                     <Badge variant="secondary" className="text-[10px] font-normal">{item.images} imgs</Badge>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                   </div>
                 ))}
               </CardContent>
@@ -458,7 +467,7 @@ export default function SyncCatalogoDroper() {
             <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
             <div>
               <p className="text-emerald-800 font-semibold">Sincronização completa!</p>
-              <p className="text-emerald-600 text-sm">{totals.success} produtos importados da droper.app com imagens, descrições e ficha técnica.</p>
+              <p className="text-emerald-600 text-sm">{totals.inserted} novos · {totals.updated} atualizados · {totals.duplicates} duplicados ignorados</p>
             </div>
           </CardContent>
         </Card>

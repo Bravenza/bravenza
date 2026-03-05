@@ -41,11 +41,13 @@ interface DroperProduct {
 }
 
 interface SyncResult {
-  success: number;
+  inserted: number;
+  updated: number;
   failed: number;
   notFound: number;
+  skippedDuplicates: number;
   errors: string[];
-  details: { sku: string; images: number }[];
+  details: { sku: string; images: number; action: "inserted" | "updated" | "duplicate" }[];
 }
 
 // ─── Cache de brands e silhouettes ────────────────────────────────────────────
@@ -266,8 +268,8 @@ async function upsertSneakerModel(
   product: DroperProduct,
   brandId: string,
   silhouetteId: string | null,
-  imageUrls: string[], // URLs das imagens da página (já uploadadas no Storage)
-): Promise<string | null> {
+  imageUrls: string[],
+): Promise<{ id: string; action: "inserted" | "updated" } | null> {
   const releaseDate = product.dataLancamento ? product.dataLancamento.split("T")[0] : null;
 
   const payload: Record<string, unknown> = {
@@ -281,7 +283,7 @@ async function upsertSneakerModel(
     colorway: product.cor || "",
     release_date: releaseDate,
     msrp: product.retail,
-    placeholder_image_url: imageUrls[0] ?? "", // imagem principal da página
+    placeholder_image_url: imageUrls[0] ?? "",
     source_primary: product.droperUrl,
     source_secondary: imageUrls.slice(1),
     image_status: "synced",
@@ -303,7 +305,7 @@ async function upsertSneakerModel(
   }
   if (updated?.id) {
     console.log(`[Model] UPDATED ${product.sku}`);
-    return updated.id;
+    return { id: updated.id, action: "updated" };
   }
 
   const { data: inserted, error: insertError } = await supabase
@@ -317,7 +319,7 @@ async function upsertSneakerModel(
     return null;
   }
   console.log(`[Model] INSERTED ${product.sku}`);
-  return inserted?.id ?? null;
+  return inserted ? { id: inserted.id, action: "inserted" } : null;
 }
 
 // ─── 7. Salva imagens em sneaker_images ───────────────────────────────────────
@@ -355,6 +357,7 @@ async function processProduct(
   supabase: ReturnType<typeof createClient>,
   drop: DropItem,
   result: SyncResult,
+  seenSkus: Set<string>,
 ): Promise<void> {
   const product = await scrapeProduct(drop);
   if (!product) {
@@ -362,6 +365,14 @@ async function processProduct(
     result.errors.push(`Falha ao extrair: ${DROPER_BASE}${drop.url}`);
     return;
   }
+
+  // Deduplicar dentro da mesma sessão
+  if (seenSkus.has(product.sku)) {
+    result.skippedDuplicates++;
+    result.details.push({ sku: product.sku, images: 0, action: "duplicate" });
+    return;
+  }
+  seenSkus.add(product.sku);
 
   console.log(`[Sync] ${product.sku} — ${product.titulo}`);
 
@@ -374,7 +385,6 @@ async function processProduct(
 
   const silhouetteId = product.nomeModelo ? await getOrCreateSilhouette(supabase, product.nomeModelo, brandId) : null;
 
-  // Upload das imagens da página do produto
   const uploadedUrls = (
     await Promise.all(product.images.map((img, i) => uploadImage(supabase, img, product.sku, i)))
   ).filter(Boolean) as string[];
@@ -385,18 +395,21 @@ async function processProduct(
     return;
   }
 
-  const sneakerId = await upsertSneakerModel(supabase, product, brandId, silhouetteId, uploadedUrls);
-  if (!sneakerId) {
+  const upsertResult = await upsertSneakerModel(supabase, product, brandId, silhouetteId, uploadedUrls);
+  if (!upsertResult) {
     result.failed++;
     result.errors.push(`Erro ao salvar modelo: SKU ${product.sku}`);
     return;
   }
 
-  // Salva imagens da página + imagem do card (linkfoto)
-  await saveSneakerImages(supabase, sneakerId, uploadedUrls, product.cardImage);
+  await saveSneakerImages(supabase, upsertResult.id, uploadedUrls, product.cardImage);
 
-  result.success++;
-  result.details.push({ sku: product.sku, images: uploadedUrls.length + (product.cardImage ? 1 : 0) });
+  if (upsertResult.action === "inserted") {
+    result.inserted++;
+  } else {
+    result.updated++;
+  }
+  result.details.push({ sku: product.sku, images: uploadedUrls.length + (product.cardImage ? 1 : 0), action: upsertResult.action });
 }
 
 // ─── Concorrência controlada ──────────────────────────────────────────────────
@@ -404,10 +417,11 @@ async function runConcurrent(
   supabase: ReturnType<typeof createClient>,
   drops: DropItem[],
   result: SyncResult,
+  seenSkus: Set<string>,
 ): Promise<void> {
   for (let i = 0; i < drops.length; i += CONCURRENCY) {
     const chunk = drops.slice(i, i + CONCURRENCY);
-    await Promise.all(chunk.map((drop) => processProduct(supabase, drop, result)));
+    await Promise.all(chunk.map((drop) => processProduct(supabase, drop, result, seenSkus)));
     console.log(`[Progress] ${Math.min(i + CONCURRENCY, drops.length)}/${drops.length}`);
   }
 }
@@ -433,10 +447,13 @@ serve(async (req) => {
 
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
+    const seenSkus = new Set<string>();
     const result: SyncResult = {
-      success: 0,
+      inserted: 0,
+      updated: 0,
       failed: 0,
       notFound: 0,
+      skippedDuplicates: 0,
       errors: [],
       details: [],
     };
@@ -448,7 +465,7 @@ serve(async (req) => {
       console.log(`[API] Página ${currentPage}...`);
       const { drops, temMais } = await fetchDropsPage(currentPage, marcaFiltro);
       if (drops.length === 0) break;
-      await runConcurrent(supabase, drops, result);
+      await runConcurrent(supabase, drops, result, seenSkus);
       if (!temMais) break;
       currentPage++;
       processed++;
@@ -456,7 +473,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        message: `✅ ${result.success} sincronizados | ❌ ${result.failed} falhas`,
+        message: `✅ ${result.inserted} novos · 🔄 ${result.updated} atualizados · ⏭️ ${result.skippedDuplicates} duplicados | ❌ ${result.failed} falhas`,
         pagesProcessed: processed,
         nextPage: currentPage,
         marca: marcaFiltro,
