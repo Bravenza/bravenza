@@ -273,7 +273,18 @@ function MarketplaceCheckoutPageInner() {
         throw new Error(failed[0].reason?.message || "Erro ao criar pedidos");
       }
       if (failed.length > 0) {
-        console.warn(`${failed.length} pedido(s) falharam, prosseguindo com os restantes`);
+        const createdCount = validItems.length - failed.length;
+        const ok = window.confirm(
+          `${failed.length} item(ns) não puderam ser processados ` +
+          `e serão removidos do checkout. ` +
+          `Deseja continuar com os ${createdCount} itens restantes?`
+        );
+        if (!ok) {
+          setStep("review");
+          setIsSubmitting(false);
+          submitLockRef.current = false;
+          return;
+        }
       }
 
       const createdOrders = orderResults
