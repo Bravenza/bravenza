@@ -299,8 +299,8 @@ function MarketplaceCheckoutPageInner() {
             type: "CPF",
             number: cardFormData.identificationNumber.replace(/\D/g, ""),
           };
-        } catch (tokenErr: any) {
-          throw new Error(tokenErr.message || "Erro ao processar cartão");
+        } catch (tokenErr) {
+          throw new Error(tokenErr instanceof Error ? tokenErr.message : "Erro ao processar cartão");
         }
       }
 
