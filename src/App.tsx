@@ -72,6 +72,7 @@ function App() {
           <BrowserRouter>
             <SkipToContent />
             <ScrollToTop />
+            <RouteErrorBoundaryWrapper>
             <AppShell>
             <PullToRefresh>
             <Suspense fallback={<PageLoader />}>
@@ -88,6 +89,7 @@ function App() {
             </Suspense>
             </PullToRefresh>
             </AppShell>
+            </RouteErrorBoundaryWrapper>
             <PWAInstallBanner />
             <Suspense fallback={null}>
               <PrivacyConsentBanner />
