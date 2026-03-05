@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/Logo";
 import { useClientSession } from "@/hooks/useClientSession";
+import { Input } from "@/components/ui/input";
 import { CartProvider } from "@/hooks/useMarketplaceCart";
 import { CartDrawer } from "@/components/client/vault/marketplace/CartDrawer";
 import { ClientNotificationBell } from "@/components/client/ClientNotificationBell";
