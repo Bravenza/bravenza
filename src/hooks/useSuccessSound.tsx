@@ -1,4 +1,5 @@
 import { useCallback, useRef } from "react";
+import { logger } from "@/lib/logger";
 
 // Create a success sound using Web Audio API
 function createSuccessSound(audioContext: AudioContext): void {

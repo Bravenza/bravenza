@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { logger } from "@/lib/logger";
 
 const APP_VERSION = "3.6.0";
 const VERSION_KEY = "bravenza-app-version";
