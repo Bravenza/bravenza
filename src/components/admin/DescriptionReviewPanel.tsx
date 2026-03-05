@@ -633,8 +633,8 @@ export default function DescriptionReviewPanel() {
                 setSelected(null);
                 await loadCounts();
                 await loadProducts();
-              } catch (e: any) {
-                showToast(e.message, "error");
+              } catch (e) {
+                showToast(getErrorMessage(e), "error");
               } finally {
                 setDeletingSkipped(false);
               }
