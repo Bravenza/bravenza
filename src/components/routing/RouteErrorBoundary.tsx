@@ -6,6 +6,8 @@ interface Props {
   children: ReactNode;
   /** Section name shown in the error UI */
   section?: string;
+  /** When this key changes, error state resets (use location.pathname) */
+  resetKey?: string | number;
 }
 
 interface State {
@@ -20,7 +22,7 @@ interface State {
  * - Shows a lighter, inline error UI (not full-screen)
  * - Allows retry without full page reload
  * - Displays the section name for context
- * - Resets automatically on navigation (children change)
+ * - Resets automatically on navigation via resetKey
  *
  * Pattern used by: Remix (errorElement), Next.js (error.tsx)
  */
@@ -39,7 +41,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    if (this.state.hasError && prevProps.children !== this.props.children) {
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
       this.setState({ hasError: false, error: null });
     }
   }
