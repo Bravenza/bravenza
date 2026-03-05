@@ -103,8 +103,11 @@ export function MarketplaceFilters({ filters, onFiltersChange, onSearch, availab
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por marca, modelo, cor..."
-            value={filters.search || ""}
-            onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
+            value={searchText}
+            onChange={(e) => {
+              setSearchText(e.target.value);
+              debouncedSetSearch(e.target.value);
+            }}
             onKeyDown={(e) => e.key === "Enter" && onSearch()}
             className="pl-9 bg-secondary/50 border-border/50 h-10"
           />
