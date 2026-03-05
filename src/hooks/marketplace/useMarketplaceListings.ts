@@ -183,7 +183,7 @@ export function useMarketplaceListings(cpf: string | null) {
   const fetchPriceDropSuggestions = useCallback(async () => {
     if (!cpf) return [];
     try {
-      const data = await marketplaceRequest(cpf, "price-drop-suggestions");
+      const data = await fetchWithRetry(() => marketplaceRequest(cpf, "price-drop-suggestions"));
       return data.suggestions || [];
     } catch (err) {
       console.error("Fetch price drop suggestions error:", err);
