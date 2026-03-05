@@ -59,6 +59,7 @@ function CartItemRow({ item, onRemove, index }: { item: CartItem; onRemove: (off
 
       {/* Remove */}
       <button
+        aria-label="Remover item do carrinho"
         onClick={() => onRemove(item.offer_id)}
         className="absolute top-2 right-2 h-6 w-6 rounded-full bg-destructive/10 text-destructive/60 hover:bg-destructive/20 hover:text-destructive flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
       >
