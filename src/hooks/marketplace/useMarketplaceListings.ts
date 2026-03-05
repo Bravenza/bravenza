@@ -197,8 +197,8 @@ export function useMarketplaceListings(cpf: string | null) {
         await marketplaceRequest(cpf, "accept-counter", "PUT", { offer_id: offerId });
         toast({ title: "Contra-proposta aceita!", description: "Agora você pode finalizar a compra." });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
         return false;
       }
     },
