@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -59,6 +59,12 @@ function AppShell({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Resets ErrorBoundary on route change
+function RouteErrorBoundaryWrapper({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  return <ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary>;
+}
+
 function App() {
   return (
   <ErrorBoundary>
@@ -72,6 +78,7 @@ function App() {
           <BrowserRouter>
             <SkipToContent />
             <ScrollToTop />
+            <RouteErrorBoundaryWrapper>
             <AppShell>
             <PullToRefresh>
             <Suspense fallback={<PageLoader />}>
@@ -88,6 +95,7 @@ function App() {
             </Suspense>
             </PullToRefresh>
             </AppShell>
+            </RouteErrorBoundaryWrapper>
             <PWAInstallBanner />
             <Suspense fallback={null}>
               <PrivacyConsentBanner />
