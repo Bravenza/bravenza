@@ -285,7 +285,7 @@ export default function CatalogSeedPage() {
       setMsTestResult(data);
       const working = (data.results || []).filter((r: any) => r.ok).length;
       toast({ title: `${working}/${(data.results || []).length} fontes ok` });
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setMsTesting(false); }
   };
 
