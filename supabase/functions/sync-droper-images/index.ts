@@ -435,10 +435,13 @@ serve(async (req) => {
 
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
+    const seenSkus = new Set<string>();
     const result: SyncResult = {
-      success: 0,
+      inserted: 0,
+      updated: 0,
       failed: 0,
       notFound: 0,
+      skippedDuplicates: 0,
       errors: [],
       details: [],
     };
