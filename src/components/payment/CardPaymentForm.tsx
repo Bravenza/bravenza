@@ -281,12 +281,12 @@ export function CardPaymentForm({
       } else {
         throw new Error(data.status_detail || "Pagamento não aprovado");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Payment error:", error);
       setPaymentStatus("error");
       
       // Map common error messages
-      let errorMessage = error.message || "Erro ao processar pagamento";
+      let errorMessage = error instanceof Error ? error.message : "Erro ao processar pagamento";
       if (errorMessage.includes("cc_rejected")) {
         errorMessage = "Cartão recusado. Verifique os dados ou tente outro cartão.";
       } else if (errorMessage.includes("insufficient_amount")) {

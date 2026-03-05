@@ -152,9 +152,9 @@ const NewOrder = () => {
 
       toast({ title: "Pedido criado!", description: `Pedido ${orderId} criado com sucesso.` });
       navigate(`/admin/pedidos/${orderId}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error creating order:", error);
-      toast({ title: "Erro ao criar pedido", description: error.message || "Tente novamente.", variant: "destructive" });
+      toast({ title: "Erro ao criar pedido", description: error instanceof Error ? error.message : "Tente novamente.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }

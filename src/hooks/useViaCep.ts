@@ -35,8 +35,8 @@ export function useViaCep(onResult: (data: ViaCepResult) => void) {
         });
         const data: ViaCepResult = await res.json();
         if (!data.erro) onResult(data);
-      } catch (err: any) {
-        if (err.name !== "AbortError") console.warn("ViaCEP error", err);
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") { /* expected */ } else console.warn("ViaCEP error", err);
       } finally {
         setIsLoading(false);
       }

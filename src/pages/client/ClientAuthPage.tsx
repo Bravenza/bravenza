@@ -132,8 +132,9 @@ export default function ClientAuthPage() {
       if (error) throw error;
       setResetSent(true);
       toast({ title: "Email enviado!", description: "Verifique sua caixa de entrada para redefinir a senha." });
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message || "Erro ao enviar email de recuperação.", variant: "destructive" });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao enviar email de recuperação.";
+      toast({ title: "Erro", description: message, variant: "destructive" });
     } finally { setIsLoading(false); }
   };
 

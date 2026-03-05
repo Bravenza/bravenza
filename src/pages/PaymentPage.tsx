@@ -258,11 +258,11 @@ export default function PaymentPage() {
         qr_code: data.qr_code,
         copy_paste: data.copy_paste,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error generating Pix:", error);
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível gerar o Pix.",
+        description: error instanceof Error ? error.message : "Não foi possível gerar o Pix.",
         variant: "destructive",
       });
     } finally {
