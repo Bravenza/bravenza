@@ -47,8 +47,8 @@ export function ForcePasswordChange({ onComplete, onSignOut }: ForcePasswordChan
       }
 
       onComplete();
-    } catch (err: any) {
-      setError(err.message || "Erro ao atualizar senha");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao atualizar senha");
     } finally {
       setIsSubmitting(false);
     }

@@ -172,11 +172,11 @@ export function VaultWishlistTab({ clientCpf }: VaultWishlistTabProps) {
         min_price: "", max_price: "", notes: "",
       });
       fetchData();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error adding item:", error);
       toast({
         title: "Erro ao adicionar",
-        description: error.message || "Tente novamente",
+        description: error instanceof Error ? error.message : "Tente novamente",
         variant: "destructive",
       });
     } finally {
@@ -199,11 +199,11 @@ export function VaultWishlistTab({ clientCpf }: VaultWishlistTabProps) {
       });
 
       fetchData();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error starting search:", error);
       toast({
         title: "Erro ao iniciar busca",
-        description: error.message || "Tente novamente",
+        description: error instanceof Error ? error.message : "Tente novamente",
         variant: "destructive",
       });
     }

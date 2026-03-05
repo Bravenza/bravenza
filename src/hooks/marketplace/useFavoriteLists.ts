@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { marketplaceRequest } from "@/hooks/marketplace/api";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorMessage } from "@/lib/error-utils";
 
 export interface FavoriteList {
   id: string;
@@ -20,7 +21,7 @@ export function useFavoriteLists(cpf: string | null) {
     try {
       const res = await marketplaceRequest(cpf, "favorite-lists:list");
       setLists(res.data || []);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Fetch favorite lists error:", err);
     } finally {
       setIsLoading(false);
@@ -34,8 +35,8 @@ export function useFavoriteLists(cpf: string | null) {
       toast({ title: "Lista criada!", description: `"${name}" foi criada.` });
       await fetchLists();
       return res.data;
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
       return null;
     }
   }, [cpf, toast, fetchLists]);
@@ -47,8 +48,8 @@ export function useFavoriteLists(cpf: string | null) {
       toast({ title: "Lista renomeada" });
       await fetchLists();
       return true;
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
       return false;
     }
   }, [cpf, toast, fetchLists]);
@@ -60,8 +61,8 @@ export function useFavoriteLists(cpf: string | null) {
       toast({ title: "Lista removida" });
       await fetchLists();
       return true;
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
       return false;
     }
   }, [cpf, toast, fetchLists]);
@@ -71,8 +72,8 @@ export function useFavoriteLists(cpf: string | null) {
     try {
       await marketplaceRequest(cpf, "favorite-lists:add-item", "POST", { list_id: listId, listing_id: listingId });
       return true;
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
       return false;
     }
   }, [cpf, toast]);
@@ -82,8 +83,8 @@ export function useFavoriteLists(cpf: string | null) {
     try {
       await marketplaceRequest(cpf, "favorite-lists:remove-item", "DELETE", undefined, { list_id: listId, listing_id: listingId });
       return true;
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
       return false;
     }
   }, [cpf, toast]);
@@ -99,8 +100,8 @@ export function useFavoriteLists(cpf: string | null) {
       toast({ title: "Itens movidos!" });
       await fetchLists();
       return true;
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
       return false;
     }
   }, [cpf, toast, fetchLists]);

@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { getMarketplaceHeaders } from "@/hooks/marketplace/api";
+import { getErrorMessage } from "@/lib/error-utils";
 
 const BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-catalog`;
 const BASE_ENGAGE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-engage`;
@@ -87,8 +88,8 @@ export function useMarketplaceCatalog(clientCpf: string) {
       if (data.error) throw new Error(data.error);
       setProducts(data.products || []);
       setTotalProducts(data.total || 0);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -119,8 +120,8 @@ export function useMarketplaceCatalog(clientCpf: string) {
       setOffers(data.offers || []);
       setAllOffers(data.offers || []);
       return data;
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
       return null;
     } finally {
       setIsLoading(false);
@@ -136,8 +137,8 @@ export function useMarketplaceCatalog(clientCpf: string) {
       if (data.error) throw new Error(data.error);
       setOffers(data.offers || []);
       return data.offers || [];
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
       return [];
     }
   }, [toast]);
@@ -161,8 +162,8 @@ export function useMarketplaceCatalog(clientCpf: string) {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       return data.product;
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
       return null;
     }
   }, [toast]);
@@ -192,8 +193,8 @@ export function useMarketplaceCatalog(clientCpf: string) {
       if (data.error) throw new Error(data.error);
       toast({ title: "Oferta criada!", description: "Sua oferta foi publicada no marketplace." });
       return data.offer;
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
       return null;
     }
   }, [toast]);
@@ -236,8 +237,8 @@ export function useMarketplaceCatalog(clientCpf: string) {
       const data = await res.json();
       setWatchlistStatus({ active: data.active, max_price: data.max_price || null });
       toast({ title: data.active ? "🔔 Alerta ativado!" : "Alerta removido" });
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
     }
   }, [toast]);
 
@@ -271,8 +272,8 @@ export function useMarketplaceCatalog(clientCpf: string) {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       return true;
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
       return false;
     }
   }, [toast]);
@@ -311,8 +312,8 @@ export function useMarketplaceCatalog(clientCpf: string) {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       return true;
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
       return false;
     }
   }, [toast]);

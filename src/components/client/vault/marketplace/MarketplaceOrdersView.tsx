@@ -117,8 +117,8 @@ export function MarketplaceOrdersView({
       setCancelDialog(null);
       setCancelReason("");
       onRefreshOrders();
-    } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } catch (e) {
+      toast({ title: "Erro", description: e instanceof Error ? e.message : "Erro ao cancelar", variant: "destructive" });
     } finally {
       setCancelLoading(false);
     }

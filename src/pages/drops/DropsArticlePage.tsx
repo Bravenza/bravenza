@@ -194,9 +194,9 @@ export default function DropsArticlePage() {
       try {
         await navigator.share({ title: post.title, text: post.excerpt || post.title, url: shareUrl });
         return;
-      } catch (e: any) {
+      } catch (e) {
         // User cancelled or not supported, fall through to clipboard
-        if (e?.name === "AbortError") return;
+        if (e instanceof Error && e.name === "AbortError") return;
       }
     }
     

@@ -164,11 +164,12 @@ export default function ReferralsPage() {
         discount_percentage: 5,
       });
       fetchReferrals();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error creating referral:", error);
+      const msg = error instanceof Error ? error.message : "";
       toast({
         title: "Erro",
-        description: error.message?.includes("duplicate") 
+        description: msg.includes("duplicate") 
           ? "Este código de indicação já existe." 
           : "Não foi possível criar a indicação.",
         variant: "destructive",

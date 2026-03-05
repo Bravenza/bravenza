@@ -121,7 +121,7 @@ export const CartProvider = forwardRef<HTMLDivElement, { cpf: string | null; chi
       toast.success("Adicionado ao carrinho");
       await fetchCart();
       return true;
-    } catch (e: any) {
+    } catch (e) {
       toast.error("Erro ao adicionar ao carrinho");
       return false;
     }

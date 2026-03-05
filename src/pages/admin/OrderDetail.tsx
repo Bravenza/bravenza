@@ -175,10 +175,10 @@ const OrderDetail = () => {
         title: "Salvo!",
         description: "Pedido atualizado com sucesso.",
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível salvar.",
+        description: error instanceof Error ? error.message : "Não foi possível salvar.",
         variant: "destructive",
       });
     } finally {
@@ -281,10 +281,10 @@ const OrderDetail = () => {
           description: `Pedido atualizado para ${ORDER_STATUS_LABELS[newStatus]}.`,
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível atualizar o status.",
+        description: error instanceof Error ? error.message : "Não foi possível atualizar o status.",
         variant: "destructive",
       });
     } finally {
@@ -311,10 +311,10 @@ const OrderDetail = () => {
       });
 
       navigate("/admin/pedidos");
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível excluir.",
+        description: error instanceof Error ? error.message : "Não foi possível excluir.",
         variant: "destructive",
       });
     } finally {

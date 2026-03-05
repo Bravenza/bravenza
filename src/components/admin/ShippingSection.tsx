@@ -174,9 +174,9 @@ export function ShippingSection({
       } else if (data?.error) {
         throw new Error(data.error);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error quoting freight:", error);
-      toast.error(error.message || "Erro ao calcular frete");
+      toast.error(error instanceof Error ? error.message : "Erro ao calcular frete");
     } finally {
       setIsQuoting(false);
     }
@@ -341,11 +341,11 @@ export function ShippingSection({
 
       setShowLabelModal(false);
       setSelectedQuote(null);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error creating label:", error);
       
       // Check for wallet balance error in catch block too
-      const errorMsg = error.message || "";
+      const errorMsg = error instanceof Error ? error.message : "";
       if (errorMsg.includes("saldo na carteira") || errorMsg.includes("Sem saldo")) {
         toast.warning(
           "Etiqueta criada no SuperFrete, mas sem saldo na carteira. Acesse o app para pagar a etiqueta.",
@@ -386,9 +386,9 @@ export function ShippingSection({
 
       setTrackingInfo(data);
       setShowTrackingModal(true);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error tracking:", error);
-      toast.error(error.message || "Erro ao rastrear pacote");
+      toast.error(error instanceof Error ? error.message : "Erro ao rastrear pacote");
     } finally {
       setIsTracking(false);
     }

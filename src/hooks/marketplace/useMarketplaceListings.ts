@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { marketplaceRequest } from "./api";
+import { getErrorMessage } from "@/lib/error-utils";
 import type { MarketplaceListing, SellerProfile } from "./types";
 
 export function useMarketplaceListings(cpf: string | null) {
@@ -32,7 +33,7 @@ export function useMarketplaceListings(cpf: string | null) {
         const data = await marketplaceRequest(cpf, "listings", "GET", undefined, params);
         setListings(data.listings || []);
         setTotal(data.total || 0);
-      } catch (err: any) {
+      } catch (err) {
         console.error("Fetch listings error:", err);
       } finally {
         setIsLoading(false);
@@ -48,7 +49,7 @@ export function useMarketplaceListings(cpf: string | null) {
       const data = await marketplaceRequest(cpf, "my-listings");
       setMyListings(data.listings || []);
       setSeller(data.seller || null);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Fetch my listings error:", err);
     } finally {
       setIsLoading(false);
@@ -63,7 +64,7 @@ export function useMarketplaceListings(cpf: string | null) {
         const data = await marketplaceRequest(cpf, "listing-detail", "GET", undefined, { id });
         setCurrentListing(data);
         return data;
-      } catch (err: any) {
+      } catch (err) {
         console.error("Fetch detail error:", err);
         return null;
       } finally {
@@ -80,8 +81,8 @@ export function useMarketplaceListings(cpf: string | null) {
         const data = await marketplaceRequest(cpf, "create-listing", "POST", body);
         toast({ title: "Anúncio criado!", description: "Seu anúncio já está ativo no marketplace." });
         return data.listing;
-      } catch (err: any) {
-        toast({ title: "Erro ao criar anúncio", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro ao criar anúncio", description: getErrorMessage(err), variant: "destructive" });
         return null;
       }
     },
@@ -95,8 +96,8 @@ export function useMarketplaceListings(cpf: string | null) {
         await marketplaceRequest(cpf, "update-listing", "PUT", body);
         toast({ title: "Anúncio atualizado!" });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro ao atualizar", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro ao atualizar", description: getErrorMessage(err), variant: "destructive" });
         return false;
       }
     },
@@ -110,8 +111,8 @@ export function useMarketplaceListings(cpf: string | null) {
         await marketplaceRequest(cpf, "delete-listing", "DELETE", undefined, { id });
         toast({ title: "Anúncio removido" });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro ao remover", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro ao remover", description: getErrorMessage(err), variant: "destructive" });
         return false;
       }
     },
@@ -127,7 +128,7 @@ export function useMarketplaceListings(cpf: string | null) {
         if (currentListing?.id === listingId) {
           setCurrentListing((prev) => prev ? { ...prev, is_favorited: data.favorited } : prev);
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error("Toggle fav error:", err);
       }
     },
@@ -141,8 +142,8 @@ export function useMarketplaceListings(cpf: string | null) {
         await marketplaceRequest(cpf, "make-offer", "POST", body);
         toast({ title: "Oferta enviada!", description: "O vendedor tem 48h para responder." });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro ao enviar oferta", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro ao enviar oferta", description: getErrorMessage(err), variant: "destructive" });
         return false;
       }
     },
@@ -155,7 +156,7 @@ export function useMarketplaceListings(cpf: string | null) {
       try {
         const data = await marketplaceRequest(cpf, "listing-offers", "GET", undefined, { listing_id: listingId });
         return data.offers || [];
-      } catch (err: any) {
+      } catch (err) {
         console.error("Fetch offers error:", err);
         return [];
       }
@@ -170,8 +171,8 @@ export function useMarketplaceListings(cpf: string | null) {
         await marketplaceRequest(cpf, "respond-offer", "PUT", { offer_id: offerId, response, ...extra });
         toast({ title: response === "accept" ? "Oferta aceita!" : response === "reject" ? "Oferta recusada" : "Contra-proposta enviada!" });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
         return false;
       }
     },
@@ -183,7 +184,7 @@ export function useMarketplaceListings(cpf: string | null) {
     try {
       const data = await marketplaceRequest(cpf, "price-drop-suggestions");
       return data.suggestions || [];
-    } catch (err: any) {
+    } catch (err) {
       console.error("Fetch price drop suggestions error:", err);
       return [];
     }
@@ -196,8 +197,8 @@ export function useMarketplaceListings(cpf: string | null) {
         await marketplaceRequest(cpf, "accept-counter", "PUT", { offer_id: offerId });
         toast({ title: "Contra-proposta aceita!", description: "Agora você pode finalizar a compra." });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
         return false;
       }
     },
@@ -211,8 +212,8 @@ export function useMarketplaceListings(cpf: string | null) {
         await marketplaceRequest(cpf, "reject-counter", "PUT", { offer_id: offerId });
         toast({ title: "Contra-proposta recusada" });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro", description: getErrorMessage(err), variant: "destructive" });
         return false;
       }
     },
@@ -226,8 +227,8 @@ export function useMarketplaceListings(cpf: string | null) {
         await marketplaceRequest(cpf, "bundle-offer", "POST", body);
         toast({ title: "Bundle enviado!", description: `Oferta para ${body.listing_ids.length} itens enviada.` });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro ao enviar bundle", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro ao enviar bundle", description: getErrorMessage(err), variant: "destructive" });
         return false;
       }
     },

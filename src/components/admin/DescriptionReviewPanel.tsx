@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getErrorMessage } from "@/lib/error-utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -212,8 +213,8 @@ export default function DescriptionReviewPanel() {
       }
 
       showToast(`${totalSuccess} descrições reescritas${totalErrors > 0 ? `, ${totalErrors} falhas` : ""}`);
-    } catch (e: any) {
-      showToast(e.message, "error");
+    } catch (e) {
+      showToast(getErrorMessage(e), "error");
     } finally {
       setEnriching(false);
       loadProducts();
@@ -248,8 +249,8 @@ export default function DescriptionReviewPanel() {
       setSelected(null);
       await loadCounts();
       await loadProducts();
-    } catch (e: any) {
-      showToast(e.message, "error");
+    } catch (e) {
+      showToast(getErrorMessage(e), "error");
     } finally {
       setApprovingAll(false);
     }
@@ -632,8 +633,8 @@ export default function DescriptionReviewPanel() {
                 setSelected(null);
                 await loadCounts();
                 await loadProducts();
-              } catch (e: any) {
-                showToast(e.message, "error");
+              } catch (e) {
+                showToast(getErrorMessage(e), "error");
               } finally {
                 setDeletingSkipped(false);
               }

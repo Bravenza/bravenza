@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { marketplaceRequest } from "./api";
+import { getErrorMessage } from "@/lib/error-utils";
 import type { MarketplaceOrder } from "./types";
 
 export function useMarketplaceOrders(cpf: string | null) {
@@ -15,8 +16,8 @@ export function useMarketplaceOrders(cpf: string | null) {
         const data = await marketplaceRequest(cpf, "create-order", "POST", body);
         toast({ title: "Pedido criado!", description: `Código: ${data.order?.order_code}` });
         return data.order;
-      } catch (err: any) {
-        toast({ title: "Erro ao comprar", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro ao comprar", description: getErrorMessage(err), variant: "destructive" });
         return null;
       }
     },
@@ -30,8 +31,8 @@ export function useMarketplaceOrders(cpf: string | null) {
         await marketplaceRequest(cpf, "confirm-payment", "PUT", { order_id: orderId, payment_method: paymentMethod, payment_id: paymentId });
         toast({ title: "Pagamento confirmado!" });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro no pagamento", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro no pagamento", description: getErrorMessage(err), variant: "destructive" });
         return false;
       }
     },
@@ -43,7 +44,7 @@ export function useMarketplaceOrders(cpf: string | null) {
     try {
       const data = await marketplaceRequest(cpf, "my-orders");
       setMyOrders(data.orders || []);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Fetch my orders error:", err);
     }
   }, [cpf]);
@@ -53,20 +54,20 @@ export function useMarketplaceOrders(cpf: string | null) {
     try {
       const data = await marketplaceRequest(cpf, "my-sales");
       setMySales(data.orders || []);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Fetch my sales error:", err);
     }
   }, [cpf]);
 
   const updateOrderStatus = useCallback(
-    async (orderId: string, status: string, extra?: Record<string, any>) => {
+    async (orderId: string, status: string, extra?: Record<string, unknown>) => {
       if (!cpf) return false;
       try {
         await marketplaceRequest(cpf, "update-order-status", "PUT", { order_id: orderId, status, ...extra });
         toast({ title: "Status atualizado!" });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro ao atualizar", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro ao atualizar", description: getErrorMessage(err), variant: "destructive" });
         return false;
       }
     },
@@ -80,8 +81,8 @@ export function useMarketplaceOrders(cpf: string | null) {
         await marketplaceRequest(cpf, "rate-seller", "POST", { order_id: orderId, rating, review });
         toast({ title: "Avaliação enviada!" });
         return true;
-      } catch (err: any) {
-        toast({ title: "Erro ao avaliar", description: err.message, variant: "destructive" });
+      } catch (err) {
+        toast({ title: "Erro ao avaliar", description: getErrorMessage(err), variant: "destructive" });
         return false;
       }
     },

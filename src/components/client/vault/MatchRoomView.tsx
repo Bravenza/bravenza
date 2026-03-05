@@ -161,11 +161,11 @@ export function MatchRoomView({ clientCpf, matchRoomId, onDecisionMade }: MatchR
       });
 
       onDecisionMade();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error approving match:", error);
       toast({
         title: "Erro ao aprovar",
-        description: error.message || "Tente novamente",
+        description: error instanceof Error ? error.message : "Tente novamente",
         variant: "destructive",
       });
     } finally {
@@ -205,11 +205,11 @@ export function MatchRoomView({ clientCpf, matchRoomId, onDecisionMade }: MatchR
 
       setShowDeclineDialog(false);
       onDecisionMade();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error declining match:", error);
       toast({
         title: "Erro ao recusar",
-        description: error.message || "Tente novamente",
+        description: error instanceof Error ? error.message : "Tente novamente",
         variant: "destructive",
       });
     } finally {

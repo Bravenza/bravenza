@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getErrorMessage, isErrorWithName } from "@/lib/error-utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -134,9 +135,9 @@ export default function CatalogSeedPage() {
       });
       clearTimeout(tid);
       return res.json();
-    } catch (e: any) {
+    } catch (e) {
       clearTimeout(tid);
-      if (e.name === "AbortError") return { ok: false, error: "Timeout" };
+      if (isErrorWithName(e, "AbortError")) return { ok: false, error: "Timeout" };
       throw e;
     }
   };
@@ -165,7 +166,7 @@ export default function CatalogSeedPage() {
         fetchLastSyncTime(),
       ]);
       setSyncPreview(preview);
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setSyncPreviewLoading(false); }
   }, [fetchLastSyncTime]);
 
@@ -191,7 +192,7 @@ export default function CatalogSeedPage() {
         if (!data.has_more) { toast({ title: `✓ ${totalSynced} novos, ${totalUpdated} atualizados` }); break; }
         await new Promise(r => setTimeout(r, 300));
       }
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setSyncing(false); handleSyncPreview(); }
   };
 
@@ -202,7 +203,7 @@ export default function CatalogSeedPage() {
       const data = await callApi("catalog-seed-500", { mode: "test" });
       setTestResult(data); setConnectorStatus(data.ok ? "on" : "off");
       toast({ title: data.ok ? "Conexão OK ✓" : "Conexão falhou", variant: data.ok ? "default" : "destructive" });
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setTesting(false); }
   };
 
@@ -232,12 +233,12 @@ export default function CatalogSeedPage() {
             queryIndex = result.next_query_index || queryIndex + 1;
             await new Promise(r => setTimeout(r, 500));
           }
-        } catch (e: any) { setBrandResults(prev => prev.map((r, idx) => idx === i ? { ...r, status: "error", error: e.message } : r)); }
+        } catch (e) { setBrandResults(prev => prev.map((r, idx) => idx === i ? { ...r, status: "error", error: getErrorMessage(e) } : r)); }
         setOverallProgress(Math.round(((i + 1) / brands.length) * 100));
         if (i < brands.length - 1 && !cancelRef.current) await new Promise(r => setTimeout(r, 1000));
       }
       if (!cancelRef.current) toast({ title: "Seed concluído! ✓" });
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setSeeding(false); setCurrentBrand(null); }
   };
 
@@ -245,7 +246,7 @@ export default function CatalogSeedPage() {
   const handleEnrichPreview = async () => {
     setPreviewing(true); setEnrichPreview(null);
     try { setEnrichPreview(await callApi("enrich-descriptions", { mode: "preview" })); }
-    catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setPreviewing(false); }
   };
 
@@ -262,7 +263,7 @@ export default function CatalogSeedPage() {
         if (!data.has_more || data.enriched === 0) { toast({ title: `✓ ${totalEnriched} descrições enriquecidas` }); break; }
         await new Promise(r => setTimeout(r, 1000));
       }
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setEnriching(false); }
   };
 
@@ -273,7 +274,7 @@ export default function CatalogSeedPage() {
       const data = await callApi("catalog-multisource", { mode: "test", source: msSource });
       setMsTestResult(data);
       toast({ title: data.ok ? `${msSource} OK ✓` : `${msSource} falhou`, variant: data.ok ? "default" : "destructive" });
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setMsTesting(false); }
   };
 
@@ -284,7 +285,7 @@ export default function CatalogSeedPage() {
       setMsTestResult(data);
       const working = (data.results || []).filter((r: any) => r.ok).length;
       toast({ title: `${working}/${(data.results || []).length} fontes ok` });
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setMsTesting(false); }
   };
 
@@ -295,7 +296,7 @@ export default function CatalogSeedPage() {
       const data = await callApi("catalog-multisource", { mode: "search", source: msSource, query: msQuery, page: msPage, limit: 30 });
       setMsSearchResult(data);
       toast({ title: data.ok ? `${data.inserted || 0} novos inseridos` : "Erro", variant: data.ok ? "default" : "destructive" });
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setMsSearching(false); }
   };
 
@@ -305,7 +306,7 @@ export default function CatalogSeedPage() {
       const data = await callApi("catalog-multisource", { mode: "enrich", source: msSource, limit: 20 });
       setMsEnrichResult(data);
       toast({ title: data.ok ? `${data.enriched || 0} enriquecidos` : "Erro", variant: data.ok ? "default" : "destructive" });
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setMsEnriching(false); }
   };
 
@@ -316,7 +317,7 @@ export default function CatalogSeedPage() {
       const data = await callApi("catalog-multisource", { mode: "discover", source: msSource, endpoint: msEndpoint, param: msParam || undefined, limit: 30 });
       setMsDiscoverResult(data);
       toast({ title: data.ok ? `${data.inserted ?? data.raw_count ?? 0} processados` : "Erro", variant: data.ok ? "default" : "destructive" });
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setMsDiscovering(false); }
   };
 
