@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
 
     throw new Error(`Unknown action: ${action}`);
   } catch (error: any) {
-    console.error("mk-subscription error:", error);
+    console.error("mkv2-subscription error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }

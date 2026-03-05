@@ -147,7 +147,7 @@ Deno.serve(async (req) => {
         },
       };
 
-      console.log("[mk-checkout] Creating consolidated PIX:", orderCodes, totalAmount);
+      console.log("[mkv2-checkout] Creating consolidated PIX:", orderCodes, totalAmount);
 
       const res = await fetch("https://api.mercadopago.com/v1/payments", {
         method: "POST",
@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
 
       paymentResult = await res.json();
       if (!res.ok) {
-        console.error("[mk-checkout] PIX error:", paymentResult);
+        console.error("[mkv2-checkout] PIX error:", paymentResult);
         return json({ error: "Erro ao gerar PIX. Tente novamente." }, 400);
       }
 
@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
         },
       };
 
-      console.log("[mk-checkout] Creating consolidated card:", orderCodes, `base=${totalAmount}`, `total=${cardTotalAmount}`, `${validInstallments}x`);
+      console.log("[mkv2-checkout] Creating consolidated card:", orderCodes, `base=${totalAmount}`, `total=${cardTotalAmount}`, `${validInstallments}x`);
 
       const res = await fetch("https://api.mercadopago.com/v1/payments", {
         method: "POST",
@@ -232,7 +232,7 @@ Deno.serve(async (req) => {
 
       paymentResult = await res.json();
       if (!res.ok) {
-        console.error("[mk-checkout] Card error:", paymentResult);
+        console.error("[mkv2-checkout] Card error:", paymentResult);
         const errorMessages: Record<string, string> = {
           cc_rejected_bad_filled_card_number: "Número do cartão inválido",
           cc_rejected_bad_filled_date: "Data de validade inválida",
@@ -282,7 +282,7 @@ Deno.serve(async (req) => {
 
           await sb.from("vault_marketplace_orders").update(updateData).eq("id", order.id);
         }
-        console.log("[mk-checkout] Card approved, all orders paid:", orderCodes, isInterestFree ? "(interest-free)" : "");
+        console.log("[mkv2-checkout] Card approved, all orders paid:", orderCodes, isInterestFree ? "(interest-free)" : "");
       }
 
       return json({
@@ -301,7 +301,7 @@ Deno.serve(async (req) => {
       return json({ error: "Método de pagamento inválido" }, 400);
     }
   } catch (err: any) {
-    console.error("[mk-checkout] Error:", err);
+    console.error("[mkv2-checkout] Error:", err);
     return json({ error: err.message || "Erro interno" }, 500);
   }
 });
