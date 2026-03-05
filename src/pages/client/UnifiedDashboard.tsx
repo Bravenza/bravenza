@@ -129,7 +129,7 @@ const tierConfig = {
 
 const vaultMenuItems = [
   { id: "vault", label: "Minha Coleção", icon: Box, description: "Itens verificados" },
-  { id: "wishlist", label: "Wishlist", icon: Search, description: "Buscas ativas" },
+  { id: "wishlist", label: "Wishlist", icon: Star, description: "Buscas ativas" },
   { id: "drops", label: "Drops", icon: Sparkles, description: "Conteúdos exclusivos" },
   { id: "clube", label: "Meu Status", icon: Award, description: "Tier e benefícios" },
   { id: "comunidade", label: "Comunidade", icon: Users, description: "Social" },
@@ -139,7 +139,7 @@ const vaultMenuItems = [
 const sectionTitles: Record<string, { title: string; subtitle: string; icon: React.ElementType }> = {
   pedidos: { title: "Meus Pedidos", subtitle: "Acompanhe suas importações em tempo real", icon: Package },
   vault: { title: "Minha Coleção", subtitle: "Seus itens verificados com certificado de autenticidade", icon: Box },
-  wishlist: { title: "Wishlist", subtitle: "Itens que estamos buscando para você", icon: Search },
+  wishlist: { title: "Wishlist", subtitle: "Itens que estamos buscando para você", icon: Star },
   drops: { title: "Drops", subtitle: "Novidades, guias e conteúdos exclusivos para membros", icon: Sparkles },
   clube: { title: "Meu Status", subtitle: "Seu tier, benefícios e evolução no Vault Club", icon: Award },
   comunidade: { title: "Comunidade", subtitle: "Conecte-se com outros membros", icon: Users },
