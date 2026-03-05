@@ -144,7 +144,7 @@ export default function SellerStorefrontPage() {
             <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-primary/40 to-primary/10 blur-sm" />
             <div className="relative w-28 h-28 rounded-2xl bg-card border-4 border-background shadow-2xl flex items-center justify-center text-3xl font-black text-primary overflow-hidden">
               {seller.avatar_url ? (
-                <img src={seller.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                <img src={seller.avatar_url} alt="Avatar do vendedor" className="w-full h-full object-cover" fetchPriority="high" />
               ) : (
                 <span className="bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">{initials}</span>
               )}
