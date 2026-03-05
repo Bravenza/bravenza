@@ -327,6 +327,8 @@ export default function AppLayout() {
 
                   return (
                     <button
+                      onMouseEnter={() => handleTabPrefetch(tab.path)}
+                      onTouchStart={() => handleTabPrefetch(tab.path)}
                       key={tab.path}
                       onClick={() => {
                         if (tab.isMore) {
