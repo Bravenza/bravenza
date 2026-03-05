@@ -145,8 +145,8 @@ export default function SyncCatalogoDroper() {
 
       if (r.errors?.length > 0) setErrors((prev) => [...prev, ...r.errors.slice(0, 10)]);
 
-      addLog(r.success > 0 ? "success" : "warning",
-        `${r.success} criados/atualizados · ${r.notFound} não encontrados · ${r.failed} falhas`
+      addLog(r.inserted > 0 || r.updated > 0 ? "success" : "warning",
+        `${r.inserted || 0} novos · ${r.updated || 0} atualizados · ${r.skippedDuplicates || 0} duplicados · ${r.failed} falhas`
       );
 
       if (result.reachedLimit) {
