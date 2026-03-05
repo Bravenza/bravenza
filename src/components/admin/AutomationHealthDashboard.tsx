@@ -37,10 +37,10 @@ interface JobHealth {
 
 const JOB_CONFIG: Record<string, { display: string; schedule: string }> = {
   "mkv2-notifications": { display: "Notificações Marketplace", schedule: "A cada hora" },
-  "mk-auto-payout": { display: "Auto-Payout", schedule: "A cada hora" },
-  "mk-cron-tasks": { display: "Manutenção (Expirar/Preços)", schedule: "A cada 6 horas" },
+  "mkv2-auto-payout": { display: "Auto-Payout", schedule: "A cada hora" },
+  "mkv2-cron-tasks": { display: "Manutenção (Expirar/Preços)", schedule: "A cada 6 horas" },
   "mkv2-releases": { display: "Releases de Sneakers", schedule: "Diário (6h)" },
-  "mk-subscription-downgrade": { display: "Downgrade de Planos", schedule: "Diário (4h)" },
+  "mkv2-subscription-downgrade": { display: "Downgrade de Planos", schedule: "Diário (4h)" },
   "vault-sla-monitor": { display: "Monitor SLA Vault", schedule: "A cada 6 horas" },
   "vault-tier-check": { display: "Verificação de Tier", schedule: "Diário (3h)" },
   "vault-semester-reset": { display: "Reset Semestral", schedule: "Diário (4h)" },

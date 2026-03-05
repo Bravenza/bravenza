@@ -1,4 +1,4 @@
-// mk-cron-tasks: Handles periodic marketplace maintenance tasks
+// mkv2-cron-tasks: Handles periodic marketplace maintenance tasks
 // - Auto-expire offers older than 48h with no activity
 // - Record daily price history snapshots
 // - Log execution to cron_execution_logs
@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     // Create execution log entry
     const { data: logEntry } = await sb
       .from("cron_execution_logs")
-      .insert({ job_name: "mk-cron-tasks", started_at: startedAt, status: "running" })
+      .insert({ job_name: "mkv2-cron-tasks", started_at: startedAt, status: "running" })
       .select("id")
       .single();
     logId = logEntry?.id || null;
@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
       .lt("updated_at", cutoff48h)
       .select("id");
 
-    if (expErr) console.error("[mk-cron-tasks] Expire error:", expErr);
+    if (expErr) console.error("[mkv2-cron-tasks] Expire error:", expErr);
     results.expired_offers = expiredOffers?.length || 0;
 
     // ── 2. Daily price history snapshot ──
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
       .select("*, offer:marketplace_offers(id, price, status)")
       .eq("is_active", true);
 
-    if (acErr) console.error("[mk-cron-tasks] AutoCut fetch error:", acErr);
+    if (acErr) console.error("[mkv2-cron-tasks] AutoCut fetch error:", acErr);
 
     let autocutApplied = 0;
     for (const rule of autocutRules || []) {
@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
       }).eq("id", rule.id);
 
       autocutApplied++;
-      console.log(`[mk-cron-tasks] AutoCut: offer ${offer.id} ${offer.price} → ${newPrice}`);
+      console.log(`[mkv2-cron-tasks] AutoCut: offer ${offer.id} ${offer.price} → ${newPrice}`);
     }
     results.autocut_applied = autocutApplied;
 
@@ -163,14 +163,14 @@ Deno.serve(async (req) => {
         .eq("id", logId);
     }
 
-    console.log("[mk-cron-tasks] Done:", results);
+    console.log("[mkv2-cron-tasks] Done:", results);
 
     return new Response(JSON.stringify({ success: true, ...results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    console.error("[mk-cron-tasks] Error:", message);
+    console.error("[mkv2-cron-tasks] Error:", message);
 
     if (logId) {
       await sb

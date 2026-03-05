@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     const cronStartedAt = new Date().toISOString();
     const { data: logEntry } = await supabase
       .from("cron_execution_logs")
-      .insert({ job_name: "mk-subscription-downgrade", started_at: cronStartedAt, status: "running" })
+      .insert({ job_name: "mkv2-subscription-downgrade", started_at: cronStartedAt, status: "running" })
       .select("id")
       .single();
     const cronLogId = logEntry?.id || null;
@@ -162,13 +162,13 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
-    console.error("mk-subscription-downgrade error:", error);
+    console.error("mkv2-subscription-downgrade error:", error);
 
     // Try to log error
     try {
       const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
       await supabase.from("cron_execution_logs").insert({
-        job_name: "mk-subscription-downgrade", status: "error", error_message: error.message,
+        job_name: "mkv2-subscription-downgrade", status: "error", error_message: error.message,
         finished_at: new Date().toISOString(),
       });
     } catch (_) {}

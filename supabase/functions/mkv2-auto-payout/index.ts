@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     const startedAt = new Date().toISOString();
     const { data: logEntry } = await sb
       .from("cron_execution_logs")
-      .insert({ job_name: "mk-auto-payout", started_at: startedAt, status: "running" })
+      .insert({ job_name: "mkv2-auto-payout", started_at: startedAt, status: "running" })
       .select("id")
       .single();
     const logId = logEntry?.id;
@@ -45,14 +45,14 @@ Deno.serve(async (req) => {
     if (error) throw error;
 
     if (!eligible || eligible.length === 0) {
-      console.log("[mk-auto-payout] No eligible orders for payout");
+      console.log("[mkv2-auto-payout] No eligible orders for payout");
       return new Response(
         JSON.stringify({ processed: 0 }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`[mk-auto-payout] Found ${eligible.length} eligible orders`);
+    console.log(`[mkv2-auto-payout] Found ${eligible.length} eligible orders`);
 
     let processed = 0;
 
@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
         .eq("id", order.id);
 
       if (updateErr) {
-        console.error(`[mk-auto-payout] Failed to update order ${order.order_code}:`, updateErr);
+        console.error(`[mkv2-auto-payout] Failed to update order ${order.order_code}:`, updateErr);
         continue;
       }
 
@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
       processed++;
     }
 
-    console.log(`[mk-auto-payout] Processed ${processed} orders`);
+    console.log(`[mkv2-auto-payout] Processed ${processed} orders`);
 
     if (logId) {
       await sb.from("cron_execution_logs").update({
@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: any) {
-    console.error("[mk-auto-payout] Error:", err);
+    console.error("[mkv2-auto-payout] Error:", err);
     return new Response(
       JSON.stringify({ error: err.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
