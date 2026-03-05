@@ -43,7 +43,7 @@ export function useMarketplaceOrders(cpf: string | null) {
   const fetchMyOrders = useCallback(async () => {
     if (!cpf) return;
     try {
-      const data = await marketplaceRequest(cpf, "my-orders");
+      const data = await fetchWithRetry(() => marketplaceRequest(cpf, "my-orders"));
       setMyOrders(data.orders || []);
     } catch (err) {
       console.error("Fetch my orders error:", err);
