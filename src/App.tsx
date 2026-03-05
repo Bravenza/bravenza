@@ -59,6 +59,12 @@ function AppShell({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Resets ErrorBoundary on route change
+function RouteErrorBoundaryWrapper({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  return <ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary>;
+}
+
 function App() {
   return (
   <ErrorBoundary>
