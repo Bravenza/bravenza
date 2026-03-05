@@ -306,7 +306,7 @@ export default function CatalogSeedPage() {
       const data = await callApi("catalog-multisource", { mode: "enrich", source: msSource, limit: 20 });
       setMsEnrichResult(data);
       toast({ title: data.ok ? `${data.enriched || 0} enriquecidos` : "Erro", variant: data.ok ? "default" : "destructive" });
-    } catch (e: any) { toast({ title: "Erro", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: "Erro", description: getErrorMessage(e), variant: "destructive" }); }
     finally { setMsEnriching(false); }
   };
 
