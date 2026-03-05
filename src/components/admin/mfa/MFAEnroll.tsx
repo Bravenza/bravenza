@@ -33,8 +33,8 @@ export function MFAEnroll({ onEnrolled, onCancelled }: MFAEnrollProps) {
         setFactorId(data.id);
         setQR(data.totp.qr_code);
         setSecret(data.totp.secret);
-      } catch (err: any) {
-        setError(err.message || "Erro ao iniciar configuração MFA");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao iniciar configuração MFA");
       } finally {
         setIsLoading(false);
       }
