@@ -1,4 +1,6 @@
-import { memo, useState, useCallback, useEffect } from "react";
+import { memo, useState, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { STALE, GC_TIME } from "@/lib/query-config";
 import { motion } from "framer-motion";
 import { HelpCircle, Search, Users, ShoppingBag, Store } from "lucide-react";
 import {
@@ -40,43 +42,32 @@ const STATIC_FAQS: FAQ[] = [
 export const MarketplaceFAQSection = memo(function MarketplaceFAQSection() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activePersona, setActivePersona] = useState("all");
-  const [faqs, setFaqs] = useState<FAQ[]>(STATIC_FAQS);
+  const [searchResults, setSearchResults] = useState<FAQ[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  const [hasLoadedDb, setHasLoadedDb] = useState(false);
 
-  // Load FAQs from database on mount
-  useEffect(() => {
-    const loadFaqs = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("faqs")
-          .select("id, question, answer, category, persona, tags")
-          .eq("is_active", true)
-          .order("order_index");
-        if (!error && data && data.length > 0) {
-          setFaqs(data as FAQ[]);
-          setHasLoadedDb(true);
-        }
-      } catch { /* use static fallback */ }
-    };
-    loadFaqs();
-  }, []);
+  const { data: dbFaqs } = useQuery({
+    queryKey: ["marketplace-faqs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("faqs")
+        .select("id, question, answer, category, persona, tags")
+        .eq("is_active", true)
+        .order("order_index");
+      if (error || !data || data.length === 0) return null;
+      return data as FAQ[];
+    },
+    staleTime: STALE.STATIC,
+    gcTime: GC_TIME.LONG,
+  });
+
+  const faqs = searchResults || dbFaqs || STATIC_FAQS;
+  const hasLoadedDb = !!dbFaqs;
 
   // Search with RPC
   const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query);
     if (!query.trim()) {
-      // Reset to loaded FAQs
-      if (hasLoadedDb) {
-        const { data } = await supabase
-          .from("faqs")
-          .select("id, question, answer, category, persona, tags")
-          .eq("is_active", true)
-          .order("order_index");
-        if (data) setFaqs(data as FAQ[]);
-      } else {
-        setFaqs(STATIC_FAQS);
-      }
+      setSearchResults(null);
       return;
     }
 
@@ -87,7 +78,7 @@ export const MarketplaceFAQSection = memo(function MarketplaceFAQSection() {
         ...(activePersona !== "all" ? { p_persona: activePersona } : {}),
       });
       if (!error && data && (data as any[]).length > 0) {
-        setFaqs((data as any[]).map((d: any) => ({
+        setSearchResults((data as any[]).map((d: any) => ({
           id: d.id,
           question: d.question,
           answer: d.answer,
@@ -97,7 +88,7 @@ export const MarketplaceFAQSection = memo(function MarketplaceFAQSection() {
           rank: d.rank,
         })));
       } else if (!error) {
-        setFaqs([]);
+        setSearchResults([]);
       }
     } catch {
       // Keep current

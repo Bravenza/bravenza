@@ -1,10 +1,12 @@
-import { useEffect, useState, useMemo, memo, useCallback } from "react";
+import { useState, useMemo, memo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HelpCircle, Package, CreditCard, Shield, Truck, MessageCircle } from "lucide-react";
+import { STALE, GC_TIME } from "@/lib/query-config";
 interface FAQ {
   id: string;
   category: string;
@@ -33,28 +35,18 @@ const CATEGORY_LABELS: Record<string, string> = {
   geral: "Geral"
 };
 function FAQSectionComponent() {
-  const [faqs, setFaqs] = useState<FAQ[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState("curadoria");
-  const fetchFAQs = useCallback(async () => {
-    try {
-      const {
-        data,
-        error
-      } = await supabase.from("faqs").select("*").eq("is_active", true).order("order_index");
+  const { data: faqs = [], isLoading } = useQuery({
+    queryKey: ["faqs"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("faqs").select("*").eq("is_active", true).order("order_index");
       if (error) throw error;
-      setFaqs(data || []);
-    } catch (error) {
-      console.error("Error fetching FAQs:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-  useEffect(() => {
-    fetchFAQs();
-  }, [fetchFAQs]);
+      return (data || []) as FAQ[];
+    },
+    staleTime: STALE.STATIC,
+    gcTime: GC_TIME.LONG,
+  });
 
-  // Memoize categories and faqsByCategory to prevent recalculation
+  const [activeCategory, setActiveCategory] = useState("curadoria");
   const categories = useMemo(() => [...new Set(faqs.map(faq => faq.category))], [faqs]);
   const faqsByCategory = useMemo(() => faqs.reduce((acc, faq) => {
     if (!acc[faq.category]) acc[faq.category] = [];

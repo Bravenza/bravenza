@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Flame, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { STALE, GC_TIME } from "@/lib/query-config";
 import { Button } from "@/components/ui/button";
 
 interface FeaturedModel {
@@ -33,8 +34,8 @@ const itemVariants = {
 const FeaturedModelsSection = () => {
   const { data: models, isLoading } = useQuery({
     queryKey: ["featured-models"],
-    staleTime: 0,
-    gcTime: 1000 * 60 * 5,
+    staleTime: STALE.STATIC,
+    gcTime: GC_TIME.LONG,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("featured_models")
