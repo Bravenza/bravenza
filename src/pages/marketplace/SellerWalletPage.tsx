@@ -114,8 +114,8 @@ export default function SellerWalletPage() {
       setPayoutOpen(false);
       setPayoutAmount("");
       fetchAll();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao solicitar saque");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao solicitar saque");
     } finally {
       setPayoutSubmitting(false);
     }
