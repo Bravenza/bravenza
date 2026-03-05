@@ -46,7 +46,7 @@ function FAQSectionComponent() {
     gcTime: GC_TIME.LONG,
   });
 
-  // Memoize categories and faqsByCategory to prevent recalculation
+  const activeCategory = faqs.length > 0 ? faqs[0].category : "curadoria";
   const categories = useMemo(() => [...new Set(faqs.map(faq => faq.category))], [faqs]);
   const faqsByCategory = useMemo(() => faqs.reduce((acc, faq) => {
     if (!acc[faq.category]) acc[faq.category] = [];
