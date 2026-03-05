@@ -12,6 +12,7 @@ import type { CartGroup } from "@/hooks/useMarketplaceCart";
 
 interface SuccessStepProps {
   paymentMethod: string;
+  paymentStatus?: string;
   orderCodes: string[];
   group: CartGroup;
   pixData: { qr_code?: string; copy_paste?: string; expiration?: string } | null;
