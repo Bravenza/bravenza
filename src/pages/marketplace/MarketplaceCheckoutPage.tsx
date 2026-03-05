@@ -71,6 +71,7 @@ function MarketplaceCheckoutPageInner() {
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [pixData, setPixData] = useState<{ qr_code?: string; copy_paste?: string; expiration?: string } | null>(null);
   const [orderCodes, setOrderCodes] = useState<string[]>([]);
+  const [paymentStatus, setPaymentStatus] = useState<string | undefined>();
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
 
   const [form, setForm] = useState<CheckoutFormData>({
