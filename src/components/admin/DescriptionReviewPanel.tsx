@@ -213,8 +213,8 @@ export default function DescriptionReviewPanel() {
       }
 
       showToast(`${totalSuccess} descrições reescritas${totalErrors > 0 ? `, ${totalErrors} falhas` : ""}`);
-    } catch (e: any) {
-      showToast(e.message, "error");
+    } catch (e) {
+      showToast(getErrorMessage(e), "error");
     } finally {
       setEnriching(false);
       loadProducts();
