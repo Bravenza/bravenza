@@ -165,78 +165,81 @@ export default function VaultClub() {
 
   return (
     <div className="space-y-6 pb-20 md:pb-0">
-      {/* Tier Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <Card className={`bg-gradient-to-br ${tierInfo.bgGradient} border-border overflow-hidden`}>
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <tierInfo.icon className={`h-6 w-6 ${tierInfo.color}`} />
-                  <span className={`text-lg font-bold ${tierInfo.color}`}>{tierInfo.name}</span>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Tier Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Card className={`bg-gradient-to-br ${tierInfo.bgGradient} border-border overflow-hidden h-full`}>
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <tierInfo.icon className={`h-6 w-6 ${tierInfo.color}`} />
+                    <span className={`text-lg font-bold ${tierInfo.color}`}>{tierInfo.name}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {member?.total_purchases || 0} compras no Vault
+                  </p>
+                  {tierInfo.nextTier && (
+                    <Badge variant="outline" className="border-border text-muted-foreground">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      Próximo: {tierInfo.nextTier}
+                    </Badge>
+                  )}
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {member?.total_purchases || 0} compras no Vault
-                </p>
-                {tierInfo.nextTier && (
-                  <Badge variant="outline" className="border-border text-muted-foreground">
-                    <TrendingUp className="h-3 w-3 mr-1" />
-                    Próximo: {tierInfo.nextTier}
-                  </Badge>
-                )}
+                <div className="text-right">
+                  <p className="text-4xl font-bold">{member?.invites_remaining || 0}</p>
+                  <p className="text-xs text-muted-foreground">convites restantes</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-4xl font-bold">{member?.invites_remaining || 0}</p>
-                <p className="text-xs text-muted-foreground">convites restantes</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-      {/* Eligibility Progress (only for non-elite) */}
-      {member?.tier !== "elite" && (
-        <Card className="bg-card border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Progresso para evolução</CardTitle>
-            <CardDescription>
-              Cumpra 2 de 3 critérios para avançar de tier
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-muted-foreground">Compras (12 meses)</span>
-                <span className={purchasesProgress >= 100 ? "text-success" : ""}>
-                  {member?.stats_purchases_count_12m || 0}/3
-                </span>
+        {/* Eligibility Progress (only for non-elite) */}
+        {member?.tier !== "elite" && (
+          <Card className="bg-card border-border h-full">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg">Progresso para evolução</CardTitle>
+              <CardDescription>
+                Cumpra 2 de 3 critérios para avançar de tier
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">Compras (12 meses)</span>
+                  <span className={purchasesProgress >= 100 ? "text-success" : ""}>
+                    {member?.stats_purchases_count_12m || 0}/3
+                  </span>
+                </div>
+                <Progress value={purchasesProgress} className="h-2" />
               </div>
-              <Progress value={purchasesProgress} className="h-2" />
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-muted-foreground">Taxa de decisão</span>
-                <span className={decisionProgress >= 100 ? "text-success" : ""}>
-                  {Math.round((member?.stats_decision_rate || 0) * 100)}%/50%
-                </span>
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">Taxa de decisão</span>
+                  <span className={decisionProgress >= 100 ? "text-success" : ""}>
+                    {Math.round((member?.stats_decision_rate || 0) * 100)}%/50%
+                  </span>
+                </div>
+                <Progress value={decisionProgress} className="h-2" />
               </div>
-              <Progress value={decisionProgress} className="h-2" />
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-muted-foreground">Indicações convertidas</span>
-                <span className={invitesProgress >= 100 ? "text-success" : ""}>
-                  {member?.stats_converted_invites || 0}/1
-                </span>
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">Indicações convertidas</span>
+                  <span className={invitesProgress >= 100 ? "text-success" : ""}>
+                    {member?.stats_converted_invites || 0}/1
+                  </span>
+                </div>
+                <Progress value={invitesProgress} className="h-2" />
               </div>
-              <Progress value={invitesProgress} className="h-2" />
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Invites Section */}
       <Card className="bg-card border-border">
