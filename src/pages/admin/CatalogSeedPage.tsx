@@ -135,9 +135,9 @@ export default function CatalogSeedPage() {
       });
       clearTimeout(tid);
       return res.json();
-    } catch (e: any) {
+    } catch (e) {
       clearTimeout(tid);
-      if (e.name === "AbortError") return { ok: false, error: "Timeout" };
+      if (isErrorWithName(e, "AbortError")) return { ok: false, error: "Timeout" };
       throw e;
     }
   };
