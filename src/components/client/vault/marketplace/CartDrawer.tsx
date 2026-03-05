@@ -131,7 +131,7 @@ export function CartDrawer() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full hover:bg-secondary/60 transition-colors active:scale-95">
+        <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full hover:bg-secondary/60 transition-colors active:scale-95" aria-label="Abrir carrinho">
           <ShoppingCart className="h-4 w-4" />
           <AnimatePresence>
             {count > 0 && (

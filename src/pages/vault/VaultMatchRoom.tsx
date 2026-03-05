@@ -346,6 +346,7 @@ export default function VaultMatchRoom() {
                     <div className="flex gap-2 overflow-x-auto pb-2">
                       {option.evidence_urls.map((url, i) => (
                         <button
+                          aria-label={`Ver evidência ${i + 1}`}
                           key={i}
                           onClick={(e) => {
                             e.stopPropagation();
