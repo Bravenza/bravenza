@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-type SkeletonVariant = "default" | "dashboard" | "list" | "detail" | "feed" | "admin";
+export type SkeletonVariant = "default" | "dashboard" | "list" | "detail" | "feed" | "admin";
 
 interface RouteSkeletonProps {
   variant?: SkeletonVariant;

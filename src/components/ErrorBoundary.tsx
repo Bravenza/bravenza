@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  /** When this key changes, error state resets (use location.pathname) */
+  resetKey?: string | number;
 }
 
 interface State {
@@ -28,8 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    // Reset error boundary when children change (e.g. route navigation)
-    if (this.state.hasError && prevProps.children !== this.props.children) {
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
       this.setState({ hasError: false, error: null });
     }
   }
