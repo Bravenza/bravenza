@@ -142,7 +142,7 @@ export function StoreCustomizationPanel({ cpf }: StoreCustomizationPanelProps) {
               onClick={() => bannerRef.current?.click()}
             >
               {bannerUrl ? (
-                <img src={bannerUrl} alt="Capa" className="w-full h-full object-cover" />
+                <img src={bannerUrl} alt="Capa" className="w-full h-full object-cover" loading="lazy" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <ImageIcon className="h-10 w-10 text-muted-foreground/15" />
