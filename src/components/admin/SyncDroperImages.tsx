@@ -158,6 +158,30 @@ export default function SyncCatalogoDroper() {
       await new Promise((r) => setTimeout(r, 2000));
     }
 
+    // Após sync Droper, disparar catalog-sync para copiar sneaker_models → marketplace_products
+    if (totals.success > 0 || done) {
+      addLog("info", "Sincronizando catálogo (sneaker_models → marketplace_products)...");
+      try {
+        let syncOffset = 0;
+        let totalSynced = 0;
+        let totalUpdated = 0;
+        let hasMore = true;
+        while (hasMore) {
+          const { data: syncData, error: syncErr } = await supabase.functions.invoke("catalog-sync", {
+            body: { mode: "sync", batch_size: 200, offset: syncOffset },
+          });
+          if (syncErr) throw new Error(syncErr.message);
+          totalSynced += syncData?.synced || 0;
+          totalUpdated += syncData?.updated || 0;
+          hasMore = syncData?.has_more || false;
+          syncOffset = syncData?.next_offset || syncOffset + 200;
+        }
+        addLog("success", `Catálogo atualizado: ${totalSynced} novos, ${totalUpdated} imagens atualizadas`);
+      } catch (err: unknown) {
+        addLog("error", `Erro ao sincronizar catálogo: ${err instanceof Error ? err.message : "erro"}`);
+      }
+    }
+
     if (!done) addLog("warning", `Pausado na página ${page}. Retome quando quiser.`);
     setRunning(false);
   };
