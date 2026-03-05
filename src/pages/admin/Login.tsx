@@ -84,9 +84,15 @@ const Login = forwardRef<HTMLDivElement>((_, ref) => {
     e.preventDefault();
     try {
       loginSchema.parse({ email: loginEmail, password: loginPassword });
-    } catch (err: any) {
-      const errors = JSON.parse(err.message);
-      toast({ title: "Erro de validação", description: errors[0].message, variant: "destructive" });
+    } catch (err) {
+      if (err instanceof Error) {
+        try {
+          const errors = JSON.parse(err.message);
+          toast({ title: "Erro de validação", description: errors[0].message, variant: "destructive" });
+        } catch {
+          toast({ title: "Erro de validação", description: err.message, variant: "destructive" });
+        }
+      }
       return;
     }
     setIsLoading(true);
