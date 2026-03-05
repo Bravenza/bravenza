@@ -232,7 +232,7 @@ const FinancePage = () => {
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground">Custos Totais</p>
-                <p className="text-base md:text-xl font-bold text-destructive whitespace-nowrap mt-1">{formatCurrency(m.total_costs + m.total_payment_fees)}</p>
+                <p className="text-base md:text-xl font-bold text-destructive tabular-nums mt-1">{formatCurrency(m.total_costs + m.total_payment_fees)}</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Produto + frete + taxas
                 </p>
