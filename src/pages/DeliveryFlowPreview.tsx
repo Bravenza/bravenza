@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from "@/lib/logger";
 import { DeliveryConfirmationFlow } from "@/components/client/vault/marketplace/DeliveryConfirmationFlow";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
