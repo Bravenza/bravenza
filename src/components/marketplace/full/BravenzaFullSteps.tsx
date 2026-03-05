@@ -103,6 +103,7 @@ export function BravenzaFullSteps() {
                 src={inspectionImage}
                 alt="Inspeção profissional de sneaker"
                 className="rounded-2xl shadow-2xl w-full aspect-square object-cover"
+                loading="lazy"
               />
               {/* Floating card overlay */}
               <motion.div
