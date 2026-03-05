@@ -246,11 +246,16 @@ export default function SyncCatalogoDroper() {
 
                 <div>
                   <label className="text-xs text-zinc-400 block mb-1">Filtrar por marca <span className="text-zinc-600">(opcional)</span></label>
-                  <input type="text" placeholder="ex: nike, adidas, new-balance..."
+                  <select
                     value={marcaFiltro}
                     onChange={(e) => setMarcaFiltro(e.target.value)}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-orange-500 transition placeholder-zinc-600"
-                  />
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-orange-500 transition"
+                  >
+                    <option value="">Todas as marcas</option>
+                    {brands.map((b) => (
+                      <option key={b} value={b.toLowerCase()}>{b}</option>
+                    ))}
+                  </select>
                   <p className="text-xs text-zinc-600 mt-1">Limite: 100 páginas por marca (6.000 produtos)</p>
                 </div>
               </div>
