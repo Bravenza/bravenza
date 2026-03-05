@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -58,6 +58,13 @@ export default function SyncCatalogoDroper() {
   const [lastSynced, setLastSynced]   = useState<{ sku: string; images: number }[]>([]);
   const shouldStop                    = useRef(false);
   const logsEndRef                    = useRef<HTMLDivElement>(null);
+  const [brands, setBrands]           = useState<string[]>([]);
+
+  useEffect(() => {
+    supabase.from("brands").select("name").order("name").then(({ data }) => {
+      if (data) setBrands(data.map((b) => b.name));
+    });
+  }, []);
 
   const addLog = (type: LogEntry["type"], message: string) => {
     setLogs((prev) => [...prev.slice(-299), { time: new Date().toLocaleTimeString("pt-BR"), type, message }]);
@@ -239,11 +246,16 @@ export default function SyncCatalogoDroper() {
 
                 <div>
                   <label className="text-xs text-zinc-400 block mb-1">Filtrar por marca <span className="text-zinc-600">(opcional)</span></label>
-                  <input type="text" placeholder="ex: nike, adidas, new-balance..."
+                  <select
                     value={marcaFiltro}
                     onChange={(e) => setMarcaFiltro(e.target.value)}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-orange-500 transition placeholder-zinc-600"
-                  />
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-orange-500 transition"
+                  >
+                    <option value="">Todas as marcas</option>
+                    {brands.map((b) => (
+                      <option key={b} value={b.toLowerCase()}>{b}</option>
+                    ))}
+                  </select>
                   <p className="text-xs text-zinc-600 mt-1">Limite: 100 páginas por marca (6.000 produtos)</p>
                 </div>
               </div>
