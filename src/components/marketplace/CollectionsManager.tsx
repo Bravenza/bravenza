@@ -95,8 +95,8 @@ export function CollectionsManager({ clientCpf, myListings }: CollectionsManager
       await marketplaceRequest(clientCpf, "delete-collection", "DELETE", undefined, { id });
       toast.success("Coleção removida");
       fetchCollections();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao remover");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao remover");
     }
   };
 
