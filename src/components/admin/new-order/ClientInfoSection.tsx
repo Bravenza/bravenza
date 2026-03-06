@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { cleanCPF, formatCPF, cleanPhone, formatPhone } from "@/lib/constants";
+import { cleanCPF, formatCPF, cleanPhone, formatPhone, validateCPF } from "@/lib/constants";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ClientInfoSectionProps {
   formData: Record<string, string>;
@@ -14,11 +15,49 @@ interface ClientInfoSectionProps {
 export function ClientInfoSection({ formData, setFormData }: ClientInfoSectionProps) {
   const { toast } = useToast();
   const [isLoadingCep, setIsLoadingCep] = useState(false);
+  const [isLoadingCpf, setIsLoadingCpf] = useState(false);
 
   const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const cleaned = cleanCPF(e.target.value);
     if (cleaned.length <= 11) {
       setFormData((prev) => ({ ...prev, client_cpf: formatCPF(cleaned) }));
+    }
+  };
+
+  const handleCpfBlur = async () => {
+    const cleaned = cleanCPF(formData.client_cpf);
+    if (!validateCPF(cleaned)) return;
+
+    setIsLoadingCpf(true);
+    try {
+      const { data } = await supabase
+        .from("orders")
+        .select("client_name, client_email, client_phone, client_address, client_cep, client_street, client_number, client_neighborhood, client_city, client_state, client_complement")
+        .eq("client_cpf", cleaned)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        setFormData(prev => ({
+          ...prev,
+          client_name: data.client_name || prev.client_name,
+          client_email: data.client_email || prev.client_email,
+          client_phone: data.client_phone || prev.client_phone,
+          client_cep: data.client_cep || prev.client_cep,
+          client_street: data.client_street || prev.client_street,
+          client_number: data.client_number || prev.client_number,
+          client_neighborhood: data.client_neighborhood || prev.client_neighborhood,
+          client_city: data.client_city || prev.client_city,
+          client_state: data.client_state || prev.client_state,
+          client_complement: data.client_complement || prev.client_complement,
+        }));
+        toast({ title: "Dados do cliente preenchidos automaticamente" });
+      }
+    } catch (err) {
+      console.error("Error fetching customer data:", err);
+    } finally {
+      setIsLoadingCpf(false);
     }
   };
 
@@ -80,7 +119,11 @@ export function ClientInfoSection({ formData, setFormData }: ClientInfoSectionPr
           </div>
           <div className="space-y-2">
             <Label htmlFor="client_cpf">CPF *</Label>
-            <Input id="client_cpf" value={formData.client_cpf} onChange={handleCPFChange} placeholder="000.000.000-00" className="bg-secondary/50" required />
+            <div className="relative">
+              <Input id="client_cpf" value={formData.client_cpf} onChange={handleCPFChange} onBlur={handleCpfBlur} placeholder="000.000.000-00" className="bg-secondary/50" required />
+              {isLoadingCpf && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+            </div>
+          </div>
           </div>
         </div>
         <div className="grid md:grid-cols-2 gap-4">
