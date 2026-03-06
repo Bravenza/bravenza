@@ -294,7 +294,6 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           valid: true,
-          cpf: sessions[0].cpf,
           client_name: orders?.[0]?.client_name || "Cliente",
           expires_at: sessions[0].expires_at
         }),
