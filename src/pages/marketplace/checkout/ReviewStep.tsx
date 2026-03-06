@@ -149,9 +149,9 @@ export function ReviewStep({ group, onNext, appliedCoupon, onApplyCoupon }: Revi
         </div>
 
         {appliedCoupon ? (
-          <div className="flex items-center justify-between p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-primary/10 border border-primary/20 rounded-lg">
             <div>
-              <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+              <p className="text-sm font-semibold text-primary">
                 {appliedCoupon.code}
               </p>
               <p className="text-xs text-muted-foreground">
