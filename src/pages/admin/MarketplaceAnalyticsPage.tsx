@@ -55,10 +55,38 @@ const STATUS_COLORS = [
   "hsl(var(--destructive))", "hsl(262, 83%, 58%)", "hsl(190, 90%, 50%)",
 ];
 
+type PeriodFilter = "current" | "last" | "quarter" | "year" | "custom";
+
+interface DateRange {
+  start: Date;
+  end: Date;
+}
+
+function getDateRange(period: PeriodFilter, custom: DateRange): DateRange {
+  const now = new Date();
+  switch (period) {
+    case "current": return { start: startOfMonth(now), end: endOfMonth(now) };
+    case "last": { const lm = subMonths(now, 1); return { start: startOfMonth(lm), end: endOfMonth(lm) }; }
+    case "quarter": return { start: subMonths(now, 3), end: now };
+    case "year": return { start: new Date(now.getFullYear(), 0, 1), end: now };
+    case "custom": return custom;
+  }
+}
+
+function getPreviousRange(range: DateRange): DateRange {
+  const duration = range.end.getTime() - range.start.getTime();
+  return { start: new Date(range.start.getTime() - duration), end: new Date(range.start.getTime() - 1) };
+}
+
 export default function MarketplaceAnalyticsPage() {
   const [metrics, setMetrics] = useState<MarketplaceMetrics | null>(null);
   const [rawOrders, setRawOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("current");
+  const [customRange, setCustomRange] = useState<DateRange>({ start: startOfMonth(new Date()), end: endOfMonth(new Date()) });
+
+  const dateRange = useMemo(() => getDateRange(periodFilter, customRange), [periodFilter, customRange]);
+  const prevRange = useMemo(() => getPreviousRange(dateRange), [dateRange]);
 
   useEffect(() => {
     fetchMetrics();
