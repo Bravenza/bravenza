@@ -271,7 +271,7 @@ export default function ActivityLogsPage() {
                         {log.user_email ? (
                           <div className="flex items-center gap-1 text-sm">
                             <User className="h-3 w-3" />
-                            <span className="truncate max-w-[150px]">{log.user_email}</span>
+                            <span className={`truncate max-w-[150px] ${adminFilter !== "all" && log.user_id === adminFilter ? "font-bold" : ""}`}>{log.user_email}</span>
                           </div>
                         ) : (
                           <span className="text-muted-foreground">Sistema</span>
