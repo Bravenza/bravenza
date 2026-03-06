@@ -57,6 +57,12 @@ export function OrderSummaryDesktop({ group, step, itemsSubtotal, shippingCost, 
               <span>A calcular</span>
             </div>
           )}
+          {couponDiscount > 0 && (
+            <div className="flex justify-between text-primary">
+              <span className="flex items-center gap-1"><Tag className="h-3 w-3" /> Cupom</span>
+              <span>-R$ {fmt(couponDiscount)}</span>
+            </div>
+          )}
           {cardInterestRate > 0 && (
             <div className="flex justify-between text-muted-foreground">
               <span>Juros cartão</span>
