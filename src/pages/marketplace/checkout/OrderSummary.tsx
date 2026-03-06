@@ -14,7 +14,7 @@ interface OrderSummaryProps {
   couponDiscount?: number;
 }
 
-export function OrderSummaryDesktop({ group, step, itemsSubtotal, shippingCost, cardInterestRate, displayTotalPrice, baseTotalPrice }: OrderSummaryProps) {
+export function OrderSummaryDesktop({ group, step, itemsSubtotal, shippingCost, cardInterestRate, displayTotalPrice, baseTotalPrice, couponDiscount = 0 }: OrderSummaryProps) {
   if (step === "processing" || step === "success") return null;
 
   return (
