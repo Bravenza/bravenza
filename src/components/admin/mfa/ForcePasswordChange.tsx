@@ -99,7 +99,7 @@ export function ForcePasswordChange({ onComplete, onSignOut }: ForcePasswordChan
                 type={showPassword ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Min. 12 caracteres, maiúscula, número e especial"
                 className="bg-secondary/30 border-border/40 h-11 pr-10"
               />
               <button
