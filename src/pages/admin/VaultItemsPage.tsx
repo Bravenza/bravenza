@@ -61,7 +61,7 @@ const VaultItemsPage = () => {
       }
 
       if (statusFilter !== "all" && statusFilter) {
-        query = query.eq("verified_status", statusFilter);
+        query = query.eq("verified_status", statusFilter as VerifiedStatus);
       }
 
       query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
