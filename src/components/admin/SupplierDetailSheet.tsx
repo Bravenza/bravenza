@@ -66,25 +66,23 @@ export function SupplierDetailSheet({ supplier, open, onOpenChange }: Props) {
     setIsLoading(true);
     try {
       // Get count + sum via full query (no limit)
-      const { data: allOrders } = await supabase
-        .from("orders")
-        .select("product_cost")
-        .eq("supplier_name", name);
+      const [allRes, recentRes] = await Promise.all([
+        supabase
+          .from("orders")
+          .select("product_cost")
+          .eq("supplier_name", name) as Promise<{ data: { product_cost: number | null }[] | null; error: unknown }>,
+        supabase
+          .from("orders")
+          .select("order_id, product_name, product_cost, current_status, created_at")
+          .eq("supplier_name", name)
+          .order("created_at", { ascending: false })
+          .limit(10) as Promise<{ data: OrderRow[] | null; error: unknown }>,
+      ]);
 
-      const count = allOrders?.length || 0;
-      const sum = allOrders?.reduce((acc, o) => acc + (o.product_cost || 0), 0) || 0;
-      setTotalOrders(count);
-      setTotalValue(sum);
-
-      // Get recent 10
-      const { data } = await supabase
-        .from("orders")
-        .select("order_id, product_name, product_cost, current_status, created_at")
-        .eq("supplier_name", name)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      setOrders((data as OrderRow[]) || []);
+      const allOrders = allRes.data || [];
+      setTotalOrders(allOrders.length);
+      setTotalValue(allOrders.reduce((acc, o) => acc + (o.product_cost || 0), 0));
+      setOrders(recentRes.data || []);
     } catch (e) {
       console.error("Error fetching supplier orders:", e);
     } finally {

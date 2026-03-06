@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
+import { SupplierDetailSheet } from "@/components/admin/SupplierDetailSheet";
 
 interface Supplier {
   id: string;
