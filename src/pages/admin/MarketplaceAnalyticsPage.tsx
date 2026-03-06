@@ -33,6 +33,7 @@ interface MarketplaceMetrics {
   openDisputes: number;
   avgOrderValue: number;
   conversionRate: number;
+  totalAdViews: number;
   sellersByTier: { tier: string; count: number }[];
   topProducts: { name: string; brand: string; sales: number; revenue: number }[];
   monthlyGMV: { month: string; gmv: number; revenue: number; orders: number }[];
