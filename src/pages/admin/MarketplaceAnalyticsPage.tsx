@@ -319,12 +319,13 @@ export default function MarketplaceAnalyticsPage() {
       </div>
 
       {/* Secondary metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         {[
-          { icon: Users, label: "Vendedores", value: metrics.totalSellers },
-          { icon: Activity, label: "Ativos", value: metrics.activeSellers },
-          { icon: Package, label: "Anúncios ativos", value: metrics.activeListings },
-          { icon: Eye, label: "Conversão", value: `${metrics.conversionRate}%` },
+          { icon: Users, label: "Vendedores", value: String(metrics.totalSellers) },
+          { icon: Activity, label: "Ativos", value: String(metrics.activeSellers) },
+          { icon: Package, label: "Anúncios ativos", value: String(metrics.activeListings) },
+          { icon: Eye, label: "Views de Anúncios", value: metrics.totalAdViews.toLocaleString("pt-BR") },
+          { icon: Eye, label: "Conversão (views → pedidos)", value: metrics.totalAdViews > 0 ? `${metrics.conversionRate}%` : "—", tooltip: "Pedidos completados ÷ visualizações de anúncios ativos" },
           { icon: TrendingUp, label: "Take rate", value: `${metrics.takeRate}%` },
         ].map((item) => (
           <Card key={item.label} className="card-premium">
@@ -332,7 +333,7 @@ export default function MarketplaceAnalyticsPage() {
               <item.icon className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-sm font-bold">{item.value}</p>
-                <p className="text-[10px] text-muted-foreground">{item.label}</p>
+                <p className="text-[10px] text-muted-foreground" title={"tooltip" in item ? item.tooltip : undefined}>{item.label}</p>
               </div>
             </CardContent>
           </Card>
