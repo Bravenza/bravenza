@@ -329,6 +329,7 @@ export type Database = {
           favorite_brands: string[] | null
           id: string
           notification_email: boolean | null
+          notification_prefs: Json
           notification_push: boolean | null
           notification_whatsapp: boolean | null
           preferred_colors: string[] | null
@@ -341,6 +342,7 @@ export type Database = {
           favorite_brands?: string[] | null
           id?: string
           notification_email?: boolean | null
+          notification_prefs?: Json
           notification_push?: boolean | null
           notification_whatsapp?: boolean | null
           preferred_colors?: string[] | null
@@ -353,6 +355,7 @@ export type Database = {
           favorite_brands?: string[] | null
           id?: string
           notification_email?: boolean | null
+          notification_prefs?: Json
           notification_push?: boolean | null
           notification_whatsapp?: boolean | null
           preferred_colors?: string[] | null

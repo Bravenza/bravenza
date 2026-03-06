@@ -1,0 +1,2 @@
+ALTER TABLE public.client_preferences
+  ADD COLUMN IF NOT EXISTS notification_prefs JSONB NOT NULL DEFAULT '{"chat": true, "drops": true, "price_alerts": true, "marketing": false, "seller_tips": true}'::jsonb;
