@@ -13,8 +13,24 @@ import { z } from "zod";
 const createAdminSchema = z.object({
   fullName: z.string().min(2, "Nome deve ter no mínimo 2 caracteres"),
   email: z.string().email("Email inválido"),
-  tempPassword: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
+  tempPassword: z.string()
+    .min(12, "Senha deve ter no mínimo 12 caracteres")
+    .regex(/[A-Z]/, "Senha deve conter ao menos uma letra maiúscula")
+    .regex(/[0-9]/, "Senha deve conter ao menos um número")
+    .regex(/[^A-Za-z0-9]/, "Senha deve conter ao menos um caractere especial"),
 });
+
+const getPasswordStrength = (password: string) => {
+  let score = 0;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  if (score <= 1) return { label: "Fraca", color: "bg-destructive", width: "w-1/4" };
+  if (score <= 2) return { label: "Média", color: "bg-warning", width: "w-2/4" };
+  if (score <= 3) return { label: "Boa", color: "bg-primary", width: "w-3/4" };
+  return { label: "Forte", color: "bg-success", width: "w-full" };
+};
 
 interface AdminUser {
   id: string;
