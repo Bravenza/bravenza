@@ -39,6 +39,7 @@ export default function SuppliersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [detailSupplier, setDetailSupplier] = useState<Supplier | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
