@@ -125,6 +125,22 @@ export function GlobalSearch() {
         });
       }
 
+      // Process marketplace orders
+      if (mkOrdersRes.data) {
+        mkOrdersRes.data.forEach((order) => {
+          const listingTitle = Array.isArray(order.listing)
+            ? order.listing[0]?.title
+            : (order.listing as { title?: string } | null)?.title;
+          searchResults.push({
+            type: "marketplace_order",
+            id: order.id,
+            title: `${order.order_code || order.id.slice(0, 8)} — ${listingTitle || ""}`,
+            subtitle: `Comprador: ${order.buyer_name} · ${order.status}`,
+            path: `/admin/vault/marketplace`,
+          });
+        });
+      }
+
       setResults(searchResults.slice(0, 12));
       setSelectedIndex(0);
     } catch (error) {
