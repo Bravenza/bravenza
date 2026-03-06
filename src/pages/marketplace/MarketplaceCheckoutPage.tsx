@@ -426,6 +426,7 @@ function MarketplaceCheckoutPageInner() {
                     orderCodes={orderCodes}
                     group={group}
                     pixData={pixData}
+                    appliedCoupon={appliedCoupon}
                   />
                 )}
               </motion.div>
