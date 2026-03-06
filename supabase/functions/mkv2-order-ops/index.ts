@@ -56,6 +56,7 @@ if(mt==="PUT"&&a==="cancel-buyer-order"){
   if(fe||!od)throw new Error("Pedido não encontrado");if(od.status!=="paid")throw new Error("Cancelamento só para pedidos pagos");
   if(!od.cancellation_window_ends_at||new Date(od.cancellation_window_ends_at)<new Date())throw new Error("Janela de cancelamento expirada");
   await sb.from("vault_marketplace_orders").update({status:"cancelled",cancelled_at:new Date().toISOString(),cancellation_reason:b.reason||"Cancelado pelo comprador"}).eq("id",od.id);
+  if(od.mp_payment_id)await refundMP(od.mp_payment_id,od.id);
   if(od.listing_id)await sb.from("vault_marketplace_listings").update({status:"active"}).eq("id",od.listing_id);
   const{data:si}=await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf,client_name)").eq("id",od.seller_id).single();
   if(si?.member?.client_cpf){await nt(sb,"❌ Compra cancelada",`Pedido ${od.order_code} cancelado pelo comprador.`,si.member.client_cpf,od.id,"marketplace_order");const se=await ge(sb,si.member.client_cpf);if(se)em("mk_order_cancelled",{recipient_name:se.name,recipient_email:se.email,order_code:od.order_code,product_name:`Pedido ${od.order_code}`,cancel_reason:b.reason||"Cancelado pelo comprador"});}
