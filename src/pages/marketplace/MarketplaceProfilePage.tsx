@@ -613,6 +613,86 @@ export default function MarketplaceProfilePage() {
                 </CardContent>
               </Card>
             </motion.div>
+
+            {/* Privacy & Data */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+              <Card className="border-destructive/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-destructive" /> Privacidade e dados
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Gerencie seus dados pessoais conforme a LGPD
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={handleExportData}
+                      disabled={exportingData}
+                    >
+                      {exportingData ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                      Baixar meus dados
+                    </Button>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" className="gap-2">
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Solicitar exclusão da conta
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="flex items-center gap-2">
+                            <AlertCircle className="h-5 w-5 text-destructive" />
+                            Excluir conta permanentemente
+                          </AlertDialogTitle>
+                          <AlertDialogDescription className="space-y-3">
+                            <p>
+                              <strong className="text-destructive">Esta ação é irreversível.</strong> Seus dados pessoais serão
+                              anonimizados e sua conta de acesso será removida permanentemente.
+                            </p>
+                            <p>
+                              Pedidos existentes serão mantidos por obrigação fiscal, mas sem
+                              informações que identifiquem você.
+                            </p>
+                            <div className="pt-2">
+                              <Label className="text-xs text-muted-foreground">
+                                Digite <strong>CONFIRMAR</strong> para prosseguir
+                              </Label>
+                              <Input
+                                value={deleteConfirmText}
+                                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                placeholder="CONFIRMAR"
+                                className="mt-1"
+                              />
+                            </div>
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel onClick={() => setDeleteConfirmText("")}>
+                            Cancelar
+                          </AlertDialogCancel>
+                          <Button
+                            variant="destructive"
+                            disabled={deleteConfirmText !== "CONFIRMAR" || deletingAccount}
+                            onClick={handleDeleteAccount}
+                            className="gap-2"
+                          >
+                            {deletingAccount ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                            Confirmar Exclusão
+                          </Button>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
         )}
       </div>
