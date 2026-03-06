@@ -129,14 +129,16 @@ export default function MarketplaceAnalyticsPage() {
       return d >= range.start && d <= range.end;
     });
 
-  const computeMetrics = (orders: any[], sellers: any[], listings: any[], products: any[]): MarketplaceMetrics => {
+  const computeMetrics = (orders: any[], sellers: any[], listings: any[], products: any[], listingViews: any[]): MarketplaceMetrics => {
     const completedOrders = orders.filter((o: any) => ["completed", "delivered", "payout_released"].includes(o.status));
     const gmv = completedOrders.reduce((sum: number, o: any) => sum + (o.sale_price || 0), 0);
     const platformRevenue = completedOrders.reduce((sum: number, o: any) => sum + (o.fee_amount || 0), 0);
     const openDisputes = orders.filter((o: any) => o.dispute_status === "open").length;
     const avgOrderValue = completedOrders.length > 0 ? gmv / completedOrders.length : 0;
-    const totalViews = listings.reduce((sum, l) => sum + (l.views_count || 0), 0);
-    const conversionRate = totalViews > 0 ? ((completedOrders.length / totalViews) * 100) : 0;
+    const totalOfferViews = listings.reduce((sum: number, l: any) => sum + (l.views_count || 0), 0);
+    const totalListingViews = listingViews.reduce((sum: number, l: any) => sum + (l.views_count || 0), 0);
+    const totalAdViews = totalOfferViews + totalListingViews;
+    const conversionRate = totalAdViews > 0 ? ((completedOrders.length / totalAdViews) * 100) : 0;
     const takeRate = gmv > 0 ? ((platformRevenue / gmv) * 100) : 0;
 
     const tierCounts: Record<string, number> = {};
