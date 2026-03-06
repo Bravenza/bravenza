@@ -194,6 +194,9 @@ export function SellerDashboardV2({ cpf }: { cpf: string }) {
                 {tasks.pending_offers_count > 0 && (
                   <TaskRow icon={MessageSquare} color="text-primary" bg="bg-primary/10" label={`${tasks.pending_offers_count} oferta${tasks.pending_offers_count > 1 ? "s" : ""} pendente${tasks.pending_offers_count > 1 ? "s" : ""}`} onClick={() => navigate("/app/loja")} />
                 )}
+                {unread.total > 0 && (
+                  <TaskRow icon={MessageSquare} color="text-blue-500" bg="bg-blue-500/10" label={`${unread.total} mensagem${unread.total > 1 ? "ns" : ""} não lida${unread.total > 1 ? "s" : ""}`} sublabel={`${Object.keys(unread.by_listing).length} anúncio${Object.keys(unread.by_listing).length !== 1 ? "s" : ""} com perguntas`} onClick={() => navigate("/app/loja")} />
+                )}
               </div>
             )}
           </CardContent>

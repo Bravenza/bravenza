@@ -108,6 +108,16 @@ export function MarketplaceHeader({ profile, signOut }: MarketplaceHeaderProps) 
                     </Link>
                   </Button>
                   <CartDrawer />
+                  {unread.total > 0 && (
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-secondary/60 transition-colors active:scale-95 relative" asChild>
+                      <Link to="/app/loja" aria-label="Mensagens não lidas">
+                        <MessageSquare className="h-4 w-4" />
+                        <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold leading-none">
+                          {unread.total > 99 ? "99+" : unread.total}
+                        </span>
+                      </Link>
+                    </Button>
+                  )}
 
                   {/* User Dropdown */}
                   <DropdownMenu>
