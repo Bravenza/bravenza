@@ -117,6 +117,7 @@ export function SuccessStep({ paymentMethod, paymentStatus, orderCodes, group, p
         </div>
       )}
 
+      <div className="space-y-2">
         {orderCodes.map((code, i) => (
           <div key={i} className="flex items-center justify-between p-3 bg-secondary/30 rounded-xl border border-border/10">
             <div className="flex items-center gap-2.5">
