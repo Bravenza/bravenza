@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Bell, Send, Users, Filter, Plus, Trash2, Eye, Clock,
@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -60,6 +61,13 @@ const SEGMENTS = [
   { value: "high_value", label: "Alto valor (R$5k+)" },
 ];
 
+const CHANNEL_LABELS: Record<string, string> = {
+  in_app: "In-App",
+  email: "E-mail",
+  push: "Push",
+  whatsapp: "WhatsApp",
+};
+
 export default function MarketplaceCampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -72,6 +80,9 @@ export default function MarketplaceCampaignsPage() {
     selectedTiers: [] as string[],
   });
   const [estimatedReach, setEstimatedReach] = useState(0);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [sendProgress, setSendProgress] = useState({ current: 0, total: 0 });
 
   useEffect(() => {
     fetchCampaigns();
@@ -84,7 +95,6 @@ export default function MarketplaceCampaignsPage() {
   const fetchCampaigns = async () => {
     setIsLoading(true);
     try {
-      // Fetch from notifications table, grouped by reference_type = 'campaign'
       const { data } = await supabase
         .from("notifications")
         .select("*")
@@ -92,7 +102,6 @@ export default function MarketplaceCampaignsPage() {
         .order("created_at", { ascending: false })
         .limit(50);
 
-      // Group by reference_id to build campaign list
       const campaignMap = new Map<string, Campaign>();
       for (const n of (data || [])) {
         const refId = n.reference_id || n.id;
@@ -130,7 +139,6 @@ export default function MarketplaceCampaignsPage() {
         query = query.in("tier", newCampaign.selectedTiers as any);
       }
       if (newCampaign.segment === "sellers") {
-        // Count sellers instead
         const { count } = await supabase.from("vault_seller_profiles").select("id", { count: "exact", head: true });
         setEstimatedReach(count || 0);
         return;
@@ -146,15 +154,22 @@ export default function MarketplaceCampaignsPage() {
     }
   };
 
-  const sendCampaign = async () => {
+  const handleSendClick = () => {
     if (!newCampaign.title || !newCampaign.message) {
       toast.error("Preencha título e mensagem");
       return;
     }
+    setShowConfirm(true);
+  };
+
+  const sendCampaign = async () => {
+    setShowConfirm(false);
+    setIsSending(true);
+    setSendProgress({ current: 0, total: 0 });
 
     try {
       // Get target members
-      let query = supabase.from("vault_members").select("client_cpf, client_name, client_email, tier").eq("is_active", true);
+      let query = supabase.from("vault_members").select("client_cpf, client_name, client_email, client_phone, tier").eq("is_active", true);
       
       if (newCampaign.selectedTiers.length > 0) {
         query = query.in("tier", newCampaign.selectedTiers as any);
@@ -166,12 +181,15 @@ export default function MarketplaceCampaignsPage() {
       const { data: members } = await query;
       if (!members || members.length === 0) {
         toast.error("Nenhum destinatário encontrado");
+        setIsSending(false);
         return;
       }
 
       const campaignId = crypto.randomUUID();
+      const total = members.length;
+      setSendProgress({ current: 0, total });
 
-      // Create notifications in batch
+      // 1. Always create in-app notifications (internal record)
       const notifications = members.map(m => ({
         title: newCampaign.title,
         message: newCampaign.message,
@@ -182,24 +200,79 @@ export default function MarketplaceCampaignsPage() {
         reference_id: campaignId,
       }));
 
-      // Insert in batches of 100
       for (let i = 0; i < notifications.length; i += 100) {
         const batch = notifications.slice(i, i + 100);
         await supabase.from("notifications").insert(batch);
+        setSendProgress({ current: Math.min(i + 100, total), total });
       }
 
-      toast.success(`Campanha enviada para ${members.length} membros!`);
+      // 2. Dispatch to selected channel
+      const channel = newCampaign.channel;
+
+      if (channel === "email") {
+        const withEmail = members.filter(m => m.client_email);
+        setSendProgress({ current: 0, total: withEmail.length });
+        for (let i = 0; i < withEmail.length; i += 10) {
+          const batch = withEmail.slice(i, i + 10);
+          await Promise.all(batch.map(m =>
+            supabase.functions.invoke("send-marketplace-email", {
+              body: {
+                type: "mk_campaign",
+                recipient_name: m.client_name,
+                recipient_email: m.client_email,
+                campaign_title: newCampaign.title,
+                campaign_message: newCampaign.message,
+              },
+            })
+          ));
+          setSendProgress({ current: Math.min(i + 10, withEmail.length), total: withEmail.length });
+        }
+      } else if (channel === "push") {
+        setSendProgress({ current: 0, total: 1 });
+        await supabase.functions.invoke("send-push", {
+          body: {
+            title: newCampaign.title,
+            body: newCampaign.message,
+            target_cpfs: members.map(m => m.client_cpf),
+          },
+        });
+        setSendProgress({ current: 1, total: 1 });
+      } else if (channel === "whatsapp") {
+        const withPhone = members.filter(m => m.client_phone);
+        setSendProgress({ current: 0, total: withPhone.length });
+        for (let i = 0; i < withPhone.length; i += 10) {
+          const batch = withPhone.slice(i, i + 10);
+          await Promise.all(batch.map(m =>
+            supabase.functions.invoke("send-whatsapp", {
+              body: {
+                message_type: "mk_campaign",
+                phone: m.client_phone,
+                client_name: m.client_name,
+                campaign_title: newCampaign.title,
+                campaign_message: newCampaign.message,
+              },
+            })
+          ));
+          setSendProgress({ current: Math.min(i + 10, withPhone.length), total: withPhone.length });
+        }
+      }
+
+      toast.success(`Campanha enviada para ${members.length} membros via ${CHANNEL_LABELS[channel]}!`);
       setShowCreate(false);
       setNewCampaign({ title: "", message: "", channel: "in_app", segment: "all", selectedTiers: [] });
       fetchCampaigns();
     } catch (err) {
       toast.error("Erro ao enviar campanha: " + (err instanceof Error ? err.message : "Erro inesperado"));
+    } finally {
+      setIsSending(false);
+      setSendProgress({ current: 0, total: 0 });
     }
   };
 
   const totalSent = campaigns.reduce((s, c) => s + c.sent_count, 0);
   const totalOpened = campaigns.reduce((s, c) => s + c.open_count, 0);
   const avgOpenRate = totalSent > 0 ? ((totalOpened / totalSent) * 100).toFixed(1) : "0";
+  const progressPercent = sendProgress.total > 0 ? Math.round((sendProgress.current / sendProgress.total) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -286,18 +359,45 @@ export default function MarketplaceCampaignsPage() {
                   <Target className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm font-bold">{estimatedReach} destinatários</p>
-                    <p className="text-xs text-muted-foreground">Alcance estimado</p>
+                    <p className="text-xs text-muted-foreground">Alcance estimado via {CHANNEL_LABELS[newCampaign.channel]}</p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Button onClick={sendCampaign} className="w-full gap-2">
-                <Send className="h-4 w-4" /> Enviar Agora
+              {isSending && sendProgress.total > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Enviando...</span>
+                    <span className="font-medium">{sendProgress.current} de {sendProgress.total}</span>
+                  </div>
+                  <Progress value={progressPercent} className="h-2" />
+                </div>
+              )}
+
+              <Button onClick={handleSendClick} className="w-full gap-2" disabled={isSending}>
+                <Send className="h-4 w-4" /> {isSending ? "Enviando..." : "Enviar Agora"}
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar envio de campanha</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta campanha será enviada para <strong>{estimatedReach} pessoas</strong> por <strong>{CHANNEL_LABELS[newCampaign.channel]}</strong>.
+              Esta ação não pode ser desfeita. Confirmar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={sendCampaign}>Confirmar Envio</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

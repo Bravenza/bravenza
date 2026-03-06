@@ -22,7 +22,8 @@ type MarketplaceEmailType =
   | "community_new_follower"
   | "community_post_comment"
   | "order_request_received"
-  | "budget_rejected";
+  | "budget_rejected"
+  | "mk_campaign";
 
 interface MarketplaceEmailData {
   type: MarketplaceEmailType;
