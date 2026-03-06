@@ -114,7 +114,7 @@ const VaultMembersPage = () => {
       }
 
       if (tierFilter !== "all") {
-        query = query.eq("tier", tierFilter);
+        query = query.eq("tier", tierFilter as VaultTier);
       }
 
       query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
