@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { action, cpf, code, session_token }: AuthRequest = await req.json();
+    const { action, cpf, code, session_token, confirm_text }: AuthRequest = await req.json();
 
     // REQUEST CODE - Send magic code to client email
     if (action === "request_code") {
