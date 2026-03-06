@@ -223,6 +223,28 @@ Deno.serve(async (req) => {
     }
     results.auto_completed_orders = completedOrders;
 
+    // ── 6. Cleanup expired auth tokens (older than 1 day past expiry) ──
+    const { data: deletedTokens, error: dtErr } = await sb
+      .from("client_auth_tokens")
+      .delete()
+      .lt("expires_at", new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString())
+      .select("id");
+
+    if (dtErr) console.error("[mkv2-cron-tasks] Token cleanup error:", dtErr);
+    results.expired_tokens_deleted = deletedTokens?.length || 0;
+    if (deletedTokens?.length) console.log(`[mkv2-cron-tasks] Deleted ${deletedTokens.length} expired auth tokens`);
+
+    // ── 7. Cleanup expired sessions (older than 1 day past expiry) ──
+    const { data: deletedSessions, error: dsErr } = await sb
+      .from("client_sessions")
+      .delete()
+      .lt("expires_at", new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString())
+      .select("id");
+
+    if (dsErr) console.error("[mkv2-cron-tasks] Session cleanup error:", dsErr);
+    results.expired_sessions_deleted = deletedSessions?.length || 0;
+    if (deletedSessions?.length) console.log(`[mkv2-cron-tasks] Deleted ${deletedSessions.length} expired sessions`);
+
     // ── Finalize log ──
     const finishedAt = new Date();
     const durationMs = finishedAt.getTime() - new Date(startedAt).getTime();
