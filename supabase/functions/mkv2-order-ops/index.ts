@@ -31,7 +31,7 @@ if(mt==="PUT"&&a==="update-order-status"){
   const u:any={status:b.status};
   if(b.status==="shipped"){u.shipped_at=new Date().toISOString();u.tracking_code=b.tracking_code||null;}
   else if(b.status==="delivered")u.delivered_at=new Date().toISOString();
-  else if(b.status==="cancelled"){u.cancelled_at=new Date().toISOString();if(b.listing_id)await sb.from("vault_marketplace_listings").update({status:"active"}).eq("id",b.listing_id);}
+  else if(b.status==="cancelled"){u.cancelled_at=new Date().toISOString();if(b.listing_id)await sb.from("vault_marketplace_listings").update({status:"active"}).eq("id",b.listing_id);const{data:rfd}=await sb.from("vault_marketplace_orders").select("mp_payment_id,status").eq("id",b.order_id).single();if(rfd?.mp_payment_id&&["paid","in_transit_to_hub","shipped"].includes(rfd.status))await refundMP(rfd.mp_payment_id,b.order_id);}
   else if(b.status==="payout_released"){
     u.payout_released_at=new Date().toISOString();u.payout_method=b.payout_method||"pix";u.payout_proof_url=b.payout_proof_url||null;
     const{data:od}=await sb.from("vault_marketplace_orders").select("listing_id,sale_price,seller_id").eq("id",b.order_id).single();
