@@ -366,10 +366,12 @@ const OrdersList = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              orders.map((order) => (
+              orders.map((order) => {
+                const slaStatus = getSlaStatus(order.sla_vault_due_date);
+                return (
                 <TableRow
                   key={order.order_id}
-                  className="border-border cursor-pointer hover:bg-secondary/30"
+                  className={`border-border cursor-pointer hover:bg-secondary/30 ${slaStatus === "overdue" ? "bg-destructive/5" : ""}`}
                   onClick={() => navigate(`/admin/pedidos/${order.order_id}`)}
                 >
                   <TableCell className="font-medium">{order.order_id}</TableCell>
@@ -390,7 +392,7 @@ const OrdersList = () => {
                     </span>
                   </TableCell>
                   <TableCell>
-                    {order.sla_vault_due_date ? formatDate(order.sla_vault_due_date) : "-"}
+                    <SlaCell date={order.sla_vault_due_date} />
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {formatDate(order.created_at)}
