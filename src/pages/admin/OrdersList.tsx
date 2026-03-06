@@ -444,10 +444,11 @@ const OrdersList = () => {
               <p className="font-medium text-sm truncate">{order.product_name}</p>
               <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
                 <span>{order.client_name}</span>
-                <span>{formatDate(order.created_at)}</span>
+                <SlaCell date={order.sla_vault_due_date} />
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
 
