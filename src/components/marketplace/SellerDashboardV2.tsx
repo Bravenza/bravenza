@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { marketplaceRequest } from "@/hooks/marketplace/api";
+import { useUnreadMessages } from "@/hooks/marketplace/useUnreadMessages";
 import { SellerReviewsSection } from "./SellerReviewsSection";
 import { SellerPriceCharts } from "./SellerPriceCharts";
 
