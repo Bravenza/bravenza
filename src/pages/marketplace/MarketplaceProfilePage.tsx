@@ -310,6 +310,53 @@ export default function MarketplaceProfilePage() {
   const toggleSize = (size: string) => setPreferredSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
   const toggleBrand = (brand: string) => setFavoriteBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
 
+  const handleExportData = async () => {
+    if (!cpf) return;
+    setExportingData(true);
+    try {
+      const sessionToken = localStorage.getItem("client_session_token");
+      if (!sessionToken) throw new Error("Sessão não encontrada");
+      const { data, error } = await supabase.functions.invoke("client-auth", {
+        body: { action: "export-my-data", session_token: sessionToken },
+      });
+      if (error) throw error;
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "meus-dados-bravenza.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Dados exportados com sucesso!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao exportar dados");
+    } finally {
+      setExportingData(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!cpf || deleteConfirmText !== "CONFIRMAR") return;
+    setDeletingAccount(true);
+    try {
+      const sessionToken = localStorage.getItem("client_session_token");
+      if (!sessionToken) throw new Error("Sessão não encontrada");
+      const { data, error } = await supabase.functions.invoke("client-auth", {
+        body: { action: "delete-account", session_token: sessionToken, confirm_text: "CONFIRMAR" },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      localStorage.removeItem("client_session_token");
+      toast.success("Conta excluída com sucesso");
+      navigate("/");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao excluir conta");
+    } finally {
+      setDeletingAccount(false);
+      setDeleteConfirmText("");
+    }
+  };
+
   if (!cpf || cpf === "visitor") {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
