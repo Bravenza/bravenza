@@ -214,6 +214,93 @@ const VaultMembersPage = () => {
     }
   };
 
+  // Bulk helpers
+  const allSelected = members.length > 0 && members.every(m => selectedIds.has(m.id));
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(members.map(m => m.id)));
+    }
+  };
+
+  const handleBulkChangeTier = async () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from("vault_members")
+        .update({ tier: bulkTier, updated_at: new Date().toISOString() })
+        .in("id", ids);
+      if (error) throw error;
+      toast.success(`${ids.length} membros atualizados para ${tierLabels[bulkTier]}`);
+      setSelectedIds(new Set());
+      setBulkTierOpen(false);
+      fetchMembers();
+    } catch (error) {
+      console.error("Bulk tier change error:", error);
+      toast.error("Erro ao alterar tier em lote");
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkDeactivate = async () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from("vault_members")
+        .update({ status: "SUSPENDED" as VaultMemberStatus, updated_at: new Date().toISOString() })
+        .in("id", ids);
+      if (error) throw error;
+      toast.success(`${ids.length} membros desativados com sucesso`);
+      setSelectedIds(new Set());
+      fetchMembers();
+    } catch (error) {
+      console.error("Bulk deactivate error:", error);
+      toast.error("Erro ao desativar em lote");
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkExport = () => {
+    const selected = members.filter(m => selectedIds.has(m.id));
+    if (selected.length === 0) return;
+    const headers = ["Nome", "CPF", "Email", "Tier", "Status", "Compras", "Gasto Total"];
+    const rows = selected.map(m => [
+      m.client_name,
+      m.client_cpf,
+      m.client_email || "",
+      tierLabels[m.tier],
+      statusLabels[m.status || "ACTIVE"],
+      String(m.total_purchases || 0),
+      String(m.total_spent || 0),
+    ]);
+    const csvContent = [headers.join(","), ...rows.map(r => r.map(v => `"${v}"`).join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `vault-membros-${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${selected.length} membros exportados`);
+    setSelectedIds(new Set());
+  };
+
   const stats = {
     total: totalCount,
     access: members.filter((m) => m.tier === "member").length,
