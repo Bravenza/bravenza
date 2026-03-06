@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Bell, Send, Users, Filter, Plus, Trash2, Eye, Clock,
-  Crown, TrendingUp, Target, CheckCircle2, BarChart3
+  Crown, TrendingUp, Target, CheckCircle2, BarChart3, Loader2, AlertTriangle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -80,8 +81,10 @@ export default function MarketplaceCampaignsPage() {
     selectedTiers: [] as string[],
   });
   const [estimatedReach, setEstimatedReach] = useState(0);
+  const [isEstimating, setIsEstimating] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [sendProgress, setSendProgress] = useState({ current: 0, total: 0 });
 
   useEffect(() => {
@@ -89,7 +92,12 @@ export default function MarketplaceCampaignsPage() {
   }, []);
 
   useEffect(() => {
-    estimateReach();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setIsEstimating(true);
+    debounceRef.current = setTimeout(() => {
+      estimateReach();
+    }, 500);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [newCampaign.segment, newCampaign.selectedTiers]);
 
   const fetchCampaigns = async () => {
@@ -132,16 +140,17 @@ export default function MarketplaceCampaignsPage() {
   };
 
   const estimateReach = async () => {
+    setIsEstimating(true);
     try {
-      let query = supabase.from("vault_members").select("id", { count: "exact", head: true }).eq("is_active", true);
-      
-      if (newCampaign.selectedTiers.length > 0) {
-        query = query.in("tier", newCampaign.selectedTiers as any);
-      }
       if (newCampaign.segment === "sellers") {
         const { count } = await supabase.from("vault_seller_profiles").select("id", { count: "exact", head: true });
         setEstimatedReach(count || 0);
         return;
+      }
+
+      let query = supabase.from("vault_members").select("id", { count: "exact", head: true }).eq("is_active", true);
+      if (newCampaign.selectedTiers.length > 0) {
+        query = query.in("tier", newCampaign.selectedTiers as any);
       }
       if (newCampaign.segment === "high_value") {
         query = query.gte("total_spent", 5000);
@@ -151,6 +160,8 @@ export default function MarketplaceCampaignsPage() {
       setEstimatedReach(count || 0);
     } catch {
       setEstimatedReach(0);
+    } finally {
+      setIsEstimating(false);
     }
   };
 
@@ -362,9 +373,15 @@ export default function MarketplaceCampaignsPage() {
 
               <Card className="bg-muted/50">
                 <CardContent className="p-3 flex items-center gap-3">
-                  <Target className="h-5 w-5 text-primary" />
+                  {isEstimating ? (
+                    <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                  ) : (
+                    <Target className="h-5 w-5 text-primary" />
+                  )}
                   <div>
-                    <p className="text-sm font-bold">{estimatedReach} destinatários</p>
+                    <p className="text-sm font-bold">
+                      {isEstimating ? "Calculando..." : `👥 Esta campanha atingirá aproximadamente ${estimatedReach} pessoas`}
+                    </p>
                     <p className="text-xs text-muted-foreground">Alcance estimado via {CHANNEL_LABELS[newCampaign.channel]}</p>
                   </div>
                 </CardContent>
@@ -380,9 +397,34 @@ export default function MarketplaceCampaignsPage() {
                 </div>
               )}
 
-              <Button onClick={handleSendClick} className="w-full gap-2" disabled={isSending}>
-                <Send className="h-4 w-4" /> {isSending ? "Enviando..." : "Enviar Agora"}
-              </Button>
+              {(() => {
+                const canSend = !isSending && !!newCampaign.title.trim() && !!newCampaign.message.trim() && estimatedReach > 0;
+                const reason = !newCampaign.title.trim()
+                  ? "Preencha o título da campanha"
+                  : !newCampaign.message.trim()
+                  ? "Preencha a mensagem da campanha"
+                  : estimatedReach === 0
+                  ? "Nenhum destinatário com os filtros atuais"
+                  : "";
+                return (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="w-full">
+                          <Button onClick={handleSendClick} className="w-full gap-2" disabled={!canSend}>
+                            <Send className="h-4 w-4" /> {isSending ? "Enviando..." : "Enviar Agora"}
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      {!canSend && reason && (
+                        <TooltipContent>
+                          <p>{reason}</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              })()}
             </div>
           </DialogContent>
         </Dialog>
@@ -393,14 +435,41 @@ export default function MarketplaceCampaignsPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar envio de campanha</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta campanha será enviada para <strong>{estimatedReach} pessoas</strong> por <strong>{CHANNEL_LABELS[newCampaign.channel]}</strong>.
-              Esta ação não pode ser desfeita. Confirmar?
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <div className="rounded-lg border border-border p-3 space-y-2">
+                  <p className="text-sm font-semibold text-foreground">{newCampaign.title}</p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{newCampaign.message}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(() => {
+                    const ch = CHANNELS.find(c => c.value === newCampaign.channel);
+                    const Icon = ch?.icon || Send;
+                    return (
+                      <Badge variant="outline" className="gap-1.5">
+                        <Icon className="h-3 w-3" /> {CHANNEL_LABELS[newCampaign.channel]}
+                      </Badge>
+                    );
+                  })()}
+                  <Badge variant="secondary" className="gap-1.5">
+                    <Users className="h-3 w-3" /> {estimatedReach} destinatários
+                  </Badge>
+                  {newCampaign.selectedTiers.length > 0 && (
+                    <Badge variant="secondary">
+                      Tiers: {newCampaign.selectedTiers.map(t => TIERS.find(x => x.value === t)?.label).join(", ")}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-sm text-warning">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span>Esta ação não pode ser desfeita.</span>
+                </div>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={sendCampaign}>Confirmar Envio</AlertDialogAction>
+            <AlertDialogAction onClick={sendCampaign}>Confirmar e Enviar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
