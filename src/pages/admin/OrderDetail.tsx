@@ -137,49 +137,28 @@ const OrderDetail = () => {
 
   const handleSave = async () => {
     if (!order) return;
-
     setIsSaving(true);
-
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({
-          client_name: editData.client_name,
-          client_email: editData.client_email,
-          client_phone: editData.client_phone,
-          client_address: editData.client_address,
-          product_brand: editData.product_brand,
-          product_model: editData.product_model,
-          product_name: editData.product_name,
-          product_size: editData.product_size,
-          product_color: editData.product_color,
-          product_reference: editData.product_reference,
-          product_link: editData.product_link,
-          product_cost: editData.product_cost,
-          product_price: editData.product_price,
-          shipping_cost: editData.shipping_cost,
-          other_costs: editData.other_costs,
-          sinal_value: editData.sinal_value,
-          sinal_paid: editData.sinal_paid,
-          balance_value: editData.balance_value,
-          balance_paid: editData.balance_paid,
-          international_tracking: editData.international_tracking,
-          international_carrier: editData.international_carrier,
-          national_tracking: editData.national_tracking,
-          national_carrier: editData.national_carrier,
-          internal_notes: editData.internal_notes,
-          inspection_photos: editData.inspection_photos,
-        })
-        .eq("order_id", order.order_id);
+      const updates: Record<string, any> = {};
+      const allowedFields = [
+        "client_name", "client_email", "client_phone", "client_address",
+        "product_brand", "product_model", "product_name", "product_size",
+        "product_color", "product_reference", "product_link",
+        "product_cost", "product_price", "shipping_cost", "other_costs",
+        "sinal_value", "sinal_paid", "balance_value", "balance_paid",
+        "international_tracking", "international_carrier",
+        "national_tracking", "national_carrier", "internal_notes",
+        "inspection_photos",
+      ];
+      for (const key of allowedFields) {
+        if (key in editData) updates[key] = (editData as any)[key];
+      }
 
-      if (error) throw error;
-
-      setOrder({ ...order, ...editData });
+      const data = await adminInvoke("update-order", { order_id: order.order_id, updates });
+      setOrder(data.order as Order);
+      setEditData(data.order as Order);
       setIsEditing(false);
-      toast({
-        title: "Salvo!",
-        description: "Pedido atualizado com sucesso.",
-      });
+      toast({ title: "Salvo!", description: "Pedido atualizado com sucesso." });
     } catch (error) {
       toast({
         title: "Erro",
