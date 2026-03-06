@@ -218,6 +218,9 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        <TabsContent value="operacional">
+          <OperationalSettingsTab />
+        </TabsContent>
         <TabsContent value="seguranca">
           <SecuritySettingsTab />
         </TabsContent>
