@@ -216,6 +216,7 @@ export default function MarketplaceOrdersPage() {
   const totalRevenue = orders.filter((o) => ["completed", "delivered"].includes(o.status)).reduce((sum, o) => sum + o.fee_amount, 0);
   const pendingPayout = orders.filter((o) => o.status === "delivered" && !o.payout_released_at).reduce((sum, o) => sum + o.seller_payout, 0);
   const disputeCount = orders.filter((o) => o.dispute_status === "open").length;
+  const totalPages = Math.max(1, Math.ceil(totalOrders / pageSize));
 
   return (
     <div className="space-y-6">
