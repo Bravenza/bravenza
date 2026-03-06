@@ -56,6 +56,7 @@ export default function MarketplaceDisputesPage() {
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [slaFilter, setSlaFilter] = useState("all");
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [resolveOpen, setResolveOpen] = useState(false);
@@ -71,14 +72,19 @@ export default function MarketplaceDisputesPage() {
   const fetchDisputes = async () => {
     setIsLoading(true);
     try {
+      const params = new URLSearchParams({ action: "admin-disputes" });
+      if (filter !== "all") params.set("status", filter);
+      if (slaFilter !== "all") {
+        const days = parseInt(slaFilter);
+        const date = new Date();
+        date.setDate(date.getDate() - days);
+        params.set("opened_before", date.toISOString());
+      }
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const h = await getMarketplaceHeaders();
-      const res = await fetch(`${ORDERS_URL}?action=admin-disputes`, { headers: h });
+      const res = await fetch(`${ORDERS_URL}?${params}`, { headers: h });
       const data = await res.json();
-      let list = data.disputes || [];
-      if (filter === "open") list = list.filter((d: Dispute) => d.dispute_status === "open");
-      else if (filter === "resolved") list = list.filter((d: Dispute) => d.dispute_status === "resolved");
-      setDisputes(list);
+      setDisputes(data.disputes || []);
     } catch (err) {
       console.error("Fetch disputes error:", err);
     } finally {
@@ -86,7 +92,7 @@ export default function MarketplaceDisputesPage() {
     }
   };
 
-  useEffect(() => { fetchDisputes(); }, [filter]);
+  useEffect(() => { fetchDisputes(); }, [filter, slaFilter]);
 
   const fetchChat = async (orderId: string) => {
     try {
@@ -186,14 +192,26 @@ export default function MarketplaceDisputesPage() {
       </div>
 
       {/* Filter */}
-      <Select value={filter} onValueChange={setFilter}>
-        <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todas</SelectItem>
-          <SelectItem value="open">Abertas</SelectItem>
-          <SelectItem value="resolved">Resolvidas</SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="flex flex-wrap gap-3">
+        <Select value={filter} onValueChange={setFilter}>
+          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas</SelectItem>
+            <SelectItem value="open">Abertas</SelectItem>
+            <SelectItem value="resolved">Resolvidas</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={slaFilter} onValueChange={setSlaFilter}>
+          <SelectTrigger className="w-52"><SelectValue placeholder="Abertas há mais de..." /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Qualquer tempo</SelectItem>
+            <SelectItem value="3">Abertas há +3 dias</SelectItem>
+            <SelectItem value="7">Abertas há +7 dias</SelectItem>
+            <SelectItem value="14">Abertas há +14 dias</SelectItem>
+            <SelectItem value="30">Abertas há +30 dias</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* List */}
       {isLoading ? (
