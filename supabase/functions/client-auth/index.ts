@@ -8,10 +8,11 @@ const corsHeaders = {
 };
 
 interface AuthRequest {
-  action: "request_code" | "verify_code" | "validate_session";
+  action: "request_code" | "verify_code" | "validate_session" | "logout" | "delete-account" | "export-my-data";
   cpf?: string;
   code?: string;
   session_token?: string;
+  confirm_text?: string;
 }
 
 // Generate 6-digit code
