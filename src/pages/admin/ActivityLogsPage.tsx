@@ -97,6 +97,10 @@ export default function ActivityLogsPage() {
         query = query.eq("entity_type", entityFilter);
       }
 
+      if (adminFilter !== "all") {
+        query = query.eq("user_id", adminFilter);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
 
