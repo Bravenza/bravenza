@@ -65,18 +65,17 @@ export function SupplierDetailSheet({ supplier, open, onOpenChange }: Props) {
   const fetchOrders = async (name: string) => {
     setIsLoading(true);
     try {
-      // Get count + sum via full query (no limit)
-      const ordersTable = supabase.from("orders");
-
-      const allRes = await (ordersTable
+      const allRes = await (supabase as any)
+        .from("orders")
         .select("product_cost")
-        .eq("supplier_name", name) as any);
+        .eq("supplier_name", name);
 
-      const recentRes = await (supabase.from("orders")
+      const recentRes = await (supabase as any)
+        .from("orders")
         .select("order_id, product_name, product_cost, current_status, created_at")
         .eq("supplier_name", name)
         .order("created_at", { ascending: false })
-        .limit(10) as any);
+        .limit(10);
 
       const allOrders: { product_cost: number | null }[] = allRes.data || [];
       setTotalOrders(allOrders.length);
