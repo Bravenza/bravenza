@@ -397,9 +397,34 @@ export default function MarketplaceCampaignsPage() {
                 </div>
               )}
 
-              <Button onClick={handleSendClick} className="w-full gap-2" disabled={isSending}>
-                <Send className="h-4 w-4" /> {isSending ? "Enviando..." : "Enviar Agora"}
-              </Button>
+              {(() => {
+                const canSend = !isSending && !!newCampaign.title.trim() && !!newCampaign.message.trim() && estimatedReach > 0;
+                const reason = !newCampaign.title.trim()
+                  ? "Preencha o título da campanha"
+                  : !newCampaign.message.trim()
+                  ? "Preencha a mensagem da campanha"
+                  : estimatedReach === 0
+                  ? "Nenhum destinatário com os filtros atuais"
+                  : "";
+                return (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="w-full">
+                          <Button onClick={handleSendClick} className="w-full gap-2" disabled={!canSend}>
+                            <Send className="h-4 w-4" /> {isSending ? "Enviando..." : "Enviar Agora"}
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      {!canSend && reason && (
+                        <TooltipContent>
+                          <p>{reason}</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              })()}
             </div>
           </DialogContent>
         </Dialog>
