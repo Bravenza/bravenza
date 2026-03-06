@@ -373,9 +373,15 @@ export default function MarketplaceCampaignsPage() {
 
               <Card className="bg-muted/50">
                 <CardContent className="p-3 flex items-center gap-3">
-                  <Target className="h-5 w-5 text-primary" />
+                  {isEstimating ? (
+                    <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                  ) : (
+                    <Target className="h-5 w-5 text-primary" />
+                  )}
                   <div>
-                    <p className="text-sm font-bold">{estimatedReach} destinatários</p>
+                    <p className="text-sm font-bold">
+                      {isEstimating ? "Calculando..." : `👥 Esta campanha atingirá aproximadamente ${estimatedReach} pessoas`}
+                    </p>
                     <p className="text-xs text-muted-foreground">Alcance estimado via {CHANNEL_LABELS[newCampaign.channel]}</p>
                   </div>
                 </CardContent>
