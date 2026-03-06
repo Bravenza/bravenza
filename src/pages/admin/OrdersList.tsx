@@ -141,7 +141,12 @@ const OrdersList = () => {
           .order("created_at", { ascending: false });
 
         // Status filter
-        if (statusFilter !== "all") {
+        if (statusFilter === "overdue") {
+          const today = new Date().toISOString().split("T")[0];
+          query = query
+            .lt("sla_vault_due_date", today)
+            .not("current_status", "in", '("DELIVERED","CANCELLED")');
+        } else if (statusFilter !== "all") {
           query = query.eq("current_status", statusFilter as any);
         }
 
