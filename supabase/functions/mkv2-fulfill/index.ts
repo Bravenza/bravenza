@@ -31,6 +31,7 @@ if(mt==="PUT"&&a==="hub-update-status"){
   return j({success:true});
 }
 if(mt==="POST"&&a==="hub-inspect"){
+  await requireAdmin(sb,ah!);
   const b=await req.json();if(!b.order_id||!b.result)throw new Error("order_id e result obrigatórios");
   let laudoId:string|null=null,laudoQr:string|null=null;
   if(b.result==="approved"){laudoId=`BRV-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2,6).toUpperCase()}`;laudoQr=`${Deno.env.get("SITE_URL")||"https://bravenza.lovable.app"}/autenticidade?laudo=${laudoId}`;}
