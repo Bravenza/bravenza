@@ -124,7 +124,6 @@ export function ClientInfoSection({ formData, setFormData }: ClientInfoSectionPr
               {isLoadingCpf && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
             </div>
           </div>
-          </div>
         </div>
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-2">
