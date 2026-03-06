@@ -425,7 +425,29 @@ export function MarketplaceOrdersView({
               data.sellerRating,
               data.sellerComment
             );
-            // TODO: If product review endpoint exists, also submit product rating/photo
+            // Submit product review if product_id is available
+            const productId = deliveryFlowOrder.listing?.product_id;
+            if (productId && data.productRating > 0) {
+              try {
+                const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+                const headers = await getMarketplaceHeaders();
+                await fetch(
+                  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-engage?action=product-review`,
+                  {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({
+                      product_id: productId,
+                      rating: data.productRating,
+                      comment: data.productComment || undefined,
+                      authenticity_score: data.productRating >= 4 ? 5 : data.productRating,
+                    }),
+                  }
+                );
+              } catch (e) {
+                console.error("Product review error:", e);
+              }
+            }
             return success;
           }}
           onClose={() => {

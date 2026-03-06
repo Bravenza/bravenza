@@ -78,6 +78,7 @@ export interface MarketplaceOrder {
     photos: string[];
     condition: string;
     is_vault_certified?: boolean;
+    product_id?: string | null;
   };
 }
 
