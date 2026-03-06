@@ -203,7 +203,6 @@ export default function MarketplaceAnalyticsPage() {
             <Download className="h-4 w-4" /> Exportar repasses
           </Button>
         </div>
-        </div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
