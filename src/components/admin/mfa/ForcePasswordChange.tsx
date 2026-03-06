@@ -21,8 +21,20 @@ export function ForcePasswordChange({ onComplete, onSignOut }: ForcePasswordChan
   const handleSubmit = async () => {
     setError("");
 
-    if (newPassword.length < 6) {
-      setError("A nova senha deve ter no mínimo 6 caracteres");
+    if (newPassword.length < 12) {
+      setError("A senha deve ter no mínimo 12 caracteres");
+      return;
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      setError("A senha deve conter ao menos uma letra maiúscula");
+      return;
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      setError("A senha deve conter ao menos um número");
+      return;
+    }
+    if (!/[^A-Za-z0-9]/.test(newPassword)) {
+      setError("A senha deve conter ao menos um caractere especial");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -87,7 +99,7 @@ export function ForcePasswordChange({ onComplete, onSignOut }: ForcePasswordChan
                 type={showPassword ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Min. 12 caracteres, maiúscula, número e especial"
                 className="bg-secondary/30 border-border/40 h-11 pr-10"
               />
               <button
@@ -98,6 +110,9 @@ export function ForcePasswordChange({ onComplete, onSignOut }: ForcePasswordChan
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Mínimo 12 caracteres, com letra maiúscula, número e caractere especial.
+            </p>
           </div>
 
           <div className="space-y-2">
