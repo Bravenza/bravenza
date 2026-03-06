@@ -1,4 +1,4 @@
-import { ShoppingCart, Truck, ShieldCheck, Lock } from "lucide-react";
+import { ShoppingCart, Truck, ShieldCheck, Lock, Tag } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import type { CartGroup } from "@/hooks/useMarketplaceCart";
 import { fmt, type Step } from "./types";
@@ -11,9 +11,10 @@ interface OrderSummaryProps {
   cardInterestRate: number;
   displayTotalPrice: number;
   baseTotalPrice: number;
+  couponDiscount?: number;
 }
 
-export function OrderSummaryDesktop({ group, step, itemsSubtotal, shippingCost, cardInterestRate, displayTotalPrice, baseTotalPrice }: OrderSummaryProps) {
+export function OrderSummaryDesktop({ group, step, itemsSubtotal, shippingCost, cardInterestRate, displayTotalPrice, baseTotalPrice, couponDiscount = 0 }: OrderSummaryProps) {
   if (step === "processing" || step === "success") return null;
 
   return (
@@ -54,6 +55,12 @@ export function OrderSummaryDesktop({ group, step, itemsSubtotal, shippingCost, 
             <div className="flex justify-between text-muted-foreground/50">
               <span>Frete</span>
               <span>A calcular</span>
+            </div>
+          )}
+          {couponDiscount > 0 && (
+            <div className="flex justify-between text-primary">
+              <span className="flex items-center gap-1"><Tag className="h-3 w-3" /> Cupom</span>
+              <span>-R$ {fmt(couponDiscount)}</span>
             </div>
           )}
           {cardInterestRate > 0 && (

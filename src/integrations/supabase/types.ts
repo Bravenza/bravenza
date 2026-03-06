@@ -4241,8 +4241,10 @@ export type Database = {
           cancelled_at: string | null
           confirmed_at: string | null
           contest_window_ends_at: string | null
+          coupon_code: string | null
           created_at: string
           delivered_at: string | null
+          discount_amount: number | null
           dispute_opened_at: string | null
           dispute_reason: string | null
           dispute_refund_amount: number | null
@@ -4301,8 +4303,10 @@ export type Database = {
           cancelled_at?: string | null
           confirmed_at?: string | null
           contest_window_ends_at?: string | null
+          coupon_code?: string | null
           created_at?: string
           delivered_at?: string | null
+          discount_amount?: number | null
           dispute_opened_at?: string | null
           dispute_reason?: string | null
           dispute_refund_amount?: number | null
@@ -4361,8 +4365,10 @@ export type Database = {
           cancelled_at?: string | null
           confirmed_at?: string | null
           contest_window_ends_at?: string | null
+          coupon_code?: string | null
           created_at?: string
           delivered_at?: string | null
+          discount_amount?: number | null
           dispute_opened_at?: string | null
           dispute_reason?: string | null
           dispute_refund_amount?: number | null

@@ -1,0 +1,2 @@
+ALTER TABLE public.vault_marketplace_orders ADD COLUMN IF NOT EXISTS coupon_code TEXT DEFAULT NULL;
+ALTER TABLE public.vault_marketplace_orders ADD COLUMN IF NOT EXISTS discount_amount NUMERIC DEFAULT 0;

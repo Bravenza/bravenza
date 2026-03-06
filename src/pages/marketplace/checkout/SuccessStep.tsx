@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CheckCircle2, Clock, Copy, Timer } from "lucide-react";
+import { CheckCircle2, Clock, Copy, Timer, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,9 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCountdown } from "./useCountdown";
+import { fmt } from "./types";
 import type { CartGroup } from "@/hooks/useMarketplaceCart";
+import type { AppliedCoupon } from "./ReviewStep";
 
 interface SuccessStepProps {
   paymentMethod: string;
@@ -16,9 +18,10 @@ interface SuccessStepProps {
   orderCodes: string[];
   group: CartGroup;
   pixData: { qr_code?: string; copy_paste?: string; expiration?: string } | null;
+  appliedCoupon?: AppliedCoupon | null;
 }
 
-export function SuccessStep({ paymentMethod, paymentStatus, orderCodes, group, pixData }: SuccessStepProps) {
+export function SuccessStep({ paymentMethod, paymentStatus, orderCodes, group, pixData, appliedCoupon }: SuccessStepProps) {
   const navigate = useNavigate();
   const [pixCopied, setPixCopied] = useState(false);
   const { remaining: pixTimer, isExpired: pixExpired } = useCountdown(pixData?.expiration || null);
@@ -103,6 +106,14 @@ export function SuccessStep({ paymentMethod, paymentStatus, orderCodes, group, p
           <p className="text-xs text-center text-muted-foreground">
             ✅ Pagamento único para todos os itens. Escaneie o QR Code ou copie o código PIX.
           </p>
+        </div>
+      )}
+
+      {appliedCoupon && appliedCoupon.discount_amount > 0 && (
+        <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/20 rounded-xl">
+          <Tag className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium">Cupom {appliedCoupon.code}</span>
+          <span className="ml-auto text-sm font-bold text-primary">-R$ {fmt(appliedCoupon.discount_amount)}</span>
         </div>
       )}
 

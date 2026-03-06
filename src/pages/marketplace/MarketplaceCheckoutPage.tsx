@@ -15,7 +15,7 @@ import { useCartAbandonment } from "@/hooks/useCartAbandonment";
 
 import { CheckoutHeader } from "./checkout/CheckoutHeader";
 import { CheckoutStepper } from "./checkout/CheckoutStepper";
-import { ReviewStep } from "./checkout/ReviewStep";
+import { ReviewStep, type AppliedCoupon } from "./checkout/ReviewStep";
 import { AddressStep } from "./checkout/AddressStep";
 import { FreightStep } from "./checkout/FreightStep";
 import { PaymentStep } from "./checkout/PaymentStep";
@@ -73,6 +73,7 @@ function MarketplaceCheckoutPageInner() {
   const [orderCodes, setOrderCodes] = useState<string[]>([]);
   const [paymentStatus, setPaymentStatus] = useState<string | undefined>();
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
   const [form, setForm] = useState<CheckoutFormData>({
     buyer_name: profile?.full_name || "",
@@ -139,8 +140,9 @@ function MarketplaceCheckoutPageInner() {
   }, [step]);
 
   const itemsSubtotal = group?.subtotal ?? 0;
+  const couponDiscount = appliedCoupon?.discount_amount ?? 0;
   const shippingCost = selectedFreight ? parseFloat(selectedFreight.price) : 0;
-  const baseTotalPrice = itemsSubtotal + shippingCost;
+  const baseTotalPrice = itemsSubtotal - couponDiscount + shippingCost;
 
   const interestFreeMax = useMemo(() => {
     if (!group?.items?.length) return 0;
@@ -299,6 +301,7 @@ function MarketplaceCheckoutPageInner() {
         payment_method: form.payment_method,
         payer_email: form.buyer_email,
         idempotency_key: idempKey,
+        ...(appliedCoupon ? { coupon_code: appliedCoupon.code } : {}),
       };
 
       if (form.payment_method === "card" && cardFormData) {
@@ -364,7 +367,7 @@ function MarketplaceCheckoutPageInner() {
                 transition={{ duration: 0.2 }}
               >
                 {step === "review" && (
-                  <ReviewStep group={group} onNext={() => setStep("address")} />
+                  <ReviewStep group={group} onNext={() => setStep("address")} appliedCoupon={appliedCoupon} onApplyCoupon={setAppliedCoupon} />
                 )}
 
                 {step === "address" && (
@@ -423,6 +426,7 @@ function MarketplaceCheckoutPageInner() {
                     orderCodes={orderCodes}
                     group={group}
                     pixData={pixData}
+                    appliedCoupon={appliedCoupon}
                   />
                 )}
               </motion.div>
@@ -437,6 +441,7 @@ function MarketplaceCheckoutPageInner() {
             cardInterestRate={cardInterestRate}
             displayTotalPrice={displayTotalPrice}
             baseTotalPrice={baseTotalPrice}
+            couponDiscount={couponDiscount}
           />
         </div>
 
