@@ -70,26 +70,26 @@ export function ReportPDFGenerator() {
       const lastMonthEnd = endOfMonth(subMonths(start, 1));
 
       // Fetch regular data + marketplace in parallel
-      const promises: Promise<any>[] = [
-        supabase.rpc("get_admin_report_pdf_data", {
-          p_month_start: start.toISOString(),
-          p_month_end: end.toISOString(),
-          p_last_month_start: lastMonthStart.toISOString(),
-          p_last_month_end: lastMonthEnd.toISOString(),
-        }),
-      ];
+      const rpcPromise = supabase.rpc("get_admin_report_pdf_data", {
+        p_month_start: start.toISOString(),
+        p_month_end: end.toISOString(),
+        p_last_month_start: lastMonthStart.toISOString(),
+        p_last_month_end: lastMonthEnd.toISOString(),
+      });
 
-      if (includeMarketplace) {
-        promises.push(
-          supabase
+      const mpPromise = includeMarketplace
+        ? supabase
             .from("vault_marketplace_orders")
             .select("id, order_code, sale_price, fee_amount, seller_payout, payout_status, status, created_at")
             .gte("created_at", start.toISOString())
             .lte("created_at", end.toISOString())
             .in("status", ["completed", "delivered"])
-            .then()
-        );
-      }
+        : null;
+
+      const [rpcResult, mpResult] = await Promise.all([
+        rpcPromise,
+        mpPromise,
+      ]);
 
       const results = await Promise.all(promises);
       const { data, error } = results[0];
