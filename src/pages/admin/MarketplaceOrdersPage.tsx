@@ -121,6 +121,12 @@ export default function MarketplaceOrdersPage() {
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatMsg, setChatMsg] = useState("");
 
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkCancelOpen, setBulkCancelOpen] = useState(false);
+  const [bulkCancelReason, setBulkCancelReason] = useState("");
+  const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number } | null>(null);
+
   const handleSearchChange = useCallback((value: string) => {
     setSearchInput(value);
     if (searchTimer.current) clearTimeout(searchTimer.current);
