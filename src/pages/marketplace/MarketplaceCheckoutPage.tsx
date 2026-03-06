@@ -73,6 +73,7 @@ function MarketplaceCheckoutPageInner() {
   const [orderCodes, setOrderCodes] = useState<string[]>([]);
   const [paymentStatus, setPaymentStatus] = useState<string | undefined>();
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
   const [form, setForm] = useState<CheckoutFormData>({
     buyer_name: profile?.full_name || "",
