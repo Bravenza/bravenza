@@ -664,6 +664,32 @@ const VaultMembersPage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Tier Change Dialog */}
+      <Dialog open={bulkTierOpen} onOpenChange={setBulkTierOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Mudar tier de {selectedIds.size} membros</DialogTitle>
+            <DialogDescription>Selecione o novo tier a ser aplicado em lote.</DialogDescription>
+          </DialogHeader>
+          <Select value={bulkTier} onValueChange={(v) => setBulkTier(v as VaultTier)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="member">Vault Access</SelectItem>
+              <SelectItem value="collector">Vault Privilege</SelectItem>
+              <SelectItem value="elite">Vault Black</SelectItem>
+            </SelectContent>
+          </Select>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkTierOpen(false)}>Cancelar</Button>
+            <Button onClick={handleBulkChangeTier} disabled={bulkActionLoading}>
+              {bulkActionLoading ? "Aplicando..." : `Aplicar a ${selectedIds.size} membros`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
