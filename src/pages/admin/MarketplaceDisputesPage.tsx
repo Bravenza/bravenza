@@ -192,14 +192,26 @@ export default function MarketplaceDisputesPage() {
       </div>
 
       {/* Filter */}
-      <Select value={filter} onValueChange={setFilter}>
-        <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todas</SelectItem>
-          <SelectItem value="open">Abertas</SelectItem>
-          <SelectItem value="resolved">Resolvidas</SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="flex flex-wrap gap-3">
+        <Select value={filter} onValueChange={setFilter}>
+          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas</SelectItem>
+            <SelectItem value="open">Abertas</SelectItem>
+            <SelectItem value="resolved">Resolvidas</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={slaFilter} onValueChange={setSlaFilter}>
+          <SelectTrigger className="w-52"><SelectValue placeholder="Abertas há mais de..." /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Qualquer tempo</SelectItem>
+            <SelectItem value="3">Abertas há +3 dias</SelectItem>
+            <SelectItem value="7">Abertas há +7 dias</SelectItem>
+            <SelectItem value="14">Abertas há +14 dias</SelectItem>
+            <SelectItem value="30">Abertas há +30 dias</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* List */}
       {isLoading ? (
