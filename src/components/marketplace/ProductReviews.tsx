@@ -214,7 +214,7 @@ export function ProductReviews({
   );
 }
 
-function ReviewItem({ review }: { review: ProductReview }) {
+function ReviewItem({ review, sellerReply }: { review: ProductReview; sellerReply?: SellerReplyData }) {
   const name = review.reviewer_name || "Anônimo";
   const timeAgo = formatDistanceToNow(new Date(review.created_at), { addSuffix: true, locale: ptBR });
 
@@ -250,6 +250,19 @@ function ReviewItem({ review }: { review: ProductReview }) {
               <Truck className="h-2.5 w-2.5" /> Entrega: {review.shipping_speed}/5
             </span>
           )}
+        </div>
+      )}
+      {/* Seller reply */}
+      {sellerReply && (
+        <div className="mt-3 ml-3 pl-3 border-l-2 border-primary/30 bg-primary/5 rounded-r-lg p-2.5">
+          <div className="flex items-center gap-1.5 mb-1">
+            <MessageSquare className="h-3 w-3 text-primary" />
+            <span className="text-[10px] font-semibold text-primary">Resposta do vendedor</span>
+            <span className="text-[9px] text-muted-foreground ml-auto">
+              {formatDistanceToNow(new Date(sellerReply.created_at), { addSuffix: true, locale: ptBR })}
+            </span>
+          </div>
+          <p className="text-xs text-foreground/80 leading-relaxed">{sellerReply.content}</p>
         </div>
       )}
     </div>
