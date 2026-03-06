@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Calculator, Copy, Send, Check, CreditCard } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Calculator, Copy, Send, Check, CreditCard, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,22 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
-// Mercado Pago interest rates by installment count
-// NOTA: 1x tem juros zero para o cliente (absorvido pela empresa)
-const INSTALLMENT_RATES: Record<number, number> = {
-  1: 0,        // 0% - juros absorvido pela empresa
-  2: 0.0964,   // 9.64%
-  3: 0.1123,   // 11.23%
-  4: 0.1136,   // 11.36%
-  5: 0.1431,   // 14.31%
-  6: 0.1432,   // 14.32%
-  7: 0.1672,   // 16.72%
-  8: 0.1673,   // 16.73%
-  9: 0.1969,   // 19.69%
-  10: 0.2065,  // 20.65%
-  11: 0.2066,  // 20.66%
-  12: 0.2211,  // 22.11%
+// Fallback rates if DB fetch fails
+const INSTALLMENT_RATES_DEFAULT: Record<number, number> = {
+  1: 0,
+  2: 0.0964,
+  3: 0.1123,
+  4: 0.1136,
+  5: 0.1431,
+  6: 0.1432,
+  7: 0.1672,
+  8: 0.1673,
+  9: 0.1969,
+  10: 0.2065,
+  11: 0.2066,
+  12: 0.2211,
 };
 
 interface InstallmentOption {
