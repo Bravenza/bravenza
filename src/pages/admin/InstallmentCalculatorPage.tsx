@@ -380,7 +380,7 @@ const InstallmentCalculatorPage = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-11 gap-2">
-            {Object.entries(INSTALLMENT_RATES)
+            {Object.entries(installmentRates)
               .filter(([installments]) => parseInt(installments) > 1)
               .map(([installments, rate]) => (
                 <div
