@@ -24,6 +24,49 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action } = body;
 
+    // ── AUTH & OWNERSHIP (skip for webhook - called by MercadoPago) ──
+    if (action !== "webhook") {
+      const ah = req.headers.get("authorization");
+      if (!ah?.startsWith("Bearer ")) {
+        return new Response(JSON.stringify({ error: "Auth required" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const { data: { user } } = await supabase.auth.getUser(
+        ah.replace("Bearer ", "")
+      );
+      if (!user) {
+        return new Response(JSON.stringify({ error: "Token inválido" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      if (action === "create" || action === "cancel") {
+        const { data: prof } = await supabase
+          .from("client_profiles")
+          .select("cpf")
+          .eq("user_id", user.id)
+          .single();
+
+        const { data: member } = await supabase
+          .from("vault_members")
+          .select("id")
+          .eq("client_cpf", prof?.cpf)
+          .single();
+
+        const { data: seller } = await supabase
+          .from("vault_seller_profiles")
+          .select("id")
+          .eq("id", body.seller_id)
+          .eq("member_id", member?.id)
+          .maybeSingle();
+
+        if (!seller) {
+          return new Response(JSON.stringify({ error: "Acesso negado" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      }
+    }
+
     // ── CREATE SUBSCRIPTION ──────────────────────────────────────────
     if (action === "create") {
       const { seller_id, plan_id, payer_email } = body;
