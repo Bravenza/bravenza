@@ -68,6 +68,9 @@ Deno.serve(async (req) => {
       if (!cpf) {
         throw new Error("CPF é obrigatório");
       }
+      if (cpf.length > 14) {
+        throw new Error("CPF inválido");
+      }
 
       if (!validateCPF(cpf)) {
         throw new Error("CPF inválido - deve conter 11 dígitos");
@@ -167,7 +170,7 @@ Deno.serve(async (req) => {
         throw new Error("CPF e código são obrigatórios");
       }
 
-      if (!validateCPF(cpf)) {
+      if (!cpf || cpf.length > 14 || !validateCPF(cpf)) {
         throw new Error("CPF inválido - deve conter 11 dígitos");
       }
 
