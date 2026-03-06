@@ -235,7 +235,7 @@ const OrdersList = () => {
       });
       if (error) throw error;
 
-      const headers = ["Pedido", "Cliente", "CPF", "Produto", "Preço", "Status", "Prazo SLA", "Criado em"];
+      const headers = ["Pedido", "Cliente", "CPF", "Produto", "Preço", "Status", "Prazo SLA", "SLA Status", "Criado em"];
       const rows = (data || []).map((o) => [
         o.order_id,
         o.client_name,
@@ -244,6 +244,7 @@ const OrdersList = () => {
         o.product_price ? formatCurrency(o.product_price) : "-",
         ORDER_STATUS_LABELS[o.current_status] || o.current_status,
         o.sla_vault_due_date ? formatDate(o.sla_vault_due_date) : "-",
+        getSlaStatusLabel(getSlaStatus(o.sla_vault_due_date)),
         formatDate(o.created_at),
       ]);
 
