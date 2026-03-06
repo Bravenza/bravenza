@@ -103,7 +103,7 @@ if(mt==="POST"&&a==="request-payout"){
     beneficiary_name:pix.beneficiary_name,
     bank_name:pix.bank_name,
   }).select().single();
-  if(error) throw error;
+  if(error){if(error.code==="23505")throw new Error("Você já tem um saque em andamento. Aguarde a conclusão antes de solicitar um novo.");throw error;}
 
   return j({success:true,payout});
 }
