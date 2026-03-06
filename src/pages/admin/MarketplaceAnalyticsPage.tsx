@@ -79,8 +79,10 @@ function getPreviousRange(range: DateRange): DateRange {
 }
 
 export default function MarketplaceAnalyticsPage() {
-  const [metrics, setMetrics] = useState<MarketplaceMetrics | null>(null);
   const [rawOrders, setRawOrders] = useState<any[]>([]);
+  const [rawSellers, setRawSellers] = useState<any[]>([]);
+  const [rawListings, setRawListings] = useState<any[]>([]);
+  const [rawProducts, setRawProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("current");
   const [customRange, setCustomRange] = useState<DateRange>({ start: startOfMonth(new Date()), end: endOfMonth(new Date()) });
@@ -89,13 +91,12 @@ export default function MarketplaceAnalyticsPage() {
   const prevRange = useMemo(() => getPreviousRange(dateRange), [dateRange]);
 
   useEffect(() => {
-    fetchMetrics();
+    fetchData();
   }, []);
 
-  const fetchMetrics = async () => {
+  const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Fetch data via edge function for marketplace_orders (not in public types)
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const headers = await getMarketplaceHeaders();
       
@@ -106,106 +107,96 @@ export default function MarketplaceAnalyticsPage() {
         supabase.from("marketplace_products").select("id, brand, model, total_offers, lowest_price").eq("is_active", true).order("total_offers", { ascending: false }).limit(10),
       ]);
 
-      const orders: any[] = ordersRes.orders || [];
-      setRawOrders(orders);
-      const sellers = sellersRes.data || [];
-      const listings = listingsRes.data || [];
-      const products = productsRes.data || [];
-
-      // Calculate metrics
-      const completedOrders = orders.filter((o: any) => ["completed", "delivered", "payout_released"].includes(o.status));
-      const gmv = completedOrders.reduce((sum: number, o: any) => sum + (o.sale_price || 0), 0);
-      const platformRevenue = completedOrders.reduce((sum: number, o: any) => sum + (o.fee_amount || 0), 0);
-      const openDisputes = orders.filter((o: any) => o.dispute_status === "open").length;
-      const avgOrderValue = completedOrders.length > 0 ? gmv / completedOrders.length : 0;
-      const totalViews = listings.reduce((sum, l) => sum + (l.views_count || 0), 0);
-      const conversionRate = totalViews > 0 ? ((completedOrders.length / totalViews) * 100) : 0;
-      const takeRate = gmv > 0 ? ((platformRevenue / gmv) * 100) : 0;
-
-      // Sellers by tier
-      const tierCounts: Record<string, number> = {};
-      sellers.forEach(s => {
-        const tier = s.plan_id || "free";
-        tierCounts[tier] = (tierCounts[tier] || 0) + 1;
-      });
-      const sellersByTier = Object.entries(tierCounts).map(([tier, count]) => ({ tier, count }));
-
-      // Top products
-      const topProducts = products.slice(0, 5).map(p => ({
-        name: p.model || "Unknown",
-        brand: p.brand || "",
-        sales: p.total_offers || 0,
-        revenue: (p.lowest_price || 0) * (p.total_offers || 0),
-      }));
-
-      // Monthly GMV (simulate from orders)
-      const monthlyMap = new Map<string, { gmv: number; revenue: number; orders: number }>();
-      const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-      completedOrders.forEach((o: any) => {
-        const d = new Date(o.created_at);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        const existing = monthlyMap.get(key) || { gmv: 0, revenue: 0, orders: 0 };
-        existing.gmv += o.sale_price || 0;
-        existing.revenue += o.fee_amount || 0;
-        existing.orders += 1;
-        monthlyMap.set(key, existing);
-      });
-      const monthlyGMV = Array.from(monthlyMap.entries())
-        .sort(([a], [b]) => a.localeCompare(b))
-        .slice(-6)
-        .map(([month, data]) => ({ month: months[parseInt(month.split("-")[1]) - 1] || month, ...data }));
-
-      // Orders by status
-      const statusCounts: Record<string, number> = {};
-      orders.forEach((o: any) => { statusCounts[o.status] = (statusCounts[o.status] || 0) + 1; });
-      const ordersByStatus = Object.entries(statusCounts)
-        .map(([status, count]) => ({ status, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 6);
-
-      // Top sellers ranking
-      const topSellers = sellers
-        .filter(s => s.total_sales_count > 0)
-        .sort((a, b) => (b.total_sales_value || 0) - (a.total_sales_value || 0))
-        .slice(0, 10)
-        .map(s => ({
-          name: `Seller #${(s.id as string).slice(0, 6)}`,
-          plan: s.plan_id || "free",
-          sales: s.total_sales_count || 0,
-          revenue: s.total_sales_value || 0,
-          rating: 0,
-          fee: s.current_fee_percent || 14,
-        }));
-
-      setMetrics({
-        gmv,
-        totalOrders: orders.length,
-        totalSellers: sellers.length,
-        activeSellers: sellers.filter(s => s.total_sales_count > 0).length,
-        activeListings: listings.length,
-        takeRate: parseFloat(takeRate.toFixed(1)),
-        platformRevenue,
-        openDisputes,
-        avgOrderValue,
-        conversionRate: parseFloat(conversionRate.toFixed(2)),
-        sellersByTier,
-        topProducts,
-        monthlyGMV,
-        ordersByStatus,
-        topSellers,
-      });
+      setRawOrders(ordersRes.orders || []);
+      setRawSellers(sellersRes.data || []);
+      setRawListings(listingsRes.data || []);
+      setRawProducts(productsRes.data || []);
     } catch (err) {
-      console.error("Error fetching marketplace metrics:", err);
-      // Set mock data for display
-      setMetrics({
-        gmv: 0, totalOrders: 0, totalSellers: 0, activeSellers: 0,
-        activeListings: 0, takeRate: 12, platformRevenue: 0, openDisputes: 0,
-        avgOrderValue: 0, conversionRate: 0, sellersByTier: [],
-        topProducts: [], monthlyGMV: [], ordersByStatus: [], topSellers: [],
-      });
+      console.error("Error fetching marketplace data:", err);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const filterByRange = (orders: any[], range: DateRange) =>
+    orders.filter((o: any) => {
+      if (!o.created_at) return false;
+      const d = new Date(o.created_at);
+      return d >= range.start && d <= range.end;
+    });
+
+  const computeMetrics = (orders: any[], sellers: any[], listings: any[], products: any[]): MarketplaceMetrics => {
+    const completedOrders = orders.filter((o: any) => ["completed", "delivered", "payout_released"].includes(o.status));
+    const gmv = completedOrders.reduce((sum: number, o: any) => sum + (o.sale_price || 0), 0);
+    const platformRevenue = completedOrders.reduce((sum: number, o: any) => sum + (o.fee_amount || 0), 0);
+    const openDisputes = orders.filter((o: any) => o.dispute_status === "open").length;
+    const avgOrderValue = completedOrders.length > 0 ? gmv / completedOrders.length : 0;
+    const totalViews = listings.reduce((sum, l) => sum + (l.views_count || 0), 0);
+    const conversionRate = totalViews > 0 ? ((completedOrders.length / totalViews) * 100) : 0;
+    const takeRate = gmv > 0 ? ((platformRevenue / gmv) * 100) : 0;
+
+    const tierCounts: Record<string, number> = {};
+    sellers.forEach(s => { tierCounts[s.plan_id || "free"] = (tierCounts[s.plan_id || "free"] || 0) + 1; });
+    const sellersByTier = Object.entries(tierCounts).map(([tier, count]) => ({ tier, count }));
+
+    const topProducts = products.slice(0, 5).map(p => ({
+      name: p.model || "Unknown", brand: p.brand || "",
+      sales: p.total_offers || 0, revenue: (p.lowest_price || 0) * (p.total_offers || 0),
+    }));
+
+    const monthlyMap = new Map<string, { gmv: number; revenue: number; orders: number }>();
+    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    completedOrders.forEach((o: any) => {
+      const d = new Date(o.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const existing = monthlyMap.get(key) || { gmv: 0, revenue: 0, orders: 0 };
+      existing.gmv += o.sale_price || 0;
+      existing.revenue += o.fee_amount || 0;
+      existing.orders += 1;
+      monthlyMap.set(key, existing);
+    });
+    const monthlyGMV = Array.from(monthlyMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-6)
+      .map(([month, data]) => ({ month: months[parseInt(month.split("-")[1]) - 1] || month, ...data }));
+
+    const statusCounts: Record<string, number> = {};
+    orders.forEach((o: any) => { statusCounts[o.status] = (statusCounts[o.status] || 0) + 1; });
+    const ordersByStatus = Object.entries(statusCounts).map(([status, count]) => ({ status, count })).sort((a, b) => b.count - a.count).slice(0, 6);
+
+    const topSellers = sellers.filter(s => s.total_sales_count > 0)
+      .sort((a, b) => (b.total_sales_value || 0) - (a.total_sales_value || 0))
+      .slice(0, 10)
+      .map(s => ({
+        name: `Seller #${(s.id as string).slice(0, 6)}`, plan: s.plan_id || "free",
+        sales: s.total_sales_count || 0, revenue: s.total_sales_value || 0, rating: 0, fee: s.current_fee_percent || 14,
+      }));
+
+    return {
+      gmv, totalOrders: orders.length, totalSellers: sellers.length,
+      activeSellers: sellers.filter(s => s.total_sales_count > 0).length,
+      activeListings: listings.length, takeRate: parseFloat(takeRate.toFixed(1)),
+      platformRevenue, openDisputes, avgOrderValue,
+      conversionRate: parseFloat(conversionRate.toFixed(2)),
+      sellersByTier, topProducts, monthlyGMV, ordersByStatus, topSellers,
+    };
+  };
+
+  const metrics = useMemo(() => {
+    if (isLoading) return null;
+    const filtered = filterByRange(rawOrders, dateRange);
+    return computeMetrics(filtered, rawSellers, rawListings, rawProducts);
+  }, [rawOrders, rawSellers, rawListings, rawProducts, dateRange, isLoading]);
+
+  const prevMetrics = useMemo(() => {
+    if (isLoading || rawOrders.length === 0) return null;
+    const filtered = filterByRange(rawOrders, prevRange);
+    return computeMetrics(filtered, rawSellers, rawListings, rawProducts);
+  }, [rawOrders, rawSellers, rawListings, rawProducts, prevRange, isLoading]);
+
+  const pctChange = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
   };
 
   if (isLoading) {
