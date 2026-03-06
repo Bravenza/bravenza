@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Percent, MapPin, Phone, Globe, CreditCard } from "lucide-react";
+import { Loader2, Percent, MapPin, Phone, Globe, CreditCard, Clock, Save } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useViaCep } from "@/hooks/useViaCep";
