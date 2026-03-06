@@ -105,6 +105,12 @@ const VaultMembersPage = () => {
     notes_internal: "",
   });
 
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkTierOpen, setBulkTierOpen] = useState(false);
+  const [bulkTier, setBulkTier] = useState<VaultTier>("member");
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+
   const fetchMembers = useCallback(async () => {
     setIsLoading(true);
     try {
