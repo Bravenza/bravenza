@@ -67,13 +67,23 @@ export default function ActivityLogsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [entityFilter, setEntityFilter] = useState<string>("all");
+  const [adminFilter, setAdminFilter] = useState<string>("all");
+  const [admins, setAdmins] = useState<{ user_id: string; full_name: string; email: string }[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const pageSize = 50;
 
   useEffect(() => {
+    supabase
+      .from("admin_profiles")
+      .select("user_id, full_name, email")
+      .order("full_name")
+      .then(({ data }) => { if (data) setAdmins(data); });
+  }, []);
+
+  useEffect(() => {
     fetchLogs();
-  }, [entityFilter, page]);
+  }, [entityFilter, adminFilter, page]);
 
   const fetchLogs = async () => {
     try {
@@ -85,6 +95,10 @@ export default function ActivityLogsPage() {
 
       if (entityFilter !== "all") {
         query = query.eq("entity_type", entityFilter);
+      }
+
+      if (adminFilter !== "all") {
+        query = query.eq("user_id", adminFilter);
       }
 
       const { data, error } = await query;
@@ -181,7 +195,7 @@ export default function ActivityLogsPage() {
                 className="pl-9"
               />
             </div>
-            <Select value={entityFilter} onValueChange={setEntityFilter}>
+            <Select value={entityFilter} onValueChange={(v) => { setEntityFilter(v); setPage(0); }}>
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Filtrar por tipo" />
               </SelectTrigger>
@@ -192,6 +206,19 @@ export default function ActivityLogsPage() {
                 <SelectItem value="budget">Orçamentos</SelectItem>
                 <SelectItem value="user">Usuários</SelectItem>
                 <SelectItem value="system">Sistema</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={adminFilter} onValueChange={(v) => { setAdminFilter(v); setPage(0); }}>
+              <SelectTrigger className="w-full sm:w-56">
+                <SelectValue placeholder="Admin responsável" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os admins</SelectItem>
+                {admins.map((a) => (
+                  <SelectItem key={a.user_id} value={a.user_id}>
+                    {a.full_name} — {a.email}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -244,7 +271,7 @@ export default function ActivityLogsPage() {
                         {log.user_email ? (
                           <div className="flex items-center gap-1 text-sm">
                             <User className="h-3 w-3" />
-                            <span className="truncate max-w-[150px]">{log.user_email}</span>
+                            <span className={`truncate max-w-[150px] ${adminFilter !== "all" && log.user_id === adminFilter ? "font-bold" : ""}`}>{log.user_email}</span>
                           </div>
                         ) : (
                           <span className="text-muted-foreground">Sistema</span>
