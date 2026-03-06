@@ -269,6 +269,56 @@ export default function MarketplaceOrdersPage() {
   const disputeCount = orders.filter((o) => o.dispute_status === "open").length;
   const totalPages = Math.max(1, Math.ceil(totalOrders / pageSize));
 
+  // Bulk helpers
+  const cancellableStatuses = ["pending_payment", "paid", "ship_to_hub_pending"];
+  const cancellableOrders = orders.filter(o => cancellableStatuses.includes(o.status));
+  const allCancellableSelected = cancellableOrders.length > 0 && cancellableOrders.every(o => selectedIds.has(o.id));
+  const selectedCancellableIds = [...selectedIds].filter(id => cancellableOrders.some(o => o.id === id));
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allCancellableSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(cancellableOrders.map(o => o.id)));
+    }
+  };
+
+  const handleBulkCancel = async () => {
+    const toCancelIds = selectedCancellableIds;
+    if (toCancelIds.length === 0) return;
+    setBulkProgress({ current: 0, total: toCancelIds.length });
+    let successCount = 0;
+    for (let i = 0; i < toCancelIds.length; i++) {
+      setBulkProgress({ current: i + 1, total: toCancelIds.length });
+      try {
+        const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+        const h = await getMarketplaceHeaders();
+        const res = await fetch(`${ORDERS_URL}?action=update-order-status`, {
+          method: "PUT",
+          headers: h,
+          body: JSON.stringify({ order_id: toCancelIds[i], status: "cancelled", admin_notes: bulkCancelReason }),
+        });
+        if (res.ok) successCount++;
+      } catch (e) {
+        console.error(`Bulk cancel error for ${toCancelIds[i]}:`, e);
+      }
+    }
+    setBulkProgress(null);
+    setBulkCancelOpen(false);
+    setBulkCancelReason("");
+    setSelectedIds(new Set());
+    fetchOrders();
+    toast({ title: `${successCount} pedidos cancelados com sucesso` });
+  };
+
   return (
     <div className="space-y-6">
       <div>
