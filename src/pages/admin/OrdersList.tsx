@@ -315,6 +315,12 @@ const OrdersList = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os status</SelectItem>
+            <SelectItem value="overdue">
+              <span className="flex items-center gap-1.5">
+                <AlertTriangle className="h-3 w-3 text-destructive" />
+                Vencidos (SLA)
+              </span>
+            </SelectItem>
             {VAULT_STATUSES.map((status) => (
               <SelectItem key={status} value={status}>
                 {ORDER_STATUS_LABELS[status]}
