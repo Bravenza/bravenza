@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
-  Search, Plus, Eye, RefreshCw, Shield, Package, QrCode, CheckCircle, Clock,
+  Search, Plus, Eye, RefreshCw, Shield, Package, QrCode, CheckCircle, Clock, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { formatDate } from "@/lib/constants";
 
@@ -38,30 +38,49 @@ interface VaultItem {
 const statusLabels: Record<VerifiedStatus, string> = { VERIFIED: "Verificado", PENDING: "Pendente", REVOKED: "Revogado" };
 const statusColors: Record<VerifiedStatus, string> = { VERIFIED: "bg-success", PENDING: "bg-warning", REVOKED: "bg-destructive" };
 
+const PAGE_SIZE = 20;
+
 const VaultItemsPage = () => {
   const [items, setItems] = useState<VaultItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("vault_items")
-        .select(`*, vault_members (client_name)`)
+        .select(`*, vault_members (client_name)`, { count: "exact" })
         .order("created_at", { ascending: false });
+
+      if (searchTerm) {
+        query = query.or(`title.ilike.%${searchTerm}%,vault_id.ilike.%${searchTerm}%`);
+      }
+
+      if (statusFilter !== "all" && statusFilter) {
+        query = query.eq("verified_status", statusFilter as VerifiedStatus);
+      }
+
+      query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+      const { data, error, count } = await query;
       if (error) throw error;
       setItems(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error("Error fetching items:", error);
       toast.error("Erro ao carregar vault items");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchTerm, statusFilter, page]);
 
-  useEffect(() => { fetchItems(); }, []);
+  useEffect(() => { fetchItems(); }, [fetchItems]);
+
+  useEffect(() => { setPage(0); }, [searchTerm, statusFilter]);
 
   const handleUpdateStatus = async (item: VaultItem, newStatus: VerifiedStatus) => {
     try {
@@ -77,22 +96,18 @@ const VaultItemsPage = () => {
     }
   };
 
-  const filteredItems = items.filter((item) => {
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.vault_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.vault_members?.client_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || item.verified_status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
   const stats = {
-    total: items.length,
+    total: totalCount,
     verified: items.filter(i => i.verified_status === "VERIFIED").length,
     pending: items.filter(i => i.verified_status === "PENDING").length,
     totalValue: items.reduce((sum, i) => sum + (i.purchase_value || 0), 0),
   };
 
-  if (isLoading) {
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const rangeStart = page * PAGE_SIZE + 1;
+  const rangeEnd = Math.min((page + 1) * PAGE_SIZE, totalCount);
+
+  if (isLoading && items.length === 0) {
     return (
       <div className="space-y-6" role="status" aria-live="polite">
         <span className="sr-only">Carregando vault items…</span>
@@ -130,7 +145,7 @@ const VaultItemsPage = () => {
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar por título, Vault ID ou membro..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+          <Input placeholder="Buscar por título ou Vault ID..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Filtrar por status" /></SelectTrigger>
@@ -158,10 +173,10 @@ const VaultItemsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredItems.length === 0 ? (
+              {items.length === 0 ? (
                 <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
               ) : (
-                filteredItems.map((item) => (
+                items.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell><code className="text-sm font-mono bg-secondary px-2 py-1 rounded">{item.vault_id}</code></TableCell>
                     <TableCell>
@@ -208,10 +223,10 @@ const VaultItemsPage = () => {
 
       {/* Mobile Cards */}
       <div className="md:hidden space-y-3">
-        {filteredItems.length === 0 ? (
+        {items.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground card-premium rounded-lg">Nenhum item encontrado</div>
         ) : (
-          filteredItems.map((item) => (
+          items.map((item) => (
             <Link key={item.id} to={`/admin/vault/items/${item.id}`}>
               <Card className="card-premium active:scale-[0.98] transition-transform">
                 <CardContent className="p-4">
@@ -230,6 +245,24 @@ const VaultItemsPage = () => {
           ))
         )}
       </div>
+
+      {/* Pagination */}
+      {totalCount > 0 && (
+        <div className="flex items-center justify-between border-t pt-4">
+          <p className="text-sm text-muted-foreground">
+            Mostrando {rangeStart}-{rangeEnd} de {totalCount} itens
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPage(p => p - 1)} disabled={page === 0}>
+              <ChevronLeft className="h-4 w-4 mr-1" />Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
+            <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1}>
+              Próxima<ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

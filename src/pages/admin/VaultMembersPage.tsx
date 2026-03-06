@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,8 @@ import {
   Star,
   Shield,
   Eye,
+  ChevronLeft,
+  ChevronRight,
   Edit,
   RefreshCw,
   TrendingUp,
@@ -82,11 +84,15 @@ const statusLabels: Record<string, string> = {
   BANNED: "Banido",
 };
 
+const PAGE_SIZE = 20;
+
 const VaultMembersPage = () => {
   const [members, setMembers] = useState<VaultMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [tierFilter, setTierFilter] = useState<string>("all");
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
   const [selectedMember, setSelectedMember] = useState<VaultMember | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -95,27 +101,39 @@ const VaultMembersPage = () => {
     notes_internal: "",
   });
 
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("vault_members")
-        .select("*")
+        .select("*", { count: "exact" })
         .order("created_at", { ascending: false });
 
+      if (searchTerm) {
+        query = query.or(`client_name.ilike.%${searchTerm}%,client_email.ilike.%${searchTerm}%,client_cpf.ilike.%${searchTerm}%`);
+      }
+
+      if (tierFilter !== "all") {
+        query = query.eq("tier", tierFilter as VaultTier);
+      }
+
+      query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+      const { data, error, count } = await query;
       if (error) throw error;
       setMembers(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error("Error fetching members:", error);
       toast.error("Erro ao carregar membros");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchTerm, tierFilter, page]);
 
-  useEffect(() => {
-    fetchMembers();
-  }, []);
+  useEffect(() => { fetchMembers(); }, [fetchMembers]);
+
+  useEffect(() => { setPage(0); }, [searchTerm, tierFilter]);
 
   const handleEditMember = (member: VaultMember) => {
     setSelectedMember(member);
@@ -129,7 +147,6 @@ const VaultMembersPage = () => {
 
   const handleSaveMember = async () => {
     if (!selectedMember) return;
-
     try {
       const { error } = await supabase
         .from("vault_members")
@@ -140,9 +157,7 @@ const VaultMembersPage = () => {
           updated_at: new Date().toISOString(),
         })
         .eq("id", selectedMember.id);
-
       if (error) throw error;
-
       toast.success("Membro atualizado com sucesso");
       setIsEditOpen(false);
       fetchMembers();
@@ -162,9 +177,7 @@ const VaultMembersPage = () => {
           flags_eligible_for_black: false,
         })
         .eq("id", member.id);
-
       if (error) throw error;
-
       toast.success(`${member.client_name} promovido para Vault Black!`);
       fetchMembers();
     } catch (error) {
@@ -182,9 +195,7 @@ const VaultMembersPage = () => {
           flags_consecutive_declines: 0,
         })
         .eq("id", member.id);
-
       if (error) throw error;
-
       toast.success("Modo revisão removido");
       fetchMembers();
     } catch (error) {
@@ -193,24 +204,17 @@ const VaultMembersPage = () => {
     }
   };
 
-  const filteredMembers = members.filter((member) => {
-    const matchesSearch =
-      member.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.client_cpf.includes(searchTerm) ||
-      member.client_email?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesTier = tierFilter === "all" || member.tier === tierFilter;
-
-    return matchesSearch && matchesTier;
-  });
-
   const stats = {
-    total: members.length,
+    total: totalCount,
     access: members.filter((m) => m.tier === "member").length,
     privilege: members.filter((m) => m.tier === "collector").length,
     black: members.filter((m) => m.tier === "elite").length,
     eligibleForBlack: members.filter((m) => m.flags_eligible_for_black).length,
   };
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const rangeStart = page * PAGE_SIZE + 1;
+  const rangeEnd = Math.min((page + 1) * PAGE_SIZE, totalCount);
 
   if (isLoading) {
     return (
@@ -341,7 +345,7 @@ const VaultMembersPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredMembers.length === 0 ? (
+              {members.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8">
                     <p className="text-muted-foreground">
@@ -350,7 +354,7 @@ const VaultMembersPage = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredMembers.map((member) => (
+                members.map((member) => (
                   <TableRow key={member.id}>
                     <TableCell>
                       <div>
@@ -440,6 +444,24 @@ const VaultMembersPage = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {totalCount > 0 && (
+        <div className="flex items-center justify-between border-t pt-4">
+          <p className="text-sm text-muted-foreground">
+            Mostrando {rangeStart}-{rangeEnd} de {totalCount} membros
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPage(p => p - 1)} disabled={page === 0}>
+              <ChevronLeft className="h-4 w-4 mr-1" />Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
+            <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1}>
+              Próxima<ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Edit Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
