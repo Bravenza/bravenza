@@ -1,0 +1,1 @@
+ALTER VIEW public.marketplace_product_comments_public SET (security_invoker = on);

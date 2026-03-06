@@ -231,6 +231,7 @@ function ProductDetailPageInner() {
   }, [offers, conditionFilter]);
 
   const [canReview, setCanReview] = useState(false);
+  const [sellerReplies, setSellerReplies] = useState<Record<string, any>>({});
   useEffect(() => {
     if (!cpf || cpf === "visitor" || !product) {
       setCanReview(false);
@@ -250,6 +251,38 @@ function ProductDetailPageInner() {
     };
     checkPurchase();
   }, [cpf, product]);
+
+  // Fetch seller replies for reviews
+  useEffect(() => {
+    if (!product) return;
+    const fetchReplies = async () => {
+      try {
+        const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+        const headers = await getMarketplaceHeaders();
+        const params = new URLSearchParams({ action: "product-comments", product_id: product.id });
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-engage?${params}`, { headers });
+        const data = await res.json();
+        if (data.comments) {
+          const repliesMap: Record<string, any> = {};
+          for (const c of data.comments) {
+            if (c.is_seller_reply && c.review_id) {
+              repliesMap[c.review_id] = {
+                id: c.id,
+                review_id: c.review_id,
+                content: c.content,
+                user_name: c.user_name,
+                created_at: c.created_at,
+              };
+            }
+          }
+          setSellerReplies(repliesMap);
+        }
+      } catch {
+        // silent
+      }
+    };
+    fetchReplies();
+  }, [product, reviews]);
 
   // Loading skeleton
   if (isLoading && !product) {
@@ -414,6 +447,7 @@ function ProductDetailPageInner() {
               total={reviewsTotal}
               isLoading={reviewsLoading}
               canReview={canReview}
+              sellerReplies={sellerReplies}
               onSubmit={async (rating, comment, details) => {
                 return submitReview(product.id, rating, comment, details);
               }}

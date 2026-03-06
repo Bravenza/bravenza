@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { marketplaceRequest } from "@/hooks/marketplace/api";
+import { SellerReviewsSection } from "./SellerReviewsSection";
 
 interface DashboardData {
   today_tasks: {
@@ -344,6 +345,9 @@ export function SellerDashboardV2({ cpf }: { cpf: string }) {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* ═══ SELLER REVIEWS ═══ */}
+      <SellerReviewsSection cpf={cpf} />
     </motion.div>
   );
 }

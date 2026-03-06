@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Star, Send, ThumbsUp, ShieldCheck, Truck } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Star, Send, ThumbsUp, ShieldCheck, Truck, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
@@ -22,6 +22,14 @@ export interface ProductReview {
   created_at: string;
 }
 
+interface SellerReplyData {
+  id: string;
+  review_id: string;
+  content: string;
+  user_name: string | null;
+  created_at: string;
+}
+
 interface ProductReviewsProps {
   productId: string;
   reviews: ProductReview[];
@@ -29,6 +37,7 @@ interface ProductReviewsProps {
   total: number;
   isLoading: boolean;
   canReview?: boolean;
+  sellerReplies?: Record<string, SellerReplyData>;
   onSubmit: (rating: number, comment?: string, details?: {
     product_quality?: number;
     authenticity_score?: number;
@@ -76,6 +85,7 @@ export function ProductReviews({
   total,
   isLoading,
   canReview = false,
+  sellerReplies = {},
   onSubmit,
   onRefresh,
   currentUserName,
@@ -196,7 +206,7 @@ export function ProductReviews({
       ) : (
         <div className="space-y-3">
           {reviews.map((review) => (
-            <ReviewItem key={review.id} review={review} />
+            <ReviewItem key={review.id} review={review} sellerReply={sellerReplies[review.id]} />
           ))}
         </div>
       )}
@@ -204,7 +214,7 @@ export function ProductReviews({
   );
 }
 
-function ReviewItem({ review }: { review: ProductReview }) {
+function ReviewItem({ review, sellerReply }: { review: ProductReview; sellerReply?: SellerReplyData }) {
   const name = review.reviewer_name || "Anônimo";
   const timeAgo = formatDistanceToNow(new Date(review.created_at), { addSuffix: true, locale: ptBR });
 
@@ -240,6 +250,19 @@ function ReviewItem({ review }: { review: ProductReview }) {
               <Truck className="h-2.5 w-2.5" /> Entrega: {review.shipping_speed}/5
             </span>
           )}
+        </div>
+      )}
+      {/* Seller reply */}
+      {sellerReply && (
+        <div className="mt-3 ml-3 pl-3 border-l-2 border-primary/30 bg-primary/5 rounded-r-lg p-2.5">
+          <div className="flex items-center gap-1.5 mb-1">
+            <MessageSquare className="h-3 w-3 text-primary" />
+            <span className="text-[10px] font-semibold text-primary">Resposta do vendedor</span>
+            <span className="text-[9px] text-muted-foreground ml-auto">
+              {formatDistanceToNow(new Date(sellerReply.created_at), { addSuffix: true, locale: ptBR })}
+            </span>
+          </div>
+          <p className="text-xs text-foreground/80 leading-relaxed">{sellerReply.content}</p>
         </div>
       )}
     </div>
