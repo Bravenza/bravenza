@@ -340,6 +340,29 @@ export default function OrderRequestsPage() {
         />
       </div>
 
+      {/* Bulk action bar */}
+      {selectedPendingIds.length > 0 && (
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/30">
+          {bulkProgress ? (
+            <div className="flex items-center gap-2 text-sm">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Processando {bulkProgress.current} de {bulkProgress.total}...</span>
+            </div>
+          ) : (
+            <>
+              <span className="text-sm font-medium">{selectedPendingIds.length} selecionados</span>
+              <Button size="sm" onClick={handleBulkApprove}>
+                <CheckCircle2 className="h-4 w-4 mr-1" /> Aprovar todos
+              </Button>
+              <Button size="sm" variant="destructive" onClick={() => setBulkRejectOpen(true)}>
+                <XCircle className="h-4 w-4 mr-1" /> Rejeitar todos
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>Limpar</Button>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Requests List */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12" role="status" aria-live="polite">
@@ -358,11 +381,31 @@ export default function OrderRequestsPage() {
         </Card>
       ) : (
         <div className="grid gap-4">
+          {/* Select all */}
+          {pendingRequests.length > 0 && (
+            <div className="flex items-center gap-2 px-1">
+              <Checkbox
+                checked={allPendingSelected}
+                onCheckedChange={toggleSelectAll}
+                id="select-all"
+              />
+              <label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer">
+                Selecionar todas pendentes ({pendingRequests.length})
+              </label>
+            </div>
+          )}
           {filteredRequests?.map((request) => (
             <Card key={request.id} className="hover:border-primary/30 transition-colors">
               <CardContent className="p-4">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex items-start gap-4">
+                    {request.status === "pending" && (
+                      <Checkbox
+                        checked={selectedIds.has(request.id)}
+                        onCheckedChange={() => toggleSelection(request.id)}
+                        className="mt-1"
+                      />
+                    )}
                     {request.reference_image_url ? (
                       <img 
                         src={request.reference_image_url} 
