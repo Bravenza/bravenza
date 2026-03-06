@@ -588,6 +588,22 @@ Deno.serve(async (req) => {
       "mk_order_cancelled", "mk_inspection_result",
       "mk_offer_received", "mk_offer_accepted", "mk_offer_rejected", "mk_offer_counter",
       "mk_watchlist_match", "mk_protection_expiring", "mk_stale_listing", "mk_subscription_expiring"];
+
+    // Transactional types always sent
+    const waTransactional = new Set([
+      "mk_purchase_confirmed", "mk_new_sale", "mk_payment_confirmed",
+      "mk_seller_shipped", "mk_delivery_confirmed", "mk_hub_received",
+      "mk_hub_shipped_to_buyer", "mk_inspection_result",
+      "mk_dispute_opened", "mk_dispute_resolved", "mk_order_cancelled",
+      "mk_payout_released", "mk_kyc_approved", "mk_kyc_rejected",
+      "mk_protection_expiring", "mk_shipping_reminder",
+    ]);
+    const waTypeToPref: Record<string, string> = {
+      mk_offer_received: "chat", mk_offer_accepted: "chat",
+      mk_offer_rejected: "chat", mk_offer_counter: "chat",
+      mk_watchlist_match: "price_alerts", mk_review_request: "marketing",
+      mk_stale_listing: "seller_tips", mk_subscription_expiring: "seller_tips",
+    };
     
     if (mkTypes.includes(message_type)) {
       const phoneToUse = requestData.recipient_phone;
@@ -597,6 +613,28 @@ Deno.serve(async (req) => {
           JSON.stringify({ success: false, message: "Telefone do destinatário não fornecido", skipped: true }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
+      }
+
+      // Check notification preferences for optional types
+      if (!waTransactional.has(message_type) && waTypeToPref[message_type]) {
+        try {
+          const cleanPhone = phoneToUse.replace(/\D/g, '');
+          const { data: member } = await supabase.from("vault_members").select("client_cpf").eq("client_phone", cleanPhone).maybeSingle();
+          if (!member?.client_cpf) { /* no member, try without country code */ }
+          if (member?.client_cpf) {
+            const { data: pref } = await supabase.from("client_preferences").select("notification_prefs").eq("client_cpf", member.client_cpf).maybeSingle();
+            if (pref?.notification_prefs) {
+              const prefs = pref.notification_prefs as Record<string, boolean>;
+              if (prefs[waTypeToPref[message_type]] === false) {
+                console.log(`[send-whatsapp] Skipped ${message_type} for ${cleanPhone} (user opted out)`);
+                return new Response(
+                  JSON.stringify({ success: true, skipped: true, reason: "user_opted_out" }),
+                  { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                );
+              }
+            }
+          }
+        } catch (e) { console.error("[send-whatsapp] Pref check error:", e); }
       }
 
       let phone = phoneToUse.replace(/\D/g, '');

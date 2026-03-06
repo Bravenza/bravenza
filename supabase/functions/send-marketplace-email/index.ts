@@ -782,6 +782,46 @@ const getEmailHtml = (type: MarketplaceEmailType, data: MarketplaceEmailRequest)
   return wrapper(template.subtitle, firstName, template.content);
 };
 
+// Types that are ALWAYS sent regardless of user preferences
+const TRANSACTIONAL_TYPES = new Set([
+  "mk_purchase_confirmed", "mk_new_sale", "mk_payment_confirmed",
+  "mk_seller_shipped", "mk_delivery_confirmed", "mk_hub_received",
+  "mk_hub_shipped_to_buyer", "mk_inspection_result",
+  "mk_dispute_opened", "mk_dispute_resolved", "mk_order_cancelled",
+  "mk_payout_released", "mk_kyc_approved", "mk_kyc_rejected",
+  "mk_protection_expiring", "mk_shipping_reminder",
+  "order_request_received", "budget_rejected",
+]);
+
+// Map optional email types to preference keys
+const TYPE_TO_PREF: Record<string, string> = {
+  mk_offer_received: "chat", mk_offer_accepted: "chat",
+  mk_offer_rejected: "chat", mk_offer_counter: "chat",
+  mk_watchlist_match: "price_alerts",
+  mk_review_request: "marketing", mk_stale_listing: "seller_tips",
+  mk_subscription_expiring: "seller_tips", mk_cart_abandoned: "marketing",
+  community_welcome: "marketing", community_post_reported: "chat",
+  community_new_follower: "chat", community_post_comment: "chat",
+};
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+async function shouldSendEmail(type: string, recipientEmail: string): Promise<boolean> {
+  if (TRANSACTIONAL_TYPES.has(type)) return true;
+  const prefKey = TYPE_TO_PREF[type];
+  if (!prefKey) return true; // unknown type → send
+  try {
+    const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    // Look up user by email → cpf → preferences
+    const { data: member } = await sb.from("vault_members").select("client_cpf").eq("client_email", recipientEmail).maybeSingle();
+    if (!member?.client_cpf) return true;
+    const { data: pref } = await sb.from("client_preferences").select("notification_prefs").eq("client_cpf", member.client_cpf).maybeSingle();
+    if (!pref?.notification_prefs) return true;
+    const prefs = pref.notification_prefs as Record<string, boolean>;
+    return prefs[prefKey] !== false;
+  } catch { return true; }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -799,6 +839,16 @@ Deno.serve(async (req) => {
 
     const resend = new Resend(resendKey);
     const data: MarketplaceEmailRequest = await req.json();
+
+    // Check notification preferences for optional types
+    const allowed = await shouldSendEmail(data.type, data.recipient_email);
+    if (!allowed) {
+      console.log(`[send-marketplace-email] Skipped ${data.type} for ${data.recipient_email} (user opted out)`);
+      return new Response(
+        JSON.stringify({ success: true, skipped: true, reason: "user_opted_out" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
 
     const subject = getSubject(data.type, data);
     const html = getEmailHtml(data.type, data);
