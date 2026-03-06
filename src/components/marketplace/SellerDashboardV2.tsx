@@ -345,6 +345,9 @@ export function SellerDashboardV2({ cpf }: { cpf: string }) {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* ═══ SELLER REVIEWS ═══ */}
+      <SellerReviewsSection cpf={cpf} />
     </motion.div>
   );
 }
