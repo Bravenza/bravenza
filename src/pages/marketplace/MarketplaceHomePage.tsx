@@ -348,10 +348,24 @@ export default function MarketplaceHomePage() {
         </Suspense>
       </LazySection>
 
+      {/* ===== ASICS SPOTLIGHT ===== */}
+      <LazySection minHeight="400px">
+        <Suspense fallback={<div className="h-[400px]" />}>
+          <SingleBrandSpotlight brand="ASICS" />
+        </Suspense>
+      </LazySection>
+
       {/* ===== SECURITY & AUTHENTICITY ===== */}
       <LazySection minHeight="300px">
         <Suspense fallback={<div className="h-[300px]" />}>
           <SecuritySection />
+        </Suspense>
+      </LazySection>
+
+      {/* ===== NEW BALANCE SPOTLIGHT ===== */}
+      <LazySection minHeight="400px">
+        <Suspense fallback={<div className="h-[400px]" />}>
+          <SingleBrandSpotlight brand="New Balance" />
         </Suspense>
       </LazySection>
 
@@ -362,10 +376,31 @@ export default function MarketplaceHomePage() {
         </Suspense>
       </LazySection>
 
+      {/* ===== CONVERSE SPOTLIGHT ===== */}
+      <LazySection minHeight="400px">
+        <Suspense fallback={<div className="h-[400px]" />}>
+          <SingleBrandSpotlight brand="Converse" />
+        </Suspense>
+      </LazySection>
+
+      {/* ===== YEEZY SPOTLIGHT ===== */}
+      <LazySection minHeight="400px">
+        <Suspense fallback={<div className="h-[400px]" />}>
+          <SingleBrandSpotlight brand="Yeezy" />
+        </Suspense>
+      </LazySection>
+
       {/* ===== RECENTLY VIEWED ===== */}
       <LazySection minHeight="200px">
         <Suspense fallback={<div className="h-[200px]" />}>
           <RecentlyViewedSection />
+        </Suspense>
+      </LazySection>
+
+      {/* ===== PUMA SPOTLIGHT ===== */}
+      <LazySection minHeight="400px">
+        <Suspense fallback={<div className="h-[400px]" />}>
+          <SingleBrandSpotlight brand="PUMA" />
         </Suspense>
       </LazySection>
 

@@ -31,6 +31,31 @@ const spotlights: SpotlightConfig[] = [
     tagline: "Três listras, infinitas possibilidades.",
     gradient: "from-blue-500/10 via-transparent to-cyan-500/10",
   },
+  {
+    brand: "ASICS",
+    tagline: "Performance que transcende gerações.",
+    gradient: "from-sky-500/10 via-transparent to-indigo-500/10",
+  },
+  {
+    brand: "New Balance",
+    tagline: "O equilíbrio perfeito entre estilo e conforto.",
+    gradient: "from-slate-500/10 via-transparent to-red-500/10",
+  },
+  {
+    brand: "Converse",
+    tagline: "Clássico que nunca sai de moda.",
+    gradient: "from-rose-500/10 via-transparent to-amber-500/10",
+  },
+  {
+    brand: "Yeezy",
+    tagline: "Design que desafia convenções.",
+    gradient: "from-neutral-500/10 via-transparent to-stone-500/10",
+  },
+  {
+    brand: "PUMA",
+    tagline: "Velocidade e atitude em cada passo.",
+    gradient: "from-green-500/10 via-transparent to-emerald-500/10",
+  },
 ];
 
 async function fetchBrandProducts(brand: string) {
