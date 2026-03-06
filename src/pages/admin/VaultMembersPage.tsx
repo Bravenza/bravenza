@@ -426,12 +426,35 @@ const VaultMembersPage = () => {
         </Select>
       </div>
 
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/30 flex-wrap">
+          <span className="text-sm font-medium">{selectedIds.size} selecionados</span>
+          <Button size="sm" variant="outline" onClick={() => setBulkTierOpen(true)} disabled={bulkActionLoading}>
+            <Crown className="h-4 w-4 mr-1" /> Mudar tier
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleBulkDeactivate} disabled={bulkActionLoading}>
+            <Ban className="h-4 w-4 mr-1" /> Desativar
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleBulkExport}>
+            <Download className="h-4 w-4 mr-1" /> Exportar
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>Limpar</Button>
+        </div>
+      )}
+
       {/* Members Table */}
       <Card>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                </TableHead>
                 <TableHead>Membro</TableHead>
                 <TableHead>Tier</TableHead>
                 <TableHead>Status</TableHead>
