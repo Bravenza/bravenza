@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Star, Send, ThumbsUp, ShieldCheck, Truck } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Star, Send, ThumbsUp, ShieldCheck, Truck, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
