@@ -83,6 +83,7 @@ export default function MarketplaceAnalyticsPage() {
   const [rawSellers, setRawSellers] = useState<any[]>([]);
   const [rawListings, setRawListings] = useState<any[]>([]);
   const [rawProducts, setRawProducts] = useState<any[]>([]);
+  const [rawListingViews, setRawListingViews] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("current");
   const [customRange, setCustomRange] = useState<DateRange>({ start: startOfMonth(new Date()), end: endOfMonth(new Date()) });
