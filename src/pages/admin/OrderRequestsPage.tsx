@@ -630,6 +630,30 @@ export default function OrderRequestsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Reject Dialog */}
+      <Dialog open={bulkRejectOpen} onOpenChange={setBulkRejectOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rejeitar {selectedPendingIds.length} solicitações</DialogTitle>
+            <DialogDescription>
+              Informe o motivo da rejeição em lote.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={bulkRejectReason}
+            onChange={(e) => setBulkRejectReason(e.target.value)}
+            placeholder="Motivo da rejeição..."
+            rows={3}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkRejectOpen(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={handleBulkReject} disabled={!bulkRejectReason.trim()}>
+              Rejeitar {selectedPendingIds.length} solicitações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
