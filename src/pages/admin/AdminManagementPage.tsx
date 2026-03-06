@@ -162,7 +162,7 @@ export default function AdminManagementPage() {
                     type={showPassword ? "text" : "password"}
                     value={tempPassword}
                     onChange={(e) => setTempPassword(e.target.value)}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder="Mín. 12 caracteres, maiúscula, número e símbolo"
                     className="pr-10"
                   />
                   <button
@@ -173,8 +173,18 @@ export default function AdminManagementPage() {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {tempPassword && (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                        <div className={`h-full rounded-full transition-all ${getPasswordStrength(tempPassword).color} ${getPasswordStrength(tempPassword).width}`} />
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground">{getPasswordStrength(tempPassword).label}</span>
+                    </div>
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground">
-                  Informe esta senha ao novo admin. Ele será obrigado a trocar no primeiro acesso.
+                  Mínimo 12 caracteres, com maiúscula, número e símbolo. Informe esta senha ao novo admin.
                 </p>
               </div>
               <div className="flex gap-3">
