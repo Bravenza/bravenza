@@ -184,6 +184,7 @@ export default function MarketplaceAnalyticsPage() {
       activeListings: listings.length, takeRate: parseFloat(takeRate.toFixed(1)),
       platformRevenue, openDisputes, avgOrderValue,
       conversionRate: parseFloat(conversionRate.toFixed(2)),
+      totalAdViews,
       sellersByTier, topProducts, monthlyGMV, ordersByStatus, topSellers,
     };
   };
