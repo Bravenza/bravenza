@@ -52,7 +52,7 @@ if(mt==="PUT"&&a==="update-order-status"){
 if(mt==="GET"&&a==="admin-orders"){const st=url.searchParams.get("status");let q=sb.from("vault_marketplace_orders").select(`*,listing:vault_marketplace_listings(title,brand,model,size,photos,condition)`).order("created_at",{ascending:false});if(st&&st!=="all")q=q.eq("status",st);const{data,error}=await q;if(error)throw error;return j({orders:data||[]});}
 if(mt==="GET"&&a==="admin-disputes"){const{data,error}=await sb.from("vault_marketplace_orders").select(`*,listing:vault_marketplace_listings(title,brand,model,size,photos,condition)`).not("dispute_status","is",null).order("dispute_opened_at",{ascending:false});if(error)throw error;return j({disputes:data||[]});}
 if(mt==="PUT"&&a==="cancel-buyer-order"){
-  const b=await req.json();const{data:od,error:fe}=await sb.from("vault_marketplace_orders").select("id,status,cancellation_window_ends_at,listing_id,order_code,seller_id,sale_price").eq("id",b.order_id).eq("buyer_cpf",cpf).single();
+  const b=await req.json();const{data:od,error:fe}=await sb.from("vault_marketplace_orders").select("id,status,cancellation_window_ends_at,listing_id,order_code,seller_id,sale_price,mp_payment_id").eq("id",b.order_id).eq("buyer_cpf",cpf).single();
   if(fe||!od)throw new Error("Pedido não encontrado");if(od.status!=="paid")throw new Error("Cancelamento só para pedidos pagos");
   if(!od.cancellation_window_ends_at||new Date(od.cancellation_window_ends_at)<new Date())throw new Error("Janela de cancelamento expirada");
   await sb.from("vault_marketplace_orders").update({status:"cancelled",cancelled_at:new Date().toISOString(),cancellation_reason:b.reason||"Cancelado pelo comprador"}).eq("id",od.id);
