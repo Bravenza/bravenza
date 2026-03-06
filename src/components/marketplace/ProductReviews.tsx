@@ -85,6 +85,7 @@ export function ProductReviews({
   total,
   isLoading,
   canReview = false,
+  sellerReplies = {},
   onSubmit,
   onRefresh,
   currentUserName,
