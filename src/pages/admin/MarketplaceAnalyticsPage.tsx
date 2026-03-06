@@ -74,6 +74,7 @@ export default function MarketplaceAnalyticsPage() {
       ]);
 
       const orders: any[] = ordersRes.orders || [];
+      setRawOrders(orders);
       const sellers = sellersRes.data || [];
       const listings = listingsRes.data || [];
       const products = productsRes.data || [];
