@@ -72,7 +72,7 @@ const InstallmentCalculatorPage = () => {
   const calculateInstallments = (): InstallmentOption[] => {
     if (numericValue <= 0) return [];
 
-    return Object.entries(INSTALLMENT_RATES).map(([installments, rate]) => {
+    return Object.entries(installmentRates).map(([installments, rate]) => {
       const numInstallments = parseInt(installments);
       const isInterestFree = numInstallments === 1;
       const totalAmount = isInterestFree ? numericValue : numericValue * (1 + rate);
