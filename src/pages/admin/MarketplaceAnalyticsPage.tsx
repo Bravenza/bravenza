@@ -52,6 +52,7 @@ const STATUS_COLORS = [
 
 export default function MarketplaceAnalyticsPage() {
   const [metrics, setMetrics] = useState<MarketplaceMetrics | null>(null);
+  const [rawOrders, setRawOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -73,6 +74,7 @@ export default function MarketplaceAnalyticsPage() {
       ]);
 
       const orders: any[] = ordersRes.orders || [];
+      setRawOrders(orders);
       const sellers = sellersRes.data || [];
       const listings = listingsRes.data || [];
       const products = productsRes.data || [];
@@ -193,12 +195,15 @@ export default function MarketplaceAnalyticsPage() {
           </h1>
           <p className="text-muted-foreground">Visão geral da performance do marketplace</p>
         </div>
-        <Button variant="outline" size="sm" className="gap-2" onClick={() => exportCSV(metrics)}>
-          <Download className="h-4 w-4" /> Exportar CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => exportFinanceXLSX(rawOrders, false)}>
+            <Download className="h-4 w-4" /> Exportar financeiro
+          </Button>
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => exportFinanceXLSX(rawOrders, true)}>
+            <Download className="h-4 w-4" /> Exportar repasses
+          </Button>
+        </div>
       </div>
-
-      {/* Primary KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { icon: DollarSign, label: "GMV Total", value: formatCurrency(metrics.gmv), color: "text-success", bg: "bg-success/10" },
@@ -463,31 +468,66 @@ export default function MarketplaceAnalyticsPage() {
   );
 }
 
-function exportCSV(metrics: MarketplaceMetrics) {
-  const lines = [
-    "Métrica,Valor",
-    `GMV Total,${metrics.gmv}`,
-    `Receita Plataforma,${metrics.platformRevenue}`,
-    `Take Rate,${metrics.takeRate}%`,
-    `Total Pedidos,${metrics.totalOrders}`,
-    `Ticket Médio,${metrics.avgOrderValue.toFixed(2)}`,
-    `Conversão,${metrics.conversionRate}%`,
-    `Vendedores Total,${metrics.totalSellers}`,
-    `Vendedores Ativos,${metrics.activeSellers}`,
-    `Anúncios Ativos,${metrics.activeListings}`,
-    `Disputas Abertas,${metrics.openDisputes}`,
-    "",
-    "Mês,GMV,Receita,Pedidos",
-    ...metrics.monthlyGMV.map(m => `${m.month},${m.gmv},${m.revenue},${m.orders}`),
-    "",
-    "Top Vendedores,Plano,Vendas,Receita,Taxa",
-    ...metrics.topSellers.map(s => `${s.name},${s.plan},${s.sales},${s.revenue},${s.fee}%`),
+async function exportFinanceXLSX(orders: any[], payoutsOnly: boolean) {
+  const XLSX = await import("xlsx");
+  
+  let filtered = orders;
+  if (payoutsOnly) {
+    filtered = orders.filter((o: any) => ["payout_released", "payout_pending"].includes(o.status));
+  }
+
+  const rows = filtered.map((o: any) => ({
+    "Código": o.order_code || "",
+    "Criado em": o.created_at ? new Date(o.created_at).toLocaleDateString("pt-BR") : "",
+    "Pago em": o.paid_at ? new Date(o.paid_at).toLocaleDateString("pt-BR") : "",
+    "Comprador": o.buyer_name || "",
+    "Produto": o.listing?.title || "",
+    "Valor venda": o.sale_price || 0,
+    "Taxa (%)": o.fee_percent || 0,
+    "Taxa (R$)": o.fee_amount || 0,
+    "Repasse vendedor": o.seller_payout || 0,
+    "Frete": o.shipping_cost || 0,
+    "Pagamento": o.payment_method || "",
+    "Status": o.status || "",
+    "Vendedor": o.seller_name || `Seller #${(o.seller_id || "").slice(0, 6)}`,
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+
+  // Bold header
+  const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
+  for (let c = range.s.c; c <= range.e.c; c++) {
+    const addr = XLSX.utils.encode_cell({ r: 0, c });
+    if (ws[addr]) {
+      ws[addr].s = { font: { bold: true } };
+    }
+  }
+
+  // Currency format for monetary columns (F, H, I, J = cols 5,7,8,9)
+  const currencyCols = [5, 7, 8, 9];
+  for (let r = 1; r <= range.e.r; r++) {
+    for (const c of currencyCols) {
+      const addr = XLSX.utils.encode_cell({ r, c });
+      if (ws[addr]) {
+        ws[addr].z = '#.##0,00';
+      }
+    }
+  }
+
+  // Column widths
+  ws["!cols"] = [
+    { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 20 }, { wch: 30 },
+    { wch: 14 }, { wch: 8 }, { wch: 14 }, { wch: 16 }, { wch: 10 },
+    { wch: 12 }, { wch: 16 }, { wch: 20 },
   ];
-  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `marketplace-analytics-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+
+  const wb = XLSX.utils.book_new();
+  const sheetName = payoutsOnly ? "Repasses" : "Financeiro";
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year = now.getFullYear();
+  const suffix = payoutsOnly ? "repasses" : "financeiro";
+  XLSX.writeFile(wb, `bravenza-${suffix}-${month}-${year}.xlsx`);
 }
