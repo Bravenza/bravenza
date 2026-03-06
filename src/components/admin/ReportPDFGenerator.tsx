@@ -91,8 +91,7 @@ export function ReportPDFGenerator() {
         mpPromise,
       ]);
 
-      const results = await Promise.all(promises);
-      const { data, error } = results[0];
+      const { data, error } = rpcResult;
       if (error) throw error;
       const d = data as any;
 
