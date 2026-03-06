@@ -1,14 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { 
   MessageSquare, 
   ArrowRight, 
   FileText, 
-  CheckCircle, 
   CreditCard, 
   Package, 
   Truck, 
@@ -16,10 +14,12 @@ import {
   Save,
   RefreshCw,
   ExternalLink,
+  Loader2,
 } from "lucide-react";
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useState, useEffect, useCallback } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WhatsAppTemplate {
   id: string;
@@ -131,39 +131,40 @@ _Bravenza - Sua loja de sneakers premium_`,
   },
 ];
 
-// Storage key for custom templates
-const STORAGE_KEY = "whatsapp_templates";
-
-// Load templates from localStorage
-const loadTemplates = (): WhatsAppTemplate[] => {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      return WHATSAPP_TEMPLATES.map(t => ({
-        ...t,
-        messageTemplate: parsed[t.id] || t.messageTemplate,
-      }));
-    } catch {
-      return WHATSAPP_TEMPLATES;
-    }
-  }
-  return WHATSAPP_TEMPLATES;
-};
-
-// Save template to localStorage
-const saveTemplate = (id: string, message: string) => {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  const data = stored ? JSON.parse(stored) : {};
-  data[id] = message;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-};
-
 export default function WhatsAppFlowPage() {
-  const [templates, setTemplates] = useState<WhatsAppTemplate[]>(loadTemplates);
+  const [templates, setTemplates] = useState<WhatsAppTemplate[]>(WHATSAPP_TEMPLATES);
   const [selectedTemplate, setSelectedTemplate] = useState<WhatsAppTemplate | null>(null);
   const [editedMessage, setEditedMessage] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const loadTemplates = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const { data } = await supabase
+        .from("whatsapp_templates")
+        .select("id, message_template");
+
+      const dbMap = new Map<string, string>();
+      for (const row of data || []) {
+        dbMap.set(row.id, row.message_template);
+      }
+
+      setTemplates(WHATSAPP_TEMPLATES.map(t => ({
+        ...t,
+        messageTemplate: dbMap.get(t.id) || t.messageTemplate,
+      })));
+    } catch (err) {
+      console.error("Failed to load templates:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadTemplates();
+  }, [loadTemplates]);
 
   const handleOpenTemplate = (template: WhatsAppTemplate) => {
     setSelectedTemplate(template);
@@ -171,18 +172,35 @@ export default function WhatsAppFlowPage() {
     setIsEditing(false);
   };
 
-  const handleSaveTemplate = () => {
+  const handleSaveTemplate = async () => {
     if (!selectedTemplate) return;
-    
-    saveTemplate(selectedTemplate.id, editedMessage);
-    setTemplates(prev => prev.map(t => 
-      t.id === selectedTemplate.id 
-        ? { ...t, messageTemplate: editedMessage }
-        : t
-    ));
-    setSelectedTemplate({ ...selectedTemplate, messageTemplate: editedMessage });
-    setIsEditing(false);
-    toast.success("Template salvo com sucesso!");
+    setIsSaving(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("whatsapp_templates")
+        .upsert({
+          id: selectedTemplate.id,
+          message_template: editedMessage,
+          updated_at: new Date().toISOString(),
+          updated_by: userData.user?.id,
+        });
+
+      if (error) throw error;
+
+      setTemplates(prev => prev.map(t =>
+        t.id === selectedTemplate.id
+          ? { ...t, messageTemplate: editedMessage }
+          : t
+      ));
+      setSelectedTemplate({ ...selectedTemplate, messageTemplate: editedMessage });
+      setIsEditing(false);
+      toast.success("Template salvo com sucesso!");
+    } catch (err) {
+      toast.error("Erro ao salvar template: " + (err instanceof Error ? err.message : "Erro desconhecido"));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleResetTemplate = () => {
@@ -208,6 +226,14 @@ export default function WhatsAppFlowPage() {
       .replace("{tracking_code}", "BR123456789BR")
       .replace("{carrier}", "Correios");
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -235,7 +261,7 @@ export default function WhatsAppFlowPage() {
                 </a>.
               </p>
               <p className="text-xs text-muted-foreground mt-2">
-                <strong>Nota:</strong> Templates personalizados ficam salvos localmente. Para produção,
+                <strong>Nota:</strong> Templates personalizados são salvos no banco de dados e compartilhados entre admins. Para produção,
                 considere usar os{" "}
                 <a 
                   href="https://www.twilio.com/docs/content" 
@@ -396,8 +422,8 @@ export default function WhatsAppFlowPage() {
                     <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
                       Cancelar
                     </Button>
-                    <Button size="sm" onClick={handleSaveTemplate} className="bg-green-500 hover:bg-green-600">
-                      <Save className="h-4 w-4 mr-1" />
+                    <Button size="sm" onClick={handleSaveTemplate} disabled={isSaving} className="bg-green-500 hover:bg-green-600">
+                      {isSaving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
                       Salvar
                     </Button>
                   </div>
