@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Package, Users, Crown, X, Loader2 } from "lucide-react";
+import { Search, Package, Users, Crown, Store, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
 
 interface SearchResult {
-  type: "order" | "client" | "vault_member";
+  type: "order" | "client" | "vault_member" | "marketplace_order";
   id: string;
   title: string;
   subtitle: string;
@@ -63,7 +63,7 @@ export function GlobalSearch() {
       const q = searchQuery.trim();
 
       // Search orders by ID or client name
-      const [ordersRes, membersRes] = await Promise.all([
+      const [ordersRes, membersRes, mkOrdersRes] = await Promise.all([
         supabase
           .from("orders")
           .select("order_id, client_name, client_cpf, current_status, product_name")
@@ -73,6 +73,11 @@ export function GlobalSearch() {
           .from("vault_members")
           .select("id, client_name, client_cpf, client_email, tier")
           .or(`client_name.ilike.%${q}%,client_cpf.ilike.%${q}%,client_email.ilike.%${q}%`)
+          .limit(5),
+        supabase
+          .from("vault_marketplace_orders")
+          .select("id, order_code, buyer_name, status, listing:vault_marketplace_listings(title)")
+          .or(`order_code.ilike.%${q}%,buyer_name.ilike.%${q}%`)
           .limit(5),
       ]);
 
@@ -120,6 +125,22 @@ export function GlobalSearch() {
         });
       }
 
+      // Process marketplace orders
+      if (mkOrdersRes.data) {
+        mkOrdersRes.data.forEach((order) => {
+          const listingTitle = Array.isArray(order.listing)
+            ? order.listing[0]?.title
+            : (order.listing as { title?: string } | null)?.title;
+          searchResults.push({
+            type: "marketplace_order",
+            id: order.id,
+            title: `${order.order_code || order.id.slice(0, 8)} — ${listingTitle || ""}`,
+            subtitle: `Comprador: ${order.buyer_name} · ${order.status}`,
+            path: `/admin/vault/marketplace`,
+          });
+        });
+      }
+
       setResults(searchResults.slice(0, 12));
       setSelectedIndex(0);
     } catch (error) {
@@ -162,12 +183,14 @@ export function GlobalSearch() {
     order: <Package className="h-4 w-4 text-primary" />,
     client: <Users className="h-4 w-4 text-info" />,
     vault_member: <Crown className="h-4 w-4 text-warning" />,
+    marketplace_order: <Store className="h-4 w-4 text-accent-foreground" />,
   };
 
   const typeLabels = {
     order: "Pedido",
     client: "Cliente",
     vault_member: "Vault",
+    marketplace_order: "Marketplace",
   };
 
   return (
