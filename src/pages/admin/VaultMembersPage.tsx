@@ -345,7 +345,7 @@ const VaultMembersPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredMembers.length === 0 ? (
+              {members.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8">
                     <p className="text-muted-foreground">
@@ -354,7 +354,7 @@ const VaultMembersPage = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredMembers.map((member) => (
+                members.map((member) => (
                   <TableRow key={member.id}>
                     <TableCell>
                       <div>
