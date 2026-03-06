@@ -5400,6 +5400,27 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_templates: {
+        Row: {
+          id: string
+          message_template: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          id: string
+          message_template: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          message_template?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       marketplace_cart_details: {
