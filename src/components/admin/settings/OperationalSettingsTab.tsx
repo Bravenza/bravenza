@@ -444,3 +444,132 @@ function InstallmentRatesCard() {
     </Card>
   );
 }
+
+const SLA_TIERS = [
+  { key: "member", label: "Member (Access)" },
+  { key: "collector", label: "Collector (Privilege)" },
+  { key: "elite", label: "Elite (Black)" },
+] as const;
+
+const SLA_FIELDS = [
+  { key: "first_response", label: "Primeira Resposta (h)" },
+  { key: "update_frequency", label: "Frequência de Atualização (h)" },
+  { key: "match_room_decision", label: "Decisão Match Room (h)" },
+] as const;
+
+const DEFAULT_SLA = {
+  member: { first_response: 24, update_frequency: 72, match_room_decision: 6 },
+  collector: { first_response: 12, update_frequency: 48, match_room_decision: 12 },
+  elite: { first_response: 6, update_frequency: 24, match_room_decision: 24 },
+};
+
+function VaultSlaConfigCard() {
+  const [config, setConfig] = useState(DEFAULT_SLA);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    async function fetch() {
+      try {
+        const { data, error } = await supabase
+          .from("system_settings")
+          .select("value")
+          .eq("key", "vault_sla_config")
+          .maybeSingle();
+        if (error) throw error;
+        if (data?.value) {
+          const parsed = typeof data.value === "string" ? JSON.parse(data.value) : data.value;
+          setConfig({ ...DEFAULT_SLA, ...parsed });
+        }
+      } catch (err) {
+        console.error("Error fetching SLA config:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetch();
+  }, []);
+
+  const updateField = (tier: string, field: string, value: string) => {
+    const num = parseInt(value);
+    if (isNaN(num) || num < 0) return;
+    setConfig((prev) => ({
+      ...prev,
+      [tier]: { ...prev[tier as keyof typeof prev], [field]: num },
+    }));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from("system_settings")
+        .upsert(
+          { key: "vault_sla_config", value: config as any, updated_at: new Date().toISOString() },
+          { onConflict: "key" }
+        );
+      if (error) throw error;
+      toast.success("Prazos de SLA atualizados!");
+    } catch {
+      toast.error("Erro ao salvar configuração de SLA");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              SLA por Tier do Vault
+            </CardTitle>
+            <CardDescription>
+              Prazos de atendimento em horas para cada nível de membro. Alterações aplicam-se imediatamente ao monitor de SLA.
+            </CardDescription>
+          </div>
+          <Button size="sm" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+            Salvar
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {SLA_TIERS.map(({ key: tierKey, label }) => (
+            <div key={tierKey} className="space-y-3 p-4 border rounded-lg bg-card">
+              <h4 className="font-semibold text-sm">{label}</h4>
+              {SLA_FIELDS.map(({ key: fieldKey, label: fieldLabel }) => (
+                <div key={fieldKey} className="space-y-1">
+                  <label className="text-xs text-muted-foreground">{fieldLabel}</label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min={1}
+                      value={config[tierKey as keyof typeof config]?.[fieldKey as keyof typeof DEFAULT_SLA.member] ?? 0}
+                      onChange={(e) => updateField(tierKey, fieldKey, e.target.value)}
+                      className="pr-6"
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">h</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
