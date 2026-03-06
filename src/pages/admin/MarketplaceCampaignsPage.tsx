@@ -140,16 +140,17 @@ export default function MarketplaceCampaignsPage() {
   };
 
   const estimateReach = async () => {
+    setIsEstimating(true);
     try {
-      let query = supabase.from("vault_members").select("id", { count: "exact", head: true }).eq("is_active", true);
-      
-      if (newCampaign.selectedTiers.length > 0) {
-        query = query.in("tier", newCampaign.selectedTiers as any);
-      }
       if (newCampaign.segment === "sellers") {
         const { count } = await supabase.from("vault_seller_profiles").select("id", { count: "exact", head: true });
         setEstimatedReach(count || 0);
         return;
+      }
+
+      let query = supabase.from("vault_members").select("id", { count: "exact", head: true }).eq("is_active", true);
+      if (newCampaign.selectedTiers.length > 0) {
+        query = query.in("tier", newCampaign.selectedTiers as any);
       }
       if (newCampaign.segment === "high_value") {
         query = query.gte("total_spent", 5000);
@@ -159,6 +160,8 @@ export default function MarketplaceCampaignsPage() {
       setEstimatedReach(count || 0);
     } catch {
       setEstimatedReach(0);
+    } finally {
+      setIsEstimating(false);
     }
   };
 
