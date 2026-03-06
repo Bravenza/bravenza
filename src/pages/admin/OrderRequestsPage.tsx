@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -62,6 +63,12 @@ export default function OrderRequestsPage() {
   const [adminNotes, setAdminNotes] = useState("");
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 25;
+
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkRejectOpen, setBulkRejectOpen] = useState(false);
+  const [bulkRejectReason, setBulkRejectReason] = useState("");
+  const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number } | null>(null);
 
   // Fetch requests via RPC with server-side pagination
   const { data: rpcData, isLoading } = useQuery({
@@ -218,6 +225,69 @@ export default function OrderRequestsPage() {
   const totalCount = rpcData?.total || 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
+  // Bulk helpers
+  const pendingRequests = filteredRequests.filter(r => r.status === "pending");
+  const selectedPendingIds = [...selectedIds].filter(id => pendingRequests.some(r => r.id === id));
+  const allPendingSelected = pendingRequests.length > 0 && pendingRequests.every(r => selectedIds.has(r.id));
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allPendingSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(pendingRequests.map(r => r.id)));
+    }
+  };
+
+  const handleBulkApprove = async () => {
+    const toConvert = pendingRequests.filter(r => selectedIds.has(r.id));
+    if (toConvert.length === 0) return;
+    setBulkProgress({ current: 0, total: toConvert.length });
+    let successCount = 0;
+    for (let i = 0; i < toConvert.length; i++) {
+      setBulkProgress({ current: i + 1, total: toConvert.length });
+      try {
+        await convertToOrderMutation.mutateAsync(toConvert[i]);
+        successCount++;
+      } catch (e) {
+        console.error(`Bulk convert error for ${toConvert[i].id}:`, e);
+      }
+    }
+    setBulkProgress(null);
+    setSelectedIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ["order-requests"] });
+    toast.success(`${successCount} solicitações convertidas com sucesso`);
+  };
+
+  const handleBulkReject = async () => {
+    const toReject = pendingRequests.filter(r => selectedIds.has(r.id));
+    if (toReject.length === 0) return;
+    setBulkProgress({ current: 0, total: toReject.length });
+    let successCount = 0;
+    for (let i = 0; i < toReject.length; i++) {
+      setBulkProgress({ current: i + 1, total: toReject.length });
+      try {
+        await updateStatusMutation.mutateAsync({ id: toReject[i].id, status: "rejected", notes: bulkRejectReason });
+        successCount++;
+      } catch (e) {
+        console.error(`Bulk reject error for ${toReject[i].id}:`, e);
+      }
+    }
+    setBulkProgress(null);
+    setBulkRejectOpen(false);
+    setBulkRejectReason("");
+    setSelectedIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ["order-requests"] });
+    toast.success(`${successCount} solicitações rejeitadas com sucesso`);
+  };
+
   const openDetail = (request: OrderRequest) => {
     setSelectedRequest(request);
     setAdminNotes(request.admin_notes || "");
@@ -270,6 +340,29 @@ export default function OrderRequestsPage() {
         />
       </div>
 
+      {/* Bulk action bar */}
+      {selectedPendingIds.length > 0 && (
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/30">
+          {bulkProgress ? (
+            <div className="flex items-center gap-2 text-sm">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Processando {bulkProgress.current} de {bulkProgress.total}...</span>
+            </div>
+          ) : (
+            <>
+              <span className="text-sm font-medium">{selectedPendingIds.length} selecionados</span>
+              <Button size="sm" onClick={handleBulkApprove}>
+                <CheckCircle2 className="h-4 w-4 mr-1" /> Aprovar todos
+              </Button>
+              <Button size="sm" variant="destructive" onClick={() => setBulkRejectOpen(true)}>
+                <XCircle className="h-4 w-4 mr-1" /> Rejeitar todos
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>Limpar</Button>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Requests List */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12" role="status" aria-live="polite">
@@ -288,11 +381,31 @@ export default function OrderRequestsPage() {
         </Card>
       ) : (
         <div className="grid gap-4">
+          {/* Select all */}
+          {pendingRequests.length > 0 && (
+            <div className="flex items-center gap-2 px-1">
+              <Checkbox
+                checked={allPendingSelected}
+                onCheckedChange={toggleSelectAll}
+                id="select-all"
+              />
+              <label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer">
+                Selecionar todas pendentes ({pendingRequests.length})
+              </label>
+            </div>
+          )}
           {filteredRequests?.map((request) => (
             <Card key={request.id} className="hover:border-primary/30 transition-colors">
               <CardContent className="p-4">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex items-start gap-4">
+                    {request.status === "pending" && (
+                      <Checkbox
+                        checked={selectedIds.has(request.id)}
+                        onCheckedChange={() => toggleSelection(request.id)}
+                        className="mt-1"
+                      />
+                    )}
                     {request.reference_image_url ? (
                       <img 
                         src={request.reference_image_url} 
@@ -515,6 +628,30 @@ export default function OrderRequestsPage() {
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Reject Dialog */}
+      <Dialog open={bulkRejectOpen} onOpenChange={setBulkRejectOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rejeitar {selectedPendingIds.length} solicitações</DialogTitle>
+            <DialogDescription>
+              Informe o motivo da rejeição em lote.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={bulkRejectReason}
+            onChange={(e) => setBulkRejectReason(e.target.value)}
+            placeholder="Motivo da rejeição..."
+            rows={3}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkRejectOpen(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={handleBulkReject} disabled={!bulkRejectReason.trim()}>
+              Rejeitar {selectedPendingIds.length} solicitações
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

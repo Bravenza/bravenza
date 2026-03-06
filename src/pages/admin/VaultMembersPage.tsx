@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -18,7 +19,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -41,6 +43,8 @@ import {
   Edit,
   RefreshCw,
   TrendingUp,
+  Download,
+  Ban,
 } from "lucide-react";
 import { formatDate } from "@/lib/constants";
 
@@ -100,6 +104,12 @@ const VaultMembersPage = () => {
     status: "" as VaultMemberStatus,
     notes_internal: "",
   });
+
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkTierOpen, setBulkTierOpen] = useState(false);
+  const [bulkTier, setBulkTier] = useState<VaultTier>("member");
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
   const fetchMembers = useCallback(async () => {
     setIsLoading(true);
@@ -202,6 +212,93 @@ const VaultMembersPage = () => {
       console.error("Error removing review mode:", error);
       toast.error("Erro ao remover modo revisão");
     }
+  };
+
+  // Bulk helpers
+  const allSelected = members.length > 0 && members.every(m => selectedIds.has(m.id));
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(members.map(m => m.id)));
+    }
+  };
+
+  const handleBulkChangeTier = async () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from("vault_members")
+        .update({ tier: bulkTier, updated_at: new Date().toISOString() })
+        .in("id", ids);
+      if (error) throw error;
+      toast.success(`${ids.length} membros atualizados para ${tierLabels[bulkTier]}`);
+      setSelectedIds(new Set());
+      setBulkTierOpen(false);
+      fetchMembers();
+    } catch (error) {
+      console.error("Bulk tier change error:", error);
+      toast.error("Erro ao alterar tier em lote");
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkDeactivate = async () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from("vault_members")
+        .update({ status: "SUSPENDED" as VaultMemberStatus, updated_at: new Date().toISOString() })
+        .in("id", ids);
+      if (error) throw error;
+      toast.success(`${ids.length} membros desativados com sucesso`);
+      setSelectedIds(new Set());
+      fetchMembers();
+    } catch (error) {
+      console.error("Bulk deactivate error:", error);
+      toast.error("Erro ao desativar em lote");
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkExport = () => {
+    const selected = members.filter(m => selectedIds.has(m.id));
+    if (selected.length === 0) return;
+    const headers = ["Nome", "CPF", "Email", "Tier", "Status", "Compras", "Gasto Total"];
+    const rows = selected.map(m => [
+      m.client_name,
+      m.client_cpf,
+      m.client_email || "",
+      tierLabels[m.tier],
+      statusLabels[m.status || "ACTIVE"],
+      String(m.total_purchases || 0),
+      String(m.total_spent || 0),
+    ]);
+    const csvContent = [headers.join(","), ...rows.map(r => r.map(v => `"${v}"`).join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `vault-membros-${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${selected.length} membros exportados`);
+    setSelectedIds(new Set());
   };
 
   const stats = {
@@ -329,12 +426,35 @@ const VaultMembersPage = () => {
         </Select>
       </div>
 
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/30 flex-wrap">
+          <span className="text-sm font-medium">{selectedIds.size} selecionados</span>
+          <Button size="sm" variant="outline" onClick={() => setBulkTierOpen(true)} disabled={bulkActionLoading}>
+            <Crown className="h-4 w-4 mr-1" /> Mudar tier
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleBulkDeactivate} disabled={bulkActionLoading}>
+            <Ban className="h-4 w-4 mr-1" /> Desativar
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleBulkExport}>
+            <Download className="h-4 w-4 mr-1" /> Exportar
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>Limpar</Button>
+        </div>
+      )}
+
       {/* Members Table */}
       <Card>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                </TableHead>
                 <TableHead>Membro</TableHead>
                 <TableHead>Tier</TableHead>
                 <TableHead>Status</TableHead>
@@ -347,7 +467,7 @@ const VaultMembersPage = () => {
             <TableBody>
               {members.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={8} className="text-center py-8">
                     <p className="text-muted-foreground">
                       Nenhum membro encontrado
                     </p>
@@ -356,6 +476,12 @@ const VaultMembersPage = () => {
               ) : (
                 members.map((member) => (
                   <TableRow key={member.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.has(member.id)}
+                        onCheckedChange={() => toggleSelection(member.id)}
+                      />
+                    </TableCell>
                     <TableCell>
                       <div>
                         <p className="font-medium">{member.client_name}</p>
@@ -536,6 +662,32 @@ const VaultMembersPage = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Tier Change Dialog */}
+      <Dialog open={bulkTierOpen} onOpenChange={setBulkTierOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Mudar tier de {selectedIds.size} membros</DialogTitle>
+            <DialogDescription>Selecione o novo tier a ser aplicado em lote.</DialogDescription>
+          </DialogHeader>
+          <Select value={bulkTier} onValueChange={(v) => setBulkTier(v as VaultTier)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="member">Vault Access</SelectItem>
+              <SelectItem value="collector">Vault Privilege</SelectItem>
+              <SelectItem value="elite">Vault Black</SelectItem>
+            </SelectContent>
+          </Select>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkTierOpen(false)}>Cancelar</Button>
+            <Button onClick={handleBulkChangeTier} disabled={bulkActionLoading}>
+              {bulkActionLoading ? "Aplicando..." : `Aplicar a ${selectedIds.size} membros`}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

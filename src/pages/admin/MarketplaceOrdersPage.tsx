@@ -4,6 +4,7 @@ import {
   Store, Package, Clock, CheckCircle2, Truck, XCircle, AlertTriangle,
   DollarSign, Loader2, ShieldCheck, MessageCircle, Search, CalendarIcon,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -119,6 +120,12 @@ export default function MarketplaceOrdersPage() {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatMsg, setChatMsg] = useState("");
+
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkCancelOpen, setBulkCancelOpen] = useState(false);
+  const [bulkCancelReason, setBulkCancelReason] = useState("");
+  const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number } | null>(null);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchInput(value);
@@ -262,6 +269,56 @@ export default function MarketplaceOrdersPage() {
   const disputeCount = orders.filter((o) => o.dispute_status === "open").length;
   const totalPages = Math.max(1, Math.ceil(totalOrders / pageSize));
 
+  // Bulk helpers
+  const cancellableStatuses = ["pending_payment", "paid", "ship_to_hub_pending"];
+  const cancellableOrders = orders.filter(o => cancellableStatuses.includes(o.status));
+  const allCancellableSelected = cancellableOrders.length > 0 && cancellableOrders.every(o => selectedIds.has(o.id));
+  const selectedCancellableIds = [...selectedIds].filter(id => cancellableOrders.some(o => o.id === id));
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allCancellableSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(cancellableOrders.map(o => o.id)));
+    }
+  };
+
+  const handleBulkCancel = async () => {
+    const toCancelIds = selectedCancellableIds;
+    if (toCancelIds.length === 0) return;
+    setBulkProgress({ current: 0, total: toCancelIds.length });
+    let successCount = 0;
+    for (let i = 0; i < toCancelIds.length; i++) {
+      setBulkProgress({ current: i + 1, total: toCancelIds.length });
+      try {
+        const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
+        const h = await getMarketplaceHeaders();
+        const res = await fetch(`${ORDERS_URL}?action=update-order-status`, {
+          method: "PUT",
+          headers: h,
+          body: JSON.stringify({ order_id: toCancelIds[i], status: "cancelled", admin_notes: bulkCancelReason }),
+        });
+        if (res.ok) successCount++;
+      } catch (e) {
+        console.error(`Bulk cancel error for ${toCancelIds[i]}:`, e);
+      }
+    }
+    setBulkProgress(null);
+    setBulkCancelOpen(false);
+    setBulkCancelReason("");
+    setSelectedIds(new Set());
+    fetchOrders();
+    toast({ title: `${successCount} pedidos cancelados com sucesso` });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -345,6 +402,26 @@ export default function MarketplaceOrdersPage() {
         )}
       </div>
 
+      {/* Bulk action bar */}
+      {selectedCancellableIds.length > 0 && (
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/30">
+          {bulkProgress ? (
+            <div className="flex items-center gap-2 text-sm">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Cancelando {bulkProgress.current} de {bulkProgress.total}...</span>
+            </div>
+          ) : (
+            <>
+              <span className="text-sm font-medium">{selectedCancellableIds.length} selecionados</span>
+              <Button size="sm" variant="destructive" onClick={() => setBulkCancelOpen(true)}>
+                <XCircle className="h-4 w-4 mr-1" /> Cancelar selecionados
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>Limpar</Button>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Orders list */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
@@ -352,15 +429,37 @@ export default function MarketplaceOrdersPage() {
         <Card className="card-premium"><CardContent className="py-12 text-center"><Package className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-30" /><p className="font-medium">Nenhum pedido encontrado</p></CardContent></Card>
       ) : (
         <div className="space-y-3">
+          {/* Select all cancellable */}
+          {cancellableOrders.length > 0 && (
+            <div className="flex items-center gap-2 px-1">
+              <Checkbox
+                checked={allCancellableSelected}
+                onCheckedChange={toggleSelectAll}
+                id="select-all-mk"
+              />
+              <label htmlFor="select-all-mk" className="text-sm text-muted-foreground cursor-pointer">
+                Selecionar canceláveis ({cancellableOrders.length})
+              </label>
+            </div>
+          )}
           {orders.map((order, i) => {
             const status = statusConfig[order.status] || statusConfig.pending_payment;
             const StatusIcon = status.icon;
+            const isCancellable = cancellableStatuses.includes(order.status);
             return (
               <motion.div key={order.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}>
                 <Card className="card-premium cursor-pointer hover:border-primary/40 transition-colors" onClick={() => openDetail(order)}>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3 min-w-0">
+                        {isCancellable && (
+                          <Checkbox
+                            checked={selectedIds.has(order.id)}
+                            onCheckedChange={() => toggleSelection(order.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex-shrink-0"
+                          />
+                        )}
                         {order.listing?.photos?.[0] && <img src={order.listing.photos[0]} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />}
                         <div className="min-w-0">
                           <p className="font-medium text-sm line-clamp-1">{order.listing?.title}</p>
@@ -599,6 +698,32 @@ export default function MarketplaceOrdersPage() {
             <Button onClick={sendAdminMsg} disabled={!chatMsg.trim()} size="icon" className="shrink-0">
               <MessageCircle className="h-4 w-4" />
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Cancel Dialog */}
+      <Dialog open={bulkCancelOpen} onOpenChange={setBulkCancelOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancelar {selectedCancellableIds.length} pedidos</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Motivo do cancelamento</label>
+              <Textarea
+                value={bulkCancelReason}
+                onChange={(e) => setBulkCancelReason(e.target.value)}
+                placeholder="Informe o motivo do cancelamento em lote..."
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setBulkCancelOpen(false)}>Voltar</Button>
+              <Button variant="destructive" onClick={handleBulkCancel} disabled={!bulkCancelReason.trim() || !!bulkProgress}>
+                {bulkProgress ? `Cancelando ${bulkProgress.current}/${bulkProgress.total}...` : `Cancelar ${selectedCancellableIds.length} pedidos`}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
