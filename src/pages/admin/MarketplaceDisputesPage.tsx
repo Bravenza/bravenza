@@ -56,6 +56,7 @@ export default function MarketplaceDisputesPage() {
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [slaFilter, setSlaFilter] = useState("all");
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [resolveOpen, setResolveOpen] = useState(false);
@@ -71,14 +72,19 @@ export default function MarketplaceDisputesPage() {
   const fetchDisputes = async () => {
     setIsLoading(true);
     try {
+      const params = new URLSearchParams({ action: "admin-disputes" });
+      if (filter !== "all") params.set("status", filter);
+      if (slaFilter !== "all") {
+        const days = parseInt(slaFilter);
+        const date = new Date();
+        date.setDate(date.getDate() - days);
+        params.set("opened_before", date.toISOString());
+      }
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const h = await getMarketplaceHeaders();
-      const res = await fetch(`${ORDERS_URL}?action=admin-disputes`, { headers: h });
+      const res = await fetch(`${ORDERS_URL}?${params}`, { headers: h });
       const data = await res.json();
-      let list = data.disputes || [];
-      if (filter === "open") list = list.filter((d: Dispute) => d.dispute_status === "open");
-      else if (filter === "resolved") list = list.filter((d: Dispute) => d.dispute_status === "resolved");
-      setDisputes(list);
+      setDisputes(data.disputes || []);
     } catch (err) {
       console.error("Fetch disputes error:", err);
     } finally {
@@ -86,7 +92,7 @@ export default function MarketplaceDisputesPage() {
     }
   };
 
-  useEffect(() => { fetchDisputes(); }, [filter]);
+  useEffect(() => { fetchDisputes(); }, [filter, slaFilter]);
 
   const fetchChat = async (orderId: string) => {
     try {
