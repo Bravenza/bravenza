@@ -89,30 +89,35 @@ const OrderDetail = () => {
 
   const [editData, setEditData] = useState<Partial<Order>>({});
 
+  const adminInvoke = async (action: string, payload: Record<string, any> = {}) => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    if (!accessToken) throw new Error("Sessão expirada. Faça login novamente.");
+
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-orders`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ action, ...payload }),
+      }
+    );
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `Erro ${res.status}`);
+    return data;
+  };
+
   const fetchOrder = async () => {
     try {
-      // Parallel fetch for order and history
-      const [orderRes, historyRes] = await Promise.all([
-        supabase
-          .from("orders")
-          .select("*")
-          .eq("order_id", orderId)
-          .single(),
-        supabase
-          .from("order_history")
-          .select("*")
-          .eq("order_id", orderId)
-          .order("created_at", { ascending: true }),
-      ]);
-
-      if (orderRes.error) throw orderRes.error;
-
-      setOrder(orderRes.data as Order);
-      setEditData(orderRes.data as Order);
-
-      if (!historyRes.error) {
-        setHistory(historyRes.data || []);
-      }
+      const data = await adminInvoke("get-order", { order_id: orderId });
+      setOrder(data.order as Order);
+      setEditData(data.order as Order);
+      setHistory(data.history || []);
     } catch (error) {
       console.error("Error fetching order:", error);
       toast({
