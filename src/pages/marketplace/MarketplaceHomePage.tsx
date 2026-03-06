@@ -313,10 +313,24 @@ export default function MarketplaceHomePage() {
         </div>
       </section>
 
+      {/* ===== NIKE SPOTLIGHT ===== */}
+      <LazySection minHeight="400px">
+        <Suspense fallback={<div className="h-[400px]" />}>
+          <SingleBrandSpotlight brand="Nike" />
+        </Suspense>
+      </LazySection>
+
       {/* ===== UPCOMING RELEASES ===== */}
       <LazySection minHeight="300px">
         <Suspense fallback={<div className="h-[300px]" />}>
           <UpcomingReleasesSection />
+        </Suspense>
+      </LazySection>
+
+      {/* ===== JORDAN SPOTLIGHT ===== */}
+      <LazySection minHeight="400px">
+        <Suspense fallback={<div className="h-[400px]" />}>
+          <SingleBrandSpotlight brand="Jordan" />
         </Suspense>
       </LazySection>
 
@@ -327,10 +341,24 @@ export default function MarketplaceHomePage() {
         </Suspense>
       </LazySection>
 
+      {/* ===== ADIDAS SPOTLIGHT ===== */}
+      <LazySection minHeight="400px">
+        <Suspense fallback={<div className="h-[400px]" />}>
+          <SingleBrandSpotlight brand="adidas" />
+        </Suspense>
+      </LazySection>
+
       {/* ===== SECURITY & AUTHENTICITY ===== */}
       <LazySection minHeight="300px">
         <Suspense fallback={<div className="h-[300px]" />}>
           <SecuritySection />
+        </Suspense>
+      </LazySection>
+
+      {/* ===== RECENTLY ADDED ===== */}
+      <LazySection minHeight="300px">
+        <Suspense fallback={<div className="h-[300px]" />}>
+          <RecentlyAddedSection />
         </Suspense>
       </LazySection>
 
@@ -349,15 +377,6 @@ export default function MarketplaceHomePage() {
           </Suspense>
         </LazySection>
       )}
-
-      {/* ===== BRAND SPOTLIGHTS ===== */}
-      <LazySection minHeight="400px">
-        <Suspense fallback={<div className="h-[400px]" />}>
-          <BrandSpotlightSection insertAfterIndex={0}>
-            <RecentlyAddedSection />
-          </BrandSpotlightSection>
-        </Suspense>
-      </LazySection>
 
       {/* ===== DROPS COUNTDOWN ===== */}
       <LazySection minHeight="200px">
