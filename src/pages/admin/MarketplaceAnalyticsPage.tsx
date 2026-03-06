@@ -209,9 +209,24 @@ export default function MarketplaceAnalyticsPage() {
 
   if (!metrics) return null;
 
+  const gmvChange = prevMetrics ? pctChange(metrics.gmv, prevMetrics.gmv) : null;
+  const revenueChange = prevMetrics ? pctChange(metrics.platformRevenue, prevMetrics.platformRevenue) : null;
+  const ordersChange = prevMetrics ? pctChange(metrics.totalOrders, prevMetrics.totalOrders) : null;
+
+  const ChangeIndicator = ({ value }: { value: number | null }) => {
+    if (value === null) return null;
+    const isPositive = value >= 0;
+    return (
+      <span className={`inline-flex items-center text-[10px] font-semibold ${isPositive ? "text-success" : "text-destructive"}`}>
+        {isPositive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+        {Math.abs(value).toFixed(1)}%
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <BarChart3 className="h-6 w-6 text-primary" />
@@ -219,20 +234,58 @@ export default function MarketplaceAnalyticsPage() {
           </h1>
           <p className="text-muted-foreground">Visão geral da performance do marketplace</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
+            <SelectTrigger className="w-44 bg-secondary/50">
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="current">Mês atual</SelectItem>
+              <SelectItem value="last">Mês anterior</SelectItem>
+              <SelectItem value="quarter">Últimos 3 meses</SelectItem>
+              <SelectItem value="year">Este ano</SelectItem>
+              <SelectItem value="custom">Personalizado</SelectItem>
+            </SelectContent>
+          </Select>
+          {periodFilter === "custom" && (
+            <div className="flex items-center gap-1">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("w-32 justify-start text-left text-xs")}>
+                    {format(customRange.start, "dd/MM/yyyy")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customRange.start} onSelect={(d) => d && setCustomRange(prev => ({ ...prev, start: d }))} className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+              <span className="text-muted-foreground text-xs">até</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("w-32 justify-start text-left text-xs")}>
+                    {format(customRange.end, "dd/MM/yyyy")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customRange.end} onSelect={(d) => d && setCustomRange(prev => ({ ...prev, end: d }))} className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
           <Button variant="outline" size="sm" className="gap-2" onClick={() => exportFinanceXLSX(rawOrders, false)}>
-            <Download className="h-4 w-4" /> Exportar financeiro
+            <Download className="h-4 w-4" /> Financeiro
           </Button>
           <Button variant="outline" size="sm" className="gap-2" onClick={() => exportFinanceXLSX(rawOrders, true)}>
-            <Download className="h-4 w-4" /> Exportar repasses
+            <Download className="h-4 w-4" /> Repasses
           </Button>
         </div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { icon: DollarSign, label: "GMV Total", value: formatCurrency(metrics.gmv), color: "text-success", bg: "bg-success/10" },
-          { icon: Percent, label: "Receita Plataforma", value: formatCurrency(metrics.platformRevenue), color: "text-primary", bg: "bg-primary/10", sub: `Take rate: ${metrics.takeRate}%` },
-          { icon: ShoppingBag, label: "Pedidos", value: metrics.totalOrders.toString(), color: "text-info", bg: "bg-info/10", sub: `Ticket médio: ${formatCurrency(metrics.avgOrderValue)}` },
+          { icon: DollarSign, label: "GMV Total", value: formatCurrency(metrics.gmv), color: "text-success", bg: "bg-success/10", change: gmvChange },
+          { icon: Percent, label: "Receita Plataforma", value: formatCurrency(metrics.platformRevenue), color: "text-primary", bg: "bg-primary/10", sub: `Take rate: ${metrics.takeRate}%`, change: revenueChange },
+          { icon: ShoppingBag, label: "Pedidos", value: metrics.totalOrders.toString(), color: "text-info", bg: "bg-info/10", sub: `Ticket médio: ${formatCurrency(metrics.avgOrderValue)}`, change: ordersChange },
           { icon: AlertTriangle, label: "Disputas Abertas", value: metrics.openDisputes.toString(), color: metrics.openDisputes > 0 ? "text-destructive" : "text-success", bg: metrics.openDisputes > 0 ? "bg-destructive/10" : "bg-success/10" },
         ].map((kpi, i) => (
           <motion.div
@@ -247,6 +300,7 @@ export default function MarketplaceAnalyticsPage() {
                   <div className={`h-10 w-10 rounded-xl ${kpi.bg} flex items-center justify-center`}>
                     <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
                   </div>
+                  {"change" in kpi && kpi.change !== undefined && <ChangeIndicator value={kpi.change ?? null} />}
                 </div>
                 <p className="text-2xl font-black tracking-tight">{kpi.value}</p>
                 <p className="text-xs text-muted-foreground">{kpi.label}</p>
