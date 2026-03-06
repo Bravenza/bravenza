@@ -122,6 +122,21 @@ export function ClientSessionProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    const sessionToken = localStorage.getItem("bravenza_session")
+      || sessionStorage.getItem("bravenza_session");
+
+    if (sessionToken) {
+      try {
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/client-auth`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "logout", session_token: sessionToken }),
+        });
+      } catch (_) {}
+      localStorage.removeItem("bravenza_session");
+      sessionStorage.removeItem("bravenza_session");
+    }
+
     await supabase.auth.signOut();
     setProfile(null);
   };
