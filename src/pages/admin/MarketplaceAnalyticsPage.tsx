@@ -1,19 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   BarChart3, DollarSign, TrendingUp, Users, Package, AlertTriangle,
   ShoppingBag, ArrowUpRight, ArrowDownRight, Store, ShieldCheck,
-  Crown, Percent, Activity, Eye, Download, Trophy
+  Crown, Percent, Activity, Eye, Download, Trophy, CalendarIcon
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area, PieChart, Pie, Cell, ComposedChart, Line
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
+import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-order-ops`;
 
@@ -50,19 +55,48 @@ const STATUS_COLORS = [
   "hsl(var(--destructive))", "hsl(262, 83%, 58%)", "hsl(190, 90%, 50%)",
 ];
 
+type PeriodFilter = "current" | "last" | "quarter" | "year" | "custom";
+
+interface DateRange {
+  start: Date;
+  end: Date;
+}
+
+function getDateRange(period: PeriodFilter, custom: DateRange): DateRange {
+  const now = new Date();
+  switch (period) {
+    case "current": return { start: startOfMonth(now), end: endOfMonth(now) };
+    case "last": { const lm = subMonths(now, 1); return { start: startOfMonth(lm), end: endOfMonth(lm) }; }
+    case "quarter": return { start: subMonths(now, 3), end: now };
+    case "year": return { start: new Date(now.getFullYear(), 0, 1), end: now };
+    case "custom": return custom;
+  }
+}
+
+function getPreviousRange(range: DateRange): DateRange {
+  const duration = range.end.getTime() - range.start.getTime();
+  return { start: new Date(range.start.getTime() - duration), end: new Date(range.start.getTime() - 1) };
+}
+
 export default function MarketplaceAnalyticsPage() {
-  const [metrics, setMetrics] = useState<MarketplaceMetrics | null>(null);
   const [rawOrders, setRawOrders] = useState<any[]>([]);
+  const [rawSellers, setRawSellers] = useState<any[]>([]);
+  const [rawListings, setRawListings] = useState<any[]>([]);
+  const [rawProducts, setRawProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("current");
+  const [customRange, setCustomRange] = useState<DateRange>({ start: startOfMonth(new Date()), end: endOfMonth(new Date()) });
+
+  const dateRange = useMemo(() => getDateRange(periodFilter, customRange), [periodFilter, customRange]);
+  const prevRange = useMemo(() => getPreviousRange(dateRange), [dateRange]);
 
   useEffect(() => {
-    fetchMetrics();
+    fetchData();
   }, []);
 
-  const fetchMetrics = async () => {
+  const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Fetch data via edge function for marketplace_orders (not in public types)
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const headers = await getMarketplaceHeaders();
       
@@ -73,106 +107,96 @@ export default function MarketplaceAnalyticsPage() {
         supabase.from("marketplace_products").select("id, brand, model, total_offers, lowest_price").eq("is_active", true).order("total_offers", { ascending: false }).limit(10),
       ]);
 
-      const orders: any[] = ordersRes.orders || [];
-      setRawOrders(orders);
-      const sellers = sellersRes.data || [];
-      const listings = listingsRes.data || [];
-      const products = productsRes.data || [];
-
-      // Calculate metrics
-      const completedOrders = orders.filter((o: any) => ["completed", "delivered", "payout_released"].includes(o.status));
-      const gmv = completedOrders.reduce((sum: number, o: any) => sum + (o.sale_price || 0), 0);
-      const platformRevenue = completedOrders.reduce((sum: number, o: any) => sum + (o.fee_amount || 0), 0);
-      const openDisputes = orders.filter((o: any) => o.dispute_status === "open").length;
-      const avgOrderValue = completedOrders.length > 0 ? gmv / completedOrders.length : 0;
-      const totalViews = listings.reduce((sum, l) => sum + (l.views_count || 0), 0);
-      const conversionRate = totalViews > 0 ? ((completedOrders.length / totalViews) * 100) : 0;
-      const takeRate = gmv > 0 ? ((platformRevenue / gmv) * 100) : 0;
-
-      // Sellers by tier
-      const tierCounts: Record<string, number> = {};
-      sellers.forEach(s => {
-        const tier = s.plan_id || "free";
-        tierCounts[tier] = (tierCounts[tier] || 0) + 1;
-      });
-      const sellersByTier = Object.entries(tierCounts).map(([tier, count]) => ({ tier, count }));
-
-      // Top products
-      const topProducts = products.slice(0, 5).map(p => ({
-        name: p.model || "Unknown",
-        brand: p.brand || "",
-        sales: p.total_offers || 0,
-        revenue: (p.lowest_price || 0) * (p.total_offers || 0),
-      }));
-
-      // Monthly GMV (simulate from orders)
-      const monthlyMap = new Map<string, { gmv: number; revenue: number; orders: number }>();
-      const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-      completedOrders.forEach((o: any) => {
-        const d = new Date(o.created_at);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        const existing = monthlyMap.get(key) || { gmv: 0, revenue: 0, orders: 0 };
-        existing.gmv += o.sale_price || 0;
-        existing.revenue += o.fee_amount || 0;
-        existing.orders += 1;
-        monthlyMap.set(key, existing);
-      });
-      const monthlyGMV = Array.from(monthlyMap.entries())
-        .sort(([a], [b]) => a.localeCompare(b))
-        .slice(-6)
-        .map(([month, data]) => ({ month: months[parseInt(month.split("-")[1]) - 1] || month, ...data }));
-
-      // Orders by status
-      const statusCounts: Record<string, number> = {};
-      orders.forEach((o: any) => { statusCounts[o.status] = (statusCounts[o.status] || 0) + 1; });
-      const ordersByStatus = Object.entries(statusCounts)
-        .map(([status, count]) => ({ status, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 6);
-
-      // Top sellers ranking
-      const topSellers = sellers
-        .filter(s => s.total_sales_count > 0)
-        .sort((a, b) => (b.total_sales_value || 0) - (a.total_sales_value || 0))
-        .slice(0, 10)
-        .map(s => ({
-          name: `Seller #${(s.id as string).slice(0, 6)}`,
-          plan: s.plan_id || "free",
-          sales: s.total_sales_count || 0,
-          revenue: s.total_sales_value || 0,
-          rating: 0,
-          fee: s.current_fee_percent || 14,
-        }));
-
-      setMetrics({
-        gmv,
-        totalOrders: orders.length,
-        totalSellers: sellers.length,
-        activeSellers: sellers.filter(s => s.total_sales_count > 0).length,
-        activeListings: listings.length,
-        takeRate: parseFloat(takeRate.toFixed(1)),
-        platformRevenue,
-        openDisputes,
-        avgOrderValue,
-        conversionRate: parseFloat(conversionRate.toFixed(2)),
-        sellersByTier,
-        topProducts,
-        monthlyGMV,
-        ordersByStatus,
-        topSellers,
-      });
+      setRawOrders(ordersRes.orders || []);
+      setRawSellers(sellersRes.data || []);
+      setRawListings(listingsRes.data || []);
+      setRawProducts(productsRes.data || []);
     } catch (err) {
-      console.error("Error fetching marketplace metrics:", err);
-      // Set mock data for display
-      setMetrics({
-        gmv: 0, totalOrders: 0, totalSellers: 0, activeSellers: 0,
-        activeListings: 0, takeRate: 12, platformRevenue: 0, openDisputes: 0,
-        avgOrderValue: 0, conversionRate: 0, sellersByTier: [],
-        topProducts: [], monthlyGMV: [], ordersByStatus: [], topSellers: [],
-      });
+      console.error("Error fetching marketplace data:", err);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const filterByRange = (orders: any[], range: DateRange) =>
+    orders.filter((o: any) => {
+      if (!o.created_at) return false;
+      const d = new Date(o.created_at);
+      return d >= range.start && d <= range.end;
+    });
+
+  const computeMetrics = (orders: any[], sellers: any[], listings: any[], products: any[]): MarketplaceMetrics => {
+    const completedOrders = orders.filter((o: any) => ["completed", "delivered", "payout_released"].includes(o.status));
+    const gmv = completedOrders.reduce((sum: number, o: any) => sum + (o.sale_price || 0), 0);
+    const platformRevenue = completedOrders.reduce((sum: number, o: any) => sum + (o.fee_amount || 0), 0);
+    const openDisputes = orders.filter((o: any) => o.dispute_status === "open").length;
+    const avgOrderValue = completedOrders.length > 0 ? gmv / completedOrders.length : 0;
+    const totalViews = listings.reduce((sum, l) => sum + (l.views_count || 0), 0);
+    const conversionRate = totalViews > 0 ? ((completedOrders.length / totalViews) * 100) : 0;
+    const takeRate = gmv > 0 ? ((platformRevenue / gmv) * 100) : 0;
+
+    const tierCounts: Record<string, number> = {};
+    sellers.forEach(s => { tierCounts[s.plan_id || "free"] = (tierCounts[s.plan_id || "free"] || 0) + 1; });
+    const sellersByTier = Object.entries(tierCounts).map(([tier, count]) => ({ tier, count }));
+
+    const topProducts = products.slice(0, 5).map(p => ({
+      name: p.model || "Unknown", brand: p.brand || "",
+      sales: p.total_offers || 0, revenue: (p.lowest_price || 0) * (p.total_offers || 0),
+    }));
+
+    const monthlyMap = new Map<string, { gmv: number; revenue: number; orders: number }>();
+    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    completedOrders.forEach((o: any) => {
+      const d = new Date(o.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const existing = monthlyMap.get(key) || { gmv: 0, revenue: 0, orders: 0 };
+      existing.gmv += o.sale_price || 0;
+      existing.revenue += o.fee_amount || 0;
+      existing.orders += 1;
+      monthlyMap.set(key, existing);
+    });
+    const monthlyGMV = Array.from(monthlyMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-6)
+      .map(([month, data]) => ({ month: months[parseInt(month.split("-")[1]) - 1] || month, ...data }));
+
+    const statusCounts: Record<string, number> = {};
+    orders.forEach((o: any) => { statusCounts[o.status] = (statusCounts[o.status] || 0) + 1; });
+    const ordersByStatus = Object.entries(statusCounts).map(([status, count]) => ({ status, count })).sort((a, b) => b.count - a.count).slice(0, 6);
+
+    const topSellers = sellers.filter(s => s.total_sales_count > 0)
+      .sort((a, b) => (b.total_sales_value || 0) - (a.total_sales_value || 0))
+      .slice(0, 10)
+      .map(s => ({
+        name: `Seller #${(s.id as string).slice(0, 6)}`, plan: s.plan_id || "free",
+        sales: s.total_sales_count || 0, revenue: s.total_sales_value || 0, rating: 0, fee: s.current_fee_percent || 14,
+      }));
+
+    return {
+      gmv, totalOrders: orders.length, totalSellers: sellers.length,
+      activeSellers: sellers.filter(s => s.total_sales_count > 0).length,
+      activeListings: listings.length, takeRate: parseFloat(takeRate.toFixed(1)),
+      platformRevenue, openDisputes, avgOrderValue,
+      conversionRate: parseFloat(conversionRate.toFixed(2)),
+      sellersByTier, topProducts, monthlyGMV, ordersByStatus, topSellers,
+    };
+  };
+
+  const metrics = useMemo(() => {
+    if (isLoading) return null;
+    const filtered = filterByRange(rawOrders, dateRange);
+    return computeMetrics(filtered, rawSellers, rawListings, rawProducts);
+  }, [rawOrders, rawSellers, rawListings, rawProducts, dateRange, isLoading]);
+
+  const prevMetrics = useMemo(() => {
+    if (isLoading || rawOrders.length === 0) return null;
+    const filtered = filterByRange(rawOrders, prevRange);
+    return computeMetrics(filtered, rawSellers, rawListings, rawProducts);
+  }, [rawOrders, rawSellers, rawListings, rawProducts, prevRange, isLoading]);
+
+  const pctChange = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
   };
 
   if (isLoading) {
@@ -185,9 +209,24 @@ export default function MarketplaceAnalyticsPage() {
 
   if (!metrics) return null;
 
+  const gmvChange = prevMetrics ? pctChange(metrics.gmv, prevMetrics.gmv) : null;
+  const revenueChange = prevMetrics ? pctChange(metrics.platformRevenue, prevMetrics.platformRevenue) : null;
+  const ordersChange = prevMetrics ? pctChange(metrics.totalOrders, prevMetrics.totalOrders) : null;
+
+  const ChangeIndicator = ({ value }: { value: number | null }) => {
+    if (value === null) return null;
+    const isPositive = value >= 0;
+    return (
+      <span className={`inline-flex items-center text-[10px] font-semibold ${isPositive ? "text-success" : "text-destructive"}`}>
+        {isPositive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+        {Math.abs(value).toFixed(1)}%
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <BarChart3 className="h-6 w-6 text-primary" />
@@ -195,20 +234,58 @@ export default function MarketplaceAnalyticsPage() {
           </h1>
           <p className="text-muted-foreground">Visão geral da performance do marketplace</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
+            <SelectTrigger className="w-44 bg-secondary/50">
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="current">Mês atual</SelectItem>
+              <SelectItem value="last">Mês anterior</SelectItem>
+              <SelectItem value="quarter">Últimos 3 meses</SelectItem>
+              <SelectItem value="year">Este ano</SelectItem>
+              <SelectItem value="custom">Personalizado</SelectItem>
+            </SelectContent>
+          </Select>
+          {periodFilter === "custom" && (
+            <div className="flex items-center gap-1">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("w-32 justify-start text-left text-xs")}>
+                    {format(customRange.start, "dd/MM/yyyy")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customRange.start} onSelect={(d) => d && setCustomRange(prev => ({ ...prev, start: d }))} className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+              <span className="text-muted-foreground text-xs">até</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("w-32 justify-start text-left text-xs")}>
+                    {format(customRange.end, "dd/MM/yyyy")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customRange.end} onSelect={(d) => d && setCustomRange(prev => ({ ...prev, end: d }))} className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
           <Button variant="outline" size="sm" className="gap-2" onClick={() => exportFinanceXLSX(rawOrders, false)}>
-            <Download className="h-4 w-4" /> Exportar financeiro
+            <Download className="h-4 w-4" /> Financeiro
           </Button>
           <Button variant="outline" size="sm" className="gap-2" onClick={() => exportFinanceXLSX(rawOrders, true)}>
-            <Download className="h-4 w-4" /> Exportar repasses
+            <Download className="h-4 w-4" /> Repasses
           </Button>
         </div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { icon: DollarSign, label: "GMV Total", value: formatCurrency(metrics.gmv), color: "text-success", bg: "bg-success/10" },
-          { icon: Percent, label: "Receita Plataforma", value: formatCurrency(metrics.platformRevenue), color: "text-primary", bg: "bg-primary/10", sub: `Take rate: ${metrics.takeRate}%` },
-          { icon: ShoppingBag, label: "Pedidos", value: metrics.totalOrders.toString(), color: "text-info", bg: "bg-info/10", sub: `Ticket médio: ${formatCurrency(metrics.avgOrderValue)}` },
+          { icon: DollarSign, label: "GMV Total", value: formatCurrency(metrics.gmv), color: "text-success", bg: "bg-success/10", change: gmvChange },
+          { icon: Percent, label: "Receita Plataforma", value: formatCurrency(metrics.platformRevenue), color: "text-primary", bg: "bg-primary/10", sub: `Take rate: ${metrics.takeRate}%`, change: revenueChange },
+          { icon: ShoppingBag, label: "Pedidos", value: metrics.totalOrders.toString(), color: "text-info", bg: "bg-info/10", sub: `Ticket médio: ${formatCurrency(metrics.avgOrderValue)}`, change: ordersChange },
           { icon: AlertTriangle, label: "Disputas Abertas", value: metrics.openDisputes.toString(), color: metrics.openDisputes > 0 ? "text-destructive" : "text-success", bg: metrics.openDisputes > 0 ? "bg-destructive/10" : "bg-success/10" },
         ].map((kpi, i) => (
           <motion.div
@@ -223,6 +300,7 @@ export default function MarketplaceAnalyticsPage() {
                   <div className={`h-10 w-10 rounded-xl ${kpi.bg} flex items-center justify-center`}>
                     <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
                   </div>
+                  {"change" in kpi && kpi.change !== undefined && <ChangeIndicator value={kpi.change ?? null} />}
                 </div>
                 <p className="text-2xl font-black tracking-tight">{kpi.value}</p>
                 <p className="text-xs text-muted-foreground">{kpi.label}</p>
