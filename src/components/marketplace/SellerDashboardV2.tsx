@@ -79,7 +79,7 @@ export function SellerDashboardV2({ cpf }: { cpf: string }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<"d7" | "d30" | "d90">("d30");
-
+  const { unread } = useUnreadMessages(cpf);
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
