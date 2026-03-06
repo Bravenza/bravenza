@@ -6,7 +6,7 @@ const nt=async(sb:any,t:string,m:string,cpf:string,rid?:string,rt?:string)=>{try
 const ge=async(sb:any,cpf:string)=>{const{data}=await sb.from("vault_members").select("client_name,client_email,client_phone").eq("client_cpf",cpf).maybeSingle();if(!data?.client_email)return null;return{name:data.client_name,email:data.client_email,phone:data.client_phone||undefined};};
 const em=(type:string,data:Record<string,any>)=>{try{const u=Deno.env.get("SUPABASE_URL"),k=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");if(u&&k)fetch(`${u}/functions/v1/send-marketplace-email`,{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${k}`},body:JSON.stringify({type,...data})}).catch(()=>{});}catch(_){}};
 const wa=(type:string,data:Record<string,any>)=>{try{const u=Deno.env.get("SUPABASE_URL"),k=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");if(u&&k)fetch(`${u}/functions/v1/send-whatsapp`,{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${k}`},body:JSON.stringify({message_type:type,...data})}).catch(()=>{});}catch(_){}};
-const gc=()=>{const c="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";let r="MKT-";for(let i=0;i<6;i++)r+=c.charAt(Math.floor(Math.random()*c.length));return r;};
+const gc=()=>{const c="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";const a=new Uint8Array(6);crypto.getRandomValues(a);return"MKT-"+Array.from(a).map(b=>c[b%c.length]).join("");};
 Deno.serve(async(req)=>{
 if(req.method==="OPTIONS")return new Response(null,{headers:H});
 const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;
