@@ -18,9 +18,10 @@ interface SuccessStepProps {
   orderCodes: string[];
   group: CartGroup;
   pixData: { qr_code?: string; copy_paste?: string; expiration?: string } | null;
+  appliedCoupon?: AppliedCoupon | null;
 }
 
-export function SuccessStep({ paymentMethod, paymentStatus, orderCodes, group, pixData }: SuccessStepProps) {
+export function SuccessStep({ paymentMethod, paymentStatus, orderCodes, group, pixData, appliedCoupon }: SuccessStepProps) {
   const navigate = useNavigate();
   const [pixCopied, setPixCopied] = useState(false);
   const { remaining: pixTimer, isExpired: pixExpired } = useCountdown(pixData?.expiration || null);
