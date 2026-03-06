@@ -187,6 +187,42 @@ Deno.serve(async (req) => {
     }
     results.cancelled_stale_orders = cancelledOrders;
 
+    // ── 5. Auto-complete delivered orders after 10 days ──
+    const cutoff10d = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: deliveredOrders, error: delErr } = await sb
+      .from("vault_marketplace_orders")
+      .select("id, order_code, buyer_cpf")
+      .eq("status", "delivered")
+      .lt("delivered_at", cutoff10d)
+      .is("dispute_status", null);
+
+    if (delErr) console.error("[mkv2-cron-tasks] Auto-complete fetch error:", delErr);
+
+    let completedOrders = 0;
+    for (const order of deliveredOrders || []) {
+      await sb.from("vault_marketplace_orders").update({
+        status: "completed",
+        completed_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      }).eq("id", order.id);
+
+      if (order.buyer_cpf) {
+        await sb.from("notifications").insert({
+          title: "✅ Pedido concluído",
+          message: `Seu pedido ${order.order_code} foi concluído automaticamente após 10 dias da entrega confirmada.`,
+          target: "client",
+          target_client_cpf: order.buyer_cpf,
+          type: "info",
+          reference_id: order.id,
+          reference_type: "marketplace_order",
+        });
+      }
+
+      completedOrders++;
+      console.log(`[mkv2-cron-tasks] Auto-completed order ${order.order_code}`);
+    }
+    results.auto_completed_orders = completedOrders;
+
     // ── Finalize log ──
     const finishedAt = new Date();
     const durationMs = finishedAt.getTime() - new Date(startedAt).getTime();
