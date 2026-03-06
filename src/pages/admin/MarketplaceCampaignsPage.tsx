@@ -435,14 +435,41 @@ export default function MarketplaceCampaignsPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar envio de campanha</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta campanha será enviada para <strong>{estimatedReach} pessoas</strong> por <strong>{CHANNEL_LABELS[newCampaign.channel]}</strong>.
-              Esta ação não pode ser desfeita. Confirmar?
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <div className="rounded-lg border border-border p-3 space-y-2">
+                  <p className="text-sm font-semibold text-foreground">{newCampaign.title}</p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{newCampaign.message}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(() => {
+                    const ch = CHANNELS.find(c => c.value === newCampaign.channel);
+                    const Icon = ch?.icon || Send;
+                    return (
+                      <Badge variant="outline" className="gap-1.5">
+                        <Icon className="h-3 w-3" /> {CHANNEL_LABELS[newCampaign.channel]}
+                      </Badge>
+                    );
+                  })()}
+                  <Badge variant="secondary" className="gap-1.5">
+                    <Users className="h-3 w-3" /> {estimatedReach} destinatários
+                  </Badge>
+                  {newCampaign.selectedTiers.length > 0 && (
+                    <Badge variant="secondary">
+                      Tiers: {newCampaign.selectedTiers.map(t => TIERS.find(x => x.value === t)?.label).join(", ")}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-sm text-warning">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span>Esta ação não pode ser desfeita.</span>
+                </div>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={sendCampaign}>Confirmar Envio</AlertDialogAction>
+            <AlertDialogAction onClick={sendCampaign}>Confirmar e Enviar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
