@@ -7,8 +7,10 @@ import {
   MoreVertical,
   Download,
   Calendar,
+  AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { differenceInDays, startOfDay } from "date-fns";
 import { typedRpc, type AdminOrdersCsvRow } from "@/integrations/supabase/typed-rpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   ORDER_STATUS_LABELS,
@@ -43,6 +46,52 @@ import {
   formatCurrency,
 } from "@/lib/constants";
 import { format } from "date-fns";
+
+type SlaStatus = "overdue" | "critical" | "ok" | "none";
+
+function getSlaStatus(date: string | null): SlaStatus {
+  if (!date) return "none";
+  const today = startOfDay(new Date());
+  const due = startOfDay(new Date(date));
+  if (due < today) return "overdue";
+  if (differenceInDays(due, today) <= 3) return "critical";
+  return "ok";
+}
+
+function getSlaStatusLabel(s: SlaStatus): string {
+  switch (s) {
+    case "overdue": return "Vencido";
+    case "critical": return "Crítico";
+    case "ok": return "Ok";
+    case "none": return "Sem prazo";
+  }
+}
+
+function SlaCell({ date }: { date: string | null }) {
+  const status = getSlaStatus(date);
+  if (status === "none") return <span className="text-muted-foreground">—</span>;
+  if (status === "overdue") {
+    return (
+      <div className="flex items-center gap-1.5">
+        <Badge variant="destructive" className="text-[10px] px-1.5 py-0">VENCIDO</Badge>
+        <span className="text-xs text-destructive font-medium">{formatDate(date!)}</span>
+      </div>
+    );
+  }
+  if (status === "critical") {
+    const days = differenceInDays(startOfDay(new Date(date!)), startOfDay(new Date()));
+    return (
+      <div className="flex items-center gap-1.5">
+        <Badge className="bg-amber-500/20 text-amber-600 border-amber-500/30 text-[10px] px-1.5 py-0 hover:bg-amber-500/20">
+          <AlertTriangle className="h-3 w-3 mr-0.5" />
+          {days === 0 ? "Hoje" : `${days}d`}
+        </Badge>
+        <span className="text-xs">{formatDate(date!)}</span>
+      </div>
+    );
+  }
+  return <span className="text-sm">{formatDate(date!)}</span>;
+}
 
 interface Order {
   order_id: string;
@@ -92,7 +141,12 @@ const OrdersList = () => {
           .order("created_at", { ascending: false });
 
         // Status filter
-        if (statusFilter !== "all") {
+        if (statusFilter === "overdue") {
+          const today = new Date().toISOString().split("T")[0];
+          query = query
+            .lt("sla_vault_due_date", today)
+            .not("current_status", "in", '("DELIVERED","CANCELLED")');
+        } else if (statusFilter !== "all") {
           query = query.eq("current_status", statusFilter as any);
         }
 
@@ -181,7 +235,7 @@ const OrdersList = () => {
       });
       if (error) throw error;
 
-      const headers = ["Pedido", "Cliente", "CPF", "Produto", "Preço", "Status", "Prazo SLA", "Criado em"];
+      const headers = ["Pedido", "Cliente", "CPF", "Produto", "Preço", "Status", "Prazo SLA", "SLA Status", "Criado em"];
       const rows = (data || []).map((o) => [
         o.order_id,
         o.client_name,
@@ -190,6 +244,7 @@ const OrdersList = () => {
         o.product_price ? formatCurrency(o.product_price) : "-",
         ORDER_STATUS_LABELS[o.current_status] || o.current_status,
         o.sla_vault_due_date ? formatDate(o.sla_vault_due_date) : "-",
+        getSlaStatusLabel(getSlaStatus(o.sla_vault_due_date)),
         formatDate(o.created_at),
       ]);
 
@@ -261,6 +316,12 @@ const OrdersList = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os status</SelectItem>
+            <SelectItem value="overdue">
+              <span className="flex items-center gap-1.5">
+                <AlertTriangle className="h-3 w-3 text-destructive" />
+                Vencidos (SLA)
+              </span>
+            </SelectItem>
             {VAULT_STATUSES.map((status) => (
               <SelectItem key={status} value={status}>
                 {ORDER_STATUS_LABELS[status]}
@@ -305,10 +366,12 @@ const OrdersList = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              orders.map((order) => (
+              orders.map((order) => {
+                const slaStatus = getSlaStatus(order.sla_vault_due_date);
+                return (
                 <TableRow
                   key={order.order_id}
-                  className="border-border cursor-pointer hover:bg-secondary/30"
+                  className={`border-border cursor-pointer hover:bg-secondary/30 ${slaStatus === "overdue" ? "bg-destructive/5" : ""}`}
                   onClick={() => navigate(`/admin/pedidos/${order.order_id}`)}
                 >
                   <TableCell className="font-medium">{order.order_id}</TableCell>
@@ -329,7 +392,7 @@ const OrdersList = () => {
                     </span>
                   </TableCell>
                   <TableCell>
-                    {order.sla_vault_due_date ? formatDate(order.sla_vault_due_date) : "-"}
+                    <SlaCell date={order.sla_vault_due_date} />
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {formatDate(order.created_at)}
@@ -350,7 +413,8 @@ const OrdersList = () => {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))
+                );
+              })
             )}
           </TableBody>
         </Table>
@@ -363,10 +427,12 @@ const OrdersList = () => {
             Nenhum pedido encontrado
           </div>
         ) : (
-          orders.map((order) => (
+          orders.map((order) => {
+            const slaStatus = getSlaStatus(order.sla_vault_due_date);
+            return (
             <div
               key={order.order_id}
-              className="card-premium p-4 cursor-pointer active:scale-[0.98] transition-transform"
+              className={`card-premium p-4 cursor-pointer active:scale-[0.98] transition-transform ${slaStatus === "overdue" ? "border-destructive/30 bg-destructive/5" : ""}`}
               onClick={() => navigate(`/admin/pedidos/${order.order_id}`)}
             >
               <div className="flex items-center justify-between mb-2">
@@ -378,10 +444,11 @@ const OrdersList = () => {
               <p className="font-medium text-sm truncate">{order.product_name}</p>
               <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
                 <span>{order.client_name}</span>
-                <span>{formatDate(order.created_at)}</span>
+                <SlaCell date={order.sla_vault_due_date} />
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
 
