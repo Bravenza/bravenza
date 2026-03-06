@@ -214,6 +214,24 @@ Deno.serve(async (req) => {
             .eq("id", sub.seller_id);
         }
 
+        // If paused, set grace period (3 days) if not already set
+        if (dbStatus === "paused" && sub) {
+          const { data: currentSub } = await supabase
+            .from("marketplace_subscriptions")
+            .select("grace_period_end")
+            .eq("provider_subscription_id", preapprovalId)
+            .single();
+
+          if (!currentSub?.grace_period_end) {
+            const graceEnd = new Date();
+            graceEnd.setDate(graceEnd.getDate() + 3);
+            await supabase
+              .from("marketplace_subscriptions")
+              .update({ grace_period_end: graceEnd.toISOString() })
+              .eq("provider_subscription_id", preapprovalId);
+          }
+        }
+
         // If cancelled/expired, downgrade to free
         if (dbStatus === "cancelled" && sub) {
           await downgradeSellerToFree(supabase, sub.seller_id);
