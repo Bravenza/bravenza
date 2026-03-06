@@ -14,7 +14,20 @@ if(ah?.startsWith("Bearer ")){const{data:u}=await sb.auth.getUser(ah.replace("Be
 if(cpf==="visitor")return j({error:"Auth required"},401);
 try{
 if(mt==="PUT"&&a==="update-order-status"){
-  const b=await req.json();const u:any={status:b.status};
+  const b=await req.json();
+  // ── RBAC: check if caller is admin or the order's seller ──
+  const{data:adminCheck}=await sb.from("admin_profiles").select("id").eq("user_id",(await sb.auth.getUser(ah!.replace("Bearer ",""))).data.user?.id||"").maybeSingle();
+  const isAdmin=!!adminCheck;
+  const sellerAllowedStatuses=["shipped","in_transit_to_hub"];
+  if(!isAdmin){
+    // Verify caller is the seller of this order
+    const{data:od2}=await sb.from("vault_marketplace_orders").select("seller_id").eq("id",b.order_id).single();
+    if(!od2)return j({error:"Pedido não encontrado"},404);
+    const{data:sp2}=await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf)").eq("id",od2.seller_id).single();
+    if(!sp2||sp2.member?.client_cpf!==cpf)return j({error:"Acesso negado"},403);
+    if(!sellerAllowedStatuses.includes(b.status))return j({error:`Vendedor não pode definir status "${b.status}"`},403);
+  }
+  const u:any={status:b.status};
   if(b.status==="shipped"){u.shipped_at=new Date().toISOString();u.tracking_code=b.tracking_code||null;}
   else if(b.status==="delivered")u.delivered_at=new Date().toISOString();
   else if(b.status==="cancelled"){u.cancelled_at=new Date().toISOString();if(b.listing_id)await sb.from("vault_marketplace_listings").update({status:"active"}).eq("id",b.listing_id);}
