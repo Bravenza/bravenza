@@ -108,9 +108,9 @@ export function ReportPDFGenerator() {
 
       // Marketplace data
       let mpOrders: any[] = [];
-      if (includeMarketplace && results[1]) {
-        if (results[1].error) console.error("Marketplace fetch error:", results[1].error);
-        mpOrders = results[1].data || [];
+      if (includeMarketplace && mpResult) {
+        if (mpResult.error) console.error("Marketplace fetch error:", mpResult.error);
+        mpOrders = mpResult.data || [];
       }
 
       const periodLabel = format(start, "dd/MM/yyyy") + " a " + format(end, "dd/MM/yyyy");
