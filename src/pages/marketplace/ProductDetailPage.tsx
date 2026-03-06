@@ -447,6 +447,7 @@ function ProductDetailPageInner() {
               total={reviewsTotal}
               isLoading={reviewsLoading}
               canReview={canReview}
+              sellerReplies={sellerReplies}
               onSubmit={async (rating, comment, details) => {
                 return submitReview(product.id, rating, comment, details);
               }}
