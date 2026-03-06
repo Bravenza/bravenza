@@ -2,10 +2,12 @@ import { memo, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { CatalogProductCard } from "@/components/client/vault/marketplace/CatalogProductCard";
-import type { CatalogProduct } from "@/hooks/useMarketplaceCatalog";
+import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "./BrandLogos";
+import { STALE, GC_TIME } from "@/lib/query-config";
 
 interface SpotlightConfig {
   brand: string;
@@ -32,23 +34,48 @@ const spotlights: SpotlightConfig[] = [
 ];
 
 interface Props {
-  products: CatalogProduct[];
   insertAfterIndex?: number;
   children?: React.ReactNode;
 }
 
-export const BrandSpotlightSection = memo(function BrandSpotlightSection({ products, insertAfterIndex, children }: Props) {
+async function fetchBrandProducts(brand: string) {
+  const { data } = await supabase
+    .from("marketplace_products")
+    .select("id, brand, model, colorway, slug, images, lowest_price, total_offers, created_at")
+    .eq("is_active", true)
+    .ilike("brand", brand)
+    .gt("total_offers", 0)
+    .order("total_offers", { ascending: false })
+    .limit(5);
+  return data || [];
+}
+
+export const BrandSpotlightSection = memo(function BrandSpotlightSection({ insertAfterIndex, children }: Props) {
   const navigate = useNavigate();
 
-  // Track rendered spotlights to insert children after the right one
+  const { data: brandData } = useQuery({
+    queryKey: ["brand-spotlights"],
+    queryFn: async () => {
+      const results = await Promise.all(
+        spotlights.map(async (s) => ({
+          brand: s.brand,
+          products: await fetchBrandProducts(s.brand),
+        }))
+      );
+      return results;
+    },
+    staleTime: STALE.STATIC,
+    gcTime: GC_TIME.LONG,
+  });
+
   let renderedCount = -1;
 
   return (
     <>
       {spotlights.map((spotlight) => {
-        const brandProducts = products.filter(
-          (p) => p.brand.toLowerCase() === spotlight.brand.toLowerCase()
-        ).slice(0, 5);
+        const brandProducts = brandData?.find(
+          (b) => b.brand.toLowerCase() === spotlight.brand.toLowerCase()
+        )?.products || [];
 
         if (brandProducts.length === 0) return null;
 
@@ -57,7 +84,7 @@ export const BrandSpotlightSection = memo(function BrandSpotlightSection({ produ
 
         return (
           <span key={spotlight.brand}>
-            <section className="py-10 border-t border-border/30">
+            <section className="py-12 border-t border-border/30">
               <div className="max-w-7xl mx-auto px-4">
                 <div className={`relative rounded-2xl p-8 mb-8 bg-gradient-to-r ${spotlight.gradient} border border-border/10 overflow-hidden`}>
                   <div className="relative z-10">
@@ -89,7 +116,7 @@ export const BrandSpotlightSection = memo(function BrandSpotlightSection({ produ
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                  {brandProducts.map((product, i) => (
+                  {brandProducts.map((product: any, i: number) => (
                     <motion.div
                       key={product.id}
                       initial={{ opacity: 0, y: 12 }}
