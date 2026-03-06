@@ -32,7 +32,7 @@ export function ClientInfoSection({ formData, setFormData }: ClientInfoSectionPr
     try {
       const { data } = await supabase
         .from("orders")
-        .select("client_name, client_email, client_phone, client_address, client_cep, client_street, client_number, client_neighborhood, client_city, client_state, client_complement")
+        .select("client_name, client_email, client_phone")
         .eq("client_cpf", cleaned)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -44,13 +44,6 @@ export function ClientInfoSection({ formData, setFormData }: ClientInfoSectionPr
           client_name: data.client_name || prev.client_name,
           client_email: data.client_email || prev.client_email,
           client_phone: data.client_phone || prev.client_phone,
-          client_cep: data.client_cep || prev.client_cep,
-          client_street: data.client_street || prev.client_street,
-          client_number: data.client_number || prev.client_number,
-          client_neighborhood: data.client_neighborhood || prev.client_neighborhood,
-          client_city: data.client_city || prev.client_city,
-          client_state: data.client_state || prev.client_state,
-          client_complement: data.client_complement || prev.client_complement,
         }));
         toast({ title: "Dados do cliente preenchidos automaticamente" });
       }
