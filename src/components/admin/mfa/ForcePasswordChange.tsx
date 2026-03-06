@@ -21,8 +21,20 @@ export function ForcePasswordChange({ onComplete, onSignOut }: ForcePasswordChan
   const handleSubmit = async () => {
     setError("");
 
-    if (newPassword.length < 6) {
-      setError("A nova senha deve ter no mínimo 6 caracteres");
+    if (newPassword.length < 12) {
+      setError("A senha deve ter no mínimo 12 caracteres");
+      return;
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      setError("A senha deve conter ao menos uma letra maiúscula");
+      return;
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      setError("A senha deve conter ao menos um número");
+      return;
+    }
+    if (!/[^A-Za-z0-9]/.test(newPassword)) {
+      setError("A senha deve conter ao menos um caractere especial");
       return;
     }
     if (newPassword !== confirmPassword) {
