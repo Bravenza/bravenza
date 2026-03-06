@@ -483,7 +483,8 @@ const VaultMembersPage = () => {
                       />
                     </TableCell>
                     <TableCell>
-                        <p className="text-xs text-muted-foreground">
+                      <div>
+                        <p className="font-medium">{member.client_name}</p>
                           {member.client_email || member.client_cpf}
                         </p>
                         {member.flags_review_mode_until && (
