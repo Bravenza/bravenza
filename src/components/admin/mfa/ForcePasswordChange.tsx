@@ -113,6 +113,7 @@ export function ForcePasswordChange({ onComplete, onSignOut }: ForcePasswordChan
             <p className="text-xs text-muted-foreground">
               Mínimo 12 caracteres, com letra maiúscula, número e caractere especial.
             </p>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="confirm-password" className="text-xs tracking-wide uppercase text-muted-foreground">
