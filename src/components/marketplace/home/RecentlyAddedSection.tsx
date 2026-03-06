@@ -1,18 +1,27 @@
 import { memo } from "react";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { CatalogProductCard } from "@/components/client/vault/marketplace/CatalogProductCard";
-import type { CatalogProduct } from "@/hooks/useMarketplaceCatalog";
+import { supabase } from "@/integrations/supabase/client";
+import { STALE, GC_TIME } from "@/lib/query-config";
 
-interface Props {
-  products: CatalogProduct[];
-}
-
-export const RecentlyAddedSection = memo(function RecentlyAddedSection({ products }: Props) {
-  // Sort by created_at desc, take first 10
-  const recentProducts = [...products]
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 10);
+export const RecentlyAddedSection = memo(function RecentlyAddedSection() {
+  const { data: recentProducts = [] } = useQuery({
+    queryKey: ["recently-added-products"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("marketplace_products")
+        .select("id, brand, model, colorway, slug, images, lowest_price, total_offers, created_at")
+        .eq("is_active", true)
+        .gt("total_offers", 0)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      return data || [];
+    },
+    staleTime: STALE.DYNAMIC,
+    gcTime: GC_TIME.LONG,
+  });
 
   if (recentProducts.length === 0) return null;
 
@@ -25,7 +34,7 @@ export const RecentlyAddedSection = memo(function RecentlyAddedSection({ product
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {recentProducts.map((product, i) => (
+          {recentProducts.map((product: any, i: number) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, y: 12 }}
