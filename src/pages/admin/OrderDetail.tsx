@@ -172,50 +172,18 @@ const OrderDetail = () => {
 
   const handleStatusChange = async () => {
     if (!order || !newStatus) return;
-
     setIsSaving(true);
-
     try {
-      const updates: Record<string, any> = {
+      await adminInvoke("update-status", {
+        order_id: order.order_id,
         current_status: newStatus,
-      };
-
-      if (newStatus === "ARRIVED_BRAZIL") {
-        const balanceDue = new Date();
-        balanceDue.setHours(balanceDue.getHours() + 24);
-        updates.balance_due_date = balanceDue.toISOString();
-      }
-
-      const { error: updateError } = await supabase
-        .from("orders")
-        .update(updates)
-        .eq("order_id", order.order_id);
-
-      if (updateError) throw updateError;
-
-      const { error: historyError } = await supabase
-        .from("order_history")
-        .insert({
-          order_id: order.order_id,
-          status: newStatus as any,
-          notes: statusNotes || null,
-        });
-
-      if (historyError) throw historyError;
-
-      try {
-        await supabase.from("notifications").insert({
-          type: "order_status_update",
-          target: "client",
-          target_client_cpf: order.client_cpf,
+        notes: statusNotes || null,
+        client_cpf: order.client_cpf,
+        notification: {
           title: `Atualização do pedido ${order.order_id}`,
           message: `Seu pedido foi atualizado para: ${ORDER_STATUS_LABELS[newStatus]}`,
-          reference_type: "order",
-          reference_id: order.order_id,
-        });
-      } catch (notifError) {
-        console.error("Error creating notification:", notifError);
-      }
+        },
+      });
 
       const notifResult = await sendAllStatusNotifications(newStatus, {
         order_id: order.order_id,
@@ -231,7 +199,7 @@ const OrderDetail = () => {
         national_carrier: order.national_carrier,
       });
 
-      setOrder({ ...order, ...updates });
+      setOrder({ ...order, current_status: newStatus });
       setHistory([
         ...history,
         {
@@ -248,7 +216,7 @@ const OrderDetail = () => {
       const notifications = [];
       if (notifResult.email && order.client_email) notifications.push("email");
       if (notifResult.whatsapp && order.client_phone) notifications.push("WhatsApp");
-      
+
       if (notifications.length > 0) {
         toast({
           title: "Status atualizado!",
@@ -278,22 +246,10 @@ const OrderDetail = () => {
 
   const handleDelete = async () => {
     if (!order) return;
-
     setIsSaving(true);
-
     try {
-      const { error } = await supabase
-        .from("orders")
-        .delete()
-        .eq("order_id", order.order_id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Pedido excluído",
-        description: "O pedido foi removido do sistema.",
-      });
-
+      await adminInvoke("delete-order", { order_id: order.order_id });
+      toast({ title: "Pedido excluído", description: "O pedido foi marcado como perdido." });
       navigate("/admin/pedidos");
     } catch (error) {
       toast({
@@ -308,26 +264,14 @@ const OrderDetail = () => {
 
   const handleMarkAsLost = async () => {
     if (!order) return;
-
     setIsSaving(true);
-
     try {
-      const { error: updateError } = await supabase
-        .from("orders")
-        .update({ current_status: "LOST" })
-        .eq("order_id", order.order_id);
-
-      if (updateError) throw updateError;
-
-      const { error: historyError } = await supabase
-        .from("order_history")
-        .insert({
-          order_id: order.order_id,
-          status: "LOST" as any,
-          notes: "Pedido marcado como perdido pelo administrador",
-        });
-
-      if (historyError) throw historyError;
+      await adminInvoke("update-status", {
+        order_id: order.order_id,
+        current_status: "LOST",
+        notes: "Pedido marcado como perdido pelo administrador",
+        client_cpf: order.client_cpf,
+      });
 
       setOrder({ ...order, current_status: "LOST" });
       setHistory([
