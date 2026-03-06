@@ -1,45 +1,35 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
-  Search,
-  RefreshCw,
-  MessageSquare,
-  Eye,
-  CheckCircle,
-  XCircle,
-  Clock,
-  AlertTriangle,
+  Search, RefreshCw, MessageSquare, Eye, CheckCircle, XCircle, Clock,
+  AlertTriangle, Trash2,
 } from "lucide-react";
 import { formatDate } from "@/lib/constants";
+import { subHours } from "date-fns";
 
+// ── Types ──────────────────────────────────────────────
 type CommunityPostStatus = "PUBLISHED" | "PENDING_REVIEW" | "REMOVED";
 type CommunityPostType = "SHOWCASE" | "DISCUSSION" | "POLL" | "ISO_WTB";
 
@@ -53,32 +43,35 @@ interface CommunityPost {
   status: CommunityPostStatus | null;
   created_at: string | null;
   moderation_notes: string | null;
-  vault_members?: {
-    client_name: string;
-    tier: string;
-  };
+  vault_members?: { client_name: string; tier: string };
 }
 
+interface CommunityComment {
+  id: string;
+  content: string;
+  created_at: string | null;
+  user_id: string;
+  post_id: string;
+  post?: { title: string } | null;
+  member?: { client_name: string } | null;
+}
+
+// ── Constants ──────────────────────────────────────────
 const typeLabels: Record<CommunityPostType, string> = {
-  SHOWCASE: "Showcase",
-  DISCUSSION: "Discussão",
-  POLL: "Enquete",
-  ISO_WTB: "ISO/WTB",
+  SHOWCASE: "Showcase", DISCUSSION: "Discussão", POLL: "Enquete", ISO_WTB: "ISO/WTB",
 };
-
 const statusLabels: Record<CommunityPostStatus, string> = {
-  PUBLISHED: "Publicado",
-  PENDING_REVIEW: "Aguardando revisão",
-  REMOVED: "Removido",
+  PUBLISHED: "Publicado", PENDING_REVIEW: "Aguardando revisão", REMOVED: "Removido",
 };
-
 const statusColors: Record<CommunityPostStatus, string> = {
-  PUBLISHED: "bg-emerald-600",
-  PENDING_REVIEW: "bg-amber-500",
-  REMOVED: "bg-red-500",
+  PUBLISHED: "bg-emerald-600", PENDING_REVIEW: "bg-amber-500", REMOVED: "bg-red-500",
 };
 
+// ── Main Component ─────────────────────────────────────
 const VaultCommunityAdminPage = () => {
+  const [activeTab, setActiveTab] = useState("posts");
+
+  // Posts state
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -87,20 +80,19 @@ const VaultCommunityAdminPage = () => {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [moderationNotes, setModerationNotes] = useState("");
 
+  // Comments state
+  const [comments, setComments] = useState<CommunityComment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(true);
+  const [commentSearch, setCommentSearch] = useState("");
+
+  // ── Fetch Posts ──
   const fetchPosts = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from("vault_community_posts")
-        .select(`
-          *,
-          vault_members (
-            client_name,
-            tier
-          )
-        `)
+        .select(`*, vault_members (client_name, tier)`)
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       setPosts(data || []);
     } catch (error) {
@@ -111,22 +103,38 @@ const VaultCommunityAdminPage = () => {
     }
   };
 
+  // ── Fetch Comments ──
+  const fetchComments = async () => {
+    setIsLoadingComments(true);
+    try {
+      const { data, error } = await supabase
+        .from("vault_community_comments")
+        .select(`*, post:vault_community_posts(title), member:vault_members(client_name)`)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      setComments((data as unknown as CommunityComment[]) || []);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      toast.error("Erro ao carregar comentários");
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
+
   useEffect(() => {
     fetchPosts();
+    fetchComments();
   }, []);
 
+  // ── Post moderation ──
   const handleApprove = async (post: CommunityPost) => {
     try {
       const { error } = await supabase
         .from("vault_community_posts")
-        .update({
-          status: "PUBLISHED",
-          moderation_notes: moderationNotes || null,
-        })
+        .update({ status: "PUBLISHED", moderation_notes: moderationNotes || null })
         .eq("id", post.id);
-
       if (error) throw error;
-
       toast.success("Post aprovado");
       setIsDetailOpen(false);
       setModerationNotes("");
@@ -138,22 +146,13 @@ const VaultCommunityAdminPage = () => {
   };
 
   const handleReject = async (post: CommunityPost) => {
-    if (!moderationNotes) {
-      toast.error("Informe o motivo da remoção");
-      return;
-    }
-
+    if (!moderationNotes) { toast.error("Informe o motivo da remoção"); return; }
     try {
       const { error } = await supabase
         .from("vault_community_posts")
-        .update({
-          status: "REMOVED",
-          moderation_notes: moderationNotes,
-        })
+        .update({ status: "REMOVED", moderation_notes: moderationNotes })
         .eq("id", post.id);
-
       if (error) throw error;
-
       toast.success("Post removido");
       setIsDetailOpen(false);
       setModerationNotes("");
@@ -170,17 +169,38 @@ const VaultCommunityAdminPage = () => {
     setIsDetailOpen(true);
   };
 
+  // ── Delete comment ──
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      const { error } = await supabase
+        .from("vault_community_comments")
+        .delete()
+        .eq("id", commentId);
+      if (error) throw error;
+      toast.success("Comentário removido");
+      fetchComments();
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      toast.error("Erro ao remover comentário");
+    }
+  };
+
+  // ── Filtered data ──
   const filteredPosts = posts.filter((post) => {
     const matchesSearch =
       post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      post.vault_members?.client_name
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "all" || post.status === statusFilter;
-
+      post.vault_members?.client_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || post.status === statusFilter;
     return matchesSearch && matchesStatus;
+  });
+
+  const filteredComments = comments.filter((c) => {
+    const q = commentSearch.toLowerCase();
+    if (!q) return true;
+    return (
+      c.content.toLowerCase().includes(q) ||
+      c.member?.client_name?.toLowerCase().includes(q)
+    );
   });
 
   const stats = {
@@ -190,7 +210,12 @@ const VaultCommunityAdminPage = () => {
     removed: posts.filter((p) => p.status === "REMOVED").length,
   };
 
-  if (isLoading) {
+  const recentCommentsCount = useMemo(() => {
+    const threshold = subHours(new Date(), 24).toISOString();
+    return comments.filter((c) => c.created_at && c.created_at > threshold).length;
+  }, [comments]);
+
+  if (isLoading && isLoadingComments) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
@@ -204,183 +229,56 @@ const VaultCommunityAdminPage = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Moderação da comunidade</h1>
-          <p className="text-muted-foreground">
-            Aprove ou remova posts da comunidade
-          </p>
+          <p className="text-muted-foreground">Aprove ou remova posts e comentários</p>
         </div>
-        <Button onClick={fetchPosts} variant="outline" size="sm">
+        <Button onClick={() => { fetchPosts(); fetchComments(); }} variant="outline" size="sm">
           <RefreshCw className="h-4 w-4 mr-2" />
           Atualizar
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">Total</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className={stats.pending > 0 ? "border-amber-500" : ""}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Clock className={`h-5 w-5 ${stats.pending > 0 ? "text-amber-500" : "text-muted-foreground"}`} />
-              <div>
-                <p className={`text-2xl font-bold ${stats.pending > 0 ? "text-amber-500" : ""}`}>
-                  {stats.pending}
-                </p>
-                <p className="text-xs text-muted-foreground">Aguardando</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-emerald-500" />
-              <div>
-                <p className="text-2xl font-bold">{stats.published}</p>
-                <p className="text-xs text-muted-foreground">Publicados</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <XCircle className="h-5 w-5 text-red-500" />
-              <div>
-                <p className="text-2xl font-bold">{stats.removed}</p>
-                <p className="text-xs text-muted-foreground">Removidos</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="posts" className="gap-1.5">
+            <MessageSquare className="h-4 w-4" />
+            Posts
+            {stats.pending > 0 && (
+              <Badge className="bg-amber-500 text-white ml-1 text-[10px] px-1.5 py-0">{stats.pending}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="comments" className="gap-1.5">
+            <MessageSquare className="h-4 w-4" />
+            Comentários
+            {recentCommentsCount > 0 && (
+              <Badge className="bg-primary text-primary-foreground ml-1 text-[10px] px-1.5 py-0">{recentCommentsCount}</Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Alert for pending posts */}
-      {stats.pending > 0 && (
-        <Card className="border-amber-500 bg-amber-500/10">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
-              <p className="font-medium">
-                {stats.pending} post(s) aguardando moderação
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por título ou autor..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+        {/* ── Posts Tab ── */}
+        <TabsContent value="posts">
+          <PostsTab
+            stats={stats}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            filteredPosts={filteredPosts}
+            openDetail={openDetail}
           />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Filtrar por status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="PENDING_REVIEW">Aguardando revisão</SelectItem>
-            <SelectItem value="PUBLISHED">Publicados</SelectItem>
-            <SelectItem value="REMOVED">Removidos</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+        </TabsContent>
 
-      {/* Posts Table */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Título</TableHead>
-                <TableHead>Autor</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Criado em</TableHead>
-                <TableHead className="text-center">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPosts.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
-                    <p className="text-muted-foreground">
-                      Nenhum post encontrado
-                    </p>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredPosts.map((post) => (
-                  <TableRow
-                    key={post.id}
-                    className={
-                      post.status === "PENDING_REVIEW" ? "bg-amber-500/5" : ""
-                    }
-                  >
-                    <TableCell>
-                      <Badge variant="outline">{typeLabels[post.type]}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <p className="font-medium">{post.title}</p>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">
-                          {post.vault_members?.client_name || "Desconhecido"}
-                        </p>
-                        <Badge variant="outline" className="text-xs mt-1">
-                          {post.vault_members?.tier === "elite"
-                            ? "Black"
-                            : post.vault_members?.tier === "collector"
-                            ? "Privilege"
-                            : "Access"}
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        className={statusColors[post.status || "PENDING_REVIEW"]}
-                      >
-                        {statusLabels[post.status || "PENDING_REVIEW"]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {post.created_at ? formatDate(post.created_at) : "-"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openDetail(post)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+        {/* ── Comments Tab ── */}
+        <TabsContent value="comments">
+          <CommentsTab
+            comments={filteredComments}
+            isLoading={isLoadingComments}
+            searchTerm={commentSearch}
+            setSearchTerm={setCommentSearch}
+            onDelete={handleDeleteComment}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Detail/Moderation Dialog */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
@@ -393,54 +291,37 @@ const VaultCommunityAdminPage = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Autor</p>
-                  <p className="font-medium">
-                    {selectedPost.vault_members?.client_name}
-                  </p>
+                  <p className="font-medium">{selectedPost.vault_members?.client_name}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Tipo</p>
                   <Badge variant="outline">{typeLabels[selectedPost.type]}</Badge>
                 </div>
               </div>
-
               <div>
                 <p className="text-sm text-muted-foreground">Título</p>
                 <p className="font-medium">{selectedPost.title}</p>
               </div>
-
               {selectedPost.content && (
                 <div>
                   <p className="text-sm text-muted-foreground">Conteúdo</p>
                   <div className="p-3 bg-secondary rounded-lg mt-1 max-h-48 overflow-y-auto">
-                    <p className="text-sm whitespace-pre-wrap">
-                      {selectedPost.content}
-                    </p>
+                    <p className="text-sm whitespace-pre-wrap">{selectedPost.content}</p>
                   </div>
                 </div>
               )}
-
-              {selectedPost.attachments &&
-                selectedPost.attachments.length > 0 && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Anexos ({selectedPost.attachments.length})
-                    </p>
-                    <div className="flex gap-2 mt-1">
-                      {selectedPost.attachments.map((url, index) => (
-                        <a
-                          key={index}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-primary underline"
-                        >
-                          Anexo {index + 1}
-                        </a>
-                      ))}
-                    </div>
+              {selectedPost.attachments && selectedPost.attachments.length > 0 && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Anexos ({selectedPost.attachments.length})</p>
+                  <div className="flex gap-2 mt-1">
+                    {selectedPost.attachments.map((url, index) => (
+                      <a key={index} href={url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">
+                        Anexo {index + 1}
+                      </a>
+                    ))}
                   </div>
-                )}
-
+                </div>
+              )}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Notas de moderação</label>
                 <Textarea
@@ -450,33 +331,21 @@ const VaultCommunityAdminPage = () => {
                   rows={3}
                 />
               </div>
-
               <div className="flex gap-2 justify-end pt-4">
-                <Button variant="outline" onClick={() => setIsDetailOpen(false)}>
-                  Cancelar
-                </Button>
+                <Button variant="outline" onClick={() => setIsDetailOpen(false)}>Cancelar</Button>
                 {selectedPost.status === "PENDING_REVIEW" && (
                   <>
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleReject(selectedPost)}
-                    >
-                      <XCircle className="h-4 w-4 mr-2" />
-                      Remover
+                    <Button variant="destructive" onClick={() => handleReject(selectedPost)}>
+                      <XCircle className="h-4 w-4 mr-2" />Remover
                     </Button>
                     <Button onClick={() => handleApprove(selectedPost)}>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Aprovar
+                      <CheckCircle className="h-4 w-4 mr-2" />Aprovar
                     </Button>
                   </>
                 )}
                 {selectedPost.status === "PUBLISHED" && (
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleReject(selectedPost)}
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Remover
+                  <Button variant="destructive" onClick={() => handleReject(selectedPost)}>
+                    <XCircle className="h-4 w-4 mr-2" />Remover
                   </Button>
                 )}
               </div>
@@ -484,6 +353,201 @@ const VaultCommunityAdminPage = () => {
           )}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+};
+
+// ── Posts Tab Component ─────────────────────────────────
+interface PostsTabProps {
+  stats: { total: number; pending: number; published: number; removed: number };
+  searchTerm: string;
+  setSearchTerm: (v: string) => void;
+  statusFilter: string;
+  setStatusFilter: (v: string) => void;
+  filteredPosts: CommunityPost[];
+  openDetail: (post: CommunityPost) => void;
+}
+
+const PostsTab = ({ stats, searchTerm, setSearchTerm, statusFilter, setStatusFilter, filteredPosts, openDetail }: PostsTabProps) => (
+  <div className="space-y-6">
+    {/* Stats */}
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <Card><CardContent className="p-4"><div className="flex items-center gap-2"><MessageSquare className="h-5 w-5 text-muted-foreground" /><div><p className="text-2xl font-bold">{stats.total}</p><p className="text-xs text-muted-foreground">Total</p></div></div></CardContent></Card>
+      <Card className={stats.pending > 0 ? "border-amber-500" : ""}><CardContent className="p-4"><div className="flex items-center gap-2"><Clock className={`h-5 w-5 ${stats.pending > 0 ? "text-amber-500" : "text-muted-foreground"}`} /><div><p className={`text-2xl font-bold ${stats.pending > 0 ? "text-amber-500" : ""}`}>{stats.pending}</p><p className="text-xs text-muted-foreground">Aguardando</p></div></div></CardContent></Card>
+      <Card><CardContent className="p-4"><div className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-emerald-500" /><div><p className="text-2xl font-bold">{stats.published}</p><p className="text-xs text-muted-foreground">Publicados</p></div></div></CardContent></Card>
+      <Card><CardContent className="p-4"><div className="flex items-center gap-2"><XCircle className="h-5 w-5 text-red-500" /><div><p className="text-2xl font-bold">{stats.removed}</p><p className="text-xs text-muted-foreground">Removidos</p></div></div></CardContent></Card>
+    </div>
+
+    {stats.pending > 0 && (
+      <Card className="border-amber-500 bg-amber-500/10">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            <p className="font-medium">{stats.pending} post(s) aguardando moderação</p>
+          </div>
+        </CardContent>
+      </Card>
+    )}
+
+    {/* Filters */}
+    <div className="flex flex-col sm:flex-row gap-4">
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Buscar por título ou autor..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+      </div>
+      <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Filtrar por status" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todos</SelectItem>
+          <SelectItem value="PENDING_REVIEW">Aguardando revisão</SelectItem>
+          <SelectItem value="PUBLISHED">Publicados</SelectItem>
+          <SelectItem value="REMOVED">Removidos</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+
+    {/* Posts Table */}
+    <Card>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Título</TableHead>
+              <TableHead>Autor</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Criado em</TableHead>
+              <TableHead className="text-center">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredPosts.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8">
+                  <p className="text-muted-foreground">Nenhum post encontrado</p>
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredPosts.map((post) => (
+                <TableRow key={post.id} className={post.status === "PENDING_REVIEW" ? "bg-amber-500/5" : ""}>
+                  <TableCell><Badge variant="outline">{typeLabels[post.type]}</Badge></TableCell>
+                  <TableCell><p className="font-medium">{post.title}</p></TableCell>
+                  <TableCell>
+                    <div>
+                      <p className="font-medium">{post.vault_members?.client_name || "Desconhecido"}</p>
+                      <Badge variant="outline" className="text-xs mt-1">
+                        {post.vault_members?.tier === "elite" ? "Black" : post.vault_members?.tier === "collector" ? "Privilege" : "Access"}
+                      </Badge>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={statusColors[post.status || "PENDING_REVIEW"]}>
+                      {statusLabels[post.status || "PENDING_REVIEW"]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{post.created_at ? formatDate(post.created_at) : "-"}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-center">
+                      <Button variant="ghost" size="icon" onClick={() => openDetail(post)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+// ── Comments Tab Component ─────────────────────────────
+interface CommentsTabProps {
+  comments: CommunityComment[];
+  isLoading: boolean;
+  searchTerm: string;
+  setSearchTerm: (v: string) => void;
+  onDelete: (id: string) => void;
+}
+
+const CommentsTab = ({ comments, isLoading, searchTerm, setSearchTerm, onDelete }: CommentsTabProps) => {
+  if (isLoading) {
+    return <div className="space-y-4"><Skeleton className="h-10 w-full" /><Skeleton className="h-64 w-full" /></div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Buscar por conteúdo ou nome do membro..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Membro</TableHead>
+                <TableHead>Conteúdo</TableHead>
+                <TableHead>Post</TableHead>
+                <TableHead>Data</TableHead>
+                <TableHead className="text-center">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {comments.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8">
+                    <p className="text-muted-foreground">Nenhum comentário encontrado</p>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                comments.map((c) => (
+                  <TableRow key={c.id}>
+                    <TableCell className="font-medium">{c.member?.client_name || "Desconhecido"}</TableCell>
+                    <TableCell>
+                      <p className="text-sm max-w-xs truncate" title={c.content}>
+                        {c.content.length > 200 ? c.content.slice(0, 200) + "…" : c.content}
+                      </p>
+                    </TableCell>
+                    <TableCell>
+                      <p className="text-sm text-muted-foreground truncate max-w-[150px]">{c.post?.title || "—"}</p>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">{c.created_at ? formatDate(c.created_at) : "—"}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-center">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remover comentário</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação é irreversível. Deseja remover este comentário?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => onDelete(c.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Remover
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };
