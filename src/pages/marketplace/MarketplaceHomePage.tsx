@@ -22,6 +22,7 @@ const SecuritySection = lazy(() => import("@/components/marketplace/home/Securit
 const RecentlyViewedSection = lazy(() => import("@/components/marketplace/home/RecentlyViewedSection").then(m => ({ default: m.RecentlyViewedSection })));
 const BestSellersSection = lazy(() => import("@/components/marketplace/home/BestSellersSection").then(m => ({ default: m.BestSellersSection })));
 const BrandSpotlightSection = lazy(() => import("@/components/marketplace/home/BrandSpotlightSection").then(m => ({ default: m.BrandSpotlightSection })));
+const SingleBrandSpotlight = lazy(() => import("@/components/marketplace/home/BrandSpotlightSection").then(m => ({ default: m.SingleBrandSpotlight })));
 const RecentlyAddedSection = lazy(() => import("@/components/marketplace/home/RecentlyAddedSection").then(m => ({ default: m.RecentlyAddedSection })));
 const SellCTASection = lazy(() => import("@/components/marketplace/home/SellCTASection").then(m => ({ default: m.SellCTASection })));
 

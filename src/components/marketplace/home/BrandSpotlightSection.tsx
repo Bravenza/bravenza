@@ -33,119 +33,89 @@ const spotlights: SpotlightConfig[] = [
   },
 ];
 
+interface SingleBrandProps {
+  brand: string;
+}
+
+export const SingleBrandSpotlight = memo(function SingleBrandSpotlight({ brand }: SingleBrandProps) {
+  const navigate = useNavigate();
+  const spotlight = spotlights.find((s) => s.brand.toLowerCase() === brand.toLowerCase());
+  if (!spotlight) return null;
+
+  const { data: brandProducts } = useQuery({
+    queryKey: ["brand-spotlight", brand],
+    queryFn: () => fetchBrandProducts(brand),
+    staleTime: STALE.STATIC,
+    gcTime: GC_TIME.LONG,
+  });
+
+  if (!brandProducts || brandProducts.length === 0) return null;
+
+  return (
+    <section className="py-12 border-t border-border/30">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className={`relative rounded-2xl p-8 mb-8 bg-gradient-to-r ${spotlight.gradient} border border-border/10 overflow-hidden`}>
+          <div className="relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="flex items-center justify-between"
+            >
+              <div>
+                <div className="text-3xl md:text-4xl mb-2">
+                  <BrandLogo name={spotlight.brand} size="lg" />
+                </div>
+                <p className="text-sm text-muted-foreground">{spotlight.tagline}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-sm gap-1 text-muted-foreground hover:text-foreground"
+                onClick={() => navigate(`/app?q=${encodeURIComponent(spotlight.brand)}`)}
+              >
+                Ver tudo <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </motion.div>
+          </div>
+          <div className="absolute -right-4 -bottom-4 text-[100px] md:text-[140px] font-black uppercase opacity-[0.03] leading-none select-none pointer-events-none">
+            {spotlight.brand}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {brandProducts.map((product: any, i: number) => (
+            <motion.div
+              key={product.id}
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.05 }}
+            >
+              <CatalogProductCard product={product} />
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+});
+
+// Keep backward compat export
 interface Props {
   insertAfterIndex?: number;
   children?: React.ReactNode;
 }
 
-async function fetchBrandProducts(brand: string) {
-  // First try products with active offers
-  const { data: withOffers } = await supabase
-    .from("marketplace_products")
-    .select("id, brand, model, colorway, slug, images, lowest_price, total_offers, created_at")
-    .eq("is_active", true)
-    .ilike("brand", brand)
-    .gt("total_offers", 0)
-    .order("total_offers", { ascending: false })
-    .limit(5);
-
-  if (withOffers && withOffers.length >= 3) return withOffers;
-
-  // Fallback: show catalog products regardless of offers
-  const { data } = await supabase
-    .from("marketplace_products")
-    .select("id, brand, model, colorway, slug, images, lowest_price, total_offers, created_at")
-    .eq("is_active", true)
-    .ilike("brand", brand)
-    .order("created_at", { ascending: false })
-    .limit(5);
-  return data || [];
-}
-
 export const BrandSpotlightSection = memo(function BrandSpotlightSection({ insertAfterIndex, children }: Props) {
-  const navigate = useNavigate();
-
-  const { data: brandData } = useQuery({
-    queryKey: ["brand-spotlights"],
-    queryFn: async () => {
-      const results = await Promise.all(
-        spotlights.map(async (s) => ({
-          brand: s.brand,
-          products: await fetchBrandProducts(s.brand),
-        }))
-      );
-      return results;
-    },
-    staleTime: STALE.STATIC,
-    gcTime: GC_TIME.LONG,
-  });
-
-  let renderedCount = -1;
-
   return (
     <>
-      {spotlights.map((spotlight) => {
-        const brandProducts = brandData?.find(
-          (b) => b.brand.toLowerCase() === spotlight.brand.toLowerCase()
-        )?.products || [];
-
-        if (brandProducts.length === 0) return null;
-
-        renderedCount++;
-        const currentIndex = renderedCount;
-
-        return (
-          <span key={spotlight.brand}>
-            <section className="py-12 border-t border-border/30">
-              <div className="max-w-7xl mx-auto px-4">
-                <div className={`relative rounded-2xl p-8 mb-8 bg-gradient-to-r ${spotlight.gradient} border border-border/10 overflow-hidden`}>
-                  <div className="relative z-10">
-                    <motion.div
-                      initial={{ opacity: 0, y: 12 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      className="flex items-center justify-between"
-                    >
-                      <div>
-                        <div className="text-3xl md:text-4xl mb-2">
-                          <BrandLogo name={spotlight.brand} size="lg" />
-                        </div>
-                        <p className="text-sm text-muted-foreground">{spotlight.tagline}</p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-sm gap-1 text-muted-foreground hover:text-foreground"
-                        onClick={() => navigate(`/app?q=${encodeURIComponent(spotlight.brand)}`)}
-                      >
-                        Ver tudo <ArrowRight className="h-3.5 w-3.5" />
-                      </Button>
-                    </motion.div>
-                  </div>
-                  <div className="absolute -right-4 -bottom-4 text-[100px] md:text-[140px] font-black uppercase opacity-[0.03] leading-none select-none pointer-events-none">
-                    {spotlight.brand}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                  {brandProducts.map((product: any, i: number) => (
-                    <motion.div
-                      key={product.id}
-                      initial={{ opacity: 0, y: 12 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.05 }}
-                    >
-                      <CatalogProductCard product={product} />
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </section>
-            {insertAfterIndex === currentIndex && children}
-          </span>
-        );
-      })}
+      {spotlights.map((s, i) => (
+        <span key={s.brand}>
+          <SingleBrandSpotlight brand={s.brand} />
+          {insertAfterIndex === i && children}
+        </span>
+      ))}
     </>
   );
 });
