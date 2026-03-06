@@ -195,10 +195,14 @@ export default function MarketplaceAnalyticsPage() {
           </h1>
           <p className="text-muted-foreground">Visão geral da performance do marketplace</p>
         </div>
-        <Button variant="outline" size="sm" className="gap-2" onClick={() => exportCSV(metrics)}>
-          <Download className="h-4 w-4" /> Exportar CSV
-        </Button>
-      </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => exportFinanceXLSX(rawOrders, false)}>
+            <Download className="h-4 w-4" /> Exportar financeiro
+          </Button>
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => exportFinanceXLSX(rawOrders, true)}>
+            <Download className="h-4 w-4" /> Exportar repasses
+          </Button>
+        </div>
 
       {/* Primary KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
