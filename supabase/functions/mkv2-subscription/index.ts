@@ -94,6 +94,36 @@ Deno.serve(async (req) => {
 
     // ── WEBHOOK (called by MP webhook) ──────────────────────────────
     if (action === "webhook") {
+      // ── HMAC-SHA256 signature verification ──
+      const webhookSecret = Deno.env.get("MERCADO_PAGO_WEBHOOK_SECRET");
+      if (!webhookSecret) {
+        console.error("CRÍTICO: MERCADO_PAGO_WEBHOOK_SECRET não configurado");
+        return new Response("Unauthorized", { status: 401, headers: { ...corsHeaders } });
+      }
+
+      const signature = req.headers.get("x-signature") || "";
+      const requestId = req.headers.get("x-request-id") || "";
+      const parts = signature.split(",");
+      const ts = parts.find((p: string) => p.startsWith("ts="))?.split("=")[1] || "";
+      const v1 = parts.find((p: string) => p.startsWith("v1="))?.split("=")[1] || "";
+      const dataId = body.data?.id || "";
+
+      const toSign = `id:${dataId};request-id:${requestId};ts:${ts};`;
+      const key = await crypto.subtle.importKey(
+        "raw", new TextEncoder().encode(webhookSecret),
+        { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+      );
+      const sigBytes = await crypto.subtle.sign(
+        "HMAC", key, new TextEncoder().encode(toSign)
+      );
+      const expected = Array.from(new Uint8Array(sigBytes))
+        .map((b: number) => b.toString(16).padStart(2, "0")).join("");
+
+      if (expected !== v1) {
+        console.error("Assinatura inválida no webhook de assinatura");
+        return new Response("Unauthorized", { status: 401, headers: { ...corsHeaders } });
+      }
+
       const { type, data } = body;
 
       if (type === "subscription_preapproval") {
