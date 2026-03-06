@@ -89,30 +89,35 @@ const OrderDetail = () => {
 
   const [editData, setEditData] = useState<Partial<Order>>({});
 
+  const adminInvoke = async (action: string, payload: Record<string, any> = {}) => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    if (!accessToken) throw new Error("Sessão expirada. Faça login novamente.");
+
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-orders`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ action, ...payload }),
+      }
+    );
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `Erro ${res.status}`);
+    return data;
+  };
+
   const fetchOrder = async () => {
     try {
-      // Parallel fetch for order and history
-      const [orderRes, historyRes] = await Promise.all([
-        supabase
-          .from("orders")
-          .select("*")
-          .eq("order_id", orderId)
-          .single(),
-        supabase
-          .from("order_history")
-          .select("*")
-          .eq("order_id", orderId)
-          .order("created_at", { ascending: true }),
-      ]);
-
-      if (orderRes.error) throw orderRes.error;
-
-      setOrder(orderRes.data as Order);
-      setEditData(orderRes.data as Order);
-
-      if (!historyRes.error) {
-        setHistory(historyRes.data || []);
-      }
+      const data = await adminInvoke("get-order", { order_id: orderId });
+      setOrder(data.order as Order);
+      setEditData(data.order as Order);
+      setHistory(data.history || []);
     } catch (error) {
       console.error("Error fetching order:", error);
       toast({
@@ -132,49 +137,28 @@ const OrderDetail = () => {
 
   const handleSave = async () => {
     if (!order) return;
-
     setIsSaving(true);
-
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({
-          client_name: editData.client_name,
-          client_email: editData.client_email,
-          client_phone: editData.client_phone,
-          client_address: editData.client_address,
-          product_brand: editData.product_brand,
-          product_model: editData.product_model,
-          product_name: editData.product_name,
-          product_size: editData.product_size,
-          product_color: editData.product_color,
-          product_reference: editData.product_reference,
-          product_link: editData.product_link,
-          product_cost: editData.product_cost,
-          product_price: editData.product_price,
-          shipping_cost: editData.shipping_cost,
-          other_costs: editData.other_costs,
-          sinal_value: editData.sinal_value,
-          sinal_paid: editData.sinal_paid,
-          balance_value: editData.balance_value,
-          balance_paid: editData.balance_paid,
-          international_tracking: editData.international_tracking,
-          international_carrier: editData.international_carrier,
-          national_tracking: editData.national_tracking,
-          national_carrier: editData.national_carrier,
-          internal_notes: editData.internal_notes,
-          inspection_photos: editData.inspection_photos,
-        })
-        .eq("order_id", order.order_id);
+      const updates: Record<string, any> = {};
+      const allowedFields = [
+        "client_name", "client_email", "client_phone", "client_address",
+        "product_brand", "product_model", "product_name", "product_size",
+        "product_color", "product_reference", "product_link",
+        "product_cost", "product_price", "shipping_cost", "other_costs",
+        "sinal_value", "sinal_paid", "balance_value", "balance_paid",
+        "international_tracking", "international_carrier",
+        "national_tracking", "national_carrier", "internal_notes",
+        "inspection_photos",
+      ];
+      for (const key of allowedFields) {
+        if (key in editData) updates[key] = (editData as any)[key];
+      }
 
-      if (error) throw error;
-
-      setOrder({ ...order, ...editData });
+      const data = await adminInvoke("update-order", { order_id: order.order_id, updates });
+      setOrder(data.order as Order);
+      setEditData(data.order as Order);
       setIsEditing(false);
-      toast({
-        title: "Salvo!",
-        description: "Pedido atualizado com sucesso.",
-      });
+      toast({ title: "Salvo!", description: "Pedido atualizado com sucesso." });
     } catch (error) {
       toast({
         title: "Erro",
@@ -188,50 +172,18 @@ const OrderDetail = () => {
 
   const handleStatusChange = async () => {
     if (!order || !newStatus) return;
-
     setIsSaving(true);
-
     try {
-      const updates: Record<string, any> = {
+      await adminInvoke("update-status", {
+        order_id: order.order_id,
         current_status: newStatus,
-      };
-
-      if (newStatus === "ARRIVED_BRAZIL") {
-        const balanceDue = new Date();
-        balanceDue.setHours(balanceDue.getHours() + 24);
-        updates.balance_due_date = balanceDue.toISOString();
-      }
-
-      const { error: updateError } = await supabase
-        .from("orders")
-        .update(updates)
-        .eq("order_id", order.order_id);
-
-      if (updateError) throw updateError;
-
-      const { error: historyError } = await supabase
-        .from("order_history")
-        .insert({
-          order_id: order.order_id,
-          status: newStatus as any,
-          notes: statusNotes || null,
-        });
-
-      if (historyError) throw historyError;
-
-      try {
-        await supabase.from("notifications").insert({
-          type: "order_status_update",
-          target: "client",
-          target_client_cpf: order.client_cpf,
+        notes: statusNotes || null,
+        client_cpf: order.client_cpf,
+        notification: {
           title: `Atualização do pedido ${order.order_id}`,
           message: `Seu pedido foi atualizado para: ${ORDER_STATUS_LABELS[newStatus]}`,
-          reference_type: "order",
-          reference_id: order.order_id,
-        });
-      } catch (notifError) {
-        console.error("Error creating notification:", notifError);
-      }
+        },
+      });
 
       const notifResult = await sendAllStatusNotifications(newStatus, {
         order_id: order.order_id,
@@ -247,7 +199,7 @@ const OrderDetail = () => {
         national_carrier: order.national_carrier,
       });
 
-      setOrder({ ...order, ...updates });
+      setOrder({ ...order, current_status: newStatus });
       setHistory([
         ...history,
         {
@@ -264,7 +216,7 @@ const OrderDetail = () => {
       const notifications = [];
       if (notifResult.email && order.client_email) notifications.push("email");
       if (notifResult.whatsapp && order.client_phone) notifications.push("WhatsApp");
-      
+
       if (notifications.length > 0) {
         toast({
           title: "Status atualizado!",
@@ -294,22 +246,10 @@ const OrderDetail = () => {
 
   const handleDelete = async () => {
     if (!order) return;
-
     setIsSaving(true);
-
     try {
-      const { error } = await supabase
-        .from("orders")
-        .delete()
-        .eq("order_id", order.order_id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Pedido excluído",
-        description: "O pedido foi removido do sistema.",
-      });
-
+      await adminInvoke("delete-order", { order_id: order.order_id });
+      toast({ title: "Pedido excluído", description: "O pedido foi marcado como perdido." });
       navigate("/admin/pedidos");
     } catch (error) {
       toast({
@@ -324,26 +264,14 @@ const OrderDetail = () => {
 
   const handleMarkAsLost = async () => {
     if (!order) return;
-
     setIsSaving(true);
-
     try {
-      const { error: updateError } = await supabase
-        .from("orders")
-        .update({ current_status: "LOST" })
-        .eq("order_id", order.order_id);
-
-      if (updateError) throw updateError;
-
-      const { error: historyError } = await supabase
-        .from("order_history")
-        .insert({
-          order_id: order.order_id,
-          status: "LOST" as any,
-          notes: "Pedido marcado como perdido pelo administrador",
-        });
-
-      if (historyError) throw historyError;
+      await adminInvoke("update-status", {
+        order_id: order.order_id,
+        current_status: "LOST",
+        notes: "Pedido marcado como perdido pelo administrador",
+        client_cpf: order.client_cpf,
+      });
 
       setOrder({ ...order, current_status: "LOST" });
       setHistory([
