@@ -140,8 +140,9 @@ function MarketplaceCheckoutPageInner() {
   }, [step]);
 
   const itemsSubtotal = group?.subtotal ?? 0;
+  const couponDiscount = appliedCoupon?.discount_amount ?? 0;
   const shippingCost = selectedFreight ? parseFloat(selectedFreight.price) : 0;
-  const baseTotalPrice = itemsSubtotal + shippingCost;
+  const baseTotalPrice = itemsSubtotal - couponDiscount + shippingCost;
 
   const interestFreeMax = useMemo(() => {
     if (!group?.items?.length) return 0;
