@@ -195,7 +195,7 @@ export default function ActivityLogsPage() {
                 className="pl-9"
               />
             </div>
-            <Select value={entityFilter} onValueChange={setEntityFilter}>
+            <Select value={entityFilter} onValueChange={(v) => { setEntityFilter(v); setPage(0); }}>
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Filtrar por tipo" />
               </SelectTrigger>
@@ -206,6 +206,19 @@ export default function ActivityLogsPage() {
                 <SelectItem value="budget">Orçamentos</SelectItem>
                 <SelectItem value="user">Usuários</SelectItem>
                 <SelectItem value="system">Sistema</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={adminFilter} onValueChange={(v) => { setAdminFilter(v); setPage(0); }}>
+              <SelectTrigger className="w-full sm:w-56">
+                <SelectValue placeholder="Admin responsável" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os admins</SelectItem>
+                {admins.map((a) => (
+                  <SelectItem key={a.user_id} value={a.user_id}>
+                    {a.full_name} — {a.email}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
