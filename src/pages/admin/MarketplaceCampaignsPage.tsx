@@ -169,7 +169,7 @@ export default function MarketplaceCampaignsPage() {
 
     try {
       // Get target members
-      let query = supabase.from("vault_members").select("client_cpf, client_name, client_email, client_phone, tier").eq("is_active", true);
+      let query = supabase.from("vault_members").select("client_cpf, client_name, client_email, tier").eq("is_active", true);
       
       if (newCampaign.selectedTiers.length > 0) {
         query = query.in("tier", newCampaign.selectedTiers as any);
@@ -238,16 +238,22 @@ export default function MarketplaceCampaignsPage() {
         });
         setSendProgress({ current: 1, total: 1 });
       } else if (channel === "whatsapp") {
-        const withPhone = members.filter(m => m.client_phone);
+        // Get phone numbers from client_profiles
+        const cpfs = members.map(m => m.client_cpf);
+        const { data: profiles } = await supabase
+          .from("client_profiles")
+          .select("cpf, phone, full_name")
+          .in("cpf", cpfs);
+        const withPhone = (profiles || []).filter(p => p.phone);
         setSendProgress({ current: 0, total: withPhone.length });
         for (let i = 0; i < withPhone.length; i += 10) {
           const batch = withPhone.slice(i, i + 10);
-          await Promise.all(batch.map(m =>
+          await Promise.all(batch.map(p =>
             supabase.functions.invoke("send-whatsapp", {
               body: {
                 message_type: "mk_campaign",
-                phone: m.client_phone,
-                client_name: m.client_name,
+                phone: p.phone,
+                client_name: p.full_name,
                 campaign_title: newCampaign.title,
                 campaign_message: newCampaign.message,
               },
