@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
 
 interface SearchResult {
-  type: "order" | "client" | "vault_member";
+  type: "order" | "client" | "vault_member" | "marketplace_order";
   id: string;
   title: string;
   subtitle: string;
