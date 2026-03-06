@@ -201,6 +201,7 @@ export default function MarketplaceAnalyticsPage() {
           </Button>
           <Button variant="outline" size="sm" className="gap-2" onClick={() => exportFinanceXLSX(rawOrders, true)}>
             <Download className="h-4 w-4" /> Exportar repasses
+          </Button>
         </div>
         </div>
       </div>
