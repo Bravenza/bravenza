@@ -347,6 +347,11 @@ export function SellerDashboardV2({ cpf }: { cpf: string }) {
         </Card>
       </motion.div>
 
+      {/* ═══ PRICE HISTORY ═══ */}
+      <motion.div variants={fadeUp}>
+        <SellerPriceCharts cpf={cpf} />
+      </motion.div>
+
       {/* ═══ SELLER REVIEWS ═══ */}
       <SellerReviewsSection cpf={cpf} />
     </motion.div>
