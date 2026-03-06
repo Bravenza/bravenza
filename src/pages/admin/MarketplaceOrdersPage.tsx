@@ -230,7 +230,7 @@ export default function MarketplaceOrdersPage() {
 
       {/* Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="card-premium"><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{orders.length}</p><p className="text-xs text-muted-foreground">Total de pedidos</p></CardContent></Card>
+        <Card className="card-premium"><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{totalOrders}</p><p className="text-xs text-muted-foreground">Total de pedidos</p></CardContent></Card>
         <Card className="card-premium"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-primary">R$ {totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p><p className="text-xs text-muted-foreground">Receita (comissões)</p></CardContent></Card>
         <Card className="card-premium"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-warning">R$ {pendingPayout.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p><p className="text-xs text-muted-foreground">Repasses pendentes</p></CardContent></Card>
         <Card className="card-premium"><CardContent className="p-4 text-center"><p className={`text-2xl font-bold ${disputeCount > 0 ? "text-destructive" : ""}`}>{disputeCount}</p><p className="text-xs text-muted-foreground">Disputas abertas</p></CardContent></Card>
