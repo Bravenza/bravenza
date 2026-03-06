@@ -177,6 +177,21 @@ Deno.serve(async (req) => {
 
       const cleanedCPF = cleanCPF(cpf);
 
+      // Check for too many failed attempts on the most recent token
+      const { data: recentToken } = await supabase
+        .from("client_auth_tokens")
+        .select("id, failed_attempts")
+        .eq("cpf", cleanedCPF)
+        .is("used_at", null)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (recentToken && recentToken.failed_attempts >= 5) {
+        throw new Error("Muitas tentativas incorretas. Solicite um novo código.");
+      }
+
       // Find valid token
       const { data: tokens, error: tokenError } = await supabase
         .from("client_auth_tokens")
@@ -191,6 +206,13 @@ Deno.serve(async (req) => {
       if (tokenError) throw tokenError;
 
       if (!tokens || tokens.length === 0) {
+        // Increment failed_attempts on the most recent active token
+        if (recentToken) {
+          await supabase
+            .from("client_auth_tokens")
+            .update({ failed_attempts: recentToken.failed_attempts + 1 })
+            .eq("id", recentToken.id);
+        }
         throw new Error("Código inválido ou expirado");
       }
 
