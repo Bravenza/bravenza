@@ -3,7 +3,8 @@ import { useOutletContext, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   User, Mail, Phone, MapPin, Shield, Bell, Save, ArrowLeft,
-  Loader2, Check, Box, Heart, Star, Settings2, Camera, AlertCircle, Lock
+  Loader2, Check, Box, Heart, Star, Settings2, Camera, AlertCircle, Lock,
+  Download, Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,6 +13,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PillTabs } from "@/components/ui/pill-tabs";
@@ -115,6 +127,9 @@ export default function MarketplaceProfilePage() {
   const [notifPush, setNotifPush] = useState(true);
   const [savingPrefs, setSavingPrefs] = useState(false);
   const [prefsLoading, setPrefsLoading] = useState(true);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [exportingData, setExportingData] = useState(false);
 
   // Address
   const [address, setAddress] = useState({
@@ -294,6 +309,53 @@ export default function MarketplaceProfilePage() {
 
   const toggleSize = (size: string) => setPreferredSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
   const toggleBrand = (brand: string) => setFavoriteBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
+
+  const handleExportData = async () => {
+    if (!cpf) return;
+    setExportingData(true);
+    try {
+      const sessionToken = localStorage.getItem("client_session_token");
+      if (!sessionToken) throw new Error("Sessão não encontrada");
+      const { data, error } = await supabase.functions.invoke("client-auth", {
+        body: { action: "export-my-data", session_token: sessionToken },
+      });
+      if (error) throw error;
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "meus-dados-bravenza.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Dados exportados com sucesso!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao exportar dados");
+    } finally {
+      setExportingData(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!cpf || deleteConfirmText !== "CONFIRMAR") return;
+    setDeletingAccount(true);
+    try {
+      const sessionToken = localStorage.getItem("client_session_token");
+      if (!sessionToken) throw new Error("Sessão não encontrada");
+      const { data, error } = await supabase.functions.invoke("client-auth", {
+        body: { action: "delete-account", session_token: sessionToken, confirm_text: "CONFIRMAR" },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      localStorage.removeItem("client_session_token");
+      toast.success("Conta excluída com sucesso");
+      navigate("/");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao excluir conta");
+    } finally {
+      setDeletingAccount(false);
+      setDeleteConfirmText("");
+    }
+  };
 
   if (!cpf || cpf === "visitor") {
     return (
@@ -548,6 +610,86 @@ export default function MarketplaceProfilePage() {
                       </div>
                     </>
                   )}
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Privacy & Data */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+              <Card className="border-destructive/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-destructive" /> Privacidade e dados
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Gerencie seus dados pessoais conforme a LGPD
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={handleExportData}
+                      disabled={exportingData}
+                    >
+                      {exportingData ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                      Baixar meus dados
+                    </Button>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" className="gap-2">
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Solicitar exclusão da conta
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="flex items-center gap-2">
+                            <AlertCircle className="h-5 w-5 text-destructive" />
+                            Excluir conta permanentemente
+                          </AlertDialogTitle>
+                          <AlertDialogDescription className="space-y-3">
+                            <p>
+                              <strong className="text-destructive">Esta ação é irreversível.</strong> Seus dados pessoais serão
+                              anonimizados e sua conta de acesso será removida permanentemente.
+                            </p>
+                            <p>
+                              Pedidos existentes serão mantidos por obrigação fiscal, mas sem
+                              informações que identifiquem você.
+                            </p>
+                            <div className="pt-2">
+                              <Label className="text-xs text-muted-foreground">
+                                Digite <strong>CONFIRMAR</strong> para prosseguir
+                              </Label>
+                              <Input
+                                value={deleteConfirmText}
+                                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                placeholder="CONFIRMAR"
+                                className="mt-1"
+                              />
+                            </div>
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel onClick={() => setDeleteConfirmText("")}>
+                            Cancelar
+                          </AlertDialogCancel>
+                          <Button
+                            variant="destructive"
+                            disabled={deleteConfirmText !== "CONFIRMAR" || deletingAccount}
+                            onClick={handleDeleteAccount}
+                            className="gap-2"
+                          >
+                            {deletingAccount ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                            Confirmar Exclusão
+                          </Button>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>

@@ -8,10 +8,11 @@ const corsHeaders = {
 };
 
 interface AuthRequest {
-  action: "request_code" | "verify_code" | "validate_session";
+  action: "request_code" | "verify_code" | "validate_session" | "logout" | "delete-account" | "export-my-data";
   cpf?: string;
   code?: string;
   session_token?: string;
+  confirm_text?: string;
 }
 
 // Generate 6-digit code
@@ -61,7 +62,7 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { action, cpf, code, session_token }: AuthRequest = await req.json();
+    const { action, cpf, code, session_token, confirm_text }: AuthRequest = await req.json();
 
     // REQUEST CODE - Send magic code to client email
     if (action === "request_code") {
@@ -316,6 +317,116 @@ Deno.serve(async (req) => {
         JSON.stringify({ success: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // ── DELETE ACCOUNT (anonymize) ──────────────────────────────────
+    if (action === "delete-account") {
+      if (!session_token) throw new Error("Token de sessão é obrigatório");
+      if (confirm_text !== "CONFIRMAR") throw new Error("Confirmação inválida");
+
+      const { data: sessions } = await supabase
+        .from("client_sessions")
+        .select("cpf")
+        .eq("session_token", session_token)
+        .gt("expires_at", new Date().toISOString())
+        .limit(1);
+
+      if (!sessions || sessions.length === 0) throw new Error("Sessão inválida ou expirada");
+      const clientCpf = sessions[0].cpf;
+
+      // Get user_id from client_profiles for auth deletion
+      const { data: profileData } = await supabase
+        .from("client_profiles")
+        .select("user_id")
+        .eq("cpf", clientCpf)
+        .single();
+
+      // Anonymize profile
+      await supabase
+        .from("client_profiles")
+        .update({
+          full_name: "Usuário Removido",
+          phone: null,
+          avatar_url: null,
+          anonymized: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("cpf", clientCpf);
+
+      // Delete sessions, tokens, notifications, favorites, saved searches
+      await Promise.all([
+        supabase.from("client_sessions").delete().eq("cpf", clientCpf),
+        supabase.from("client_auth_tokens").delete().eq("cpf", clientCpf),
+        supabase.from("notifications").delete().eq("target_client_cpf", clientCpf),
+        supabase.from("marketplace_saved_searches").delete().eq("user_cpf", clientCpf),
+        supabase.from("marketplace_watchlist").delete().eq("user_cpf", clientCpf),
+      ]);
+
+      // Anonymize messages
+      await supabase
+        .from("vault_marketplace_messages")
+        .update({ sender_name: "Usuário Removido" })
+        .eq("sender_cpf", clientCpf);
+
+      // Anonymize orders (keep for fiscal)
+      await supabase
+        .from("vault_marketplace_orders")
+        .update({ buyer_name: "Usuário Removido" })
+        .eq("buyer_cpf", clientCpf);
+
+      // Delete auth account
+      if (profileData?.user_id) {
+        await supabase.auth.admin.deleteUser(profileData.user_id);
+      }
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ── EXPORT MY DATA ──────────────────────────────────────────────
+    if (action === "export-my-data") {
+      if (!session_token) throw new Error("Token de sessão é obrigatório");
+
+      const { data: sessions } = await supabase
+        .from("client_sessions")
+        .select("cpf")
+        .eq("session_token", session_token)
+        .gt("expires_at", new Date().toISOString())
+        .limit(1);
+
+      if (!sessions || sessions.length === 0) throw new Error("Sessão inválida ou expirada");
+      const clientCpf = sessions[0].cpf;
+
+      const [profileRes, ordersRes, reviewsRes, messagesRes, favoritesRes, searchesRes, notifRes] = await Promise.all([
+        supabase.from("client_profiles").select("*").eq("cpf", clientCpf).single(),
+        supabase.from("orders").select("order_id, order_type, current_status, product_name, product_price, created_at").eq("client_cpf", clientCpf),
+        supabase.from("marketplace_product_reviews").select("*").eq("reviewer_cpf", clientCpf),
+        supabase.from("vault_marketplace_messages").select("id, listing_id, order_id, content, created_at").eq("sender_cpf", clientCpf),
+        supabase.from("marketplace_watchlist").select("*").eq("user_cpf", clientCpf),
+        supabase.from("marketplace_saved_searches").select("*").eq("user_cpf", clientCpf),
+        supabase.from("notifications").select("*").eq("target_client_cpf", clientCpf),
+      ]);
+
+      const exportData = {
+        exported_at: new Date().toISOString(),
+        profile: profileRes.data,
+        orders: ordersRes.data || [],
+        reviews: reviewsRes.data || [],
+        messages: messagesRes.data || [],
+        favorites: favoritesRes.data || [],
+        saved_searches: searchesRes.data || [],
+        notifications: notifRes.data || [],
+      };
+
+      return new Response(JSON.stringify(exportData, null, 2), {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+          "Content-Disposition": 'attachment; filename="meus-dados-bravenza.json"',
+        },
+      });
     }
 
     throw new Error("Ação inválida");

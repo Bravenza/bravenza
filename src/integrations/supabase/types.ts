@@ -366,6 +366,7 @@ export type Database = {
       }
       client_profiles: {
         Row: {
+          anonymized: boolean
           avatar_url: string | null
           cpf: string
           created_at: string | null
@@ -376,6 +377,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          anonymized?: boolean
           avatar_url?: string | null
           cpf: string
           created_at?: string | null
@@ -386,6 +388,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          anonymized?: boolean
           avatar_url?: string | null
           cpf?: string
           created_at?: string | null
