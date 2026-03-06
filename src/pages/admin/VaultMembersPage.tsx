@@ -477,8 +477,12 @@ const VaultMembersPage = () => {
                 members.map((member) => (
                   <TableRow key={member.id}>
                     <TableCell>
-                      <div>
-                        <p className="font-medium">{member.client_name}</p>
+                      <Checkbox
+                        checked={selectedIds.has(member.id)}
+                        onCheckedChange={() => toggleSelection(member.id)}
+                      />
+                    </TableCell>
+                    <TableCell>
                         <p className="text-xs text-muted-foreground">
                           {member.client_email || member.client_cpf}
                         </p>
