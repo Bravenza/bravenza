@@ -206,7 +206,7 @@ export default function OrderRequestsPage() {
       if (updateError) throw updateError;
 
       // Send notifications in parallel (fire-and-forget, don't block order creation)
-      const notificationPromises: Promise<unknown>[] = [];
+      const notificationPromises: PromiseLike<unknown>[] = [];
 
       // a. In-app notification
       notificationPromises.push(
