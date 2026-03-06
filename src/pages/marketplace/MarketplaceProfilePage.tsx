@@ -3,7 +3,8 @@ import { useOutletContext, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   User, Mail, Phone, MapPin, Shield, Bell, Save, ArrowLeft,
-  Loader2, Check, Box, Heart, Star, Settings2, Camera, AlertCircle, Lock
+  Loader2, Check, Box, Heart, Star, Settings2, Camera, AlertCircle, Lock,
+  Download, Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
