@@ -366,7 +366,7 @@ function MarketplaceCheckoutPageInner() {
                 transition={{ duration: 0.2 }}
               >
                 {step === "review" && (
-                  <ReviewStep group={group} onNext={() => setStep("address")} />
+                  <ReviewStep group={group} onNext={() => setStep("address")} appliedCoupon={appliedCoupon} onApplyCoupon={setAppliedCoupon} />
                 )}
 
                 {step === "address" && (
