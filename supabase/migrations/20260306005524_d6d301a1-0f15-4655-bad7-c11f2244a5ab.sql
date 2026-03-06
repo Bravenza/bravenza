@@ -1,0 +1,1 @@
+ALTER TABLE public.marketplace_product_comments ADD COLUMN IF NOT EXISTS review_id UUID REFERENCES public.marketplace_product_reviews(id) ON DELETE CASCADE;

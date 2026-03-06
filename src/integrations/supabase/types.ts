@@ -1442,6 +1442,7 @@ export type Database = {
           is_visible: boolean
           parent_id: string | null
           product_id: string
+          review_id: string | null
           user_cpf: string
           user_name: string | null
         }
@@ -1453,6 +1454,7 @@ export type Database = {
           is_visible?: boolean
           parent_id?: string | null
           product_id: string
+          review_id?: string | null
           user_cpf: string
           user_name?: string | null
         }
@@ -1464,6 +1466,7 @@ export type Database = {
           is_visible?: boolean
           parent_id?: string | null
           product_id?: string
+          review_id?: string | null
           user_cpf?: string
           user_name?: string | null
         }
@@ -1487,6 +1490,20 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_product_comments_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_product_reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_product_comments_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_product_reviews_public"
             referencedColumns: ["id"]
           },
         ]
