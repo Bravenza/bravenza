@@ -67,13 +67,23 @@ export default function ActivityLogsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [entityFilter, setEntityFilter] = useState<string>("all");
+  const [adminFilter, setAdminFilter] = useState<string>("all");
+  const [admins, setAdmins] = useState<{ user_id: string; full_name: string; email: string }[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const pageSize = 50;
 
   useEffect(() => {
+    supabase
+      .from("admin_profiles")
+      .select("user_id, full_name, email")
+      .order("full_name")
+      .then(({ data }) => { if (data) setAdmins(data); });
+  }, []);
+
+  useEffect(() => {
     fetchLogs();
-  }, [entityFilter, page]);
+  }, [entityFilter, adminFilter, page]);
 
   const fetchLogs = async () => {
     try {
