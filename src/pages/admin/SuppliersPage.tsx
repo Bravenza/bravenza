@@ -256,15 +256,6 @@ export default function SuppliersPage() {
         confirmText="Excluir"
         isLoading={isDeleting}
         variant="destructive"
-      <ConfirmDialog
-        open={!!deleteId}
-        onOpenChange={(open) => !open && setDeleteId(null)}
-        onConfirm={handleDelete}
-        title="Excluir fornecedor?"
-        description="Esta ação não pode ser desfeita. O fornecedor será removido permanentemente do sistema."
-        confirmText="Excluir"
-        isLoading={isDeleting}
-        variant="destructive"
       />
 
       <SupplierDetailSheet
