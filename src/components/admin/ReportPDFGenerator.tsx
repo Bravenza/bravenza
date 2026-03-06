@@ -87,6 +87,7 @@ export function ReportPDFGenerator() {
             .gte("created_at", start.toISOString())
             .lte("created_at", end.toISOString())
             .in("status", ["completed", "delivered"])
+            .then()
         );
       }
 
