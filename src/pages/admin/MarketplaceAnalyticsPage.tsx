@@ -52,6 +52,7 @@ const STATUS_COLORS = [
 
 export default function MarketplaceAnalyticsPage() {
   const [metrics, setMetrics] = useState<MarketplaceMetrics | null>(null);
+  const [rawOrders, setRawOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
