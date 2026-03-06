@@ -78,6 +78,7 @@ Deno.serve(async (req) => {
       payer_email,
       payer_identification,
       idempotency_key,
+      coupon_code,
     } = body;
 
     // Normalize to array
