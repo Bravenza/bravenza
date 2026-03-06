@@ -4990,6 +4990,7 @@ export type Database = {
           id_selfie_url_encrypted: string | null
           is_active: boolean
           is_business: boolean
+          kyc_docs_deleted: boolean
           kyc_rejection_reason: string | null
           kyc_reviewed_at: string | null
           kyc_reviewed_by: string | null
@@ -5047,6 +5048,7 @@ export type Database = {
           id_selfie_url_encrypted?: string | null
           is_active?: boolean
           is_business?: boolean
+          kyc_docs_deleted?: boolean
           kyc_rejection_reason?: string | null
           kyc_reviewed_at?: string | null
           kyc_reviewed_by?: string | null
@@ -5104,6 +5106,7 @@ export type Database = {
           id_selfie_url_encrypted?: string | null
           is_active?: boolean
           is_business?: boolean
+          kyc_docs_deleted?: boolean
           kyc_rejection_reason?: string | null
           kyc_reviewed_at?: string | null
           kyc_reviewed_by?: string | null

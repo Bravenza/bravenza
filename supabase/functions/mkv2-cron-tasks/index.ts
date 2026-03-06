@@ -245,6 +245,61 @@ Deno.serve(async (req) => {
     results.expired_sessions_deleted = deletedSessions?.length || 0;
     if (deletedSessions?.length) console.log(`[mkv2-cron-tasks] Deleted ${deletedSessions.length} expired sessions`);
 
+    // ── 8. KYC document cleanup (LGPD) ──
+    // Approved > 90 days: delete docs
+    const cutoff90d = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: approvedSellers } = await sb
+      .from("vault_seller_profiles")
+      .select("id, member_id")
+      .eq("kyc_status", "approved")
+      .lt("kyc_approved_at", cutoff90d)
+      .eq("kyc_docs_deleted", false);
+
+    // Rejected > 30 days: delete docs
+    const cutoff30d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: rejectedSellers } = await sb
+      .from("vault_seller_profiles")
+      .select("id, member_id")
+      .eq("kyc_status", "rejected")
+      .lt("updated_at", cutoff30d)
+      .eq("kyc_docs_deleted", false);
+
+    const sellersToClean = [...(approvedSellers || []), ...(rejectedSellers || [])];
+    let kycDocsDeleted = 0;
+
+    for (const seller of sellersToClean) {
+      try {
+        // Get CPF from member
+        const { data: member } = await sb
+          .from("vault_members")
+          .select("client_cpf")
+          .eq("id", seller.member_id)
+          .single();
+
+        if (!member?.client_cpf) continue;
+
+        const cpf = member.client_cpf;
+        const { data: files } = await sb.storage.from("seller-kyc-docs").list(cpf);
+
+        if (files && files.length > 0) {
+          const filePaths = files.map((f: any) => `${cpf}/${f.name}`);
+          await sb.storage.from("seller-kyc-docs").remove(filePaths);
+        }
+
+        await sb
+          .from("vault_seller_profiles")
+          .update({ kyc_docs_deleted: true })
+          .eq("id", seller.id);
+
+        kycDocsDeleted++;
+      } catch (e) {
+        console.error(`[mkv2-cron-tasks] KYC cleanup error for seller ${seller.id}:`, e);
+      }
+    }
+
+    results.kyc_docs_deleted = kycDocsDeleted;
+    if (kycDocsDeleted) console.log(`[mkv2-cron-tasks] Deleted KYC docs for ${kycDocsDeleted} sellers`);
+
     // ── Finalize log ──
     const finishedAt = new Date();
     const durationMs = finishedAt.getTime() - new Date(startedAt).getTime();

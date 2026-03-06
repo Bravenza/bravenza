@@ -1,0 +1,1 @@
+ALTER TABLE public.vault_seller_profiles ADD COLUMN IF NOT EXISTS kyc_docs_deleted BOOLEAN NOT NULL DEFAULT false;
