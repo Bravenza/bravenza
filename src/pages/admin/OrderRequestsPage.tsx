@@ -225,6 +225,69 @@ export default function OrderRequestsPage() {
   const totalCount = rpcData?.total || 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
+  // Bulk helpers
+  const pendingRequests = filteredRequests.filter(r => r.status === "pending");
+  const selectedPendingIds = [...selectedIds].filter(id => pendingRequests.some(r => r.id === id));
+  const allPendingSelected = pendingRequests.length > 0 && pendingRequests.every(r => selectedIds.has(r.id));
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allPendingSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(pendingRequests.map(r => r.id)));
+    }
+  };
+
+  const handleBulkApprove = async () => {
+    const toConvert = pendingRequests.filter(r => selectedIds.has(r.id));
+    if (toConvert.length === 0) return;
+    setBulkProgress({ current: 0, total: toConvert.length });
+    let successCount = 0;
+    for (let i = 0; i < toConvert.length; i++) {
+      setBulkProgress({ current: i + 1, total: toConvert.length });
+      try {
+        await convertToOrderMutation.mutateAsync(toConvert[i]);
+        successCount++;
+      } catch (e) {
+        console.error(`Bulk convert error for ${toConvert[i].id}:`, e);
+      }
+    }
+    setBulkProgress(null);
+    setSelectedIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ["order-requests"] });
+    toast.success(`${successCount} solicitações convertidas com sucesso`);
+  };
+
+  const handleBulkReject = async () => {
+    const toReject = pendingRequests.filter(r => selectedIds.has(r.id));
+    if (toReject.length === 0) return;
+    setBulkProgress({ current: 0, total: toReject.length });
+    let successCount = 0;
+    for (let i = 0; i < toReject.length; i++) {
+      setBulkProgress({ current: i + 1, total: toReject.length });
+      try {
+        await updateStatusMutation.mutateAsync({ id: toReject[i].id, status: "rejected", notes: bulkRejectReason });
+        successCount++;
+      } catch (e) {
+        console.error(`Bulk reject error for ${toReject[i].id}:`, e);
+      }
+    }
+    setBulkProgress(null);
+    setBulkRejectOpen(false);
+    setBulkRejectReason("");
+    setSelectedIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ["order-requests"] });
+    toast.success(`${successCount} solicitações rejeitadas com sucesso`);
+  };
+
   const openDetail = (request: OrderRequest) => {
     setSelectedRequest(request);
     setAdminNotes(request.admin_notes || "");
