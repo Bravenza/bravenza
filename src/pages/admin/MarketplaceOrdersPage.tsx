@@ -99,6 +99,9 @@ export default function MarketplaceOrdersPage() {
   const [refundAmount, setRefundAmount] = useState("");
   const [resolveNotes, setResolveNotes] = useState("");
   const [payoutProofUrl, setPayoutProofUrl] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const pageSize = 50;
 
   // Admin chat
   const [chatOpen, setChatOpen] = useState(false);
@@ -108,12 +111,13 @@ export default function MarketplaceOrdersPage() {
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
-      const params = new URLSearchParams({ action: "admin-orders", status: statusFilter });
+      const params = new URLSearchParams({ action: "admin-orders", status: statusFilter, page: String(page), pageSize: String(pageSize) });
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const h = await getMarketplaceHeaders();
       const res = await fetch(`${ORDERS_URL}?${params}`, { headers: h });
       const data = await res.json();
       setOrders(data.orders || []);
+      setTotalOrders(data.total || 0);
     } catch (err) {
       console.error("Fetch admin orders error:", err);
     } finally {
@@ -121,7 +125,8 @@ export default function MarketplaceOrdersPage() {
     }
   };
 
-  useEffect(() => { fetchOrders(); }, [statusFilter]);
+  useEffect(() => { setPage(1); }, [statusFilter]);
+  useEffect(() => { fetchOrders(); }, [statusFilter, page]);
 
   const updateStatus = async (orderId: string, status: string, extra?: Record<string, any>) => {
     setActionLoading(true);
@@ -211,6 +216,7 @@ export default function MarketplaceOrdersPage() {
   const totalRevenue = orders.filter((o) => ["completed", "delivered"].includes(o.status)).reduce((sum, o) => sum + o.fee_amount, 0);
   const pendingPayout = orders.filter((o) => o.status === "delivered" && !o.payout_released_at).reduce((sum, o) => sum + o.seller_payout, 0);
   const disputeCount = orders.filter((o) => o.dispute_status === "open").length;
+  const totalPages = Math.max(1, Math.ceil(totalOrders / pageSize));
 
   return (
     <div className="space-y-6">
@@ -224,7 +230,7 @@ export default function MarketplaceOrdersPage() {
 
       {/* Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="card-premium"><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{orders.length}</p><p className="text-xs text-muted-foreground">Total de pedidos</p></CardContent></Card>
+        <Card className="card-premium"><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{totalOrders}</p><p className="text-xs text-muted-foreground">Total de pedidos</p></CardContent></Card>
         <Card className="card-premium"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-primary">R$ {totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p><p className="text-xs text-muted-foreground">Receita (comissões)</p></CardContent></Card>
         <Card className="card-premium"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-warning">R$ {pendingPayout.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p><p className="text-xs text-muted-foreground">Repasses pendentes</p></CardContent></Card>
         <Card className="card-premium"><CardContent className="p-4 text-center"><p className={`text-2xl font-bold ${disputeCount > 0 ? "text-destructive" : ""}`}>{disputeCount}</p><p className="text-xs text-muted-foreground">Disputas abertas</p></CardContent></Card>
@@ -282,6 +288,21 @@ export default function MarketplaceOrdersPage() {
               </motion.div>
             );
           })}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!isLoading && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 pt-2">
+          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            Anterior
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Página {page} de {totalPages}
+          </span>
+          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+            Próxima
+          </Button>
         </div>
       )}
 
