@@ -36,6 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   ORDER_STATUS_LABELS,
@@ -45,6 +46,52 @@ import {
   formatCurrency,
 } from "@/lib/constants";
 import { format } from "date-fns";
+
+type SlaStatus = "overdue" | "critical" | "ok" | "none";
+
+function getSlaStatus(date: string | null): SlaStatus {
+  if (!date) return "none";
+  const today = startOfDay(new Date());
+  const due = startOfDay(new Date(date));
+  if (due < today) return "overdue";
+  if (differenceInDays(due, today) <= 3) return "critical";
+  return "ok";
+}
+
+function getSlaStatusLabel(s: SlaStatus): string {
+  switch (s) {
+    case "overdue": return "Vencido";
+    case "critical": return "Crítico";
+    case "ok": return "Ok";
+    case "none": return "Sem prazo";
+  }
+}
+
+function SlaCell({ date }: { date: string | null }) {
+  const status = getSlaStatus(date);
+  if (status === "none") return <span className="text-muted-foreground">—</span>;
+  if (status === "overdue") {
+    return (
+      <div className="flex items-center gap-1.5">
+        <Badge variant="destructive" className="text-[10px] px-1.5 py-0">VENCIDO</Badge>
+        <span className="text-xs text-destructive font-medium">{formatDate(date!)}</span>
+      </div>
+    );
+  }
+  if (status === "critical") {
+    const days = differenceInDays(startOfDay(new Date(date!)), startOfDay(new Date()));
+    return (
+      <div className="flex items-center gap-1.5">
+        <Badge className="bg-amber-500/20 text-amber-600 border-amber-500/30 text-[10px] px-1.5 py-0 hover:bg-amber-500/20">
+          <AlertTriangle className="h-3 w-3 mr-0.5" />
+          {days === 0 ? "Hoje" : `${days}d`}
+        </Badge>
+        <span className="text-xs">{formatDate(date!)}</span>
+      </div>
+    );
+  }
+  return <span className="text-sm">{formatDate(date!)}</span>;
+}
 
 interface Order {
   order_id: string;
