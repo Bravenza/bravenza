@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { marketplaceRequest } from "@/hooks/marketplace/api";
 import { SellerReviewsSection } from "./SellerReviewsSection";
+import { SellerPriceCharts } from "./SellerPriceCharts";
 
 interface DashboardData {
   today_tasks: {
