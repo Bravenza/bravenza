@@ -39,6 +39,33 @@ const InstallmentCalculatorPage = () => {
   const [clientName, setClientName] = useState<string>("");
   const [productName, setProductName] = useState<string>("");
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [installmentRates, setInstallmentRates] = useState<Record<number, number>>(INSTALLMENT_RATES_DEFAULT);
+  const [isLoadingRates, setIsLoadingRates] = useState(true);
+
+  useEffect(() => {
+    async function fetchRates() {
+      try {
+        const { data, error } = await supabase
+          .from("system_settings")
+          .select("value")
+          .eq("key", "installment_rates")
+          .maybeSingle();
+
+        if (error) throw error;
+        if (data?.value) {
+          const parsed = JSON.parse(String(data.value));
+          const mapped: Record<number, number> = {};
+          Object.entries(parsed).forEach(([k, v]) => { mapped[parseInt(k)] = Number(v); });
+          setInstallmentRates(mapped);
+        }
+      } catch (err) {
+        console.error("Error fetching installment rates:", err);
+      } finally {
+        setIsLoadingRates(false);
+      }
+    }
+    fetchRates();
+  }, []);
 
   const numericValue = parseFloat(baseValue.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
 
