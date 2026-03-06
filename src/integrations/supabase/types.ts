@@ -256,6 +256,7 @@ export type Database = {
           cpf: string
           created_at: string
           expires_at: string
+          failed_attempts: number
           id: string
           token: string
           used_at: string | null
@@ -264,6 +265,7 @@ export type Database = {
           cpf: string
           created_at?: string
           expires_at: string
+          failed_attempts?: number
           id?: string
           token: string
           used_at?: string | null
@@ -272,6 +274,7 @@ export type Database = {
           cpf?: string
           created_at?: string
           expires_at?: string
+          failed_attempts?: number
           id?: string
           token?: string
           used_at?: string | null

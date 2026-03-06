@@ -1,0 +1,1 @@
+ALTER TABLE public.client_auth_tokens ADD COLUMN IF NOT EXISTS failed_attempts INTEGER NOT NULL DEFAULT 0;
