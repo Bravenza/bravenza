@@ -33,6 +33,7 @@ interface MarketplaceMetrics {
   openDisputes: number;
   avgOrderValue: number;
   conversionRate: number;
+  totalAdViews: number;
   sellersByTier: { tier: string; count: number }[];
   topProducts: { name: string; brand: string; sales: number; revenue: number }[];
   monthlyGMV: { month: string; gmv: number; revenue: number; orders: number }[];
@@ -83,6 +84,7 @@ export default function MarketplaceAnalyticsPage() {
   const [rawSellers, setRawSellers] = useState<any[]>([]);
   const [rawListings, setRawListings] = useState<any[]>([]);
   const [rawProducts, setRawProducts] = useState<any[]>([]);
+  const [rawListingViews, setRawListingViews] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("current");
   const [customRange, setCustomRange] = useState<DateRange>({ start: startOfMonth(new Date()), end: endOfMonth(new Date()) });
@@ -100,17 +102,19 @@ export default function MarketplaceAnalyticsPage() {
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const headers = await getMarketplaceHeaders();
       
-      const [ordersRes, sellersRes, listingsRes, productsRes] = await Promise.all([
+      const [ordersRes, sellersRes, listingsRes, productsRes, listingViewsRes] = await Promise.all([
         fetch(`${FUNCTION_URL}?action=admin-orders&status=all`, { headers }).then(r => r.json()),
         supabase.from("vault_seller_profiles").select("id, plan_id, total_sales_count, total_sales_value, current_fee_percent, kyc_status"),
         supabase.from("marketplace_offers").select("id, status, price, views_count").eq("status", "active"),
         supabase.from("marketplace_products").select("id, brand, model, total_offers, lowest_price").eq("is_active", true).order("total_offers", { ascending: false }).limit(10),
+        supabase.from("vault_marketplace_listings").select("views_count").eq("status", "active"),
       ]);
 
       setRawOrders(ordersRes.orders || []);
       setRawSellers(sellersRes.data || []);
       setRawListings(listingsRes.data || []);
       setRawProducts(productsRes.data || []);
+      setRawListingViews(listingViewsRes.data || []);
     } catch (err) {
       console.error("Error fetching marketplace data:", err);
     } finally {
@@ -125,14 +129,16 @@ export default function MarketplaceAnalyticsPage() {
       return d >= range.start && d <= range.end;
     });
 
-  const computeMetrics = (orders: any[], sellers: any[], listings: any[], products: any[]): MarketplaceMetrics => {
+  const computeMetrics = (orders: any[], sellers: any[], listings: any[], products: any[], listingViews: any[]): MarketplaceMetrics => {
     const completedOrders = orders.filter((o: any) => ["completed", "delivered", "payout_released"].includes(o.status));
     const gmv = completedOrders.reduce((sum: number, o: any) => sum + (o.sale_price || 0), 0);
     const platformRevenue = completedOrders.reduce((sum: number, o: any) => sum + (o.fee_amount || 0), 0);
     const openDisputes = orders.filter((o: any) => o.dispute_status === "open").length;
     const avgOrderValue = completedOrders.length > 0 ? gmv / completedOrders.length : 0;
-    const totalViews = listings.reduce((sum, l) => sum + (l.views_count || 0), 0);
-    const conversionRate = totalViews > 0 ? ((completedOrders.length / totalViews) * 100) : 0;
+    const totalOfferViews = listings.reduce((sum: number, l: any) => sum + (l.views_count || 0), 0);
+    const totalListingViews = listingViews.reduce((sum: number, l: any) => sum + (l.views_count || 0), 0);
+    const totalAdViews = totalOfferViews + totalListingViews;
+    const conversionRate = totalAdViews > 0 ? ((completedOrders.length / totalAdViews) * 100) : 0;
     const takeRate = gmv > 0 ? ((platformRevenue / gmv) * 100) : 0;
 
     const tierCounts: Record<string, number> = {};
@@ -178,6 +184,7 @@ export default function MarketplaceAnalyticsPage() {
       activeListings: listings.length, takeRate: parseFloat(takeRate.toFixed(1)),
       platformRevenue, openDisputes, avgOrderValue,
       conversionRate: parseFloat(conversionRate.toFixed(2)),
+      totalAdViews,
       sellersByTier, topProducts, monthlyGMV, ordersByStatus, topSellers,
     };
   };
@@ -185,14 +192,14 @@ export default function MarketplaceAnalyticsPage() {
   const metrics = useMemo(() => {
     if (isLoading) return null;
     const filtered = filterByRange(rawOrders, dateRange);
-    return computeMetrics(filtered, rawSellers, rawListings, rawProducts);
-  }, [rawOrders, rawSellers, rawListings, rawProducts, dateRange, isLoading]);
+    return computeMetrics(filtered, rawSellers, rawListings, rawProducts, rawListingViews);
+  }, [rawOrders, rawSellers, rawListings, rawProducts, rawListingViews, dateRange, isLoading]);
 
   const prevMetrics = useMemo(() => {
     if (isLoading || rawOrders.length === 0) return null;
     const filtered = filterByRange(rawOrders, prevRange);
-    return computeMetrics(filtered, rawSellers, rawListings, rawProducts);
-  }, [rawOrders, rawSellers, rawListings, rawProducts, prevRange, isLoading]);
+    return computeMetrics(filtered, rawSellers, rawListings, rawProducts, rawListingViews);
+  }, [rawOrders, rawSellers, rawListings, rawProducts, rawListingViews, prevRange, isLoading]);
 
   const pctChange = (current: number, previous: number) => {
     if (previous === 0) return current > 0 ? 100 : 0;
@@ -312,12 +319,13 @@ export default function MarketplaceAnalyticsPage() {
       </div>
 
       {/* Secondary metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         {[
-          { icon: Users, label: "Vendedores", value: metrics.totalSellers },
-          { icon: Activity, label: "Ativos", value: metrics.activeSellers },
-          { icon: Package, label: "Anúncios ativos", value: metrics.activeListings },
-          { icon: Eye, label: "Conversão", value: `${metrics.conversionRate}%` },
+          { icon: Users, label: "Vendedores", value: String(metrics.totalSellers) },
+          { icon: Activity, label: "Ativos", value: String(metrics.activeSellers) },
+          { icon: Package, label: "Anúncios ativos", value: String(metrics.activeListings) },
+          { icon: Eye, label: "Views de Anúncios", value: metrics.totalAdViews.toLocaleString("pt-BR") },
+          { icon: Eye, label: "Conversão (views → pedidos)", value: metrics.totalAdViews > 0 ? `${metrics.conversionRate}%` : "—", tooltip: "Pedidos completados ÷ visualizações de anúncios ativos" },
           { icon: TrendingUp, label: "Take rate", value: `${metrics.takeRate}%` },
         ].map((item) => (
           <Card key={item.label} className="card-premium">
@@ -325,7 +333,7 @@ export default function MarketplaceAnalyticsPage() {
               <item.icon className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-sm font-bold">{item.value}</p>
-                <p className="text-[10px] text-muted-foreground">{item.label}</p>
+                <p className="text-[10px] text-muted-foreground" title={"tooltip" in item ? item.tooltip : undefined}>{item.label}</p>
               </div>
             </CardContent>
           </Card>
