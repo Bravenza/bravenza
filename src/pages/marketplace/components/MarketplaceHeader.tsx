@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Menu, X, Heart, LogOut, Settings, Store, Package, User } from "lucide-react";
+import { Search, Menu, X, Heart, LogOut, Settings, Store, Package, User, MessageSquare } from "lucide-react";
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { Logo } from "@/components/Logo";
 import { CartDrawer } from "@/components/client/vault/marketplace/CartDrawer";
 import { cn } from "@/lib/utils";
 import { navItems } from "./marketplace-nav";
+import { useUnreadMessages } from "@/hooks/marketplace/useUnreadMessages";
 
 interface MarketplaceHeaderProps {
   profile: { full_name?: string; cpf?: string } | null;
