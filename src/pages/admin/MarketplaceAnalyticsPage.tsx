@@ -1,19 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   BarChart3, DollarSign, TrendingUp, Users, Package, AlertTriangle,
   ShoppingBag, ArrowUpRight, ArrowDownRight, Store, ShieldCheck,
-  Crown, Percent, Activity, Eye, Download, Trophy
+  Crown, Percent, Activity, Eye, Download, Trophy, CalendarIcon
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area, PieChart, Pie, Cell, ComposedChart, Line
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
+import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-order-ops`;
 
