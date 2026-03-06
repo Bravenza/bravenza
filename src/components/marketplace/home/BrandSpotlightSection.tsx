@@ -86,7 +86,7 @@ interface SingleBrandProps {
 
 export const SingleBrandSpotlight = memo(function SingleBrandSpotlight({ brand }: SingleBrandProps) {
   const navigate = useNavigate();
-  const spotlight = spotlights.find((s) => s.brand.toLowerCase() === brand.toLowerCase().replace("asics","ASICS").toLowerCase());
+  const spotlight = spotlights.find((s) => s.brand.toLowerCase() === brand.toLowerCase());
   if (!spotlight) return null;
 
   const { data: brandProducts } = useQuery({
