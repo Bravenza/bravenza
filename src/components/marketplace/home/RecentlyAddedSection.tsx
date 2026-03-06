@@ -19,7 +19,7 @@ export const RecentlyAddedSection = memo(function RecentlyAddedSection() {
         .limit(10);
       return data || [];
     },
-    staleTime: STALE.DYNAMIC,
+    staleTime: 5 * 60 * 1000, // 5 min
     gcTime: GC_TIME.LONG,
   });
 
