@@ -201,10 +201,9 @@ export default function MarketplaceAnalyticsPage() {
           </Button>
           <Button variant="outline" size="sm" className="gap-2" onClick={() => exportFinanceXLSX(rawOrders, true)}>
             <Download className="h-4 w-4" /> Exportar repasses
-          </Button>
         </div>
-
-      {/* Primary KPIs */}
+        </div>
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { icon: DollarSign, label: "GMV Total", value: formatCurrency(metrics.gmv), color: "text-success", bg: "bg-success/10" },
