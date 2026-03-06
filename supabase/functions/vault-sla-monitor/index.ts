@@ -52,6 +52,25 @@ Deno.serve(async (req) => {
       .single();
     const cronLogId = logEntry?.id || null;
 
+    // Fetch SLA config from database, fallback to defaults
+    let SLA_CONFIG = SLA_CONFIG_DEFAULT;
+    try {
+      const { data: slaSettingRow } = await supabase
+        .from("system_settings")
+        .select("value")
+        .eq("key", "vault_sla_config")
+        .single();
+
+      if (slaSettingRow?.value) {
+        const parsed = typeof slaSettingRow.value === 'string'
+          ? JSON.parse(slaSettingRow.value)
+          : slaSettingRow.value;
+        SLA_CONFIG = { ...SLA_CONFIG_DEFAULT, ...parsed };
+      }
+    } catch (e) {
+      console.warn("Failed to load SLA config from DB, using defaults:", e);
+    }
+
     const now = new Date();
     const violations: SLACheckResult[] = [];
     const warnings: SLACheckResult[] = [];

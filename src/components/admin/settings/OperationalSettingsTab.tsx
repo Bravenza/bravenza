@@ -276,9 +276,10 @@ export function OperationalSettingsTab() {
           />
         </CardContent>
       </Card>
+
+      <VaultSlaConfigCard />
     </div>
   );
-}
 
 const DEFAULT_RATES: Record<string, number> = {
   "1": 0, "2": 0.0964, "3": 0.1123, "4": 0.1136,
