@@ -427,10 +427,12 @@ const OrdersList = () => {
             Nenhum pedido encontrado
           </div>
         ) : (
-          orders.map((order) => (
+          orders.map((order) => {
+            const slaStatus = getSlaStatus(order.sla_vault_due_date);
+            return (
             <div
               key={order.order_id}
-              className="card-premium p-4 cursor-pointer active:scale-[0.98] transition-transform"
+              className={`card-premium p-4 cursor-pointer active:scale-[0.98] transition-transform ${slaStatus === "overdue" ? "border-destructive/30 bg-destructive/5" : ""}`}
               onClick={() => navigate(`/admin/pedidos/${order.order_id}`)}
             >
               <div className="flex items-center justify-between mb-2">
