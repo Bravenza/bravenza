@@ -22,6 +22,14 @@ export interface ProductReview {
   created_at: string;
 }
 
+interface SellerReplyData {
+  id: string;
+  review_id: string;
+  content: string;
+  user_name: string | null;
+  created_at: string;
+}
+
 interface ProductReviewsProps {
   productId: string;
   reviews: ProductReview[];
@@ -29,6 +37,7 @@ interface ProductReviewsProps {
   total: number;
   isLoading: boolean;
   canReview?: boolean;
+  sellerReplies?: Record<string, SellerReplyData>;
   onSubmit: (rating: number, comment?: string, details?: {
     product_quality?: number;
     authenticity_score?: number;
