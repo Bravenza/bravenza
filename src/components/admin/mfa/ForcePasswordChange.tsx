@@ -110,7 +110,9 @@ export function ForcePasswordChange({ onComplete, onSignOut }: ForcePasswordChan
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-          </div>
+            <p className="text-xs text-muted-foreground">
+              Mínimo 12 caracteres, com letra maiúscula, número e caractere especial.
+            </p>
 
           <div className="space-y-2">
             <Label htmlFor="confirm-password" className="text-xs tracking-wide uppercase text-muted-foreground">
