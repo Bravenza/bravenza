@@ -139,7 +139,7 @@ export default function SuppliersPage() {
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-primary" />
                         <div>
-                          <p className="font-medium">{supplier.name}</p>
+                          <p className="font-medium cursor-pointer hover:text-primary transition-colors" onClick={() => setDetailSupplier(supplier)}>{supplier.name}</p>
                           {supplier.website && (
                             <a href={supplier.website} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">{supplier.website}</a>
                           )}
