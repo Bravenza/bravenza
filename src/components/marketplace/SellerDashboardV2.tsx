@@ -98,7 +98,7 @@ export function SellerDashboardV2({ cpf }: { cpf: string }) {
   if (!data) return <EmptyDashboard />;
 
   const tasks = data.today_tasks;
-  const taskCount = tasks.pending_shipments.length + tasks.pending_hub_actions.length + tasks.open_disputes.length + tasks.pending_offers_count;
+  const taskCount = tasks.pending_shipments.length + tasks.pending_hub_actions.length + tasks.open_disputes.length + tasks.pending_offers_count + (unread.total > 0 ? 1 : 0);
   const m = data.metrics[period];
   const ls = data.listings_summary;
   const w = data.wallet_summary;
