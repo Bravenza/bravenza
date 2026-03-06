@@ -5,3 +5,4 @@ export { useMarketplaceOrders } from "./useMarketplaceOrders";
 export { useMarketplaceSeller } from "./useMarketplaceSeller";
 export { useSellerPlan } from "./useSellerPlan";
 export type { MarketplacePlan, FeeTier, SellerPlanStatus, SubscriptionInfo } from "./useSellerPlan";
+export { useUnreadMessages } from "./useUnreadMessages";

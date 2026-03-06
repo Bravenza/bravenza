@@ -49,7 +49,7 @@ const ACTION_TO_FUNCTION: Record<string, string> = {
 
   // mkv2-fulfill: Disputes, Chat, Hub PRO, Inspection, Laudo, Auto-payout
   "open-dispute": "mkv2-fulfill", "resolve-dispute": "mkv2-fulfill",
-  "chat-messages": "mkv2-fulfill", "send-message": "mkv2-fulfill",
+  "chat-messages": "mkv2-fulfill", "send-message": "mkv2-fulfill", "unread-count": "mkv2-fulfill",
   "hub-orders": "mkv2-fulfill", "hub-update-status": "mkv2-fulfill", "hub-inspect": "mkv2-fulfill",
   "laudo-lookup": "mkv2-fulfill", "check-auto-payout": "mkv2-fulfill",
 

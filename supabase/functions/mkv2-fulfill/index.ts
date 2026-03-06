@@ -50,6 +50,22 @@ if(mt==="POST"&&a==="hub-inspect"){
 }
 if(mt==="GET"&&a==="laudo-lookup"){const lid=url.searchParams.get("laudo_id");if(!lid)throw new Error("laudo_id obrigatório");const{data:insp}=await sb.from("marketplace_inspections").select(`*,order:vault_marketplace_orders!inner(order_code,buyer_name,sale_price,listing:vault_marketplace_listings(title,brand,model,size,photos,condition))`).eq("laudo_id",lid).eq("result","approved").maybeSingle();if(!insp)return j({found:false});return j({found:true,laudo:{laudo_id:insp.laudo_id,inspected_at:insp.inspected_at,checklist:insp.checklist,notes:insp.notes,inspection_photos:insp.inspection_photos,order_code:insp.order?.order_code,product:{title:insp.order?.listing?.title,brand:insp.order?.listing?.brand,model:insp.order?.listing?.model,size:insp.order?.listing?.size,condition:insp.order?.listing?.condition,photos:insp.order?.listing?.photos}}});}
 if(mt==="GET"&&a==="check-auto-payout"){const{data:orders,error}=await sb.from("vault_marketplace_orders").select("id,order_code,seller_id,seller_payout,protection_ends_at").eq("status","delivered").is("payout_released_at",null).is("dispute_status",null);if(error)throw error;const now=new Date();const el=(orders||[]).filter((o:any)=>o.protection_ends_at&&new Date(o.protection_ends_at)<now);for(const o of el){await sb.from("vault_marketplace_orders").update({status:"payout_pending"}).eq("id",o.id);const{data:sl}=await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf)").eq("id",o.seller_id).single();if(sl?.member?.client_cpf)await nt(sb,"💰 Pagamento liberado!",`Pedido ${o.order_code} — R$ ${o.seller_payout.toFixed(2)} será transferido.`,sl.member.client_cpf,o.id,"marketplace_payout");}return j({checked:(orders||[]).length,eligible:el.length});}
+if(mt==="GET"&&a==="unread-count"){
+  // Get seller profile to find seller_id
+  const{data:sp}=await sb.from("vault_seller_profiles").select("id").eq("member:vault_members!inner(client_cpf)",cpf).maybeSingle();
+  // Fetch all unread messages where sender is not the current user
+  const{data:msgs,error:ue}=await sb.from("vault_marketplace_messages").select("id,listing_id,order_id").neq("sender_cpf",cpf).is("read_at",null);
+  if(ue)throw ue;
+  const byListing:Record<string,number>={};
+  const byOrder:Record<string,number>={};
+  let total=0;
+  for(const m of msgs||[]){
+    total++;
+    if(m.listing_id){byListing[m.listing_id]=(byListing[m.listing_id]||0)+1;}
+    if(m.order_id){byOrder[m.order_id]=(byOrder[m.order_id]||0)+1;}
+  }
+  return j({total,by_listing:byListing,by_order:byOrder});
+}
 return j({error:"Ação não encontrada"},404);
 }catch(e:any){console.error("mkv2-fulfill error:",e);return j({error:e.message},500);}
 });

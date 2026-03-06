@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { marketplaceRequest } from "@/hooks/marketplace/api";
+import { useUnreadMessages } from "@/hooks/marketplace/useUnreadMessages";
 import { SellerReviewsSection } from "./SellerReviewsSection";
 import { SellerPriceCharts } from "./SellerPriceCharts";
 
@@ -78,7 +79,7 @@ export function SellerDashboardV2({ cpf }: { cpf: string }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<"d7" | "d30" | "d90">("d30");
-
+  const { unread } = useUnreadMessages(cpf);
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -97,7 +98,7 @@ export function SellerDashboardV2({ cpf }: { cpf: string }) {
   if (!data) return <EmptyDashboard />;
 
   const tasks = data.today_tasks;
-  const taskCount = tasks.pending_shipments.length + tasks.pending_hub_actions.length + tasks.open_disputes.length + tasks.pending_offers_count;
+  const taskCount = tasks.pending_shipments.length + tasks.pending_hub_actions.length + tasks.open_disputes.length + tasks.pending_offers_count + (unread.total > 0 ? 1 : 0);
   const m = data.metrics[period];
   const ls = data.listings_summary;
   const w = data.wallet_summary;
@@ -192,6 +193,9 @@ export function SellerDashboardV2({ cpf }: { cpf: string }) {
                 )}
                 {tasks.pending_offers_count > 0 && (
                   <TaskRow icon={MessageSquare} color="text-primary" bg="bg-primary/10" label={`${tasks.pending_offers_count} oferta${tasks.pending_offers_count > 1 ? "s" : ""} pendente${tasks.pending_offers_count > 1 ? "s" : ""}`} onClick={() => navigate("/app/loja")} />
+                )}
+                {unread.total > 0 && (
+                  <TaskRow icon={MessageSquare} color="text-blue-500" bg="bg-blue-500/10" label={`${unread.total} mensagem${unread.total > 1 ? "ns" : ""} não lida${unread.total > 1 ? "s" : ""}`} sublabel={`${Object.keys(unread.by_listing).length} anúncio${Object.keys(unread.by_listing).length !== 1 ? "s" : ""} com perguntas`} onClick={() => navigate("/app/loja")} />
                 )}
               </div>
             )}

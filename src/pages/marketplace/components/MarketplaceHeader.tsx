@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Menu, X, Heart, LogOut, Settings, Store, Package, User } from "lucide-react";
+import { Search, Menu, X, Heart, LogOut, Settings, Store, Package, User, MessageSquare } from "lucide-react";
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { Logo } from "@/components/Logo";
 import { CartDrawer } from "@/components/client/vault/marketplace/CartDrawer";
 import { cn } from "@/lib/utils";
 import { navItems } from "./marketplace-nav";
+import { useUnreadMessages } from "@/hooks/marketplace/useUnreadMessages";
 
 interface MarketplaceHeaderProps {
   profile: { full_name?: string; cpf?: string } | null;
@@ -28,6 +29,7 @@ export function MarketplaceHeader({ profile, signOut }: MarketplaceHeaderProps) 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  const { unread } = useUnreadMessages(profile?.cpf || null);
 
   const initials = profile?.full_name
     ? profile.full_name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase()
@@ -106,6 +108,16 @@ export function MarketplaceHeader({ profile, signOut }: MarketplaceHeaderProps) 
                     </Link>
                   </Button>
                   <CartDrawer />
+                  {unread.total > 0 && (
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-secondary/60 transition-colors active:scale-95 relative" asChild>
+                      <Link to="/app/loja" aria-label="Mensagens não lidas">
+                        <MessageSquare className="h-4 w-4" />
+                        <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold leading-none">
+                          {unread.total > 99 ? "99+" : unread.total}
+                        </span>
+                      </Link>
+                    </Button>
+                  )}
 
                   {/* User Dropdown */}
                   <DropdownMenu>
