@@ -125,7 +125,7 @@ export const DropsCountdownSection = memo(function DropsCountdownSection() {
   if (loading) return null;
 
   return (
-    <section className="py-16 md:py-24 relative overflow-hidden">
+    <section className="py-12 relative overflow-hidden">
       {/* === URGENT BACKGROUND === */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-destructive/[0.04] to-background" />
       

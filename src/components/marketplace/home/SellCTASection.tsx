@@ -21,7 +21,7 @@ export const SellCTASection = memo(function SellCTASection() {
   const navigate = useNavigate();
 
   return (
-    <section className="py-16 md:py-24 relative overflow-hidden">
+    <section className="py-12 relative overflow-hidden">
       {/* Dramatic background */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/12 via-background to-primary/6" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.18),transparent_55%)]" />
