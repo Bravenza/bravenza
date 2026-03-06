@@ -105,17 +105,57 @@ export default function MarketplaceOrdersPage() {
   const [payoutProofUrl, setPayoutProofUrl] = useState("");
   const [page, setPage] = useState(1);
   const [totalOrders, setTotalOrders] = useState(0);
-  const pageSize = 50;
+  const pageSize = 20;
+
+  // Search & date filters
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [datePreset, setDatePreset] = useState("all");
+  const [customFrom, setCustomFrom] = useState<Date | undefined>();
+  const [customTo, setCustomTo] = useState<Date | undefined>();
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Admin chat
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatMsg, setChatMsg] = useState("");
 
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchInput(value);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      setSearchQuery(value);
+      setPage(1);
+    }, 400);
+  }, []);
+
+  const getDateRange = useCallback((): { from?: string; to?: string } => {
+    const now = new Date();
+    switch (datePreset) {
+      case "today":
+        return { from: startOfDay(now).toISOString(), to: endOfDay(now).toISOString() };
+      case "7days":
+        return { from: startOfDay(subDays(now, 7)).toISOString(), to: endOfDay(now).toISOString() };
+      case "30days":
+        return { from: startOfDay(subDays(now, 30)).toISOString(), to: endOfDay(now).toISOString() };
+      case "custom":
+        return {
+          from: customFrom ? startOfDay(customFrom).toISOString() : undefined,
+          to: customTo ? endOfDay(customTo).toISOString() : undefined,
+        };
+      default:
+        return {};
+    }
+  }, [datePreset, customFrom, customTo]);
+
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams({ action: "admin-orders", status: statusFilter, page: String(page), pageSize: String(pageSize) });
+      if (searchQuery) params.set("search", searchQuery);
+      const { from, to } = getDateRange();
+      if (from) params.set("date_from", from);
+      if (to) params.set("date_to", to);
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const h = await getMarketplaceHeaders();
       const res = await fetch(`${ORDERS_URL}?${params}`, { headers: h });
@@ -129,8 +169,8 @@ export default function MarketplaceOrdersPage() {
     }
   };
 
-  useEffect(() => { setPage(1); }, [statusFilter]);
-  useEffect(() => { fetchOrders(); }, [statusFilter, page]);
+  useEffect(() => { setPage(1); }, [statusFilter, datePreset, customFrom, customTo]);
+  useEffect(() => { fetchOrders(); }, [statusFilter, page, searchQuery, datePreset, customFrom, customTo]);
 
   const updateStatus = async (orderId: string, status: string, extra?: Record<string, any>) => {
     setActionLoading(true);
