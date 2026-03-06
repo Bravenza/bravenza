@@ -92,7 +92,12 @@ export default function MarketplaceCampaignsPage() {
   }, []);
 
   useEffect(() => {
-    estimateReach();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setIsEstimating(true);
+    debounceRef.current = setTimeout(() => {
+      estimateReach();
+    }, 500);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [newCampaign.segment, newCampaign.selectedTiers]);
 
   const fetchCampaigns = async () => {
