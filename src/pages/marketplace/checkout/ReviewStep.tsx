@@ -33,7 +33,8 @@ export function ReviewStep({ group, onNext, appliedCoupon, onApplyCoupon }: Revi
 
     try {
       const productIds = group.items
-        .map(i => i.offer?.product_id)
+        .map(i => i.offer?.product?.slug ? undefined : i.offer_id) // use offer_id as fallback
+        .concat(group.items.map(i => (i.offer as any)?.product_id).filter(Boolean))
         .filter(Boolean);
 
       const headers = await getMarketplaceHeaders();
