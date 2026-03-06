@@ -1,4 +1,4 @@
-import { ShoppingCart, Truck, ShieldCheck, Lock } from "lucide-react";
+import { ShoppingCart, Truck, ShieldCheck, Lock, Tag } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import type { CartGroup } from "@/hooks/useMarketplaceCart";
 import { fmt, type Step } from "./types";
@@ -11,6 +11,7 @@ interface OrderSummaryProps {
   cardInterestRate: number;
   displayTotalPrice: number;
   baseTotalPrice: number;
+  couponDiscount?: number;
 }
 
 export function OrderSummaryDesktop({ group, step, itemsSubtotal, shippingCost, cardInterestRate, displayTotalPrice, baseTotalPrice }: OrderSummaryProps) {

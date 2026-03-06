@@ -109,7 +109,14 @@ export function SuccessStep({ paymentMethod, paymentStatus, orderCodes, group, p
         </div>
       )}
 
-      <div className="space-y-2">
+      {appliedCoupon && appliedCoupon.discount_amount > 0 && (
+        <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/20 rounded-xl">
+          <Tag className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium">Cupom {appliedCoupon.code}</span>
+          <span className="ml-auto text-sm font-bold text-primary">-R$ {fmt(appliedCoupon.discount_amount)}</span>
+        </div>
+      )}
+
         {orderCodes.map((code, i) => (
           <div key={i} className="flex items-center justify-between p-3 bg-secondary/30 rounded-xl border border-border/10">
             <div className="flex items-center gap-2.5">
