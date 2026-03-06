@@ -148,6 +148,10 @@ export default function SettingsPage() {
             <Settings className="h-4 w-4" />
             Geral
           </TabsTrigger>
+          <TabsTrigger value="operacional" className="flex items-center gap-2 whitespace-nowrap">
+            <Settings2 className="h-4 w-4" />
+            Operacional
+          </TabsTrigger>
           <TabsTrigger value="seguranca" className="flex items-center gap-2 whitespace-nowrap">
             <ShieldCheck className="h-4 w-4" />
             Segurança
