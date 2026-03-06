@@ -183,12 +183,14 @@ export function GlobalSearch() {
     order: <Package className="h-4 w-4 text-primary" />,
     client: <Users className="h-4 w-4 text-info" />,
     vault_member: <Crown className="h-4 w-4 text-warning" />,
+    marketplace_order: <Store className="h-4 w-4 text-accent-foreground" />,
   };
 
   const typeLabels = {
     order: "Pedido",
     client: "Cliente",
     vault_member: "Vault",
+    marketplace_order: "Marketplace",
   };
 
   return (
