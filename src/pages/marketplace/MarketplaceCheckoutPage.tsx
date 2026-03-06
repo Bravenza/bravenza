@@ -441,6 +441,7 @@ function MarketplaceCheckoutPageInner() {
             cardInterestRate={cardInterestRate}
             displayTotalPrice={displayTotalPrice}
             baseTotalPrice={baseTotalPrice}
+            couponDiscount={couponDiscount}
           />
         </div>
 
