@@ -205,14 +205,60 @@ export default function OrderRequestsPage() {
 
       if (updateError) throw updateError;
 
+      // Send notifications in parallel (fire-and-forget, don't block order creation)
+      const notificationPromises: PromiseLike<unknown>[] = [];
+
+      // a. In-app notification
+      notificationPromises.push(
+        supabase.from("notifications").insert({
+          type: "order_status_update" as const,
+          target: "client" as const,
+          target_client_cpf: cleanCPF(request.client_cpf),
+          title: "Sua solicitação foi aceita! 🎉",
+          message: `Seu pedido ${orderId} foi criado e já está em processamento. Acompanhe pelo app.`,
+          reference_type: "order",
+          reference_id: orderId,
+        }).then(({ error: e }) => { if (e) console.error("In-app notification error:", e); })
+      );
+
+      // b. Email confirmation
+      notificationPromises.push(
+        supabase.functions.invoke("send-order-email", {
+          body: {
+            type: "order_created",
+            order_id: orderId,
+            client_name: request.client_name,
+            client_email: request.client_email,
+            product_name: productName,
+          },
+        }).catch((err: unknown) => { console.error("Email notification error:", err); })
+      );
+
+      // c. WhatsApp (if phone provided)
+      if (request.client_phone) {
+        notificationPromises.push(
+          supabase.functions.invoke("send-whatsapp", {
+            body: {
+              type: "order_created",
+              recipient_phone: request.client_phone.replace(/\D/g, ""),
+              recipient_name: request.client_name,
+              order_id: orderId,
+              product_name: productName,
+            },
+          }).catch((err: unknown) => { console.error("WhatsApp notification error:", err); })
+        );
+      }
+
+      // Await all notifications but don't throw on failure
+      await Promise.allSettled(notificationPromises);
+
       return orderId;
     },
     onSuccess: (orderId) => {
       queryClient.invalidateQueries({ queryKey: ["order-requests"] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
-      toast.success("Pedido criado com sucesso!");
+      toast.success("Pedido criado! Cliente notificado por email.");
       setIsDetailOpen(false);
-      // Navigate to the new order to set the price
       navigate(`/admin/pedidos/${orderId}`);
     },
     onError: (error: any) => {
