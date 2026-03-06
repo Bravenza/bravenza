@@ -82,11 +82,15 @@ const statusLabels: Record<string, string> = {
   BANNED: "Banido",
 };
 
+const PAGE_SIZE = 20;
+
 const VaultMembersPage = () => {
   const [members, setMembers] = useState<VaultMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [tierFilter, setTierFilter] = useState<string>("all");
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
   const [selectedMember, setSelectedMember] = useState<VaultMember | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -95,114 +99,39 @@ const VaultMembersPage = () => {
     notes_internal: "",
   });
 
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("vault_members")
-        .select("*")
+        .select("*", { count: "exact" })
         .order("created_at", { ascending: false });
 
+      if (searchTerm) {
+        query = query.or(`client_name.ilike.%${searchTerm}%,client_email.ilike.%${searchTerm}%,client_cpf.ilike.%${searchTerm}%`);
+      }
+
+      if (tierFilter !== "all") {
+        query = query.eq("tier", tierFilter);
+      }
+
+      query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+      const { data, error, count } = await query;
       if (error) throw error;
       setMembers(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error("Error fetching members:", error);
       toast.error("Erro ao carregar membros");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchTerm, tierFilter, page]);
 
-  useEffect(() => {
-    fetchMembers();
-  }, []);
+  useEffect(() => { fetchMembers(); }, [fetchMembers]);
 
-  const handleEditMember = (member: VaultMember) => {
-    setSelectedMember(member);
-    setEditForm({
-      tier: member.tier,
-      status: member.status || "ACTIVE",
-      notes_internal: member.notes_internal || "",
-    });
-    setIsEditOpen(true);
-  };
-
-  const handleSaveMember = async () => {
-    if (!selectedMember) return;
-
-    try {
-      const { error } = await supabase
-        .from("vault_members")
-        .update({
-          tier: editForm.tier,
-          status: editForm.status,
-          notes_internal: editForm.notes_internal,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", selectedMember.id);
-
-      if (error) throw error;
-
-      toast.success("Membro atualizado com sucesso");
-      setIsEditOpen(false);
-      fetchMembers();
-    } catch (error) {
-      console.error("Error updating member:", error);
-      toast.error("Erro ao atualizar membro");
-    }
-  };
-
-  const handleUpgradeToBlack = async (member: VaultMember) => {
-    try {
-      const { error } = await supabase
-        .from("vault_members")
-        .update({
-          tier: "elite" as VaultTier,
-          tier_upgraded_at: new Date().toISOString(),
-          flags_eligible_for_black: false,
-        })
-        .eq("id", member.id);
-
-      if (error) throw error;
-
-      toast.success(`${member.client_name} promovido para Vault Black!`);
-      fetchMembers();
-    } catch (error) {
-      console.error("Error upgrading member:", error);
-      toast.error("Erro ao promover membro");
-    }
-  };
-
-  const handleRemoveReviewMode = async (member: VaultMember) => {
-    try {
-      const { error } = await supabase
-        .from("vault_members")
-        .update({
-          flags_review_mode_until: null,
-          flags_consecutive_declines: 0,
-        })
-        .eq("id", member.id);
-
-      if (error) throw error;
-
-      toast.success("Modo revisão removido");
-      fetchMembers();
-    } catch (error) {
-      console.error("Error removing review mode:", error);
-      toast.error("Erro ao remover modo revisão");
-    }
-  };
-
-  const filteredMembers = members.filter((member) => {
-    const matchesSearch =
-      member.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.client_cpf.includes(searchTerm) ||
-      member.client_email?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesTier = tierFilter === "all" || member.tier === tierFilter;
-
-    return matchesSearch && matchesTier;
-  });
+  useEffect(() => { setPage(0); }, [searchTerm, tierFilter]);
 
   const stats = {
     total: members.length,
