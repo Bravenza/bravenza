@@ -6,6 +6,7 @@ const nt=async(sb:any,t:string,m:string,cpf:string,rid?:string,rt?:string)=>{try
 const ge=async(sb:any,cpf:string)=>{const{data}=await sb.from("vault_members").select("client_name,client_email,client_phone").eq("client_cpf",cpf).maybeSingle();if(!data?.client_email)return null;return{name:data.client_name,email:data.client_email,phone:data.client_phone||undefined};};
 const em=(type:string,data:Record<string,any>)=>{try{const u=Deno.env.get("SUPABASE_URL"),k=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");if(u&&k)fetch(`${u}/functions/v1/send-marketplace-email`,{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${k}`},body:JSON.stringify({type,...data})}).catch(()=>{});}catch(_){}};
 const wa=(type:string,data:Record<string,any>)=>{try{const u=Deno.env.get("SUPABASE_URL"),k=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");if(u&&k)fetch(`${u}/functions/v1/send-whatsapp`,{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${k}`},body:JSON.stringify({message_type:type,...data})}).catch(()=>{});}catch(_){}};
+const refundMP=async(mpPaymentId:string,orderId:string)=>{const tk=Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");if(!tk){console.error(`[mkv2-order-ops] MERCADO_PAGO_ACCESS_TOKEN not set. Cannot refund order ${orderId}.`);return;}try{const r=await fetch(`https://api.mercadopago.com/v1/payments/${mpPaymentId}/refunds`,{method:"POST",headers:{"Authorization":`Bearer ${tk}`,"X-Idempotency-Key":`refund-${orderId}`,"Content-Type":"application/json"},body:JSON.stringify({})});if(!r.ok){const t=await r.text();console.error(`[mkv2-order-ops] MP refund failed order=${orderId} payment=${mpPaymentId}: ${r.status} ${t}`);}else{console.log(`[mkv2-order-ops] MP refund initiated order=${orderId} payment=${mpPaymentId}`);}}catch(e){console.error(`[mkv2-order-ops] MP refund exception order=${orderId}:`,e);}};
 Deno.serve(async(req)=>{
 if(req.method==="OPTIONS")return new Response(null,{headers:H});
 const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;
@@ -30,7 +31,7 @@ if(mt==="PUT"&&a==="update-order-status"){
   const u:any={status:b.status};
   if(b.status==="shipped"){u.shipped_at=new Date().toISOString();u.tracking_code=b.tracking_code||null;}
   else if(b.status==="delivered")u.delivered_at=new Date().toISOString();
-  else if(b.status==="cancelled"){u.cancelled_at=new Date().toISOString();if(b.listing_id)await sb.from("vault_marketplace_listings").update({status:"active"}).eq("id",b.listing_id);}
+  else if(b.status==="cancelled"){u.cancelled_at=new Date().toISOString();if(b.listing_id)await sb.from("vault_marketplace_listings").update({status:"active"}).eq("id",b.listing_id);const{data:rfd}=await sb.from("vault_marketplace_orders").select("mp_payment_id,status").eq("id",b.order_id).single();if(rfd?.mp_payment_id&&["paid","in_transit_to_hub","shipped"].includes(rfd.status))await refundMP(rfd.mp_payment_id,b.order_id);}
   else if(b.status==="payout_released"){
     u.payout_released_at=new Date().toISOString();u.payout_method=b.payout_method||"pix";u.payout_proof_url=b.payout_proof_url||null;
     const{data:od}=await sb.from("vault_marketplace_orders").select("listing_id,sale_price,seller_id").eq("id",b.order_id).single();
@@ -51,10 +52,11 @@ if(mt==="PUT"&&a==="update-order-status"){
 if(mt==="GET"&&a==="admin-orders"){const st=url.searchParams.get("status");let q=sb.from("vault_marketplace_orders").select(`*,listing:vault_marketplace_listings(title,brand,model,size,photos,condition)`).order("created_at",{ascending:false});if(st&&st!=="all")q=q.eq("status",st);const{data,error}=await q;if(error)throw error;return j({orders:data||[]});}
 if(mt==="GET"&&a==="admin-disputes"){const{data,error}=await sb.from("vault_marketplace_orders").select(`*,listing:vault_marketplace_listings(title,brand,model,size,photos,condition)`).not("dispute_status","is",null).order("dispute_opened_at",{ascending:false});if(error)throw error;return j({disputes:data||[]});}
 if(mt==="PUT"&&a==="cancel-buyer-order"){
-  const b=await req.json();const{data:od,error:fe}=await sb.from("vault_marketplace_orders").select("id,status,cancellation_window_ends_at,listing_id,order_code,seller_id,sale_price").eq("id",b.order_id).eq("buyer_cpf",cpf).single();
+  const b=await req.json();const{data:od,error:fe}=await sb.from("vault_marketplace_orders").select("id,status,cancellation_window_ends_at,listing_id,order_code,seller_id,sale_price,mp_payment_id").eq("id",b.order_id).eq("buyer_cpf",cpf).single();
   if(fe||!od)throw new Error("Pedido não encontrado");if(od.status!=="paid")throw new Error("Cancelamento só para pedidos pagos");
   if(!od.cancellation_window_ends_at||new Date(od.cancellation_window_ends_at)<new Date())throw new Error("Janela de cancelamento expirada");
   await sb.from("vault_marketplace_orders").update({status:"cancelled",cancelled_at:new Date().toISOString(),cancellation_reason:b.reason||"Cancelado pelo comprador"}).eq("id",od.id);
+  if(od.mp_payment_id)await refundMP(od.mp_payment_id,od.id);
   if(od.listing_id)await sb.from("vault_marketplace_listings").update({status:"active"}).eq("id",od.listing_id);
   const{data:si}=await sb.from("vault_seller_profiles").select("member:vault_members!inner(client_cpf,client_name)").eq("id",od.seller_id).single();
   if(si?.member?.client_cpf){await nt(sb,"❌ Compra cancelada",`Pedido ${od.order_code} cancelado pelo comprador.`,si.member.client_cpf,od.id,"marketplace_order");const se=await ge(sb,si.member.client_cpf);if(se)em("mk_order_cancelled",{recipient_name:se.name,recipient_email:se.email,order_code:od.order_code,product_name:`Pedido ${od.order_code}`,cancel_reason:b.reason||"Cancelado pelo comprador"});}
