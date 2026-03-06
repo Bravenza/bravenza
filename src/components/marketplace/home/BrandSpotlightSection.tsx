@@ -33,6 +33,28 @@ const spotlights: SpotlightConfig[] = [
   },
 ];
 
+async function fetchBrandProducts(brand: string) {
+  const { data: withOffers } = await supabase
+    .from("marketplace_products")
+    .select("id, brand, model, colorway, slug, images, lowest_price, total_offers, created_at")
+    .eq("is_active", true)
+    .ilike("brand", brand)
+    .gt("total_offers", 0)
+    .order("total_offers", { ascending: false })
+    .limit(5);
+
+  if (withOffers && withOffers.length >= 3) return withOffers;
+
+  const { data } = await supabase
+    .from("marketplace_products")
+    .select("id, brand, model, colorway, slug, images, lowest_price, total_offers, created_at")
+    .eq("is_active", true)
+    .ilike("brand", brand)
+    .order("created_at", { ascending: false })
+    .limit(5);
+  return data || [];
+}
+
 interface SingleBrandProps {
   brand: string;
 }
