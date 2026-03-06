@@ -81,8 +81,10 @@ export default function MarketplaceCampaignsPage() {
     selectedTiers: [] as string[],
   });
   const [estimatedReach, setEstimatedReach] = useState(0);
+  const [isEstimating, setIsEstimating] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [sendProgress, setSendProgress] = useState({ current: 0, total: 0 });
 
   useEffect(() => {
