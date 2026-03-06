@@ -127,6 +127,9 @@ export default function MarketplaceProfilePage() {
   const [notifPush, setNotifPush] = useState(true);
   const [savingPrefs, setSavingPrefs] = useState(false);
   const [prefsLoading, setPrefsLoading] = useState(true);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [exportingData, setExportingData] = useState(false);
 
   // Address
   const [address, setAddress] = useState({
