@@ -101,17 +101,19 @@ export default function MarketplaceAnalyticsPage() {
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const headers = await getMarketplaceHeaders();
       
-      const [ordersRes, sellersRes, listingsRes, productsRes] = await Promise.all([
+      const [ordersRes, sellersRes, listingsRes, productsRes, listingViewsRes] = await Promise.all([
         fetch(`${FUNCTION_URL}?action=admin-orders&status=all`, { headers }).then(r => r.json()),
         supabase.from("vault_seller_profiles").select("id, plan_id, total_sales_count, total_sales_value, current_fee_percent, kyc_status"),
         supabase.from("marketplace_offers").select("id, status, price, views_count").eq("status", "active"),
         supabase.from("marketplace_products").select("id, brand, model, total_offers, lowest_price").eq("is_active", true).order("total_offers", { ascending: false }).limit(10),
+        supabase.from("vault_marketplace_listings").select("views_count").eq("status", "active"),
       ]);
 
       setRawOrders(ordersRes.orders || []);
       setRawSellers(sellersRes.data || []);
       setRawListings(listingsRes.data || []);
       setRawProducts(productsRes.data || []);
+      setRawListingViews(listingViewsRes.data || []);
     } catch (err) {
       console.error("Error fetching marketplace data:", err);
     } finally {
