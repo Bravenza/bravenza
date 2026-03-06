@@ -63,7 +63,7 @@ export function GlobalSearch() {
       const q = searchQuery.trim();
 
       // Search orders by ID or client name
-      const [ordersRes, membersRes] = await Promise.all([
+      const [ordersRes, membersRes, mkOrdersRes] = await Promise.all([
         supabase
           .from("orders")
           .select("order_id, client_name, client_cpf, current_status, product_name")
@@ -73,6 +73,11 @@ export function GlobalSearch() {
           .from("vault_members")
           .select("id, client_name, client_cpf, client_email, tier")
           .or(`client_name.ilike.%${q}%,client_cpf.ilike.%${q}%,client_email.ilike.%${q}%`)
+          .limit(5),
+        supabase
+          .from("vault_marketplace_orders")
+          .select("id, order_code, buyer_name, status, listing:vault_marketplace_listings(title)")
+          .or(`order_code.ilike.%${q}%,buyer_name.ilike.%${q}%`)
           .limit(5),
       ]);
 
