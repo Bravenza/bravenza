@@ -15,7 +15,7 @@ import { useCartAbandonment } from "@/hooks/useCartAbandonment";
 
 import { CheckoutHeader } from "./checkout/CheckoutHeader";
 import { CheckoutStepper } from "./checkout/CheckoutStepper";
-import { ReviewStep } from "./checkout/ReviewStep";
+import { ReviewStep, type AppliedCoupon } from "./checkout/ReviewStep";
 import { AddressStep } from "./checkout/AddressStep";
 import { FreightStep } from "./checkout/FreightStep";
 import { PaymentStep } from "./checkout/PaymentStep";
