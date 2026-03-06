@@ -36,6 +36,8 @@ import {
   Star,
   Shield,
   Eye,
+  ChevronLeft,
+  ChevronRight,
   Edit,
   RefreshCw,
   TrendingUp,
