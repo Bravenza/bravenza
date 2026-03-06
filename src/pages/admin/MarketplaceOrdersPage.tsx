@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Store, Package, Clock, CheckCircle2, Truck, XCircle, AlertTriangle,
-  DollarSign, Loader2, ShieldCheck, MessageCircle,
+  DollarSign, Loader2, ShieldCheck, MessageCircle, Search, CalendarIcon,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
 interface AdminOrder {
@@ -101,17 +105,57 @@ export default function MarketplaceOrdersPage() {
   const [payoutProofUrl, setPayoutProofUrl] = useState("");
   const [page, setPage] = useState(1);
   const [totalOrders, setTotalOrders] = useState(0);
-  const pageSize = 50;
+  const pageSize = 20;
+
+  // Search & date filters
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [datePreset, setDatePreset] = useState("all");
+  const [customFrom, setCustomFrom] = useState<Date | undefined>();
+  const [customTo, setCustomTo] = useState<Date | undefined>();
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Admin chat
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatMsg, setChatMsg] = useState("");
 
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchInput(value);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      setSearchQuery(value);
+      setPage(1);
+    }, 400);
+  }, []);
+
+  const getDateRange = useCallback((): { from?: string; to?: string } => {
+    const now = new Date();
+    switch (datePreset) {
+      case "today":
+        return { from: startOfDay(now).toISOString(), to: endOfDay(now).toISOString() };
+      case "7days":
+        return { from: startOfDay(subDays(now, 7)).toISOString(), to: endOfDay(now).toISOString() };
+      case "30days":
+        return { from: startOfDay(subDays(now, 30)).toISOString(), to: endOfDay(now).toISOString() };
+      case "custom":
+        return {
+          from: customFrom ? startOfDay(customFrom).toISOString() : undefined,
+          to: customTo ? endOfDay(customTo).toISOString() : undefined,
+        };
+      default:
+        return {};
+    }
+  }, [datePreset, customFrom, customTo]);
+
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams({ action: "admin-orders", status: statusFilter, page: String(page), pageSize: String(pageSize) });
+      if (searchQuery) params.set("search", searchQuery);
+      const { from, to } = getDateRange();
+      if (from) params.set("date_from", from);
+      if (to) params.set("date_to", to);
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const h = await getMarketplaceHeaders();
       const res = await fetch(`${ORDERS_URL}?${params}`, { headers: h });
@@ -125,8 +169,8 @@ export default function MarketplaceOrdersPage() {
     }
   };
 
-  useEffect(() => { setPage(1); }, [statusFilter]);
-  useEffect(() => { fetchOrders(); }, [statusFilter, page]);
+  useEffect(() => { setPage(1); }, [statusFilter, datePreset, customFrom, customTo]);
+  useEffect(() => { fetchOrders(); }, [statusFilter, page, searchQuery, datePreset, customFrom, customTo]);
 
   const updateStatus = async (orderId: string, status: string, extra?: Record<string, any>) => {
     setActionLoading(true);
@@ -236,22 +280,70 @@ export default function MarketplaceOrdersPage() {
         <Card className="card-premium"><CardContent className="p-4 text-center"><p className={`text-2xl font-bold ${disputeCount > 0 ? "text-destructive" : ""}`}>{disputeCount}</p><p className="text-xs text-muted-foreground">Disputas abertas</p></CardContent></Card>
       </div>
 
-      {/* Filter */}
-      <Select value={statusFilter} onValueChange={setStatusFilter}>
-        <SelectTrigger className="w-48"><SelectValue placeholder="Filtrar por status" /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todos</SelectItem>
-          <SelectItem value="pending_payment">Aguardando pagamento</SelectItem>
-          <SelectItem value="paid">Pagos</SelectItem>
-          <SelectItem value="shipped">Enviados</SelectItem>
-          <SelectItem value="delivered">Entregues</SelectItem>
-          <SelectItem value="payout_pending">Repasse pendente</SelectItem>
-          <SelectItem value="payout_released">Repasse realizado</SelectItem>
-          <SelectItem value="completed">Concluídos</SelectItem>
-          <SelectItem value="disputed">Em disputa</SelectItem>
-          <SelectItem value="cancelled">Cancelados</SelectItem>
-        </SelectContent>
-      </Select>
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 items-end">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar código ou comprador..."
+            value={searchInput}
+            onChange={e => handleSearchChange(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-48"><SelectValue placeholder="Filtrar por status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="pending_payment">Aguardando pagamento</SelectItem>
+            <SelectItem value="paid">Pagos</SelectItem>
+            <SelectItem value="shipped">Enviados</SelectItem>
+            <SelectItem value="delivered">Entregues</SelectItem>
+            <SelectItem value="payout_pending">Repasse pendente</SelectItem>
+            <SelectItem value="payout_released">Repasse realizado</SelectItem>
+            <SelectItem value="completed">Concluídos</SelectItem>
+            <SelectItem value="disputed">Em disputa</SelectItem>
+            <SelectItem value="cancelled">Cancelados</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={datePreset} onValueChange={setDatePreset}>
+          <SelectTrigger className="w-40"><SelectValue placeholder="Período" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="today">Hoje</SelectItem>
+            <SelectItem value="7days">7 dias</SelectItem>
+            <SelectItem value="30days">30 dias</SelectItem>
+            <SelectItem value="custom">Personalizado</SelectItem>
+          </SelectContent>
+        </Select>
+        {datePreset === "custom" && (
+          <div className="flex gap-2 items-center">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className={cn("w-[130px] justify-start text-left text-xs", !customFrom && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-1 h-3 w-3" />
+                  {customFrom ? format(customFrom, "dd/MM/yyyy") : "De"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} initialFocus className={cn("p-3 pointer-events-auto")} />
+              </PopoverContent>
+            </Popover>
+            <span className="text-xs text-muted-foreground">→</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className={cn("w-[130px] justify-start text-left text-xs", !customTo && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-1 h-3 w-3" />
+                  {customTo ? format(customTo, "dd/MM/yyyy") : "Até"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={customTo} onSelect={setCustomTo} initialFocus className={cn("p-3 pointer-events-auto")} />
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
+      </div>
 
       {/* Orders list */}
       {isLoading ? (
@@ -292,17 +384,24 @@ export default function MarketplaceOrdersPage() {
       )}
 
       {/* Pagination */}
-      {!isLoading && totalPages > 1 && (
-        <div className="flex items-center justify-center gap-4 pt-2">
-          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-            Anterior
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Página {page} de {totalPages}
-          </span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
-            Próxima
-          </Button>
+      {!isLoading && (
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-sm text-muted-foreground">
+            Mostrando {totalOrders === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, totalOrders)} de {totalOrders} pedidos
+          </p>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                Anterior
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Página {page} de {totalPages}
+              </span>
+              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                Próxima
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
