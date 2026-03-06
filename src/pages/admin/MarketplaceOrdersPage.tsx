@@ -402,6 +402,26 @@ export default function MarketplaceOrdersPage() {
         )}
       </div>
 
+      {/* Bulk action bar */}
+      {selectedCancellableIds.length > 0 && (
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/30">
+          {bulkProgress ? (
+            <div className="flex items-center gap-2 text-sm">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Cancelando {bulkProgress.current} de {bulkProgress.total}...</span>
+            </div>
+          ) : (
+            <>
+              <span className="text-sm font-medium">{selectedCancellableIds.length} selecionados</span>
+              <Button size="sm" variant="destructive" onClick={() => setBulkCancelOpen(true)}>
+                <XCircle className="h-4 w-4 mr-1" /> Cancelar selecionados
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>Limpar</Button>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Orders list */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
@@ -409,15 +429,37 @@ export default function MarketplaceOrdersPage() {
         <Card className="card-premium"><CardContent className="py-12 text-center"><Package className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-30" /><p className="font-medium">Nenhum pedido encontrado</p></CardContent></Card>
       ) : (
         <div className="space-y-3">
+          {/* Select all cancellable */}
+          {cancellableOrders.length > 0 && (
+            <div className="flex items-center gap-2 px-1">
+              <Checkbox
+                checked={allCancellableSelected}
+                onCheckedChange={toggleSelectAll}
+                id="select-all-mk"
+              />
+              <label htmlFor="select-all-mk" className="text-sm text-muted-foreground cursor-pointer">
+                Selecionar canceláveis ({cancellableOrders.length})
+              </label>
+            </div>
+          )}
           {orders.map((order, i) => {
             const status = statusConfig[order.status] || statusConfig.pending_payment;
             const StatusIcon = status.icon;
+            const isCancellable = cancellableStatuses.includes(order.status);
             return (
               <motion.div key={order.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}>
                 <Card className="card-premium cursor-pointer hover:border-primary/40 transition-colors" onClick={() => openDetail(order)}>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3 min-w-0">
+                        {isCancellable && (
+                          <Checkbox
+                            checked={selectedIds.has(order.id)}
+                            onCheckedChange={() => toggleSelection(order.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex-shrink-0"
+                          />
+                        )}
                         {order.listing?.photos?.[0] && <img src={order.listing.photos[0]} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />}
                         <div className="min-w-0">
                           <p className="font-medium text-sm line-clamp-1">{order.listing?.title}</p>
