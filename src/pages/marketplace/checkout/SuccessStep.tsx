@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CheckCircle2, Clock, Copy, Timer } from "lucide-react";
+import { CheckCircle2, Clock, Copy, Timer, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,9 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCountdown } from "./useCountdown";
+import { fmt } from "./types";
 import type { CartGroup } from "@/hooks/useMarketplaceCart";
+import type { AppliedCoupon } from "./ReviewStep";
 
 interface SuccessStepProps {
   paymentMethod: string;
