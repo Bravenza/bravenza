@@ -135,13 +135,86 @@ const VaultMembersPage = () => {
 
   useEffect(() => { setPage(0); }, [searchTerm, tierFilter]);
 
+  const handleEditMember = (member: VaultMember) => {
+    setSelectedMember(member);
+    setEditForm({
+      tier: member.tier,
+      status: member.status || "ACTIVE",
+      notes_internal: member.notes_internal || "",
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleSaveMember = async () => {
+    if (!selectedMember) return;
+    try {
+      const { error } = await supabase
+        .from("vault_members")
+        .update({
+          tier: editForm.tier,
+          status: editForm.status,
+          notes_internal: editForm.notes_internal,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", selectedMember.id);
+      if (error) throw error;
+      toast.success("Membro atualizado com sucesso");
+      setIsEditOpen(false);
+      fetchMembers();
+    } catch (error) {
+      console.error("Error updating member:", error);
+      toast.error("Erro ao atualizar membro");
+    }
+  };
+
+  const handleUpgradeToBlack = async (member: VaultMember) => {
+    try {
+      const { error } = await supabase
+        .from("vault_members")
+        .update({
+          tier: "elite" as VaultTier,
+          tier_upgraded_at: new Date().toISOString(),
+          flags_eligible_for_black: false,
+        })
+        .eq("id", member.id);
+      if (error) throw error;
+      toast.success(`${member.client_name} promovido para Vault Black!`);
+      fetchMembers();
+    } catch (error) {
+      console.error("Error upgrading member:", error);
+      toast.error("Erro ao promover membro");
+    }
+  };
+
+  const handleRemoveReviewMode = async (member: VaultMember) => {
+    try {
+      const { error } = await supabase
+        .from("vault_members")
+        .update({
+          flags_review_mode_until: null,
+          flags_consecutive_declines: 0,
+        })
+        .eq("id", member.id);
+      if (error) throw error;
+      toast.success("Modo revisão removido");
+      fetchMembers();
+    } catch (error) {
+      console.error("Error removing review mode:", error);
+      toast.error("Erro ao remover modo revisão");
+    }
+  };
+
   const stats = {
-    total: members.length,
+    total: totalCount,
     access: members.filter((m) => m.tier === "member").length,
     privilege: members.filter((m) => m.tier === "collector").length,
     black: members.filter((m) => m.tier === "elite").length,
     eligibleForBlack: members.filter((m) => m.flags_eligible_for_black).length,
   };
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const rangeStart = page * PAGE_SIZE + 1;
+  const rangeEnd = Math.min((page + 1) * PAGE_SIZE, totalCount);
 
   if (isLoading) {
     return (
