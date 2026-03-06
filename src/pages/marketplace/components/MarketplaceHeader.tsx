@@ -29,6 +29,7 @@ export function MarketplaceHeader({ profile, signOut }: MarketplaceHeaderProps) 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  const { unread } = useUnreadMessages(profile?.cpf || null);
 
   const initials = profile?.full_name
     ? profile.full_name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase()
