@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SecuritySettingsTab } from "@/components/admin/settings/SecuritySettingsTab";
 import { AdminSettingsTab } from "@/components/admin/settings/AdminSettingsTab";
+import { OperationalSettingsTab } from "@/components/admin/settings/OperationalSettingsTab";
 
 interface ApiConfig {
   id: string;
