@@ -269,7 +269,7 @@ export default function MarketplaceHomePage() {
       </section>
 
       {/* ===== TRENDING / EM ALTA ===== */}
-      <section className="py-10">
+      <section className="py-12">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">

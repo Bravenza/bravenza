@@ -67,7 +67,7 @@ export const UpcomingReleasesSection = memo(function UpcomingReleasesSection() {
   }, []);
 
   return (
-    <section className="py-10 md:py-16 relative overflow-hidden">
+    <section className="py-12 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-background via-card/20 to-background" />
 
       <div className="max-w-7xl mx-auto px-4 relative z-10">

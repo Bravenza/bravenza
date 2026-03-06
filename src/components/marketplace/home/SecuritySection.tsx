@@ -39,7 +39,7 @@ const features = [
 
 export const SecuritySection = memo(function SecuritySection() {
   return (
-    <section className="py-16 md:py-20 border-t border-border/30 relative overflow-hidden">
+    <section className="py-12 border-t border-border/30 relative overflow-hidden">
       {/* Background glow effects */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px]" />
