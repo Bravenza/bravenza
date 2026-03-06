@@ -206,7 +206,7 @@ export function ProductReviews({
       ) : (
         <div className="space-y-3">
           {reviews.map((review) => (
-            <ReviewItem key={review.id} review={review} />
+            <ReviewItem key={review.id} review={review} sellerReply={sellerReplies[review.id]} />
           ))}
         </div>
       )}
