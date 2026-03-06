@@ -113,9 +113,55 @@ Deno.serve(async (req) => {
     const effectiveInterestFree = maxInterestFree === -1 ? 0 : maxInterestFree;
 
     // Calculate consolidated total
-    const totalAmount = orders.reduce((sum, o) => {
+    let totalAmount = orders.reduce((sum, o) => {
       return sum + (o.sale_price || 0) + (o.shipping_cost || 0) + (o.authentication_fee || 0);
     }, 0);
+
+    // ── Apply coupon if provided ──
+    let couponDiscount = 0;
+    let appliedCouponCode: string | null = null;
+    if (coupon_code) {
+      const { data: coupon } = await sb
+        .from("marketplace_coupons")
+        .select("*")
+        .eq("code", coupon_code)
+        .eq("is_active", true)
+        .single();
+
+      if (coupon) {
+        const validUntil = coupon.valid_until ? new Date(coupon.valid_until) : null;
+        const isExpired = validUntil && validUntil < new Date();
+        const maxUsesReached = coupon.max_uses !== null && coupon.uses_count >= coupon.max_uses;
+
+        if (!isExpired && !maxUsesReached) {
+          if (!coupon.min_purchase || totalAmount >= coupon.min_purchase) {
+            if (coupon.discount_type === "percent") {
+              couponDiscount = Math.round((totalAmount * coupon.discount_value / 100) * 100) / 100;
+            } else {
+              couponDiscount = Math.min(coupon.discount_value, totalAmount);
+            }
+            totalAmount = Math.round((totalAmount - couponDiscount) * 100) / 100;
+            appliedCouponCode = coupon.code;
+
+            // Increment uses_count
+            await sb.from("marketplace_coupons")
+              .update({ uses_count: coupon.uses_count + 1 })
+              .eq("id", coupon.id);
+
+            // Save coupon info on all orders
+            for (const order of orders) {
+              const orderDiscount = Math.round((couponDiscount / orders.length) * 100) / 100;
+              await sb.from("vault_marketplace_orders").update({
+                coupon_code: appliedCouponCode,
+                discount_amount: orderDiscount,
+              }).eq("id", order.id);
+            }
+
+            console.log(`[mkv2-checkout] Coupon ${coupon.code} applied: -R$${couponDiscount}`);
+          }
+        }
+      }
+    }
 
     const orderCodes = orders.map(o => o.order_code).join("+");
     const productNames = orders.map(o => o.listing?.title || "Sneaker").join(", ");
