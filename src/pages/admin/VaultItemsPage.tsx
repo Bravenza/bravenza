@@ -60,7 +60,7 @@ const VaultItemsPage = () => {
         query = query.or(`title.ilike.%${searchTerm}%,vault_id.ilike.%${searchTerm}%`);
       }
 
-      if (statusFilter !== "all") {
+      if (statusFilter !== "all" && statusFilter) {
         query = query.eq("verified_status", statusFilter);
       }
 
