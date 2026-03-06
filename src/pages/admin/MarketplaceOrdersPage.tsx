@@ -99,6 +99,9 @@ export default function MarketplaceOrdersPage() {
   const [refundAmount, setRefundAmount] = useState("");
   const [resolveNotes, setResolveNotes] = useState("");
   const [payoutProofUrl, setPayoutProofUrl] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const pageSize = 50;
 
   // Admin chat
   const [chatOpen, setChatOpen] = useState(false);
@@ -108,12 +111,13 @@ export default function MarketplaceOrdersPage() {
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
-      const params = new URLSearchParams({ action: "admin-orders", status: statusFilter });
+      const params = new URLSearchParams({ action: "admin-orders", status: statusFilter, page: String(page), pageSize: String(pageSize) });
       const { getMarketplaceHeaders } = await import("@/hooks/marketplace/api");
       const h = await getMarketplaceHeaders();
       const res = await fetch(`${ORDERS_URL}?${params}`, { headers: h });
       const data = await res.json();
       setOrders(data.orders || []);
+      setTotalOrders(data.total || 0);
     } catch (err) {
       console.error("Fetch admin orders error:", err);
     } finally {
@@ -121,7 +125,8 @@ export default function MarketplaceOrdersPage() {
     }
   };
 
-  useEffect(() => { fetchOrders(); }, [statusFilter]);
+  useEffect(() => { setPage(1); }, [statusFilter]);
+  useEffect(() => { fetchOrders(); }, [statusFilter, page]);
 
   const updateStatus = async (orderId: string, status: string, extra?: Record<string, any>) => {
     setActionLoading(true);
