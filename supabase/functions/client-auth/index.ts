@@ -298,6 +298,23 @@ Deno.serve(async (req) => {
       );
     }
 
+    // LOGOUT - Invalidate session token in database
+    if (action === "logout") {
+      if (!session_token) {
+        throw new Error("Token de sessão é obrigatório");
+      }
+
+      await supabase
+        .from("client_sessions")
+        .delete()
+        .eq("session_token", session_token);
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     throw new Error("Ação inválida");
 
   } catch (error: any) {
