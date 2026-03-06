@@ -192,14 +192,14 @@ export default function MarketplaceAnalyticsPage() {
   const metrics = useMemo(() => {
     if (isLoading) return null;
     const filtered = filterByRange(rawOrders, dateRange);
-    return computeMetrics(filtered, rawSellers, rawListings, rawProducts);
-  }, [rawOrders, rawSellers, rawListings, rawProducts, dateRange, isLoading]);
+    return computeMetrics(filtered, rawSellers, rawListings, rawProducts, rawListingViews);
+  }, [rawOrders, rawSellers, rawListings, rawProducts, rawListingViews, dateRange, isLoading]);
 
   const prevMetrics = useMemo(() => {
     if (isLoading || rawOrders.length === 0) return null;
     const filtered = filterByRange(rawOrders, prevRange);
-    return computeMetrics(filtered, rawSellers, rawListings, rawProducts);
-  }, [rawOrders, rawSellers, rawListings, rawProducts, prevRange, isLoading]);
+    return computeMetrics(filtered, rawSellers, rawListings, rawProducts, rawListingViews);
+  }, [rawOrders, rawSellers, rawListings, rawProducts, rawListingViews, prevRange, isLoading]);
 
   const pctChange = (current: number, previous: number) => {
     if (previous === 0) return current > 0 ? 100 : 0;
