@@ -701,6 +701,32 @@ export default function MarketplaceOrdersPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Cancel Dialog */}
+      <Dialog open={bulkCancelOpen} onOpenChange={setBulkCancelOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancelar {selectedCancellableIds.length} pedidos</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Motivo do cancelamento</label>
+              <Textarea
+                value={bulkCancelReason}
+                onChange={(e) => setBulkCancelReason(e.target.value)}
+                placeholder="Informe o motivo do cancelamento em lote..."
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setBulkCancelOpen(false)}>Voltar</Button>
+              <Button variant="destructive" onClick={handleBulkCancel} disabled={!bulkCancelReason.trim() || !!bulkProgress}>
+                {bulkProgress ? `Cancelando ${bulkProgress.current}/${bulkProgress.total}...` : `Cancelar ${selectedCancellableIds.length} pedidos`}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
