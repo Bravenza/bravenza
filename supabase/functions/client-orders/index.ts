@@ -20,53 +20,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { session_token, action, cpf, notification_id, notification_ids } = body;
 
-    // Handle notification actions that use CPF directly
-    if (action === "get_notifications" && cpf) {
-      const { data: notifications, error } = await supabase
-        .from("notifications")
-        .select("*")
-        .eq("target", "client")
-        .eq("target_client_cpf", cpf)
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-
-      return new Response(
-        JSON.stringify({ success: true, notifications: notifications || [] }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (action === "mark_notification_read" && notification_id) {
-      const { error } = await supabase
-        .from("notifications")
-        .update({ read: true, read_at: new Date().toISOString() })
-        .eq("id", notification_id);
-
-      if (error) throw error;
-
-      return new Response(
-        JSON.stringify({ success: true }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (action === "mark_all_notifications_read" && notification_ids) {
-      const { error } = await supabase
-        .from("notifications")
-        .update({ read: true, read_at: new Date().toISOString() })
-        .in("id", notification_ids);
-
-      if (error) throw error;
-
-      return new Response(
-        JSON.stringify({ success: true }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Default action: get orders (requires session_token)
+    // All actions require session_token
     if (!session_token) {
       throw new Error("Token de sessão é obrigatório");
     }
@@ -86,6 +40,41 @@ Deno.serve(async (req) => {
     }
 
     const clientCpf = sessions[0].cpf;
+
+    const ok = (data: any) => new Response(
+      JSON.stringify({ success: true, ...data }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+
+    // ── Notification actions (using session-derived CPF) ──
+    if (action === "get_notifications") {
+      const { data: notifications } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("target", "client")
+        .eq("target_client_cpf", clientCpf)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      return ok({ notifications: notifications || [] });
+    }
+
+    if (action === "mark_notification_read" && notification_id) {
+      await supabase
+        .from("notifications")
+        .update({ read: true, read_at: new Date().toISOString() })
+        .eq("id", notification_id)
+        .eq("target_client_cpf", clientCpf);
+      return ok({ success: true });
+    }
+
+    if (action === "mark_all_notifications_read" && notification_ids) {
+      await supabase
+        .from("notifications")
+        .update({ read: true, read_at: new Date().toISOString() })
+        .in("id", notification_ids)
+        .eq("target_client_cpf", clientCpf);
+      return ok({ success: true });
+    }
 
     // Get all orders for this CPF with inspection photos
     const { data: orders, error: ordersError } = await supabase
