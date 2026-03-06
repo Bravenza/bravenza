@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
+import { SupplierDetailSheet } from "@/components/admin/SupplierDetailSheet";
 
 interface Supplier {
   id: string;
@@ -38,6 +39,7 @@ export default function SuppliersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [detailSupplier, setDetailSupplier] = useState<Supplier | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -137,7 +139,7 @@ export default function SuppliersPage() {
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-primary" />
                         <div>
-                          <p className="font-medium">{supplier.name}</p>
+                          <p className="font-medium cursor-pointer hover:text-primary transition-colors" onClick={() => setDetailSupplier(supplier)}>{supplier.name}</p>
                           {supplier.website && (
                             <a href={supplier.website} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">{supplier.website}</a>
                           )}
@@ -206,7 +208,7 @@ export default function SuppliersPage() {
                   <div className="flex items-center gap-2">
                     <Building2 className="h-4 w-4 text-primary" />
                     <div>
-                      <p className="font-medium">{supplier.name}</p>
+                      <p className="font-medium cursor-pointer hover:text-primary transition-colors" onClick={() => setDetailSupplier(supplier)}>{supplier.name}</p>
                       <Badge variant="outline" className="mt-1">{supplier.country}</Badge>
                     </div>
                   </div>
@@ -254,6 +256,12 @@ export default function SuppliersPage() {
         confirmText="Excluir"
         isLoading={isDeleting}
         variant="destructive"
+      />
+
+      <SupplierDetailSheet
+        supplier={detailSupplier}
+        open={!!detailSupplier}
+        onOpenChange={(open) => !open && setDetailSupplier(null)}
       />
     </div>
   );
