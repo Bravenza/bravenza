@@ -352,7 +352,7 @@ export default function MarketplaceHomePage() {
       {/* ===== BRAND SPOTLIGHTS ===== */}
       <LazySection minHeight="400px">
         <Suspense fallback={<div className="h-[400px]" />}>
-          <BrandSpotlightSection products={products} insertAfterIndex={0}>
+          <BrandSpotlightSection insertAfterIndex={0}>
             <RecentlyAddedSection products={products} />
           </BrandSpotlightSection>
         </Suspense>
