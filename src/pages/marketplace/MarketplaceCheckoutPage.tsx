@@ -301,6 +301,7 @@ function MarketplaceCheckoutPageInner() {
         payment_method: form.payment_method,
         payer_email: form.buyer_email,
         idempotency_key: idempKey,
+        ...(appliedCoupon ? { coupon_code: appliedCoupon.code } : {}),
       };
 
       if (form.payment_method === "card" && cardFormData) {
