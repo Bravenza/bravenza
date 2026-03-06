@@ -1,48 +1,31 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import {
-  Gift,
-  Users,
-  Search,
-  Copy,
-  Check,
-  Clock,
-  Plus,
-  Percent,
+  Gift, Users, Search, Copy, Check, Clock, Plus, Percent,
+  TrendingUp, Download, DollarSign, BarChart3,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, subMonths, startOfMonth, isAfter } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from "recharts";
 
 interface Referral {
   id: string;
@@ -89,6 +72,8 @@ export default function ReferralsPage() {
     discount_percentage: 5,
   });
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -107,21 +92,132 @@ export default function ReferralsPage() {
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
       setReferrals(data || []);
     } catch (error) {
       console.error("Error fetching referrals:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar as indicações.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Não foi possível carregar as indicações.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ── KPIs ──
+  const kpis = useMemo(() => {
+    const total = referrals.length;
+    const converted = referrals.filter(
+      (r) => r.status === "converted" || r.status === "rewarded" || r.referred_order_id
+    ).length;
+    const conversionRate = total > 0 ? ((converted / total) * 100).toFixed(1) : "0";
+    const pendingCount = referrals.filter((r) => r.status === "pending").length;
+    const rewardedCount = referrals.filter((r) => r.status === "rewarded").length;
+    return { total, converted, conversionRate, pendingCount, rewardedCount };
+  }, [referrals]);
+
+  // ── Monthly chart data (last 6 months) ──
+  const chartData = useMemo(() => {
+    const now = new Date();
+    const months: { label: string; start: Date; count: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = subMonths(now, i);
+      const start = startOfMonth(d);
+      months.push({
+        label: format(start, "MMM/yy", { locale: ptBR }),
+        start,
+        count: 0,
+      });
+    }
+    referrals.forEach((r) => {
+      const created = new Date(r.created_at);
+      for (let i = 0; i < months.length; i++) {
+        const nextStart = i < months.length - 1 ? months[i + 1].start : subMonths(now, -1);
+        if (
+          (isAfter(created, months[i].start) || created.getTime() === months[i].start.getTime()) &&
+          !isAfter(created, nextStart)
+        ) {
+          months[i].count++;
+          break;
+        }
+      }
+    });
+    return months.map((m) => ({ name: m.label, indicações: m.count }));
+  }, [referrals]);
+
+  // ── CSV export ──
+  const handleExportCSV = () => {
+    const header = "referrer_name,referrer_email,referred_name,referred_email,referral_code,status,discount_percentage,created_at,discount_used_at";
+    const rows = referrals.map((r) =>
+      [
+        `"${r.referrer_name}"`,
+        r.referrer_email || "",
+        r.referred_name || "",
+        "",
+        r.referral_code,
+        r.status,
+        r.discount_percentage,
+        r.created_at,
+        r.discount_used_at || "",
+      ].join(",")
+    );
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `indicacoes_${format(new Date(), "yyyy-MM-dd")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: `${referrals.length} indicações exportadas` });
+  };
+
+  // ── Bulk mark as rewarded ──
+  const pendingReferrals = referrals.filter((r) => r.status === "converted");
+  const selectedPendingIds = [...selectedIds].filter((id) =>
+    pendingReferrals.some((r) => r.id === id)
+  );
+
+  const handleBulkReward = async () => {
+    if (selectedPendingIds.length === 0) return;
+    setIsBulkProcessing(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("referrals")
+        .update({
+          status: "rewarded",
+          discount_used: true,
+          discount_used_at: new Date().toISOString(),
+        })
+        .in("id", selectedPendingIds);
+
+      if (error) throw error;
+      toast({ title: `${selectedPendingIds.length} indicações marcadas como recompensadas` });
+      setSelectedIds(new Set());
+      fetchReferrals();
+    } catch (error) {
+      console.error("Error bulk rewarding:", error);
+      toast({ title: "Erro", description: "Falha ao processar em lote.", variant: "destructive" });
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedPendingIds.length === pendingReferrals.length && pendingReferrals.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(pendingReferrals.map((r) => r.id)));
+    }
+  };
+
+  // ── Existing handlers (unchanged) ──
   const generateReferralCode = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let code = "BRVZ";
@@ -133,17 +229,11 @@ export default function ReferralsPage() {
 
   const handleCreateReferral = async () => {
     if (!newReferral.referrer_cpf || !newReferral.referrer_name) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "CPF e nome do indicador são obrigatórios.",
-        variant: "destructive",
-      });
+      toast({ title: "Campos obrigatórios", description: "CPF e nome do indicador são obrigatórios.", variant: "destructive" });
       return;
     }
-
     try {
       const referralCode = generateReferralCode();
-      
       const { error } = await supabase.from("referrals").insert([{
         referrer_cpf: newReferral.referrer_cpf.replace(/\D/g, ""),
         referrer_name: newReferral.referrer_name,
@@ -152,26 +242,17 @@ export default function ReferralsPage() {
         discount_percentage: newReferral.discount_percentage,
         status: "pending",
       }]);
-
       if (error) throw error;
-
       toast({ title: "Código de indicação criado com sucesso!" });
       setIsDialogOpen(false);
-      setNewReferral({
-        referrer_cpf: "",
-        referrer_name: "",
-        referrer_email: "",
-        discount_percentage: 5,
-      });
+      setNewReferral({ referrer_cpf: "", referrer_name: "", referrer_email: "", discount_percentage: 5 });
       fetchReferrals();
     } catch (error) {
       console.error("Error creating referral:", error);
       const msg = error instanceof Error ? error.message : "";
       toast({
         title: "Erro",
-        description: msg.includes("duplicate") 
-          ? "Este código de indicação já existe." 
-          : "Não foi possível criar a indicação.",
+        description: msg.includes("duplicate") ? "Este código de indicação já existe." : "Não foi possível criar a indicação.",
         variant: "destructive",
       });
     }
@@ -184,36 +265,12 @@ export default function ReferralsPage() {
     toast({ title: "Código copiado!" });
   };
 
-  const handleMarkAsConverted = async (id: string, referredCpf: string, referredName: string) => {
-    try {
-      const { error } = await supabase
-        .from("referrals")
-        .update({
-          status: "converted",
-          referred_cpf: referredCpf,
-          referred_name: referredName,
-        })
-        .eq("id", id);
-
-      if (error) throw error;
-      toast({ title: "Indicação marcada como convertida!" });
-      fetchReferrals();
-    } catch (error) {
-      console.error("Error updating referral:", error);
-    }
-  };
-
   const handleMarkAsRewarded = async (id: string) => {
     try {
       const { error } = await supabase
         .from("referrals")
-        .update({
-          status: "rewarded",
-          discount_used: true,
-          discount_used_at: new Date().toISOString(),
-        })
+        .update({ status: "rewarded", discount_used: true, discount_used_at: new Date().toISOString() })
         .eq("id", id);
-
       if (error) throw error;
       toast({ title: "Recompensa aplicada!" });
       fetchReferrals();
@@ -237,48 +294,43 @@ export default function ReferralsPage() {
       <div className="space-y-6" role="status" aria-live="polite">
         <span className="sr-only">Carregando indicações…</span>
         <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-24" />
-          ))}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-24" />)}
         </div>
         <Skeleton className="h-64 w-full" />
       </div>
     );
   }
 
-  const stats = {
-    total: referrals.length,
-    pending: referrals.filter((r) => r.status === "pending").length,
-    converted: referrals.filter((r) => r.status === "converted").length,
-    rewarded: referrals.filter((r) => r.status === "rewarded").length,
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Programa de Indicação</h1>
-          <p className="text-muted-foreground">
-            Gerencie os códigos de indicação e recompensas
-          </p>
+          <p className="text-muted-foreground">Gerencie os códigos de indicação e recompensas</p>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)} className="btn-gold">
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Indicação
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportCSV}>
+            <Download className="mr-2 h-4 w-4" />
+            Exportar CSV
+          </Button>
+          <Button onClick={() => setIsDialogOpen(true)} className="btn-gold">
+            <Plus className="mr-2 h-4 w-4" />
+            Nova Indicação
+          </Button>
+        </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="card-premium">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
+                <p className="text-xs text-muted-foreground">Total</p>
+                <p className="text-2xl font-bold">{kpis.total}</p>
               </div>
-              <Gift className="h-8 w-8 text-muted-foreground" />
+              <Gift className="h-7 w-7 text-muted-foreground" />
             </div>
           </CardContent>
         </Card>
@@ -286,10 +338,10 @@ export default function ReferralsPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Pendentes</p>
-                <p className="text-2xl font-bold text-warning">{stats.pending}</p>
+                <p className="text-xs text-muted-foreground">Convertidas</p>
+                <p className="text-2xl font-bold text-info">{kpis.converted}</p>
               </div>
-              <Clock className="h-8 w-8 text-warning" />
+              <Users className="h-7 w-7 text-info" />
             </div>
           </CardContent>
         </Card>
@@ -297,10 +349,10 @@ export default function ReferralsPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Convertidos</p>
-                <p className="text-2xl font-bold text-info">{stats.converted}</p>
+                <p className="text-xs text-muted-foreground">Conversão</p>
+                <p className="text-2xl font-bold text-primary">{kpis.conversionRate}%</p>
               </div>
-              <Users className="h-8 w-8 text-info" />
+              <TrendingUp className="h-7 w-7 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -308,14 +360,74 @@ export default function ReferralsPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Recompensados</p>
-                <p className="text-2xl font-bold text-success">{stats.rewarded}</p>
+                <p className="text-xs text-muted-foreground">Pendentes</p>
+                <p className="text-2xl font-bold text-warning">{kpis.pendingCount}</p>
               </div>
-              <Check className="h-8 w-8 text-success" />
+              <Clock className="h-7 w-7 text-warning" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="card-premium">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">Recompensadas</p>
+                <p className="text-2xl font-bold text-success">{kpis.rewardedCount}</p>
+              </div>
+              <Check className="h-7 w-7 text-success" />
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Monthly Chart */}
+      <Card className="card-premium">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" /> Indicações por Mês (últimos 6 meses)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-52">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="name" className="text-xs fill-muted-foreground" tick={{ fontSize: 12 }} />
+                <YAxis allowDecimals={false} className="text-xs fill-muted-foreground" tick={{ fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    color: "hsl(var(--foreground))",
+                  }}
+                />
+                <Bar dataKey="indicações" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Bulk Actions Bar */}
+      {selectedPendingIds.length > 0 && (
+        <Card className="border-primary/40 bg-primary/5">
+          <CardContent className="p-3 flex items-center justify-between">
+            <span className="text-sm font-medium">
+              {selectedPendingIds.length} selecionada(s)
+            </span>
+            <Button
+              size="sm"
+              onClick={handleBulkReward}
+              disabled={isBulkProcessing}
+              className="btn-gold"
+            >
+              <Check className="mr-2 h-4 w-4" />
+              {isBulkProcessing ? "Processando..." : `Marcar ${selectedPendingIds.length} como recompensadas`}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filters */}
       <Card className="card-premium">
@@ -346,12 +458,19 @@ export default function ReferralsPage() {
         </CardContent>
       </Card>
 
-      {/* Desktop Referrals Table */}
+      {/* Desktop Table */}
       <Card className="card-premium hidden md:block">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={pendingReferrals.length > 0 && selectedPendingIds.length === pendingReferrals.length}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Selecionar todas convertidas"
+                  />
+                </TableHead>
                 <TableHead>Indicador</TableHead>
                 <TableHead>Código</TableHead>
                 <TableHead>Indicado</TableHead>
@@ -364,7 +483,7 @@ export default function ReferralsPage() {
             <TableBody>
               {filteredReferrals.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     <Gift className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     Nenhuma indicação encontrada
                   </TableCell>
@@ -372,6 +491,15 @@ export default function ReferralsPage() {
               ) : (
                 filteredReferrals.map((referral) => (
                   <TableRow key={referral.id}>
+                    <TableCell>
+                      {referral.status === "converted" && (
+                        <Checkbox
+                          checked={selectedIds.has(referral.id)}
+                          onCheckedChange={() => toggleSelect(referral.id)}
+                          aria-label={`Selecionar ${referral.referrer_name}`}
+                        />
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div>
                         <p className="font-medium">{referral.referrer_name}</p>
@@ -382,7 +510,7 @@ export default function ReferralsPage() {
                       <div className="flex items-center gap-2">
                         <code className="bg-secondary px-2 py-1 rounded text-sm font-mono">{referral.referral_code}</code>
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopyCode(referral.referral_code)}>
-                           {copiedCode === referral.referral_code ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
+                          {copiedCode === referral.referral_code ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
                         </Button>
                       </div>
                     </TableCell>
@@ -418,7 +546,7 @@ export default function ReferralsPage() {
         </CardContent>
       </Card>
 
-      {/* Mobile Referral Cards */}
+      {/* Mobile Cards */}
       <div className="md:hidden space-y-3">
         {filteredReferrals.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground card-premium rounded-lg">
@@ -430,9 +558,17 @@ export default function ReferralsPage() {
             <Card key={referral.id} className="card-premium">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <p className="font-medium">{referral.referrer_name}</p>
-                    <p className="text-xs text-muted-foreground">{referral.referrer_email || "Sem email"}</p>
+                  <div className="flex items-center gap-2">
+                    {referral.status === "converted" && (
+                      <Checkbox
+                        checked={selectedIds.has(referral.id)}
+                        onCheckedChange={() => toggleSelect(referral.id)}
+                      />
+                    )}
+                    <div>
+                      <p className="font-medium">{referral.referrer_name}</p>
+                      <p className="text-xs text-muted-foreground">{referral.referrer_email || "Sem email"}</p>
+                    </div>
                   </div>
                   <Badge className={STATUS_COLORS[referral.status] || STATUS_COLORS.pending}>
                     {STATUS_LABELS[referral.status] || referral.status}
@@ -470,66 +606,30 @@ export default function ReferralsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Nova Indicação</DialogTitle>
-            <DialogDescription>
-              Crie um código de indicação para um cliente
-            </DialogDescription>
+            <DialogDescription>Crie um código de indicação para um cliente</DialogDescription>
           </DialogHeader>
-
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="referrer_name">Nome do Indicador *</Label>
-              <Input
-                id="referrer_name"
-                value={newReferral.referrer_name}
-                onChange={(e) => setNewReferral({ ...newReferral, referrer_name: e.target.value })}
-                placeholder="Nome completo"
-              />
+              <Input id="referrer_name" value={newReferral.referrer_name} onChange={(e) => setNewReferral({ ...newReferral, referrer_name: e.target.value })} placeholder="Nome completo" />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="referrer_cpf">CPF do Indicador *</Label>
-              <Input
-                id="referrer_cpf"
-                value={newReferral.referrer_cpf}
-                onChange={(e) => setNewReferral({ ...newReferral, referrer_cpf: e.target.value })}
-                placeholder="000.000.000-00"
-              />
+              <Input id="referrer_cpf" value={newReferral.referrer_cpf} onChange={(e) => setNewReferral({ ...newReferral, referrer_cpf: e.target.value })} placeholder="000.000.000-00" />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="referrer_email">Email</Label>
-              <Input
-                id="referrer_email"
-                type="email"
-                value={newReferral.referrer_email}
-                onChange={(e) => setNewReferral({ ...newReferral, referrer_email: e.target.value })}
-                placeholder="email@exemplo.com"
-              />
+              <Input id="referrer_email" type="email" value={newReferral.referrer_email} onChange={(e) => setNewReferral({ ...newReferral, referrer_email: e.target.value })} placeholder="email@exemplo.com" />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="discount_percentage">Desconto (%)</Label>
-              <Input
-                id="discount_percentage"
-                type="number"
-                min="1"
-                max="50"
-                value={newReferral.discount_percentage}
-                onChange={(e) => setNewReferral({ ...newReferral, discount_percentage: parseInt(e.target.value) || 5 })}
-              />
-              <p className="text-xs text-muted-foreground">
-                Desconto que o indicador receberá quando alguém usar seu código
-              </p>
+              <Input id="discount_percentage" type="number" min="1" max="50" value={newReferral.discount_percentage} onChange={(e) => setNewReferral({ ...newReferral, discount_percentage: parseInt(e.target.value) || 5 })} />
+              <p className="text-xs text-muted-foreground">Desconto que o indicador receberá quando alguém usar seu código</p>
             </div>
           </div>
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleCreateReferral} className="btn-gold">
-              Gerar Código
-            </Button>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreateReferral} className="btn-gold">Gerar Código</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
