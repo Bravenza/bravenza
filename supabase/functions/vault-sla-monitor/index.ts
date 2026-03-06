@@ -5,8 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// SLA configurations by tier (in hours)
-const SLA_CONFIG = {
+// SLA configurations by tier (in hours) — fallback defaults
+const SLA_CONFIG_DEFAULT = {
   member: { // Vault Access
     first_response: 24,
     update_frequency: 72,
