@@ -64,6 +64,12 @@ export default function OrderRequestsPage() {
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 25;
 
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkRejectOpen, setBulkRejectOpen] = useState(false);
+  const [bulkRejectReason, setBulkRejectReason] = useState("");
+  const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number } | null>(null);
+
   // Fetch requests via RPC with server-side pagination
   const { data: rpcData, isLoading } = useQuery({
     queryKey: ["order-requests", searchTerm, page],
