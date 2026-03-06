@@ -213,6 +213,8 @@ export function OperationalSettingsTab() {
         </CardContent>
       </Card>
 
+      <InstallmentRatesCard />
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -275,5 +277,168 @@ export function OperationalSettingsTab() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+const DEFAULT_RATES: Record<string, number> = {
+  "1": 0, "2": 0.0964, "3": 0.1123, "4": 0.1136,
+  "5": 0.1431, "6": 0.1432, "7": 0.1672, "8": 0.1673,
+  "9": 0.1969, "10": 0.2065, "11": 0.2066, "12": 0.2211,
+};
+
+function InstallmentRatesCard() {
+  const [rates, setRates] = useState<Record<string, number>>(DEFAULT_RATES);
+  const [editRates, setEditRates] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    async function fetch() {
+      try {
+        const { data, error } = await supabase
+          .from("system_settings")
+          .select("value")
+          .eq("key", "installment_rates")
+          .maybeSingle();
+        if (error) throw error;
+        if (data?.value) {
+          const parsed = JSON.parse(String(data.value));
+          setRates(parsed);
+        }
+      } catch (err) {
+        console.error("Error fetching installment rates:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetch();
+  }, []);
+
+  const startEditing = () => {
+    const edit: Record<string, string> = {};
+    Object.entries(rates).forEach(([k, v]) => { edit[k] = (v * 100).toFixed(2); });
+    setEditRates(edit);
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const newRates: Record<string, number> = {};
+      for (const [k, v] of Object.entries(editRates)) {
+        const n = parseFloat(v);
+        if (isNaN(n) || n < 0 || n > 50) {
+          toast.error(`Taxa inválida para ${k}x. Use valores entre 0 e 50%.`);
+          setIsSaving(false);
+          return;
+        }
+        newRates[k] = n / 100;
+      }
+      const { error } = await supabase
+        .from("system_settings")
+        .upsert(
+          { key: "installment_rates", value: JSON.stringify(newRates), updated_at: new Date().toISOString() },
+          { onConflict: "key" }
+        );
+      if (error) throw error;
+      setRates(newRates);
+      setIsEditing(false);
+      toast.success("Taxas de parcelamento atualizadas!");
+    } catch {
+      toast.error("Erro ao salvar taxas");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const formatCurrency = (v: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+
+  const previewInstallment = (installments: number, ratePercent: string) => {
+    const rate = parseFloat(ratePercent) / 100;
+    if (isNaN(rate)) return "";
+    const base = 100;
+    const total = installments === 1 ? base : base * (1 + rate);
+    return `R$ 100 em ${installments}x = ${formatCurrency(total / installments)}/parcela`;
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Taxas de Parcelamento
+            </CardTitle>
+            <CardDescription>Taxas de juros do Mercado Pago por número de parcelas. Usadas na calculadora de parcelamento.</CardDescription>
+          </div>
+          {!isEditing && (
+            <Button variant="outline" size="sm" onClick={startEditing}>Editar</Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Parcelas</TableHead>
+              <TableHead>Taxa (%)</TableHead>
+              {isEditing && <TableHead>Preview (base R$ 100)</TableHead>}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 12 }, (_, i) => String(i + 1)).map((k) => (
+              <TableRow key={k}>
+                <TableCell className="font-medium">{k}x</TableCell>
+                <TableCell>
+                  {isEditing ? (
+                    <div className="relative w-24">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="50"
+                        value={editRates[k] ?? "0"}
+                        onChange={(e) => setEditRates(prev => ({ ...prev, [k]: e.target.value }))}
+                        className="pr-6"
+                      />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">%</span>
+                    </div>
+                  ) : (
+                    <span>{((rates[k] ?? 0) * 100).toFixed(2)}%</span>
+                  )}
+                </TableCell>
+                {isEditing && (
+                  <TableCell className="text-xs text-muted-foreground">
+                    {previewInstallment(parseInt(k), editRates[k] ?? "0")}
+                  </TableCell>
+                )}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        {isEditing && (
+          <div className="flex items-center gap-2 mt-4">
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Salvar
+            </Button>
+            <Button variant="ghost" onClick={() => setIsEditing(false)}>Cancelar</Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
