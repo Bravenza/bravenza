@@ -247,15 +247,30 @@ export default function SellerWalletPage() {
 
       {/* Withdraw CTA */}
       <motion.div variants={fadeUp}>
-        <Button
-          className="w-full h-12 font-bold text-sm btn-gold rounded-xl gap-2 shadow-md"
-          disabled={released <= 0 || pixAccounts.length === 0}
-          onClick={() => setPayoutOpen(true)}
-        >
-          <ArrowDownLeft className="h-4 w-4" /> Solicitar saque · {fmt(released)}
-        </Button>
-        {pixAccounts.length === 0 && released > 0 && (
-          <p className="text-[11px] text-destructive mt-1.5 text-center">Cadastre uma conta PIX para solicitar saques</p>
+        {pixAccounts.length === 0 && released > 0 ? (
+          <div className="text-center">
+            <Button
+              className="w-full h-12 font-bold text-sm rounded-xl gap-2 shadow-md"
+              variant="outline"
+              disabled
+            >
+              <ArrowDownLeft className="h-4 w-4" /> Solicitar saque · {fmt(released)}
+            </Button>
+            <button
+              onClick={() => openPixDialog()}
+              className="text-[11px] text-primary hover:text-primary/80 mt-2 inline-flex items-center gap-1 transition-colors font-medium"
+            >
+              Cadastre uma chave PIX para sacar →
+            </button>
+          </div>
+        ) : (
+          <Button
+            className="w-full h-12 font-bold text-sm btn-gold rounded-xl gap-2 shadow-md"
+            disabled={released <= 0}
+            onClick={() => setPayoutOpen(true)}
+          >
+            <ArrowDownLeft className="h-4 w-4" /> Solicitar saque · {fmt(released)}
+          </Button>
         )}
       </motion.div>
 
