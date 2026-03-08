@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { checkIdempotency, setIdempotencyResult, markIdempotencyFailed, releaseIdempotencyKey } from "../_shared/idempotency.ts";
+import { checkIdempotency, setIdempotencyResult, markIdempotencyFailed } from "../_shared/idempotency.ts";
 import { resolveAuthCpf } from "../_shared/mk-helpers.ts";
 
 const corsHeaders = {
@@ -33,6 +33,7 @@ Deno.serve(async (req) => {
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, supabaseKey);
   let idempKey = "";
+
   try {
     const mercadoPagoToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");
     if (!mercadoPagoToken) {
@@ -58,21 +59,7 @@ Deno.serve(async (req) => {
       throw new Error("Parâmetros inválidos");
     }
 
-    // Idempotency check
-    idempKey = idempotency_key || `card-${order_id}-${payment_type}`;
-    const idempCheck = await checkIdempotency(supabase, idempKey, 5);
-    if (idempCheck.isDuplicate) {
-      console.log(`[process-card] Duplicate request for ${idempKey}, returning cached`);
-      return new Response(JSON.stringify(idempCheck.cachedResult), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
-
-    // Validate installments (1-12)
-    const validInstallments = Math.min(Math.max(1, installments), 12);
-
-    // Verify order using the budget approval token
+    // ── Validate order BEFORE acquiring idempotency lock ──
     const { data: orderData, error: orderError } = await supabase.rpc(
       "get_order_by_token",
       { p_token: token }
@@ -87,21 +74,27 @@ Deno.serve(async (req) => {
 
     // Validate payment status based on payment type
     if (payment_type === "full") {
-      if (order.sinal_paid) {
-        throw new Error("Pagamento já foi realizado");
-      }
+      if (order.sinal_paid) throw new Error("Pagamento já foi realizado");
     } else if (payment_type === "sinal") {
-      if (order.sinal_paid) {
-        throw new Error("Sinal já foi pago");
-      }
+      if (order.sinal_paid) throw new Error("Sinal já foi pago");
     } else if (payment_type === "balance") {
-      if (!order.sinal_paid) {
-        throw new Error("Sinal deve ser pago primeiro");
-      }
-      if (order.balance_paid) {
-        throw new Error("Saldo já foi pago");
-      }
+      if (!order.sinal_paid) throw new Error("Sinal deve ser pago primeiro");
+      if (order.balance_paid) throw new Error("Saldo já foi pago");
     }
+
+    // ── Idempotency lock: AFTER input + order validation, BEFORE external API call ──
+    idempKey = idempotency_key || `card-${order_id}-${payment_type}`;
+    const idempCheck = await checkIdempotency(supabase, idempKey, 5);
+    if (idempCheck.isDuplicate) {
+      console.log(`[process-card] Duplicate request for ${idempKey}, returning cached`);
+      return new Response(JSON.stringify(idempCheck.cachedResult), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // Validate installments (1-12)
+    const validInstallments = Math.min(Math.max(1, installments), 12);
 
     // Get additional order data for description
     const { data: fullOrderData } = await supabase
@@ -128,7 +121,7 @@ Deno.serve(async (req) => {
       token: card_token,
       description: paymentDescription,
       installments: validInstallments,
-      payment_method_id: "credit_card", // Will be auto-detected from token
+      payment_method_id: "credit_card",
       payer: {
         email: clientEmail,
         identification: payer_identification,
@@ -162,7 +155,6 @@ Deno.serve(async (req) => {
     if (!paymentResponse.ok) {
       console.error("Mercado Pago payment error:", paymentData);
       
-      // Map error codes to user-friendly messages
       let errorMessage = "Erro ao processar pagamento";
       
       if (paymentData.cause && paymentData.cause.length > 0) {
@@ -197,7 +189,6 @@ Deno.serve(async (req) => {
       const now = new Date().toISOString();
       
       if (payment_type === "full" || payment_type === "sinal") {
-        // For full payment, we mark sinal as paid (which represents the full amount)
         await supabase
           .from("orders")
           .update({
@@ -205,12 +196,11 @@ Deno.serve(async (req) => {
             sinal_paid_at: now,
             sinal_payment_method: "CARD",
             sinal_stripe_payment_id: paymentData.id.toString(),
-            current_status: payment_type === "full" ? "ORDER_CONFIRMED" : "ORDER_CONFIRMED",
+            current_status: "ORDER_CONFIRMED",
             updated_at: now,
           })
           .eq("order_id", order_id);
 
-        // Add to order history
         await supabase.from("order_history").insert({
           order_id: order_id,
           status: "ORDER_CONFIRMED",
@@ -247,7 +237,6 @@ Deno.serve(async (req) => {
       installments: validInstallments,
     };
 
-    // Cache the result
     await setIdempotencyResult(supabase, idempKey, responseData);
 
     return new Response(
@@ -259,7 +248,6 @@ Deno.serve(async (req) => {
     );
   } catch (error: any) {
     console.error("Error processing card payment:", error);
-    // Record failure and allow retry
     if (idempKey) {
       await markIdempotencyFailed(supabase, idempKey, error.message || "Unknown error").catch(() => {});
     }
