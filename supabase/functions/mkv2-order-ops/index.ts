@@ -1,4 +1,5 @@
 import{createClient}from"https://esm.sh/@supabase/supabase-js@2";
+import{requireAdminByToken,isAdminByToken}from"../_shared/auth-guard.ts";
 const H={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version","Access-Control-Allow-Methods":"GET, POST, PUT, DELETE, OPTIONS"};
 const j=(d:unknown,s=200)=>new Response(JSON.stringify(d),{status:s,headers:{...H,"Content-Type":"application/json"}});
 const sc=()=>createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -7,7 +8,6 @@ const ge=async(sb:any,cpf:string)=>{const{data}=await sb.from("vault_members").s
 const em=(type:string,data:Record<string,any>)=>{try{const u=Deno.env.get("SUPABASE_URL"),k=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");if(u&&k)fetch(`${u}/functions/v1/send-marketplace-email`,{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${k}`},body:JSON.stringify({type,...data})}).catch(()=>{});}catch(_){}};
 const wa=(type:string,data:Record<string,any>)=>{try{const u=Deno.env.get("SUPABASE_URL"),k=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");if(u&&k)fetch(`${u}/functions/v1/send-whatsapp`,{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${k}`},body:JSON.stringify({message_type:type,...data})}).catch(()=>{});}catch(_){}};
 const refundMP=async(mpPaymentId:string,orderId:string)=>{const tk=Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");if(!tk){console.error(`[mkv2-order-ops] MERCADO_PAGO_ACCESS_TOKEN not set. Cannot refund order ${orderId}.`);return;}try{const r=await fetch(`https://api.mercadopago.com/v1/payments/${mpPaymentId}/refunds`,{method:"POST",headers:{"Authorization":`Bearer ${tk}`,"X-Idempotency-Key":`refund-${orderId}`,"Content-Type":"application/json"},body:JSON.stringify({})});if(!r.ok){const t=await r.text();console.error(`[mkv2-order-ops] MP refund failed order=${orderId} payment=${mpPaymentId}: ${r.status} ${t}`);}else{console.log(`[mkv2-order-ops] MP refund initiated order=${orderId} payment=${mpPaymentId}`);}}catch(e){console.error(`[mkv2-order-ops] MP refund exception order=${orderId}:`,e);}};
-const requireAdmin=async(sb:any,authHeader:string):Promise<void>=>{const{data:u}=await sb.auth.getUser(authHeader.replace("Bearer ",""));if(!u?.user)throw new Error("Acesso restrito a administradores");const{data:ap}=await sb.from("admin_profiles").select("id").eq("user_id",u.user.id).maybeSingle();if(!ap)throw new Error("Acesso restrito a administradores");};
 Deno.serve(async(req)=>{
 if(req.method==="OPTIONS")return new Response(null,{headers:H});
 const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;
@@ -17,9 +17,8 @@ if(cpf==="visitor")return j({error:"Auth required"},401);
 try{
 if(mt==="PUT"&&a==="update-order-status"){
   const b=await req.json();
-  // ── RBAC: check if caller is admin or the order's seller ──
-  const{data:adminCheck}=await sb.from("admin_profiles").select("id").eq("user_id",(await sb.auth.getUser(ah!.replace("Bearer ",""))).data.user?.id||"").maybeSingle();
-  const isAdmin=!!adminCheck;
+  // ── RBAC: check if caller is admin (via user_roles) or the order's seller ──
+  const isAdmin=await isAdminByToken(sb,ah!);
   const sellerAllowedStatuses=["shipped","in_transit_to_hub"];
   if(!isAdmin){
     // Verify caller is the seller of this order
