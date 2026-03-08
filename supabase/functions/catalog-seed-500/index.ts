@@ -224,7 +224,7 @@ Deno.serve(async (req) => {
     const brandMap = new Map((brands || []).map((b: any) => [b.name, b.id]));
     const silMap = new Map((silhouettes || []).map((s: any) => [`${s.brand_id}|${s.name}`, s.id]));
     const brandId = brandMap.get(brandName);
-    if (!brandId) return json({ ok: false, error: `Marca não encontrada no DB: ${brandName}` }, 400);
+    if (!brandId) return jsonResponse({ ok: false, error: `Marca não encontrada no DB: ${brandName}` }, 400);
 
     const brandSilhouettes = (taxonomy || [])
       .filter((t: any) => t.brand_name === brandName)
