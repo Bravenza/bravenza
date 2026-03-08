@@ -188,7 +188,7 @@ Deno.serve(async (req) => {
   const mode = body.mode || "seed"; // "test" | "seed" | "seed_brand" | "brands_list"
 
   const rapidKey = Deno.env.get("RAPIDAPI_KEY");
-  if (!rapidKey) return json({ ok: false, error: "RAPIDAPI_KEY não configurada.", missing: ["RAPIDAPI_KEY"] });
+  if (!rapidKey) return jsonResponse({ ok: false, error: "RAPIDAPI_KEY não configurada.", missing: ["RAPIDAPI_KEY"] });
 
   const apiHeaders = { "X-RapidAPI-Key": rapidKey, "X-RapidAPI-Host": STOCKX_API_HOST };
 
