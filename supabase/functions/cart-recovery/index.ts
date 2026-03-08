@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireServiceOrAdmin } from "../_shared/auth-guard.ts";
+import { jsonResponse } from "../_shared/mk-helpers.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +18,11 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Service guard
+    try { await requireServiceOrAdmin(req, supabase); } catch (e: any) {
+      return jsonResponse({ error: e.message || "Unauthorized" }, e.status || 401);
+    }
 
     const body = await req.json().catch(() => ({}));
     const action = body.action || "process";
