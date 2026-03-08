@@ -65,17 +65,7 @@ Deno.serve(async (req) => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     }),
 
-    // 4. Stripe
-    checkService("stripe", async () => {
-      const key = Deno.env.get("STRIPE_SECRET_KEY");
-      if (!key) throw new Error("Chave não configurada");
-      const res = await fetch("https://api.stripe.com/v1/balance", {
-        headers: { Authorization: `Bearer ${key}` },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    }),
-
-    // 5. MercadoPago
+    // 4. MercadoPago
     checkService("mercadopago", async () => {
       const token = Deno.env.get("MERCADOPAGO_ACCESS_TOKEN");
       if (!token) throw new Error("Token não configurado");
