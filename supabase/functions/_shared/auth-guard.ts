@@ -97,6 +97,46 @@ export async function optionalAuth(req: Request, sb: any): Promise<AuthResult | 
 }
 
 /**
+ * Resolve CPF from auth token. Used by mkv2-* functions that key on CPF.
+ * For public actions, returns "visitor" if no token; for private actions, throws AuthError.
+ */
+export async function resolveAuthCpf(
+  req: Request,
+  sb: any,
+  opts?: { allowVisitor?: boolean }
+): Promise<{ cpf: string; userId: string; email: string | null }> {
+  const authHeader = req.headers.get("authorization");
+
+  if (!authHeader?.startsWith("Bearer ")) {
+    if (opts?.allowVisitor) return { cpf: "visitor", userId: "", email: null };
+    throw new AuthError("Token de autenticação ausente");
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const { data, error } = await sb.auth.getUser(token);
+  if (error || !data?.user) {
+    if (opts?.allowVisitor) return { cpf: "visitor", userId: "", email: null };
+    throw new AuthError("Token inválido ou expirado");
+  }
+
+  const userId = data.user.id;
+  const email = data.user.email || null;
+
+  const { data: profile } = await sb
+    .from("client_profiles")
+    .select("cpf")
+    .eq("user_id", userId)
+    .single();
+
+  if (!profile?.cpf) {
+    if (opts?.allowVisitor) return { cpf: "visitor", userId, email };
+    throw new AuthError("Perfil de cliente não encontrado");
+  }
+
+  return { cpf: profile.cpf, userId, email };
+}
+
+/**
  * Convenience: wrap a handler with auth error handling.
  * Returns a proper JSON error response for AuthError instances.
  */
