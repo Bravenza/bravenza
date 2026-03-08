@@ -240,6 +240,14 @@ Deno.serve(async (req) => {
     const productNames = orders.map(o => o.listing?.title || "Sneaker").join(", ");
     const description = `Bravenza MKT — ${orderCodes}`;
 
+    // Server-side idempotency check
+    const checkoutIdempKey = idempotency_key || `mkt-checkout-${orderIds.sort().join("-")}-${payment_method}`;
+    const idempCheck = await checkIdempotency(sb, checkoutIdempKey, 5);
+    if (idempCheck.isDuplicate) {
+      console.log(`[mkv2-checkout] Duplicate checkout for ${checkoutIdempKey}`);
+      return json(idempCheck.cachedResult || { status: "processing" });
+    }
+
     // Build consolidated external_reference: MKT-CODE1+CODE2-method
     const externalRef = `MKT-${orderCodes}-${payment_method === "card" ? "card" : "pix"}`;
 
