@@ -1,50 +1,25 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, x-supabase-client-platform, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { requireAdmin, authErrorResponse } from "../_shared/auth-guard.ts";
+import { corsHeaders, jsonResponse } from "../_shared/mk-helpers.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseAdmin = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  let auth;
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+    auth = await requireAdmin(req, supabaseAdmin);
+  } catch (error) {
+    return authErrorResponse(error);
+  }
 
-    // Verify the caller is an admin
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("Não autorizado");
-    }
-
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabaseUser = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: { user: callerUser }, error: authError } = await supabaseUser.auth.getUser();
-    if (authError || !callerUser) {
-      throw new Error("Não autorizado");
-    }
-
-    // Check if caller is admin
-    const { data: roleData } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", callerUser.id)
-      .eq("role", "admin")
-      .maybeSingle();
-
-    if (!roleData) {
-      throw new Error("Apenas administradores podem gerenciar admins");
-    }
-
+  try {
     const body = await req.json();
     const action = body.action || "create";
 
@@ -53,7 +28,6 @@ Deno.serve(async (req) => {
       const { userId, fullName, email } = body;
       if (!userId) throw new Error("userId é obrigatório");
 
-      // Update auth user metadata and email
       const updatePayload: Record<string, unknown> = {};
       if (email) updatePayload.email = email;
       if (fullName) updatePayload.user_metadata = { full_name: fullName };
@@ -63,7 +37,6 @@ Deno.serve(async (req) => {
         if (updateError) throw updateError;
       }
 
-      // Update admin profile
       const profileUpdate: Record<string, unknown> = { updated_at: new Date().toISOString() };
       if (fullName) profileUpdate.full_name = fullName;
       if (email) profileUpdate.email = email;
@@ -73,10 +46,7 @@ Deno.serve(async (req) => {
         .update(profileUpdate)
         .eq("user_id", userId);
 
-      return new Response(
-        JSON.stringify({ success: true, message: "Admin atualizado" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ success: true, message: "Admin atualizado" });
     }
 
     // === DELETE ===
@@ -84,31 +54,24 @@ Deno.serve(async (req) => {
       const { userId } = body;
       if (!userId) throw new Error("userId é obrigatório");
 
-      // Prevent self-deletion
-      if (userId === callerUser.id) {
+      if (userId === auth.userId) {
         throw new Error("Você não pode remover a si mesmo");
       }
 
-      // Remove role
       await supabaseAdmin
         .from("user_roles")
         .delete()
         .eq("user_id", userId)
         .eq("role", "admin");
 
-      // Remove profile
       await supabaseAdmin
         .from("admin_profiles")
         .delete()
         .eq("user_id", userId);
 
-      // Delete user from auth
       await supabaseAdmin.auth.admin.deleteUser(userId);
 
-      return new Response(
-        JSON.stringify({ success: true, message: "Admin removido" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ success: true, message: "Admin removido" });
     }
 
     // === CREATE (default) ===
@@ -122,7 +85,6 @@ Deno.serve(async (req) => {
       throw new Error("Senha temporária deve ter no mínimo 6 caracteres");
     }
 
-    // Create user via admin API
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: tempPassword,
@@ -137,7 +99,6 @@ Deno.serve(async (req) => {
       throw createError;
     }
 
-    // Add admin role
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
       .insert({ user_id: newUser.user.id, role: "admin" });
@@ -147,7 +108,6 @@ Deno.serve(async (req) => {
       throw new Error("Erro ao atribuir role de admin");
     }
 
-    // Create admin profile with must_change_password = true
     const { error: profileError } = await supabaseAdmin
       .from("admin_profiles")
       .insert({
@@ -155,29 +115,20 @@ Deno.serve(async (req) => {
         full_name: fullName,
         email,
         must_change_password: true,
-        created_by: callerUser.id,
+        created_by: auth.userId,
       });
 
     if (profileError) {
       console.error("Error creating admin profile:", profileError);
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: `Admin ${fullName} criado com sucesso`,
-        user_id: newUser.user.id,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({
+      success: true,
+      message: `Admin ${fullName} criado com sucesso`,
+      user_id: newUser.user.id,
+    });
   } catch (error: any) {
     console.error("Admin management error:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      }
-    );
+    return jsonResponse({ error: error.message }, 400);
   }
 });
