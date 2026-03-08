@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { useClientSession } from "@/hooks/useClientSession";
 import { getMarketplaceHeaders } from "@/hooks/marketplace/api";
 import { toast } from "sonner";
+import { DropImagePlaceholder } from "@/components/marketplace/DropImagePlaceholder";
 
 interface Release {
   brand: string;
