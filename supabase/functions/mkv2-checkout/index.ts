@@ -1,6 +1,7 @@
 // Marketplace Checkout — Consolidated payment for multiple orders
 // Supports PIX or Card via MercadoPago Transparent Checkout
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkIdempotency, setIdempotencyResult } from "../_shared/idempotency.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
