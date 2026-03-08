@@ -26,6 +26,11 @@
  *     await markIdempotencyFailed(sb, key, e.message);
  *     throw e;
  *   }
+ *
+ * Error semantics:
+ *   - Unique violation (23505) on upsert → treated as concurrent duplicate (safe)
+ *   - Any other DB error on upsert → throws Error (NOT masked as duplicate)
+ *   - Callers should catch and handle the thrown error appropriately
  */
 
 export interface IdempotencyCheck {
