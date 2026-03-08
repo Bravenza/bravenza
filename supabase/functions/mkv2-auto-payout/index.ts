@@ -2,6 +2,7 @@
 // after the protection period (8 business days) has elapsed.
 // Should be called via cron (hourly).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkIdempotency, setIdempotencyResult } from "../_shared/idempotency.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
