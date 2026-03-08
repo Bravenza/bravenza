@@ -18,6 +18,9 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Auth: require authenticated user
+    try { await requireAuth(req, supabase); } catch (e) { return authErrorResponse(e); }
+
     const { cpf, endpoint, p256dh, auth, user_agent } = await req.json();
 
     if (!cpf || !endpoint || !p256dh || !auth) {

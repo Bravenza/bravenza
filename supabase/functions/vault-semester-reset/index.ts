@@ -23,6 +23,9 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Auth: only service-role, cron, or admin
+    try { await requireServiceOrAdmin(req, supabase); } catch (e) { return authErrorResponse(e); }
+
     const cronStartedAt = new Date().toISOString();
     const { data: logEntry } = await supabase
       .from("cron_execution_logs")
