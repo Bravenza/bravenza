@@ -8,9 +8,7 @@ const gs=async(sb:any,mid:string)=>{const{data}=await sb.from("vault_seller_prof
 Deno.serve(async(req)=>{
 if(req.method==="OPTIONS")return new Response(null,{headers:H});
 const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;
-let cpf="visitor";const ah=req.headers.get("authorization");
-if(ah?.startsWith("Bearer ")){const{data:u}=await sb.auth.getUser(ah.replace("Bearer ",""));if(u?.user){const{data:p}=await sb.from("client_profiles").select("cpf").eq("user_id",u.user.id).single();if(p?.cpf)cpf=p.cpf;}}
-if(cpf==="visitor")return j({error:"Auth required"},401);
+const _ar=await resolveAuthCpf(req,sb);if(_ar.error||!_ar.cpf)return j({error:_ar.error||"Auth required"},401);const cpf=_ar.cpf;
 try{
 if(mt==="GET"&&a==="seller-analytics"){
   const mb=await gm(sb,cpf);if(!mb)return j({analytics:null});const sl=await gs(sb,mb.id);if(!sl)return j({analytics:null});

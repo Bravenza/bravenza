@@ -8,9 +8,7 @@ const PUB=new Set(["product-comments","product-reviews","product-analytics","che
 Deno.serve(async(req)=>{
 if(req.method==="OPTIONS")return new Response(null,{headers:H});
 const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;
-let cpf="visitor";const ah=req.headers.get("authorization");
-if(ah?.startsWith("Bearer ")){const{data:u}=await sb.auth.getUser(ah.replace("Bearer ",""));if(u?.user){const{data:p}=await sb.from("client_profiles").select("cpf").eq("user_id",u.user.id).single();if(p?.cpf)cpf=p.cpf;}}
-if(!PUB.has(a||"")&&cpf==="visitor")return j({error:"Auth required"},401);
+const{cpf:_c,errorResponse:_e}=await _rc(req,sb,PUB,a);if(_e)return _e;const cpf=_c!;
 try{
 if(mt==="GET"&&a==="product-comments"){const pid=url.searchParams.get("product_id");if(!pid)throw new Error("product_id obrigatório");const{data,error}=await sb.from("marketplace_product_comments_public").select("*").eq("product_id",pid).eq("is_visible",true).order("created_at",{ascending:true});if(error)throw error;return j({comments:data||[]});}
 if(mt==="POST"&&a==="product-comment"){const b=await req.json();if(!b.product_id||!b.content)throw new Error("product_id e content obrigatórios");const{data:mem}=await sb.from("vault_members").select("client_name").eq("client_cpf",cpf).maybeSingle();const insertData:any={product_id:b.product_id,user_cpf:cpf,user_name:mem?.client_name||"Usuário",content:b.content,parent_id:b.parent_id||null,is_seller_reply:!!b.is_seller_reply};if(b.review_id)insertData.review_id=b.review_id;const{data:comment,error}=await sb.from("marketplace_product_comments").insert(insertData).select().single();if(error)throw error;return j({comment});}

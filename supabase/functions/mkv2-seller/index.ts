@@ -9,9 +9,7 @@ const PUB=new Set(["seller-tier-info","seller-leaderboard"]);
 Deno.serve(async(req)=>{
 if(req.method==="OPTIONS")return new Response(null,{headers:H});
 const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;
-let cpf="visitor";const ah=req.headers.get("authorization");
-if(ah?.startsWith("Bearer ")){const{data:u}=await sb.auth.getUser(ah.replace("Bearer ",""));if(u?.user){const{data:p}=await sb.from("client_profiles").select("cpf").eq("user_id",u.user.id).single();if(p?.cpf)cpf=p.cpf;}}
-if(!PUB.has(a||"")&&cpf==="visitor")return j({error:"Auth required"},401);
+const{cpf:_c,errorResponse:_e}=await _rc(req,sb,PUB,a);if(_e)return _e;const cpf=_c!;
 try{
 if(mt==="GET"&&a==="seller-onboarding-status"){const mb=await gm(sb,cpf);if(!mb)return j({onboarded:false,seller:null});const sl=await gs(sb,mb.id);if(!sl)return j({onboarded:false,seller:null});return j({onboarded:!!sl.onboarding_completed_at,seller:{id:sl.id,full_name:sl.full_name,cpf_cnpj:sl.cpf_cnpj?`***${sl.cpf_cnpj.slice(-4)}`:null,phone:sl.phone?`***${sl.phone.slice(-4)}`:null,pix_key_type:sl.pix_key_type,pix_key:sl.pix_key?`${sl.pix_key.slice(0,3)}***`:null,pix_beneficiary:sl.pix_beneficiary,bank_name:sl.bank_name,account_type:sl.account_type||"pf",kyc_status:sl.kyc_status,terms_accepted_at:sl.terms_accepted_at,onboarding_completed_at:sl.onboarding_completed_at}});}
 if(mt==="POST"&&a==="seller-onboarding"){

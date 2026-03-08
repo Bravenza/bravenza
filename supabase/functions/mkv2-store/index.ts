@@ -12,9 +12,7 @@ const wa=(type:string,data:Record<string,any>)=>{try{const u=Deno.env.get("SUPAB
 Deno.serve(async(req)=>{
 if(req.method==="OPTIONS")return new Response(null,{headers:H});
 const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;
-let cpf="visitor";const ah=req.headers.get("authorization");
-if(ah?.startsWith("Bearer ")){const{data:u}=await sb.auth.getUser(ah.replace("Bearer ",""));if(u?.user){const{data:p}=await sb.from("client_profiles").select("cpf").eq("user_id",u.user.id).single();if(p?.cpf)cpf=p.cpf;}}
-if(cpf==="visitor")return j({error:"Auth required"},401);
+const _ar=await resolveAuthCpf(req,sb);if(_ar.error||!_ar.cpf)return j({error:_ar.error||"Auth required"},401);const cpf=_ar.cpf;
 try{
 if(mt==="POST"&&a==="create-coupon"){const b=await req.json();const mb=await gm(sb,cpf);if(!mb)throw new Error("Membro não encontrado");const sl=await gs(sb,mb.id);if(!sl)throw new Error("Vendedor não encontrado");if(!b.code||!b.discount_value)throw new Error("code e discount_value obrigatórios");const{data:c,error}=await sb.from("marketplace_coupons").insert({seller_id:sl.id,code:b.code.toUpperCase().trim(),discount_type:b.discount_type||"percent",discount_value:b.discount_value,min_purchase:b.min_purchase||0,max_uses:b.max_uses||null,valid_until:b.valid_until||null,listing_ids:b.listing_ids||null}).select().single();if(error)throw error;return j({success:true,coupon:c});}
 if(mt==="GET"&&a==="my-coupons"){const mb=await gm(sb,cpf);if(!mb)return j({coupons:[]});const sl=await gs(sb,mb.id);if(!sl)return j({coupons:[]});const{data}=await sb.from("marketplace_coupons").select("*").eq("seller_id",sl.id).order("created_at",{ascending:false});return j({coupons:data||[]});}

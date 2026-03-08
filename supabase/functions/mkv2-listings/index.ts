@@ -7,9 +7,7 @@ const PUB=new Set(["listings","listing-detail","seller-public-profile"]);
 Deno.serve(async(req)=>{
 if(req.method==="OPTIONS")return new Response(null,{headers:H});
 const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;
-let cpf="visitor";const ah=req.headers.get("authorization");
-if(ah?.startsWith("Bearer ")){const{data:u}=await sb.auth.getUser(ah.replace("Bearer ",""));if(u?.user){const{data:p}=await sb.from("client_profiles").select("cpf").eq("user_id",u.user.id).single();if(p?.cpf)cpf=p.cpf;}}
-if(!PUB.has(a||"")&&cpf==="visitor")return j({error:"Auth required"},401);
+const{cpf:_c,errorResponse:_e}=await _rc(req,sb,PUB,a);if(_e)return _e;const cpf=_c!;
 try{
 if(a==="listings"){
   const pg=+(url.searchParams.get("page")||"1"),lm=20,of2=(pg-1)*lm;const br=url.searchParams.get("brand"),ct=url.searchParams.get("condition"),mn=url.searchParams.get("min_price"),mx=url.searchParams.get("max_price"),sz=url.searchParams.get("size"),sr=url.searchParams.get("search"),so=url.searchParams.get("sort")||"recent";

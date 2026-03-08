@@ -9,9 +9,7 @@ const nt=async(sb:any,t:string,m:string,cpf:string,rid?:string,rt?:string)=>{try
 Deno.serve(async(req)=>{
 if(req.method==="OPTIONS")return new Response(null,{headers:H});
 const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;
-let cpf="visitor";const ah=req.headers.get("authorization");
-if(ah?.startsWith("Bearer ")){const{data:u}=await sb.auth.getUser(ah.replace("Bearer ",""));if(u?.user){const{data:p}=await sb.from("client_profiles").select("cpf").eq("user_id",u.user.id).single();if(p?.cpf)cpf=p.cpf;}}
-if(cpf==="visitor")return j({error:"Auth required"},401);
+const _ar=await resolveAuthCpf(req,sb);if(_ar.error||!_ar.cpf)return j({error:_ar.error||"Auth required"},401);const cpf=_ar.cpf;
 try{
 if(mt==="GET"&&a==="my-collections"){const mb=await gm(sb,cpf);if(!mb)return j({collections:[]});const sl=await gs(sb,mb.id);if(!sl)return j({collections:[]});const{data}=await sb.from("seller_collections").select("*").eq("seller_id",sl.id).order("sort_order",{ascending:true});return j({collections:data||[]});}
 if(mt==="POST"&&a==="create-collection"){const b=await req.json();const mb=await gm(sb,cpf);if(!mb)throw new Error("Membro não encontrado");const sl=await gs(sb,mb.id);if(!sl)throw new Error("Vendedor não encontrado");if(sl.plan_id!=="elite")throw new Error("Coleções apenas no plano Elite.");const{data,error}=await sb.from("seller_collections").insert({seller_id:sl.id,name:b.name,description:b.description||null,cover_image:b.cover_image||null,listing_ids:b.listing_ids||[]}).select().single();if(error)throw error;return j({collection:data});}
