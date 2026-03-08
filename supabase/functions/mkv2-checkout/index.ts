@@ -381,7 +381,7 @@ Deno.serve(async (req) => {
 
           // If interest-free, adjust seller fee (surcharge absorbed by seller)
           if (isInterestFree) {
-            const surchargePercent = getSurchargePercent(effectiveInterestFree);
+            const surchargePercent = getSurchargePercent(effectiveInterestFree, surcharges);
             const newFeePercent = (order.fee_percent || 14) + surchargePercent;
             const newFeeAmount = Math.round(order.sale_price * newFeePercent / 100 * 100) / 100;
             const newSellerPayout = Math.round((order.sale_price - newFeeAmount) * 100) / 100;
