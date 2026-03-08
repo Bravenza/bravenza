@@ -109,6 +109,7 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const sb = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
+  let checkoutIdempKey = "";
   try {
     // ── Load dynamic rates from DB ──
     const { mpRates, surcharges } = await loadRatesConfig(sb);
