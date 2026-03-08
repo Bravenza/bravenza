@@ -28,9 +28,10 @@ interface Release {
 type FilterBrand = "all" | "Nike" | "Jordan" | "Adidas" | "New Balance" | "Puma";
 type FilterStatus = "all" | "upcoming" | "today" | "past";
 
-// ── Countdown hook ──
-function useCountdown(targetDate: Date) {
+// ── Countdown hook (accepts null to disable) ──
+function useCountdown(targetDate: Date | null) {
   const getTimeLeft = () => {
+    if (!targetDate) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
     const diff = Math.max(0, targetDate.getTime() - Date.now());
     return {
       days: Math.floor(diff / (1000 * 60 * 60 * 24)),
@@ -41,6 +42,7 @@ function useCountdown(targetDate: Date) {
   };
   const [t, setT] = useState(getTimeLeft());
   useEffect(() => {
+    if (!targetDate) return;
     const id = setInterval(() => setT(getTimeLeft()), 1000);
     return () => clearInterval(id);
   }, [targetDate]);
@@ -95,17 +97,14 @@ export default function MarketplaceDropsPage() {
   const [brandFilter, setBrandFilter] = useState<FilterBrand>("all");
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("upcoming");
 
-  // Next friday countdown
-  const getNextFriday = () => {
+  // Dynamic countdown: target the next upcoming release date
+  const nextRelease = useMemo(() => {
     const now = new Date();
-    const day = now.getDay();
-    const daysUntilFriday = ((5 - day + 7) % 7) || 7;
-    const next = new Date(now);
-    next.setDate(now.getDate() + daysUntilFriday);
-    next.setHours(12, 0, 0, 0);
-    return next;
-  };
-  const countdown = useCountdown(getNextFriday());
+    return releases.find(r => new Date(r.release_date + "T12:00:00") > now) || null;
+  }, [releases]);
+  const countdown = useCountdown(
+    nextRelease ? new Date(nextRelease.release_date + "T12:00:00") : null
+  );
 
   const fetchReleases = useCallback(async () => {
     setIsLoading(true);
@@ -218,18 +217,27 @@ export default function MarketplaceDropsPage() {
             <Zap className="h-3.5 w-3.5 text-destructive" />
           </motion.div>
 
-          <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-2">Próximo drop em</h1>
-          <p className="text-sm text-muted-foreground mb-8">Sexta-feira, 12h. Não perca.</p>
+          {nextRelease ? (
+            <>
+              <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-2">Próximo drop em</h1>
+              <p className="text-sm text-muted-foreground mb-8">{nextRelease.brand} {nextRelease.model} — {formatDate(nextRelease.release_date)}</p>
 
-          <div className="flex items-center justify-center gap-3 md:gap-4 mb-8">
-            <CountdownUnit value={countdown.days} label="Dias" />
-            <span className="text-xl font-black text-destructive/40 mt-[-16px]">:</span>
-            <CountdownUnit value={countdown.hours} label="Horas" />
-            <span className="text-xl font-black text-destructive/40 mt-[-16px]">:</span>
-            <CountdownUnit value={countdown.minutes} label="Min" />
-            <span className="text-xl font-black text-destructive/40 mt-[-16px]">:</span>
-            <CountdownUnit value={countdown.seconds} label="Seg" />
-          </div>
+              <div className="flex items-center justify-center gap-3 md:gap-4 mb-8">
+                <CountdownUnit value={countdown.days} label="Dias" />
+                <span className="text-xl font-black text-destructive/40 mt-[-16px]">:</span>
+                <CountdownUnit value={countdown.hours} label="Horas" />
+                <span className="text-xl font-black text-destructive/40 mt-[-16px]">:</span>
+                <CountdownUnit value={countdown.minutes} label="Min" />
+                <span className="text-xl font-black text-destructive/40 mt-[-16px]">:</span>
+                <CountdownUnit value={countdown.seconds} label="Seg" />
+              </div>
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-2">Drops</h1>
+              <p className="text-sm text-muted-foreground mb-8">Nenhum lançamento futuro agendado no momento.</p>
+            </>
+          )}
 
           <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500/10 to-amber-500/10 border border-yellow-500/20 w-fit mx-auto">
             <Crown className="h-3.5 w-3.5 text-yellow-500" />
