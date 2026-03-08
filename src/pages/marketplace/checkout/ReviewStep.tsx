@@ -32,56 +32,53 @@ export function ReviewStep({ group, onNext, appliedCoupon, onApplyCoupon }: Revi
     setIsValidating(true);
 
     try {
-      const productIds = group.items
-        .map(i => i.offer?.product?.slug ? undefined : i.offer_id) // use offer_id as fallback
-        .concat(group.items.map(i => (i.offer as any)?.product_id).filter(Boolean))
-        .filter(Boolean);
-
       const headers = await getMarketplaceHeaders();
-      const params = new URLSearchParams({ action: "product-coupons" });
+
+      // Use the first item's listing_id to validate via backend (seller_id checked server-side)
+      const firstListingId = (group.items[0]?.offer as any)?.listing_id;
+      if (!firstListingId) {
+        setCouponError("Erro interno: anúncio não encontrado");
+        return;
+      }
+
+      const params = new URLSearchParams({ action: "validate-coupon" });
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-discover?${params}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-store?${params}`,
         {
           method: "POST",
           headers,
-          body: JSON.stringify({ product_ids: productIds }),
+          body: JSON.stringify({
+            code: couponCode.trim(),
+            listing_id: firstListingId,
+          }),
         }
       );
 
       const data = await res.json();
-      const coupons: any[] = data.coupons || [];
 
-      const now = new Date();
-      const matched = coupons.find(
-        (c: any) =>
-          c.code.toLowerCase() === couponCode.trim().toLowerCase() &&
-          c.is_active &&
-          (!c.valid_until || new Date(c.valid_until) > now) &&
-          (c.max_uses === null || c.uses_count < c.max_uses)
-      );
-
-      if (!matched) {
-        setCouponError("Cupom inválido ou expirado");
+      if (!res.ok || !data.valid) {
+        setCouponError(data.reason || data.error || "Cupom inválido ou expirado");
         return;
       }
 
       const subtotal = group.subtotal;
-      if (matched.min_purchase && subtotal < matched.min_purchase) {
-        setCouponError(`Compra mínima de R$ ${fmt(matched.min_purchase)} para este cupom`);
-        return;
+      if (data.discount_type === "percent") {
+        const discountAmount = Math.round((subtotal * data.discount_value) / 100 * 100) / 100;
+        onApplyCoupon?.({
+          code: couponCode.trim().toUpperCase(),
+          discount_type: "percent",
+          discount_value: data.discount_value,
+          discount_amount: discountAmount,
+        });
+      } else {
+        const discountAmount = Math.min(data.discount ?? data.discount_value, subtotal);
+        onApplyCoupon?.({
+          code: couponCode.trim().toUpperCase(),
+          discount_type: "fixed",
+          discount_value: data.discount_value,
+          discount_amount: discountAmount,
+        });
       }
-
-      const discountAmount =
-        matched.discount_type === "percent"
-          ? Math.round((subtotal * matched.discount_value) / 100 * 100) / 100
-          : Math.min(matched.discount_value, subtotal);
-
-      onApplyCoupon?.({
-        code: matched.code,
-        discount_type: matched.discount_type,
-        discount_value: matched.discount_value,
-        discount_amount: discountAmount,
-      });
     } catch {
       setCouponError("Erro ao validar cupom. Tente novamente.");
     } finally {

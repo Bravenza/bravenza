@@ -184,6 +184,9 @@ Deno.serve(async (req) => {
     let couponDiscount = 0;
     let appliedCouponCode: string | null = null;
     if (coupon_code) {
+      // Collect unique seller_ids from orders
+      const orderSellerIds = [...new Set(orders.map((o: any) => o.seller_id).filter(Boolean))];
+
       const { data: coupon } = await sb
         .from("marketplace_coupons")
         .select("*")
@@ -192,35 +195,41 @@ Deno.serve(async (req) => {
         .single();
 
       if (coupon) {
-        const validUntil = coupon.valid_until ? new Date(coupon.valid_until) : null;
-        const isExpired = validUntil && validUntil < new Date();
-        const maxUsesReached = coupon.max_uses !== null && coupon.uses_count >= coupon.max_uses;
+        // Verify coupon belongs to one of the sellers in this order
+        if (!orderSellerIds.includes(coupon.seller_id)) {
+          console.warn(`[mkv2-checkout] Coupon ${coupon.code} seller_id ${coupon.seller_id} does not match order sellers [${orderSellerIds.join(",")}]`);
+          // Skip coupon silently — do not apply
+        } else {
+          const validUntil = coupon.valid_until ? new Date(coupon.valid_until) : null;
+          const isExpired = validUntil && validUntil < new Date();
+          const maxUsesReached = coupon.max_uses !== null && coupon.uses_count >= coupon.max_uses;
 
-        if (!isExpired && !maxUsesReached) {
-          if (!coupon.min_purchase || totalAmount >= coupon.min_purchase) {
-            if (coupon.discount_type === "percent") {
-              couponDiscount = Math.round((totalAmount * coupon.discount_value / 100) * 100) / 100;
-            } else {
-              couponDiscount = Math.min(coupon.discount_value, totalAmount);
+          if (!isExpired && !maxUsesReached) {
+            if (!coupon.min_purchase || totalAmount >= coupon.min_purchase) {
+              if (coupon.discount_type === "percent") {
+                couponDiscount = Math.round((totalAmount * coupon.discount_value / 100) * 100) / 100;
+              } else {
+                couponDiscount = Math.min(coupon.discount_value, totalAmount);
+              }
+              totalAmount = Math.round((totalAmount - couponDiscount) * 100) / 100;
+              appliedCouponCode = coupon.code;
+
+              // Increment uses_count
+              await sb.from("marketplace_coupons")
+                .update({ uses_count: coupon.uses_count + 1 })
+                .eq("id", coupon.id);
+
+              // Save coupon info on all orders
+              for (const order of orders) {
+                const orderDiscount = Math.round((couponDiscount / orders.length) * 100) / 100;
+                await sb.from("vault_marketplace_orders").update({
+                  coupon_code: appliedCouponCode,
+                  discount_amount: orderDiscount,
+                }).eq("id", order.id);
+              }
+
+              console.log(`[mkv2-checkout] Coupon ${coupon.code} applied: -R$${couponDiscount}`);
             }
-            totalAmount = Math.round((totalAmount - couponDiscount) * 100) / 100;
-            appliedCouponCode = coupon.code;
-
-            // Increment uses_count
-            await sb.from("marketplace_coupons")
-              .update({ uses_count: coupon.uses_count + 1 })
-              .eq("id", coupon.id);
-
-            // Save coupon info on all orders
-            for (const order of orders) {
-              const orderDiscount = Math.round((couponDiscount / orders.length) * 100) / 100;
-              await sb.from("vault_marketplace_orders").update({
-                coupon_code: appliedCouponCode,
-                discount_amount: orderDiscount,
-              }).eq("id", order.id);
-            }
-
-            console.log(`[mkv2-checkout] Coupon ${coupon.code} applied: -R$${couponDiscount}`);
           }
         }
       }
