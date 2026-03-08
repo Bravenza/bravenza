@@ -25,19 +25,26 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Rate limit: 5 reviews per 15 min per IP
+    const rl = await checkRateLimit(req, { key: "submit-review", maxRequests: 5, windowMinutes: 15 });
+    if (!rl.allowed) return rateLimitResponse(rl.retryAfterSeconds!, corsHeaders);
+
+    const data = await safeParseBody<ReviewRequest>(req, 10_000);
+    if (!data) throw new Error("Payload inválido ou muito grande");
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const data: ReviewRequest = await req.json();
 
     if (!data.session_token || !data.order_id || !data.rating) {
       throw new Error("session_token, order_id e rating são obrigatórios");
     }
 
-    if (data.rating < 1 || data.rating > 5) {
-      throw new Error("Rating deve ser entre 1 e 5");
-    }
+    const rating = validateInt(data.rating, 1, 5);
+    if (rating === null) throw new Error("Rating deve ser entre 1 e 5");
+
+    // Sanitize comment to prevent XSS
+    const safeComment = data.comment ? stripHtml(sanitizeString(data.comment, 2000) || "") : null;
 
     // Validate session
     const { data: session, error: sessionError } = await supabase
