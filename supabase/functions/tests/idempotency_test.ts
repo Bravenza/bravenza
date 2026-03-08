@@ -19,9 +19,7 @@ const SUPABASE_URL =
   Deno.env.get("SUPABASE_URL") ??
   `https://snfqxejtmauyspyhqvop.supabase.co`;
 const SUPABASE_KEY =
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
-  // anon key used in test context — sufficient for idempotency_keys (no RLS)
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNuZnF4ZWp0bWF1eXNweWhxdm9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0Mzg4MDQsImV4cCI6MjA4NTAxNDgwNH0.Qhu8pRHI_fC-FV9fA0epi9-rjMUYjZYGt_8YnTi51cU";
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 function sb() {
   return createClient(SUPABASE_URL, SUPABASE_KEY);
