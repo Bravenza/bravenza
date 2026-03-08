@@ -72,17 +72,53 @@ These are intentionally public and contain no sensitive data:
 ## Idempotency Protection
 
 Critical payment functions use the `_shared/idempotency.ts` helper:
-- **Lock acquired** before processing (`status: "processing"`)
-- **Marked failed** on error with `markIdempotencyFailed()` (records error, allows retry on next request)
-- **Completed** on success with `setIdempotencyResult()` (prevents duplicate)
-- **TTL-based expiration** as safety net (default 5-15 min)
-- **Failed status** is auto-cleared on next `checkIdempotency()` call
+
+### Status lifecycle
+```
+processing → completed   (success: result cached, duplicates return cache)
+processing → failed      (error: recorded with context, next request retries)
+processing → (stale)     (stuck >2× TTL: auto-cleared on next check)
+expired    → (cleared)   (past expires_at: deleted on next check)
+```
+
+### Schema (`idempotency_keys` table)
+| Column | Type | Purpose |
+|--------|------|---------|
+| `key` | text (unique) | Deterministic key e.g. `card-{orderId}-{type}` |
+| `status` | text | `processing` / `completed` / `failed` |
+| `cached_result` | jsonb | Stored response for completed keys |
+| `last_error` | text | Error message for failed keys |
+| `expires_at` | timestamptz | TTL-based expiration |
+| `updated_at` | timestamptz | Tracks last status change (stale detection) |
+
+### Lock placement policy
+Lock is acquired **AFTER** input validation and ownership checks, **BEFORE** external API calls:
+1. Parse + validate request body
+2. Verify order ownership / payment status
+3. **→ checkIdempotency() ←** (lock point)
+4. Call external API (MercadoPago, etc.)
+5. Update database
+6. setIdempotencyResult() on success / markIdempotencyFailed() on error
+
+### Scenario → Response matrix
+| Scenario | Status | Response | HTTP |
+|----------|--------|----------|------|
+| First request | `processing` → `completed` | Payment result | 200 |
+| Duplicate (completed) | `completed` | Cached result | 200 |
+| Concurrent request | `processing` (fresh) | `{"status":"processing","message":"..."}` | 200 |
+| Retry after failure | `failed` → cleared → `processing` | New attempt | 200 |
+| Retry after stale lock | `processing` (>2×TTL) → cleared → `processing` | New attempt | 200 |
+| Retry after expiry | expired → cleared → `processing` | New attempt | 200 |
 
 ### Functions using idempotency:
-- `process-card-payment` → `card-{orderId}-{type}`
-- `generate-pix` → `pix-{orderId}-{type}`
-- `mkv2-checkout` → `mkt-checkout-{ids}-{method}`
-- `mkv2-auto-payout` → `auto-payout-{date}`
+| Function | Key pattern | TTL | Lock point |
+|----------|-------------|-----|------------|
+| `process-card-payment` | `card-{orderId}-{type}` | 5 min | After order validation |
+| `generate-pix` | `pix-{orderId}-{type}` | 15 min | After payment status check |
+| `mkv2-checkout` | `mkt-checkout-{ids}-{method}` | 5 min | After ownership + status validation |
+| `mercadopago-webhook` | `webhook-mp-{paymentId}-{action}` | 60 min | After signature validation |
+| `mkv2-wallet` (request-payout) | `wallet-payout-{sellerId}-{amount}` | 5 min | After balance validation |
+| `mkv2-auto-payout` | `auto-payout-{orderId}` | 120 min | Per-order within batch |
 
 ## Admin Role Validation
 All admin checks use `user_roles` table (not `admin_profiles`).
