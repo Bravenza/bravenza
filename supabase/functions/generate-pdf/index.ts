@@ -357,7 +357,9 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Admin guard
-    try { await requireAdmin(req, supabase); } catch (e) { return authErrorResponse(e); }
+    console.log("[generate-pdf] Auth header present:", !!req.headers.get("authorization"));
+    try { await requireAdmin(req, supabase); } catch (e) { console.log("[generate-pdf] Auth rejected:", (e as any).message); return authErrorResponse(e); }
+    console.log("[generate-pdf] Auth passed");
 
     let order_id: string;
     let type: string;
