@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireAdmin, authErrorResponse, AuthError } from "../_shared/auth-guard.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -14,16 +15,13 @@ Deno.serve(async (req) => {
 
   const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-  // Admin auth
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) return json({ error: "Auth required" }, 401);
-  const anonSb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const { data: { user }, error: userErr } = await anonSb.auth.getUser();
-  if (userErr || !user) return json({ error: "Unauthorized" }, 401);
-  const { data: adm } = await sb.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
-  if (!adm) return json({ error: "Admin only" }, 403);
+  // Admin auth via shared guard
+  try {
+    await requireAdmin(req, sb);
+  } catch (e) {
+    if (e instanceof AuthError) return authErrorResponse(e);
+    return json({ error: "Unauthorized" }, 401);
+  }
 
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
 

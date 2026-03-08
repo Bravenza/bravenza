@@ -1,4 +1,5 @@
 import{createClient}from"https://esm.sh/@supabase/supabase-js@2";
+import{resolveAuthCpf}from"../_shared/mk-helpers.ts";
 const H={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version","Access-Control-Allow-Methods":"GET, POST, PUT, DELETE, OPTIONS"};
 const j=(d:unknown,s=200)=>new Response(JSON.stringify(d),{status:s,headers:{...H,"Content-Type":"application/json"}});
 const sc=()=>createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -8,9 +9,8 @@ const PUB=new Set(["catalog-products","catalog-product","catalog-offers","catalo
 Deno.serve(async(req)=>{
 if(req.method==="OPTIONS")return new Response(null,{headers:H});
 const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;
-let cpf="visitor";const ah=req.headers.get("authorization");
-if(ah?.startsWith("Bearer ")){const{data:u}=await sb.auth.getUser(ah.replace("Bearer ",""));if(u?.user){const{data:p}=await sb.from("client_profiles").select("cpf").eq("user_id",u.user.id).single();if(p?.cpf)cpf=p.cpf;}}
-if(!PUB.has(a||"")&&cpf==="visitor")return j({error:"Auth required"},401);
+let cpf="visitor";
+if(!PUB.has(a||"")){const ar=await resolveAuthCpf(req,sb);if(ar.error||!ar.cpf)return j({error:ar.error||"Auth required"},401);cpf=ar.cpf;}else{const ar=await resolveAuthCpf(req,sb);if(!ar.error&&ar.cpf)cpf=ar.cpf;}
 try{
 if(mt==="GET"&&a==="catalog-products"){
   const lm=+(url.searchParams.get("limit")||"20");const cursor=url.searchParams.get("cursor");const sr=url.searchParams.get("search"),br=url.searchParams.get("brand"),cat=url.searchParams.get("category"),mdl=url.searchParams.get("model");
