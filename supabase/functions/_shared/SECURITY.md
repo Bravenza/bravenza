@@ -43,19 +43,20 @@ Auth-only functions use `resolveAuthCpf(req, sb)` directly.
 - `create-admin`, `catalog-sync`, `catalog-seed-500`
 - `mkv2-auto-payout`, `mkv2-cron-tasks`, `sync-droper-images`
 
-**Auth-required (mk-helpers.ts → resolveAuthCpf):**
+**Auth-required (auth-guard.ts → requireAuth):**
+- `mkv2-order-ops` ✅ Sprint 1 — migrated from mk-helpers `resolveAuthCpf` to auth-guard `requireAuth`
 - `mkv2-wallet`, `mkv2-offers`, `mkv2-social`, `mkv2-seller-data`
-- `mkv2-orders`, `mkv2-store`, `mkv2-order-ops`, `mkv2-checkout`
+- `mkv2-orders`, `mkv2-store`, `mkv2-checkout`
 
-**Mixed public/auth (mk-helpers.ts → resolveCpf + PUB set):**
+**Mixed public/auth (auth-guard.ts → requireAuth + optionalAuth):**
+- `mkv2-fulfill` ✅ Sprint 1 — migrated from mk-helpers `resolveCpf` to auth-guard `requireAuth`/`optionalAuth`/`requireAdmin`
 - `mkv2-engage` (PUB: product-comments, product-reviews, product-analytics, check-purchase)
 - `mkv2-listings` (PUB: listings, listing-detail, seller-public-profile)
 - `mkv2-seller` (PUB: seller-tier-info, seller-leaderboard)
-- `mkv2-fulfill` (PUB: laudo-lookup, check-auto-payout)
 
-**Admin checks within mixed functions (auth-guard.ts):**
-- `mkv2-fulfill` → `requireAdminByToken` for resolve-dispute, hub-orders, hub-update-status, hub-inspect; `isAdminByToken` for send-message
-- `mkv2-order-ops` → `requireAdminByToken` for admin-orders, admin-disputes, payout_released; `isAdminByToken` for update-order-status RBAC
+**Admin checks within migrated functions (auth-guard.ts → requireAdmin):**
+- `mkv2-fulfill` → `requireAdmin` for resolve-dispute, hub-orders, hub-update-status, hub-inspect; try/catch `requireAdmin` for send-message admin name
+- `mkv2-order-ops` → `requireAdmin` for admin-orders, admin-disputes, payout_released; try/catch `requireAdmin` for update-order-status RBAC
 
 **Session-based auth (client portal, not JWT):**
 - `client-orders` → session_token via client_sessions table

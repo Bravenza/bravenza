@@ -205,6 +205,7 @@ WHERE expires_at < now();
 | Smoke tests marketplace (M1-M4) | ☐ | Relatório seção 3.2 |
 | Smoke tests auth (A1-A8) | ☐ | Relatório seção 3.3 |
 | Zero funções sem auth guard | ✅ | Todas 59 funções classificadas e protegidas |
+| Sprint 1 P0 migrado | ✅ | `mkv2-order-ops`, `mkv2-fulfill`, `client-orders` usando shared guards |
 | Documento verify_jwt final | ✅ | `_shared/SECURITY.md` atualizado |
 | Erros 5xx < 1% (72h) | ☐ | Monitoramento seção 4 |
 | Zero duplicação em pagamento | ☐ | Query seção 4.3 |
