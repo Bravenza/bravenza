@@ -2919,6 +2919,45 @@ export type Database = {
           },
         ]
       }
+      sneaker_releases: {
+        Row: {
+          brand: string
+          colorway: string | null
+          created_at: string
+          hype_level: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          model: string
+          release_date: string
+          updated_at: string
+        }
+        Insert: {
+          brand: string
+          colorway?: string | null
+          created_at?: string
+          hype_level?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          model: string
+          release_date: string
+          updated_at?: string
+        }
+        Update: {
+          brand?: string
+          colorway?: string | null
+          created_at?: string
+          hype_level?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          model?: string
+          release_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           average_shipping_days: number | null
