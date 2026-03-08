@@ -20,16 +20,17 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  let idempKey = "";
+
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const mercadoPagoToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");
 
     if (!mercadoPagoToken) {
       throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurado");
     }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { token, payment_type, amount, description, idempotency_key }: PixRequest & { idempotency_key?: string } = await req.json();
 
