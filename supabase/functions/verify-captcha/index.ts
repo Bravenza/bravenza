@@ -1,3 +1,6 @@
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limiter.ts";
+import { safeParseBody } from "../_shared/input-validation.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
