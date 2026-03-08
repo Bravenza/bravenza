@@ -80,15 +80,10 @@ Deno.serve(async (req) => {
 
   // ── Admin actions: require admin role via auth-guard ──
   if (ADMIN_ACTIONS.has(a || "")) {
-    console.log(`[mkv2-discover] Admin action "${a}" — checking auth...`);
-    const authHeader = req.headers.get("authorization");
-    console.log(`[mkv2-discover] Auth header present: ${!!authHeader}, starts with Bearer: ${authHeader?.startsWith("Bearer ")}`);
     let adminAuth;
     try {
       adminAuth = await requireAdmin(req, sb);
-      console.log(`[mkv2-discover] Admin auth OK: userId=${adminAuth.userId}`);
     } catch (error) {
-      console.log(`[mkv2-discover] Admin auth FAILED:`, error);
       return authErrorResponse(error);
     }
 
