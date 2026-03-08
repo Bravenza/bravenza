@@ -213,7 +213,7 @@ Deno.serve(async (req) => {
   if (mode === "seed_brand") {
     const brandName = body.brand as string;
     const quota = BRAND_QUOTAS[brandName];
-    if (!brandName || !quota) return json({ ok: false, error: `Marca inválida: ${brandName}` }, 400);
+    if (!brandName || !quota) return jsonResponse({ ok: false, error: `Marca inválida: ${brandName}` }, 400);
     const queryIndex = body.query_index ?? 0; // which silhouette query to start from
     const BATCH_LIMIT = 30; // max items to process per call
 
