@@ -122,6 +122,13 @@ Deno.serve(async (req) => {
         reference_type: "marketplace_payout",
       });
 
+      // Mark idempotency as completed (prevents stuck "processing" state)
+      await setIdempotencyResult(sb, payoutIdempKey, {
+        order_id: order.id,
+        order_code: order.order_code,
+        payout_amount: order.seller_payout,
+      }).catch((e: unknown) => console.warn(`[mkv2-auto-payout] Failed to finalize idempotency for ${order.order_code}:`, e));
+
       processed++;
     }
 
