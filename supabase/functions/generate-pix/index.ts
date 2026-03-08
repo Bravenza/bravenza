@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
     }
 
     // Deterministic idempotency key — same order+type always maps to same key
-    const idempKey = idempotency_key || `pix-${order.order_id}-${payment_type}`;
+    idempKey = idempotency_key || `pix-${order.order_id}-${payment_type}`;
 
     // Server-side idempotency check
     const idempCheck = await checkIdempotency(supabase, idempKey, 15);
