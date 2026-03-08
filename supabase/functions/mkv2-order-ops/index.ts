@@ -1,22 +1,25 @@
 /**
  * mkv2-order-ops — Order operations (status updates, admin views, buyer cancellation)
  *
+ * Auth model: Supabase JWT via shared auth-guard.ts
+ *
  * Action tiers:
  *   PUBLIC_ACTIONS  → (none)
  *   AUTH_ACTIONS    → update-order-status (seller RBAC), cancel-buyer-order
  *   ADMIN_ACTIONS   → admin-orders, admin-disputes, update-order-status (full), payout_released
+ *
+ * All actions require authentication. Admin actions additionally require admin role.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
-  requireAdminByToken,
-  isAdminByToken,
+  requireAuth,
+  requireAdmin,
   authErrorResponse,
   AuthError,
 } from "../_shared/auth-guard.ts";
 import {
   corsHeaders,
   jsonResponse,
-  resolveAuthCpf,
   getMemberEmail,
   sendMarketplaceEmail,
   sendMarketplaceWhatsApp,
@@ -27,6 +30,7 @@ import {
 const ADMIN_ACTIONS = new Set(["admin-orders", "admin-disputes"]);
 // update-order-status uses RBAC: admin can set any status, seller limited set
 // cancel-buyer-order is auth (buyer must own the order)
+// payout_released within update-order-status is admin-only (checked inline)
 
 const sc = () =>
   createClient(
@@ -71,25 +75,21 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const action = url.searchParams.get("action");
   const method = req.method;
-  const authHeader = req.headers.get("authorization") || "";
-
-  // ── All actions require authentication ──
-  const authResult = await resolveAuthCpf(req, sb);
-  if (authResult.error || !authResult.cpf) {
-    return jsonResponse({ error: authResult.error || "Auth required" }, 401);
-  }
-  const cpf = authResult.cpf;
-
-  // ── Admin-only actions: validate via shared guard ──
-  if (ADMIN_ACTIONS.has(action || "")) {
-    try {
-      await requireAdminByToken(sb, authHeader);
-    } catch (e) {
-      return authErrorResponse(e);
-    }
-  }
 
   try {
+    // ── All actions require authentication via shared guard ──
+    const auth = await requireAuth(req, sb);
+    const cpf = auth.cpf;
+
+    if (!cpf) {
+      return jsonResponse({ error: "Perfil de cliente não encontrado" }, 403);
+    }
+
+    // ── Admin-only actions: validate via shared guard ──
+    if (ADMIN_ACTIONS.has(action || "")) {
+      await requireAdmin(req, sb);
+    }
+
     // ═══════════════════════════════════════════════
     // ADMIN: admin-orders
     // ═══════════════════════════════════════════════
@@ -158,7 +158,16 @@ Deno.serve(async (req) => {
     // ═══════════════════════════════════════════════
     if (method === "PUT" && action === "update-order-status") {
       const b = await req.json();
-      const isAdmin = await isAdminByToken(sb, authHeader);
+
+      // Check if caller is admin (no throw — just a boolean check)
+      let isAdmin = false;
+      try {
+        await requireAdmin(req, sb);
+        isAdmin = true;
+      } catch (_) {
+        // Not admin — that's fine for seller-allowed statuses
+      }
+
       const sellerAllowedStatuses = ["shipped", "in_transit_to_hub"];
 
       if (!isAdmin) {
@@ -200,8 +209,8 @@ Deno.serve(async (req) => {
         if (rfd?.mp_payment_id && ["paid", "in_transit_to_hub", "shipped"].includes(rfd.status))
           await refundMP(rfd.mp_payment_id, b.order_id);
       } else if (b.status === "payout_released") {
-        // payout_released is admin-only
-        await requireAdminByToken(sb, authHeader);
+        // payout_released is admin-only — enforce via shared guard
+        await requireAdmin(req, sb);
         u.payout_released_at = new Date().toISOString();
         u.payout_method = b.payout_method || "pix";
         u.payout_proof_url = b.payout_proof_url || null;
