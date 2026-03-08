@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { checkIdempotency, setIdempotencyResult, releaseIdempotencyKey } from "../_shared/idempotency.ts";
+import { checkIdempotency, setIdempotencyResult, markIdempotencyFailed } from "../_shared/idempotency.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -178,6 +178,10 @@ Deno.serve(async (req) => {
     );
   } catch (error: any) {
     console.error("Error generating Pix:", error);
+    // Record failure — idempKey may not be set if error happened before idempotency check
+    if (typeof idempKey === "string" && idempKey) {
+      await markIdempotencyFailed(supabase, idempKey, error.message || "PIX generation error").catch(() => {});
+    }
     return new Response(
       JSON.stringify({ error: error.message }),
       {

@@ -1,4 +1,5 @@
 import{createClient}from"https://esm.sh/@supabase/supabase-js@2";
+import{resolveAuthCpf}from"../_shared/mk-helpers.ts";
 const H={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version","Access-Control-Allow-Methods":"GET, POST, PUT, DELETE, OPTIONS"};
 const j=(d:unknown,s=200)=>new Response(JSON.stringify(d),{status:s,headers:{...H,"Content-Type":"application/json"}});
 const sc=()=>createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -7,9 +8,7 @@ const gs=async(sb:any,mid:string)=>{const{data}=await sb.from("vault_seller_prof
 Deno.serve(async(req)=>{
 if(req.method==="OPTIONS")return new Response(null,{headers:H});
 const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;
-let cpf="visitor";const ah=req.headers.get("authorization");
-if(ah?.startsWith("Bearer ")){const{data:u}=await sb.auth.getUser(ah.replace("Bearer ",""));if(u?.user){const{data:p}=await sb.from("client_profiles").select("cpf").eq("user_id",u.user.id).single();if(p?.cpf)cpf=p.cpf;}}
-if(cpf==="visitor")return j({error:"Auth required"},401);
+const _ar=await resolveAuthCpf(req,sb);if(_ar.error||!_ar.cpf)return j({error:_ar.error||"Auth required"},401);const cpf=_ar.cpf;
 try{
 if(mt==="GET"&&a==="seller-analytics"){
   const mb=await gm(sb,cpf);if(!mb)return j({analytics:null});const sl=await gs(sb,mb.id);if(!sl)return j({analytics:null});

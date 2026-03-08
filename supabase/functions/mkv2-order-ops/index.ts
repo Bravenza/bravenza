@@ -1,5 +1,6 @@
 import{createClient}from"https://esm.sh/@supabase/supabase-js@2";
 import{requireAdminByToken,isAdminByToken}from"../_shared/auth-guard.ts";
+import{resolveAuthCpf}from"../_shared/mk-helpers.ts";
 const H={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version","Access-Control-Allow-Methods":"GET, POST, PUT, DELETE, OPTIONS"};
 const j=(d:unknown,s=200)=>new Response(JSON.stringify(d),{status:s,headers:{...H,"Content-Type":"application/json"}});
 const sc=()=>createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -10,10 +11,8 @@ const wa=(type:string,data:Record<string,any>)=>{try{const u=Deno.env.get("SUPAB
 const refundMP=async(mpPaymentId:string,orderId:string)=>{const tk=Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");if(!tk){console.error(`[mkv2-order-ops] MERCADO_PAGO_ACCESS_TOKEN not set. Cannot refund order ${orderId}.`);return;}try{const r=await fetch(`https://api.mercadopago.com/v1/payments/${mpPaymentId}/refunds`,{method:"POST",headers:{"Authorization":`Bearer ${tk}`,"X-Idempotency-Key":`refund-${orderId}`,"Content-Type":"application/json"},body:JSON.stringify({})});if(!r.ok){const t=await r.text();console.error(`[mkv2-order-ops] MP refund failed order=${orderId} payment=${mpPaymentId}: ${r.status} ${t}`);}else{console.log(`[mkv2-order-ops] MP refund initiated order=${orderId} payment=${mpPaymentId}`);}}catch(e){console.error(`[mkv2-order-ops] MP refund exception order=${orderId}:`,e);}};
 Deno.serve(async(req)=>{
 if(req.method==="OPTIONS")return new Response(null,{headers:H});
-const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;
-let cpf="visitor";const ah=req.headers.get("authorization");
-if(ah?.startsWith("Bearer ")){const{data:u}=await sb.auth.getUser(ah.replace("Bearer ",""));if(u?.user){const{data:p}=await sb.from("client_profiles").select("cpf").eq("user_id",u.user.id).single();if(p?.cpf)cpf=p.cpf;}}
-if(cpf==="visitor")return j({error:"Auth required"},401);
+const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;const ah=req.headers.get("authorization")||"";
+const _ar=await resolveAuthCpf(req,sb);if(_ar.error||!_ar.cpf)return j({error:_ar.error||"Auth required"},401);const cpf=_ar.cpf;
 try{
 if(mt==="PUT"&&a==="update-order-status"){
   const b=await req.json();

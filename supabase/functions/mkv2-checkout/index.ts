@@ -1,7 +1,8 @@
 // Marketplace Checkout — Consolidated payment for multiple orders
 // Supports PIX or Card via MercadoPago Transparent Checkout
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { checkIdempotency, setIdempotencyResult, releaseIdempotencyKey } from "../_shared/idempotency.ts";
+import { checkIdempotency, setIdempotencyResult, markIdempotencyFailed } from "../_shared/idempotency.ts";
+import { resolveAuthCpf } from "../_shared/mk-helpers.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -114,17 +115,10 @@ Deno.serve(async (req) => {
     // ── Load dynamic rates from DB ──
     const { mpRates, surcharges } = await loadRatesConfig(sb);
 
-    // ── Auth: validate JWT and resolve buyer CPF ──
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Auth required" }, 401);
-
-    const { data: { user } } = await sb.auth.getUser(authHeader.replace("Bearer ", ""));
-    if (!user) return json({ error: "Token inválido" }, 401);
-
-    const { data: profile } = await sb.from("client_profiles")
-      .select("cpf").eq("user_id", user.id).single();
-    const cpf = profile?.cpf;
-    if (!cpf) return json({ error: "Perfil não encontrado" }, 403);
+    // ── Auth: validate JWT and resolve buyer CPF via shared guard ──
+    const authResult = await resolveAuthCpf(req, sb);
+    if (authResult.error || !authResult.cpf) return json({ error: authResult.error || "Auth required" }, 401);
+    const cpf = authResult.cpf;
 
     const body = await req.json();
     const {
@@ -435,9 +429,9 @@ Deno.serve(async (req) => {
     }
   } catch (err: any) {
     console.error("[mkv2-checkout] Error:", err);
-    // Release idempotency lock so the client can retry
+    // Record failure and allow retry
     if (checkoutIdempKey) {
-      await releaseIdempotencyKey(sb, checkoutIdempKey).catch(() => {});
+      await markIdempotencyFailed(sb, checkoutIdempKey, err.message || "Checkout error").catch(() => {});
     }
     return json({ error: err.message || "Erro interno" }, 500);
   }

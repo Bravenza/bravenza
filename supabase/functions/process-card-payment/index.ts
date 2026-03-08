@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { checkIdempotency, setIdempotencyResult, releaseIdempotencyKey } from "../_shared/idempotency.ts";
+import { checkIdempotency, setIdempotencyResult, markIdempotencyFailed, releaseIdempotencyKey } from "../_shared/idempotency.ts";
+import { resolveAuthCpf } from "../_shared/mk-helpers.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,16 +29,15 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
   let idempKey = "";
   try {
     const mercadoPagoToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");
     if (!mercadoPagoToken) {
       throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurado");
     }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const {
       token,
@@ -259,9 +259,9 @@ Deno.serve(async (req) => {
     );
   } catch (error: any) {
     console.error("Error processing card payment:", error);
-    // Release idempotency lock so the client can retry
+    // Record failure and allow retry
     if (idempKey) {
-      await releaseIdempotencyKey(supabase, idempKey).catch(() => {});
+      await markIdempotencyFailed(supabase, idempKey, error.message || "Unknown error").catch(() => {});
     }
     return new Response(
       JSON.stringify({ error: error.message }),
