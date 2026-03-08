@@ -27,6 +27,8 @@ import {
 } from "../_shared/mk-helpers.ts";
 
 // ── Action tier constants ──
+const PUBLIC_ACTIONS = new Set<string>([]); // None — all actions require auth
+const AUTH_ACTIONS = new Set(["update-order-status", "cancel-buyer-order"]);
 const ADMIN_ACTIONS = new Set(["admin-orders", "admin-disputes"]);
 // update-order-status uses RBAC: admin can set any status, seller limited set
 // cancel-buyer-order is auth (buyer must own the order)

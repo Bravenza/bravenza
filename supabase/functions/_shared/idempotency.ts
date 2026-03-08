@@ -26,6 +26,11 @@
  *     await markIdempotencyFailed(sb, key, e.message);
  *     throw e;
  *   }
+ *
+ * Error semantics:
+ *   - Unique violation (23505) on upsert → treated as concurrent duplicate (safe)
+ *   - Any other DB error on upsert → throws Error (NOT masked as duplicate)
+ *   - Callers should catch and handle the thrown error appropriately
  */
 
 export interface IdempotencyCheck {
@@ -96,9 +101,15 @@ export async function checkIdempotency(
     );
 
   if (error) {
-    // Race condition on upsert — treat as concurrent duplicate
-    console.warn("[idempotency] Lock contention for key:", key, error.message);
-    return { isDuplicate: true, cachedResult: { status: "processing", message: "Requisição em andamento" } };
+    // Distinguish unique-violation (true race) from transient DB errors
+    if (error.code === "23505") {
+      // Unique constraint — another request locked the key concurrently
+      console.warn("[idempotency] Lock contention (unique violation) for key:", key);
+      return { isDuplicate: true, cachedResult: { status: "processing", message: "Requisição em andamento" } };
+    }
+    // Transient/unexpected DB error — do NOT mask as duplicate; let caller handle
+    console.error("[idempotency] DB error acquiring lock for key:", key, error.code, error.message);
+    throw new Error(`Idempotency lock failed: ${error.message}`);
   }
 
   return { isDuplicate: false, cachedResult: null };
