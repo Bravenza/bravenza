@@ -1,9 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireServiceOrAdmin, authErrorResponse } from "../_shared/auth-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, x-supabase-client-platform, apikey, content-type",
+    "authorization, x-client-info, x-supabase-client-platform, apikey, content-type, x-cron-key",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -28,6 +29,9 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const sb = createClient(supabaseUrl, supabaseServiceKey);
+    // Auth: only service-role, cron, or admin can invoke this internal function
+    try { await requireServiceOrAdmin(req, sb); } catch (e) { return authErrorResponse(e); }
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const body: CreateNotificationRequest = await req.json();

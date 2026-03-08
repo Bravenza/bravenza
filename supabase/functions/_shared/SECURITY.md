@@ -220,35 +220,36 @@ See "Why `verify_jwt = false`" above for rationale.
 | `mkv2-cron-tasks` | SERVICE | `false` | requireServiceOrAdmin | Scheduled maintenance |
 | `mkv2-auto-payout` | SERVICE | `false` | requireServiceOrAdmin | Auto payouts + idempotency |
 | `sync-droper-images` | SERVICE | `false` | requireServiceOrAdmin | Image sync from Droper |
-| `vault-semester-reset` | SERVICE | `false` | service-role/cron | Semester tier reset |
-| `vault-sla-monitor` | SERVICE | `false` | service-role/cron | SLA monitoring |
-| `process-reminders` | SERVICE | `false` | service-role/cron | Reminder processing |
-| `schedule-reminder` | SERVICE | `false` | service-role/cron | Reminder scheduling |
+| `vault-semester-reset` | SERVICE | `false` | requireServiceOrAdmin | Semester tier reset |
+| `vault-sla-monitor` | SERVICE | `false` | requireServiceOrAdmin | SLA monitoring |
+| `process-reminders` | SERVICE | `false` | requireServiceOrAdmin | Reminder processing |
+| `schedule-reminder` | SERVICE | `false` | requireServiceOrAdmin | Reminder scheduling |
 | `cart-recovery` | SERVICE | `false` | service-role/cron | Abandoned cart emails |
-| `send-budget-email` | INTERNAL | `false` | Called by admin flows | Email dispatch |
-| `send-order-email` | INTERNAL | `false` | Called by webhook/checkout | Email dispatch |
-| `send-marketplace-email` | INTERNAL | `false` | Called by mkv2-* functions | Email dispatch |
-| `send-whatsapp` | INTERNAL | `false` | Called by notification flows | WhatsApp dispatch |
-| `send-push` | INTERNAL | `false` | Called by notification flows | Push dispatch |
-| `create-notification` | INTERNAL | `false` | Called by edge functions | Notification creation |
-| `superfrete` | INTERNAL | `false` | Called by checkout/fulfill | Shipping API proxy |
+| `push-subscribe` | AUTH | `false` | requireAuth | Push subscription registration |
+| `send-budget-email` | SERVICE | `false` | requireServiceOrAdmin | Email dispatch |
+| `send-order-email` | SERVICE | `false` | requireServiceOrAdmin | Email dispatch |
+| `send-marketplace-email` | SERVICE | `false` | requireServiceOrAdmin | Email dispatch |
+| `send-whatsapp` | SERVICE | `false` | requireServiceOrAdmin | WhatsApp dispatch |
+| `send-push` | SERVICE | `false` | requireServiceOrAdmin | Push dispatch |
+| `create-notification` | SERVICE | `false` | requireServiceOrAdmin | Notification creation |
+| `superfrete` | SERVICE | `false` | requireServiceOrAdmin | Shipping API proxy |
 
 ### Residual Risks & Mitigation Plan
 
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| INTERNAL functions (send-*, create-notification, superfrete) callable by anyone with anon key | Medium | These functions perform side-effects (send emails/messages) but require valid data references (order_id, cpf). Abuse vector is limited. **Plan**: Add `requireServiceOrAdmin` guard in next hardening cycle. |
-| `push-subscribe` has JWT header check but not via shared guard | Low | Currently checks auth header inline. **Plan**: Migrate to `requireAuth` from shared guard. |
-| `generate-pdf`, `enrich-descriptions` admin check not yet verified as shared guard | Low | **Plan**: Confirm they use `requireAdmin` from `auth-guard.ts`, not ad-hoc checks. |
-| `vault-semester-reset`, `vault-sla-monitor` auth pattern not verified | Medium | Expected to use service-role key. **Plan**: Audit and migrate to `requireServiceOrAdmin` in P2. |
-| `schedule-reminder`, `process-reminders` auth pattern not verified | Medium | Expected to use service-role key. **Plan**: Audit and migrate to `requireServiceOrAdmin` in P2. |
+| Risk | Severity | Status |
+|------|----------|--------|
+| ~~INTERNAL functions callable by anyone with anon key~~ | ~~Medium~~ | ✅ **Resolved P2** — All now use `requireServiceOrAdmin` |
+| ~~`push-subscribe` inline JWT check~~ | ~~Low~~ | ✅ **Resolved P2** — Migrated to `requireAuth` |
+| ~~`vault-semester-reset`, `vault-sla-monitor` auth unverified~~ | ~~Medium~~ | ✅ **Resolved P2** — Both use `requireServiceOrAdmin` |
+| ~~`schedule-reminder`, `process-reminders` auth unverified~~ | ~~Medium~~ | ✅ **Resolved P2** — Both use `requireServiceOrAdmin` |
+| `generate-pdf`, `enrich-descriptions` admin check not verified | Low | **Plan**: Confirm `requireAdmin` from shared guard |
 
 ### Governance Policy
 
 1. **New functions MUST** use shared guards from `_shared/auth-guard.ts`.
 2. **All functions keep** `verify_jwt = false` — JWT validation is done in-code.
 3. **Every function entry** in `config.toml` MUST have an inline comment with tier classification.
-4. **INTERNAL functions** are the next hardening target (P2) for adding explicit auth guards.
+4. **No function with side-effects** may be invocable without auth.
 5. **This matrix** is the single source of truth and must be updated on every new function addition.
 
 ---
