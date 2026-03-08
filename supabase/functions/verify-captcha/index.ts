@@ -1,3 +1,6 @@
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limiter.ts";
+import { safeParseBody } from "../_shared/input-validation.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -11,7 +14,18 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { token, action } = await req.json();
+    // Rate limit: 20 captcha verifications per 15 min per IP
+    const rl = await checkRateLimit(req, { key: "verify-captcha", maxRequests: 20, windowMinutes: 15 });
+    if (!rl.allowed) return rateLimitResponse(rl.retryAfterSeconds!, corsHeaders);
+
+    const body = await safeParseBody<{ token: string; action: string }>(req, 5_000);
+    if (!body) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Payload inválido" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const { token, action } = body;
 
     if (!token || !action) {
       return new Response(

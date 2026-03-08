@@ -2484,6 +2484,27 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_entries: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string
+          key: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address: string
+          key: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string
+          key?: string
+        }
+        Relationships: []
+      }
       referrals: {
         Row: {
           created_at: string
@@ -6054,6 +6075,7 @@ export type Database = {
         Args: { p_seller_id: string }
         Returns: boolean
       }
+      cleanup_rate_limit_entries: { Args: never; Returns: undefined }
       create_vault_invite: {
         Args: { p_cpf: string }
         Returns: {

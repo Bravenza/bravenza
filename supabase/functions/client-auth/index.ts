@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limiter.ts";
+import { safeParseBody, validateCPF as valCPF, sanitizeString } from "../_shared/input-validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,14 +60,26 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Body size guard (reject > 10KB)
+    const body = await safeParseBody<AuthRequest>(req, 10_000);
+    if (!body) {
+      return new Response(
+        JSON.stringify({ error: "Payload inválido ou muito grande" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { action, cpf, code, session_token, confirm_text }: AuthRequest = await req.json();
+    const { action, cpf, code, session_token, confirm_text } = body;
 
     // REQUEST CODE - Send magic code to client email
     if (action === "request_code") {
+      // Rate limit: 5 requests per 15 min per IP
+      const rl = await checkRateLimit(req, { key: "auth:request_code", maxRequests: 5, windowMinutes: 15 });
+      if (!rl.allowed) return rateLimitResponse(rl.retryAfterSeconds!, corsHeaders);
       if (!cpf) {
         throw new Error("CPF é obrigatório");
       }
@@ -167,6 +181,9 @@ Deno.serve(async (req) => {
 
     // VERIFY CODE - Validate code and create session
     if (action === "verify_code") {
+      // Rate limit: 10 attempts per 15 min per IP
+      const rl = await checkRateLimit(req, { key: "auth:verify_code", maxRequests: 10, windowMinutes: 15 });
+      if (!rl.allowed) return rateLimitResponse(rl.retryAfterSeconds!, corsHeaders);
       if (!cpf || !code) {
         throw new Error("CPF e código são obrigatórios");
       }
