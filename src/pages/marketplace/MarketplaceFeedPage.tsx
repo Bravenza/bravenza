@@ -1,11 +1,13 @@
 import { useOutletContext } from "react-router-dom";
-import { Activity, TrendingUp, Tag, ShoppingBag, Star, Package, Flame } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Activity, TrendingUp, Tag, ShoppingBag, Star, Package, Flame, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mkv2-discover`;
+const PAGE_SIZE = 30;
 
 interface FeedEvent {
   id: string;
@@ -35,15 +37,51 @@ function timeAgo(date: string) {
 
 export default function MarketplaceFeedPage() {
   const context = useOutletContext<{ cpf?: string; profile?: any }>();
-  const cpf = context?.cpf || "visitor";
   const [events, setEvents] = useState<FeedEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const headersRef = useRef<Record<string, string> | null>(null);
 
-  useEffect(() => {
-    fetchFeed();
+  const getHeaders = useCallback(async () => {
+    if (headersRef.current) return headersRef.current;
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    };
+    if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+    headersRef.current = headers;
+    return headers;
   }, []);
 
-  // Realtime subscription
+  const fetchFeed = useCallback(async (beforeId?: string) => {
+    const loading = beforeId ? setIsLoadingMore : setIsLoading;
+    loading(true);
+    try {
+      const headers = await getHeaders();
+      let url = `${FUNCTION_URL}?action=activity-feed&limit=${PAGE_SIZE}`;
+      if (beforeId) url += `&before_id=${beforeId}`;
+      const res = await fetch(url, { headers });
+      const data = await res.json();
+      const newEvents: FeedEvent[] = data.events || [];
+      setHasMore(data.has_more ?? false);
+      if (beforeId) {
+        setEvents((prev) => [...prev, ...newEvents]);
+      } else {
+        setEvents(newEvents);
+      }
+    } catch (err) {
+      console.error("Fetch feed error:", err);
+    } finally {
+      loading(false);
+    }
+  }, [getHeaders]);
+
+  useEffect(() => { fetchFeed(); }, [fetchFeed]);
+
+  // Realtime subscription for new events
   useEffect(() => {
     const channel = supabase
       .channel("marketplace-feed-page")
@@ -51,7 +89,7 @@ export default function MarketplaceFeedPage() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "marketplace_activity_feed" },
         (payload) => {
-          setEvents((prev) => [payload.new as FeedEvent, ...prev].slice(0, 50));
+          setEvents((prev) => [payload.new as FeedEvent, ...prev]);
         }
       )
       .subscribe();
@@ -59,26 +97,9 @@ export default function MarketplaceFeedPage() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const fetchFeed = async () => {
-    setIsLoading(true);
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-      };
-      if (accessToken) {
-        headers["Authorization"] = `Bearer ${accessToken}`;
-      }
-      const res = await fetch(`${FUNCTION_URL}?action=activity-feed&limit=50`, { headers });
-      const data = await res.json();
-      setEvents(data.events || []);
-    } catch (err) {
-      console.error("Fetch feed error:", err);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleLoadMore = () => {
+    const lastEvent = events[events.length - 1];
+    if (lastEvent) fetchFeed(lastEvent.id);
   };
 
   return (
@@ -120,7 +141,7 @@ export default function MarketplaceFeedPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  transition={{ delay: i * 0.02, duration: 0.3 }}
+                  transition={{ delay: Math.min(i, 10) * 0.02, duration: 0.3 }}
                   className="flex items-start gap-3 p-4 rounded-xl bg-card/60 border border-border/20 hover:border-primary/20 transition-all"
                 >
                   <div className={`w-9 h-9 rounded-lg ${config.bgColor} flex items-center justify-center shrink-0 mt-0.5`}>
@@ -144,6 +165,27 @@ export default function MarketplaceFeedPage() {
               );
             })}
           </AnimatePresence>
+
+          {hasMore && (
+            <div className="pt-4 flex justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLoadMore}
+                disabled={isLoadingMore}
+                className="gap-2"
+              >
+                {isLoadingMore ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Carregando...
+                  </>
+                ) : (
+                  "Carregar mais"
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>
