@@ -386,7 +386,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      return json({
+      return jsonResponse({
         ok: true, brand: brandName, fetched: collected.length, quota,
         inserted: stats.inserted, updated: stats.updated, skipped: stats.skipped,
         skipped_existing: stats.skipped_existing,
@@ -397,7 +397,7 @@ Deno.serve(async (req) => {
       });
     } catch (e: any) {
       console.error(`catalog-seed brand ${brandName} error:`, e);
-      return json({ ok: false, brand: brandName, error: e.message }, 500);
+      return jsonResponse({ ok: false, brand: brandName, error: e.message }, 500);
     }
   }
 
