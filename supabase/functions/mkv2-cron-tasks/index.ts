@@ -1,16 +1,17 @@
-// mkv2-cron-tasks: Handles periodic marketplace maintenance tasks
-// - Auto-expire offers older than 48h with no activity
-// - Record daily price history snapshots
-// - Log execution to cron_execution_logs
+/**
+ * mkv2-cron-tasks — Periodic marketplace maintenance
+ *
+ * Action tiers:
+ *   PUBLIC_ACTIONS  → (none)
+ *   AUTH_ACTIONS    → (none)
+ *   ADMIN_ACTIONS   → all (service-role, cron key, or admin session)
+ *
+ * Tasks: expire stale offers, price history snapshots, autocut, cancel stale orders,
+ * auto-complete delivered orders, cleanup expired tokens/sessions, KYC LGPD cleanup
+ */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireServiceOrAdmin, authErrorResponse } from "../_shared/auth-guard.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-cron-key",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-};
+import { corsHeaders } from "../_shared/mk-helpers.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {

@@ -1,14 +1,14 @@
+/**
+ * catalog-seed-500 — Seed sneaker catalog from StockX API
+ *
+ * Action tiers:
+ *   PUBLIC_ACTIONS  → (none)
+ *   AUTH_ACTIONS    → (none)
+ *   ADMIN_ACTIONS   → test, brands_list, seed_brand (admin only)
+ */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireAdmin, authErrorResponse } from "../_shared/auth-guard.ts";
-
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-const json = (d: unknown, s = 200) =>
-  new Response(JSON.stringify(d), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
+import { corsHeaders, jsonResponse } from "../_shared/mk-helpers.ts";
 
 const PLACEHOLDER = "/img/shoe-placeholder-white.png";
 
