@@ -27,35 +27,76 @@ function calcProtectionEnd(): string {
   return d.toISOString();
 }
 
-/** Mercado Pago interest rates by installment count */
-const MP_RATES: Record<number, number> = {
+/** Fallback: Mercado Pago interest rates by installment count */
+const MP_RATES_DEFAULT: Record<number, number> = {
   1: 0, 2: 0.0964, 3: 0.1123, 4: 0.1136, 5: 0.1431, 6: 0.1432,
   7: 0.1672, 8: 0.1673, 9: 0.1969, 10: 0.2065, 11: 0.2066, 12: 0.2211,
 };
 
-/** Installment surcharge tiers (seller absorbs this to offer interest-free) */
-const INSTALLMENT_SURCHARGES: Record<number, number> = {
+/** Fallback: Installment surcharge tiers (seller absorbs this to offer interest-free) */
+const INSTALLMENT_SURCHARGES_DEFAULT: Record<number, number> = {
   3: 5, 6: 10, 10: 14, 12: 18,
 };
 
 /** Get surcharge percent for a given interest_free_installments tier */
-function getSurchargePercent(interestFreeMax: number): number {
+function getSurchargePercent(interestFreeMax: number, surcharges: Record<number, number>): number {
   if (interestFreeMax <= 0) return 0;
-  // Find the matching tier
   const tiers = [3, 6, 10, 12];
   for (const t of tiers) {
-    if (interestFreeMax <= t) return INSTALLMENT_SURCHARGES[t];
+    if (interestFreeMax <= t) return surcharges[t] ?? 0;
   }
-  return INSTALLMENT_SURCHARGES[12];
+  return surcharges[12] ?? 0;
 }
 
 /** Calculate card total with interest: amount / (1 - rate) */
-function calcCardTotal(baseAmount: number, installments: number, interestFreeMax: number = 0): number {
-  // If installments are within the seller's interest-free tier, buyer pays no interest
+function calcCardTotal(baseAmount: number, installments: number, interestFreeMax: number, rates: Record<number, number>): number {
   if (interestFreeMax > 0 && installments <= interestFreeMax) return baseAmount;
-  const rate = MP_RATES[installments] || 0;
+  const rate = rates[installments] || 0;
   if (rate === 0) return baseAmount;
   return Math.round((baseAmount / (1 - rate)) * 100) / 100;
+}
+
+/** Load MP rates and surcharges from system_settings, with fallback */
+async function loadRatesConfig(sb: any): Promise<{
+  mpRates: Record<number, number>;
+  surcharges: Record<number, number>;
+}> {
+  try {
+    const [ratesRes, surchargesRes] = await Promise.all([
+      sb.from("system_settings").select("value").eq("key", "installment_rates").single(),
+      sb.from("system_settings").select("value").eq("key", "installment_surcharges").single(),
+    ]);
+
+    let mpRates = MP_RATES_DEFAULT;
+    if (ratesRes.data?.value) {
+      const parsed = typeof ratesRes.data.value === "string"
+        ? JSON.parse(ratesRes.data.value)
+        : ratesRes.data.value;
+      // Convert string keys to numbers
+      const mapped: Record<number, number> = {};
+      for (const [k, v] of Object.entries(parsed)) {
+        mapped[Number(k)] = Number(v);
+      }
+      if (Object.keys(mapped).length > 0) mpRates = mapped;
+    }
+
+    let surcharges = INSTALLMENT_SURCHARGES_DEFAULT;
+    if (surchargesRes.data?.value) {
+      const parsed = typeof surchargesRes.data.value === "string"
+        ? JSON.parse(surchargesRes.data.value)
+        : surchargesRes.data.value;
+      const mapped: Record<number, number> = {};
+      for (const [k, v] of Object.entries(parsed)) {
+        mapped[Number(k)] = Number(v);
+      }
+      if (Object.keys(mapped).length > 0) surcharges = mapped;
+    }
+
+    return { mpRates, surcharges };
+  } catch (e) {
+    console.warn("[mkv2-checkout] Failed to load rates from DB, using defaults:", e);
+    return { mpRates: MP_RATES_DEFAULT, surcharges: INSTALLMENT_SURCHARGES_DEFAULT };
+  }
 }
 
 Deno.serve(async (req) => {
@@ -68,6 +109,9 @@ Deno.serve(async (req) => {
   const sb = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   try {
+    // ── Load dynamic rates from DB ──
+    const { mpRates, surcharges } = await loadRatesConfig(sb);
+
     // ── Auth: validate JWT and resolve buyer CPF ──
     const authHeader = req.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) return json({ error: "Auth required" }, 401);
@@ -258,7 +302,7 @@ Deno.serve(async (req) => {
       if (!card_token) return json({ error: "Token do cartão obrigatório" }, 400);
 
       const validInstallments = Math.min(Math.max(1, installments || 1), 12);
-      const cardTotalAmount = calcCardTotal(totalAmount, validInstallments, effectiveInterestFree);
+      const cardTotalAmount = calcCardTotal(totalAmount, validInstallments, effectiveInterestFree, mpRates);
       const isInterestFree = effectiveInterestFree > 0 && validInstallments <= effectiveInterestFree;
 
       const cardPayload = {
@@ -337,7 +381,7 @@ Deno.serve(async (req) => {
 
           // If interest-free, adjust seller fee (surcharge absorbed by seller)
           if (isInterestFree) {
-            const surchargePercent = getSurchargePercent(effectiveInterestFree);
+            const surchargePercent = getSurchargePercent(effectiveInterestFree, surcharges);
             const newFeePercent = (order.fee_percent || 14) + surchargePercent;
             const newFeeAmount = Math.round(order.sale_price * newFeePercent / 100 * 100) / 100;
             const newSellerPayout = Math.round((order.sale_price - newFeeAmount) * 100) / 100;
