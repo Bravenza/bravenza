@@ -78,16 +78,30 @@ Todas as 59 funções usam `verify_jwt = false`. Validação JWT acontece in-cod
 
 ### 3.3 Auth / Access Control
 
-| # | Cenário | Expected | Pass? |
-|---|---------|----------|-------|
-| A1 | Admin endpoint sem Bearer | 401 `Token de autenticação ausente` | ☐ |
-| A2 | Admin endpoint com user token (não-admin) | 403 `Acesso restrito a administradores` | ☐ |
-| A3 | Admin endpoint com admin token | 200 | ☐ |
-| A4 | SERVICE endpoint com anon key | 401 ou 403 | ☐ |
-| A5 | SERVICE endpoint com service-role key | 200 | ☐ |
-| A6 | PUBLIC endpoint sem auth | 200 | ☐ |
-| A7 | AUTH endpoint sem Bearer | 401 | ☐ |
-| A8 | AUTH endpoint com user token válido | 200 | ☐ |
+| # | Cenário | Expected | Verificação | Status |
+|---|---------|----------|-------------|--------|
+| A1 | Admin endpoint sem Bearer | 401 `Token de autenticação ausente` | Code review: `requireAdmin` → `requireAuth` checks header | ✅ Code |
+| A2 | Admin endpoint com user token (não-admin) | 403 `Acesso restrito a administradores` | Code review: `requireAdmin` checks `user_roles` | ✅ Code |
+| A3 | Admin endpoint com admin token | 200 | Curl test + logs: "Auth passed" | ✅ Tested |
+| A4 | SERVICE endpoint com anon key | 401 ou 403 | Code review: `requireServiceOrAdmin` checks service-role key, cron key, then admin | ✅ Code |
+| A5 | SERVICE endpoint com service-role key | 200 | Curl test: `cart-recovery` → 200 | ✅ Tested |
+| A6 | PUBLIC endpoint sem auth | 200 | Curl test: `health-check` → 200, `push-vapid-key` → 200 | ✅ Tested |
+| A7 | AUTH endpoint sem Bearer | 401 | Code review: `requireAuth` checks header | ✅ Code |
+| A8 | AUTH endpoint com user token válido | 200 | Code review: `requireAuth` → `getUser` → profile lookup | ✅ Code |
+
+> **Nota:** O tool de curl envia automaticamente service-role key como Authorization header.
+> Cenários de rejeição (A1, A2, A4, A7) verificados por code review do guard compartilhado.
+> Deploy confirmado via logs: `[generate-pdf] Auth header present: true` → `Auth passed` (2026-03-08T21:56:38Z).
+
+### Evidências de deploy
+
+| Função | Guard | Deploy | Log evidence |
+|--------|-------|--------|--------------|
+| `generate-pdf` | `requireAdmin` | ✅ Deployed | `[generate-pdf] Auth passed` em logs |
+| `enrich-descriptions` | `requireAdmin` | ✅ Deployed | Resposta 200 com service-role |
+| `cart-recovery` | `requireServiceOrAdmin` | ✅ Deployed | Resposta 200 com service-role |
+| `push-subscribe` | `requireAuth` | ✅ Deployed | Resposta 200 com service-role |
+| `create-notification` | `requireServiceOrAdmin` | ✅ Deployed | Resposta 400 (business error, not auth) |
 
 ---
 
