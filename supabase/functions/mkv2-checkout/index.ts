@@ -415,7 +415,7 @@ Deno.serve(async (req) => {
         console.log("[mkv2-checkout] Card approved, all orders paid:", orderCodes, isInterestFree ? "(interest-free)" : "");
       }
 
-      return json({
+      const cardResult = {
         status: paymentResult.status,
         status_detail: paymentResult.status_detail,
         payment_id: paymentResult.id,
@@ -425,7 +425,9 @@ Deno.serve(async (req) => {
         interest_free_max: effectiveInterestFree,
         order_count: orders.length,
         order_codes: orders.map(o => o.order_code),
-      });
+      };
+      await setIdempotencyResult(sb, checkoutIdempKey, cardResult);
+      return json(cardResult);
 
     } else {
       return json({ error: "Método de pagamento inválido" }, 400);

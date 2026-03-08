@@ -239,13 +239,18 @@ Deno.serve(async (req) => {
       console.log(`Payment approved for order ${order_id}, payment ID: ${paymentData.id}`);
     }
 
+    const responseData = {
+      status: paymentData.status,
+      status_detail: paymentData.status_detail,
+      payment_id: paymentData.id,
+      installments: validInstallments,
+    };
+
+    // Cache the result
+    await setIdempotencyResult(supabase, idempKey, responseData);
+
     return new Response(
-      JSON.stringify({
-        status: paymentData.status,
-        status_detail: paymentData.status_detail,
-        payment_id: paymentData.id,
-        installments: validInstallments,
-      }),
+      JSON.stringify(responseData),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,

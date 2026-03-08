@@ -58,6 +58,14 @@ Deno.serve(async (req) => {
     let processed = 0;
 
     for (const order of eligible) {
+      // Idempotency: prevent duplicate payout transitions for same order
+      const payoutIdempKey = `auto-payout-${order.id}`;
+      const idempCheck = await checkIdempotency(sb, payoutIdempKey, 120); // 2h TTL
+      if (idempCheck.isDuplicate) {
+        console.log(`[mkv2-auto-payout] Skipping duplicate payout for order ${order.order_code}`);
+        continue;
+      }
+
       // Transition to payout_pending
       const { error: updateErr } = await sb
         .from("vault_marketplace_orders")

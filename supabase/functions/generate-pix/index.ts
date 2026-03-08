@@ -160,13 +160,17 @@ Deno.serve(async (req) => {
 
     console.log(`Pix generated for order ${order.order_id}, payment_id: ${mpData.id}`);
 
+    const responseData = {
+      payment_id: mpData.id,
+      qr_code: `data:image/png;base64,${qrCode}`,
+      copy_paste: copyPaste,
+      expires_at: mpData.date_of_expiration,
+    };
+
+    await setIdempotencyResult(supabase, idempKey, responseData);
+
     return new Response(
-      JSON.stringify({
-        payment_id: mpData.id,
-        qr_code: `data:image/png;base64,${qrCode}`,
-        copy_paste: copyPaste,
-        expires_at: mpData.date_of_expiration,
-      }),
+      JSON.stringify(responseData),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
