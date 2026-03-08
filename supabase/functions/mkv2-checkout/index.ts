@@ -1,6 +1,7 @@
 // Marketplace Checkout — Consolidated payment for multiple orders
 // Supports PIX or Card via MercadoPago Transparent Checkout
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkIdempotency, setIdempotencyResult } from "../_shared/idempotency.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -239,6 +240,14 @@ Deno.serve(async (req) => {
     const productNames = orders.map(o => o.listing?.title || "Sneaker").join(", ");
     const description = `Bravenza MKT — ${orderCodes}`;
 
+    // Server-side idempotency check
+    const checkoutIdempKey = idempotency_key || `mkt-checkout-${orderIds.sort().join("-")}-${payment_method}`;
+    const idempCheck = await checkIdempotency(sb, checkoutIdempKey, 5);
+    if (idempCheck.isDuplicate) {
+      console.log(`[mkv2-checkout] Duplicate checkout for ${checkoutIdempKey}`);
+      return json(idempCheck.cachedResult || { status: "processing" });
+    }
+
     // Build consolidated external_reference: MKT-CODE1+CODE2-method
     const externalRef = `MKT-${orderCodes}-${payment_method === "card" ? "card" : "pix"}`;
 
@@ -295,7 +304,7 @@ Deno.serve(async (req) => {
 
       const pixData = paymentResult.point_of_interaction?.transaction_data;
 
-      return json({
+      const pixResult = {
         status: paymentResult.status,
         payment_id: paymentResult.id,
         pix_qr_code: pixData?.qr_code_base64 || null,
@@ -304,7 +313,9 @@ Deno.serve(async (req) => {
         total_amount: totalAmount,
         order_count: orders.length,
         order_codes: orders.map(o => o.order_code),
-      });
+      };
+      await setIdempotencyResult(sb, checkoutIdempKey, pixResult);
+      return json(pixResult);
 
     } else if (payment_method === "card") {
       // ===== Card Payment =====
@@ -404,7 +415,7 @@ Deno.serve(async (req) => {
         console.log("[mkv2-checkout] Card approved, all orders paid:", orderCodes, isInterestFree ? "(interest-free)" : "");
       }
 
-      return json({
+      const cardResult = {
         status: paymentResult.status,
         status_detail: paymentResult.status_detail,
         payment_id: paymentResult.id,
@@ -414,7 +425,9 @@ Deno.serve(async (req) => {
         interest_free_max: effectiveInterestFree,
         order_count: orders.length,
         order_codes: orders.map(o => o.order_code),
-      });
+      };
+      await setIdempotencyResult(sb, checkoutIdempKey, cardResult);
+      return json(cardResult);
 
     } else {
       return json({ error: "Método de pagamento inválido" }, 400);

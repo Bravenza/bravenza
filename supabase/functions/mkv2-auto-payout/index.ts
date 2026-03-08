@@ -2,6 +2,7 @@
 // after the protection period (8 business days) has elapsed.
 // Should be called via cron (hourly).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkIdempotency, setIdempotencyResult } from "../_shared/idempotency.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,6 +58,14 @@ Deno.serve(async (req) => {
     let processed = 0;
 
     for (const order of eligible) {
+      // Idempotency: prevent duplicate payout transitions for same order
+      const payoutIdempKey = `auto-payout-${order.id}`;
+      const idempCheck = await checkIdempotency(sb, payoutIdempKey, 120); // 2h TTL
+      if (idempCheck.isDuplicate) {
+        console.log(`[mkv2-auto-payout] Skipping duplicate payout for order ${order.order_code}`);
+        continue;
+      }
+
       // Transition to payout_pending
       const { error: updateErr } = await sb
         .from("vault_marketplace_orders")

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkIdempotency, setIdempotencyResult, releaseIdempotencyKey } from "../_shared/idempotency.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -78,7 +79,17 @@ Deno.serve(async (req) => {
     }
 
     // Deterministic idempotency key — same order+type always maps to same key
-    const idempKey = idempotency_key || `${order.order_id}-${payment_type}-pix`;
+    const idempKey = idempotency_key || `pix-${order.order_id}-${payment_type}`;
+
+    // Server-side idempotency check
+    const idempCheck = await checkIdempotency(supabase, idempKey, 15);
+    if (idempCheck.isDuplicate) {
+      console.log(`[generate-pix] Duplicate request for ${idempKey}, returning cached`);
+      return new Response(JSON.stringify(idempCheck.cachedResult), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
 
     // Create Mercado Pago Pix payment
     const mpResponse = await fetch("https://api.mercadopago.com/v1/payments", {
@@ -149,13 +160,17 @@ Deno.serve(async (req) => {
 
     console.log(`Pix generated for order ${order.order_id}, payment_id: ${mpData.id}`);
 
+    const responseData = {
+      payment_id: mpData.id,
+      qr_code: `data:image/png;base64,${qrCode}`,
+      copy_paste: copyPaste,
+      expires_at: mpData.date_of_expiration,
+    };
+
+    await setIdempotencyResult(supabase, idempKey, responseData);
+
     return new Response(
-      JSON.stringify({
-        payment_id: mpData.id,
-        qr_code: `data:image/png;base64,${qrCode}`,
-        copy_paste: copyPaste,
-        expires_at: mpData.date_of_expiration,
-      }),
+      JSON.stringify(responseData),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,

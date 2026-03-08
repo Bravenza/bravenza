@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkIdempotency, setIdempotencyResult, releaseIdempotencyKey } from "../_shared/idempotency.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,6 +55,17 @@ Deno.serve(async (req) => {
 
     if (!token || !card_token || !payment_type || !amount || !order_id) {
       throw new Error("Parâmetros inválidos");
+    }
+
+    // Idempotency check
+    const idempKey = idempotency_key || `card-${order_id}-${payment_type}`;
+    const idempCheck = await checkIdempotency(supabase, idempKey, 5);
+    if (idempCheck.isDuplicate) {
+      console.log(`[process-card] Duplicate request for ${idempKey}, returning cached`);
+      return new Response(JSON.stringify(idempCheck.cachedResult), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
     }
 
     // Validate installments (1-12)
@@ -227,13 +239,18 @@ Deno.serve(async (req) => {
       console.log(`Payment approved for order ${order_id}, payment ID: ${paymentData.id}`);
     }
 
+    const responseData = {
+      status: paymentData.status,
+      status_detail: paymentData.status_detail,
+      payment_id: paymentData.id,
+      installments: validInstallments,
+    };
+
+    // Cache the result
+    await setIdempotencyResult(supabase, idempKey, responseData);
+
     return new Response(
-      JSON.stringify({
-        status: paymentData.status,
-        status_detail: paymentData.status_detail,
-        payment_id: paymentData.id,
-        installments: validInstallments,
-      }),
+      JSON.stringify(responseData),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,

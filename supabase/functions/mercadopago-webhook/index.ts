@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createHmac } from "https://deno.land/std@0.224.0/crypto/mod.ts";
+import { checkIdempotency, setIdempotencyResult, releaseIdempotencyKey } from "../_shared/idempotency.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,6 +47,13 @@ async function validateSignature(req: Request, body: string): Promise<boolean> {
   const v1 = parts["v1"];
   if (!ts || !v1) {
     console.error("[webhook] Invalid x-signature format");
+    return false;
+  }
+
+  // Replay protection: reject if timestamp is older than 5 minutes
+  const timestampAge = Math.abs(Date.now() / 1000 - Number(ts));
+  if (timestampAge > 300) {
+    console.error(`[webhook] Timestamp too old: ${timestampAge}s drift (max 300s)`);
     return false;
   }
 
@@ -447,29 +455,45 @@ Deno.serve(async (req) => {
         return new Response("OK", { status: 200 });
       }
 
-      const mercadoPagoToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");
-      if (!mercadoPagoToken) {
-        throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurado");
+      // Idempotency check: prevent duplicate processing of same payment notification
+      const idempKey = `webhook-mp-${paymentId}-${body.action}`;
+      const idempCheck = await checkIdempotency(supabase, idempKey, 60); // 60 min TTL for webhooks
+      if (idempCheck.isDuplicate) {
+        console.log(`[webhook] Duplicate webhook for payment ${paymentId}, skipping`);
+        return new Response("OK", { status: 200, headers: corsHeaders });
       }
 
-      const mpResponse = await fetch(
-        `https://api.mercadopago.com/v1/payments/${paymentId}`,
-        {
-          headers: { Authorization: `Bearer ${mercadoPagoToken}` },
+      try {
+        const mercadoPagoToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");
+        if (!mercadoPagoToken) {
+          throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurado");
         }
-      );
 
-      const payment = await mpResponse.json();
-      console.log("Payment details:", JSON.stringify(payment));
+        const mpResponse = await fetch(
+          `https://api.mercadopago.com/v1/payments/${paymentId}`,
+          {
+            headers: { Authorization: `Bearer ${mercadoPagoToken}` },
+          }
+        );
 
-      if (payment.status === "approved") {
-        const externalRef = payment.external_reference || "";
+        const payment = await mpResponse.json();
+        console.log("Payment details:", JSON.stringify(payment));
 
-        if (externalRef.startsWith("MKT-")) {
-          await handleMarketplacePayment(supabase, payment, externalRef, paymentId);
-        } else {
-          await handleOrderPayment(supabase, supabaseUrl, supabaseKey, payment, externalRef, paymentId);
+        if (payment.status === "approved") {
+          const externalRef = payment.external_reference || "";
+
+          if (externalRef.startsWith("MKT-")) {
+            await handleMarketplacePayment(supabase, payment, externalRef, paymentId);
+          } else {
+            await handleOrderPayment(supabase, supabaseUrl, supabaseKey, payment, externalRef, paymentId);
+          }
         }
+
+        await setIdempotencyResult(supabase, idempKey, { payment_id: paymentId, status: payment.status });
+      } catch (processingError) {
+        // Release idempotency key so webhook can be retried
+        await releaseIdempotencyKey(supabase, idempKey);
+        throw processingError;
       }
     }
 

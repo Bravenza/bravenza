@@ -633,6 +633,33 @@ export type Database = {
         }
         Relationships: []
       }
+      idempotency_keys: {
+        Row: {
+          cached_result: Json | null
+          created_at: string
+          expires_at: string
+          id: string
+          key: string
+          status: string
+        }
+        Insert: {
+          cached_result?: Json | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          key: string
+          status?: string
+        }
+        Update: {
+          cached_result?: Json | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          key?: string
+          status?: string
+        }
+        Relationships: []
+      }
       marketplace_activity_feed: {
         Row: {
           created_at: string
