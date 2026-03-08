@@ -50,6 +50,13 @@ async function validateSignature(req: Request, body: string): Promise<boolean> {
     return false;
   }
 
+  // Replay protection: reject if timestamp is older than 5 minutes
+  const timestampAge = Math.abs(Date.now() / 1000 - Number(ts));
+  if (timestampAge > 300) {
+    console.error(`[webhook] Timestamp too old: ${timestampAge}s drift (max 300s)`);
+    return false;
+  }
+
   // Extract data.id from body
   const parsed = JSON.parse(body);
   const dataId = parsed?.data?.id;
