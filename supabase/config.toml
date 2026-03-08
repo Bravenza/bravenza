@@ -244,36 +244,37 @@ verify_jwt = false
 verify_jwt = false
 # SERVICE — Abandoned cart recovery emails. Service-role/cron only.
 
-# ── INTERNAL MESSAGING (service-to-service) ───────────────────────────────────
-# Called internally by other edge functions or admin actions, not directly by users.
+# ── SERVICE (messaging & infrastructure) ──────────────────────────────────────
+# Previously INTERNAL — now protected by requireServiceOrAdmin.
+# Only callable by service-role key, cron secrets, or admin session.
 
 [functions.send-budget-email]
 verify_jwt = false
-# INTERNAL — Email dispatch for budgets. Called by admin flows.
+# SERVICE — Email dispatch for budgets. requireServiceOrAdmin.
 
 [functions.send-order-email]
 verify_jwt = false
-# INTERNAL — Email dispatch for order events. Called by webhook/checkout flows.
+# SERVICE — Email dispatch for order events. requireServiceOrAdmin.
 
 [functions.send-marketplace-email]
 verify_jwt = false
-# INTERNAL — Email dispatch for marketplace events. Called by mkv2-* functions.
+# SERVICE — Email dispatch for marketplace events. requireServiceOrAdmin.
 
 [functions.send-whatsapp]
 verify_jwt = false
-# INTERNAL — WhatsApp message dispatch via Twilio. Called by notification flows.
+# SERVICE — WhatsApp message dispatch via Twilio. requireServiceOrAdmin.
 
 [functions.send-push]
 verify_jwt = false
-# INTERNAL — Push notification dispatch. Called by notification flows.
+# SERVICE — Push notification dispatch. requireServiceOrAdmin.
 
 [functions.create-notification]
 verify_jwt = false
-# INTERNAL — Notification record creation. Called by other edge functions.
+# SERVICE — Notification record creation. requireServiceOrAdmin.
 
 [functions.superfrete]
 verify_jwt = false
-# INTERNAL — Shipping quote/label via SuperFrete API. Called by checkout/fulfill flows.
+# SERVICE — Shipping quote/label via SuperFrete API. requireServiceOrAdmin.
 
 [functions.admin-orders]
 verify_jwt = false
