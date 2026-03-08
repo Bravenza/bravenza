@@ -86,7 +86,23 @@ export async function setIdempotencyResult(
 }
 
 /**
+ * Mark an idempotency key as failed with error details.
+ * Failed keys are automatically cleared on next check (allows retry).
+ */
+export async function markIdempotencyFailed(
+  sb: any,
+  key: string,
+  errorMessage: string
+): Promise<void> {
+  await sb
+    .from("idempotency_keys")
+    .update({ status: "failed", cached_result: { error: errorMessage, failed_at: new Date().toISOString() } })
+    .eq("key", key);
+}
+
+/**
  * Release an idempotency lock on error (allows retry).
+ * Use markIdempotencyFailed() when you want to record the error before allowing retry.
  */
 export async function releaseIdempotencyKey(
   sb: any,

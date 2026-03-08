@@ -10,9 +10,7 @@ const wa=(type:string,data:Record<string,any>)=>{try{const u=Deno.env.get("SUPAB
 Deno.serve(async(req)=>{
 if(req.method==="OPTIONS")return new Response(null,{headers:H});
 const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;
-let cpf="visitor";const ah=req.headers.get("authorization");
-if(ah?.startsWith("Bearer ")){const{data:u}=await sb.auth.getUser(ah.replace("Bearer ",""));if(u?.user){const{data:p}=await sb.from("client_profiles").select("cpf").eq("user_id",u.user.id).single();if(p?.cpf)cpf=p.cpf;}}
-if(cpf==="visitor")return j({error:"Auth required"},401);
+const _ar=await resolveAuthCpf(req,sb);if(_ar.error||!_ar.cpf)return j({error:_ar.error||"Auth required"},401);const cpf=_ar.cpf;
 try{
 if(mt==="POST"&&a==="make-offer"){
   const b=await req.json();const{data:li}=await sb.from("vault_marketplace_listings").select(`id,title,seller:vault_seller_profiles!inner(member:vault_members!inner(client_cpf))`).eq("id",b.listing_id).eq("status","active").single();

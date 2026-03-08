@@ -429,9 +429,9 @@ Deno.serve(async (req) => {
     }
   } catch (err: any) {
     console.error("[mkv2-checkout] Error:", err);
-    // Release idempotency lock so the client can retry
+    // Record failure and allow retry
     if (checkoutIdempKey) {
-      await releaseIdempotencyKey(sb, checkoutIdempKey).catch(() => {});
+      await markIdempotencyFailed(sb, checkoutIdempKey, err.message || "Checkout error").catch(() => {});
     }
     return json({ error: err.message || "Erro interno" }, 500);
   }

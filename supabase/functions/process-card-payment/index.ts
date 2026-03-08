@@ -259,9 +259,9 @@ Deno.serve(async (req) => {
     );
   } catch (error: any) {
     console.error("Error processing card payment:", error);
-    // Release idempotency lock so the client can retry
+    // Record failure and allow retry
     if (idempKey) {
-      await releaseIdempotencyKey(supabase, idempKey).catch(() => {});
+      await markIdempotencyFailed(supabase, idempKey, error.message || "Unknown error").catch(() => {});
     }
     return new Response(
       JSON.stringify({ error: error.message }),
