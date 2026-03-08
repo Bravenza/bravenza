@@ -68,6 +68,18 @@ Deno.serve(async (req) => {
   const sb = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   try {
+    // ── Auth: validate JWT and resolve buyer CPF ──
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Auth required" }, 401);
+
+    const { data: { user } } = await sb.auth.getUser(authHeader.replace("Bearer ", ""));
+    if (!user) return json({ error: "Token inválido" }, 401);
+
+    const { data: profile } = await sb.from("client_profiles")
+      .select("cpf").eq("user_id", user.id).single();
+    const cpf = profile?.cpf;
+    if (!cpf) return json({ error: "Perfil não encontrado" }, 403);
+
     const body = await req.json();
     const {
       order_id,
@@ -87,14 +99,21 @@ Deno.serve(async (req) => {
       return json({ error: "order_ids e payment_method são obrigatórios" }, 400);
     }
 
-    // Fetch all orders with their listing's offer info for interest_free_installments
+    // Fetch all orders with ownership check
     const { data: orders, error: ordersErr } = await sb
       .from("vault_marketplace_orders")
       .select("*, listing:vault_marketplace_listings(title, interest_free_installments)")
-      .in("id", orderIds);
+      .in("id", orderIds)
+      .eq("buyer_cpf", cpf);
 
     if (ordersErr || !orders || orders.length === 0) {
       return json({ error: "Pedidos não encontrados" }, 404);
+    }
+
+    // Ensure ALL requested orders were returned (prevents partial ownership bypass)
+    if (orders.length !== orderIds.length) {
+      console.error(`[mkv2-checkout] Ownership mismatch: requested ${orderIds.length}, found ${orders.length} for cpf ${cpf}`);
+      return json({ error: "Um ou mais pedidos não pertencem a este comprador" }, 403);
     }
 
     // Validate all are pending_payment
