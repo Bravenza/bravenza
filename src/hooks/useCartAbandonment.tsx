@@ -89,10 +89,9 @@ export function useCartAbandonment(cpf: string | null, cartItems: CartItem[]) {
 
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      // On unmount (React navigation away from checkout), record abandonment
-      if (!checkoutCompletedRef.current && cartItems.length > 0) {
-        recordAbandonment();
-      }
+      // NOTE: Do NOT record abandonment on unmount — it causes false positives
+      // when users navigate back to the catalog during checkout.
+      // Abandonment is only recorded via beforeunload (tab close/external nav).
     };
   }, [cpf, cartItems, recordAbandonment]);
 
