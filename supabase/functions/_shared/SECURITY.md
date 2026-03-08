@@ -145,7 +145,7 @@ This prevents privilege escalation via profile manipulation.
 
 ### Compatibility Notes
 - All three functions are admin/service-only — no public actions
-- `catalog-sync` now accepts cron key via shared `requireServiceOrAdmin` (checks `app_config.cron_secret_key` instead of `catalog_sync_cron_key`)
+- `catalog-sync` agora usa `requireServiceOrAdmin` (shared guard), que valida `app_config.cron_secret_key`. A key `cron_secret_key` foi criada no banco com o mesmo valor da antiga `catalog_sync_cron_key` para garantir compatibilidade.
 - `verify_jwt=false` justified: all three validate auth in-code via shared guard
 
 ### P1 Acceptance Checklist
