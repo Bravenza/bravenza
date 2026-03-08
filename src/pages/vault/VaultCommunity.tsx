@@ -145,17 +145,31 @@ export default function VaultCommunity() {
     setIsSubmitting(true);
     
     try {
-      const { error } = await supabase
-        .from("vault_community_posts")
-        .insert({
-          user_id: member.id,
-          type: newPost.type as any,
-          title: newPost.title,
-          content: newPost.content,
-          status: "PENDING_REVIEW",
-        });
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("Sessão expirada");
 
-      if (error) throw error;
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/vault-community`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            action: "create-post",
+            member_id: member.id,
+            type: newPost.type,
+            title: newPost.title,
+            content: newPost.content,
+          }),
+        }
+      );
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Erro ao publicar");
 
       toast({
         title: "Publicação enviada!",
