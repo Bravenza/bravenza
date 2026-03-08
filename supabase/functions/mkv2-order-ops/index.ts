@@ -11,7 +11,7 @@ const wa=(type:string,data:Record<string,any>)=>{try{const u=Deno.env.get("SUPAB
 const refundMP=async(mpPaymentId:string,orderId:string)=>{const tk=Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");if(!tk){console.error(`[mkv2-order-ops] MERCADO_PAGO_ACCESS_TOKEN not set. Cannot refund order ${orderId}.`);return;}try{const r=await fetch(`https://api.mercadopago.com/v1/payments/${mpPaymentId}/refunds`,{method:"POST",headers:{"Authorization":`Bearer ${tk}`,"X-Idempotency-Key":`refund-${orderId}`,"Content-Type":"application/json"},body:JSON.stringify({})});if(!r.ok){const t=await r.text();console.error(`[mkv2-order-ops] MP refund failed order=${orderId} payment=${mpPaymentId}: ${r.status} ${t}`);}else{console.log(`[mkv2-order-ops] MP refund initiated order=${orderId} payment=${mpPaymentId}`);}}catch(e){console.error(`[mkv2-order-ops] MP refund exception order=${orderId}:`,e);}};
 Deno.serve(async(req)=>{
 if(req.method==="OPTIONS")return new Response(null,{headers:H});
-const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;
+const sb=sc(),url=new URL(req.url),a=url.searchParams.get("action"),mt=req.method;const ah=req.headers.get("authorization")||"";
 const _ar=await resolveAuthCpf(req,sb);if(_ar.error||!_ar.cpf)return j({error:_ar.error||"Auth required"},401);const cpf=_ar.cpf;
 try{
 if(mt==="PUT"&&a==="update-order-status"){
