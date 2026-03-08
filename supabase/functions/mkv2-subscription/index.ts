@@ -5,6 +5,7 @@ const corsHeaders = {
 };
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireAuth, authErrorResponse, AuthError } from "../_shared/auth-guard.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -24,19 +25,15 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action } = body;
 
-    // ── AUTH & OWNERSHIP (skip for webhook - called by MercadoPago) ──
+    // ── AUTH via shared guard (skip for webhook - called by MercadoPago) ──
+    let authUserId: string | null = null;
     if (action !== "webhook") {
-      const ah = req.headers.get("authorization");
-      if (!ah?.startsWith("Bearer ")) {
+      try {
+        const auth = await requireAuth(req, supabase);
+        authUserId = auth.userId;
+      } catch (e) {
+        if (e instanceof AuthError) return authErrorResponse(e);
         return new Response(JSON.stringify({ error: "Auth required" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-
-      const { data: { user } } = await supabase.auth.getUser(
-        ah.replace("Bearer ", "")
-      );
-      if (!user) {
-        return new Response(JSON.stringify({ error: "Token inválido" }),
           { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
@@ -44,7 +41,7 @@ Deno.serve(async (req) => {
         const { data: prof } = await supabase
           .from("client_profiles")
           .select("cpf")
-          .eq("user_id", user.id)
+          .eq("user_id", authUserId)
           .single();
 
         const { data: member } = await supabase

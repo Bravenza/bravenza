@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireAuth, optionalAuth, authErrorResponse, AuthError } from "../_shared/auth-guard.ts";
 
 const H = {
   "Access-Control-Allow-Origin": "*",
@@ -10,12 +11,9 @@ const j = (d: unknown, s = 200) =>
 const sc = () =>
   createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-const getUid = async (sb: any, req: Request): Promise<string | null> => {
-  const ah = req.headers.get("authorization");
-  if (!ah?.startsWith("Bearer ")) return null;
-  const { data: u } = await sb.auth.getUser(ah.replace("Bearer ", ""));
-  return u?.user?.id || null;
-};
+// ── Action tier constants ──
+const SERVICE_ACTIONS = new Set(["alerts:process"]);
+// AUTH_ACTIONS (implicit): alerts:list, alerts:upsert, alerts:delete
 
 const FREE_ALERT_LIMIT = 5;
 const COOLDOWN_HOURS = 24;
@@ -46,8 +44,15 @@ Deno.serve(async (req) => {
     } catch {}
   }
 
-  const uid = await getUid(sb, req);
-  if (!uid) return j({ ok: false, error: "Auth required" }, 401);
+  // ── All other actions require authentication via shared guard ──
+  let uid: string;
+  try {
+    const auth = await requireAuth(req, sb);
+    uid = auth.userId;
+  } catch (e) {
+    if (e instanceof AuthError) return authErrorResponse(e);
+    return j({ ok: false, error: "Auth required" }, 401);
+  }
 
   try {
     // ─── LIST ───────────────────────────────────────────────
