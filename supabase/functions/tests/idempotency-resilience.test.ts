@@ -6,7 +6,8 @@
  * 2. markIdempotencyFailed on non-existent key is safe no-op (risk #2)
  * 3. Webhook returns 500 on transient errors so MP retries (risk #3)
  */
-import "https://deno.land/std@0.224.0/dotenv/load.ts";
+import { loadSync } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
+try { loadSync({ allowEmptyValues: true }); } catch { /* env already set */ }
 import { assertEquals, assertRejects } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
