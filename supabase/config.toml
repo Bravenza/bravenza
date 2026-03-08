@@ -279,3 +279,7 @@ verify_jwt = false
 [functions.admin-orders]
 verify_jwt = false
 # ADMIN — Admin order management. requireAdmin.
+
+[functions.auth-smoke-test]
+verify_jwt = false
+# ADMIN — Auth guard smoke test. requireAdmin. Internal testing only.
