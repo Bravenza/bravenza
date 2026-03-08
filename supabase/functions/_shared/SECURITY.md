@@ -242,7 +242,9 @@ See "Why `verify_jwt = false`" above for rationale.
 | ~~`push-subscribe` inline JWT check~~ | ~~Low~~ | ✅ **Resolved P2** — Migrated to `requireAuth` |
 | ~~`vault-semester-reset`, `vault-sla-monitor` auth unverified~~ | ~~Medium~~ | ✅ **Resolved P2** — Both use `requireServiceOrAdmin` |
 | ~~`schedule-reminder`, `process-reminders` auth unverified~~ | ~~Medium~~ | ✅ **Resolved P2** — Both use `requireServiceOrAdmin` |
-| `generate-pdf`, `enrich-descriptions` admin check not verified | Low | **Plan**: Confirm `requireAdmin` from shared guard |
+| ~~`generate-pdf` no auth~~ | ~~Medium~~ | ✅ **Resolved P3** — `requireAdmin` from shared guard |
+| ~~`enrich-descriptions` ad-hoc auth~~ | ~~Low~~ | ✅ **Resolved P3** — Migrated to `requireAdmin` shared guard |
+| ~~`cart-recovery` no auth~~ | ~~Medium~~ | ✅ **Resolved P3** — `requireServiceOrAdmin` added |
 
 ### Governance Policy
 
