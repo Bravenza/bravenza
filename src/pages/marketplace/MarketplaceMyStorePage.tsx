@@ -1,5 +1,6 @@
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { useState, useEffect, lazy, Suspense } from "react";
+import { useFeatureFlag } from "@/hooks/useFeatureFlag";
 import { motion } from "framer-motion";
 import {
   Store, Package, Megaphone, BarChart3, Tag, TrendingDown, HelpCircle,
