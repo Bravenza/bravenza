@@ -402,5 +402,5 @@ Deno.serve(async (req) => {
   }
 
   // Legacy "seed" mode — redirect to brands_list
-  return json({ ok: false, error: "Use mode=seed_brand com brand=Nike. Use mode=brands_list para listar marcas." }, 400);
+  return jsonResponse({ ok: false, error: "Use mode=seed_brand com brand=Nike. Use mode=brands_list para listar marcas." }, 400);
 });
