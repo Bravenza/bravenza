@@ -206,7 +206,7 @@ Deno.serve(async (req) => {
   // --- Brands list mode ---
   if (mode === "brands_list") {
     const brandsList = Object.entries(BRAND_QUOTAS).map(([name, quota]) => ({ name, quota }));
-    return json({ ok: true, brands: brandsList, total_quota: Object.values(BRAND_QUOTAS).reduce((a, b) => a + b, 0) });
+    return jsonResponse({ ok: true, brands: brandsList, total_quota: Object.values(BRAND_QUOTAS).reduce((a, b) => a + b, 0) });
   }
 
   // --- Seed one brand mode (processes one batch per call) ---
