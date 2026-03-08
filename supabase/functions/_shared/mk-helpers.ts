@@ -1,5 +1,6 @@
 // Shared helpers for all mk-* edge functions
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireAuth, AuthError } from "./auth-guard.ts";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,37 +16,26 @@ export function createSupabaseClient() {
   return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 }
 
-/** Resolve authenticated CPF from JWT token via client_profiles */
+/**
+ * Resolve authenticated CPF from JWT token via client_profiles.
+ * Delegates JWT validation to shared auth-guard (single source of truth).
+ */
 export async function resolveAuthCpf(
   req: Request,
   sb: any
 ): Promise<{ cpf: string | null; error: string | null }> {
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return { cpf: null, error: "Token de autenticação ausente" };
+  try {
+    const auth = await requireAuth(req, sb);
+    if (!auth.cpf) {
+      return { cpf: null, error: "Perfil de cliente não encontrado. Faça login novamente." };
+    }
+    return { cpf: auth.cpf, error: null };
+  } catch (e) {
+    if (e instanceof AuthError) {
+      return { cpf: null, error: e.message };
+    }
+    return { cpf: null, error: "Erro de autenticação" };
   }
-
-  const token = authHeader.replace("Bearer ", "");
-
-  // Use service role client to verify the JWT
-  const { data, error } = await sb.auth.getUser(token);
-  if (error || !data?.user) {
-    return { cpf: null, error: "Token inválido ou expirado" };
-  }
-
-  const userId = data.user.id;
-
-  const { data: profile, error: profileError } = await sb
-    .from("client_profiles")
-    .select("cpf")
-    .eq("user_id", userId)
-    .single();
-
-  if (profileError || !profile?.cpf) {
-    return { cpf: null, error: "Perfil de cliente não encontrado. Faça login novamente." };
-  }
-
-  return { cpf: profile.cpf, error: null };
 }
 
 /** Get vault member by CPF */
