@@ -6520,6 +6520,7 @@ export type Database = {
         Returns: Json
       }
       get_my_cpf: { Args: never; Returns: string }
+      get_my_vault_member_id: { Args: never; Returns: string }
       get_online_community_users: {
         Args: { p_minutes?: number }
         Returns: {
