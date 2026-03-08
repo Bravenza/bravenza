@@ -109,6 +109,9 @@ Deno.serve(async (req) => {
   const sb = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   try {
+    // ── Load dynamic rates from DB ──
+    const { mpRates, surcharges } = await loadRatesConfig(sb);
+
     // ── Auth: validate JWT and resolve buyer CPF ──
     const authHeader = req.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) return json({ error: "Auth required" }, 401);
