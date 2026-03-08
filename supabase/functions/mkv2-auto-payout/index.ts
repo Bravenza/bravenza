@@ -79,6 +79,7 @@ Deno.serve(async (req) => {
 
       if (updateErr) {
         console.error(`[mkv2-auto-payout] Failed to update order ${order.order_code}:`, updateErr);
+        await releaseIdempotencyKey(sb, payoutIdempKey).catch(() => {});
         continue;
       }
 
