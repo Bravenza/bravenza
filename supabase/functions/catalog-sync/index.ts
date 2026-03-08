@@ -1,24 +1,16 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-const json = (d: unknown, s = 200) =>
-  new Response(JSON.stringify(d), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
+import { requireAdmin, AuthError, authErrorResponse } from "../_shared/auth-guard.ts";
+import { corsHeaders, jsonResponse } from "../_shared/mk-helpers.ts";
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   // Auth: accept service-role key, cron key, or admin user session
   const authHeader = req.headers.get("authorization");
   const cronKey = req.headers.get("x-cron-key");
-  // Read cron key from app_config table (no secret dependency)
+
   let internalCronKey: string | null = null;
   if (cronKey) {
     const { data: ck } = await sb.from("app_config").select("value").eq("key", "catalog_sync_cron_key").maybeSingle();
@@ -30,14 +22,11 @@ Deno.serve(async (req) => {
   const isCronCall = !!(internalCronKey && cronKey && cronKey === internalCronKey);
 
   if (!isServiceRole && !isCronCall) {
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Auth required" }, 401);
-    const anonSb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: userErr } = await anonSb.auth.getUser();
-    if (userErr || !user) return json({ error: "Unauthorized" }, 401);
-    const { data: adm } = await sb.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
-    if (!adm) return json({ error: "Admin only" }, 403);
+    try {
+      await requireAdmin(req, sb);
+    } catch (error) {
+      return authErrorResponse(error);
+    }
   }
 
   let body: any = {};
@@ -52,7 +41,6 @@ Deno.serve(async (req) => {
       const { count: totalProducts } = await sb.from("marketplace_products").select("id", { count: "exact", head: true });
 
       const PAGE = 1000;
-      // Get ALL model SKUs (paginated)
       const modelSkus = new Set<string>();
       let mOff = 0;
       while (true) {
@@ -62,7 +50,6 @@ Deno.serve(async (req) => {
         if (pg.length < PAGE) break;
         mOff += PAGE;
       }
-      // Get ALL marketplace SKUs (paginated)
       const mpSkus = new Set<string>();
       let pOff = 0;
       while (true) {
@@ -79,7 +66,7 @@ Deno.serve(async (req) => {
 
       const { count: outdatedImages } = await sb.rpc("count_outdated_images").maybeSingle() || { count: 0 };
 
-      return json({
+      return jsonResponse({
         ok: true,
         total_sneaker_models: totalModels || 0,
         total_marketplace_products: totalProducts || 0,
@@ -90,7 +77,6 @@ Deno.serve(async (req) => {
     }
 
     if (mode === "sync") {
-      // Fetch a batch of sneaker_models with brand info
       const { data: models, error: modelsErr } = await sb
         .from("sneaker_models")
         .select("id, sku, model_name_en, model_name_pt, description_en, description_pt, colorway, release_date, msrp, image_status, brand:brands!inner(name)")
@@ -98,18 +84,16 @@ Deno.serve(async (req) => {
         .range(offset, offset + batchSize - 1);
 
       if (modelsErr) throw modelsErr;
-      if (!models || models.length === 0) return json({ ok: true, synced: 0, updated: 0, skipped: 0, has_more: false });
+      if (!models || models.length === 0) return jsonResponse({ ok: true, synced: 0, updated: 0, skipped: 0, has_more: false });
 
       const skus = models.map((m: any) => m.sku).filter(Boolean);
       
-      // Get existing products WITH their current image count
       const { data: existingProducts } = await sb
         .from("marketplace_products")
         .select("id, sku, images")
         .in("sku", skus);
       const existingMap = new Map((existingProducts || []).map((p: any) => [p.sku, p]));
 
-      // Get ALL images for these models
       const modelIds = models.map((m: any) => m.id);
       const { data: imgData } = await sb
         .from("sneaker_images")
@@ -124,17 +108,13 @@ Deno.serve(async (req) => {
         imageMap.set(img.sneaker_id, list);
       }
 
-      let synced = 0;
-      let updated = 0;
-      let skipped = 0;
+      let synced = 0, updated = 0, skipped = 0;
       const errors: string[] = [];
-
       const toInsert: any[] = [];
       const toUpdate: { id: string; images: string[] }[] = [];
 
       for (const model of models) {
         if (!model.sku) { skipped++; continue; }
-
         const brandName = (model as any).brand?.name || "Unknown";
         let modelName = model.model_name_pt || model.model_name_en || model.sku;
         if (modelName.toLowerCase().startsWith(brandName.toLowerCase() + " ")) {
@@ -142,11 +122,9 @@ Deno.serve(async (req) => {
         }
         const description = model.description_pt || model.description_en || `${brandName} ${modelName}`;
         const imageArray = imageMap.get(model.id) || [];
-
         const existing = existingMap.get(model.sku);
 
         if (existing) {
-          // Already exists — check if images need updating
           const currentImgCount = existing.images?.length || 0;
           if (imageArray.length > currentImgCount) {
             toUpdate.push({ id: existing.id, images: imageArray });
@@ -156,7 +134,6 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // New product — insert
         const slug = `${brandName}-${modelName}`
           .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 120);
         const uniqueSlug = `${slug}-${model.sku.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().substring(0, 10)}`;
@@ -170,7 +147,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Insert new products in chunks
       const CHUNK = 50;
       for (let i = 0; i < toInsert.length; i += CHUNK) {
         const chunk = toInsert.slice(i, i + CHUNK);
@@ -193,7 +169,6 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Update images for existing products
       for (const upd of toUpdate) {
         const { error: updErr } = await sb
           .from("marketplace_products")
@@ -206,23 +181,14 @@ Deno.serve(async (req) => {
         }
       }
 
-      const hasMore = models.length === batchSize;
-
-      return json({
-        ok: true,
-        synced,
-        updated,
-        skipped,
-        errors: errors.length,
-        error_details: errors.slice(0, 5),
-        offset,
-        next_offset: offset + batchSize,
-        has_more: hasMore,
-        batch_size: batchSize,
+      return jsonResponse({
+        ok: true, synced, updated, skipped,
+        errors: errors.length, error_details: errors.slice(0, 5),
+        offset, next_offset: offset + batchSize,
+        has_more: models.length === batchSize, batch_size: batchSize,
       });
     }
 
-    // Mode: update-images — bulk update images for all marketplace products from sneaker_images
     if (mode === "update-images") {
       const { data: products, error: pErr } = await sb
         .from("marketplace_products")
@@ -232,9 +198,8 @@ Deno.serve(async (req) => {
         .range(offset, offset + batchSize - 1);
 
       if (pErr) throw pErr;
-      if (!products || products.length === 0) return json({ ok: true, updated: 0, has_more: false });
+      if (!products || products.length === 0) return jsonResponse({ ok: true, updated: 0, has_more: false });
 
-      // Get sneaker_model IDs for these SKUs
       const skus = products.map((p: any) => p.sku);
       const { data: models } = await sb
         .from("sneaker_models")
@@ -242,7 +207,6 @@ Deno.serve(async (req) => {
         .in("sku", skus);
       const skuToModelId = new Map((models || []).map((m: any) => [m.sku, m.id]));
 
-      // Get all images
       const modelIds = [...new Set((models || []).map((m: any) => m.id))];
       const { data: imgData } = await sb
         .from("sneaker_images")
@@ -270,18 +234,16 @@ Deno.serve(async (req) => {
         if (!error) updated++;
       }
 
-      return json({
-        ok: true,
-        updated,
-        offset,
+      return jsonResponse({
+        ok: true, updated, offset,
         next_offset: offset + batchSize,
         has_more: products.length === batchSize,
       });
     }
 
-    return json({ ok: false, error: "mode inválido. Use: preview, sync" }, 400);
+    return jsonResponse({ ok: false, error: "mode inválido. Use: preview, sync" }, 400);
   } catch (e: any) {
     console.error("catalog-sync error:", e);
-    return json({ ok: false, error: e.message }, 500);
+    return jsonResponse({ ok: false, error: e.message }, 500);
   }
 });
