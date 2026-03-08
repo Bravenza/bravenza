@@ -1,5 +1,13 @@
+/**
+ * catalog-sync — Syncs sneaker_models → marketplace_products
+ *
+ * Action tiers:
+ *   PUBLIC_ACTIONS  → (none)
+ *   AUTH_ACTIONS    → (none)
+ *   ADMIN_ACTIONS   → preview, sync, update-images (admin, service-role, or cron)
+ */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { requireAdmin, AuthError, authErrorResponse } from "../_shared/auth-guard.ts";
+import { requireServiceOrAdmin, authErrorResponse } from "../_shared/auth-guard.ts";
 import { corsHeaders, jsonResponse } from "../_shared/mk-helpers.ts";
 
 Deno.serve(async (req) => {
@@ -7,26 +15,11 @@ Deno.serve(async (req) => {
 
   const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-  // Auth: accept service-role key, cron key, or admin user session
-  const authHeader = req.headers.get("authorization");
-  const cronKey = req.headers.get("x-cron-key");
-
-  let internalCronKey: string | null = null;
-  if (cronKey) {
-    const { data: ck } = await sb.from("app_config").select("value").eq("key", "catalog_sync_cron_key").maybeSingle();
-    internalCronKey = ck?.value || null;
-  }
-
-  const isServiceRole = authHeader?.startsWith("Bearer ") &&
-    authHeader.replace("Bearer ", "") === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const isCronCall = !!(internalCronKey && cronKey && cronKey === internalCronKey);
-
-  if (!isServiceRole && !isCronCall) {
-    try {
-      await requireAdmin(req, sb);
-    } catch (error) {
-      return authErrorResponse(error);
-    }
+  // Auth: require service-role, cron key, or admin session (shared guard)
+  try {
+    await requireServiceOrAdmin(req, sb);
+  } catch (error) {
+    return authErrorResponse(error);
   }
 
   let body: any = {};

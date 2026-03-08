@@ -1,14 +1,14 @@
+/**
+ * catalog-seed-500 — Seed sneaker catalog from StockX API
+ *
+ * Action tiers:
+ *   PUBLIC_ACTIONS  → (none)
+ *   AUTH_ACTIONS    → (none)
+ *   ADMIN_ACTIONS   → test, brands_list, seed_brand (admin only)
+ */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireAdmin, authErrorResponse } from "../_shared/auth-guard.ts";
-
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-const json = (d: unknown, s = 200) =>
-  new Response(JSON.stringify(d), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
+import { corsHeaders, jsonResponse } from "../_shared/mk-helpers.ts";
 
 const PLACEHOLDER = "/img/shoe-placeholder-white.png";
 
@@ -172,7 +172,7 @@ async function translateBatch(
 
 // ---------- main ----------
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
@@ -188,7 +188,7 @@ Deno.serve(async (req) => {
   const mode = body.mode || "seed"; // "test" | "seed" | "seed_brand" | "brands_list"
 
   const rapidKey = Deno.env.get("RAPIDAPI_KEY");
-  if (!rapidKey) return json({ ok: false, error: "RAPIDAPI_KEY não configurada.", missing: ["RAPIDAPI_KEY"] });
+  if (!rapidKey) return jsonResponse({ ok: false, error: "RAPIDAPI_KEY não configurada.", missing: ["RAPIDAPI_KEY"] });
 
   const apiHeaders = { "X-RapidAPI-Key": rapidKey, "X-RapidAPI-Host": STOCKX_API_HOST };
 
@@ -197,23 +197,23 @@ Deno.serve(async (req) => {
     try {
       const data = await throttledFetch(`${STOCKX_API_BASE}/getproducts?keywords=Jordan+1&limit=1`, apiHeaders);
       const arr = extractArray(data);
-      return json({ ok: true, test: true, sample_count: arr.length, sample: arr[0] || null, source: "sneaker-database-stockx" });
+      return jsonResponse({ ok: true, test: true, sample_count: arr.length, sample: arr[0] || null, source: "sneaker-database-stockx" });
     } catch (e: any) {
-      return json({ ok: false, error: e.message });
+      return jsonResponse({ ok: false, error: e.message });
     }
   }
 
   // --- Brands list mode ---
   if (mode === "brands_list") {
     const brandsList = Object.entries(BRAND_QUOTAS).map(([name, quota]) => ({ name, quota }));
-    return json({ ok: true, brands: brandsList, total_quota: Object.values(BRAND_QUOTAS).reduce((a, b) => a + b, 0) });
+    return jsonResponse({ ok: true, brands: brandsList, total_quota: Object.values(BRAND_QUOTAS).reduce((a, b) => a + b, 0) });
   }
 
   // --- Seed one brand mode (processes one batch per call) ---
   if (mode === "seed_brand") {
     const brandName = body.brand as string;
     const quota = BRAND_QUOTAS[brandName];
-    if (!brandName || !quota) return json({ ok: false, error: `Marca inválida: ${brandName}` }, 400);
+    if (!brandName || !quota) return jsonResponse({ ok: false, error: `Marca inválida: ${brandName}` }, 400);
     const queryIndex = body.query_index ?? 0; // which silhouette query to start from
     const BATCH_LIMIT = 30; // max items to process per call
 
@@ -224,7 +224,7 @@ Deno.serve(async (req) => {
     const brandMap = new Map((brands || []).map((b: any) => [b.name, b.id]));
     const silMap = new Map((silhouettes || []).map((s: any) => [`${s.brand_id}|${s.name}`, s.id]));
     const brandId = brandMap.get(brandName);
-    if (!brandId) return json({ ok: false, error: `Marca não encontrada no DB: ${brandName}` }, 400);
+    if (!brandId) return jsonResponse({ ok: false, error: `Marca não encontrada no DB: ${brandName}` }, 400);
 
     const brandSilhouettes = (taxonomy || [])
       .filter((t: any) => t.brand_name === brandName)
@@ -386,7 +386,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      return json({
+      return jsonResponse({
         ok: true, brand: brandName, fetched: collected.length, quota,
         inserted: stats.inserted, updated: stats.updated, skipped: stats.skipped,
         skipped_existing: stats.skipped_existing,
@@ -397,10 +397,10 @@ Deno.serve(async (req) => {
       });
     } catch (e: any) {
       console.error(`catalog-seed brand ${brandName} error:`, e);
-      return json({ ok: false, brand: brandName, error: e.message }, 500);
+      return jsonResponse({ ok: false, brand: brandName, error: e.message }, 500);
     }
   }
 
   // Legacy "seed" mode — redirect to brands_list
-  return json({ ok: false, error: "Use mode=seed_brand com brand=Nike. Use mode=brands_list para listar marcas." }, 400);
+  return jsonResponse({ ok: false, error: "Use mode=seed_brand com brand=Nike. Use mode=brands_list para listar marcas." }, 400);
 });
