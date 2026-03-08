@@ -5,8 +5,6 @@
  *
  * Covers: success path, duplicate detection, failure+retry, stale lock cleanup, race condition.
  */
-import { loadSync } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
-try { loadSync({ allowEmptyValues: true, export: true }); } catch { /* CI may not have .env */ }
 import { assertEquals, assertExists } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
@@ -16,8 +14,14 @@ import {
   releaseIdempotencyKey,
 } from "../_shared/idempotency.ts";
 
-const SUPABASE_URL = Deno.env.get("VITE_SUPABASE_URL") || Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("VITE_SUPABASE_PUBLISHABLE_KEY")!;
+// Prefer runtime env (edge function context), fall back to project constants
+const SUPABASE_URL =
+  Deno.env.get("SUPABASE_URL") ??
+  `https://snfqxejtmauyspyhqvop.supabase.co`;
+const SUPABASE_KEY =
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+  // anon key used in test context — sufficient for idempotency_keys (no RLS)
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNuZnF4ZWp0bWF1eXNweWhxdm9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0Mzg4MDQsImV4cCI6MjA4NTAxNDgwNH0.Qhu8pRHI_fC-FV9fA0epi9-rjMUYjZYGt_8YnTi51cU";
 
 function sb() {
   return createClient(SUPABASE_URL, SUPABASE_KEY);
