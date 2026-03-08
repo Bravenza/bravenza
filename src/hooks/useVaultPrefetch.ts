@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { STALE } from "@/lib/query-config";
+import { useFeatureFlag } from "@/hooks/useFeatureFlag";
 
 /**
  * Prefetches Vault member data (closet items, counts) in the background
@@ -11,6 +12,7 @@ import { STALE } from "@/lib/query-config";
  */
 export function useVaultPrefetch(cpf: string | null, isVaultMember: boolean) {
   const queryClient = useQueryClient();
+  const { enabled: favoritesEnabled } = useFeatureFlag("enable_favorites_lists");
 
   useEffect(() => {
     if (!cpf || !isVaultMember) return;
@@ -26,17 +28,19 @@ export function useVaultPrefetch(cpf: string | null, isVaultMember: boolean) {
       staleTime: STALE.SEMI_STATIC,
     });
 
-    // Prefetch favorite count
-    queryClient.prefetchQuery({
-      queryKey: ["vault", "favorites-count", cpf],
-      queryFn: async () => {
-        const { count } = await supabase
-          .from("favorite_list_items" as any)
-          .select("id", { count: "exact", head: true })
-          .eq("owner_cpf", cpf);
-        return count ?? 0;
-      },
-      staleTime: STALE.SEMI_STATIC,
-    });
-  }, [cpf, isVaultMember, queryClient]);
+    // Prefetch favorite count only if feature is enabled
+    if (favoritesEnabled) {
+      queryClient.prefetchQuery({
+        queryKey: ["vault", "favorites-count", cpf],
+        queryFn: async () => {
+          const { count } = await supabase
+            .from("favorite_list_items" as any)
+            .select("id", { count: "exact", head: true })
+            .eq("owner_cpf", cpf);
+          return count ?? 0;
+        },
+        staleTime: STALE.SEMI_STATIC,
+      });
+    }
+  }, [cpf, isVaultMember, queryClient, favoritesEnabled]);
 }
