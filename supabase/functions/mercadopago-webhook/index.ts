@@ -492,7 +492,7 @@ Deno.serve(async (req) => {
         await setIdempotencyResult(supabase, idempKey, { payment_id: paymentId, status: payment.status });
       } catch (processingError: any) {
         // Record failure with context — allows retry on next webhook delivery
-        await markIdempotencyFailed(sb, idempKey, processingError?.message || "Webhook processing error").catch(() => {});
+        await markIdempotencyFailed(supabase, idempKey, processingError?.message || "Webhook processing error").catch(() => {});
         throw processingError;
       }
     }
