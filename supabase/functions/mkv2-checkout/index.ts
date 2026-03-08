@@ -304,7 +304,7 @@ Deno.serve(async (req) => {
 
       const pixData = paymentResult.point_of_interaction?.transaction_data;
 
-      return json({
+      const pixResult = {
         status: paymentResult.status,
         payment_id: paymentResult.id,
         pix_qr_code: pixData?.qr_code_base64 || null,
@@ -313,7 +313,9 @@ Deno.serve(async (req) => {
         total_amount: totalAmount,
         order_count: orders.length,
         order_codes: orders.map(o => o.order_code),
-      });
+      };
+      await setIdempotencyResult(sb, checkoutIdempKey, pixResult);
+      return json(pixResult);
 
     } else if (payment_method === "card") {
       // ===== Card Payment =====
