@@ -41,6 +41,9 @@ export async function checkIdempotency(
     if (new Date(existing.expires_at) < new Date()) {
       // Expired — delete and allow re-processing
       await sb.from("idempotency_keys").delete().eq("id", existing.id);
+    } else if (existing.status === "failed") {
+      // Previously failed — delete and allow retry
+      await sb.from("idempotency_keys").delete().eq("id", existing.id);
     } else if (existing.status === "completed" && existing.cached_result) {
       // Already processed — return cached result
       return { isDuplicate: true, cachedResult: existing.cached_result };
