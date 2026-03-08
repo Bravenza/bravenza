@@ -28,15 +28,14 @@ export function useVaultPrefetch(cpf: string | null, isVaultMember: boolean) {
       staleTime: STALE.SEMI_STATIC,
     });
 
-    // Prefetch favorite count only if feature is enabled
+    // Prefetch favorite lists count only if feature is enabled
     if (favoritesEnabled) {
       queryClient.prefetchQuery({
         queryKey: ["vault", "favorites-count", cpf],
         queryFn: async () => {
           const { count } = await supabase
-            .from("favorite_list_items" as any)
-            .select("id", { count: "exact", head: true })
-            .eq("owner_cpf", cpf);
+            .from("favorite_lists")
+            .select("id", { count: "exact", head: true });
           return count ?? 0;
         },
         staleTime: STALE.SEMI_STATIC,
