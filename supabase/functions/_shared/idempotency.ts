@@ -133,6 +133,9 @@ export async function setIdempotencyResult(
  * Mark an idempotency key as failed with error details.
  * Failed keys are automatically cleared on next checkIdempotency() call (allows retry).
  * The error context is preserved in `last_error` and `cached_result` for debugging.
+ *
+ * Safe to call even if the key was never locked (e.g., checkIdempotency threw before
+ * acquiring the lock). The update simply matches zero rows — no error, no side-effect.
  */
 export async function markIdempotencyFailed(
   sb: any,
