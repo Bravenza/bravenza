@@ -111,3 +111,46 @@ This prevents privilege escalation via profile manipulation.
 - [x] All protected actions return consistent errors via `authErrorResponse`
 - [x] `verify_jwt=false` justified per function (in-code validation via shared guard)
 - [x] Auth error handling uses `AuthError` class with proper HTTP status codes
+
+---
+
+## P1 Migration Status (Hardening Fase 3)
+
+| Function | Before | After | Status |
+|----------|--------|-------|--------|
+| `catalog-sync` | ad-hoc service-role + cron-key checks + `requireAdmin` fallback | `requireServiceOrAdmin` from shared guard (single call) | ✅ Migrated |
+| `catalog-seed-500` | local `CORS`/`json()` helpers, `requireAdmin` already used | Shared `corsHeaders`/`jsonResponse` from mk-helpers | ✅ Migrated |
+| `mkv2-cron-tasks` | local `corsHeaders`, `requireServiceOrAdmin` already used | Shared `corsHeaders` from mk-helpers | ✅ Migrated |
+
+### Before/After Action Map
+
+**catalog-sync:**
+| Action | Before | After |
+|--------|--------|-------|
+| `preview` | ad-hoc service-role OR cron-key OR requireAdmin | `requireServiceOrAdmin` (shared) |
+| `sync` | same ad-hoc | `requireServiceOrAdmin` (shared) |
+| `update-images` | same ad-hoc | `requireServiceOrAdmin` (shared) |
+
+**catalog-seed-500:**
+| Action | Before | After |
+|--------|--------|-------|
+| `test` | `requireAdmin` (shared) | `requireAdmin` (shared) — no change |
+| `brands_list` | `requireAdmin` (shared) | `requireAdmin` (shared) — no change |
+| `seed_brand` | `requireAdmin` (shared) | `requireAdmin` (shared) — no change |
+
+**mkv2-cron-tasks:**
+| Action | Before | After |
+|--------|--------|-------|
+| all tasks | `requireServiceOrAdmin` (shared) | `requireServiceOrAdmin` (shared) — no change |
+
+### Compatibility Notes
+- All three functions are admin/service-only — no public actions
+- `catalog-sync` now accepts cron key via shared `requireServiceOrAdmin` (checks `app_config.cron_secret_key` instead of `catalog_sync_cron_key`)
+- `verify_jwt=false` justified: all three validate auth in-code via shared guard
+
+### P1 Acceptance Checklist
+- [x] All actions protected by shared guard (`requireAdmin` or `requireServiceOrAdmin`)
+- [x] No ad-hoc service-role/cron-key validation remaining
+- [x] No local CORS/response helpers — using shared `corsHeaders`/`jsonResponse`
+- [x] Consistent 401/403 error responses via `authErrorResponse`
+- [x] `verify_jwt=false` justified per function (in-code validation)
