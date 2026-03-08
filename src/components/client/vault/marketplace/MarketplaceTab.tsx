@@ -233,26 +233,10 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
     return success;
   };
 
-  const handleSearch = () => {
-    fetchCatalogProducts({
-      search: filters.search,
-      brand: filters.brand,
-      model: filters.model,
-      category: filters.condition,
-    });
-    fetchListings({
-      search: filters.search,
-      brand: filters.brand,
-      size: filters.size,
-      condition: filters.condition,
-      priceMin: filters.priceMin,
-      priceMax: filters.priceMax,
-      sort: filters.sort,
-      favoritesOnly: filters.favoritesOnly,
-      modality: filters.modality,
-      trustedOnly: filters.trustedOnly,
-    });
-  };
+  const handleSearch = useCallback(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    executeSearch();
+  }, [executeSearch]);
 
   const handleBrandSelected = async (brand: string | undefined) => {
     if (brand) {
