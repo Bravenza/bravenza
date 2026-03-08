@@ -57,6 +57,17 @@ Deno.serve(async (req) => {
       throw new Error("Parâmetros inválidos");
     }
 
+    // Idempotency check
+    const idempKey = idempotency_key || `card-${order_id}-${payment_type}`;
+    const idempCheck = await checkIdempotency(supabase, idempKey, 5);
+    if (idempCheck.isDuplicate) {
+      console.log(`[process-card] Duplicate request for ${idempKey}, returning cached`);
+      return new Response(JSON.stringify(idempCheck.cachedResult), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     // Validate installments (1-12)
     const validInstallments = Math.min(Math.max(1, installments), 12);
 
