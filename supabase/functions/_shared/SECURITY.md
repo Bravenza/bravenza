@@ -224,8 +224,7 @@ See "Why `verify_jwt = false`" above for rationale.
 | `vault-sla-monitor` | SERVICE | `false` | requireServiceOrAdmin | SLA monitoring |
 | `process-reminders` | SERVICE | `false` | requireServiceOrAdmin | Reminder processing |
 | `schedule-reminder` | SERVICE | `false` | requireServiceOrAdmin | Reminder scheduling |
-| `cart-recovery` | SERVICE | `false` | service-role/cron | Abandoned cart emails |
-| `push-subscribe` | AUTH | `false` | requireAuth | Push subscription registration |
+| `cart-recovery` | SERVICE | `false` | requireServiceOrAdmin | Abandoned cart recovery |
 | `send-budget-email` | SERVICE | `false` | requireServiceOrAdmin | Email dispatch |
 | `send-order-email` | SERVICE | `false` | requireServiceOrAdmin | Email dispatch |
 | `send-marketplace-email` | SERVICE | `false` | requireServiceOrAdmin | Email dispatch |
