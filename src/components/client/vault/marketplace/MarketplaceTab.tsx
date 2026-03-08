@@ -97,15 +97,53 @@ export function MarketplaceTab({ clientCpf, isVaultMember, buyerName, buyerEmail
   const { status: planStatus } = useSellerPlan(seller?.id || null);
   const isElitePlan = planStatus?.plan?.id === "elite";
 
+  // Debounced auto-search when filters change
+  const filtersRef = useRef(filters);
+  const isFirstRender = useRef(true);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
-    handleSearch();
-    if (isVaultMember) {
-      checkOnboardingStatus().then((res) => {
-        setSellerOnboarded(res.onboarded);
-        setSellerKycStatus(res.seller?.kyc_status || null);
-      });
+    filtersRef.current = filters;
+  }, [filters]);
+
+  const executeSearch = useCallback(() => {
+    const f = filtersRef.current;
+    fetchCatalogProducts({
+      search: f.search,
+      brand: f.brand,
+      model: f.model,
+      category: f.condition,
+    });
+    fetchListings({
+      search: f.search,
+      brand: f.brand,
+      size: f.size,
+      condition: f.condition,
+      priceMin: f.priceMin,
+      priceMax: f.priceMax,
+      sort: f.sort,
+      favoritesOnly: f.favoritesOnly,
+      modality: f.modality,
+      trustedOnly: f.trustedOnly,
+    });
+  }, [fetchCatalogProducts, fetchListings]);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      executeSearch();
+      if (isVaultMember) {
+        checkOnboardingStatus().then((res) => {
+          setSellerOnboarded(res.onboarded);
+          setSellerKycStatus(res.seller?.kyc_status || null);
+        });
+      }
+      return;
     }
-  }, []);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(executeSearch, 300);
+    return () => { if (debounceTimer.current) clearTimeout(debounceTimer.current); };
+  }, [filters]);
 
   useEffect(() => {
     if (innerTab === "minha-loja" && isVaultMember) {
