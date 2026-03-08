@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireServiceOrAdmin, authErrorResponse } from "../_shared/auth-guard.ts";
 
 // ─── Configurações ─────────────────────────────────────────────────────────────
 const CATALOKO_API = "https://service.cataloko.com/api/search/v4";

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireAdmin, authErrorResponse } from "../_shared/auth-guard.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
