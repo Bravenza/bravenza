@@ -3,12 +3,29 @@
  * 
  * Prevents duplicate processing of payments, webhooks, and critical operations.
  * Uses the `idempotency_keys` table with automatic TTL-based expiration.
- * 
+ *
+ * Status lifecycle:
+ *   processing → completed  (success path)
+ *   processing → failed     (error path — allows retry on next request)
+ *   processing → (stale)    (stuck >2x TTL — auto-cleared on next check)
+ *
+ * Retry policy:
+ *   - `completed` + cached_result → return cached (true duplicate)
+ *   - `processing` + fresh → return "em processamento" (concurrent request)
+ *   - `processing` + stale (>2x TTL) → delete and allow retry
+ *   - `failed` → delete and allow retry
+ *   - expired → delete and allow retry
+ *
  * Usage:
  *   const check = await checkIdempotency(sb, key, 15);
  *   if (check.isDuplicate) return jsonResponse(check.cachedResult);
- *   // ... process ...
- *   await setIdempotencyResult(sb, key, result);
+ *   try {
+ *     // ... process ...
+ *     await setIdempotencyResult(sb, key, result);
+ *   } catch (e) {
+ *     await markIdempotencyFailed(sb, key, e.message);
+ *     throw e;
+ *   }
  */
 
 export interface IdempotencyCheck {
@@ -19,7 +36,10 @@ export interface IdempotencyCheck {
 /**
  * Check if a key has already been processed.
  * If not, locks the key with status "processing" to prevent concurrent duplicates.
- * 
+ *
+ * Stale processing detection: if a key has been "processing" for longer than
+ * 2x the TTL, it's considered stuck and will be cleared for retry.
+ *
  * @param sb - Supabase client (service role)
  * @param key - Deterministic idempotency key (e.g., `webhook-payment-12345`)
  * @param ttlMinutes - How long to remember this key (default: 15 min)
@@ -29,41 +49,54 @@ export async function checkIdempotency(
   key: string,
   ttlMinutes = 15
 ): Promise<IdempotencyCheck> {
+  const now = new Date();
+
   // Check for existing key
   const { data: existing } = await sb
     .from("idempotency_keys")
-    .select("id, status, cached_result, expires_at")
+    .select("id, status, cached_result, expires_at, updated_at")
     .eq("key", key)
     .maybeSingle();
 
   if (existing) {
-    // Check if expired
-    if (new Date(existing.expires_at) < new Date()) {
-      // Expired — delete and allow re-processing
+    const expiresAt = new Date(existing.expires_at);
+    const updatedAt = existing.updated_at ? new Date(existing.updated_at) : new Date(0);
+    const staleCutoff = ttlMinutes * 2 * 60 * 1000; // 2x TTL
+
+    // Expired — clear and allow re-processing
+    if (expiresAt < now) {
       await sb.from("idempotency_keys").delete().eq("id", existing.id);
-    } else if (existing.status === "failed") {
-      // Previously failed — delete and allow retry
+    }
+    // Failed — clear and allow retry
+    else if (existing.status === "failed") {
       await sb.from("idempotency_keys").delete().eq("id", existing.id);
-    } else if (existing.status === "completed" && existing.cached_result) {
-      // Already processed — return cached result
+    }
+    // Completed with cached result — true duplicate
+    else if (existing.status === "completed" && existing.cached_result) {
       return { isDuplicate: true, cachedResult: existing.cached_result };
-    } else if (existing.status === "processing") {
-      // Currently being processed by another request — treat as duplicate
+    }
+    // Processing but stale (stuck) — clear and allow retry
+    else if (existing.status === "processing" && (now.getTime() - updatedAt.getTime()) > staleCutoff) {
+      console.warn(`[idempotency] Stale processing lock cleared for key: ${key} (age: ${Math.round((now.getTime() - updatedAt.getTime()) / 1000)}s)`);
+      await sb.from("idempotency_keys").delete().eq("id", existing.id);
+    }
+    // Processing and fresh — concurrent request
+    else if (existing.status === "processing") {
       return { isDuplicate: true, cachedResult: { status: "processing", message: "Requisição em andamento" } };
     }
   }
 
   // Lock the key
-  const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000).toISOString();
+  const expiresAt = new Date(now.getTime() + ttlMinutes * 60 * 1000).toISOString();
   const { error } = await sb
     .from("idempotency_keys")
     .upsert(
-      { key, status: "processing", expires_at: expiresAt },
+      { key, status: "processing", expires_at: expiresAt, updated_at: now.toISOString(), last_error: null },
       { onConflict: "key" }
     );
 
   if (error) {
-    // If upsert fails due to race condition, treat as duplicate
+    // Race condition on upsert — treat as concurrent duplicate
     console.warn("[idempotency] Lock contention for key:", key, error.message);
     return { isDuplicate: true, cachedResult: { status: "processing", message: "Requisição em andamento" } };
   }
@@ -81,13 +114,14 @@ export async function setIdempotencyResult(
 ): Promise<void> {
   await sb
     .from("idempotency_keys")
-    .update({ status: "completed", cached_result: result })
+    .update({ status: "completed", cached_result: result, updated_at: new Date().toISOString(), last_error: null })
     .eq("key", key);
 }
 
 /**
  * Mark an idempotency key as failed with error details.
- * Failed keys are automatically cleared on next check (allows retry).
+ * Failed keys are automatically cleared on next checkIdempotency() call (allows retry).
+ * The error context is preserved in `last_error` and `cached_result` for debugging.
  */
 export async function markIdempotencyFailed(
   sb: any,
@@ -96,13 +130,19 @@ export async function markIdempotencyFailed(
 ): Promise<void> {
   await sb
     .from("idempotency_keys")
-    .update({ status: "failed", cached_result: { error: errorMessage, failed_at: new Date().toISOString() } })
+    .update({
+      status: "failed",
+      last_error: errorMessage,
+      cached_result: { error: errorMessage, failed_at: new Date().toISOString() },
+      updated_at: new Date().toISOString(),
+    })
     .eq("key", key);
 }
 
 /**
- * Release an idempotency lock on error (allows retry).
- * Use markIdempotencyFailed() when you want to record the error before allowing retry.
+ * Release an idempotency lock immediately (deletes the key).
+ * Prefer markIdempotencyFailed() when you want to record the error for debugging.
+ * Use this only for non-error cases (e.g., skipping a webhook that doesn't need processing).
  */
 export async function releaseIdempotencyKey(
   sb: any,

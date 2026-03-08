@@ -1,5 +1,6 @@
 import{createClient}from"https://esm.sh/@supabase/supabase-js@2";
 import{resolveAuthCpf}from"../_shared/mk-helpers.ts";
+import{checkIdempotency,setIdempotencyResult,markIdempotencyFailed}from"../_shared/idempotency.ts";
 const H={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version","Access-Control-Allow-Methods":"GET, POST, PUT, DELETE, OPTIONS"};
 const j=(d:unknown,s=200)=>new Response(JSON.stringify(d),{status:s,headers:{...H,"Content-Type":"application/json"}});
 const sc=()=>createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -66,45 +67,59 @@ if(mt==="POST"&&a==="request-payout"){
   const amount=Number(b.amount);
   if(!amount||amount<=0) throw new Error("Valor inválido");
 
-  // Recalculate released balance
-  const{data:relOrders}=await sb.from("vault_marketplace_orders")
-    .select("seller_payout")
-    .eq("seller_id",sellerId)
-    .in("status",["completed","payout_pending"])
-    .not("confirmed_at","is",null)
-    .is("dispute_status",null);
-  const totalEarned=(relOrders||[]).reduce((s:number,o:any)=>s+Number(o.seller_payout),0);
+  // Idempotency: prevent duplicate payout requests
+  const payoutIdempKey=`wallet-payout-${sellerId}-${amount}`;
+  const idempCheck=await checkIdempotency(sb,payoutIdempKey,5);
+  if(idempCheck.isDuplicate){
+    console.log(`[mkv2-wallet] Duplicate payout request for ${payoutIdempKey}`);
+    return j(idempCheck.cachedResult||{status:"processing"});
+  }
 
-  const{data:existingPayouts}=await sb.from("marketplace_seller_payouts")
-    .select("amount")
-    .eq("seller_id",sellerId)
-    .in("status",["requested","processing","completed"]);
-  const payoutsTotal=(existingPayouts||[]).reduce((s:number,p:any)=>s+Number(p.amount),0);
-  const released=Math.max(0,totalEarned-payoutsTotal);
+  try{
+    // Recalculate released balance
+    const{data:relOrders}=await sb.from("vault_marketplace_orders")
+      .select("seller_payout")
+      .eq("seller_id",sellerId)
+      .in("status",["completed","payout_pending"])
+      .not("confirmed_at","is",null)
+      .is("dispute_status",null);
+    const totalEarned=(relOrders||[]).reduce((s:number,o:any)=>s+Number(o.seller_payout),0);
 
-  if(amount>released) throw new Error(`Saldo insuficiente. Disponível: R$ ${released.toFixed(2)}`);
+    const{data:existingPayouts}=await sb.from("marketplace_seller_payouts")
+      .select("amount")
+      .eq("seller_id",sellerId)
+      .in("status",["requested","processing","completed"]);
+    const payoutsTotal=(existingPayouts||[]).reduce((s:number,p:any)=>s+Number(p.amount),0);
+    const released=Math.max(0,totalEarned-payoutsTotal);
 
-  // Get default PIX account
-  const{data:pix}=await sb.from("marketplace_seller_pix_accounts")
-    .select("*")
-    .eq("seller_id",sellerId)
-    .eq("is_default",true)
-    .maybeSingle();
-  if(!pix) throw new Error("Cadastre uma conta PIX antes de solicitar saque");
+    if(amount>released) throw new Error(`Saldo insuficiente. Disponível: R$ ${released.toFixed(2)}`);
 
-  const{data:payout,error}=await sb.from("marketplace_seller_payouts").insert({
-    seller_id:sellerId,
-    amount,
-    status:"requested",
-    pix_account_id:pix.id,
-    pix_key:pix.pix_key,
-    pix_key_type:pix.pix_key_type,
-    beneficiary_name:pix.beneficiary_name,
-    bank_name:pix.bank_name,
-  }).select().single();
-  if(error){if(error.code==="23505")throw new Error("Você já tem um saque em andamento. Aguarde a conclusão antes de solicitar um novo.");throw error;}
+    // Get default PIX account
+    const{data:pix}=await sb.from("marketplace_seller_pix_accounts")
+      .select("*")
+      .eq("seller_id",sellerId)
+      .eq("is_default",true)
+      .maybeSingle();
+    if(!pix) throw new Error("Cadastre uma conta PIX antes de solicitar saque");
 
-  return j({success:true,payout});
+    const{data:payout,error}=await sb.from("marketplace_seller_payouts").insert({
+      seller_id:sellerId,
+      amount,
+      status:"requested",
+      pix_account_id:pix.id,
+      pix_key:pix.pix_key,
+      pix_key_type:pix.pix_key_type,
+      beneficiary_name:pix.beneficiary_name,
+      bank_name:pix.bank_name,
+    }).select().single();
+    if(error){if(error.code==="23505")throw new Error("Você já tem um saque em andamento. Aguarde a conclusão antes de solicitar um novo.");throw error;}
+
+    await setIdempotencyResult(sb,payoutIdempKey,{success:true,payout_id:payout.id});
+    return j({success:true,payout});
+  }catch(payoutErr:any){
+    await markIdempotencyFailed(sb,payoutIdempKey,payoutErr.message||"Payout request error").catch(()=>{});
+    throw payoutErr;
+  }
 }
 
 // ── pix-accounts: List seller PIX accounts ──

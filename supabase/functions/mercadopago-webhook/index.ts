@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createHmac } from "https://deno.land/std@0.224.0/crypto/mod.ts";
-import { checkIdempotency, setIdempotencyResult, releaseIdempotencyKey } from "../_shared/idempotency.ts";
+import { checkIdempotency, setIdempotencyResult, markIdempotencyFailed } from "../_shared/idempotency.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -490,9 +490,9 @@ Deno.serve(async (req) => {
         }
 
         await setIdempotencyResult(supabase, idempKey, { payment_id: paymentId, status: payment.status });
-      } catch (processingError) {
-        // Release idempotency key so webhook can be retried
-        await releaseIdempotencyKey(supabase, idempKey);
+      } catch (processingError: any) {
+        // Record failure with context — allows retry on next webhook delivery
+        await markIdempotencyFailed(supabase, idempKey, processingError?.message || "Webhook processing error").catch(() => {});
         throw processingError;
       }
     }

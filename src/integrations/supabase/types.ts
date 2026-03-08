@@ -640,7 +640,9 @@ export type Database = {
           expires_at: string
           id: string
           key: string
+          last_error: string | null
           status: string
+          updated_at: string
         }
         Insert: {
           cached_result?: Json | null
@@ -648,7 +650,9 @@ export type Database = {
           expires_at: string
           id?: string
           key: string
+          last_error?: string | null
           status?: string
+          updated_at?: string
         }
         Update: {
           cached_result?: Json | null
@@ -656,7 +660,9 @@ export type Database = {
           expires_at?: string
           id?: string
           key?: string
+          last_error?: string | null
           status?: string
+          updated_at?: string
         }
         Relationships: []
       }
