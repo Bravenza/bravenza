@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Store, Package, TrendingDown, ShoppingBag, BarChart3, Tag, Activity, Megaphone, HelpCircle, ChevronRight, Bot, Wallet, AlertTriangle } from "lucide-react";
