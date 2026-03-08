@@ -97,17 +97,14 @@ export default function MarketplaceDropsPage() {
   const [brandFilter, setBrandFilter] = useState<FilterBrand>("all");
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("upcoming");
 
-  // Next friday countdown
-  const getNextFriday = () => {
+  // Dynamic countdown: target the next upcoming release date
+  const nextRelease = useMemo(() => {
     const now = new Date();
-    const day = now.getDay();
-    const daysUntilFriday = ((5 - day + 7) % 7) || 7;
-    const next = new Date(now);
-    next.setDate(now.getDate() + daysUntilFriday);
-    next.setHours(12, 0, 0, 0);
-    return next;
-  };
-  const countdown = useCountdown(getNextFriday());
+    return releases.find(r => new Date(r.release_date + "T12:00:00") > now) || null;
+  }, [releases]);
+  const countdown = useCountdown(
+    nextRelease ? new Date(nextRelease.release_date + "T12:00:00") : null
+  );
 
   const fetchReleases = useCallback(async () => {
     setIsLoading(true);
