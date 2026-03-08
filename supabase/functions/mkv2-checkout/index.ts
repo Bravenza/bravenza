@@ -242,7 +242,7 @@ Deno.serve(async (req) => {
     const description = `Bravenza MKT — ${orderCodes}`;
 
     // Server-side idempotency check
-    const checkoutIdempKey = idempotency_key || `mkt-checkout-${orderIds.sort().join("-")}-${payment_method}`;
+    checkoutIdempKey = idempotency_key || `mkt-checkout-${orderIds.sort().join("-")}-${payment_method}`;
     const idempCheck = await checkIdempotency(sb, checkoutIdempKey, 5);
     if (idempCheck.isDuplicate) {
       console.log(`[mkv2-checkout] Duplicate checkout for ${checkoutIdempKey}`);
