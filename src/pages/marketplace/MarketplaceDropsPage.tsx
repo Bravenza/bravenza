@@ -217,18 +217,27 @@ export default function MarketplaceDropsPage() {
             <Zap className="h-3.5 w-3.5 text-destructive" />
           </motion.div>
 
-          <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-2">Próximo drop em</h1>
-          <p className="text-sm text-muted-foreground mb-8">Sexta-feira, 12h. Não perca.</p>
+          {nextRelease ? (
+            <>
+              <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-2">Próximo drop em</h1>
+              <p className="text-sm text-muted-foreground mb-8">{nextRelease.brand} {nextRelease.model} — {formatDate(nextRelease.release_date)}</p>
 
-          <div className="flex items-center justify-center gap-3 md:gap-4 mb-8">
-            <CountdownUnit value={countdown.days} label="Dias" />
-            <span className="text-xl font-black text-destructive/40 mt-[-16px]">:</span>
-            <CountdownUnit value={countdown.hours} label="Horas" />
-            <span className="text-xl font-black text-destructive/40 mt-[-16px]">:</span>
-            <CountdownUnit value={countdown.minutes} label="Min" />
-            <span className="text-xl font-black text-destructive/40 mt-[-16px]">:</span>
-            <CountdownUnit value={countdown.seconds} label="Seg" />
-          </div>
+              <div className="flex items-center justify-center gap-3 md:gap-4 mb-8">
+                <CountdownUnit value={countdown.days} label="Dias" />
+                <span className="text-xl font-black text-destructive/40 mt-[-16px]">:</span>
+                <CountdownUnit value={countdown.hours} label="Horas" />
+                <span className="text-xl font-black text-destructive/40 mt-[-16px]">:</span>
+                <CountdownUnit value={countdown.minutes} label="Min" />
+                <span className="text-xl font-black text-destructive/40 mt-[-16px]">:</span>
+                <CountdownUnit value={countdown.seconds} label="Seg" />
+              </div>
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-2">Drops</h1>
+              <p className="text-sm text-muted-foreground mb-8">Nenhum lançamento futuro agendado no momento.</p>
+            </>
+          )}
 
           <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500/10 to-amber-500/10 border border-yellow-500/20 w-fit mx-auto">
             <Crown className="h-3.5 w-3.5 text-yellow-500" />
