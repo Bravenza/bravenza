@@ -19,6 +19,11 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Service guard
+    try { await requireServiceOrAdmin(req, supabase); } catch (e: any) {
+      return jsonResponse({ error: e.message || "Unauthorized" }, e.status || 401);
+    }
+
     const body = await req.json().catch(() => ({}));
     const action = body.action || "process";
 

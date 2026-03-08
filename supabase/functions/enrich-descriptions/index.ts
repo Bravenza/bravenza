@@ -201,40 +201,8 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Auth check
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer "))
-      return new Response(
-        JSON.stringify({ error: "Auth required" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-
-    const anonSb = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-    const {
-      data: { user },
-      error: userErr,
-    } = await anonSb.auth.getUser();
-    if (userErr || !user)
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-
-    const { data: adm } = await sb
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (!adm)
-      return new Response(
-        JSON.stringify({ error: "Admin only" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Admin guard (shared)
+    try { await requireAdmin(req, sb); } catch (e) { return authErrorResponse(e); }
 
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
     if (!lovableKey)
