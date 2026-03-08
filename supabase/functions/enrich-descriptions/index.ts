@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireAdmin, authErrorResponse } from "../_shared/auth-guard.ts";
 
 // ─── Configurações ─────────────────────────────────────────────────────────────
 const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
