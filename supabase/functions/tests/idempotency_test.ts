@@ -5,7 +5,8 @@
  *
  * Covers: success path, duplicate detection, failure+retry, stale lock cleanup, race condition.
  */
-import "https://deno.land/std@0.224.0/dotenv/load.ts";
+import { loadSync } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
+try { loadSync({ allowEmptyValues: true, export: true }); } catch { /* CI may not have .env */ }
 import { assertEquals, assertExists } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
