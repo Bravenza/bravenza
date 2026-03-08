@@ -3,25 +3,75 @@ import { Link } from "react-router-dom";
 import { Shield, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const CONSENT_KEY = "bravenza_privacy_consent";
 const CONSENT_VERSION = "1"; // Bump to re-show banner after policy changes
 
 function PrivacyConsentBannerComponent() {
   const [visible, setVisible] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
-    const stored = localStorage.getItem(CONSENT_KEY);
-    if (stored !== CONSENT_VERSION) {
-      // Small delay so it doesn't block initial render
-      const t = setTimeout(() => setVisible(true), 1500);
-      return () => clearTimeout(t);
-    }
-  }, []);
+    let cancelled = false;
 
-  const handleAccept = () => {
+    async function checkConsent() {
+      // 1. For authenticated users, check the database first
+      if (user) {
+        try {
+          const { data } = await supabase
+            .from("client_profiles")
+            .select("privacy_consent_version")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (data?.privacy_consent_version === CONSENT_VERSION) {
+            // Also sync to localStorage for offline/fast checks
+            localStorage.setItem(CONSENT_KEY, CONSENT_VERSION);
+            return; // Already consented
+          }
+        } catch {
+          // DB check failed — fall through to localStorage
+        }
+      }
+
+      // 2. Fallback to localStorage (anonymous users or DB failure)
+      const stored = localStorage.getItem(CONSENT_KEY);
+      if (stored === CONSENT_VERSION) return;
+
+      // 3. Show banner after short delay
+      if (!cancelled) {
+        const t = setTimeout(() => {
+          if (!cancelled) setVisible(true);
+        }, 1500);
+        return () => clearTimeout(t);
+      }
+    }
+
+    checkConsent();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const handleAccept = async () => {
+    // Always store locally
     localStorage.setItem(CONSENT_KEY, CONSENT_VERSION);
     setVisible(false);
+
+    // For authenticated users, persist to database
+    if (user) {
+      try {
+        await supabase
+          .from("client_profiles")
+          .update({
+            privacy_consent_version: CONSENT_VERSION,
+            privacy_consent_at: new Date().toISOString(),
+          } as any)
+          .eq("user_id", user.id);
+      } catch {
+        // Non-critical — localStorage is the fallback
+      }
+    }
   };
 
   const handleDismiss = () => {
