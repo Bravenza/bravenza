@@ -204,10 +204,13 @@ WHERE expires_at < now();
 | Migration aplicada em prod | ☐ | Publicar via Lovable |
 | Smoke tests pagamento (P1-P6) | ☐ | Relatório seção 3.1 |
 | Smoke tests marketplace (M1-M4) | ☐ | Relatório seção 3.2 |
-| Smoke tests auth (A1-A8) | ☐ | Relatório seção 3.3 |
-| Zero funções sem auth guard | ✅ | Todas 59 funções classificadas e protegidas |
+| Smoke tests auth (A1-A9) | ✅ | Relatório seção 3.3 — Live tests via browser automation |
+| Zero funções sem auth guard | ✅ | Todas 42 funções classificadas e protegidas |
 | Sprint 1 P0 migrado | ✅ | `mkv2-order-ops`, `mkv2-fulfill`, `client-orders` usando shared guards |
-| Documento verify_jwt final | ✅ | `_shared/SECURITY.md` atualizado |
+| Sprint 2 P1 migrado | ✅ | `catalog-sync`, `catalog-seed-500`, `mkv2-cron-tasks` já usam shared guards |
+| Idempotência robusta | ✅ | 6 funções críticas com processing/completed/failed + stale lock detection |
+| Documento verify_jwt final | ✅ | `_shared/SECURITY.md` — matriz completa com 42 funções |
+| Config.toml governado | ✅ | Classificação inline por função com justificativa |
 | Erros 5xx < 1% (72h) | ☐ | Monitoramento seção 4 |
 | Zero duplicação em pagamento | ☐ | Query seção 4.3 |
 | Rollback plan documentado | ✅ | Seção 5 |
@@ -223,6 +226,55 @@ WHERE expires_at < now();
 | Idempotency shared | `supabase/functions/_shared/idempotency.ts` | ✅ Completo |
 | Matriz auth/config | `supabase/functions/_shared/SECURITY.md` | ✅ Completo |
 | Config.toml governado | `supabase/config.toml` | ✅ Completo |
-| Smoke test checklist | Este documento, seção 3 | ✅ Pronto para execução |
+| Smoke test checklist | Este documento, seção 3 | ✅ Auth tests executados live |
 | Runbook incidentes | Este documento, seção 5 | ✅ Completo |
 | Observabilidade | Este documento, seção 4 | ✅ Queries prontas |
+
+---
+
+## 8. Sprint 2 — Resumo de Auditoria
+
+### 8.1 P1 Auth Guard — Status
+
+| Função | Guard Usado | Ad-hoc Restante | Status |
+|--------|------------|-----------------|--------|
+| `catalog-sync` | `requireServiceOrAdmin` (auth-guard.ts) | Nenhum | ✅ Já migrado |
+| `catalog-seed-500` | `requireAdmin` (auth-guard.ts) | Nenhum | ✅ Já migrado |
+| `mkv2-cron-tasks` | `requireServiceOrAdmin` (auth-guard.ts) | Nenhum | ✅ Já migrado |
+
+### 8.2 Idempotência Robusta — Status
+
+| Função | Key Pattern | TTL | Lock Point | Status |
+|--------|-------------|-----|------------|--------|
+| `generate-pix` | `pix-{orderId}-{type}` | 15min | Após validação de pagamento | ✅ Implementado |
+| `process-card-payment` | `card-{orderId}-{type}` | 5min | Após validação de order | ✅ Implementado |
+| `mkv2-checkout` | `mkt-checkout-{ids}-{method}` | 5min | Após ownership + status | ✅ Implementado |
+| `mkv2-wallet` | `wallet-payout-{sellerId}-{amount}` | 5min | Após validação de saldo | ✅ Implementado |
+| `mkv2-auto-payout` | `auto-payout-{orderId}` | 120min | Per-order no batch | ✅ Implementado |
+| `mercadopago-webhook` | `webhook-mp-{paymentId}-{action}` | 60min | Após validação HMAC | ✅ Implementado |
+
+**Helper `_shared/idempotency.ts`:**
+- ✅ Status lifecycle: `processing` → `completed` | `failed`
+- ✅ Stale lock detection: auto-clear após 2× TTL
+- ✅ `markIdempotencyFailed()` com `last_error` para debugging
+- ✅ Retry seguro: keys `failed` são limpas no próximo `checkIdempotency()`
+
+### 8.3 verify_jwt Governance — Status
+
+- ✅ 42 funções classificadas em `config.toml` com comentário inline
+- ✅ Matriz completa em `_shared/SECURITY.md` § "verify_jwt Governance Matrix"
+- ✅ 5 tiers: PUBLIC, WEBHOOK, SESSION, AUTH, MIXED, ADMIN, SERVICE
+- ✅ Zero funções sem classificação ou justificativa
+
+### 8.4 Riscos Residuais
+
+| Risco | Severidade | Mitigação |
+|-------|-----------|-----------|
+| Smoke tests de pagamento (P1-P6) pendentes | Médio | Requerem credenciais MP de teste — executar pré-deploy |
+| Smoke tests marketplace (M1-M4) pendentes | Médio | Requerem dados de teste — executar pré-deploy |
+| Monitoramento 72h pós-release | Baixo | Queries prontas na seção 4 |
+
+### 8.5 Auditoria Final
+
+**Status: ✅ CONCLUÍDA** — Todos os critérios estruturais do Sprint 2 atendidos.
+Pendências restantes são operacionais (smoke tests com dados reais, monitoramento pós-deploy).
