@@ -1,11 +1,16 @@
+/**
+ * client-orders — Client portal order/notification queries
+ *
+ * Auth model: session_token (CPF-based client portal, not Supabase JWT)
+ * All actions require a valid, non-expired session_token from client_sessions.
+ *
+ * Action tiers:
+ *   PUBLIC_ACTIONS  → (none)
+ *   AUTH_ACTIONS    → get_notifications, mark_notification_read, mark_all_notifications_read, (default: list orders)
+ *   ADMIN_ACTIONS   → (none)
+ */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, x-supabase-client-platform, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-};
+import { corsHeaders, jsonResponse } from "../_shared/mk-helpers.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -18,14 +23,13 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json();
-    const { session_token, action, cpf, notification_id, notification_ids } = body;
+    const { session_token, action, notification_id, notification_ids } = body;
 
-    // All actions require session_token
+    // ── Session-based auth (all actions) ──
     if (!session_token) {
-      throw new Error("Token de sessão é obrigatório");
+      return jsonResponse({ error: "Token de sessão é obrigatório" }, 401);
     }
 
-    // Validate session
     const { data: sessions, error: sessionError } = await supabase
       .from("client_sessions")
       .select("cpf")
@@ -34,19 +38,13 @@ Deno.serve(async (req) => {
       .limit(1);
 
     if (sessionError) throw sessionError;
-
     if (!sessions || sessions.length === 0) {
-      throw new Error("Sessão inválida ou expirada");
+      return jsonResponse({ error: "Sessão inválida ou expirada" }, 401);
     }
 
     const clientCpf = sessions[0].cpf;
 
-    const ok = (data: any) => new Response(
-      JSON.stringify({ success: true, ...data }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-
-    // ── Notification actions (using session-derived CPF) ──
+    // ── Notification actions ──
     if (action === "get_notifications") {
       const { data: notifications } = await supabase
         .from("notifications")
@@ -55,7 +53,7 @@ Deno.serve(async (req) => {
         .eq("target_client_cpf", clientCpf)
         .order("created_at", { ascending: false })
         .limit(50);
-      return ok({ notifications: notifications || [] });
+      return jsonResponse({ success: true, notifications: notifications || [] });
     }
 
     if (action === "mark_notification_read" && notification_id) {
@@ -64,7 +62,7 @@ Deno.serve(async (req) => {
         .update({ read: true, read_at: new Date().toISOString() })
         .eq("id", notification_id)
         .eq("target_client_cpf", clientCpf);
-      return ok({ success: true });
+      return jsonResponse({ success: true });
     }
 
     if (action === "mark_all_notifications_read" && notification_ids) {
@@ -73,39 +71,19 @@ Deno.serve(async (req) => {
         .update({ read: true, read_at: new Date().toISOString() })
         .in("id", notification_ids)
         .eq("target_client_cpf", clientCpf);
-      return ok({ success: true });
+      return jsonResponse({ success: true });
     }
 
-    // Get all orders for this CPF with inspection photos
+    // ── Default action: list orders with history ──
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
       .select(`
-        order_id,
-        order_type,
-        current_status,
-        product_name,
-        product_brand,
-        product_model,
-        product_size,
-        product_color,
-        product_price,
-        product_currency,
-        payment_mode,
-        sinal_value,
-        sinal_paid,
-        sinal_paid_at,
-        balance_value,
-        balance_paid,
-        balance_paid_at,
-        budget_status,
-        budget_approval_token,
-        international_tracking,
-        national_tracking,
-        national_carrier,
-        inspection_photos,
-        client_email,
-        created_at,
-        updated_at
+        order_id, order_type, current_status, product_name, product_brand,
+        product_model, product_size, product_color, product_price, product_currency,
+        payment_mode, sinal_value, sinal_paid, sinal_paid_at, balance_value,
+        balance_paid, balance_paid_at, budget_status, budget_approval_token,
+        international_tracking, national_tracking, national_carrier,
+        inspection_photos, client_email, created_at, updated_at
       `)
       .eq("client_cpf", clientCpf)
       .order("created_at", { ascending: false });
@@ -117,13 +95,11 @@ Deno.serve(async (req) => {
     if (orders && orders.length > 0 && orders[0].client_email) {
       clientEmail = orders[0].client_email;
     } else {
-      // Try to get email from vault_members
       const { data: vaultMember } = await supabase
         .from("vault_members")
         .select("client_email")
         .eq("client_cpf", clientCpf)
         .limit(1);
-      
       if (vaultMember && vaultMember.length > 0) {
         clientEmail = vaultMember[0].client_email;
       }
@@ -137,32 +113,18 @@ Deno.serve(async (req) => {
           .select("status, notes, created_at")
           .eq("order_id", order.order_id)
           .order("created_at", { ascending: true });
-
-        return {
-          ...order,
-          history: history || [],
-        };
+        return { ...order, history: history || [] };
       })
     );
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        orders: ordersWithHistory,
-        cpf: clientCpf,
-        client_email: clientEmail
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-
+    return jsonResponse({
+      success: true,
+      orders: ordersWithHistory,
+      cpf: clientCpf,
+      client_email: clientEmail,
+    });
   } catch (error: any) {
     console.error("Client orders error:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400
-      }
-    );
+    return jsonResponse({ error: error.message }, 400);
   }
 });

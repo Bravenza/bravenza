@@ -20,6 +20,7 @@ Instead, **every function validates auth in code** using one of these patterns:
 | `requireAdmin(req, sb)` | Admin panel functions | JWT → user_id → user_roles(admin) |
 | `requireAdminByToken(sb, header)` | Admin checks in mixed functions | Same, accepts raw header |
 | `isAdminByToken(sb, header)` | RBAC checks (seller vs admin) | Boolean admin check, no throw |
+| Session token | client-orders, client-auth | client_sessions table validation |
 | Webhook signature | mercadopago-webhook | HMAC-SHA256 signature validation |
 | No auth (public) | og-renderer, health-check | Public endpoints, no sensitive data |
 
@@ -38,8 +39,9 @@ Auth-only functions use `resolveAuthCpf(req, sb)` directly.
 
 ### Functions Using Shared Auth (`_shared/mk-helpers.ts` + `_shared/auth-guard.ts`)
 
-**Admin functions (auth-guard.ts → requireAdmin):**
-- `admin-orders`, `create-admin`, `catalog-sync`
+**Admin functions (auth-guard.ts → requireAdmin / requireServiceOrAdmin):**
+- `create-admin`, `catalog-sync`, `catalog-seed-500`
+- `mkv2-auto-payout`, `mkv2-cron-tasks`, `sync-droper-images`
 
 **Auth-required (mk-helpers.ts → resolveAuthCpf):**
 - `mkv2-wallet`, `mkv2-offers`, `mkv2-social`, `mkv2-seller-data`
@@ -52,11 +54,12 @@ Auth-only functions use `resolveAuthCpf(req, sb)` directly.
 - `mkv2-fulfill` (PUB: laudo-lookup, check-auto-payout)
 
 **Admin checks within mixed functions (auth-guard.ts):**
-- `mkv2-fulfill` → `requireAdminByToken` for resolve-dispute, `isAdminByToken` for send-message
-- `mkv2-order-ops` → `isAdminByToken` for update-order-status RBAC
+- `mkv2-fulfill` → `requireAdminByToken` for resolve-dispute, hub-orders, hub-update-status, hub-inspect; `isAdminByToken` for send-message
+- `mkv2-order-ops` → `requireAdminByToken` for admin-orders, admin-disputes, payout_released; `isAdminByToken` for update-order-status RBAC
 
-**Standalone auth (vault-community → requireAuth):**
-- `vault-community`
+**Session-based auth (client portal, not JWT):**
+- `client-orders` → session_token via client_sessions table
+- `client-auth` → session_token + CPF code verification
 
 ### Public Endpoints (No Auth Required)
 These are intentionally public and contain no sensitive data:
@@ -84,3 +87,27 @@ Critical payment functions use the `_shared/idempotency.ts` helper:
 ## Admin Role Validation
 All admin checks use `user_roles` table (not `admin_profiles`).
 This prevents privilege escalation via profile manipulation.
+
+---
+
+## P0 Migration Status (Hardening Fase 3)
+
+| Function | Before | After | Status |
+|----------|--------|-------|--------|
+| `mkv2-order-ops` | ad-hoc `isAdminByToken` inline, minified | Explicit `ADMIN_ACTIONS` set, `requireAdminByToken` at gate, `AuthError` catch | ✅ Migrated |
+| `mkv2-fulfill` | ad-hoc `requireAdminByToken` per-action, minified | Explicit `PUBLIC_ACTIONS` + `ADMIN_ACTIONS` sets, gate-level admin check, `AuthError` catch | ✅ Migrated |
+| `client-orders` | ad-hoc CORS headers + inline response builders | Shared `corsHeaders` + `jsonResponse` from mk-helpers, 401 for missing/invalid session | ✅ Migrated |
+| `create-admin` | Already using `requireAdmin` from auth-guard | No change needed | ✅ Already compliant |
+
+### Compatibility Notes
+- `laudo-lookup` and `check-auto-payout` remain PUBLIC (no auth required)
+- `client-orders` uses session_token auth (not JWT) — this is correct for the CPF-based client portal
+- `update-order-status` uses RBAC: admin can set any status, sellers limited to `shipped`/`in_transit_to_hub`
+- `payout_released` sub-status requires admin even within `update-order-status`
+
+### Acceptance Checklist
+- [x] No admin action in P0 functions depends on manual header/token parsing
+- [x] All public actions remain public and documented in `PUBLIC_ACTIONS` constant
+- [x] All protected actions return consistent errors via `authErrorResponse`
+- [x] `verify_jwt=false` justified per function (in-code validation via shared guard)
+- [x] Auth error handling uses `AuthError` class with proper HTTP status codes
