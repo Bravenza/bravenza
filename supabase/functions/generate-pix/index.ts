@@ -20,16 +20,17 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  let idempKey = "";
+
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const mercadoPagoToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");
 
     if (!mercadoPagoToken) {
       throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurado");
     }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { token, payment_type, amount, description, idempotency_key }: PixRequest & { idempotency_key?: string } = await req.json();
 
@@ -79,7 +80,7 @@ Deno.serve(async (req) => {
     }
 
     // Deterministic idempotency key — same order+type always maps to same key
-    const idempKey = idempotency_key || `pix-${order.order_id}-${payment_type}`;
+    idempKey = idempotency_key || `pix-${order.order_id}-${payment_type}`;
 
     // Server-side idempotency check
     const idempCheck = await checkIdempotency(supabase, idempKey, 15);
@@ -178,8 +179,7 @@ Deno.serve(async (req) => {
     );
   } catch (error: any) {
     console.error("Error generating Pix:", error);
-    // Record failure — idempKey may not be set if error happened before idempotency check
-    if (typeof idempKey === "string" && idempKey) {
+    if (idempKey) {
       await markIdempotencyFailed(supabase, idempKey, error.message || "PIX generation error").catch(() => {});
     }
     return new Response(

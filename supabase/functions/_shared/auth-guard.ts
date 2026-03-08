@@ -157,6 +157,39 @@ export async function isAdminByToken(sb: any, authHeader: string): Promise<boole
 }
 
 /**
+ * Validates that the request comes from a service-role caller or a cron trigger.
+ * Use for internal/cron functions that should never be called by end users.
+ * 
+ * Checks (in order):
+ * 1. Bearer token matches SUPABASE_SERVICE_ROLE_KEY
+ * 2. x-cron-key header matches stored cron key in app_config
+ * 3. Falls back to requireAdmin (admin users can trigger manually)
+ * 
+ * Throws AuthError if none match.
+ */
+export async function requireServiceOrAdmin(req: Request, sb: any): Promise<void> {
+  const authHeader = req.headers.get("authorization") || "";
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  // 1. Service role key
+  if (authHeader === `Bearer ${serviceRoleKey}`) return;
+
+  // 2. Cron key
+  const cronKey = req.headers.get("x-cron-key");
+  if (cronKey) {
+    const { data: ck } = await sb
+      .from("app_config")
+      .select("value")
+      .eq("key", "cron_secret_key")
+      .maybeSingle();
+    if (ck?.value && cronKey === ck.value) return;
+  }
+
+  // 3. Admin user session
+  await requireAdmin(req, sb);
+}
+
+/**
  * Resolve CPF from auth token. Used by mkv2-* functions that key on CPF.
  * For public actions, returns "visitor" if no token; for private actions, throws AuthError.
  */

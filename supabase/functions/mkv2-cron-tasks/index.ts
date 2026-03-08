@@ -3,11 +3,12 @@
 // - Record daily price history snapshots
 // - Log execution to cron_execution_logs
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireServiceOrAdmin, authErrorResponse } from "../_shared/auth-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-cron-key",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
 
@@ -20,6 +21,13 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
+
+  // Auth: require service-role, cron key, or admin session
+  try {
+    await requireServiceOrAdmin(req, sb);
+  } catch (error) {
+    return authErrorResponse(error);
+  }
 
   const startedAt = new Date().toISOString();
   let logId: string | null = null;

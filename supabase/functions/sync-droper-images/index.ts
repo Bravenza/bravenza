@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireServiceOrAdmin, authErrorResponse } from "../_shared/auth-guard.ts";
 
 // ─── Configurações ─────────────────────────────────────────────────────────────
 const CATALOKO_API = "https://service.cataloko.com/api/search/v4";
@@ -432,6 +433,14 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // Auth: require service-role or admin session
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  try {
+    await requireServiceOrAdmin(req, supabase);
+  } catch (error) {
+    return authErrorResponse(error);
+  }
+
   try {
     let startPage = 0;
     let maxPages = MAX_PAGES;
@@ -444,8 +453,6 @@ serve(async (req) => {
     } catch {
       /* usa defaults */
     }
-
-    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     const seenSkus = new Set<string>();
     const result: SyncResult = {
