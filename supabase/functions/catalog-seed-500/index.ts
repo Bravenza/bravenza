@@ -197,9 +197,9 @@ Deno.serve(async (req) => {
     try {
       const data = await throttledFetch(`${STOCKX_API_BASE}/getproducts?keywords=Jordan+1&limit=1`, apiHeaders);
       const arr = extractArray(data);
-      return json({ ok: true, test: true, sample_count: arr.length, sample: arr[0] || null, source: "sneaker-database-stockx" });
+      return jsonResponse({ ok: true, test: true, sample_count: arr.length, sample: arr[0] || null, source: "sneaker-database-stockx" });
     } catch (e: any) {
-      return json({ ok: false, error: e.message });
+      return jsonResponse({ ok: false, error: e.message });
     }
   }
 
