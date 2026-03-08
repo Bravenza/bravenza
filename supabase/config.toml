@@ -1,173 +1,280 @@
 project_id = "snfqxejtmauyspyhqvop"
 
-[functions.generate-pix]
-verify_jwt = false
+# ═══════════════════════════════════════════════════════════════════════════════
+# Edge Function Authentication Governance (Fase 3 Hardening — Final)
+#
+# All functions use verify_jwt = false intentionally.
+# JWT validation happens IN CODE via shared guards (_shared/auth-guard.ts).
+# This avoids intermittent 401s from Supabase's signing-keys rotation system.
+#
+# Classification tiers:
+#   PUBLIC    — No auth required; public data or external webhooks
+#   SESSION   — CPF-based session_token auth (client portal)
+#   AUTH      — JWT required via requireAuth / resolveAuthCpf / resolveCpf
+#   ADMIN     — JWT + user_roles(admin) via requireAdmin / requireAdminByToken
+#   SERVICE   — Service-role key / cron secret / admin fallback via requireServiceOrAdmin
+#   MIXED     — Per-action classification (PUBLIC_ACTIONS + AUTH + ADMIN sets)
+#
+# See _shared/SECURITY.md § "verify_jwt Governance Matrix" for full justification.
+# ═══════════════════════════════════════════════════════════════════════════════
 
-[functions.mercadopago-webhook]
-verify_jwt = false
-
-[functions.process-card-payment]
-verify_jwt = false
-
-[functions.send-budget-email]
-verify_jwt = false
-
-[functions.send-order-email]
-verify_jwt = false
-
-[functions.send-marketplace-email]
-verify_jwt = false
-
-[functions.send-whatsapp]
-verify_jwt = false
-
-[functions.client-auth]
-verify_jwt = false
-
-[functions.client-orders]
-verify_jwt = false
-
-[functions.generate-pdf]
-verify_jwt = false
-
-[functions.create-notification]
-verify_jwt = false
-
-[functions.process-reminders]
-verify_jwt = false
-
-[functions.schedule-reminder]
-verify_jwt = false
-
-[functions.submit-review]
-verify_jwt = false
-
-[functions.superfrete]
-verify_jwt = false
-
-[functions.vault-redeem-invite]
-verify_jwt = false
-
-[functions.vault-tier-check]
-verify_jwt = false
-
-[functions.vault-semester-reset]
-verify_jwt = false
-
-[functions.vault-sla-monitor]
-verify_jwt = false
-
-[functions.vault-certificate]
-verify_jwt = false
-
-[functions.verify-authenticity]
-verify_jwt = false
-
-[functions.mkv2-offers]
-verify_jwt = false
-
-[functions.mkv2-catalog]
-verify_jwt = false
-
-[functions.mkv2-engage]
-verify_jwt = false
-
-[functions.mkv2-discover]
-verify_jwt = false
-
-[functions.mkv2-orders]
-verify_jwt = false
-
-[functions.mkv2-order-ops]
-verify_jwt = false
-
-[functions.mkv2-fulfill]
-verify_jwt = false
-
-[functions.mkv2-seller]
-verify_jwt = false
-
-[functions.mkv2-seller-data]
-verify_jwt = false
-
-[functions.mkv2-store]
-verify_jwt = false
-
-[functions.mkv2-social]
-verify_jwt = false
-
-[functions.send-push]
-verify_jwt = false
-
-[functions.push-subscribe]
-verify_jwt = false
-
-[functions.push-vapid-key]
-verify_jwt = false
-
-[functions.cart-recovery]
-verify_jwt = false
+# ── PUBLIC endpoints ──────────────────────────────────────────────────────────
+# No sensitive data; intentionally open to the internet.
 
 [functions.health-check]
 verify_jwt = false
-
-[functions.mkv2-favorites]
-verify_jwt = false
-
-[functions.mkv2-alerts]
-verify_jwt = false
-
+# PUBLIC — Uptime monitoring. No sensitive data exposed.
 
 [functions.og-renderer]
 verify_jwt = false
+# PUBLIC — Open Graph meta tag renderer for link previews. Read-only public data.
 
-[functions.catalog-seed-500]
+[functions.push-vapid-key]
 verify_jwt = false
-
-[functions.catalog-translate-missing]
-verify_jwt = false
-
-[functions.catalog-multisource]
-verify_jwt = false
-
-[functions.mkv2-checkout]
-verify_jwt = false
-
-[functions.mkv2-subscription]
-verify_jwt = false
-
-[functions.mkv2-releases]
-verify_jwt = false
-
-[functions.mkv2-notifications]
-verify_jwt = false
-
-[functions.mkv2-listings]
-verify_jwt = false
-
-[functions.mkv2-wallet]
-verify_jwt = false
-
-[functions.create-admin]
-verify_jwt = false
-
-[functions.enrich-descriptions]
-verify_jwt = false
+# PUBLIC — Returns VAPID public key for push notification subscription. Public by design.
 
 [functions.verify-captcha]
 verify_jwt = false
+# PUBLIC — reCAPTCHA token verification. Rate-limited (20/15min per IP). No auth needed.
 
-[functions.catalog-sync]
+[functions.verify-authenticity]
 verify_jwt = false
+# PUBLIC — Laudo/authenticity certificate lookup by QR code. Public read-only.
 
-[functions.sync-droper-images]
-verify_jwt = false
+# ── WEBHOOK endpoints ─────────────────────────────────────────────────────────
+# External service callbacks validated by signature, not JWT.
 
-[functions.mkv2-auto-payout]
+[functions.mercadopago-webhook]
 verify_jwt = false
+# WEBHOOK — Validated via HMAC-SHA256 signature (MP_WEBHOOK_SECRET). Not JWT-based.
 
-[functions.mkv2-cron-tasks]
+# ── SESSION-based auth (client portal) ────────────────────────────────────────
+# CPF + magic code → session_token, validated against client_sessions table.
+
+[functions.client-auth]
 verify_jwt = false
+# SESSION — CPF magic-code auth flow. Validates session_token from client_sessions.
+
+[functions.client-orders]
+verify_jwt = false
+# SESSION — Client portal order/notification queries. session_token auth (not JWT).
+
+[functions.submit-review]
+verify_jwt = false
+# SESSION — Review submission. Validates session_token from client_sessions.
+
+# ── AUTH-required endpoints (JWT → user) ──────────────────────────────────────
+# All actions require valid JWT. Guard: requireAuth / resolveAuthCpf.
+
+[functions.generate-pix]
+verify_jwt = false
+# AUTH — PIX payment generation. JWT required via auth header → resolveAuthCpf.
+
+[functions.process-card-payment]
+verify_jwt = false
+# AUTH — Card payment processing. JWT required. Idempotency-protected.
+
+[functions.mkv2-checkout]
+verify_jwt = false
+# AUTH — Marketplace checkout. JWT → resolveAuthCpf. Idempotency-protected.
+
+[functions.mkv2-offers]
+verify_jwt = false
+# AUTH — Seller offer CRUD. JWT → resolveAuthCpf → seller ownership validation.
+
+[functions.mkv2-orders]
+verify_jwt = false
+# AUTH — Buyer order queries. JWT → resolveAuthCpf.
+
+[functions.mkv2-store]
+verify_jwt = false
+# AUTH — Seller storefront management. JWT → resolveAuthCpf → seller ownership.
+
+[functions.mkv2-social]
+verify_jwt = false
+# AUTH — Social features (follow, share). JWT → resolveAuthCpf.
+
+[functions.mkv2-seller-data]
+verify_jwt = false
+# AUTH — Seller dashboard data. JWT → resolveAuthCpf → seller ownership.
+
+[functions.mkv2-wallet]
+verify_jwt = false
+# AUTH — Seller wallet & payouts. JWT → resolveAuthCpf. Idempotency on request-payout.
+
+[functions.mkv2-subscription]
+verify_jwt = false
+# AUTH — Seller subscription management. JWT → resolveAuthCpf.
 
 [functions.mkv2-subscription-downgrade]
 verify_jwt = false
+# AUTH — Subscription downgrade flow. JWT → resolveAuthCpf.
+
+[functions.mkv2-notifications]
+verify_jwt = false
+# AUTH — User notification management. JWT → resolveAuthCpf.
+
+[functions.mkv2-favorites]
+verify_jwt = false
+# AUTH — Favorite lists management. JWT → resolveAuthCpf.
+
+[functions.mkv2-alerts]
+verify_jwt = false
+# AUTH — Price alert CRUD. JWT → resolveAuthCpf. Process action is SERVICE-level.
+
+[functions.push-subscribe]
+verify_jwt = false
+# AUTH — Push notification subscription registration. JWT required.
+
+[functions.vault-redeem-invite]
+verify_jwt = false
+# AUTH — Vault invite redemption. JWT → requireAuth.
+
+[functions.vault-tier-check]
+verify_jwt = false
+# AUTH — Vault tier eligibility check. JWT → requireAuth.
+
+[functions.vault-certificate]
+verify_jwt = false
+# AUTH — Vault authenticity certificate. JWT → requireAuth + ownership check.
+
+[functions.vault-community]
+verify_jwt = false
+# AUTH — Vault community features. JWT → requireAuth.
+
+# ── MIXED endpoints (per-action PUBLIC + AUTH + ADMIN) ────────────────────────
+# Action-level classification via PUBLIC_ACTIONS / ADMIN_ACTIONS sets.
+
+[functions.mkv2-listings]
+verify_jwt = false
+# MIXED — listings/listing-detail/seller-public-profile = PUBLIC; others = AUTH.
+
+[functions.mkv2-engage]
+verify_jwt = false
+# MIXED — product-comments/reviews/analytics = PUBLIC; write actions = AUTH.
+
+[functions.mkv2-seller]
+verify_jwt = false
+# MIXED — seller-tier-info/leaderboard = PUBLIC; seller dashboard = AUTH.
+
+[functions.mkv2-fulfill]
+verify_jwt = false
+# MIXED — laudo-lookup/check-auto-payout = PUBLIC; shipping = AUTH; hub-* = ADMIN.
+
+[functions.mkv2-order-ops]
+verify_jwt = false
+# MIXED — update-order-status = AUTH+RBAC; admin-orders/disputes = ADMIN.
+
+[functions.mkv2-discover]
+verify_jwt = false
+# MIXED — Search/browse = PUBLIC; personalized results = AUTH (optional).
+
+[functions.mkv2-catalog]
+verify_jwt = false
+# MIXED — Catalog browsing = PUBLIC; catalog management = AUTH/ADMIN.
+
+[functions.mkv2-releases]
+verify_jwt = false
+# MIXED — Release calendar = PUBLIC; reminder = AUTH.
+
+# ── ADMIN endpoints (JWT + user_roles admin) ─────────────────────────────────
+# Require admin role. Guard: requireAdmin / requireAdminByToken.
+
+[functions.create-admin]
+verify_jwt = false
+# ADMIN — Admin user creation. requireAdmin from auth-guard.ts.
+
+[functions.enrich-descriptions]
+verify_jwt = false
+# ADMIN — AI description enrichment for catalog. Admin-only operation.
+
+[functions.generate-pdf]
+verify_jwt = false
+# ADMIN — PDF generation for orders/documents. Admin-only.
+
+# ── SERVICE/INTERNAL endpoints ────────────────────────────────────────────────
+# Restricted to service-role key, cron secrets, or admin fallback.
+# Guard: requireServiceOrAdmin.
+
+[functions.catalog-sync]
+verify_jwt = false
+# SERVICE — Catalog sync from external sources. requireServiceOrAdmin.
+
+[functions.catalog-seed-500]
+verify_jwt = false
+# SERVICE — Catalog seeding tool. requireAdmin (admin-only).
+
+[functions.catalog-translate-missing]
+verify_jwt = false
+# SERVICE — Translation of missing catalog entries. Admin/service-role.
+
+[functions.catalog-multisource]
+verify_jwt = false
+# SERVICE — Multi-source catalog aggregation. Admin/service-role.
+
+[functions.mkv2-cron-tasks]
+verify_jwt = false
+# SERVICE — Scheduled maintenance tasks. requireServiceOrAdmin.
+
+[functions.mkv2-auto-payout]
+verify_jwt = false
+# SERVICE — Automatic payout processing. requireServiceOrAdmin. Idempotency-protected.
+
+[functions.sync-droper-images]
+verify_jwt = false
+# SERVICE — Image sync from Droper. requireServiceOrAdmin.
+
+[functions.vault-semester-reset]
+verify_jwt = false
+# SERVICE — Vault semester tier reset. Service-role/cron only.
+
+[functions.vault-sla-monitor]
+verify_jwt = false
+# SERVICE — SLA monitoring for Vault. Service-role/cron only.
+
+[functions.process-reminders]
+verify_jwt = false
+# SERVICE — Reminder processing cron. Service-role/cron only.
+
+[functions.schedule-reminder]
+verify_jwt = false
+# SERVICE — Reminder scheduling. Internal service call.
+
+[functions.cart-recovery]
+verify_jwt = false
+# SERVICE — Abandoned cart recovery emails. Service-role/cron only.
+
+# ── INTERNAL MESSAGING (service-to-service) ───────────────────────────────────
+# Called internally by other edge functions or admin actions, not directly by users.
+
+[functions.send-budget-email]
+verify_jwt = false
+# INTERNAL — Email dispatch for budgets. Called by admin flows.
+
+[functions.send-order-email]
+verify_jwt = false
+# INTERNAL — Email dispatch for order events. Called by webhook/checkout flows.
+
+[functions.send-marketplace-email]
+verify_jwt = false
+# INTERNAL — Email dispatch for marketplace events. Called by mkv2-* functions.
+
+[functions.send-whatsapp]
+verify_jwt = false
+# INTERNAL — WhatsApp message dispatch via Twilio. Called by notification flows.
+
+[functions.send-push]
+verify_jwt = false
+# INTERNAL — Push notification dispatch. Called by notification flows.
+
+[functions.create-notification]
+verify_jwt = false
+# INTERNAL — Notification record creation. Called by other edge functions.
+
+[functions.superfrete]
+verify_jwt = false
+# INTERNAL — Shipping quote/label via SuperFrete API. Called by checkout/fulfill flows.
+
+[functions.admin-orders]
+verify_jwt = false
+# ADMIN — Admin order management. requireAdmin.

@@ -150,6 +150,109 @@ This prevents privilege escalation via profile manipulation.
 
 ---
 
+## verify_jwt Governance Matrix (Hardening Fase 3 — Final)
+
+All functions use `verify_jwt = false` in `supabase/config.toml`.
+This is **intentional** — JWT validation happens in-code via shared guards.
+See "Why `verify_jwt = false`" above for rationale.
+
+### Classification Legend
+
+| Tier | Description | Guard |
+|------|-------------|-------|
+| PUBLIC | No auth. Public data or external webhooks. | None (rate-limited where applicable) |
+| WEBHOOK | External callback validated by signature | HMAC-SHA256 (not JWT) |
+| SESSION | CPF-based session_token | `client_sessions` table validation |
+| AUTH | JWT required | `requireAuth` / `resolveAuthCpf` / `resolveCpf` |
+| ADMIN | JWT + admin role | `requireAdmin` / `requireAdminByToken` |
+| SERVICE | Service-role / cron secret / admin fallback | `requireServiceOrAdmin` |
+| MIXED | Per-action tier (PUBLIC + AUTH + ADMIN sets) | `resolveCpf` + action sets |
+| INTERNAL | Service-to-service calls | Called by other edge functions, not end users |
+
+### Full Function Matrix
+
+| Function | Tier | `verify_jwt` | Auth Guard | Justification |
+|----------|------|-------------|------------|---------------|
+| `health-check` | PUBLIC | `false` | None | Uptime monitoring, no sensitive data |
+| `og-renderer` | PUBLIC | `false` | None | OG meta tags for link previews, read-only |
+| `push-vapid-key` | PUBLIC | `false` | None | Returns public VAPID key |
+| `verify-captcha` | PUBLIC | `false` | None + rate-limit | reCAPTCHA verification, 20/15min/IP |
+| `verify-authenticity` | PUBLIC | `false` | None | Laudo lookup by QR, public read-only |
+| `mercadopago-webhook` | WEBHOOK | `false` | HMAC-SHA256 | MP signature validation, not JWT-based |
+| `client-auth` | SESSION | `false` | session_token | CPF magic-code flow, not JWT |
+| `client-orders` | SESSION | `false` | session_token | Client portal, session-based |
+| `submit-review` | SESSION | `false` | session_token | Review submission via client portal |
+| `generate-pix` | AUTH | `false` | resolveAuthCpf | PIX generation, JWT required |
+| `process-card-payment` | AUTH | `false` | auth header | Card payment, JWT + idempotency |
+| `mkv2-checkout` | AUTH | `false` | resolveAuthCpf | Checkout, JWT + idempotency |
+| `mkv2-offers` | AUTH | `false` | resolveAuthCpf | Seller offer CRUD |
+| `mkv2-orders` | AUTH | `false` | resolveAuthCpf | Buyer order queries |
+| `mkv2-store` | AUTH | `false` | resolveAuthCpf | Storefront management |
+| `mkv2-social` | AUTH | `false` | resolveAuthCpf | Follow/share features |
+| `mkv2-seller-data` | AUTH | `false` | resolveAuthCpf | Seller dashboard data |
+| `mkv2-wallet` | AUTH | `false` | resolveAuthCpf | Wallet & payouts + idempotency |
+| `mkv2-subscription` | AUTH | `false` | resolveAuthCpf | Subscription management |
+| `mkv2-subscription-downgrade` | AUTH | `false` | resolveAuthCpf | Downgrade flow |
+| `mkv2-notifications` | AUTH | `false` | resolveAuthCpf | Notification management |
+| `mkv2-favorites` | AUTH | `false` | resolveAuthCpf | Favorite lists |
+| `mkv2-alerts` | AUTH | `false` | resolveAuthCpf | Price alerts CRUD |
+| `push-subscribe` | AUTH | `false` | JWT header | Push subscription registration |
+| `vault-redeem-invite` | AUTH | `false` | requireAuth | Invite redemption |
+| `vault-tier-check` | AUTH | `false` | requireAuth | Tier eligibility |
+| `vault-certificate` | AUTH | `false` | requireAuth | Certificate + ownership |
+| `vault-community` | AUTH | `false` | requireAuth | Community features |
+| `mkv2-listings` | MIXED | `false` | resolveCpf + PUB set | listings/detail = PUBLIC; others = AUTH |
+| `mkv2-engage` | MIXED | `false` | resolveCpf + PUB set | comments/reviews = PUBLIC; writes = AUTH |
+| `mkv2-seller` | MIXED | `false` | resolveCpf + PUB set | tier-info/leaderboard = PUBLIC; dash = AUTH |
+| `mkv2-fulfill` | MIXED | `false` | resolveCpf + ADMIN set | laudo = PUBLIC; shipping = AUTH; hub = ADMIN |
+| `mkv2-order-ops` | MIXED | `false` | resolveCpf + ADMIN set | update-status = AUTH+RBAC; admin-* = ADMIN |
+| `mkv2-discover` | MIXED | `false` | optionalAuth | Browse = PUBLIC; personalized = AUTH |
+| `mkv2-catalog` | MIXED | `false` | resolveCpf | Browse = PUBLIC; manage = AUTH/ADMIN |
+| `mkv2-releases` | MIXED | `false` | optionalAuth | Calendar = PUBLIC; reminders = AUTH |
+| `create-admin` | ADMIN | `false` | requireAdmin | Admin creation, admin-only |
+| `enrich-descriptions` | ADMIN | `false` | requireAdmin | AI enrichment, admin-only |
+| `generate-pdf` | ADMIN | `false` | requireAdmin | PDF generation, admin-only |
+| `admin-orders` | ADMIN | `false` | requireAdmin | Admin order management |
+| `catalog-sync` | SERVICE | `false` | requireServiceOrAdmin | External catalog sync |
+| `catalog-seed-500` | SERVICE | `false` | requireAdmin | Catalog seeding tool |
+| `catalog-translate-missing` | SERVICE | `false` | requireServiceOrAdmin | Translation batch |
+| `catalog-multisource` | SERVICE | `false` | requireServiceOrAdmin | Multi-source aggregation |
+| `mkv2-cron-tasks` | SERVICE | `false` | requireServiceOrAdmin | Scheduled maintenance |
+| `mkv2-auto-payout` | SERVICE | `false` | requireServiceOrAdmin | Auto payouts + idempotency |
+| `sync-droper-images` | SERVICE | `false` | requireServiceOrAdmin | Image sync from Droper |
+| `vault-semester-reset` | SERVICE | `false` | service-role/cron | Semester tier reset |
+| `vault-sla-monitor` | SERVICE | `false` | service-role/cron | SLA monitoring |
+| `process-reminders` | SERVICE | `false` | service-role/cron | Reminder processing |
+| `schedule-reminder` | SERVICE | `false` | service-role/cron | Reminder scheduling |
+| `cart-recovery` | SERVICE | `false` | service-role/cron | Abandoned cart emails |
+| `send-budget-email` | INTERNAL | `false` | Called by admin flows | Email dispatch |
+| `send-order-email` | INTERNAL | `false` | Called by webhook/checkout | Email dispatch |
+| `send-marketplace-email` | INTERNAL | `false` | Called by mkv2-* functions | Email dispatch |
+| `send-whatsapp` | INTERNAL | `false` | Called by notification flows | WhatsApp dispatch |
+| `send-push` | INTERNAL | `false` | Called by notification flows | Push dispatch |
+| `create-notification` | INTERNAL | `false` | Called by edge functions | Notification creation |
+| `superfrete` | INTERNAL | `false` | Called by checkout/fulfill | Shipping API proxy |
+
+### Residual Risks & Mitigation Plan
+
+| Risk | Severity | Mitigation |
+|------|----------|------------|
+| INTERNAL functions (send-*, create-notification, superfrete) callable by anyone with anon key | Medium | These functions perform side-effects (send emails/messages) but require valid data references (order_id, cpf). Abuse vector is limited. **Plan**: Add `requireServiceOrAdmin` guard in next hardening cycle. |
+| `push-subscribe` has JWT header check but not via shared guard | Low | Currently checks auth header inline. **Plan**: Migrate to `requireAuth` from shared guard. |
+| `generate-pdf`, `enrich-descriptions` admin check not yet verified as shared guard | Low | **Plan**: Confirm they use `requireAdmin` from `auth-guard.ts`, not ad-hoc checks. |
+| `vault-semester-reset`, `vault-sla-monitor` auth pattern not verified | Medium | Expected to use service-role key. **Plan**: Audit and migrate to `requireServiceOrAdmin` in P2. |
+| `schedule-reminder`, `process-reminders` auth pattern not verified | Medium | Expected to use service-role key. **Plan**: Audit and migrate to `requireServiceOrAdmin` in P2. |
+
+### Governance Policy
+
+1. **New functions MUST** use shared guards from `_shared/auth-guard.ts`.
+2. **All functions keep** `verify_jwt = false` — JWT validation is done in-code.
+3. **Every function entry** in `config.toml` MUST have an inline comment with tier classification.
+4. **INTERNAL functions** are the next hardening target (P2) for adding explicit auth guards.
+5. **This matrix** is the single source of truth and must be updated on every new function addition.
+
+---
+
 ## P1 Migration Status (Hardening Fase 3)
 
 | Function | Before | After | Status |
