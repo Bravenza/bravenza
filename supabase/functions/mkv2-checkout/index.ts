@@ -302,7 +302,7 @@ Deno.serve(async (req) => {
       if (!card_token) return json({ error: "Token do cartão obrigatório" }, 400);
 
       const validInstallments = Math.min(Math.max(1, installments || 1), 12);
-      const cardTotalAmount = calcCardTotal(totalAmount, validInstallments, effectiveInterestFree);
+      const cardTotalAmount = calcCardTotal(totalAmount, validInstallments, effectiveInterestFree, mpRates);
       const isInterestFree = effectiveInterestFree > 0 && validInstallments <= effectiveInterestFree;
 
       const cardPayload = {
