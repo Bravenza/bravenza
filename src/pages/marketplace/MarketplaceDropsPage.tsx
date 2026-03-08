@@ -28,9 +28,10 @@ interface Release {
 type FilterBrand = "all" | "Nike" | "Jordan" | "Adidas" | "New Balance" | "Puma";
 type FilterStatus = "all" | "upcoming" | "today" | "past";
 
-// ── Countdown hook ──
-function useCountdown(targetDate: Date) {
+// ── Countdown hook (accepts null to disable) ──
+function useCountdown(targetDate: Date | null) {
   const getTimeLeft = () => {
+    if (!targetDate) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
     const diff = Math.max(0, targetDate.getTime() - Date.now());
     return {
       days: Math.floor(diff / (1000 * 60 * 60 * 24)),
@@ -41,6 +42,7 @@ function useCountdown(targetDate: Date) {
   };
   const [t, setT] = useState(getTimeLeft());
   useEffect(() => {
+    if (!targetDate) return;
     const id = setInterval(() => setT(getTimeLeft()), 1000);
     return () => clearInterval(id);
   }, [targetDate]);
