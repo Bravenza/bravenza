@@ -115,17 +115,10 @@ Deno.serve(async (req) => {
     // ── Load dynamic rates from DB ──
     const { mpRates, surcharges } = await loadRatesConfig(sb);
 
-    // ── Auth: validate JWT and resolve buyer CPF ──
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Auth required" }, 401);
-
-    const { data: { user } } = await sb.auth.getUser(authHeader.replace("Bearer ", ""));
-    if (!user) return json({ error: "Token inválido" }, 401);
-
-    const { data: profile } = await sb.from("client_profiles")
-      .select("cpf").eq("user_id", user.id).single();
-    const cpf = profile?.cpf;
-    if (!cpf) return json({ error: "Perfil não encontrado" }, 403);
+    // ── Auth: validate JWT and resolve buyer CPF via shared guard ──
+    const authResult = await resolveAuthCpf(req, sb);
+    if (authResult.error || !authResult.cpf) return json({ error: authResult.error || "Auth required" }, 401);
+    const cpf = authResult.cpf;
 
     const body = await req.json();
     const {
