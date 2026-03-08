@@ -6497,6 +6497,7 @@ export type Database = {
         Args: { p_cpf: string; p_member_id: string }
         Returns: Json
       }
+      get_my_cpf: { Args: never; Returns: string }
       get_online_community_users: {
         Args: { p_minutes?: number }
         Returns: {
