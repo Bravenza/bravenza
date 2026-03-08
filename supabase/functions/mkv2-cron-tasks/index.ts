@@ -309,6 +309,43 @@ Deno.serve(async (req) => {
     results.kyc_docs_deleted = kycDocsDeleted;
     if (kycDocsDeleted) console.log(`[mkv2-cron-tasks] Deleted KYC docs for ${kycDocsDeleted} sellers`);
 
+    // ── 9. Cleanup expired/failed idempotency keys ──
+    const { data: expiredIdemp, error: eiErr } = await sb
+      .from("idempotency_keys")
+      .delete()
+      .lt("expires_at", now.toISOString())
+      .select("id");
+
+    if (eiErr) console.error("[mkv2-cron-tasks] Idempotency expired cleanup error:", eiErr);
+    results.expired_idempotency_keys_deleted = expiredIdemp?.length || 0;
+
+    // Failed keys older than 1 hour (safe to purge — retry window long passed)
+    const failedCutoff = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
+    const { data: failedIdemp, error: fiErr } = await sb
+      .from("idempotency_keys")
+      .delete()
+      .eq("status", "failed")
+      .lt("updated_at", failedCutoff)
+      .select("id");
+
+    if (fiErr) console.error("[mkv2-cron-tasks] Idempotency failed cleanup error:", fiErr);
+    results.failed_idempotency_keys_deleted = failedIdemp?.length || 0;
+
+    // Stuck "processing" keys older than 30 minutes (stale locks)
+    const staleCutoff = new Date(now.getTime() - 30 * 60 * 1000).toISOString();
+    const { data: staleIdemp, error: siErr } = await sb
+      .from("idempotency_keys")
+      .delete()
+      .eq("status", "processing")
+      .lt("updated_at", staleCutoff)
+      .select("id");
+
+    if (siErr) console.error("[mkv2-cron-tasks] Idempotency stale cleanup error:", siErr);
+    results.stale_idempotency_keys_deleted = staleIdemp?.length || 0;
+
+    const totalIdempCleaned = (expiredIdemp?.length || 0) + (failedIdemp?.length || 0) + (staleIdemp?.length || 0);
+    if (totalIdempCleaned) console.log(`[mkv2-cron-tasks] Cleaned ${totalIdempCleaned} idempotency keys (${expiredIdemp?.length || 0} expired, ${failedIdemp?.length || 0} failed, ${staleIdemp?.length || 0} stale)`);
+
     // ── Finalize log ──
     const finishedAt = new Date();
     const durationMs = finishedAt.getTime() - new Date(startedAt).getTime();
