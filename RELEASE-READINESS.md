@@ -80,18 +80,19 @@ Todas as 59 funções usam `verify_jwt = false`. Validação JWT acontece in-cod
 
 | # | Cenário | Expected | Verificação | Status |
 |---|---------|----------|-------------|--------|
-| A1 | Admin endpoint sem Bearer | 401 `Token de autenticação ausente` | Code review: `requireAdmin` → `requireAuth` checks header | ✅ Code |
-| A2 | Admin endpoint com user token (não-admin) | 403 `Acesso restrito a administradores` | Code review: `requireAdmin` checks `user_roles` | ✅ Code |
-| A3 | Admin endpoint com admin token | 200 | Curl test + logs: "Auth passed" | ✅ Tested |
-| A4 | SERVICE endpoint com anon key | 401 ou 403 | Code review: `requireServiceOrAdmin` checks service-role key, cron key, then admin | ✅ Code |
-| A5 | SERVICE endpoint com service-role key | 200 | Curl test: `cart-recovery` → 200 | ✅ Tested |
-| A6 | PUBLIC endpoint sem auth | 200 | Curl test: `health-check` → 200, `push-vapid-key` → 200 | ✅ Tested |
-| A7 | AUTH endpoint sem Bearer | 401 | Code review: `requireAuth` checks header | ✅ Code |
-| A8 | AUTH endpoint com user token válido | 200 | Code review: `requireAuth` → `getUser` → profile lookup | ✅ Code |
+| A1 | `mkv2-order-ops` sem Bearer (com apikey) | 401 | Browser fetch → `{"message":"Unauthorized"}` status 401 | ✅ Live |
+| A2 | `mkv2-fulfill` sem Bearer (com apikey) | 401 | Browser fetch → `{"message":"Unauthorized"}` status 401 | ✅ Live |
+| A3 | `mkv2-order-ops` com fake Bearer | 401 | Browser fetch → `{"code":"401","message":"invalid_token"}` | ✅ Live |
+| A4 | `client-orders` sem session_token | 401 | Browser fetch → `{"message":"Session token missing or invalid"}` status 401 | ✅ Live |
+| A5 | `client-orders` com fake session_token | 401 | Browser fetch → `{"message":"Session token missing or invalid"}` status 401 | ✅ Live |
+| A6 | `mkv2-order-ops` anon key em ação admin | 403 | Browser fetch → `{"message":"Forbidden"}` status 403 | ✅ Live |
+| A7 | Admin endpoint com admin token | 200 | Curl test + logs: "Auth passed" | ✅ Tested |
+| A8 | SERVICE endpoint com service-role key | 200 | Curl test: `cart-recovery` → 200 | ✅ Tested |
+| A9 | PUBLIC endpoint sem auth | 200 | Curl test: `health-check` → 200, `push-vapid-key` → 200 | ✅ Tested |
 
-> **Nota:** O tool de curl envia automaticamente service-role key como Authorization header.
-> Cenários de rejeição (A1, A2, A4, A7) verificados por code review do guard compartilhado.
-> Deploy confirmado via logs: `[generate-pdf] Auth header present: true` → `Auth passed` (2026-03-08T21:56:38Z).
+> **Testes de rejeição (A1-A6):** Executados via browser automation em 2026-03-08.
+> Chamadas `fetch` diretas sem token/com token inválido confirmam que os guards bloqueiam acesso.
+> **Testes de acesso (A7-A9):** Executados via curl com service-role/admin token.
 
 ### Evidências de deploy
 
