@@ -97,6 +97,66 @@ export async function optionalAuth(req: Request, sb: any): Promise<AuthResult | 
 }
 
 /**
+ * Requires admin role using a raw Bearer token string (not Request).
+ * For use in minified/compact functions that already extracted the auth header.
+ * Validates via user_roles table (not admin_profiles) for consistency.
+ */
+export async function requireAdminByToken(sb: any, authHeader: string): Promise<AuthResult> {
+  if (!authHeader?.startsWith("Bearer ")) {
+    throw new AuthError("Token de autenticação ausente");
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const { data, error } = await sb.auth.getUser(token);
+
+  if (error || !data?.user) {
+    throw new AuthError("Token inválido ou expirado");
+  }
+
+  const userId = data.user.id;
+  const email = data.user.email || null;
+
+  // Check admin role via user_roles (not admin_profiles)
+  const { data: roleData } = await sb
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+
+  if (!roleData) {
+    throw new AuthError("Acesso restrito a administradores", 403);
+  }
+
+  // Resolve CPF (optional for admin users)
+  const { data: profile } = await sb
+    .from("client_profiles")
+    .select("cpf")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  return { userId, cpf: profile?.cpf || null, email };
+}
+
+/**
+ * Check if a token belongs to an admin. Returns boolean (no throw).
+ * Uses user_roles for consistency with requireAdmin.
+ */
+export async function isAdminByToken(sb: any, authHeader: string): Promise<boolean> {
+  if (!authHeader?.startsWith("Bearer ")) return false;
+  const token = authHeader.replace("Bearer ", "");
+  const { data, error } = await sb.auth.getUser(token);
+  if (error || !data?.user) return false;
+  const { data: roleData } = await sb
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", data.user.id)
+    .eq("role", "admin")
+    .maybeSingle();
+  return !!roleData;
+}
+
+/**
  * Resolve CPF from auth token. Used by mkv2-* functions that key on CPF.
  * For public actions, returns "visitor" if no token; for private actions, throws AuthError.
  */
