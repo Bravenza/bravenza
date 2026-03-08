@@ -95,6 +95,27 @@ Deno.serve(async (req) => {
       // Even 4xx means API is reachable
       if (res.status >= 500) throw new Error(`HTTP ${res.status}`);
     }),
+
+    // 7. Twilio (WhatsApp)
+    checkService("twilio", async () => {
+      const sid = Deno.env.get("TWILIO_ACCOUNT_SID");
+      const token = Deno.env.get("TWILIO_AUTH_TOKEN");
+      if (!sid || !token) throw new Error("Credenciais não configuradas");
+      const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}.json`, {
+        headers: { Authorization: "Basic " + btoa(`${sid}:${token}`) },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    }),
+
+    // 8. Resend (Email)
+    checkService("resend", async () => {
+      const key = Deno.env.get("RESEND_API_KEY");
+      if (!key) throw new Error("Chave não configurada");
+      const res = await fetch("https://api.resend.com/domains", {
+        headers: { Authorization: `Bearer ${key}` },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    }),
   ]);
 
   const overall = checks.every((c) => c.status === "operational")
