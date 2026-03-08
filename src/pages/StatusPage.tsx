@@ -29,9 +29,10 @@ export default function StatusPage() {
     database: t("status.serviceDatabase"),
     auth: t("status.serviceAuth"),
     storage: t("status.serviceStorage"),
-    stripe: t("status.serviceStripe"),
     mercadopago: t("status.serviceMercadopago"),
     superfrete: t("status.serviceSuperfrete"),
+    twilio: t("status.serviceTwilio", "WhatsApp (Twilio)"),
+    resend: t("status.serviceResend", "E-mail (Resend)"),
   };
 
   const STATUS_CONFIG = {
