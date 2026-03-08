@@ -62,7 +62,7 @@ export default function MarketplaceMyStorePage() {
 
   const { searchProducts, createProduct, createOffer } = useMarketplaceCatalog(cpf || "visitor");
 
-  const enable_seller_dashboard_v2 = true; // Feature flag
+  const { enabled: enable_seller_dashboard_v2 } = useFeatureFlag("enable_seller_dashboard_v2");
   const [sellerSubTab, setSellerSubTab] = useState(enable_seller_dashboard_v2 ? "dashboard" : "anuncios");
   const [sellerOnboarded, setSellerOnboarded] = useState<boolean | null>(null);
   const [sellerKycStatus, setSellerKycStatus] = useState<string | null>(null);
