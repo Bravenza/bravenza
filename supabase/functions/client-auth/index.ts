@@ -181,6 +181,9 @@ Deno.serve(async (req) => {
 
     // VERIFY CODE - Validate code and create session
     if (action === "verify_code") {
+      // Rate limit: 10 attempts per 15 min per IP
+      const rl = await checkRateLimit(req, { key: "auth:verify_code", maxRequests: 10, windowMinutes: 15 });
+      if (!rl.allowed) return rateLimitResponse(rl.retryAfterSeconds!, corsHeaders);
       if (!cpf || !code) {
         throw new Error("CPF e código são obrigatórios");
       }
