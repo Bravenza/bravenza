@@ -2,7 +2,7 @@
 // after the protection period (8 business days) has elapsed.
 // Should be called via cron (hourly).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { checkIdempotency, setIdempotencyResult } from "../_shared/idempotency.ts";
+import { checkIdempotency, setIdempotencyResult, releaseIdempotencyKey } from "../_shared/idempotency.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -79,6 +79,7 @@ Deno.serve(async (req) => {
 
       if (updateErr) {
         console.error(`[mkv2-auto-payout] Failed to update order ${order.order_code}:`, updateErr);
+        await releaseIdempotencyKey(sb, payoutIdempKey).catch(() => {});
         continue;
       }
 

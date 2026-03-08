@@ -28,6 +28,7 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let idempKey = "";
   try {
     const mercadoPagoToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");
     if (!mercadoPagoToken) {
@@ -58,7 +59,7 @@ Deno.serve(async (req) => {
     }
 
     // Idempotency check
-    const idempKey = idempotency_key || `card-${order_id}-${payment_type}`;
+    idempKey = idempotency_key || `card-${order_id}-${payment_type}`;
     const idempCheck = await checkIdempotency(supabase, idempKey, 5);
     if (idempCheck.isDuplicate) {
       console.log(`[process-card] Duplicate request for ${idempKey}, returning cached`);
@@ -258,6 +259,10 @@ Deno.serve(async (req) => {
     );
   } catch (error: any) {
     console.error("Error processing card payment:", error);
+    // Release idempotency lock so the client can retry
+    if (idempKey) {
+      await releaseIdempotencyKey(supabase, idempKey).catch(() => {});
+    }
     return new Response(
       JSON.stringify({ error: error.message }),
       {

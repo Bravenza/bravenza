@@ -1,7 +1,7 @@
 // Marketplace Checkout — Consolidated payment for multiple orders
 // Supports PIX or Card via MercadoPago Transparent Checkout
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { checkIdempotency, setIdempotencyResult } from "../_shared/idempotency.ts";
+import { checkIdempotency, setIdempotencyResult, releaseIdempotencyKey } from "../_shared/idempotency.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -109,6 +109,7 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const sb = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
+  let checkoutIdempKey = "";
   try {
     // ── Load dynamic rates from DB ──
     const { mpRates, surcharges } = await loadRatesConfig(sb);
@@ -241,7 +242,7 @@ Deno.serve(async (req) => {
     const description = `Bravenza MKT — ${orderCodes}`;
 
     // Server-side idempotency check
-    const checkoutIdempKey = idempotency_key || `mkt-checkout-${orderIds.sort().join("-")}-${payment_method}`;
+    checkoutIdempKey = idempotency_key || `mkt-checkout-${orderIds.sort().join("-")}-${payment_method}`;
     const idempCheck = await checkIdempotency(sb, checkoutIdempKey, 5);
     if (idempCheck.isDuplicate) {
       console.log(`[mkv2-checkout] Duplicate checkout for ${checkoutIdempKey}`);
@@ -434,6 +435,10 @@ Deno.serve(async (req) => {
     }
   } catch (err: any) {
     console.error("[mkv2-checkout] Error:", err);
+    // Release idempotency lock so the client can retry
+    if (checkoutIdempKey) {
+      await releaseIdempotencyKey(sb, checkoutIdempKey).catch(() => {});
+    }
     return json({ error: err.message || "Erro interno" }, 500);
   }
 });
