@@ -2,7 +2,7 @@
 // after the protection period (8 business days) has elapsed.
 // Should be called via cron (hourly).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { checkIdempotency, setIdempotencyResult, releaseIdempotencyKey } from "../_shared/idempotency.ts";
+import { checkIdempotency, setIdempotencyResult, markIdempotencyFailed } from "../_shared/idempotency.ts";
 import { requireServiceOrAdmin, authErrorResponse } from "../_shared/auth-guard.ts";
 
 const corsHeaders = {
