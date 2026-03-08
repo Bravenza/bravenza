@@ -373,6 +373,8 @@ export type Database = {
           full_name: string
           id: string
           phone: string | null
+          privacy_consent_at: string | null
+          privacy_consent_version: string | null
           updated_at: string | null
           user_id: string
         }
@@ -384,6 +386,8 @@ export type Database = {
           full_name: string
           id?: string
           phone?: string | null
+          privacy_consent_at?: string | null
+          privacy_consent_version?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -395,6 +399,8 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string | null
+          privacy_consent_at?: string | null
+          privacy_consent_version?: string | null
           updated_at?: string | null
           user_id?: string
         }
