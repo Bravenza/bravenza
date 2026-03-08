@@ -165,6 +165,42 @@ serve(async (req) => {
     // Sort by release_date
     merged.sort((a, b) => a.release_date.localeCompare(b.release_date));
 
+    // 4. Cache images to Supabase Storage (fire-and-forget, don't block response)
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const cachePromises = merged.map(async (r) => {
+      if (!r.image_url || r.image_url.startsWith(supabaseUrl)) return; // Already cached or no URL
+      try {
+        const imgRes = await fetch(r.image_url, { headers: { "User-Agent": "Mozilla/5.0" } });
+        if (!imgRes.ok) {
+          r.image_url = null; // Mark as broken
+          return;
+        }
+        const blob = await imgRes.blob();
+        const ext = blob.type?.includes("png") ? "png" : "jpg";
+        const safeName = `${r.brand}-${r.model}-${r.release_date}`.toLowerCase().replace(/[^a-z0-9-]/g, "_");
+        const filePath = `${safeName}.${ext}`;
+
+        await sb.storage.from("drop-images").upload(filePath, blob, {
+          contentType: blob.type || "image/jpeg",
+          upsert: true,
+        });
+
+        const { data: publicUrlData } = sb.storage.from("drop-images").getPublicUrl(filePath);
+        if (publicUrlData?.publicUrl) {
+          r.image_url = publicUrlData.publicUrl;
+        }
+      } catch (cacheErr) {
+        console.warn(`[mkv2-releases] Failed to cache image for ${r.brand} ${r.model}:`, cacheErr);
+        // Keep original URL as fallback, frontend will handle errors
+      }
+    });
+
+    // Wait for caching (with timeout to avoid blocking too long)
+    await Promise.race([
+      Promise.allSettled(cachePromises),
+      new Promise(resolve => setTimeout(resolve, 8000)),
+    ]);
+
     if (cronLogId) {
       await sb.from("cron_execution_logs").update({
         status: "success",
