@@ -34,9 +34,53 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // For product pages with slug, fetch product data
+    const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+    // ── Seller store pages: /marketplace/loja/:sellerId or /loja/:sellerId ──
+    const sellerMatch = path.match(/\/(?:marketplace\/)?loja\/([a-f0-9-]+)/i);
+    if (sellerMatch) {
+      const sellerId = sellerMatch[1];
+      const { data: seller } = await sb
+        .from("vault_seller_profiles")
+        .select("id, store_name, bio, banner_url, avatar_url, rating, total_sales")
+        .eq("id", sellerId)
+        .single();
+
+      if (seller) {
+        const storeName = seller.store_name || "Loja";
+        const ratingText = seller.rating ? `⭐ ${Number(seller.rating).toFixed(1)}` : "";
+        const salesText = seller.total_sales ? `${seller.total_sales} vendas` : "";
+        const statsText = [ratingText, salesText].filter(Boolean).join(" · ");
+        const description = seller.bio
+          ? `${seller.bio.slice(0, 120)}${seller.bio.length > 120 ? "..." : ""}`
+          : `Confira os sneakers autenticados disponíveis na loja ${storeName}.`;
+        const canonical = `${SITE}/marketplace/loja/${seller.id}`;
+        const image = seller.banner_url || seller.avatar_url || `${SITE}/og-image.png`;
+
+        const jsonLd = JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Store",
+          name: storeName,
+          url: canonical,
+          image,
+          ...(seller.bio ? { description: seller.bio } : {}),
+          ...(seller.rating ? { aggregateRating: { "@type": "AggregateRating", ratingValue: seller.rating, bestRating: 5 } } : {}),
+          parentOrganization: { "@type": "Organization", name: "BRAVENZA" },
+        });
+
+        return new Response(buildHTML({
+          title: `${storeName} — Loja no Marketplace BRAVENZA${statsText ? ` | ${statsText}` : ""}`,
+          description,
+          url: canonical,
+          image,
+          type: "profile",
+          jsonLd,
+        }), { headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8" } });
+      }
+    }
+
+    // ── Product pages with slug ──
     if (slug) {
-      const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
       const { data: product } = await sb
         .from("marketplace_products")
         .select("brand, model, colorway, images, lowest_price, sku, description, slug, total_offers")
