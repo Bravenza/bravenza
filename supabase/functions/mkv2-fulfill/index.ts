@@ -1,22 +1,29 @@
 /**
  * mkv2-fulfill — Fulfillment, inspection, disputes, chat
  *
+ * Auth model: Supabase JWT via shared auth-guard.ts
+ *
  * Action tiers:
  *   PUBLIC_ACTIONS  → laudo-lookup, check-auto-payout
+ *     - laudo-lookup: Public certificate verification, no auth needed
+ *     - check-auto-payout: Cron/service trigger, no user auth needed
  *   AUTH_ACTIONS    → open-dispute, chat-messages, send-message, unread-count
  *   ADMIN_ACTIONS   → resolve-dispute, hub-orders, hub-update-status, hub-inspect
+ *
+ * Public actions skip auth entirely. Auth actions require valid JWT.
+ * Admin actions require JWT + admin role in user_roles.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
-  requireAdminByToken,
-  isAdminByToken,
+  requireAuth,
+  requireAdmin,
+  optionalAuth,
   authErrorResponse,
   AuthError,
 } from "../_shared/auth-guard.ts";
 import {
   corsHeaders,
   jsonResponse,
-  resolveCpf,
   getMemberEmail,
   sendMarketplaceEmail,
   sendMarketplaceWhatsApp,
@@ -26,6 +33,7 @@ import {
 // ── Action tier constants ──
 const PUBLIC_ACTIONS = new Set(["laudo-lookup", "check-auto-payout"]);
 const ADMIN_ACTIONS = new Set(["resolve-dispute", "hub-orders", "hub-update-status", "hub-inspect"]);
+// AUTH_ACTIONS (implicit): open-dispute, chat-messages, send-message, unread-count
 
 const sc = () =>
   createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -67,23 +75,29 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const action = url.searchParams.get("action");
   const method = req.method;
-  const authHeader = req.headers.get("authorization") || "";
-
-  // ── Resolve auth: public actions allow visitors, others require JWT ──
-  const { cpf: rawCpf, errorResponse } = await resolveCpf(req, sb, PUBLIC_ACTIONS, action);
-  if (errorResponse) return errorResponse;
-  const cpf = rawCpf!;
-
-  // ── Admin-only actions: validate via shared guard ──
-  if (ADMIN_ACTIONS.has(action || "")) {
-    try {
-      await requireAdminByToken(sb, authHeader);
-    } catch (e) {
-      return authErrorResponse(e);
-    }
-  }
 
   try {
+    // ── Route by action tier ──
+    const isPublic = PUBLIC_ACTIONS.has(action || "");
+    const isAdmin = ADMIN_ACTIONS.has(action || "");
+
+    let cpf: string = "visitor";
+
+    if (isPublic) {
+      // Public actions: optionally resolve auth for richer context
+      const auth = await optionalAuth(req, sb);
+      if (auth?.cpf) cpf = auth.cpf;
+    } else if (isAdmin) {
+      // Admin actions: require JWT + admin role
+      const auth = await requireAdmin(req, sb);
+      cpf = auth.cpf || "admin";
+    } else {
+      // Auth actions: require valid JWT
+      const auth = await requireAuth(req, sb);
+      if (!auth.cpf) return jsonResponse({ error: "Perfil de cliente não encontrado" }, 403);
+      cpf = auth.cpf;
+    }
+
     // ═══════════════════════════════════════════════
     // AUTH: open-dispute
     // ═══════════════════════════════════════════════
@@ -262,7 +276,13 @@ Deno.serve(async (req) => {
       if (!b.message || b.message.trim().length === 0) throw new Error("Mensagem não pode ser vazia");
       if (b.message.length > 2000) throw new Error("Mensagem muito longa. Máximo 2000 caracteres");
 
-      const isRealAdmin = await isAdminByToken(sb, authHeader);
+      // Check admin status for sender name (no throw)
+      let isRealAdmin = false;
+      try {
+        await requireAdmin(req, sb);
+        isRealAdmin = true;
+      } catch (_) {}
+
       const { data: member } = await sb
         .from("vault_members")
         .select("client_name")

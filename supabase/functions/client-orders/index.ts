@@ -8,6 +8,11 @@
  *   PUBLIC_ACTIONS  → (none)
  *   AUTH_ACTIONS    → get_notifications, mark_notification_read, mark_all_notifications_read, (default: list orders)
  *   ADMIN_ACTIONS   → (none)
+ *
+ * Note: This function uses session_token auth (not JWT) because the client portal
+ * authenticates via CPF + OTP code, creating sessions in the client_sessions table.
+ * This is intentionally separate from Supabase Auth and does not use auth-guard.ts.
+ * Session validation is centralized at the top of the handler.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/mk-helpers.ts";
@@ -25,7 +30,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { session_token, action, notification_id, notification_ids } = body;
 
-    // ── Session-based auth (all actions) ──
+    // ── Session-based auth (all actions require valid session) ──
     if (!session_token) {
       return jsonResponse({ error: "Token de sessão é obrigatório" }, 401);
     }
@@ -44,7 +49,7 @@ Deno.serve(async (req) => {
 
     const clientCpf = sessions[0].cpf;
 
-    // ── Notification actions ──
+    // ── AUTH: get_notifications ──
     if (action === "get_notifications") {
       const { data: notifications } = await supabase
         .from("notifications")
@@ -56,6 +61,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: true, notifications: notifications || [] });
     }
 
+    // ── AUTH: mark_notification_read ──
     if (action === "mark_notification_read" && notification_id) {
       await supabase
         .from("notifications")
@@ -65,6 +71,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: true });
     }
 
+    // ── AUTH: mark_all_notifications_read ──
     if (action === "mark_all_notifications_read" && notification_ids) {
       await supabase
         .from("notifications")
@@ -74,7 +81,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: true });
     }
 
-    // ── Default action: list orders with history ──
+    // ── AUTH (default): list orders with history ──
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
       .select(`
