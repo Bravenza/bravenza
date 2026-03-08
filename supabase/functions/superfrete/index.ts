@@ -93,6 +93,10 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Auth: only service-role, cron, or admin can invoke this internal function
+    const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    try { await requireServiceOrAdmin(req, sb); } catch (e) { return authErrorResponse(e); }
+
     // Get token from environment (Supabase secret)
     const token = Deno.env.get("SUPERFRETE_API_TOKEN");
     
