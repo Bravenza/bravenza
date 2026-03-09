@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkIdempotency, setIdempotencyResult, markIdempotencyFailed } from "../_shared/idempotency.ts";
-import { resolveAuthCpf } from "../_shared/mk-helpers.ts";
+import { requireAuth, authErrorResponse } from "../_shared/auth-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,6 +35,9 @@ Deno.serve(async (req) => {
   let idempKey = "";
 
   try {
+    // Auth: require authenticated user (JWT validation via shared guard)
+    try { await requireAuth(req, supabase); } catch (e) { return authErrorResponse(e); }
+
     const mercadoPagoToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");
     if (!mercadoPagoToken) {
       throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurado");
