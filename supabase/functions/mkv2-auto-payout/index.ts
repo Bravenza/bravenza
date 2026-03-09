@@ -4,6 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkIdempotency, setIdempotencyResult, markIdempotencyFailed } from "../_shared/idempotency.ts";
 import { requireServiceOrAdmin, authErrorResponse } from "../_shared/auth-guard.ts";
+import { createLogger } from "../_shared/structured-log.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +18,7 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const log = createLogger("mkv2-auto-payout", req);
   const sb = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -25,7 +27,9 @@ Deno.serve(async (req) => {
   // Auth: require service-role, cron key, or admin session
   try {
     await requireServiceOrAdmin(req, sb);
+    log.setActor("service", "cron");
   } catch (error) {
+    log.warn("auth_denied", { reason: (error as Error).message });
     return authErrorResponse(error);
   }
 
@@ -54,14 +58,14 @@ Deno.serve(async (req) => {
     if (error) throw error;
 
     if (!eligible || eligible.length === 0) {
-      console.log("[mkv2-auto-payout] No eligible orders for payout");
+      log.done({ processed: 0, message: "No eligible orders" });
       return new Response(
         JSON.stringify({ processed: 0 }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`[mkv2-auto-payout] Found ${eligible.length} eligible orders`);
+    log.info("eligible_orders_found", { count: eligible.length });
 
     let processed = 0;
 
@@ -70,7 +74,7 @@ Deno.serve(async (req) => {
       const payoutIdempKey = `auto-payout-${order.id}`;
       const idempCheck = await checkIdempotency(sb, payoutIdempKey, 120); // 2h TTL
       if (idempCheck.isDuplicate) {
-        console.log(`[mkv2-auto-payout] Skipping duplicate payout for order ${order.order_code}`);
+        log.warn("duplicate_payout_skipped", { order_code: order.order_code, key: payoutIdempKey });
         continue;
       }
 
@@ -86,10 +90,23 @@ Deno.serve(async (req) => {
         .eq("id", order.id);
 
       if (updateErr) {
-        console.error(`[mkv2-auto-payout] Failed to update order ${order.order_code}:`, updateErr);
+        log.error("payout_update_failed", { order_code: order.order_code, error: updateErr.message });
         await markIdempotencyFailed(sb, payoutIdempKey, updateErr.message || "Update failed").catch(() => {});
         continue;
       }
+
+      // Audit: payout initiated
+      await sb.from("audit_events").insert({
+        event_type: "payout",
+        action: "auto_payout_initiated",
+        actor_id: null,
+        actor_type: "system",
+        resource_type: "marketplace_order",
+        resource_id: order.id,
+        request_id: log.ctx.request_id,
+        status: "success",
+        sanitized_payload: { order_code: order.order_code, amount: order.seller_payout, seller_id: order.seller_id },
+      }).catch(() => {});
 
       // Notify seller
       if (order.seller_id) {
@@ -122,17 +139,15 @@ Deno.serve(async (req) => {
         reference_type: "marketplace_payout",
       });
 
-      // Mark idempotency as completed (prevents stuck "processing" state)
+      // Mark idempotency as completed
       await setIdempotencyResult(sb, payoutIdempKey, {
         order_id: order.id,
         order_code: order.order_code,
         payout_amount: order.seller_payout,
-      }).catch((e: unknown) => console.warn(`[mkv2-auto-payout] Failed to finalize idempotency for ${order.order_code}:`, e));
+      }).catch((e: unknown) => log.warn("idempotency_finalize_failed", { order_code: order.order_code, error: String(e) }));
 
       processed++;
     }
-
-    console.log(`[mkv2-auto-payout] Processed ${processed} orders`);
 
     if (logId) {
       await sb.from("cron_execution_logs").update({
@@ -143,12 +158,14 @@ Deno.serve(async (req) => {
       }).eq("id", logId);
     }
 
+    log.done({ processed, total_eligible: eligible.length });
+
     return new Response(
       JSON.stringify({ processed, total_eligible: eligible.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: any) {
-    console.error("[mkv2-auto-payout] Error:", err);
+    log.error("auto_payout_error", { message: err.message });
     return new Response(
       JSON.stringify({ error: err.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
