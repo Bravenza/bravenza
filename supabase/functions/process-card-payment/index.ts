@@ -35,6 +35,9 @@ Deno.serve(async (req) => {
   let idempKey = "";
 
   try {
+    // Auth: require authenticated user (JWT validation via shared guard)
+    try { await requireAuth(req, supabase); } catch (e) { return authErrorResponse(e); }
+
     const mercadoPagoToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");
     if (!mercadoPagoToken) {
       throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurado");
