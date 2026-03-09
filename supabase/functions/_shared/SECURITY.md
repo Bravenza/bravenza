@@ -183,8 +183,8 @@ See "Why `verify_jwt = false`" above for rationale.
 | `client-auth` | SESSION | `false` | session_token | CPF magic-code flow, not JWT |
 | `client-orders` | SESSION | `false` | session_token | Client portal, session-based |
 | `submit-review` | SESSION | `false` | session_token | Review submission via client portal |
-| `generate-pix` | AUTH | `false` | resolveAuthCpf | PIX generation, JWT required |
-| `process-card-payment` | AUTH | `false` | auth header | Card payment, JWT + idempotency |
+| `generate-pix` | AUTH | `false` | requireAuth | PIX generation, JWT required |
+| `process-card-payment` | AUTH | `false` | requireAuth | Card payment, JWT + idempotency |
 | `mkv2-checkout` | AUTH | `false` | resolveAuthCpf | Checkout, JWT + idempotency |
 | `mkv2-offers` | AUTH | `false` | resolveAuthCpf | Seller offer CRUD |
 | `mkv2-orders` | AUTH | `false` | resolveAuthCpf | Buyer order queries |
