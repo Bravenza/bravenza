@@ -182,6 +182,51 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_type: string
+          created_at: string
+          error_details: string | null
+          event_type: string
+          id: string
+          request_id: string
+          resource_id: string | null
+          resource_type: string
+          sanitized_payload: Json | null
+          status: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_type: string
+          created_at?: string
+          error_details?: string | null
+          event_type: string
+          id?: string
+          request_id: string
+          resource_id?: string | null
+          resource_type: string
+          sanitized_payload?: Json | null
+          status: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_type?: string
+          created_at?: string
+          error_details?: string | null
+          event_type?: string
+          id?: string
+          request_id?: string
+          resource_id?: string | null
+          resource_type?: string
+          sanitized_payload?: Json | null
+          status?: string
+        }
+        Relationships: []
+      }
       brands: {
         Row: {
           created_at: string
