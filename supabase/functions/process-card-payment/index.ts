@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkIdempotency, setIdempotencyResult, markIdempotencyFailed } from "../_shared/idempotency.ts";
 import { requireAuth, authErrorResponse } from "../_shared/auth-guard.ts";
+import { createLogger } from "../_shared/structured-log.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,6 +30,7 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const log = createLogger("process-card-payment", req);
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, supabaseKey);
@@ -36,7 +38,14 @@ Deno.serve(async (req) => {
 
   try {
     // Auth: require authenticated user (JWT validation via shared guard)
-    try { await requireAuth(req, supabase); } catch (e) { return authErrorResponse(e); }
+    let authResult;
+    try {
+      authResult = await requireAuth(req, supabase);
+      log.setActor(authResult.userId, "user");
+    } catch (e) {
+      log.warn("auth_denied", { reason: (e as Error).message });
+      return authErrorResponse(e);
+    }
 
     const mercadoPagoToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");
     if (!mercadoPagoToken) {
@@ -56,7 +65,7 @@ Deno.serve(async (req) => {
       idempotency_key,
     }: CardPaymentRequest & { idempotency_key?: string } = await req.json();
 
-    console.log(`Processing card payment for order ${order_id}, type: ${payment_type}, amount: ${amount}`);
+    log.info("card_payment_requested", { order_id, payment_type, amount, installments });
 
     if (!token || !card_token || !payment_type || !amount || !order_id) {
       throw new Error("Parâmetros inválidos");
@@ -69,7 +78,7 @@ Deno.serve(async (req) => {
     );
 
     if (orderError || !orderData || orderData.length === 0) {
-      console.error("Order not found:", orderError);
+      log.error("order_not_found", { order_id });
       throw new Error("Pedido não encontrado");
     }
 
@@ -87,14 +96,29 @@ Deno.serve(async (req) => {
 
     // ── Idempotency lock: AFTER input + order validation, BEFORE external API call ──
     idempKey = idempotency_key || `card-${order_id}-${payment_type}`;
+    log.setIdempotencyKey(idempKey);
+
     const idempCheck = await checkIdempotency(supabase, idempKey, 5);
     if (idempCheck.isDuplicate) {
-      console.log(`[process-card] Duplicate request for ${idempKey}, returning cached`);
+      log.warn("duplicate_request", { key: idempKey });
       return new Response(JSON.stringify(idempCheck.cachedResult), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
+
+    // Audit: payment initiated
+    await supabase.from("audit_events").insert({
+      event_type: "payment",
+      action: "card_initiated",
+      actor_id: authResult.userId,
+      actor_type: "user",
+      resource_type: "order",
+      resource_id: order_id,
+      request_id: log.ctx.request_id,
+      status: "started",
+      sanitized_payload: { payment_type, amount, installments, idempotency_key: idempKey },
+    }).catch(() => {});
 
     // Validate installments (1-12)
     const validInstallments = Math.min(Math.max(1, installments), 12);
@@ -139,8 +163,6 @@ Deno.serve(async (req) => {
       },
     };
 
-    console.log("Creating payment with payload:", JSON.stringify(paymentPayload, null, 2));
-
     const paymentResponse = await fetch("https://api.mercadopago.com/v1/payments", {
       method: "POST",
       headers: {
@@ -153,17 +175,15 @@ Deno.serve(async (req) => {
 
     const paymentData = await paymentResponse.json();
 
-    console.log("Payment response:", JSON.stringify(paymentData, null, 2));
-
     if (!paymentResponse.ok) {
-      console.error("Mercado Pago payment error:", paymentData);
-      
+      log.error("mp_api_error", { status: paymentResponse.status, mp_error: paymentData.message });
+
       let errorMessage = "Erro ao processar pagamento";
-      
+
       if (paymentData.cause && paymentData.cause.length > 0) {
         const cause = paymentData.cause[0];
         const errorCode = cause.code;
-        
+
         const errorMessages: Record<string, string> = {
           "cc_rejected_bad_filled_card_number": "Número do cartão inválido",
           "cc_rejected_bad_filled_date": "Data de validade inválida",
@@ -180,17 +200,31 @@ Deno.serve(async (req) => {
           "cc_rejected_max_attempts": "Limite de tentativas excedido",
           "cc_rejected_other_reason": "Cartão recusado",
         };
-        
+
         errorMessage = errorMessages[errorCode] || errorMessage;
       }
-      
+
+      // Audit: payment failed
+      await supabase.from("audit_events").insert({
+        event_type: "payment",
+        action: "card_failed",
+        actor_id: authResult.userId,
+        actor_type: "user",
+        resource_type: "order",
+        resource_id: order_id,
+        request_id: log.ctx.request_id,
+        status: "error",
+        error_details: errorMessage,
+        sanitized_payload: { payment_type, amount, mp_status: paymentResponse.status },
+      }).catch(() => {});
+
       throw new Error(errorMessage);
     }
 
     // Update order based on payment status
     if (paymentData.status === "approved") {
       const now = new Date().toISOString();
-      
+
       if (payment_type === "full" || payment_type === "sinal") {
         await supabase
           .from("orders")
@@ -207,7 +241,7 @@ Deno.serve(async (req) => {
         await supabase.from("order_history").insert({
           order_id: order_id,
           status: "ORDER_CONFIRMED",
-          notes: payment_type === "full" 
+          notes: payment_type === "full"
             ? `Pagamento total confirmado via cartão de crédito (${validInstallments}x). ID: ${paymentData.id}`
             : `Sinal confirmado via cartão de crédito (${validInstallments}x). ID: ${paymentData.id}`,
         });
@@ -229,8 +263,6 @@ Deno.serve(async (req) => {
           notes: `Saldo confirmado via cartão de crédito (${validInstallments}x). ID: ${paymentData.id}`,
         });
       }
-
-      console.log(`Payment approved for order ${order_id}, payment ID: ${paymentData.id}`);
     }
 
     const responseData = {
@@ -242,6 +274,21 @@ Deno.serve(async (req) => {
 
     await setIdempotencyResult(supabase, idempKey, responseData);
 
+    // Audit: payment completed
+    await supabase.from("audit_events").insert({
+      event_type: "payment",
+      action: "card_completed",
+      actor_id: authResult.userId,
+      actor_type: "user",
+      resource_type: "order",
+      resource_id: order_id,
+      request_id: log.ctx.request_id,
+      status: "success",
+      sanitized_payload: { payment_type, amount, payment_id: paymentData.id, mp_status: paymentData.status },
+    }).catch(() => {});
+
+    log.done({ payment_id: paymentData.id, order_id, mp_status: paymentData.status });
+
     return new Response(
       JSON.stringify(responseData),
       {
@@ -250,7 +297,7 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error: any) {
-    console.error("Error processing card payment:", error);
+    log.error("card_payment_error", { message: error.message });
     if (idempKey) {
       await markIdempotencyFailed(supabase, idempKey, error.message || "Unknown error").catch(() => {});
     }

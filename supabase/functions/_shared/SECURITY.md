@@ -240,11 +240,14 @@ See "Why `verify_jwt = false`" above for rationale.
 |------|----------|--------|
 | ~~INTERNAL functions callable by anyone with anon key~~ | ~~Medium~~ | ✅ **Resolved P2** — All now use `requireServiceOrAdmin` |
 | ~~`push-subscribe` inline JWT check~~ | ~~Low~~ | ✅ **Resolved P2** — Migrated to `requireAuth` |
+| ~~`push-subscribe` CPF ownership not verified~~ | ~~Medium~~ | ✅ **Resolved P4** — Now validates `authResult.cpf === submitted cpf` |
 | ~~`vault-semester-reset`, `vault-sla-monitor` auth unverified~~ | ~~Medium~~ | ✅ **Resolved P2** — Both use `requireServiceOrAdmin` |
 | ~~`schedule-reminder`, `process-reminders` auth unverified~~ | ~~Medium~~ | ✅ **Resolved P2** — Both use `requireServiceOrAdmin` |
 | ~~`generate-pdf` no auth~~ | ~~Medium~~ | ✅ **Resolved P3** — `requireAdmin` from shared guard |
 | ~~`enrich-descriptions` ad-hoc auth~~ | ~~Low~~ | ✅ **Resolved P3** — Migrated to `requireAdmin` shared guard |
 | ~~`cart-recovery` no auth~~ | ~~Medium~~ | ✅ **Resolved P3** — `requireServiceOrAdmin` added |
+| ~~Structured logging created but not integrated~~ | ~~Low~~ | ✅ **Resolved P4** — `createLogger` integrated in `generate-pix`, `process-card-payment`, `mkv2-auto-payout` |
+| ~~No audit trail for payment events~~ | ~~Medium~~ | ✅ **Resolved P4** — `audit_events` logged for pix/card initiated/completed/failed + auto-payout |
 
 ### Governance Policy
 

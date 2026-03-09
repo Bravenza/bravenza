@@ -18,13 +18,23 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Auth: require authenticated user
-    try { await requireAuth(req, supabase); } catch (e) { return authErrorResponse(e); }
+    // Auth: require authenticated user and get their CPF
+    let authResult;
+    try { authResult = await requireAuth(req, supabase); } catch (e) { return authErrorResponse(e); }
 
     const { cpf, endpoint, p256dh, auth, user_agent } = await req.json();
 
     if (!cpf || !endpoint || !p256dh || !auth) {
       throw new Error("Missing required fields: cpf, endpoint, p256dh, auth");
+    }
+
+    // Security: verify submitted CPF matches authenticated user's CPF
+    // Prevents subscription hijacking (registering push for another user)
+    if (authResult.cpf && authResult.cpf !== cpf) {
+      return new Response(
+        JSON.stringify({ error: "CPF não corresponde ao usuário autenticado" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
     }
 
     // Upsert subscription (update if same endpoint for same user)

@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkIdempotency, setIdempotencyResult, markIdempotencyFailed } from "../_shared/idempotency.ts";
 import { requireAuth, authErrorResponse } from "../_shared/auth-guard.ts";
+import { createLogger } from "../_shared/structured-log.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,6 +22,7 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const log = createLogger("generate-pix", req);
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, supabaseKey);
@@ -28,7 +30,14 @@ Deno.serve(async (req) => {
 
   try {
     // Auth: require authenticated user (JWT validation via shared guard)
-    try { await requireAuth(req, supabase); } catch (e) { return authErrorResponse(e); }
+    let authResult;
+    try {
+      authResult = await requireAuth(req, supabase);
+      log.setActor(authResult.userId, "user");
+    } catch (e) {
+      log.warn("auth_denied", { reason: (e as Error).message });
+      return authErrorResponse(e);
+    }
 
     const mercadoPagoToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");
 
@@ -41,6 +50,8 @@ Deno.serve(async (req) => {
     if (!token || !payment_type || !amount) {
       throw new Error("Parâmetros inválidos");
     }
+
+    log.info("pix_requested", { payment_type, amount });
 
     // Verify order exists and get details
     const { data: orderData, error: orderError } = await supabase.rpc(
@@ -66,7 +77,6 @@ Deno.serve(async (req) => {
 
     // Validate payment status based on payment type
     if (payment_type === "full") {
-      // Full payment: check if already paid (using sinal_paid as the marker)
       if (order.sinal_paid) {
         throw new Error("Pagamento já foi realizado");
       }
@@ -85,16 +95,30 @@ Deno.serve(async (req) => {
 
     // Deterministic idempotency key — same order+type always maps to same key
     idempKey = idempotency_key || `pix-${order.order_id}-${payment_type}`;
+    log.setIdempotencyKey(idempKey);
 
     // Server-side idempotency check
     const idempCheck = await checkIdempotency(supabase, idempKey, 15);
     if (idempCheck.isDuplicate) {
-      console.log(`[generate-pix] Duplicate request for ${idempKey}, returning cached`);
+      log.warn("duplicate_request", { key: idempKey });
       return new Response(JSON.stringify(idempCheck.cachedResult), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
+
+    // Audit: payment initiated
+    await supabase.from("audit_events").insert({
+      event_type: "payment",
+      action: "pix_initiated",
+      actor_id: authResult.userId,
+      actor_type: "user",
+      resource_type: "order",
+      resource_id: order.order_id,
+      request_id: log.ctx.request_id,
+      status: "started",
+      sanitized_payload: { payment_type, amount, idempotency_key: idempKey },
+    }).catch(() => {});
 
     // Create Mercado Pago Pix payment
     const mpResponse = await fetch("https://api.mercadopago.com/v1/payments", {
@@ -121,7 +145,20 @@ Deno.serve(async (req) => {
     const mpData = await mpResponse.json();
 
     if (!mpResponse.ok) {
-      console.error("Mercado Pago error:", mpData);
+      log.error("mp_api_error", { status: mpResponse.status, mp_error: mpData.message });
+      // Audit: payment failed at MP
+      await supabase.from("audit_events").insert({
+        event_type: "payment",
+        action: "pix_failed",
+        actor_id: authResult.userId,
+        actor_type: "user",
+        resource_type: "order",
+        resource_id: order.order_id,
+        request_id: log.ctx.request_id,
+        status: "error",
+        error_details: mpData.message || "MP API error",
+        sanitized_payload: { payment_type, amount, mp_status: mpResponse.status },
+      }).catch(() => {});
       throw new Error(mpData.message || "Erro ao gerar Pix");
     }
 
@@ -163,8 +200,6 @@ Deno.serve(async (req) => {
         .eq("order_id", fullOrder.order_id);
     }
 
-    console.log(`Pix generated for order ${order.order_id}, payment_id: ${mpData.id}`);
-
     const responseData = {
       payment_id: mpData.id,
       qr_code: `data:image/png;base64,${qrCode}`,
@@ -174,6 +209,21 @@ Deno.serve(async (req) => {
 
     await setIdempotencyResult(supabase, idempKey, responseData);
 
+    // Audit: payment completed
+    await supabase.from("audit_events").insert({
+      event_type: "payment",
+      action: "pix_completed",
+      actor_id: authResult.userId,
+      actor_type: "user",
+      resource_type: "order",
+      resource_id: order.order_id,
+      request_id: log.ctx.request_id,
+      status: "success",
+      sanitized_payload: { payment_type, amount, payment_id: mpData.id },
+    }).catch(() => {});
+
+    log.done({ payment_id: mpData.id, order_id: order.order_id });
+
     return new Response(
       JSON.stringify(responseData),
       {
@@ -182,7 +232,7 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error: any) {
-    console.error("Error generating Pix:", error);
+    log.error("pix_error", { message: error.message });
     if (idempKey) {
       await markIdempotencyFailed(supabase, idempKey, error.message || "PIX generation error").catch(() => {});
     }
