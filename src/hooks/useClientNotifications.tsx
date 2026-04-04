@@ -25,16 +25,17 @@ export function useClientNotifications(clientCpf: string | null) {
     if (!clientCpf) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke("client-orders", {
-        body: { 
-          action: "get_notifications",
-          cpf: clientCpf 
-        },
-      });
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("target", "client")
+        .eq("target_client_cpf", clientCpf)
+        .order("created_at", { ascending: false })
+        .limit(50);
 
       if (error) throw error;
 
-      const typedData = (data?.notifications || []) as ClientNotification[];
+      const typedData = (data || []) as ClientNotification[];
       setNotifications(typedData);
       setUnreadCount(typedData.filter((n) => !n.read).length);
     } catch (error) {
@@ -46,12 +47,11 @@ export function useClientNotifications(clientCpf: string | null) {
 
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
-      const { error } = await supabase.functions.invoke("client-orders", {
-        body: { 
-          action: "mark_notification_read",
-          notification_id: notificationId 
-        },
-      });
+      const { error } = await supabase
+        .from("notifications")
+        .update({ read: true, read_at: new Date().toISOString() })
+        .eq("id", notificationId)
+        .eq("target_client_cpf", clientCpf);
 
       if (error) throw error;
 
@@ -64,19 +64,18 @@ export function useClientNotifications(clientCpf: string | null) {
     } catch (error) {
       console.error("Error marking notification as read:", error);
     }
-  }, []);
+  }, [clientCpf]);
 
   const markAllAsRead = useCallback(async () => {
     try {
       const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
       if (unreadIds.length === 0) return;
 
-      const { error } = await supabase.functions.invoke("client-orders", {
-        body: { 
-          action: "mark_all_notifications_read",
-          notification_ids: unreadIds 
-        },
-      });
+      const { error } = await supabase
+        .from("notifications")
+        .update({ read: true, read_at: new Date().toISOString() })
+        .in("id", unreadIds)
+        .eq("target_client_cpf", clientCpf);
 
       if (error) throw error;
 
@@ -87,7 +86,7 @@ export function useClientNotifications(clientCpf: string | null) {
     } catch (error) {
       console.error("Error marking all as read:", error);
     }
-  }, [notifications]);
+  }, [notifications, clientCpf]);
 
   // Subscribe to realtime notifications
   useEffect(() => {
