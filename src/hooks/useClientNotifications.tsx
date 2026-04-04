@@ -88,7 +88,7 @@ export function useClientNotifications(clientCpf: string | null) {
     }
   }, [notifications, clientCpf]);
 
-  // Subscribe to realtime notifications
+  // Subscribe to realtime notifications for the authenticated client context
   useEffect(() => {
     if (!clientCpf) return;
 
