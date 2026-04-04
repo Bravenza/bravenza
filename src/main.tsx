@@ -31,7 +31,7 @@ if (import.meta.env.PROD && sentryDsn) {
   });
 }
 
-const APP_VERSION = "3.7.1";
+const APP_VERSION = "3.7.2";
 const VERSION_KEY = "bravenza-app-version";
 
 // Version-gated cleanup — only runs when the app version changes
